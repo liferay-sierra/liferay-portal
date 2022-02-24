@@ -54,6 +54,7 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 
@@ -311,6 +312,22 @@ public class ObjectDDMStorageAdapter implements DDMStorageAdapter {
 		Map<String, ObjectField> objectFieldsMap = _toObjectFieldsMap(
 			objectFields);
 
+		int index = 0;
+
+		for (Map.Entry<String, DDMFormField> entry :
+				ddmFormFieldsMap.entrySet()) {
+
+			DDMFormField value = entry.getValue();
+
+			Map<String, Object> p = value.getProperties();
+
+			if (_fieldsTypeNotMappable.contains(p.get("type"))) {
+				ddmFormFieldValues.remove(index);
+			}
+
+			index++;
+		}
+
 		for (DDMFormFieldValue ddmFormFieldValue : ddmFormFieldValues) {
 			if (StringUtil.equals(
 					ddmFormFieldValue.getType(),
@@ -514,6 +531,9 @@ public class ObjectDDMStorageAdapter implements DDMStorageAdapter {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ObjectDDMStorageAdapter.class);
+
+	private final Set<String> _fieldsTypeNotMappable = SetUtil.fromArray(
+		"separator", "paragraph");
 
 	@Reference
 	private JSONFactory _jsonFactory;
