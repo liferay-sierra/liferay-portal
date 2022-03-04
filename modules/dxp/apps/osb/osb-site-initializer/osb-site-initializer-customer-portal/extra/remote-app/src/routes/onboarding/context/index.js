@@ -16,16 +16,13 @@ import {Liferay} from '../../../common/services/liferay';
 import {
 	addAccountFlag,
 	getAccountSubscriptionGroups,
+	getDXPCloudEnvironment,
 	getKoroneikiAccounts,
 	getUserAccount,
 } from '../../../common/services/liferay/graphql/queries';
-import {searchParams} from '../../../common/services/liferay/searchParams';
 import {getCurrentSession} from '../../../common/services/okta/rest/sessions';
-import {
-	ROLE_TYPES,
-	ROUTE_TYPES,
-	SEARCH_PARAMS_KEYS,
-} from '../../../common/utils/constants';
+import {ROLE_TYPES, ROUTE_TYPES} from '../../../common/utils/constants';
+import {getAccountKey} from '../../../common/utils/getAccountKey';
 import {isValidPage} from '../../../common/utils/page.validation';
 import {PRODUCT_TYPES} from '../../customer-portal/utils/constants';
 import {ONBOARDING_STEP_TYPES} from '../utils/constants';
@@ -37,6 +34,7 @@ const AppContextProvider = ({assetsPath, children}) => {
 	const {oktaSessionURL} = useApplicationProvider();
 	const [state, dispatch] = useReducer(reducer, {
 		assetsPath,
+		dxpCloudActivationSubmittedStatus: undefined,
 		koroneikiAccount: {},
 		project: undefined,
 		sessionId: '',
@@ -127,10 +125,28 @@ const AppContextProvider = ({assetsPath, children}) => {
 			}
 		};
 
+		const getDXPCloudActivationStatus = async (accountKey) => {
+			const {data} = await client.query({
+				query: getDXPCloudEnvironment,
+				variables: {
+					filter: `accountKey eq '${accountKey}'`,
+					scopeKey: Liferay.ThemeDisplay.getScopeGroupId(),
+				},
+			});
+
+			if (data) {
+				const status = !!data.c?.dXPCloudEnvironments?.items?.length;
+
+				dispatch({
+					payload: status,
+					type:
+						actionTypes.UPDATE_DXP_CLOUD_ACTIVATION_SUBMITTED_STATUS,
+				});
+			}
+		};
+
 		const fetchData = async () => {
-			const projectExternalReferenceCode = searchParams.get(
-				SEARCH_PARAMS_KEYS.accountKey
-			);
+			const projectExternalReferenceCode = getAccountKey();
 
 			const user = await getUser(projectExternalReferenceCode);
 
@@ -154,6 +170,7 @@ const AppContextProvider = ({assetsPath, children}) => {
 				if (accountBrief) {
 					getProject(projectExternalReferenceCode, accountBrief);
 					getSubscriptionGroups(projectExternalReferenceCode);
+					getDXPCloudActivationStatus(projectExternalReferenceCode);
 					getSessionId();
 
 					client.mutate({

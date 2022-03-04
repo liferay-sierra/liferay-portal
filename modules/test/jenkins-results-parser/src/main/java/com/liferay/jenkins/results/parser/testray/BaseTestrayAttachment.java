@@ -74,7 +74,9 @@ public abstract class BaseTestrayAttachment implements TestrayAttachment {
 				return JenkinsResultsParserUtil.read(file);
 			}
 			catch (Exception exception) {
-				throw new RuntimeException(exception);
+				System.out.println("Unable to download " + getURL());
+
+				return null;
 			}
 			finally {
 				JenkinsResultsParserUtil.delete(file);
@@ -86,7 +88,9 @@ public abstract class BaseTestrayAttachment implements TestrayAttachment {
 			return JenkinsResultsParserUtil.toString(urlString);
 		}
 		catch (IOException ioException) {
-			throw new RuntimeException(ioException);
+			System.out.println("Unable to download " + getURL());
+
+			return null;
 		}
 	}
 

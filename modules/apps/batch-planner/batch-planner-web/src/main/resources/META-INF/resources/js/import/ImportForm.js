@@ -13,6 +13,7 @@
  */
 
 import ClayLink from '@clayui/link';
+import ClayTable from '@clayui/table';
 import PropTypes from 'prop-types';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 
@@ -21,12 +22,30 @@ import {
 	FILE_SCHEMA_EVENT,
 	SCHEMA_SELECTED_EVENT,
 	TEMPLATE_SELECTED_EVENT,
-	TEMPLATE_SOILED,
+	TEMPLATE_SOILED_EVENT,
 } from '../constants';
 import getFieldsFromSchema from '../getFieldsFromSchema';
+import {getAvailableMappings} from '../utilities/mappings';
 import ImportMappingItem from './ImportMappingItem';
 import ImportSubmit from './ImportSubmit';
 
+const TableFieldsHeader = () => (
+	<ClayTable.Head>
+		<ClayTable.Row>
+			<ClayTable.Cell headingCell headingTitle>
+				{Liferay.Language.get('destination-field')}
+			</ClayTable.Cell>
+
+			<ClayTable.Cell headingCell headingTitle>
+				{Liferay.Language.get('source-file-field')}
+			</ClayTable.Cell>
+
+			<ClayTable.Cell headingCell headingTitle>
+				{Liferay.Language.get('preview')}
+			</ClayTable.Cell>
+		</ClayTable.Row>
+	</ClayTable.Head>
+);
 function ImportForm({
 	backUrl,
 	formDataQuerySelector,
@@ -35,22 +54,32 @@ function ImportForm({
 	mappedFields,
 	portletNamespace,
 }) {
-	const [dbFields, setDbFields] = useState();
+	const [dbFields, setDbFields] = useState({
+		optional: [],
+		required: [],
+	});
 	const [formEvaluated, setFormEvaluated] = useState(false);
 	const [fileFields, setFileFields] = useState();
+	const [demoFileValues, setDemoFileValues] = useState({});
 	const [fieldsSelections, setFieldsSelections] = useState({});
+	const [mappingsToBeEvaluated, setMappingsToBeEvaluated] = useState(
+		mappedFields
+	);
 	const useTemplateMappingRef = useRef();
 
 	const formIsValid = useMemo(() => {
-		if (!Object.keys(fieldsSelections).length) {
+		if (
+			!Object.keys(fieldsSelections).length ||
+			!(dbFields.optional.length + dbFields.required.length)
+		) {
 			return false;
 		}
 
-		const requiredFieldNotFound = dbFields.some(
-			(dbField) => dbField.required && !fieldsSelections[dbField.name]
+		const requiredFieldNotFilled = dbFields.required.some(
+			(dbField) => !fieldsSelections[dbField.name]
 		);
 
-		return !requiredFieldNotFound;
+		return !requiredFieldNotFilled;
 	}, [fieldsSelections, dbFields]);
 
 	const updateFieldMapping = (fileField, dbFieldName) => {
@@ -59,111 +88,181 @@ function ImportForm({
 			[dbFieldName]: fileField,
 		}));
 
-		Liferay.fire(TEMPLATE_SOILED);
+		Liferay.fire(TEMPLATE_SOILED_EVENT);
 	};
 
 	useEffect(() => {
-		if (dbFields && fileFields && !useTemplateMappingRef.current) {
-			const newFieldsSelection = {};
+		const dbFieldsUnordered = [...dbFields.optional, ...dbFields.required];
 
-			dbFields?.forEach((dbField) => {
-				newFieldsSelection[dbField.name] = null;
+		if (
+			dbFields.optional.length &&
+			dbFields.required.length &&
+			fileFields &&
+			!useTemplateMappingRef.current
+		) {
+			const availableMappings = getAvailableMappings(
+				mappingsToBeEvaluated,
+				fileFields,
+				dbFieldsUnordered
+			);
 
-				if (fileFields.includes(dbField.name)) {
-					newFieldsSelection[dbField.name] = dbField.name;
-				}
-			});
-
-			setFieldsSelections(newFieldsSelection);
+			setFieldsSelections(availableMappings);
 		}
-	}, [dbFields, fileFields]);
+	}, [dbFields, fileFields, mappingsToBeEvaluated]);
 
 	useEffect(() => {
-		function handleSchemaUpdated(event) {
-			const newSchema = event.schema;
-
-			if (newSchema) {
-				const newDBFields = getFieldsFromSchema(newSchema);
+		function handleSchemaUpdated({schema}) {
+			if (schema) {
+				const newDBFields = getFieldsFromSchema(schema);
 
 				setDbFields(newDBFields);
 			}
 		}
 
-		function handleFileSchemaUpdate({schema}) {
+		function handleFileSchemaUpdate({firstItemDetails, schema}) {
 			setFileFields(schema);
+
+			setDemoFileValues(firstItemDetails);
 		}
 
-		function handleTemplateSelect(event) {
-			const {template} = event;
-
+		function handleTemplateSelect({template}) {
 			if (template) {
-				useTemplateMappingRef.current = true;
-
-				setFieldsSelections(template.mapping);
-			}
-			else {
-				useTemplateMappingRef.current = false;
+				setMappingsToBeEvaluated(template.mappings);
 			}
 		}
-
-		const handleTemplateDirty = () => {
-			useTemplateMappingRef.current = false;
-		};
 
 		Liferay.on(FILE_SCHEMA_EVENT, handleFileSchemaUpdate);
 		Liferay.on(SCHEMA_SELECTED_EVENT, handleSchemaUpdated);
 		Liferay.on(TEMPLATE_SELECTED_EVENT, handleTemplateSelect);
-		Liferay.on(TEMPLATE_SOILED, handleTemplateDirty);
 
 		return () => {
 			Liferay.detach(FILE_SCHEMA_EVENT, handleFileSchemaUpdate);
 			Liferay.detach(SCHEMA_SELECTED_EVENT, handleSchemaUpdated);
 			Liferay.detach(TEMPLATE_SELECTED_EVENT, handleTemplateSelect);
-			Liferay.detach(TEMPLATE_SOILED, handleTemplateDirty);
 		};
 	}, []);
 
-	useEffect(() => {
-		if (mappedFields) {
-			setFileFields(Object.keys(mappedFields));
-
-			setDbFields(Object.values(mappedFields));
-		}
-	}, [mappedFields]);
+	const formIsVisible = !!(
+		fileFields?.length > 0 &&
+		!!(dbFields.optional.length + dbFields.required.length)
+	);
 
 	return (
 		<>
-			{fileFields?.length > 0 && dbFields?.length > 0 && (
+			{formIsVisible && (
 				<div className="card import-mapping-table">
 					<h4 className="card-header">
 						{Liferay.Language.get('import-mappings')}
 					</h4>
 
-					<div className="card-body">
-						<div className="lfr-form-content">
-							<div className="autofit-section">
-								{dbFields?.map((dbField) => (
-									<ImportMappingItem
-										dbField={dbField}
-										fileFields={fileFields}
-										formEvaluated={formEvaluated}
-										key={dbField.name}
-										portletNamespace={portletNamespace}
-										selectedFileField={
-											fieldsSelections[dbField.name] || ''
-										}
-										updateFieldMapping={(
-											selectedFileField
-										) =>
-											updateFieldMapping(
-												selectedFileField,
-												dbField.name
-											)
-										}
-									/>
-								))}
-							</div>
-						</div>
+					<div className="card-body p-0">
+						<ClayTable borderless>
+							<TableFieldsHeader />
+
+							<ClayTable.Body>
+								{!!dbFields.required.length && (
+									<>
+										<ClayTable.Row divider>
+											<ClayTable.Cell
+												className="text-uppercase"
+												colSpan={3}
+											>
+												{Liferay.Language.get(
+													'required-fields'
+												)}
+											</ClayTable.Cell>
+										</ClayTable.Row>
+
+										{dbFields.required.map((dbField) => (
+											<ImportMappingItem
+												dbField={dbField}
+												fileFields={fileFields}
+												formEvaluated={formEvaluated}
+												key={dbField.name}
+												portletNamespace={
+													portletNamespace
+												}
+												previewValue={
+													fieldsSelections[
+														dbField.name
+													] &&
+													demoFileValues[
+														fieldsSelections[
+															dbField.name
+														]
+													]
+												}
+												required={true}
+												selectedFileField={
+													fieldsSelections[
+														dbField.name
+													] || ''
+												}
+												updateFieldMapping={(
+													selectedFileField
+												) =>
+													updateFieldMapping(
+														selectedFileField,
+														dbField.name
+													)
+												}
+											/>
+										))}
+									</>
+								)}
+
+								{!!dbFields.optional.length && (
+									<>
+										<ClayTable.Row divider>
+											<ClayTable.Cell
+												className="text-uppercase"
+												colSpan={3}
+											>
+												{Liferay.Language.get(
+													'optional-fields'
+												)}
+											</ClayTable.Cell>
+										</ClayTable.Row>
+
+										{dbFields.optional.map((dbField) => (
+											<ImportMappingItem
+												dbField={dbField}
+												fileFields={fileFields}
+												formEvaluated={formEvaluated}
+												key={dbField.name}
+												portletNamespace={
+													portletNamespace
+												}
+												previewValue={
+													fieldsSelections[
+														dbField.name
+													] &&
+													demoFileValues[
+														fieldsSelections[
+															dbField.name
+														]
+													]
+												}
+												required={false}
+												selectedFileField={
+													fieldsSelections[
+														dbField.name
+													] || ''
+												}
+												updateFieldMapping={(
+													selectedFileField
+												) =>
+													updateFieldMapping(
+														selectedFileField,
+														dbField.name
+													)
+												}
+											/>
+										))}
+									</>
+								)}
+							</ClayTable.Body>
+						</ClayTable>
 					</div>
 				</div>
 			)}
@@ -177,11 +276,13 @@ function ImportForm({
 					<SaveTemplate
 						evaluateForm={() => setFormEvaluated(true)}
 						formIsValid={formIsValid}
+						formIsVisible={formIsVisible}
 						formSaveAsTemplateDataQuerySelector={
 							formDataQuerySelector
 						}
 						formSaveAsTemplateURL={formSaveAsTemplateURL}
 						portletNamespace={portletNamespace}
+						type="import"
 					/>
 
 					<ImportSubmit
@@ -189,6 +290,7 @@ function ImportForm({
 						formDataQuerySelector={formDataQuerySelector}
 						formImportURL={formImportURL}
 						formIsValid={formIsValid}
+						formIsVisible={formIsVisible}
 						portletNamespace={portletNamespace}
 					/>
 				</div>
@@ -196,6 +298,10 @@ function ImportForm({
 		</>
 	);
 }
+
+ImportForm.defaultProps = {
+	mappedFields: {},
+};
 
 ImportForm.propTypes = {
 	backUrl: PropTypes.string.isRequired,

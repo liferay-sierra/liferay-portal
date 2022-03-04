@@ -1727,7 +1727,6 @@ definition {
 			fieldFieldLabel = "Text");
 	}
 
-	@ignore = "true"
 	@priority = "3"
 	test CopyDataDefinition {
 		Navigator.openURL();
@@ -2520,7 +2519,6 @@ definition {
 			fieldName = "BooleanEdit");
 	}
 
-	@ignore = "true"
 	@priority = "4"
 	test EditBooleanFieldShowLabel {
 		Navigator.openURL();
@@ -2583,7 +2581,7 @@ definition {
 			ddlListName = "List Name");
 
 		DDLRecord.populateFieldBoolean(
-			ddlRecordFieldData = "Yes",
+			ddlRecordFieldData = "True",
 			fieldFieldLabel = "Boolean",
 			fieldName = "Boolean",
 			fieldShowLabel = "No");
@@ -2599,7 +2597,7 @@ definition {
 		DDLNavigator.gotoListRecords(ddlListName = "List Name");
 
 		DDLRecord.viewFirstFieldCP(
-			ddlRecordFieldData = "Yes",
+			ddlRecordFieldData = "True",
 			field = "Boolean",
 			fieldFieldLabel = "Boolean",
 			fieldName = "Boolean",
@@ -3646,7 +3644,6 @@ definition {
 			fieldReadOnly = "No");
 	}
 
-	@ignore = "true"
 	@priority = "3"
 	test ViewFormTemplateFields {
 		Navigator.openURL();
@@ -3681,16 +3678,6 @@ definition {
 		DynamicDataMapping.viewCanAddField(field = "Separator");
 
 		DynamicDataMapping.viewCannotAddField(field = "Text");
-
-		DynamicDataMapping.deleteField(fieldFieldLabel = "Text");
-
-		DynamicDataMapping.viewCanAddField(field = "Fieldset");
-
-		DynamicDataMapping.viewCanAddField(field = "Paragraph");
-
-		DynamicDataMapping.viewCanAddField(field = "Separator");
-
-		DynamicDataMapping.viewCanAddField(field = "Text");
 	}
 
 	@priority = "3"

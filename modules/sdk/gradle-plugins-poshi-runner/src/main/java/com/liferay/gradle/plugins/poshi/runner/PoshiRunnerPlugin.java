@@ -599,7 +599,18 @@ public class PoshiRunnerPlugin implements Plugin<Project> {
 
 				@Override
 				public void execute(ExecSpec execSpec) {
-					execSpec.commandLine(finalChromeBinaryPath, "--version");
+					if (OSDetector.isWindows()) {
+						execSpec.commandLine(
+							"cmd", "/c",
+							"wmic datafile where name=\"" +
+								finalChromeBinaryPath.replace("\\", "\\\\") +
+									"\" get Version /value");
+					}
+					else {
+						execSpec.commandLine(
+							finalChromeBinaryPath, "--version");
+					}
+
 					execSpec.setStandardOutput(byteArrayOutputStream);
 				}
 
@@ -693,7 +704,11 @@ public class PoshiRunnerPlugin implements Plugin<Project> {
 	private boolean _isDownloadChromeDriver(Properties poshiProperties) {
 		String browserType = poshiProperties.getProperty("browser.type");
 
-		if (Validator.isNull(browserType) || !browserType.equals("chrome")) {
+		if (Validator.isNull(browserType)) {
+			return true;
+		}
+
+		if (!browserType.equals("chrome")) {
 			return false;
 		}
 
@@ -770,9 +785,16 @@ public class PoshiRunnerPlugin implements Plugin<Project> {
 		Map<String, Object> systemProperties = test.getSystemProperties();
 
 		if (_isDownloadChromeDriver(poshiProperties)) {
-			systemProperties.put(
-				"webdriver.chrome.driver",
-				_getWebDriverDir(test.getProject()) + "/chromedriver");
+			if (OSDetector.isWindows()) {
+				systemProperties.put(
+					"webdriver.chrome.driver",
+					_getWebDriverDir(test.getProject()) + "/chromedriver.exe");
+			}
+			else {
+				systemProperties.put(
+					"webdriver.chrome.driver",
+					_getWebDriverDir(test.getProject()) + "/chromedriver");
+			}
 		}
 		else if (Validator.isNotNull(
 					System.getProperty("webdriver.chrome.driver"))) {
@@ -806,11 +828,11 @@ public class PoshiRunnerPlugin implements Plugin<Project> {
 				put("95", "95.0.4638.17");
 				put("96", "96.0.4664.45");
 				put("97", "97.0.4692.71");
-				put("98", "98.0.4758.80");
-				put("99", "99.0.4844.17");
+				put("98", "98.0.4758.102");
+				put("99", "99.0.4844.51");
 			}
 		};
 	private static final Pattern _chromeVersionPattern = Pattern.compile(
-		"[A-z\\s]+(?<chromeMajorVersion>[0-9]{2})\\.");
+		"[A-z=\\s]+(?<chromeMajorVersion>[0-9]{2})\\.");
 
 }

@@ -26,9 +26,6 @@ export type TestrayCase = {
 	stepsType: string;
 	testrayCaseId: number;
 	testrayCaseResult: number;
-	testrayCaseTypeId: number;
-	testrayComponentId: number;
-	testrayProjectId: number;
 };
 
 const testrayCaseFragment = gql`
@@ -44,9 +41,6 @@ const testrayCaseFragment = gql`
 		stepsType
 		testrayCaseResult
 		testrayCaseId
-		testrayCaseTypeId
-		testrayComponentId
-		testrayProjectId
 	}
 `;
 
@@ -57,15 +51,9 @@ export const getTestrayCases = gql`
 		$filter: String
 		$page: Int = 1
 		$pageSize: Int = 20
-		$scopeKey: String
 	) {
 		c {
-			testrayCases(
-				filter: $filter
-				page: $page
-				pageSize: $pageSize
-				scopeKey: $scopeKey
-			) {
+			testrayCases(filter: $filter, page: $page, pageSize: $pageSize) {
 				items {
 					...TestrayCaseFragment
 				}

@@ -11,11 +11,7 @@
 
 import InviteTeamMembersForm from '../../../common/containers/setup-forms/InviteTeamMembersForm';
 import SetupDXPCloud from '../../../common/containers/setup-forms/SetupDXPCloudForm';
-import {
-	API_BASE_URL,
-	SEARCH_PARAMS_KEYS,
-} from '../../../common/utils/constants';
-import getLiferaySiteName from '../../../common/utils/getLiferaySiteName';
+import {PAGE_ROUTER_TYPES} from '../../../common/utils/constants';
 import {useOnboarding} from '../context';
 import {actionTypes} from '../context/reducer';
 import {ONBOARDING_STEP_TYPES} from '../utils/constants';
@@ -24,23 +20,29 @@ import Welcome from './Welcome';
 
 const Pages = () => {
 	const [
-		{project, sessionId, step, subscriptionGroups},
+		{
+			dxpCloudActivationSubmittedStatus,
+			project,
+			sessionId,
+			step,
+			subscriptionGroups,
+		},
 		dispatch,
 	] = useOnboarding();
 
 	const invitesPageHandle = () => {
 		const hasSubscriptionsDXPCloud = !!subscriptionGroups?.length;
 
-		if (hasSubscriptionsDXPCloud) {
+		if (hasSubscriptionsDXPCloud && !dxpCloudActivationSubmittedStatus) {
 			dispatch({
 				payload: ONBOARDING_STEP_TYPES.dxpCloud,
 				type: actionTypes.CHANGE_STEP,
 			});
 		}
 		else {
-			window.location.href = `${API_BASE_URL}/${getLiferaySiteName()}/overview?${
-				SEARCH_PARAMS_KEYS.accountKey
-			}=${project.accountKey}`;
+			window.location.href = PAGE_ROUTER_TYPES.project(
+				project.accountKey
+			);
 		}
 	};
 
@@ -66,9 +68,9 @@ const Pages = () => {
 							});
 						}
 						else {
-							window.location.href = `${API_BASE_URL}/${getLiferaySiteName()}/overview?${
-								SEARCH_PARAMS_KEYS.accountKey
-							}=${project.accountKey}`;
+							window.location.href = PAGE_ROUTER_TYPES.project(
+								project.accountKey
+							);
 						}
 					}}
 					leftButton="Skip for now"

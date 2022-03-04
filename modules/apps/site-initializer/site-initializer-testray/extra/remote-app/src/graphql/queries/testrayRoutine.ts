@@ -14,20 +14,19 @@
 
 import {gql} from '@apollo/client';
 
+export type TestrayRoutine = {
+	name: String;
+	testrayRoutineId: String;
+};
+
 export const getTestrayRoutines = gql`
 	query getTestrayRoutines(
 		$filter: String
 		$page: Int = 1
 		$pageSize: Int = 20
-		$scopeKey: String
 	) {
 		c {
-			testrayRoutines(
-				filter: $filter
-				page: $page
-				pageSize: $pageSize
-				scopeKey: $scopeKey
-			) {
+			testrayRoutines(filter: $filter, page: $page, pageSize: $pageSize) {
 				items {
 					name
 					testrayRoutineId

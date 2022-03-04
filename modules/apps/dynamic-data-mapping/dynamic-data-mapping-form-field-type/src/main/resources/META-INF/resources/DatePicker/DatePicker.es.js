@@ -113,7 +113,7 @@ export default function DatePicker({
 			'';
 
 		if (rawDate !== '') {
-			const date = moment(rawDate, serverFormat);
+			const date = moment(rawDate, serverFormat, true);
 			formattedDate = date
 				.locale(locale ?? defaultLanguageId)
 				.format(momentFormat);
@@ -255,6 +255,7 @@ export default function DatePicker({
 				value={formattedDate}
 				weekdaysShort={weekdaysShort}
 				years={years}
+				yearsCheck={false}
 			/>
 
 			<input name={name} type="hidden" value={rawDate} />

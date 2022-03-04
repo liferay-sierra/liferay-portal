@@ -41,16 +41,6 @@ if (priceDisplayType.equals(CommercePricingConstants.TAX_INCLUDED_IN_PRICE)) {
 	totalCommerceDiscountValue = commerceOrderPrice.getTotalDiscountValueWithTaxAmount();
 	totalOrderCommerceMoney = commerceOrderPrice.getTotalWithTaxAmount();
 }
-
-String commercePaymentMethodName = StringPool.BLANK;
-
-String commercePaymentMethodKey = commerceOrder.getCommercePaymentMethodKey();
-
-if (commercePaymentMethodKey != null) {
-	commercePaymentMethodName = orderSummaryCheckoutStepDisplayContext.getPaymentMethodName(commercePaymentMethodKey, locale);
-}
-
-String commerceShippingOptionName = commerceOrder.getShippingOptionName();
 %>
 
 <div class="commerce-order-summary">
@@ -461,6 +451,14 @@ String commerceShippingOptionName = commerceOrder.getShippingOptionName();
 				</address>
 			</c:if>
 
+			<%
+			String commerceShippingOptionName = StringPool.BLANK;
+
+			if (commerceOrder.getShippingOptionName() != null) {
+				commerceShippingOptionName = orderSummaryCheckoutStepDisplayContext.getShippingOptionName(commerceOrder.getShippingOptionName(), locale);
+			}
+			%>
+
 			<c:if test="<%= Validator.isNotNull(commerceShippingOptionName) %>">
 				<div class="panel-body shipping-method">
 					<h5>
@@ -477,6 +475,14 @@ String commerceShippingOptionName = commerceOrder.getShippingOptionName();
 				</div>
 			</c:if>
 
+			<%
+			String commercePaymentMethodName = StringPool.BLANK;
+
+			if (commerceOrder.getCommercePaymentMethodKey() != null) {
+				commercePaymentMethodName = orderSummaryCheckoutStepDisplayContext.getPaymentMethodName(commerceOrder.getCommercePaymentMethodKey(), locale);
+			}
+			%>
+
 			<c:if test="<%= Validator.isNotNull(commercePaymentMethodName) %>">
 				<div class="panel-body payment-method">
 					<h5>
@@ -485,6 +491,35 @@ String commerceShippingOptionName = commerceOrder.getShippingOptionName();
 
 					<div class="shipping-description">
 						<%= HtmlUtil.escape(commercePaymentMethodName) %>
+					</div>
+				</div>
+			</c:if>
+
+			<%
+			String deliveryTermEntryName = orderSummaryCheckoutStepDisplayContext.getDeliveryTermEntryName(locale);
+			%>
+
+			<c:if test="<%= Validator.isNotNull(deliveryTermEntryName) %>">
+				<div class="panel-body payment-method">
+					<h5>
+						<liferay-ui:message key="delivery-terms" />
+					</h5>
+
+					<div class="shipping-description">
+						<a href="#" id="<%= commerceOrder.getDeliveryCommerceTermEntryId() %>"><%= HtmlUtil.escape(deliveryTermEntryName) %></a>
+
+						<liferay-frontend:component
+							context='<%=
+								HashMapBuilder.<String, Object>put(
+									"HTMLElementId", commerceOrder.getDeliveryCommerceTermEntryId()
+								).put(
+									"modalContent", commerceOrder.getDeliveryCommerceTermEntryDescription()
+								).put(
+									"modalTitle", deliveryTermEntryName
+								).build()
+							%>'
+							module="js/attachModalToHTMLElement"
+						/>
 					</div>
 				</div>
 			</c:if>
@@ -500,7 +535,20 @@ String commerceShippingOptionName = commerceOrder.getShippingOptionName();
 					</h5>
 
 					<div class="shipping-description">
-						<%= HtmlUtil.escape(paymentTermEntryName) %>
+						<a href="#" id="<%= commerceOrder.getPaymentCommerceTermEntryId() %>"><%= HtmlUtil.escape(paymentTermEntryName) %></a>
+
+						<liferay-frontend:component
+							context='<%=
+								HashMapBuilder.<String, Object>put(
+									"HTMLElementId", commerceOrder.getPaymentCommerceTermEntryId()
+								).put(
+									"modalContent", commerceOrder.getPaymentCommerceTermEntryDescription()
+								).put(
+									"modalTitle", paymentTermEntryName
+								).build()
+							%>'
+							module="js/attachModalToHTMLElement"
+						/>
 					</div>
 				</div>
 			</c:if>
