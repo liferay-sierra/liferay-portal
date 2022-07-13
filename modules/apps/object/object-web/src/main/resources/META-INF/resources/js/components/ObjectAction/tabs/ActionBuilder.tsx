@@ -110,10 +110,7 @@ export default function ActionBuilder({
 
 		fillSelect(Liferay.Language.get('related-objects'), relatedObjects);
 
-		fillSelect(
-			Liferay.Language.get('non-related-objects'),
-			nonRelatedObjects
-		);
+		fillSelect(Liferay.Language.get('non-related-objects'), nonRelatedObjects);
 
 		setRelationships(relationships);
 	};
