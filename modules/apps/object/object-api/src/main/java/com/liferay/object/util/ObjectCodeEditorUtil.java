@@ -12,10 +12,10 @@
  * details.
  */
 
-package com.liferay.object.web.internal.object.definitions.display.context.util;
+package com.liferay.object.util;
 
 import com.liferay.object.constants.ObjectFieldConstants;
-import com.liferay.object.service.ObjectFieldLocalService;
+import com.liferay.object.service.ObjectFieldLocalServiceUtil;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.LanguageUtil;
@@ -32,13 +32,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
-
 /**
  * @author Carolina Barbosa
  */
-@Component(service = {})
 public class ObjectCodeEditorUtil {
 
 	public static List<Map<String, Object>> getCodeEditorElements(
@@ -53,7 +49,7 @@ public class ObjectCodeEditorUtil {
 			_createCodeEditorElement(
 				TransformUtil.transform(
 					ListUtil.filter(
-						_objectFieldLocalService.getObjectFields(
+						ObjectFieldLocalServiceUtil.getObjectFields(
 							objectDefinitionId),
 						objectField ->
 							(includeAggregationObjectField ||
@@ -95,15 +91,6 @@ public class ObjectCodeEditorUtil {
 			"label", LanguageUtil.get(locale, key)
 		).build();
 	}
-
-	@Reference(unbind = "-")
-	private void _setObjectFieldLocalService(
-		ObjectFieldLocalService objectFieldLocalService) {
-
-		_objectFieldLocalService = objectFieldLocalService;
-	}
-
-	private static ObjectFieldLocalService _objectFieldLocalService;
 
 	private enum DDMExpressionFunction {
 
