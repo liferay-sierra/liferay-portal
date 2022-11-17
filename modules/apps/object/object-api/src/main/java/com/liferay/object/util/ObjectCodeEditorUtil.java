@@ -60,7 +60,7 @@ public class ObjectCodeEditorUtil {
 							 !objectField.compareBusinessType(
 								 ObjectFieldConstants.BUSINESS_TYPE_FORMULA))),
 					objectField -> HashMapBuilder.put(
-						"content", objectField.getName()
+						"content", _processDBColumnName(objectField.getName())
 					).put(
 						"helpText", StringPool.BLANK
 					).put(
@@ -90,6 +90,14 @@ public class ObjectCodeEditorUtil {
 		).put(
 			"label", LanguageUtil.get(locale, key)
 		).build();
+	}
+
+	private static String _processDBColumnName(String columnName) {
+		if (columnName.endsWith(StringPool.UNDERLINE)) {
+			columnName = columnName.substring(0, columnName.length() - 1);
+		}
+
+		return columnName;
 	}
 
 	private enum DDMExpressionFunction {
