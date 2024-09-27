@@ -16,8 +16,6 @@ package com.liferay.portal.events;
 
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.dao.db.DB;
-import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.exception.ResourceActionsException;
 import com.liferay.portal.kernel.log.Log;
@@ -28,8 +26,10 @@ import com.liferay.portal.kernel.service.ResourceActionLocalServiceUtil;
 import com.liferay.portal.kernel.upgrade.UpgradeException;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.upgrade.util.UpgradeProcessUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LoggingTimer;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.version.Version;
@@ -38,6 +38,8 @@ import com.liferay.portal.util.PropsValues;
 
 import java.sql.Connection;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -91,10 +93,6 @@ public class StartupHelperUtil {
 		_dbNew = dbNew;
 	}
 
-	public static void setDropIndexes(boolean dropIndexes) {
-		_dropIndexes = dropIndexes;
-	}
-
 	public static void setStartupFinished(boolean startupFinished) {
 		_startupFinished = startupFinished;
 	}
@@ -103,53 +101,29 @@ public class StartupHelperUtil {
 		_upgrading = upgrading;
 	}
 
-	public static void updateIndexes() {
-		updateIndexes(_dropIndexes);
-	}
-
-	public static void updateIndexes(boolean dropIndexes) {
-		DB db = DBManagerUtil.getDB();
-
-		try (Connection connection = DataAccess.getConnection()) {
-			updateIndexes(db, connection, dropIndexes);
-		}
-		catch (Exception exception) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(exception);
-			}
-		}
-	}
-
-	public static void updateIndexes(
-		DB db, Connection connection, boolean dropIndexes) {
-
-		try {
-			Thread currentThread = Thread.currentThread();
-
-			ClassLoader classLoader = currentThread.getContextClassLoader();
-
-			String tablesSQL = StringUtil.read(
-				classLoader,
-				"com/liferay/portal/tools/sql/dependencies/portal-tables.sql");
-
-			String indexesSQL = StringUtil.read(
-				classLoader,
-				"com/liferay/portal/tools/sql/dependencies/indexes.sql");
-
-			db.updateIndexes(connection, tablesSQL, indexesSQL, dropIndexes);
-		}
-		catch (Exception exception) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(exception);
-			}
-		}
-	}
-
 	public static void upgradeProcess(int buildNumber) throws UpgradeException {
+		List<String> upgradeProcessClassNames = new ArrayList<>();
+
+		if (GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-157670"))) {
+			Collections.addAll(
+				upgradeProcessClassNames,
+				"com.liferay.portal.upgrade.UpgradeProcess_6_1_1",
+				"com.liferay.portal.upgrade.UpgradeProcess_6_2_0");
+		}
+
+		Collections.addAll(
+			upgradeProcessClassNames,
+			"com.liferay.portal.upgrade.UpgradeProcess_7_0_0",
+			"com.liferay.portal.upgrade.UpgradeProcess_7_0_1",
+			"com.liferay.portal.upgrade.UpgradeProcess_7_0_3",
+			"com.liferay.portal.upgrade.UpgradeProcess_7_0_5",
+			"com.liferay.portal.upgrade.UpgradeProcess_7_0_6",
+			"com.liferay.portal.upgrade.PortalUpgradeProcess");
+
 		List<UpgradeProcess> upgradeProcesses =
 			UpgradeProcessUtil.initUpgradeProcesses(
 				PortalClassLoaderUtil.getClassLoader(),
-				_UPGRADE_PROCESS_CLASS_NAMES);
+				upgradeProcessClassNames.toArray(new String[0]));
 
 		_upgraded = UpgradeProcessUtil.upgradeProcess(
 			buildNumber, upgradeProcesses);
@@ -160,8 +134,10 @@ public class StartupHelperUtil {
 			_log.debug("Check the portal's required schema version");
 		}
 
-		if (!PortalUpgradeProcess.isInRequiredSchemaVersion(
-				DataAccess.getConnection())) {
+		try (Connection connection = DataAccess.getConnection()) {
+			if (PortalUpgradeProcess.isInRequiredSchemaVersion(connection)) {
+				return;
+			}
 
 			Version currentSchemaVersion =
 				PortalUpgradeProcess.getCurrentSchemaVersion(
@@ -189,20 +165,10 @@ public class StartupHelperUtil {
 		}
 	}
 
-	private static final String[] _UPGRADE_PROCESS_CLASS_NAMES = {
-		"com.liferay.portal.upgrade.UpgradeProcess_7_0_0",
-		"com.liferay.portal.upgrade.UpgradeProcess_7_0_1",
-		"com.liferay.portal.upgrade.UpgradeProcess_7_0_3",
-		"com.liferay.portal.upgrade.UpgradeProcess_7_0_5",
-		"com.liferay.portal.upgrade.UpgradeProcess_7_0_6",
-		"com.liferay.portal.upgrade.PortalUpgradeProcess"
-	};
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		StartupHelperUtil.class);
 
 	private static boolean _dbNew;
-	private static boolean _dropIndexes;
 	private static boolean _startupFinished;
 	private static boolean _upgraded;
 	private static boolean _upgrading;

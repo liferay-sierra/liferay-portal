@@ -26,14 +26,13 @@ import com.liferay.dynamic.data.mapping.model.DDMFormInstance;
 import com.liferay.dynamic.data.mapping.model.DDMFormInstanceRecord;
 import com.liferay.dynamic.data.mapping.model.DDMFormInstanceRecordVersion;
 import com.liferay.dynamic.data.mapping.model.DDMFormInstanceSettings;
-import com.liferay.dynamic.data.mapping.model.DDMFormSuccessPageSettings;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.service.DDMFormInstanceRecordService;
 import com.liferay.dynamic.data.mapping.service.DDMFormInstanceRecordVersionLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMFormInstanceService;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -61,7 +60,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marcellus Tavares
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM,
 		"javax.portlet.name=" + DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM_ADMIN,
@@ -116,11 +114,9 @@ public class AddFormInstanceRecordMVCActionCommand
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
-		_addFormInstanceMVCCommandHelper.
-			updateRequiredFieldsAccordingToVisibility(
-				actionRequest, ddmForm, ddmFormValues,
-				LocaleUtil.fromLanguageId(
-					LanguageUtil.getLanguageId(actionRequest)));
+		_addFormInstanceMVCCommandHelper.updateNonevaluableDDMFormFields(
+			actionRequest, ddmForm, ddmFormValues,
+			LocaleUtil.fromLanguageId(_language.getLanguageId(actionRequest)));
 
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			DDMFormInstanceRecord.class.getName(), actionRequest);
@@ -148,25 +144,22 @@ public class AddFormInstanceRecordMVCActionCommand
 		DDMFormInstanceSettings ddmFormInstanceSettings =
 			ddmFormInstance.getSettingsModel();
 
-		String redirectURL = ParamUtil.getString(
-			actionRequest, "redirect", ddmFormInstanceSettings.redirectURL());
+		String ddmFormInstanceSettingsRedirectURL =
+			ddmFormInstanceSettings.redirectURL();
 
-		if (Validator.isNotNull(redirectURL)) {
-			portletSession.setAttribute(
-				DDMFormWebKeys.DYNAMIC_DATA_MAPPING_FORM_INSTANCE_ID,
-				formInstanceId);
-			portletSession.setAttribute(DDMFormWebKeys.GROUP_ID, groupId);
-
-			sendRedirect(actionRequest, actionResponse, redirectURL);
+		if (Validator.isNotNull(ddmFormInstanceSettingsRedirectURL)) {
+			hideDefaultSuccessMessage(actionRequest);
 		}
-		else {
-			DDMFormSuccessPageSettings ddmFormSuccessPageSettings =
-				ddmForm.getDDMFormSuccessPageSettings();
 
-			if (ddmFormSuccessPageSettings.isEnabled()) {
-				hideDefaultSuccessMessage(actionRequest);
-			}
-		}
+		portletSession.setAttribute(
+			DDMFormWebKeys.DYNAMIC_DATA_MAPPING_FORM_INSTANCE_ID,
+			formInstanceId);
+		portletSession.setAttribute(DDMFormWebKeys.GROUP_ID, groupId);
+
+		sendRedirect(
+			actionRequest, actionResponse,
+			ParamUtil.getString(
+				actionRequest, "redirect", ddmFormInstanceSettingsRedirectURL));
 	}
 
 	protected DDMForm getDDMForm(DDMFormInstance ddmFormInstance)
@@ -175,27 +168,6 @@ public class AddFormInstanceRecordMVCActionCommand
 		DDMStructure ddmStructure = ddmFormInstance.getStructure();
 
 		return ddmStructure.getDDMForm();
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMFormInstanceRecordService(
-		DDMFormInstanceRecordService ddmFormInstanceRecordService) {
-
-		_ddmFormInstanceRecordService = ddmFormInstanceRecordService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMFormInstanceService(
-		DDMFormInstanceService ddmFormInstanceService) {
-
-		_ddmFormInstanceService = ddmFormInstanceService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMFormValuesFactory(
-		DDMFormValuesFactory ddmFormValuesFactory) {
-
-		_ddmFormValuesFactory = ddmFormValuesFactory;
 	}
 
 	private void _updateFormInstanceRecord(
@@ -256,11 +228,10 @@ public class AddFormInstanceRecordMVCActionCommand
 		DDMFormInstanceSettings ddmFormInstanceSettings =
 			ddmFormInstance.getSettingsModel();
 
-		String formLayoutURL =
-			_addDefaultSharedFormLayoutPortalInstanceLifecycleListener.
-				getFormLayoutURL(themeDisplay);
-
-		if (StringUtil.startsWith(currentURL, formLayoutURL) &&
+		if (StringUtil.startsWith(
+				currentURL,
+				_addDefaultSharedFormLayoutPortalInstanceLifecycleListener.
+					getFormLayoutURL(themeDisplay)) &&
 			!ddmFormInstanceSettings.published()) {
 
 			throw new FormInstanceNotPublishedException(
@@ -277,14 +248,21 @@ public class AddFormInstanceRecordMVCActionCommand
 	private AddFormInstanceRecordMVCCommandHelper
 		_addFormInstanceMVCCommandHelper;
 
+	@Reference
 	private DDMFormInstanceRecordService _ddmFormInstanceRecordService;
 
 	@Reference
 	private DDMFormInstanceRecordVersionLocalService
 		_ddmFormInstanceRecordVersionLocalService;
 
+	@Reference
 	private DDMFormInstanceService _ddmFormInstanceService;
+
+	@Reference
 	private DDMFormValuesFactory _ddmFormValuesFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

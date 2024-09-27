@@ -32,15 +32,20 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
+import com.liferay.search.experiences.rest.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.search.experiences.rest.resource.v1_0.KeywordQueryContributorResource;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -59,7 +62,8 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @generated
  */
 @Component(
-	immediate = true, service = KeywordQueryContributorResource.Factory.class
+	property = "resource.locator.key=/search-experiences-rest/v1.0/KeywordQueryContributor",
+	service = KeywordQueryContributorResource.Factory.class
 )
 @Generated("")
 public class KeywordQueryContributorResourceFactoryImpl
@@ -75,10 +79,8 @@ public class KeywordQueryContributorResourceFactoryImpl
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (KeywordQueryContributorResource)
-					ProxyUtil.newProxyInstance(
-						KeywordQueryContributorResource.class.getClassLoader(),
-						new Class<?>[] {KeywordQueryContributorResource.class},
+				return _keywordQueryContributorResourceProxyProviderFunction.
+					apply(
 						(proxy, method, arguments) -> _invoke(
 							method, arguments, _checkPermissions,
 							_httpServletRequest, _httpServletResponse,
@@ -137,14 +139,32 @@ public class KeywordQueryContributorResourceFactoryImpl
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		KeywordQueryContributorResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, KeywordQueryContributorResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		KeywordQueryContributorResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			KeywordQueryContributorResource.class.getClassLoader(),
+			KeywordQueryContributorResource.class);
+
+		try {
+			Constructor<KeywordQueryContributorResource> constructor =
+				(Constructor<KeywordQueryContributorResource>)
+					proxyClass.getConstructor(InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -167,7 +187,7 @@ public class KeywordQueryContributorResourceFactoryImpl
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		KeywordQueryContributorResource keywordQueryContributorResource =
@@ -196,6 +216,8 @@ public class KeywordQueryContributorResourceFactoryImpl
 		keywordQueryContributorResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		keywordQueryContributorResource.setRoleLocalService(_roleLocalService);
+		keywordQueryContributorResource.setSortParserProvider(
+			_sortParserProvider);
 
 		try {
 			return method.invoke(keywordQueryContributorResource, arguments);
@@ -212,6 +234,11 @@ public class KeywordQueryContributorResourceFactoryImpl
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function
+		<InvocationHandler, KeywordQueryContributorResource>
+			_keywordQueryContributorResourceProxyProviderFunction =
+				_getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -234,9 +261,6 @@ public class KeywordQueryContributorResourceFactoryImpl
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -245,6 +269,9 @@ public class KeywordQueryContributorResourceFactoryImpl
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

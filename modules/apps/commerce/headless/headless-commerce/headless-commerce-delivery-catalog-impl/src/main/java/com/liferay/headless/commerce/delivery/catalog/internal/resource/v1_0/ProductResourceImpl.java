@@ -36,6 +36,7 @@ import com.liferay.headless.commerce.delivery.catalog.internal.dto.v1_0.converte
 import com.liferay.headless.commerce.delivery.catalog.internal.odata.entity.v1_0.ProductEntityModel;
 import com.liferay.headless.commerce.delivery.catalog.resource.v1_0.ProductResource;
 import com.liferay.petra.function.UnsafeConsumer;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.search.BooleanClause;
 import com.liferay.portal.kernel.search.BooleanClauseFactoryUtil;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
@@ -54,7 +55,6 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
-import com.liferay.portal.vulcan.resource.EntityModelResource;
 
 import java.io.Serializable;
 
@@ -72,12 +72,11 @@ import org.osgi.service.component.annotations.ServiceScope;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	properties = "OSGI-INF/liferay/rest/v1_0/product.properties",
 	scope = ServiceScope.PROTOTYPE, service = ProductResource.class
 )
-public class ProductResourceImpl
-	extends BaseProductResourceImpl implements EntityModelResource {
+@CTAware
+public class ProductResourceImpl extends BaseProductResourceImpl {
 
 	@Override
 	public Product getChannelProduct(

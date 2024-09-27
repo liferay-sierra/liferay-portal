@@ -14,16 +14,20 @@
 
 package com.liferay.layout.internal.workflow;
 
+import com.liferay.layout.content.LayoutContentProvider;
 import com.liferay.layout.internal.configuration.LayoutWorkflowHandlerConfiguration;
+import com.liferay.layout.service.LayoutLocalizationLocalService;
 import com.liferay.layout.util.LayoutCopyHelper;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.WorkflowDefinitionLink;
+import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.workflow.BaseWorkflowHandler;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -33,6 +37,9 @@ import java.io.Serializable;
 
 import java.util.Locale;
 import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -56,7 +63,7 @@ public class LayoutWorkflowHandler extends BaseWorkflowHandler<Layout> {
 
 	@Override
 	public String getType(Locale locale) {
-		return LanguageUtil.get(locale, "content-page");
+		return _language.get(locale, "content-page");
 	}
 
 	@Override
@@ -66,7 +73,7 @@ public class LayoutWorkflowHandler extends BaseWorkflowHandler<Layout> {
 
 		Layout layout = _layoutLocalService.getLayout(classPK);
 
-		if (layout.isHidden() || layout.isSystem() || !layout.isTypeContent()) {
+		if (layout.isSystem() || !layout.isTypeContent()) {
 			return null;
 		}
 
@@ -106,16 +113,33 @@ public class LayoutWorkflowHandler extends BaseWorkflowHandler<Layout> {
 
 		Layout draftLayout = layout.fetchDraftLayout();
 
+		long originalUserId = PrincipalThreadLocal.getUserId();
+
 		try {
+			PrincipalThreadLocal.setName(userId);
+
 			_layoutCopyHelper.copyLayout(draftLayout, layout);
 		}
 		catch (Exception exception) {
 			throw new PortalException(exception);
 		}
+		finally {
+			PrincipalThreadLocal.setName(originalUserId);
+		}
 
 		_layoutLocalService.updateStatus(
 			userId, draftLayout.getPlid(), WorkflowConstants.STATUS_APPROVED,
 			serviceContext);
+
+		if ((serviceContext.getRequest() != null) &&
+			(serviceContext.getResponse() != null)) {
+
+			layout = _layoutLocalService.getLayout(layout.getPlid());
+
+			_updateLayoutContent(
+				serviceContext.getRequest(), serviceContext.getResponse(),
+				layout, serviceContext);
+		}
 
 		return _layoutLocalService.updateStatus(
 			userId, classPK, status, serviceContext);
@@ -128,11 +152,36 @@ public class LayoutWorkflowHandler extends BaseWorkflowHandler<Layout> {
 			LayoutWorkflowHandlerConfiguration.class, properties);
 	}
 
+	private void _updateLayoutContent(
+		HttpServletRequest httpServletRequest,
+		HttpServletResponse httpServletResponse, Layout layout,
+		ServiceContext serviceContext) {
+
+		for (Locale locale :
+				_language.getAvailableLocales(layout.getGroupId())) {
+
+			_layoutLocalizationLocalService.updateLayoutLocalization(
+				_layoutContentProvider.getLayoutContent(
+					httpServletRequest, httpServletResponse, layout, locale),
+				LocaleUtil.toLanguageId(locale), layout.getPlid(),
+				serviceContext);
+		}
+	}
+
+	@Reference
+	private Language _language;
+
+	@Reference
+	private LayoutContentProvider _layoutContentProvider;
+
 	private volatile LayoutWorkflowHandlerConfiguration
 		_layoutConverterConfiguration;
 
 	@Reference
 	private LayoutCopyHelper _layoutCopyHelper;
+
+	@Reference
+	private LayoutLocalizationLocalService _layoutLocalizationLocalService;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;

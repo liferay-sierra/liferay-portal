@@ -69,6 +69,21 @@ public class JUnitTestResult extends BaseTestResult {
 			Dom4JUtil.getNewAnchorElement(
 				getTestReportURL(), getDisplayName()));
 
+		TestHistory testHistory = getTestHistory();
+
+		if (testHistory != null) {
+			downstreamBuildListItemElement.addText(" - ");
+
+			downstreamBuildListItemElement.add(
+				Dom4JUtil.getNewAnchorElement(
+					testHistory.getTestrayCaseResultURL(),
+					JenkinsResultsParserUtil.combine(
+						"Failed ",
+						String.valueOf(testHistory.getFailureCount()),
+						" of last ",
+						String.valueOf(testHistory.getTestCount()))));
+		}
+
 		String errorStackTrace = getErrorStackTrace();
 
 		if ((errorStackTrace != null) && !errorStackTrace.isEmpty()) {
@@ -192,7 +207,7 @@ public class JUnitTestResult extends BaseTestResult {
 		super(build);
 
 		_className = caseJSONObject.getString("className");
-		_duration = (long)(caseJSONObject.getDouble("duration") * 1000D);
+		_duration = (long)(caseJSONObject.getDouble("duration") * 1000);
 		_status = caseJSONObject.getString("status");
 		_testName = caseJSONObject.getString("name");
 

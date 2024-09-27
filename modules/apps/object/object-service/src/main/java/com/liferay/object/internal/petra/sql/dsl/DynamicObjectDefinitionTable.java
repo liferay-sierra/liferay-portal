@@ -14,11 +14,11 @@
 
 package com.liferay.object.internal.petra.sql.dsl;
 
+import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.petra.sql.dsl.Column;
 import com.liferay.petra.sql.dsl.base.BaseTable;
-import com.liferay.petra.sql.dsl.expression.Expression;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
@@ -28,10 +28,8 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import java.math.BigDecimal;
 
 import java.sql.Blob;
-import java.sql.Clob;
 import java.sql.Types;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -44,14 +42,15 @@ public class DynamicObjectDefinitionTable
 	extends BaseTable<DynamicObjectDefinitionTable> {
 
 	/**
-	 * @see com.liferay.portal.kernel.upgrade.UpgradeProcess#AlterTableAddColumn
+	 * @see com.liferay.portal.dao.db.BaseDB#alterTableAddColumn(
+	 *      java.sql.Connection, String, String, String)
 	 */
 	public static String getAlterTableAddColumnSQL(
 		String tableName, String columnName, String type) {
 
 		String sql = StringBundler.concat(
 			"alter table ", tableName, " add ", columnName, StringPool.SPACE,
-			_getDataType(type), _getSQLColumnNull(type), StringPool.SEMICOLON);
+			_getDataType(type), _getSQLColumnNull(type));
 
 		if (_log.isDebugEnabled()) {
 			_log.debug("SQL: " + sql);
@@ -60,20 +59,24 @@ public class DynamicObjectDefinitionTable
 		return sql;
 	}
 
-	/**
-	 * @see com.liferay.portal.kernel.upgrade.UpgradeProcess#AlterTableDropColumn
-	 */
-	public static String getAlterTableDropColumnSQL(
-		String tableName, String columnName) {
+	public static Class<?> getJavaClass(String type) {
+		Class<?> javaClass = _javaClasses.get(type);
 
-		String sql = StringBundler.concat(
-			"alter table ", tableName, " drop column ", columnName);
-
-		if (_log.isDebugEnabled()) {
-			_log.debug("SQL: " + sql);
+		if (javaClass == null) {
+			throw new IllegalArgumentException("Invalid type " + type);
 		}
 
-		return sql;
+		return javaClass;
+	}
+
+	public static Integer getSQLType(String type) {
+		Integer sqlType = _sqlTypes.get(type);
+
+		if (sqlType == null) {
+			throw new IllegalArgumentException("Invalid type " + type);
+		}
+
+		return sqlType;
 	}
 
 	public DynamicObjectDefinitionTable(
@@ -82,6 +85,7 @@ public class DynamicObjectDefinitionTable
 
 		super(tableName, () -> null);
 
+		_objectDefinition = objectDefinition;
 		_objectFields = objectFields;
 		_tableName = tableName;
 
@@ -92,19 +96,19 @@ public class DynamicObjectDefinitionTable
 			Column.FLAG_PRIMARY);
 
 		for (ObjectField objectField : objectFields) {
+			if (objectField.compareBusinessType(
+					ObjectFieldConstants.BUSINESS_TYPE_AGGREGATION) ||
+				objectField.compareBusinessType(
+					ObjectFieldConstants.BUSINESS_TYPE_FORMULA)) {
+
+				continue;
+			}
+
 			createColumn(
 				objectField.getDBColumnName(),
-				_javaClasses.get(objectField.getDBType()),
-				_sqlTypes.get(objectField.getDBType()), Column.FLAG_DEFAULT);
+				getJavaClass(objectField.getDBType()),
+				getSQLType(objectField.getDBType()), Column.FLAG_DEFAULT);
 		}
-
-		List<Expression<?>> selectExpressions = new ArrayList<>();
-
-		for (Column<DynamicObjectDefinitionTable, ?> column : getColumns()) {
-			selectExpressions.add(column);
-		}
-
-		_selectExpressions = selectExpressions.toArray(new Expression<?>[0]);
 	}
 
 	/**
@@ -121,6 +125,14 @@ public class DynamicObjectDefinitionTable
 		sb.append(" LONG not null primary key");
 
 		for (ObjectField objectField : _objectFields) {
+			if (objectField.compareBusinessType(
+					ObjectFieldConstants.BUSINESS_TYPE_AGGREGATION) ||
+				objectField.compareBusinessType(
+					ObjectFieldConstants.BUSINESS_TYPE_FORMULA)) {
+
+				continue;
+			}
+
 			sb.append(", ");
 			sb.append(objectField.getDBColumnName());
 			sb.append(" ");
@@ -139,6 +151,10 @@ public class DynamicObjectDefinitionTable
 		return sql;
 	}
 
+	public ObjectDefinition getObjectDefinition() {
+		return _objectDefinition;
+	}
+
 	public List<ObjectField> getObjectFields() {
 		return _objectFields;
 	}
@@ -152,8 +168,11 @@ public class DynamicObjectDefinitionTable
 		return _primaryKeyColumnName;
 	}
 
-	public Expression<?>[] getSelectExpressions() {
-		return _selectExpressions;
+	@Override
+	protected <C> Column<DynamicObjectDefinitionTable, C> createColumn(
+		String name, Class<C> javaClass, int sqlType, int flags) {
+
+		return super.createColumn(name, javaClass, sqlType, flags);
 	}
 
 	private static String _getDataType(String type) {
@@ -212,7 +231,7 @@ public class DynamicObjectDefinitionTable
 		).put(
 			"Boolean", Boolean.class
 		).put(
-			"Clob", Clob.class
+			"Clob", String.class
 		).put(
 			"Date", Date.class
 		).put(
@@ -244,9 +263,9 @@ public class DynamicObjectDefinitionTable
 		"String", Types.VARCHAR
 	).build();
 
+	private final ObjectDefinition _objectDefinition;
 	private final List<ObjectField> _objectFields;
 	private final String _primaryKeyColumnName;
-	private final Expression<?>[] _selectExpressions;
 	private final String _tableName;
 
 }

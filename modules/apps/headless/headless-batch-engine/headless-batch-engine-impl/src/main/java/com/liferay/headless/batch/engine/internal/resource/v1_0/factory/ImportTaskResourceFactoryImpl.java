@@ -14,6 +14,7 @@
 
 package com.liferay.headless.batch.engine.internal.resource.v1_0.factory;
 
+import com.liferay.headless.batch.engine.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.headless.batch.engine.resource.v1_0.ImportTaskResource;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -33,14 +34,18 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -58,7 +61,10 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @author Ivica Cardic
  * @generated
  */
-@Component(immediate = true, service = ImportTaskResource.Factory.class)
+@Component(
+	property = "resource.locator.key=/headless-batch-engine/v1.0/ImportTask",
+	service = ImportTaskResource.Factory.class
+)
 @Generated("")
 public class ImportTaskResourceFactoryImpl
 	implements ImportTaskResource.Factory {
@@ -73,9 +79,7 @@ public class ImportTaskResourceFactoryImpl
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (ImportTaskResource)ProxyUtil.newProxyInstance(
-					ImportTaskResource.class.getClassLoader(),
-					new Class<?>[] {ImportTaskResource.class},
+				return _importTaskResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -134,14 +138,32 @@ public class ImportTaskResourceFactoryImpl
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		ImportTaskResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, ImportTaskResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		ImportTaskResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			ImportTaskResource.class.getClassLoader(),
+			ImportTaskResource.class);
+
+		try {
+			Constructor<ImportTaskResource> constructor =
+				(Constructor<ImportTaskResource>)proxyClass.getConstructor(
+					InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -164,7 +186,7 @@ public class ImportTaskResourceFactoryImpl
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		ImportTaskResource importTaskResource =
@@ -188,6 +210,7 @@ public class ImportTaskResourceFactoryImpl
 		importTaskResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		importTaskResource.setRoleLocalService(_roleLocalService);
+		importTaskResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(importTaskResource, arguments);
@@ -203,6 +226,9 @@ public class ImportTaskResourceFactoryImpl
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, ImportTaskResource>
+		_importTaskResourceProxyProviderFunction = _getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -225,9 +251,6 @@ public class ImportTaskResourceFactoryImpl
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -236,6 +259,9 @@ public class ImportTaskResourceFactoryImpl
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

@@ -21,6 +21,7 @@ import com.liferay.jenkins.results.parser.PluginsGitRepositoryJob;
 import com.liferay.jenkins.results.parser.PortalGitWorkingDirectory;
 import com.liferay.jenkins.results.parser.PortalTestClassJob;
 import com.liferay.jenkins.results.parser.job.property.JobProperty;
+import com.liferay.jenkins.results.parser.test.clazz.TestClass;
 import com.liferay.poshi.core.PoshiContext;
 import com.liferay.poshi.core.util.PropsUtil;
 
@@ -31,6 +32,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
+import org.json.JSONObject;
 
 /**
  * @author Michael Hashimoto
@@ -48,6 +51,12 @@ public class PluginsFunctionalBatchTestClassGroup
 			(PluginsGitRepositoryJob)portalTestClassJob;
 
 		return pluginsGitRepositoryJob.getPluginsTestBaseDirs();
+	}
+
+	protected PluginsFunctionalBatchTestClassGroup(
+		JSONObject jsonObject, PortalTestClassJob portalTestClassJob) {
+
+		super(jsonObject, portalTestClassJob);
 	}
 
 	protected PluginsFunctionalBatchTestClassGroup(
@@ -80,7 +89,7 @@ public class PluginsFunctionalBatchTestClassGroup
 	}
 
 	@Override
-	protected List<List<String>> getPoshiTestClassGroups(File testBaseDir) {
+	protected List<List<TestClass>> getPoshiTestClassGroups(File testBaseDir) {
 		String query = getTestBatchRunPropertyQuery(testBaseDir);
 
 		if (JenkinsResultsParserUtil.isNullOrEmpty(query)) {
@@ -115,6 +124,7 @@ public class PluginsFunctionalBatchTestClassGroup
 			}
 
 			Properties properties = JenkinsResultsParserUtil.getProperties(
+				new File(portalWorkingDirectory, "portal-web/poshi.properties"),
 				new File(
 					portalWorkingDirectory, "portal-web/poshi-ext.properties"),
 				new File(testBaseDir, "test.properties"));
@@ -132,7 +142,8 @@ public class PluginsFunctionalBatchTestClassGroup
 
 				PoshiContext.readFiles();
 
-				return PoshiContext.getTestBatchGroups(query, getAxisMaxSize());
+				return getTestClassGroups(
+					PoshiContext.getTestBatchGroups(query, getAxisMaxSize()));
 			}
 			catch (Exception exception) {
 				throw new RuntimeException(exception);

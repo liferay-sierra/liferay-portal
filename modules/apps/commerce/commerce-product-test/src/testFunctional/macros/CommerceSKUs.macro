@@ -48,4 +48,53 @@ definition {
 		Refresh();
 	}
 
+	macro editSkuERC {
+		SelectFrame.selectFrameNoLoading(locator1 = "CommerceEntry#IFRAME_SIDE_PANEL");
+
+		Type(
+			locator1 = "CommerceEntry#SKU_ERC_FIELD",
+			value1 = "${skuERC}");
+
+		if (isSet(publish)) {
+			Button.clickPublish();
+		}
+
+		if (isSet(closeFrame)) {
+			Click(locator1 = "Icon#CLOSE");
+
+			SelectFrame.selectFrameTop();
+		}
+	}
+
+	macro editSkuPricing {
+		SelectFrame.selectFrameNoLoading(locator1 = "CommerceEntry#IFRAME_SIDE_PANEL");
+
+		if (isSet(basePrice)) {
+			Type(
+				key_text = "Base Price",
+				locator1 = "TextInput#ANY",
+				value1 = "${basePrice}");
+		}
+
+		if (isSet(promoPrice)) {
+			Type(
+				key_text = "Promotion Price",
+				locator1 = "TextInput#ANY",
+				value1 = "${promoPrice}");
+		}
+
+		if (isSet(cost)) {
+			Type(
+				key_text = "Cost",
+				locator1 = "TextInput#ANY",
+				value1 = "${cost}");
+		}
+
+		Button.clickPublish();
+
+		Click(locator1 = "Icon#CLOSE");
+
+		SelectFrame.selectFrameTop();
+	}
+
 }

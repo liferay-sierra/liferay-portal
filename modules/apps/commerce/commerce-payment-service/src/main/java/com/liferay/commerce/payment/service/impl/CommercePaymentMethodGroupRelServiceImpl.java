@@ -20,13 +20,12 @@ import com.liferay.commerce.payment.service.base.CommercePaymentMethodGroupRelSe
 import com.liferay.commerce.product.model.CommerceChannel;
 import com.liferay.commerce.product.service.CommerceChannelLocalService;
 import com.liferay.commerce.service.CommerceAddressRestrictionLocalService;
+import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
-import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionFactory;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.spring.extender.service.ServiceReference;
 
 import java.io.File;
 
@@ -35,10 +34,20 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+
 /**
  * @author Luca Pellizzon
  * @author Alessio Antonio Rendina
  */
+@Component(
+	property = {
+		"json.web.service.context.name=commerce",
+		"json.web.service.context.path=CommercePaymentMethodGroupRel"
+	},
+	service = AopService.class
+)
 public class CommercePaymentMethodGroupRelServiceImpl
 	extends CommercePaymentMethodGroupRelServiceBaseImpl {
 
@@ -133,6 +142,23 @@ public class CommercePaymentMethodGroupRelServiceImpl
 
 		commercePaymentMethodGroupRelLocalService.
 			deleteCommercePaymentMethodGroupRel(commercePaymentMethodGroupRel);
+	}
+
+	@Override
+	public CommercePaymentMethodGroupRel fetchCommercePaymentMethodGroupRel(
+			long commercePaymentMethodGroupRelId)
+		throws PortalException {
+
+		CommercePaymentMethodGroupRel commercePaymentMethodGroupRel =
+			commercePaymentMethodGroupRelLocalService.
+				fetchCommercePaymentMethodGroupRel(
+					commercePaymentMethodGroupRelId);
+
+		if (commercePaymentMethodGroupRel != null) {
+			_checkCommerceChannel(commercePaymentMethodGroupRel.getGroupId());
+		}
+
+		return commercePaymentMethodGroupRel;
 	}
 
 	@Override
@@ -360,18 +386,17 @@ public class CommercePaymentMethodGroupRelServiceImpl
 			getPermissionChecker(), commerceChannel, ActionKeys.UPDATE);
 	}
 
-	private static volatile ModelResourcePermission<CommerceChannel>
-		_commerceChannelModelResourcePermission =
-			ModelResourcePermissionFactory.getInstance(
-				CommercePaymentMethodGroupRelServiceImpl.class,
-				"_commerceChannelModelResourcePermission",
-				CommerceChannel.class);
-
-	@ServiceReference(type = CommerceAddressRestrictionLocalService.class)
+	@Reference
 	private CommerceAddressRestrictionLocalService
 		_commerceAddressRestrictionLocalService;
 
-	@ServiceReference(type = CommerceChannelLocalService.class)
+	@Reference
 	private CommerceChannelLocalService _commerceChannelLocalService;
+
+	@Reference(
+		target = "(model.class.name=com.liferay.commerce.product.model.CommerceChannel)"
+	)
+	private ModelResourcePermission<CommerceChannel>
+		_commerceChannelModelResourcePermission;
 
 }

@@ -60,7 +60,7 @@ public class NavigationMenuItemSerDes {
 		sb.append("{");
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+			"yyyy-MM-dd'T'HH:mm:ssXX");
 
 		if (navigationMenuItem.getAvailableLanguages() != null) {
 			if (sb.length() > 1) {
@@ -89,6 +89,20 @@ public class NavigationMenuItemSerDes {
 			}
 
 			sb.append("]");
+		}
+
+		if (navigationMenuItem.getContentURL() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"contentURL\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(navigationMenuItem.getContentURL()));
+
+			sb.append("\"");
 		}
 
 		if (navigationMenuItem.getCreator() != null) {
@@ -301,7 +315,7 @@ public class NavigationMenuItemSerDes {
 		Map<String, String> map = new TreeMap<>();
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+			"yyyy-MM-dd'T'HH:mm:ssXX");
 
 		if (navigationMenuItem.getAvailableLanguages() == null) {
 			map.put("availableLanguages", null);
@@ -310,6 +324,15 @@ public class NavigationMenuItemSerDes {
 			map.put(
 				"availableLanguages",
 				String.valueOf(navigationMenuItem.getAvailableLanguages()));
+		}
+
+		if (navigationMenuItem.getContentURL() == null) {
+			map.put("contentURL", null);
+		}
+		else {
+			map.put(
+				"contentURL",
+				String.valueOf(navigationMenuItem.getContentURL()));
 		}
 
 		if (navigationMenuItem.getCreator() == null) {
@@ -451,6 +474,12 @@ public class NavigationMenuItemSerDes {
 				if (jsonParserFieldValue != null) {
 					navigationMenuItem.setAvailableLanguages(
 						toStrings((Object[])jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "contentURL")) {
+				if (jsonParserFieldValue != null) {
+					navigationMenuItem.setContentURL(
+						(String)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "creator")) {

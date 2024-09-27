@@ -20,7 +20,6 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
-import com.liferay.portal.kernel.security.sso.OpenSSO;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.servlet.taglib.BaseJSPDynamicInclude;
 import com.liferay.portal.kernel.servlet.taglib.DynamicInclude;
@@ -47,6 +46,11 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(immediate = true, service = DynamicInclude.class)
 public class OpenSSOBottomJSPDynamicInclude extends BaseJSPDynamicInclude {
+
+	@Override
+	public ServletContext getServletContext() {
+		return _servletContext;
+	}
 
 	@Override
 	public void include(
@@ -109,15 +113,6 @@ public class OpenSSOBottomJSPDynamicInclude extends BaseJSPDynamicInclude {
 		return _log;
 	}
 
-	@Override
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.login.authentication.opensso.web)",
-		unbind = "-"
-	)
-	protected void setServletContext(ServletContext servletContext) {
-		super.setServletContext(servletContext);
-	}
-
 	private static final String[] _ERRORS = {
 		ContactNameException.class.getSimpleName(),
 		PrincipalException.MustBeAuthenticated.class.getSimpleName(),
@@ -132,9 +127,11 @@ public class OpenSSOBottomJSPDynamicInclude extends BaseJSPDynamicInclude {
 	private ConfigurationProvider _configurationProvider;
 
 	@Reference
-	private OpenSSO _openSSO;
-
-	@Reference
 	private Portal _portal;
+
+	@Reference(
+		target = "(osgi.web.symbolicname=com.liferay.login.authentication.opensso.web)"
+	)
+	private ServletContext _servletContext;
 
 }

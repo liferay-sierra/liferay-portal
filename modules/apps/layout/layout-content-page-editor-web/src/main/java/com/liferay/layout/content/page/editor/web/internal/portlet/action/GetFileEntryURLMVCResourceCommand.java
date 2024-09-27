@@ -20,7 +20,7 @@ import com.liferay.layout.content.page.editor.constants.ContentPageEditorPortlet
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
@@ -41,7 +41,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Verónica González
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + ContentPageEditorPortletKeys.CONTENT_PAGE_EDITOR_PORTLET,
 		"mvc.command.name=/layout_content_page_editor/get_file_entry_url"
@@ -79,7 +78,7 @@ public class GetFileEntryURLMVCResourceCommand extends BaseMVCResourceCommand {
 				resourceRequest, resourceResponse,
 				JSONUtil.put(
 					"error",
-					LanguageUtil.get(
+					_language.get(
 						themeDisplay.getRequest(),
 						"an-unexpected-error-occurred")));
 		}
@@ -90,5 +89,8 @@ public class GetFileEntryURLMVCResourceCommand extends BaseMVCResourceCommand {
 
 	@Reference
 	private DLAppService _dlAppService;
+
+	@Reference
+	private Language _language;
 
 }

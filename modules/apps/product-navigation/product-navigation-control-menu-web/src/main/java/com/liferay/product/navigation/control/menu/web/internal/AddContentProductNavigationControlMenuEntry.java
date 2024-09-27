@@ -15,6 +15,7 @@
 package com.liferay.product.navigation.control.menu.web.internal;
 
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.product.navigation.control.menu.BaseJSPProductNavigationControlMenuEntry;
@@ -67,7 +68,9 @@ public class AddContentProductNavigationControlMenuEntry
 			(ThemeDisplay)httpServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
 
-		if (isEmbeddedPersonalApplicationLayout(themeDisplay.getLayout())) {
+		Layout layout = themeDisplay.getLayout();
+
+		if (layout.isEmbeddedPersonalApplication()) {
 			return false;
 		}
 
@@ -75,12 +78,13 @@ public class AddContentProductNavigationControlMenuEntry
 	}
 
 	@Override
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.product.navigation.control.menu.web)",
-		unbind = "-"
-	)
-	public void setServletContext(ServletContext servletContext) {
-		super.setServletContext(servletContext);
+	protected ServletContext getServletContext() {
+		return _servletContext;
 	}
+
+	@Reference(
+		target = "(osgi.web.symbolicname=com.liferay.product.navigation.control.menu.web)"
+	)
+	private ServletContext _servletContext;
 
 }

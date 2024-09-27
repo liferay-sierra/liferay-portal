@@ -14,8 +14,7 @@
 
 package com.liferay.journal.internal.validation;
 
-import com.liferay.depot.service.DepotEntryLocalService;
-import com.liferay.depot.util.SiteConnectedGroupGroupProviderUtil;
+import com.liferay.depot.group.provider.SiteConnectedGroupGroupProvider;
 import com.liferay.dynamic.data.mapping.exception.NoSuchStructureException;
 import com.liferay.dynamic.data.mapping.exception.NoSuchTemplateException;
 import com.liferay.dynamic.data.mapping.exception.StorageFieldNameException;
@@ -53,7 +52,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.LocaleException;
 import com.liferay.portal.kernel.exception.NoSuchImageException;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Image;
@@ -65,7 +64,7 @@ import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -107,12 +106,10 @@ public class JournalArticleModelValidator
 		throws PortalException {
 
 		Locale articleDefaultLocale = LocaleUtil.fromLanguageId(
-			LocalizationUtil.getDefaultLanguageId(content));
+			_localization.getDefaultLanguageId(content));
 
 		if (!ExportImportThreadLocal.isImportInProcess()) {
-			if (!LanguageUtil.isAvailableLocale(
-					groupId, articleDefaultLocale)) {
-
+			if (!_language.isAvailableLocale(groupId, articleDefaultLocale)) {
 				LocaleException localeException = new LocaleException(
 					LocaleException.TYPE_CONTENT,
 					StringBundler.concat(
@@ -122,7 +119,7 @@ public class JournalArticleModelValidator
 				localeException.setSourceAvailableLocales(
 					Collections.singleton(articleDefaultLocale));
 				localeException.setTargetAvailableLocales(
-					LanguageUtil.getAvailableLocales(groupId));
+					_language.getAvailableLocales(groupId));
 
 				throw localeException;
 			}
@@ -332,7 +329,7 @@ public class JournalArticleModelValidator
 
 		List<DDMStructure> folderDDMStructures =
 			_journalFolderLocalService.getDDMStructures(
-				SiteConnectedGroupGroupProviderUtil.
+				_siteConnectedGroupGroupProvider.
 					getCurrentAndAncestorSiteAndDepotGroupIds(groupId, true),
 				folderId, restrictionType);
 
@@ -503,6 +500,10 @@ public class JournalArticleModelValidator
 			String externalReferenceCode, long groupId)
 		throws PortalException {
 
+		if (Validator.isNull(externalReferenceCode)) {
+			return;
+		}
+
 		List<JournalArticle> articles = _journalArticlePersistence.findByG_ERC(
 			groupId, externalReferenceCode);
 
@@ -527,9 +528,6 @@ public class JournalArticleModelValidator
 	private DDMTemplateLocalService _ddmTemplateLocalService;
 
 	@Reference
-	private DepotEntryLocalService _depotEntryLocalService;
-
-	@Reference
 	private ImageLocalService _imageLocalService;
 
 	@Reference
@@ -548,6 +546,15 @@ public class JournalArticleModelValidator
 	private JournalHelper _journalHelper;
 
 	@Reference
+	private Language _language;
+
+	@Reference
+	private Localization _localization;
+
+	@Reference
 	private Portal _portal;
+
+	@Reference
+	private SiteConnectedGroupGroupProvider _siteConnectedGroupGroupProvider;
 
 }

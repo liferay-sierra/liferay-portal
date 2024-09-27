@@ -46,7 +46,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alec Sloan
  */
-@Component(enabled = false, immediate = true, service = Indexer.class)
+@Component(immediate = true, service = Indexer.class)
 public class CommerceChannelIndexer extends BaseIndexer<CommerceChannel> {
 
 	public static final String CLASS_NAME = CommerceChannel.class.getName();
@@ -123,6 +123,9 @@ public class CommerceChannelIndexer extends BaseIndexer<CommerceChannel> {
 		document.addKeyword(
 			CPField.COMMERCE_CHANNEL_GROUP_ID, group.getGroupId());
 
+		document.addKeyword(
+			Field.SCOPE_GROUP_ID, commerceChannel.getSiteGroupId());
+
 		if (_log.isDebugEnabled()) {
 			_log.debug("Document " + commerceChannel + " indexed successfully");
 		}
@@ -146,8 +149,7 @@ public class CommerceChannelIndexer extends BaseIndexer<CommerceChannel> {
 	@Override
 	protected void doReindex(CommerceChannel commerceChannel) throws Exception {
 		_indexWriterHelper.updateDocument(
-			getSearchEngineId(), commerceChannel.getCompanyId(),
-			getDocument(commerceChannel), isCommitImmediately());
+			commerceChannel.getCompanyId(), getDocument(commerceChannel));
 	}
 
 	@Override
@@ -182,7 +184,6 @@ public class CommerceChannelIndexer extends BaseIndexer<CommerceChannel> {
 					}
 				}
 			});
-		indexableActionableDynamicQuery.setSearchEngineId(getSearchEngineId());
 
 		indexableActionableDynamicQuery.performActions();
 	}

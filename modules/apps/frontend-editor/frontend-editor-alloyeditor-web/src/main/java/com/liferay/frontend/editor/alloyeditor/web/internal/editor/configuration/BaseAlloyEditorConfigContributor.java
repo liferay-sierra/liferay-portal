@@ -30,8 +30,6 @@ import com.liferay.portal.kernel.util.StringUtil;
 
 import java.util.Map;
 
-import javax.portlet.PortletURL;
-
 import org.osgi.service.component.annotations.Reference;
 
 /**
@@ -94,10 +92,8 @@ public abstract class BaseAlloyEditorConfigContributor
 			name + "selectDocument");
 	}
 
-	@Reference(unbind = "-")
-	protected void setItemSelector(ItemSelector itemSelector) {
-		_itemSelector = itemSelector;
-	}
+	@Reference
+	protected ItemSelector itemSelector;
 
 	private void _populateFileBrowserURL(
 		JSONObject jsonObject,
@@ -117,13 +113,12 @@ public abstract class BaseAlloyEditorConfigContributor
 			new URLItemSelectorReturnType());
 		layoutItemSelectorCriterion.setShowHiddenPages(true);
 
-		PortletURL itemSelectorURL = _itemSelector.getItemSelectorURL(
-			requestBackedPortletURLFactory, eventName,
-			fileItemSelectorCriterion, layoutItemSelectorCriterion);
-
-		jsonObject.put("documentBrowseLinkUrl", itemSelectorURL.toString());
+		jsonObject.put(
+			"documentBrowseLinkUrl",
+			String.valueOf(
+				itemSelector.getItemSelectorURL(
+					requestBackedPortletURLFactory, eventName,
+					fileItemSelectorCriterion, layoutItemSelectorCriterion)));
 	}
-
-	private ItemSelector _itemSelector;
 
 }

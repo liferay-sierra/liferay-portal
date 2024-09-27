@@ -14,8 +14,10 @@
 
 package com.liferay.portal.kernel.workflow;
 
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.ServiceProxyFactory;
 import com.liferay.portal.kernel.workflow.search.WorkflowModelSearchResult;
 
 import java.io.Serializable;
@@ -48,7 +50,7 @@ public class WorkflowTaskManagerUtil {
 			long companyId, long userId, long workflowTaskId,
 			long assigneeUserId, String comment, Date dueDate,
 			Map<String, Serializable> workflowContext)
-		throws WorkflowException {
+		throws PortalException {
 
 		return _workflowTaskManager.assignWorkflowTaskToUser(
 			companyId, userId, workflowTaskId, assigneeUserId, comment, dueDate,
@@ -59,7 +61,7 @@ public class WorkflowTaskManagerUtil {
 			long companyId, long userId, long workflowTaskId,
 			String transitionName, String comment,
 			Map<String, Serializable> workflowContext)
-		throws WorkflowException {
+		throws PortalException {
 
 		return _workflowTaskManager.completeWorkflowTask(
 			companyId, userId, workflowTaskId, transitionName, comment,
@@ -71,27 +73,23 @@ public class WorkflowTaskManagerUtil {
 			String transitionName, String comment,
 			Map<String, Serializable> workflowContext,
 			boolean waitForCompletion)
-		throws WorkflowException {
+		throws PortalException {
 
 		return _workflowTaskManager.completeWorkflowTask(
 			companyId, userId, workflowTaskId, transitionName, comment,
 			workflowContext, waitForCompletion);
 	}
 
-	public static WorkflowTask fetchWorkflowTask(
-			long companyId, long workflowTaskId)
+	public static WorkflowTask fetchWorkflowTask(long workflowTaskId)
 		throws WorkflowException {
 
-		return _workflowTaskManager.fetchWorkflowTask(
-			companyId, workflowTaskId);
+		return _workflowTaskManager.fetchWorkflowTask(workflowTaskId);
 	}
 
-	public static List<User> getAssignableUsers(
-			long companyId, long workflowTaskId)
+	public static List<User> getAssignableUsers(long workflowTaskId)
 		throws WorkflowException {
 
-		return _workflowTaskManager.getAssignableUsers(
-			companyId, workflowTaskId);
+		return _workflowTaskManager.getAssignableUsers(workflowTaskId);
 	}
 
 	public static List<String> getNextTransitionNames(
@@ -99,14 +97,20 @@ public class WorkflowTaskManagerUtil {
 		throws WorkflowException {
 
 		return _workflowTaskManager.getNextTransitionNames(
-			companyId, userId, workflowTaskId);
+			userId, workflowTaskId);
+	}
+
+	public static List<User> getNotifiableUsers(long workflowTaskId)
+		throws WorkflowException {
+
+		return _workflowTaskManager.getNotifiableUsers(workflowTaskId);
 	}
 
 	public static WorkflowTask getWorkflowTask(
 			long companyId, long workflowTaskId)
 		throws WorkflowException {
 
-		return _workflowTaskManager.getWorkflowTask(companyId, workflowTaskId);
+		return _workflowTaskManager.getWorkflowTask(workflowTaskId);
 	}
 
 	public static int getWorkflowTaskCount(long companyId, Boolean completed)
@@ -165,10 +169,6 @@ public class WorkflowTaskManagerUtil {
 			companyId, userId, workflowInstanceId, completed);
 	}
 
-	public static WorkflowTaskManager getWorkflowTaskManager() {
-		return _workflowTaskManager;
-	}
-
 	public static List<WorkflowTask> getWorkflowTasks(
 			long companyId, Boolean completed, int start, int end,
 			OrderByComparator<WorkflowTask> orderByComparator)
@@ -225,12 +225,19 @@ public class WorkflowTaskManagerUtil {
 			orderByComparator);
 	}
 
+	public static List<WorkflowTransition> getWorkflowTaskWorkflowTransitions(
+			long workflowTaskId)
+		throws WorkflowException {
+
+		return _workflowTaskManager.getWorkflowTaskWorkflowTransitions(
+			workflowTaskId);
+	}
+
 	public static boolean hasAssignableUsers(
 			long companyId, long workflowTaskId)
 		throws WorkflowException {
 
-		return _workflowTaskManager.hasAssignableUsers(
-			companyId, workflowTaskId);
+		return _workflowTaskManager.hasAssignableUsers(workflowTaskId);
 	}
 
 	public static List<WorkflowTask> search(
@@ -294,12 +301,9 @@ public class WorkflowTaskManagerUtil {
 			companyId, userId, workflowTaskId, comment, dueDate);
 	}
 
-	public void setWorkflowTaskManager(
-		WorkflowTaskManager workflowTaskManager) {
-
-		_workflowTaskManager = workflowTaskManager;
-	}
-
-	private static WorkflowTaskManager _workflowTaskManager;
+	private static volatile WorkflowTaskManager _workflowTaskManager =
+		ServiceProxyFactory.newServiceTrackedInstance(
+			WorkflowTaskManager.class, WorkflowTaskManagerUtil.class,
+			"_workflowTaskManager", true);
 
 }

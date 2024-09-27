@@ -51,10 +51,10 @@ public class CSVBatchEngineImportTaskItemReaderImplTest
 				csvBatchEngineImportTaskItemReaderImpl =
 					_getCSVBatchEngineImportTaskItemReader(
 						new String[] {
-							"createDate1", "description1", "id1", "name1_en",
-							"name1_hr"
+							"createDate1", "description1", "id1",
+							"name1_i18n_en", "name1_i18n_hr"
 						},
-						StringPool.SEMICOLON, null,
+						true, StringPool.SEMICOLON, null,
 						new Object[][] {
 							{
 								createDateString, "sample description", 1,
@@ -71,7 +71,9 @@ public class CSVBatchEngineImportTaskItemReaderImplTest
 				).put(
 					"id1", "id"
 				).put(
-					"name1", "name"
+					"name1_i18n_en", "name"
+				).put(
+					"name1_i18n_hr", "name"
 				).build(),
 				csvBatchEngineImportTaskItemReaderImpl.read(),
 				HashMapBuilder.put(
@@ -83,15 +85,41 @@ public class CSVBatchEngineImportTaskItemReaderImplTest
 	}
 
 	@Test
+	public void testColumnMappingWithoutHeaders() throws Exception {
+		try (CSVBatchEngineImportTaskItemReaderImpl
+				csvBatchEngineImportTaskItemReaderImpl =
+					_getCSVBatchEngineImportTaskItemReader(
+						null, false, StringPool.SEMICOLON, null,
+						new Object[][] {
+							{
+								createDateString, "sample description", 1,
+								"sample name"
+							}
+						})) {
+
+			validate(
+				createDateString, "sample description", 1L,
+				HashMapBuilder.put(
+					"0", "createDate"
+				).put(
+					"1", "description"
+				).put(
+					"2", "id"
+				).build(),
+				csvBatchEngineImportTaskItemReaderImpl.read(), null);
+		}
+	}
+
+	@Test
 	public void testColumnMappingWithUndefinedColumn() throws Exception {
 		try (CSVBatchEngineImportTaskItemReaderImpl
 				csvBatchEngineImportTaskItemReaderImpl =
 					_getCSVBatchEngineImportTaskItemReader(
 						new String[] {
-							"createDate1", "description1", "id1", "name1_en",
-							"name1_hr"
+							"createDate1", "description1", "id1",
+							"name1_i18n_en", "name1_i18n_hr"
 						},
-						StringPool.SEMICOLON, null,
+						true, StringPool.SEMICOLON, null,
 						new Object[][] {
 							{
 								createDateString, "sample description", 1,
@@ -118,10 +146,10 @@ public class CSVBatchEngineImportTaskItemReaderImplTest
 				csvBatchEngineImportTaskItemReaderImpl =
 					_getCSVBatchEngineImportTaskItemReader(
 						new String[] {
-							"createDate1", "description1", "id1", "name1_en",
-							"name1_hr"
+							"createDate1", "description1", "id1",
+							"name1_i18n_en", "name1_i18n_hr"
 						},
-						StringPool.SEMICOLON, null,
+						true, StringPool.SEMICOLON, null,
 						new Object[][] {
 							{
 								createDateString, "sample description", 1,
@@ -149,10 +177,10 @@ public class CSVBatchEngineImportTaskItemReaderImplTest
 				csvBatchEngineImportTaskItemReaderImpl =
 					_getCSVBatchEngineImportTaskItemReader(
 						new String[] {
-							"createDate1", "description1", "id1", "name1_en",
-							"name1_hr"
+							"createDate1", "description1", "id1",
+							"name1_i18n_en", "name1_i18n_hr"
 						},
-						StringPool.SEMICOLON, null,
+						true, StringPool.SEMICOLON, null,
 						new Object[][] {
 							{
 								createDateString, "sample description", 1,
@@ -191,7 +219,7 @@ public class CSVBatchEngineImportTaskItemReaderImplTest
 		try (CSVBatchEngineImportTaskItemReaderImpl
 				csvBatchEngineImportTaskItemReaderImpl =
 					_getCSVBatchEngineImportTaskItemReader(
-						FIELD_NAMES, null, null,
+						FIELD_NAMES, true, null, null,
 						new Object[][] {
 							{
 								"", "sample description", 1, "sample name",
@@ -215,7 +243,7 @@ public class CSVBatchEngineImportTaskItemReaderImplTest
 		try (CSVBatchEngineImportTaskItemReaderImpl
 				csvBatchEngineImportTaskItemReaderImpl =
 					_getCSVBatchEngineImportTaskItemReader(
-						FIELD_NAMES, null, null,
+						FIELD_NAMES, true, null, null,
 						new Object[][] {
 							{
 								createDateString, "sample description 1", 1,
@@ -232,7 +260,18 @@ public class CSVBatchEngineImportTaskItemReaderImplTest
 
 				validate(
 					createDateString, "sample description " + rowCount,
-					rowCount, Collections.emptyMap(),
+					rowCount,
+					HashMapBuilder.put(
+						"createDate", "createDate"
+					).put(
+						"description", "description"
+					).put(
+						"id", "id"
+					).put(
+						"name_i18n_en", "name"
+					).put(
+						"name_i18n_hr", "name"
+					).build(),
 					csvBatchEngineImportTaskItemReaderImpl.read(),
 					HashMapBuilder.put(
 						"en", "sample name " + rowCount
@@ -258,7 +297,7 @@ public class CSVBatchEngineImportTaskItemReaderImplTest
 		try (CSVBatchEngineImportTaskItemReaderImpl
 				csvBatchEngineImportTaskItemReaderImpl =
 					_getCSVBatchEngineImportTaskItemReader(
-						FIELD_NAMES, null, null,
+						FIELD_NAMES, true, null, null,
 						new Object[][] {{"", "", 1}})) {
 
 			validate(
@@ -272,7 +311,7 @@ public class CSVBatchEngineImportTaskItemReaderImplTest
 		try (CSVBatchEngineImportTaskItemReaderImpl
 				csvBatchEngineImportTaskItemReaderImpl =
 					_getCSVBatchEngineImportTaskItemReader(
-						FIELD_NAMES, null, null,
+						FIELD_NAMES, true, null, null,
 						new Object[][] {
 							{createDateString, "", 1, "", "naziv 1"},
 							{
@@ -282,7 +321,18 @@ public class CSVBatchEngineImportTaskItemReaderImplTest
 						})) {
 
 			validate(
-				createDateString, null, 1L, Collections.emptyMap(),
+				createDateString, null, 1L,
+				HashMapBuilder.put(
+					"createDate", "createDate"
+				).put(
+					"description", "description"
+				).put(
+					"id", "id"
+				).put(
+					"name_i18n_en", "name"
+				).put(
+					"name_i18n_hr", "name"
+				).build(),
 				csvBatchEngineImportTaskItemReaderImpl.read(),
 				new HashMap<String, String>() {
 					{
@@ -293,7 +343,17 @@ public class CSVBatchEngineImportTaskItemReaderImplTest
 
 			validate(
 				createDateString, "sample description 2", 2L,
-				Collections.emptyMap(),
+				HashMapBuilder.put(
+					"createDate", "createDate"
+				).put(
+					"description", "description"
+				).put(
+					"id", "id"
+				).put(
+					"name_i18n_en", "name"
+				).put(
+					"name_i18n_hr", "name"
+				).build(),
 				csvBatchEngineImportTaskItemReaderImpl.read(),
 				HashMapBuilder.put(
 					"en", "sample name 2"
@@ -304,23 +364,23 @@ public class CSVBatchEngineImportTaskItemReaderImplTest
 	}
 
 	private Object[] _encloseWithCharacter(
-		Object[] cellValues, String enclosingCharacter) {
+		String enclosingCharacter, Object[] rowValues) {
 
 		if (Validator.isNull(enclosingCharacter)) {
-			return cellValues;
+			return rowValues;
 		}
 
-		for (int i = 0; i < cellValues.length; i++) {
-			cellValues[i] =
-				enclosingCharacter + cellValues[i] + enclosingCharacter;
+		for (int i = 0; i < rowValues.length; i++) {
+			rowValues[i] =
+				enclosingCharacter + rowValues[i] + enclosingCharacter;
 		}
 
-		return cellValues;
+		return rowValues;
 	}
 
 	private byte[] _getContent(
-		String[] cellNames, String delimiter, String enclosingCharacter,
-		Object[][] rowValues) {
+		String[] columnNames, boolean containsHeaders, String delimiter,
+		String enclosingCharacter, Object[][] rowValues) {
 
 		StringBundler sb = new StringBundler();
 
@@ -328,13 +388,15 @@ public class CSVBatchEngineImportTaskItemReaderImplTest
 			delimiter = StringPool.COMMA;
 		}
 
-		sb.append(StringUtil.merge(cellNames, delimiter));
-		sb.append("\n");
+		if (containsHeaders) {
+			sb.append(StringUtil.merge(columnNames, delimiter));
+			sb.append("\n");
+		}
 
-		for (Object[] cellValues : rowValues) {
+		for (Object[] singleRowValues : rowValues) {
 			sb.append(
 				StringUtil.merge(
-					_encloseWithCharacter(cellValues, enclosingCharacter),
+					_encloseWithCharacter(enclosingCharacter, singleRowValues),
 					delimiter));
 			sb.append("\n");
 		}
@@ -346,22 +408,27 @@ public class CSVBatchEngineImportTaskItemReaderImplTest
 
 	private CSVBatchEngineImportTaskItemReaderImpl
 			_getCSVBatchEngineImportTaskItemReader(
-				String[] cellNames, String delimiter, String enclosingCharacter,
-				Object[][] rowValues)
+				String[] columnNames, boolean containsHeaders, String delimiter,
+				String enclosingCharacter, Object[][] rowValues)
 		throws IOException {
 
 		return new CSVBatchEngineImportTaskItemReaderImpl(
 			StringPool.COMMA,
 			new ByteArrayInputStream(
 				_getContent(
-					cellNames, delimiter, enclosingCharacter, rowValues)),
-			_getProperties(delimiter, enclosingCharacter));
+					columnNames, containsHeaders, delimiter, enclosingCharacter,
+					rowValues)),
+			_getProperties(containsHeaders, delimiter, enclosingCharacter));
 	}
 
 	private Map<String, Serializable> _getProperties(
-		String delimiter, String enclosingCharacter) {
+		boolean containsHeaders, String delimiter, String enclosingCharacter) {
 
 		Map<String, Serializable> map = new HashMap<>();
+
+		if (!containsHeaders) {
+			map.put("containsHeaders", StringPool.FALSE);
+		}
 
 		if (Validator.isNotNull(delimiter)) {
 			map.put("delimiter", delimiter);
@@ -381,7 +448,7 @@ public class CSVBatchEngineImportTaskItemReaderImplTest
 		try (CSVBatchEngineImportTaskItemReaderImpl
 				csvBatchEngineImportTaskItemReaderImpl =
 					_getCSVBatchEngineImportTaskItemReader(
-						FIELD_NAMES, delimiter, enclosingCharacter,
+						FIELD_NAMES, true, delimiter, enclosingCharacter,
 						new Object[][] {
 							{
 								createDateString, "hey, here is a comma inside",
@@ -391,7 +458,17 @@ public class CSVBatchEngineImportTaskItemReaderImplTest
 
 			validate(
 				createDateString, "hey, here is a comma inside", 1L,
-				Collections.emptyMap(),
+				HashMapBuilder.put(
+					"createDate", "createDate"
+				).put(
+					"description", "description"
+				).put(
+					"id", "id"
+				).put(
+					"name_i18n_en", "name"
+				).put(
+					"name_i18n_hr", "name"
+				).build(),
 				csvBatchEngineImportTaskItemReaderImpl.read(),
 				HashMapBuilder.put(
 					"en", "sample name"

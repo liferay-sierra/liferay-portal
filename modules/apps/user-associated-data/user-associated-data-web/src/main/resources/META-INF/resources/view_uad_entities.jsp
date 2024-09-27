@@ -72,11 +72,8 @@ long[] groupIds = viewUADEntitiesDisplay.getGroupIds();
 
 	<div class="closed sidenav-container sidenav-right" id="<portlet:namespace />infoPanelId">
 		<div id="breadcrumb">
-			<liferay-ui:breadcrumb
-				showCurrentGroup="<%= false %>"
-				showGuestGroup="<%= false %>"
-				showLayout="<%= false %>"
-				showPortletBreadcrumb="<%= true %>"
+			<liferay-site-navigation:breadcrumb
+				breadcrumbEntries="<%= BreadcrumbEntriesUtil.getBreadcrumbEntries(request, false, false, false, true, true) %>"
 			/>
 		</div>
 
@@ -217,7 +214,7 @@ long[] groupIds = viewUADEntitiesDisplay.getGroupIds();
 					if (applicationKeys) {
 						applicationKeys.setAttribute(
 							'value',
-							Liferay.Util.listCheckedExcept(
+							Liferay.Util.getCheckedCheckboxes(
 								form,
 								'<portlet:namespace />allRowIds'
 							)
@@ -236,7 +233,7 @@ long[] groupIds = viewUADEntitiesDisplay.getGroupIds();
 						);
 
 						if (<%= primaryKeysVar %>) {
-							var primaryKeys = Liferay.Util.listCheckedExcept(
+							var primaryKeys = Liferay.Util.getCheckedCheckboxes(
 								form,
 								'<portlet:namespace />allRowIds',
 								'<portlet:namespace />rowIds<%= typeClass.getSimpleName() %>'

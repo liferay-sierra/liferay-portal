@@ -40,7 +40,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + LayoutPageTemplateAdminPortletKeys.LAYOUT_PAGE_TEMPLATES,
 		"mvc.command.name=/layout_page_template_admin/update_layout_page_template_entry_preview"
@@ -97,7 +96,7 @@ public class UpdateLayoutPageTemplateEntryPreviewMVCActionCommand
 		}
 
 		fileEntry = PortletFileRepositoryUtil.addPortletFileEntry(
-			themeDisplay.getScopeGroupId(), themeDisplay.getUserId(),
+			null, themeDisplay.getScopeGroupId(), themeDisplay.getUserId(),
 			LayoutPageTemplateEntry.class.getName(), layoutPageTemplateEntryId,
 			LayoutAdminPortletKeys.GROUP_PAGES, repository.getDlFolderId(),
 			fileEntry.getContentStream(), fileName, fileEntry.getMimeType(),

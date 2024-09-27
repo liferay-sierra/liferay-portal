@@ -25,18 +25,19 @@ import com.liferay.commerce.order.importer.item.CommerceOrderImporterItemImpl;
 import com.liferay.commerce.price.CommerceOrderPriceCalculation;
 import com.liferay.commerce.service.CommerceOrderItemService;
 import com.liferay.commerce.service.CommerceOrderService;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ListUtil;
-import com.liferay.portal.vulcan.util.TransformUtil;
 
 import java.util.List;
 
@@ -62,6 +63,11 @@ public class CommerceOrderImporterTypeUtil {
 			commerceOrder.getGroupId(), commerceOrder.getCommerceAccountId(),
 			commerceOrder.getCommerceCurrencyId(),
 			commerceOrder.getCommerceOrderTypeId());
+
+		tempCommerceOrder.setManuallyAdjusted(true);
+
+		tempCommerceOrder = commerceOrderService.updateCommerceOrder(
+			tempCommerceOrder);
 
 		CommerceContext commerceContext = commerceContextFactory.create(
 			tempCommerceOrder.getCompanyId(), tempCommerceOrder.getGroupId(),
@@ -110,6 +116,15 @@ public class CommerceOrderImporterTypeUtil {
 								commerceOrderValidatorResult.
 									getLocalizedMessage(),
 							String.class));
+				}
+
+				if (exception instanceof PrincipalException) {
+					commerceOrderImporterItemImpl.setErrorMessages(
+						new String[] {
+							LanguageUtil.get(
+								serviceContext.getLocale(),
+								"the-product-is-no-longer-available")
+						});
 				}
 				else {
 					String[] errorMessages =

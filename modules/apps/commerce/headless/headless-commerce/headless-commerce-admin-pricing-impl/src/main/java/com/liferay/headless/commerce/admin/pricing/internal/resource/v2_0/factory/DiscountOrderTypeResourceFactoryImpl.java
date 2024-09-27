@@ -14,6 +14,7 @@
 
 package com.liferay.headless.commerce.admin.pricing.internal.resource.v2_0.factory;
 
+import com.liferay.headless.commerce.admin.pricing.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.headless.commerce.admin.pricing.resource.v2_0.DiscountOrderTypeResource;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -33,14 +34,18 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -59,7 +62,7 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @generated
  */
 @Component(
-	enabled = false, immediate = true,
+	property = "resource.locator.key=/headless-commerce-admin-pricing/v2.0/DiscountOrderType",
 	service = DiscountOrderTypeResource.Factory.class
 )
 @Generated("")
@@ -76,9 +79,7 @@ public class DiscountOrderTypeResourceFactoryImpl
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (DiscountOrderTypeResource)ProxyUtil.newProxyInstance(
-					DiscountOrderTypeResource.class.getClassLoader(),
-					new Class<?>[] {DiscountOrderTypeResource.class},
+				return _discountOrderTypeResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -137,14 +138,32 @@ public class DiscountOrderTypeResourceFactoryImpl
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		DiscountOrderTypeResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, DiscountOrderTypeResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		DiscountOrderTypeResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			DiscountOrderTypeResource.class.getClassLoader(),
+			DiscountOrderTypeResource.class);
+
+		try {
+			Constructor<DiscountOrderTypeResource> constructor =
+				(Constructor<DiscountOrderTypeResource>)
+					proxyClass.getConstructor(InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -167,7 +186,7 @@ public class DiscountOrderTypeResourceFactoryImpl
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		DiscountOrderTypeResource discountOrderTypeResource =
@@ -194,6 +213,7 @@ public class DiscountOrderTypeResourceFactoryImpl
 		discountOrderTypeResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		discountOrderTypeResource.setRoleLocalService(_roleLocalService);
+		discountOrderTypeResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(discountOrderTypeResource, arguments);
@@ -209,6 +229,10 @@ public class DiscountOrderTypeResourceFactoryImpl
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, DiscountOrderTypeResource>
+		_discountOrderTypeResourceProxyProviderFunction =
+			_getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -231,9 +255,6 @@ public class DiscountOrderTypeResourceFactoryImpl
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -242,6 +263,9 @@ public class DiscountOrderTypeResourceFactoryImpl
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

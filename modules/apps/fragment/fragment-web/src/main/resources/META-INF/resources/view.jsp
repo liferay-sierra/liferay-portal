@@ -86,6 +86,7 @@ List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentDis
 															"viewImportURL", fragmentCollectionsViewContext.get("viewImportURL")
 														).build()
 													%>'
+													aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 													dropdownItems="<%= fragmentDisplayContext.getCollectionsDropdownItems() %>"
 													propsTransformer="js/FragmentCollectionViewDefaultPropsTransformer"
 												/>
@@ -110,8 +111,6 @@ List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentDis
 													href="<%=
 														PortletURLBuilder.createRenderURL(
 															renderResponse
-														).setMVCRenderCommandName(
-															"/fragment/view"
 														).setParameter(
 															"fragmentCollectionKey", fragmentCollectionContributor.getFragmentCollectionKey()
 														).buildString()
@@ -139,8 +138,6 @@ List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentDis
 													href="<%=
 														PortletURLBuilder.createRenderURL(
 															renderResponse
-														).setMVCRenderCommandName(
-															"/fragment/view"
 														).setParameter(
 															"fragmentCollectionId", fragmentCollection.getFragmentCollectionId()
 														).buildString()
@@ -183,8 +180,6 @@ List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentDis
 													href="<%=
 														PortletURLBuilder.createRenderURL(
 															renderResponse
-														).setMVCRenderCommandName(
-															"/fragment/view"
 														).setParameter(
 															"fragmentCollectionId", fragmentCollection.getFragmentCollectionId()
 														).buildString()
@@ -221,8 +216,6 @@ List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentDis
 													href="<%=
 														PortletURLBuilder.createRenderURL(
 															renderResponse
-														).setMVCRenderCommandName(
-															"/fragment/view"
 														).setParameter(
 															"fragmentCollectionId", fragmentCollection.getFragmentCollectionId()
 														).buildString()
@@ -294,6 +287,7 @@ List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentDis
 									%>
 
 									<clay:dropdown-actions
+										aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 										dropdownItems="<%= fragmentCollectionActionDropdownItemsProvider.getActionDropdownItems() %>"
 										propsTransformer="js/FragmentCollectionDropdownPropsTransformer"
 									/>

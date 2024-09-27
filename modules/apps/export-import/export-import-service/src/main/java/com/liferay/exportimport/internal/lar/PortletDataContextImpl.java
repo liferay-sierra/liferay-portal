@@ -124,6 +124,7 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -421,11 +422,11 @@ public class PortletDataContextImpl implements PortletDataContext {
 		String referenceKey = _getReferenceKey(classedModel);
 
 		if (missing) {
+			referenceElement.addAttribute("missing", Boolean.TRUE.toString());
+
 			if (_references.contains(referenceKey)) {
 				return referenceElement;
 			}
-
-			referenceElement.addAttribute("missing", Boolean.TRUE.toString());
 
 			if (!_missingReferences.contains(referenceKey)) {
 				_missingReferences.add(referenceKey);
@@ -456,6 +457,11 @@ public class PortletDataContextImpl implements PortletDataContext {
 		}
 
 		return value;
+	}
+
+	@Override
+	public void addScopedPrimaryKeys(Collection<String> scopedPrimaryKeys) {
+		_scopedPrimaryKeys.addAll(scopedPrimaryKeys);
 	}
 
 	@Override
@@ -841,15 +847,19 @@ public class PortletDataContextImpl implements PortletDataContext {
 		String key = StringPool.BLANK;
 
 		if (_importDataElements != null) {
-			key = StringBundler.concat(
-				_importDataRootElement.attributeValue("self-path"),
-				CharPool.POUND, name, CharPool.POUND, attribute, CharPool.POUND,
-				value);
+			String selfPath = _importDataRootElement.attributeValue(
+				"self-path");
 
-			importDataElement = _importDataElements.get(key);
+			if (Validator.isNotNull(selfPath)) {
+				key = StringBundler.concat(
+					selfPath, CharPool.POUND, name, CharPool.POUND, attribute,
+					CharPool.POUND, value);
 
-			if (importDataElement != null) {
-				return importDataElement;
+				importDataElement = _importDataElements.get(key);
+
+				if (importDataElement != null) {
+					return importDataElement;
+				}
 			}
 		}
 
@@ -857,7 +867,7 @@ public class PortletDataContextImpl implements PortletDataContext {
 
 		importDataElement = _getDataElement(groupElement, attribute, value);
 
-		if (_importDataElements != null) {
+		if (Validator.isNotNull(key)) {
 			_importDataElements.put(key, importDataElement);
 		}
 
@@ -987,12 +997,11 @@ public class PortletDataContextImpl implements PortletDataContext {
 	public Element getReferenceDataElement(
 		Element parentElement, Class<?> clazz, long classPK) {
 
-		List<Element> referenceElements = getReferenceElements(
-			parentElement, clazz.getName(), 0, null, (Serializable)classPK,
-			null);
-
 		List<Element> referenceDataElements = getReferenceDataElements(
-			referenceElements, clazz);
+			getReferenceElements(
+				parentElement, clazz.getName(), 0, null, (Serializable)classPK,
+				null),
+			clazz);
 
 		if (referenceDataElements.isEmpty()) {
 			return null;
@@ -1005,11 +1014,10 @@ public class PortletDataContextImpl implements PortletDataContext {
 	public Element getReferenceDataElement(
 		Element parentElement, Class<?> clazz, long groupId, String uuid) {
 
-		List<Element> referenceElements = getReferenceElements(
-			parentElement, clazz.getName(), groupId, uuid, null, null);
-
 		List<Element> referenceDataElements = getReferenceDataElements(
-			referenceElements, clazz);
+			getReferenceElements(
+				parentElement, clazz.getName(), groupId, uuid, null, null),
+			clazz);
 
 		if (referenceDataElements.isEmpty()) {
 			return null;
@@ -1043,10 +1051,10 @@ public class PortletDataContextImpl implements PortletDataContext {
 	public List<Element> getReferenceDataElements(
 		Element parentElement, Class<?> clazz, String referenceType) {
 
-		List<Element> referenceElements = getReferenceElements(
-			parentElement, clazz.getName(), 0, null, null, referenceType);
-
-		return getReferenceDataElements(referenceElements, clazz);
+		return getReferenceDataElements(
+			getReferenceElements(
+				parentElement, clazz.getName(), 0, null, null, referenceType),
+			clazz);
 	}
 
 	@Override
@@ -1060,10 +1068,10 @@ public class PortletDataContextImpl implements PortletDataContext {
 	public List<Element> getReferenceDataElements(
 		StagedModel parentStagedModel, Class<?> clazz, String referenceType) {
 
-		List<Element> referenceElements = getReferenceElements(
-			parentStagedModel, clazz.getName(), null, referenceType);
-
-		return getReferenceDataElements(referenceElements, clazz);
+		return getReferenceDataElements(
+			getReferenceElements(
+				parentStagedModel, clazz.getName(), null, referenceType),
+			clazz);
 	}
 
 	@Override
@@ -1132,6 +1140,10 @@ public class PortletDataContextImpl implements PortletDataContext {
 	@Override
 	public String getRootPortletId() {
 		return _rootPortletId;
+	}
+
+	public Set<String> getScopedPrimaryKeys() {
+		return _scopedPrimaryKeys;
 	}
 
 	@Override
@@ -1484,6 +1496,10 @@ public class PortletDataContextImpl implements PortletDataContext {
 	@Override
 	public void importPortletPermissions(String resourceName)
 		throws PortalException {
+
+		if (getGroupId() != getScopeGroupId()) {
+			return;
+		}
 
 		importPermissions(resourceName, getSourceGroupId(), getScopeGroupId());
 	}
@@ -1911,6 +1927,12 @@ public class PortletDataContextImpl implements PortletDataContext {
 			serviceContext.setModifiedDate(auditedModel.getModifiedDate());
 			serviceContext.setUserId(getUserId(auditedModel));
 		}
+		else if (classedModel instanceof StagedModel) {
+			StagedModel stagedModel = (StagedModel)classedModel;
+
+			serviceContext.setCreateDate(stagedModel.getCreateDate());
+			serviceContext.setModifiedDate(stagedModel.getModifiedDate());
+		}
 
 		// Permissions
 
@@ -1944,10 +1966,8 @@ public class PortletDataContextImpl implements PortletDataContext {
 				"asset-entry-priority");
 
 			if (assetPriorityAttribute != null) {
-				double assetPriority = GetterUtil.getDouble(
-					assetPriorityAttribute.getValue());
-
-				serviceContext.setAssetPriority(assetPriority);
+				serviceContext.setAssetPriority(
+					GetterUtil.getDouble(assetPriorityAttribute.getValue()));
 			}
 		}
 
@@ -2050,14 +2070,17 @@ public class PortletDataContextImpl implements PortletDataContext {
 		String key = StringPool.BLANK;
 
 		if (_importDataElements != null) {
-			key = StringBundler.concat(
-				_importDataRootElement.attributeValue("self-path"),
-				CharPool.POUND, name);
+			String selfPath = _importDataRootElement.attributeValue(
+				"self-path");
 
-			groupElement = _importDataElements.get(key);
+			if (Validator.isNotNull(selfPath)) {
+				key = StringBundler.concat(selfPath, CharPool.POUND, name);
 
-			if (groupElement != null) {
-				return groupElement;
+				groupElement = _importDataElements.get(key);
+
+				if (groupElement != null) {
+					return groupElement;
+				}
 			}
 		}
 
@@ -2068,7 +2091,7 @@ public class PortletDataContextImpl implements PortletDataContext {
 			groupElement = SAXReaderUtil.createElement("EMPTY-ELEMENT");
 		}
 
-		if (_importDataElements != null) {
+		if (Validator.isNotNull(key)) {
 			_importDataElements.put(key, groupElement);
 		}
 

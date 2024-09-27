@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 import java.io.Serializable;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Provides the local service utility for AccountEntry. This utility wraps
@@ -50,7 +51,9 @@ public class AccountEntryLocalServiceUtil {
 		getService().activateAccountEntries(accountEntryIds);
 	}
 
-	public static AccountEntry activateAccountEntry(AccountEntry accountEntry) {
+	public static AccountEntry activateAccountEntry(AccountEntry accountEntry)
+		throws PortalException {
+
 		return getService().activateAccountEntry(accountEntry);
 	}
 
@@ -126,8 +129,8 @@ public class AccountEntryLocalServiceUtil {
 		getService().deactivateAccountEntries(accountEntryIds);
 	}
 
-	public static AccountEntry deactivateAccountEntry(
-		AccountEntry accountEntry) {
+	public static AccountEntry deactivateAccountEntry(AccountEntry accountEntry)
+		throws PortalException {
 
 		return getService().deactivateAccountEntry(accountEntry);
 	}
@@ -306,6 +309,20 @@ public class AccountEntryLocalServiceUtil {
 			companyId, externalReferenceCode);
 	}
 
+	/**
+	 * Returns the account entry with the matching UUID and company.
+	 *
+	 * @param uuid the account entry's UUID
+	 * @param companyId the primary key of the company
+	 * @return the matching account entry, or <code>null</code> if a matching account entry could not be found
+	 */
+	public static AccountEntry fetchAccountEntryByUuidAndCompanyId(
+		String uuid, long companyId) {
+
+		return getService().fetchAccountEntryByUuidAndCompanyId(
+			uuid, companyId);
+	}
+
 	public static AccountEntry fetchPersonAccountEntry(long userId) {
 		return getService().fetchPersonAccountEntry(userId);
 	}
@@ -381,10 +398,33 @@ public class AccountEntryLocalServiceUtil {
 			companyId, externalReferenceCode);
 	}
 
+	/**
+	 * Returns the account entry with the matching UUID and company.
+	 *
+	 * @param uuid the account entry's UUID
+	 * @param companyId the primary key of the company
+	 * @return the matching account entry
+	 * @throws PortalException if a matching account entry could not be found
+	 */
+	public static AccountEntry getAccountEntryByUuidAndCompanyId(
+			String uuid, long companyId)
+		throws PortalException {
+
+		return getService().getAccountEntryByUuidAndCompanyId(uuid, companyId);
+	}
+
 	public static com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery
 		getActionableDynamicQuery() {
 
 		return getService().getActionableDynamicQuery();
+	}
+
+	public static com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery
+		getExportActionableDynamicQuery(
+			com.liferay.exportimport.kernel.lar.PortletDataContext
+				portletDataContext) {
+
+		return getService().getExportActionableDynamicQuery(portletDataContext);
 	}
 
 	public static AccountEntry getGuestAccountEntry(long companyId)
@@ -519,6 +559,13 @@ public class AccountEntryLocalServiceUtil {
 			accountEntryId, addressId);
 	}
 
+	public static AccountEntry updateDomains(
+			long accountEntryId, String[] domains)
+		throws PortalException {
+
+		return getService().updateDomains(accountEntryId, domains);
+	}
+
 	public static AccountEntry updateExternalReferenceCode(
 			AccountEntry accountEntry, String externalReferenceCode)
 		throws PortalException {
@@ -535,8 +582,17 @@ public class AccountEntryLocalServiceUtil {
 			accountEntryId, externalReferenceCode);
 	}
 
+	public static AccountEntry updateRestrictMembership(
+			long accountEntryId, boolean restrictMembership)
+		throws PortalException {
+
+		return getService().updateRestrictMembership(
+			accountEntryId, restrictMembership);
+	}
+
 	public static AccountEntry updateStatus(
-		AccountEntry accountEntry, int status) {
+			AccountEntry accountEntry, int status)
+		throws PortalException {
 
 		return getService().updateStatus(accountEntry, status);
 	}
@@ -545,6 +601,16 @@ public class AccountEntryLocalServiceUtil {
 		throws PortalException {
 
 		return getService().updateStatus(accountEntryId, status);
+	}
+
+	public static AccountEntry updateStatus(
+			long userId, long accountEntryId, int status,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext,
+			Map<String, Serializable> workflowContext)
+		throws PortalException {
+
+		return getService().updateStatus(
+			userId, accountEntryId, status, serviceContext, workflowContext);
 	}
 
 	public static AccountEntryLocalService getService() {

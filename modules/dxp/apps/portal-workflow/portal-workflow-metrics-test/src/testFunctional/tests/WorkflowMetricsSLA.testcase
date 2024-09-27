@@ -13,12 +13,7 @@ definition {
 
 		User.firstLoginPG();
 
-		Navigator.openURL();
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Workflow",
-			panel = "Applications",
-			portlet = "Metrics");
+		Workflow.openWorkflowMetrics();
 	}
 
 	tearDown {
@@ -32,7 +27,12 @@ definition {
 	@description = "LPS-89082 - Verify that a blocked SLA can be fixed"
 	@priority = "5"
 	test BlockedSLACanBeFixed {
+		property portal.acceptance = "true";
 		property test.name.skip.portal.instance = "WorkflowMetricsSLA#BlockedSLACanBeFixed";
+
+		WorkflowMetrics.setSLADefinitionsJobInterval(
+			definitionsJobInterval = "1",
+			slaJobInterval = "1");
 
 		WorkflowMetrics.goToWorkflowSLASettings(workflowProcessName = "Single Approver");
 
@@ -68,11 +68,11 @@ definition {
 
 		Workflow.gotoEditWorkflowDefinition(workflowDefinitionTitle = "Single Approver");
 
-		KaleoDesigner.selectNode(nodeNodeLabel = "update");
+		ProcessBuilderKaleoDesignerReact.selectNodeByLabel(nodeLabel = "update");
 
-		KaleoDesigner.deleteNode(nodeNodeLabel = "update");
+		ProcessBuilderKaleoDesignerReact.deleteNodeOrConnection(title = "Delete Task Node");
 
-		Button.click(button = "Update");
+		Button.clickUpdate();
 
 		WorkflowMetrics.goToWorkflowProcessMetrics(workflowProcessName = "Single Approver");
 
@@ -172,6 +172,12 @@ definition {
 	@description = "LPS-89014 - Verify that deleting a SLA will not be reflected in all completed instances"
 	@priority = "4"
 	test DeletingSLANotReflectCompletedInstances {
+		property test.name.skip.portal.instance = "WorkflowMetricsSLA#DeletingSLANotReflectCompletedInstances";
+
+		WorkflowMetrics.setSLADefinitionsJobInterval(
+			definitionsJobInterval = "1",
+			slaJobInterval = "1");
+
 		WorkflowMetrics.goToWorkflowSLASettings(workflowProcessName = "Single Approver");
 
 		Click(locator1 = "WorkflowMetricsSLA#ADD_NEW_SLA_BUTTON");
@@ -186,23 +192,11 @@ definition {
 
 		Button.clickSave();
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Workflow",
-			panel = "Applications",
-			portlet = "Process Builder");
-
-		Navigator.gotoNavItem(navItem = "Configuration");
+		Workflow.openWorkflowProcessBuilderConfiguration();
 
 		Workflow.configureWorkflow(
 			workflowDefinition = "Single Approver",
 			workflowResourceValue = "Blogs Entry");
-
-		Navigator.openURL();
-
-		ProductMenu.gotoPortlet(
-			category = "Content & Data",
-			panel = "Site Administration",
-			portlet = "Blogs");
 
 		JSONBlog.addEntry(
 			entryContent = "Blogs Entry Content",
@@ -219,8 +213,6 @@ definition {
 			workflowAssetTitle = "Blogs Entry Title",
 			workflowAssetType = "Blogs Entry",
 			workflowTask = "Review");
-
-		Pause(locator1 = "60000");
 
 		WorkflowMetrics.goToWorkflowProcessMetrics(workflowProcessName = "Single Approver");
 
@@ -250,6 +242,12 @@ definition {
 	@description = "LPS-89014 - Verify that deleting a SLA will be reflected in all instances In Progress"
 	@priority = "5"
 	test DeletingSLAReflectInProgressInstances {
+		property test.name.skip.portal.instance = "WorkflowMetricsSLA#DeletingSLAReflectInProgressInstances";
+
+		WorkflowMetrics.setSLADefinitionsJobInterval(
+			definitionsJobInterval = "1",
+			slaJobInterval = "1");
+
 		WorkflowMetrics.goToWorkflowSLASettings(workflowProcessName = "Single Approver");
 
 		Click(locator1 = "WorkflowMetricsSLA#ADD_NEW_SLA_BUTTON");
@@ -264,23 +262,11 @@ definition {
 
 		Button.clickSave();
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Workflow",
-			panel = "Applications",
-			portlet = "Process Builder");
-
-		Navigator.gotoNavItem(navItem = "Configuration");
+		Workflow.openWorkflowProcessBuilderConfiguration();
 
 		Workflow.configureWorkflow(
 			workflowDefinition = "Single Approver",
 			workflowResourceValue = "Blogs Entry");
-
-		Navigator.openURL();
-
-		ProductMenu.gotoPortlet(
-			category = "Content & Data",
-			panel = "Site Administration",
-			portlet = "Blogs");
 
 		JSONBlog.addEntry(
 			entryContent = "Blogs Entry Content",
@@ -288,9 +274,9 @@ definition {
 
 		WorkflowMetrics.goToWorkflowProcessMetrics(workflowProcessName = "Single Approver");
 
-		Pause(locator1 = "60000");
-
-		Refresh();
+		while ((IsTextNotEqual(locator1 = "WorkflowMetrics#DASHBOARD_TOTAL_ONTIME_ITEMS_VALUE", value1 = "1")) && (maxIterations = "45")) {
+			Refresh();
+		}
 
 		WorkflowMetrics.checkPendingWorkflowValues(
 			key_ontime = "1",
@@ -318,7 +304,11 @@ definition {
 	@description = "LPS-89082 - Verify that the error alert will be displayed again when user enters the metrics page again after closing it"
 	@priority = "2"
 	test ErrorAlertIsDisplayedAgainWhenClosed {
-		property test.name.skip.portal.instance = "WorkflowMetricsProcessListView#CanOrderByOnTimeItems";
+		property test.name.skip.portal.instance = "WorkflowMetricsSLA#ErrorAlertIsDisplayedAgainWhenClosed";
+
+		WorkflowMetrics.setSLADefinitionsJobInterval(
+			definitionsJobInterval = "1",
+			slaJobInterval = "1");
 
 		WorkflowMetrics.goToWorkflowSLASettings(workflowProcessName = "Single Approver");
 
@@ -334,58 +324,37 @@ definition {
 
 		Button.clickSave();
 
-		var siteName = TestCase.getSiteName(siteName = "${siteName}");
-
-		ProductMenu.gotoPortlet(
-			category = "Configuration",
-			portlet = "Workflow",
-			site = "${siteName}");
+		Workflow.openWorkflowAdmin(siteURLKey = "guest");
 
 		Workflow.configureWorkflow(
 			workflowDefinition = "Single Approver",
 			workflowResourceValue = "Blogs Entry");
 
-		ProductMenu.gotoPortlet(
-			category = "Content & Data",
-			panel = "Site Administration",
-			portlet = "Blogs");
-
 		JSONBlog.addEntry(
 			entryContent = "Test Entry",
 			entryTitle = "Test Blog");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Workflow",
-			panel = "Applications",
-			portlet = "Process Builder");
+		Workflow.openWorkflowListView();
 
 		Workflow.gotoEditWorkflowDefinition(workflowDefinitionTitle = "Single Approver");
 
-		KaleoDesigner.selectNode(nodeNodeLabel = "update");
+		ProcessBuilderKaleoDesignerReact.selectNodeByLabel(nodeLabel = "update");
 
-		KaleoDesigner.deleteNode(nodeNodeLabel = "update");
+		ProcessBuilderKaleoDesignerReact.deleteNodeOrConnection(title = "Delete Task Node");
 
-		Button.click(button = "Update");
+		Button.clickUpdate();
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Workflow",
-			panel = "Applications",
-			portlet = "Metrics");
+		Workflow.openWorkflowMetrics();
 
 		WorkflowMetrics.goToWorkflowProcessMetrics(workflowProcessName = "Single Approver");
 
-		Pause(locator1 = "50000");
-
-		Refresh();
-
-		AssertElementPresent(locator1 = "WorkflowMetrics#WARNING_SLA_BLOCKED");
+		while ((IsElementNotPresent(locator1 = "WorkflowMetrics#WARNING_SLA_BLOCKED")) && (maxIterations = "45")) {
+			Refresh();
+		}
 
 		Click(locator1 = "Icon#TIMES");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Workflow",
-			panel = "Applications",
-			portlet = "Metrics");
+		Workflow.openWorkflowMetrics();
 
 		WorkflowMetrics.goToWorkflowProcessMetrics(workflowProcessName = "Single Approver");
 
@@ -396,6 +365,10 @@ definition {
 	@priority = "4"
 	test ErrorMessagesAreDisplayedAndClickableWhenSLABlocked {
 		property test.name.skip.portal.instance = "WorkflowMetricsSLA#ErrorMessagesAreDisplayedAndClickableWhenSLABlocked";
+
+		WorkflowMetrics.setSLADefinitionsJobInterval(
+			definitionsJobInterval = "1",
+			slaJobInterval = "1");
 
 		WorkflowMetrics.goToWorkflowSLASettings(workflowProcessName = "Single Approver");
 
@@ -431,11 +404,11 @@ definition {
 
 		Workflow.gotoEditWorkflowDefinition(workflowDefinitionTitle = "Single Approver");
 
-		KaleoDesigner.selectNode(nodeNodeLabel = "update");
+		ProcessBuilderKaleoDesignerReact.selectNodeByLabel(nodeLabel = "update");
 
-		KaleoDesigner.deleteNode(nodeNodeLabel = "update");
+		ProcessBuilderKaleoDesignerReact.deleteNodeOrConnection(title = "Delete Task Node");
 
-		Button.click(button = "Update");
+		Button.clickUpdate();
 
 		WorkflowMetrics.goToWorkflowProcessMetrics(workflowProcessName = "Single Approver");
 
@@ -851,6 +824,10 @@ definition {
 	test SLAListIsGroupedWhenSLABlocked {
 		property test.name.skip.portal.instance = "WorkflowMetricsSLA#SLAListIsGroupedWhenSLABlocked";
 
+		WorkflowMetrics.setSLADefinitionsJobInterval(
+			definitionsJobInterval = "1",
+			slaJobInterval = "1");
+
 		WorkflowMetrics.goToWorkflowSLASettings(workflowProcessName = "Single Approver");
 
 		Click(locator1 = "WorkflowMetricsSLA#ADD_NEW_SLA_BUTTON");
@@ -886,11 +863,11 @@ definition {
 
 		Workflow.gotoEditWorkflowDefinition(workflowDefinitionTitle = "Single Approver");
 
-		KaleoDesigner.selectNode(nodeNodeLabel = "update");
+		ProcessBuilderKaleoDesignerReact.selectNodeByLabel(nodeLabel = "update");
 
-		KaleoDesigner.deleteNode(nodeNodeLabel = "update");
+		ProcessBuilderKaleoDesignerReact.deleteNodeOrConnection(title = "Delete Task Node");
 
-		Button.click(button = "Update");
+		Button.clickUpdate();
 
 		WorkflowMetrics.goToWorkflowProcessMetrics(workflowProcessName = "Single Approver");
 
@@ -918,7 +895,7 @@ definition {
 
 	}
 
-	@description = "LPS-94760 - Verify that when there is an alert message on the page, the update date should be displayed bellow it"
+	@description = "LPS-94760 - Verify that when there is an alert message on the page, the update date should be displayed below it"
 	@ignore = "true"
 	@priority = "3"
 	test SLAProcessingDateIsDisplayedUnderAlertMessage {
@@ -1000,12 +977,7 @@ definition {
 
 		Button.clickSave();
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Workflow",
-			panel = "Applications",
-			portlet = "Process Builder");
-
-		Navigator.gotoNavItem(navItem = "Configuration");
+		Workflow.openWorkflowProcessBuilderConfiguration();
 
 		Workflow.configureWorkflow(
 			workflowDefinition = "Single Approver",
@@ -1025,12 +997,8 @@ definition {
 
 		Click(locator1 = "WorkflowAllItems#WORKFLOW_INSTANCE_ID");
 
-		while (IsElementNotPresent(key_slaName = "${slaName}", locator1 = "WorkflowAllItems#DETAIL_PAGE_SLA_ENGLISH_HOUR_FORMAT")) {
+		while ((IsElementNotPresent(key_slaName = "${slaName}", locator1 = "WorkflowAllItems#DETAIL_PAGE_SLA_ENGLISH_HOUR_FORMAT")) && (maxIterations = "45")) {
 			Click(locator1 = "WorkflowAllItems#DETAIL_PAGE_CLOSE");
-
-			Pause(locator1 = "2000");
-
-			Refresh();
 
 			Click(locator1 = "WorkflowAllItems#WORKFLOW_INSTANCE_ID");
 		}
@@ -1238,6 +1206,12 @@ definition {
 	@description = "LPS-89416 - Verify that updating a SLA will not be reflected in completed instances"
 	@priority = "4"
 	test UpdatingSLANotReflectCompletedInstances {
+		property test.name.skip.portal.instance = "WorkflowMetricsSLA#UpdatingSLANotReflectCompletedInstances";
+
+		WorkflowMetrics.setSLADefinitionsJobInterval(
+			definitionsJobInterval = "1",
+			slaJobInterval = "1");
+
 		WorkflowMetrics.goToWorkflowSLASettings(workflowProcessName = "Single Approver");
 
 		Click(locator1 = "WorkflowMetricsSLA#ADD_NEW_SLA_BUTTON");
@@ -1322,14 +1296,13 @@ definition {
 	@description = "LPS-89416 - Verify that updating a SLA will recalculate time for all instances In Progress"
 	@priority = "5"
 	test UpdatingSLARecalculateTimeInProgressInstances {
-		property portal.upstream = "quarantine";
+		property test.name.skip.portal.instance = "WorkflowMetricsSLA#UpdatingSLARecalculateTimeInProgressInstances";
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Workflow",
-			panel = "Applications",
-			portlet = "Process Builder");
+		WorkflowMetrics.setSLADefinitionsJobInterval(
+			definitionsJobInterval = "1",
+			slaJobInterval = "1");
 
-		Navigator.gotoNavItem(navItem = "Configuration");
+		Workflow.openWorkflowProcessBuilderConfiguration();
 
 		Workflow.configureWorkflow(
 			workflowDefinition = "Single Approver",
@@ -1351,18 +1324,15 @@ definition {
 
 		Button.clickSave();
 
-		Navigator.openURL();
-
-		ProductMenu.gotoPortlet(
-			category = "Content & Data",
-			panel = "Site Administration",
-			portlet = "Blogs");
-
 		JSONBlog.addEntry(
 			entryContent = "Blogs Entry Content",
 			entryTitle = "Blogs Entry Title");
 
-		Pause(locator1 = "50000");
+		WorkflowMetrics.goToWorkflowProcessMetrics(workflowProcessName = "Single Approver");
+
+		while ((IsTextNotEqual(locator1 = "WorkflowMetrics#DASHBOARD_TOTAL_ONTIME_ITEMS_VALUE", value1 = "1")) && (maxIterations = "45")) {
+			Refresh();
+		}
 
 		WorkflowMetrics.goToWorkflowAllItems(workflowProcessName = "Single Approver");
 
@@ -1389,7 +1359,11 @@ definition {
 
 		Button.clickUpdate();
 
-		Pause(locator1 = "35000");
+		WorkflowMetrics.goToWorkflowProcessMetrics(workflowProcessName = "Single Approver");
+
+		while ((IsTextNotEqual(locator1 = "WorkflowMetrics#DASHBOARD_TOTAL_ONTIME_ITEMS_VALUE", value1 = "1")) && (maxIterations = "45")) {
+			Refresh();
+		}
 
 		WorkflowMetrics.goToWorkflowAllItems(workflowProcessName = "Single Approver");
 

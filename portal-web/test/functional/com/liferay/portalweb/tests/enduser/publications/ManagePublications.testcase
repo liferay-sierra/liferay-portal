@@ -1,6 +1,9 @@
 @component-name = "portal-publications"
 definition {
 
+	property database.types = "db2,hypersonic,mariadb,mysql,oracle,postgresql,sqlserver";
+	property osgi.module.configuration.file.names = "com.liferay.change.tracking.configuration.CTSettingsConfiguration.config";
+	property osgi.module.configurations = "enabled=B\"true\"";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Publications";
@@ -9,8 +12,6 @@ definition {
 		TestCase.setUpPortalInstance();
 
 		User.firstLoginPG();
-
-		Publications.enablePublications();
 	}
 
 	tearDown {
@@ -46,7 +47,9 @@ definition {
 	test CreateNewPublicationWithoutName {
 		Publications.createNewPublication(gotoPublicationsAdmin = "true");
 
-		Alert.viewRequiredField();
+		AssertTextEquals.assertPartialText(
+			locator1 = "TextInput#REQUIRED_ALERT",
+			value1 = "The Name field is required.");
 	}
 
 	@priority = "5"
@@ -58,9 +61,9 @@ definition {
 			publicationDescription = "Publication Description",
 			publicationName = "Publication Name");
 
-		PagesAdmin.openPagesAdmin(siteURLKey = "guest");
-
-		PagesAdmin.addPublicPage(pageName = "Test Page");
+		JSONLayout.addPublicLayout(
+			groupName = "Guest",
+			layoutName = "Test Page Name");
 
 		ApplicationsMenu.gotoPortlet(
 			category = "Publications",

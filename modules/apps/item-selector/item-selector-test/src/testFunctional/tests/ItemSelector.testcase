@@ -1,4 +1,4 @@
-@component-name = "portal-collaboration"
+@component-name = "portal-lima"
 definition {
 
 	property portal.acceptance = "true";
@@ -22,6 +22,8 @@ definition {
 			BlogsEntry.tearDownCP();
 
 			Depot.tearDownCP();
+
+			Site.tearDownCP();
 
 			User.logoutPG();
 		}
@@ -96,7 +98,7 @@ definition {
 		NavigationMenusAdmin.editItem(
 			item = "Page",
 			itemName = "Test Page Name 1",
-			pageNames = "Test Page Name 2");
+			pageName = "Test Page Name 2");
 
 		NavigationMenusAdmin.viewItem(itemName = "Test Page Name 2");
 	}
@@ -156,6 +158,32 @@ definition {
 			webContentTitle = "Web Content From Depot");
 	}
 
+	@description = "This is a test for LPS-107014. It checks that the site pagination can be displayed correctly in item selector."
+	@priority = "4"
+	test CanDisplaySitePaginationCorrectly {
+		for (var i : list "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20") {
+			JSONGroup.addGroup(groupName = "Site Name ${i}");
+		}
+
+		BlogsNavigator.openToAddEntry(siteURLKey = "guest");
+
+		BlogsNavigator.gotoSelectFile();
+
+		ItemSelector.changeWorkspaces(
+			navTab = "Documents and Media",
+			workspacesType = "Site");
+
+		Pagination.viewResults(results = "Showing 1 to 20 of 22 entries.");
+
+		Click(locator1 = "Pagination#NEXT_LINK");
+
+		Pagination.viewResults(results = "Showing 21 to 22 of 22 entries.");
+
+		AssertTextNotPresent(
+			locator1 = "Message#EMPTY_INFO",
+			value1 = "No sites were found.");
+	}
+
 	@description = "This test ensures that documents can filter by the current site in the item selector."
 	@priority = "5"
 	@refactordone
@@ -195,7 +223,10 @@ definition {
 			viewNoLocationInfo = "Site Name");
 	}
 
+	// Ignored until LPS-159228 implemented
+
 	@description = "This test ensures that web content using a structure can be filtered from the current depot."
+	@ignore = "true"
 	@priority = "5"
 	@refactordone
 	test CanFilterCustomWCFromCurrentDepot {
@@ -245,7 +276,10 @@ definition {
 			itemType = "Web Content Article");
 	}
 
+	// Ignored until LPS-159228 implemented
+
 	@description = "This test ensures that a document folder can be filtered from the current depot."
+	@ignore = "true"
 	@priority = "5"
 	@refactordone
 	test CanFilterDMFolderFromCurrentDepot {
@@ -273,7 +307,10 @@ definition {
 			itemType = "Documents Folder");
 	}
 
+	// Ignored until LPS-159228 implemented
+
 	@description = "This test ensures that a document can be filtered from the current depot."
+	@ignore = "true"
 	@priority = "5"
 	@refactordone
 	test CanFilterImageFromCurrentDepot {
@@ -305,7 +342,10 @@ definition {
 			itemType = "Document");
 	}
 
+	// Ignored until LPS-159228 implemented
+
 	@description = "This test ensures that web contents can filter by the current site in the item selector."
+	@ignore = "true"
 	@priority = "5"
 	@refactordone
 	test CanFilterWCByCurrentSite {
@@ -352,7 +392,10 @@ definition {
 			webContentTitle = "Web Content From Site");
 	}
 
+	// Ignored until LPS-159228 implemented
+
 	@description = "This test ensures that the web content folder can be filtered from the current depot."
+	@ignore = "true"
 	@priority = "5"
 	@refactordone
 	test CanFilterWCFolderFromCurrentDepot {
@@ -381,7 +424,10 @@ definition {
 			itemType = "Web Content Folder");
 	}
 
+	// Ignored until LPS-159228 implemented
+
 	@description = "This test ensures that web content can be filtered from the current depot."
+	@ignore = "true"
 	@priority = "5"
 	@refactordone
 	test CanFilterWCFromCurrentDepot {
@@ -618,14 +664,16 @@ definition {
 	@priority = "5"
 	@refactordone
 	test CanPreviewSVG {
+		JSONGroup.addGroup(groupName = "Site Name");
+
 		JSONDocument.addFileWithUploadedFile(
 			dmDocumentDescription = "DM Document Description",
 			dmDocumentTitle = "Document_1.svg",
-			groupName = "Guest",
+			groupName = "Site Name",
 			mimeType = "image/svg+xml",
 			sourceFileName = "Document_1.svg");
 
-		BlogsNavigator.openToAddEntry(siteURLKey = "guest");
+		BlogsNavigator.openToAddEntry(siteURLKey = "site-name");
 
 		BlogsNavigator.gotoSelectFile();
 
@@ -764,7 +812,7 @@ definition {
 		BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
 
 		Blogs.addEntryWithUploadedCoverImage(
-			coverImageName = "Document_1",
+			coverImageName = "document_1",
 			entryContent = "Blogs Entry Content",
 			entrySubtitle = "Blogs Entry Subtitle",
 			entryTitle = "Blogs Entry Title",
@@ -813,14 +861,17 @@ definition {
 			paddingTop = "2",
 			panel = "Styles");
 
-		PageEditor.clickPublish();
+		PageEditor.publish();
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "web/test-site-name/test-content-page-name");
 
-		ContentPages.viewFragmentBackgroundImage(image = "Document_1.jpeg");
+		ContentPages.viewFragmentBackgroundImage(image = "document_1-jpeg");
 	}
 
+	// Ignored until LPS-159228 implemented
+
 	@description = "This test covers LPS-119553. It ensures that the assets in the connected site can not be filtered out after navigating to the depot through the breadcrumb."
+	@ignore = "true"
 	@priority = "4"
 	@refactordone
 	test CanViewCorrectFilterResultsInSpecificBreadcrumb {
@@ -882,7 +933,10 @@ definition {
 		LexiconEntry.viewNoEntry(rowEntry = "WC WebContent From Site");
 	}
 
+	// Ignored until LPS-159228 implemented
+
 	@description = "This ensures that the location info of depot web content can be viewed through WCD on a connected site."
+	@ignore = "true"
 	@priority = "5"
 	@refactordone
 	test CanViewCorrectWCLocationInfo {
@@ -1162,16 +1216,18 @@ definition {
 	@priority = "4"
 	@refactordone
 	test FilePaginationDisplaysCorrectCount {
+		JSONGroup.addGroup(groupName = "Site Name");
+
 		for (var documentTitle : list "Document_1,Document_2,Document_3,Document_4,Commerce_Black,Commerce_White") {
 			JSONDocument.addFileWithUploadedFile(
 				dmDocumentDescription = "DM Document Description",
 				dmDocumentTitle = "${documentTitle}",
-				groupName = "Guest",
+				groupName = "Site Name",
 				mimeType = "image/jpeg",
 				sourceFileName = "${documentTitle}.jpg");
 		}
 
-		BlogsNavigator.openToAddEntry(siteURLKey = "guest");
+		BlogsNavigator.openToAddEntry(siteURLKey = "site-name");
 
 		BlogsNavigator.gotoSelectFile();
 
@@ -1261,10 +1317,9 @@ definition {
 		Pagination.viewResults(results = "Showing 21 to 30 of 30 entries.");
 	}
 
-	@description = "This is a test for LPS-136945. It checks that only 'File Upload,' 'Folder,' 'Google Drive Shortcut' and 'External Video Shortcut' options appear when adding a document."
+	@description = "This is a test for LPS-136945. It checks that only 'File Upload', 'Folder', and 'External Video Shortcut' options appear when adding a document."
 	@priority = "3"
 	test OnlyRelevantSelectionsAppearWhenAddingDocuments {
-		property osgi.app.includes = "document-library-google-docs";
 		property portal.acceptance = "false";
 
 		WebContentNavigator.openWebContentAdmin(siteURLKey = "guest");
@@ -1304,25 +1359,12 @@ definition {
 		ItemSelector.viewRelevantSelections(addImageOptions = "true");
 	}
 
-	@description = "This is a test for LPS-136944. It checks that only 'File Upload,' 'Folder,' and 'External Video Shortcut' options appear when adding a video."
-	@priority = "3"
-	test OnlyRelevantSelectionsAppearWhenAddingVideos {
-		property portal.acceptance = "false";
-
-		WebContentNavigator.openWebContentAdmin(siteURLKey = "guest");
-
-		LexiconEntry.gotoAddMenuItem(menuItem = "Basic Web Content");
-
-		ItemSelector.gotoItemSelectorViaCKEditor(video = "true");
-
-		ItemSelector.viewRelevantSelections(addVideoOptions = "true");
-	}
-
 	@description = "This test covers LPS-96564. It ensures that a private site cannot be viewed by a non-site member in calendar widget."
 	@priority = "4"
 	@refactordone
 	test PrivateSiteShouldNotBeViewableWithoutPermissionsInCalendar {
 		property custom.properties = "jsonws.web.service.paths.excludes=";
+		property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
 
 		var portalURL = PropsUtil.get("portal.url");
 

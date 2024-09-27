@@ -22,7 +22,7 @@ import com.liferay.data.engine.field.type.util.LocalizedValueUtil;
 import com.liferay.data.engine.rest.dto.v2_0.DataLayout;
 import com.liferay.data.engine.rest.dto.v2_0.DataLayoutRenderingContext;
 import com.liferay.data.engine.rest.dto.v2_0.util.DataDefinitionDDMFormUtil;
-import com.liferay.data.engine.rest.internal.content.type.DataDefinitionContentTypeTracker;
+import com.liferay.data.engine.rest.internal.content.type.DataDefinitionContentTypeRegistry;
 import com.liferay.data.engine.rest.internal.dto.v2_0.util.DataDefinitionUtil;
 import com.liferay.data.engine.rest.internal.dto.v2_0.util.DataLayoutUtil;
 import com.liferay.data.engine.rest.internal.dto.v2_0.util.MapToDDMFormValuesConverterUtil;
@@ -32,7 +32,7 @@ import com.liferay.data.engine.rest.resource.exception.DataLayoutValidationExcep
 import com.liferay.data.engine.rest.resource.v2_0.DataLayoutResource;
 import com.liferay.data.engine.service.DEDataDefinitionFieldLinkLocalService;
 import com.liferay.dynamic.data.mapping.form.builder.rule.DDMFormRuleDeserializer;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderingContext;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormTemplateContextFactory;
 import com.liferay.dynamic.data.mapping.io.DDMFormLayoutSerializer;
@@ -56,9 +56,10 @@ import com.liferay.portal.events.ServicePreAction;
 import com.liferay.portal.events.ThemeServicePreAction;
 import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.frontend.icons.FrontendIconsUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
@@ -78,9 +79,7 @@ import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
-import com.liferay.portal.vulcan.resource.EntityModelResource;
 import com.liferay.portal.vulcan.util.SearchUtil;
-import com.liferay.portal.vulcan.util.TransformUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -106,8 +105,7 @@ import org.osgi.service.component.annotations.ServiceScope;
 	scope = ServiceScope.PROTOTYPE, service = DataLayoutResource.class
 )
 @CTAware
-public class DataLayoutResourceImpl
-	extends BaseDataLayoutResourceImpl implements EntityModelResource {
+public class DataLayoutResourceImpl extends BaseDataLayoutResourceImpl {
 
 	@Override
 	public void deleteDataDefinitionDataLayout(Long dataDefinitionId)
@@ -184,7 +182,7 @@ public class DataLayoutResourceImpl
 		DDMStructureLayout ddmStructureLayout =
 			_ddmStructureLayoutLocalService.getStructureLayout(
 				siteId,
-				_dataDefinitionContentTypeTracker.getClassNameId(contentType),
+				_dataDefinitionContentTypeRegistry.getClassNameId(contentType),
 				dataLayoutKey);
 
 		_dataDefinitionModelResourcePermission.check(
@@ -192,7 +190,7 @@ public class DataLayoutResourceImpl
 			ddmStructureLayout.getDDMStructureId(), ActionKeys.VIEW);
 
 		return _getDataLayout(
-			_dataDefinitionContentTypeTracker.getClassNameId(contentType),
+			_dataDefinitionContentTypeRegistry.getClassNameId(contentType),
 			dataLayoutKey, siteId);
 	}
 
@@ -216,12 +214,12 @@ public class DataLayoutResourceImpl
 				dataLayout,
 				DataDefinitionDDMFormUtil.toDDMForm(
 					DataDefinitionUtil.toDataDefinition(
-						_dataDefinitionContentTypeTracker,
-						_ddmFormFieldTypeServicesTracker, ddmStructure,
+						_dataDefinitionContentTypeRegistry,
+						_ddmFormFieldTypeServicesRegistry, ddmStructure,
 						_ddmStructureLayoutLocalService,
 						_spiDDMFormRuleConverter),
-					_ddmFormFieldTypeServicesTracker),
-				_ddmFormFieldTypeServicesTracker, _ddmFormLayoutSerializer,
+					_ddmFormFieldTypeServicesRegistry),
+				_ddmFormFieldTypeServicesRegistry, _ddmFormLayoutSerializer,
 				_ddmFormRuleDeserializer),
 			dataLayout.getDataLayoutKey(), dataLayout.getDescription(),
 			dataLayout.getName());
@@ -280,14 +278,18 @@ public class DataLayoutResourceImpl
 				ddmFormRenderingContext);
 
 		ddmFormTemplateContext.put("editable", false);
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)contextHttpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
 		ddmFormTemplateContext.put(
-			"spritemap",
-			dataLayoutRenderingContext.getPathThemeImages() +
-				"/clay/icons.svg");
+			"spritemap", FrontendIconsUtil.getSpritemap(themeDisplay));
+
 		ddmFormTemplateContext.remove("fieldTypes");
 
 		return Response.ok(
-			JSONFactoryUtil.looseSerializeDeep(ddmFormTemplateContext)
+			_jsonFactory.looseSerializeDeep(ddmFormTemplateContext)
 		).build();
 	}
 
@@ -310,14 +312,14 @@ public class DataLayoutResourceImpl
 				dataLayout,
 				DataDefinitionDDMFormUtil.toDDMForm(
 					DataDefinitionUtil.toDataDefinition(
-						_dataDefinitionContentTypeTracker,
-						_ddmFormFieldTypeServicesTracker,
+						_dataDefinitionContentTypeRegistry,
+						_ddmFormFieldTypeServicesRegistry,
 						_ddmStructureLocalService.getStructure(
 							ddmStructureLayout.getDDMStructureId()),
 						_ddmStructureLayoutLocalService,
 						_spiDDMFormRuleConverter),
-					_ddmFormFieldTypeServicesTracker),
-				_ddmFormFieldTypeServicesTracker, _ddmFormLayoutSerializer,
+					_ddmFormFieldTypeServicesRegistry),
+				_ddmFormFieldTypeServicesRegistry, _ddmFormLayoutSerializer,
 				_ddmFormRuleDeserializer),
 			dataLayout.getDescription(), dataLayout.getName());
 	}
@@ -390,7 +392,7 @@ public class DataLayoutResourceImpl
 			ddmStructureLayout.getGroupId());
 
 		return DataLayoutUtil.toDataLayout(
-			_ddmFormFieldTypeServicesTracker, ddmStructureLayout,
+			_ddmFormFieldTypeServicesRegistry, ddmStructureLayout,
 			_spiDDMFormRuleConverter);
 	}
 
@@ -403,7 +405,7 @@ public class DataLayoutResourceImpl
 
 	private DataLayout _getDataLayout(long dataLayoutId) throws Exception {
 		return DataLayoutUtil.toDataLayout(
-			_ddmFormFieldTypeServicesTracker,
+			_ddmFormFieldTypeServicesRegistry,
 			_ddmStructureLayoutLocalService.getDDMStructureLayout(dataLayoutId),
 			_spiDDMFormRuleConverter);
 	}
@@ -426,8 +428,7 @@ public class DataLayoutResourceImpl
 
 		if (pagination.getPageSize() > 250) {
 			throw new ValidationException(
-				LanguageUtil.format(
-					locale, "page-size-is-greater-than-x", 250));
+				_language.format(locale, "page-size-is-greater-than-x", 250));
 		}
 
 		if (ArrayUtil.isEmpty(sorts)) {
@@ -443,7 +444,7 @@ public class DataLayoutResourceImpl
 
 		if (Validator.isNull(keywords)) {
 			return Page.of(
-				TransformUtil.transform(
+				transform(
 					_ddmStructureLayoutLocalService.getStructureLayouts(
 						ddmStructure.getGroupId(),
 						ddmStructure.getClassNameId(),
@@ -453,7 +454,7 @@ public class DataLayoutResourceImpl
 						_toOrderByComparator(
 							(Sort)ArrayUtil.getValue(sorts, 0))),
 					ddmStructureLayout -> DataLayoutUtil.toDataLayout(
-						_ddmFormFieldTypeServicesTracker, ddmStructureLayout,
+						_ddmFormFieldTypeServicesRegistry, ddmStructureLayout,
 						_spiDDMFormRuleConverter)),
 				pagination,
 				_ddmStructureLayoutLocalService.getStructureLayoutsCount(
@@ -482,7 +483,7 @@ public class DataLayoutResourceImpl
 			},
 			sorts,
 			document -> DataLayoutUtil.toDataLayout(
-				_ddmFormFieldTypeServicesTracker,
+				_ddmFormFieldTypeServicesRegistry,
 				_ddmStructureLayoutLocalService.getStructureLayout(
 					GetterUtil.getLong(document.get(Field.ENTRY_CLASS_PK))),
 				_spiDDMFormRuleConverter));
@@ -613,7 +614,7 @@ public class DataLayoutResourceImpl
 			String content, String definitionSchemaVersion)
 		throws Exception {
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(content);
+		JSONObject jsonObject = _jsonFactory.createJSONObject(content);
 
 		jsonObject.put("definitionSchemaVersion", definitionSchemaVersion);
 
@@ -653,7 +654,7 @@ public class DataLayoutResourceImpl
 			ddmStructureLayout.getGroupId());
 
 		return DataLayoutUtil.toDataLayout(
-			_ddmFormFieldTypeServicesTracker, ddmStructureLayout,
+			_ddmFormFieldTypeServicesRegistry, ddmStructureLayout,
 			_spiDDMFormRuleConverter);
 	}
 
@@ -662,7 +663,7 @@ public class DataLayoutResourceImpl
 			_ddmFormLayoutValidator.validate(
 				DataLayoutUtil.toDDMFormLayout(
 					dataLayout, ddmStructure.getFullHierarchyDDMForm(),
-					_ddmFormFieldTypeServicesTracker,
+					_ddmFormFieldTypeServicesRegistry,
 					_ddmFormRuleDeserializer));
 		}
 		catch (DDMFormLayoutValidationException
@@ -682,14 +683,15 @@ public class DataLayoutResourceImpl
 	private static final EntityModel _entityModel = new DataLayoutEntityModel();
 
 	@Reference
-	private DataDefinitionContentTypeTracker _dataDefinitionContentTypeTracker;
+	private DataDefinitionContentTypeRegistry
+		_dataDefinitionContentTypeRegistry;
 
 	@Reference
 	private DataDefinitionModelResourcePermission
 		_dataDefinitionModelResourcePermission;
 
 	@Reference
-	private DDMFormFieldTypeServicesTracker _ddmFormFieldTypeServicesTracker;
+	private DDMFormFieldTypeServicesRegistry _ddmFormFieldTypeServicesRegistry;
 
 	@Reference(target = "(ddm.form.layout.serializer.type=json)")
 	private DDMFormLayoutSerializer _ddmFormLayoutSerializer;
@@ -715,6 +717,12 @@ public class DataLayoutResourceImpl
 	@Reference
 	private DEDataDefinitionFieldLinkLocalService
 		_deDataDefinitionFieldLinkLocalService;
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

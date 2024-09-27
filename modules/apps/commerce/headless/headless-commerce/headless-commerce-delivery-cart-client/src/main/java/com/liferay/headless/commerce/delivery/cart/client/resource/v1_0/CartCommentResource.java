@@ -110,6 +110,12 @@ public interface CartCommentResource {
 			return new CartCommentResourceImpl(this);
 		}
 
+		public Builder contextPath(String contextPath) {
+			_contextPath = contextPath;
+
+			return this;
+		}
+
 		public Builder endpoint(String host, int port, String scheme) {
 			_host = host;
 			_port = port;
@@ -155,6 +161,7 @@ public interface CartCommentResource {
 		private Builder() {
 		}
 
+		private String _contextPath = "";
 		private Map<String, String> _headers = new LinkedHashMap<>();
 		private String _host = "localhost";
 		private Locale _locale;
@@ -196,6 +203,17 @@ public interface CartCommentResource {
 					"HTTP response status code: " +
 						httpResponse.getStatusCode());
 			}
+
+			try {
+				return;
+			}
+			catch (Exception e) {
+				_logger.log(
+					Level.WARNING,
+					"Unable to process HTTP response: " + content, e);
+
+				throw new Problem.ProblemException(Problem.toDTO(content));
+			}
 		}
 
 		public HttpInvoker.HttpResponse deleteCartCommentHttpResponse(
@@ -225,7 +243,7 @@ public interface CartCommentResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-commerce-delivery-cart/v1.0/cart-comments/{cartCommentId}");
 
 			httpInvoker.path("cartCommentId", cartCommentId);
@@ -302,7 +320,7 @@ public interface CartCommentResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-commerce-delivery-cart/v1.0/cart-comments/batch");
 
 			httpInvoker.userNameAndPassword(
@@ -379,7 +397,7 @@ public interface CartCommentResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-commerce-delivery-cart/v1.0/cart-comments/{cartCommentId}");
 
 			httpInvoker.path("cartCommentId", cartCommentId);
@@ -463,7 +481,7 @@ public interface CartCommentResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-commerce-delivery-cart/v1.0/cart-comments/{cartCommentId}");
 
 			httpInvoker.path("cartCommentId", cartCommentId);
@@ -547,7 +565,7 @@ public interface CartCommentResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-commerce-delivery-cart/v1.0/cart-comments/{cartCommentId}");
 
 			httpInvoker.path("cartCommentId", cartCommentId);
@@ -624,7 +642,7 @@ public interface CartCommentResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-commerce-delivery-cart/v1.0/cart-comments/batch");
 
 			httpInvoker.userNameAndPassword(
@@ -711,7 +729,7 @@ public interface CartCommentResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-commerce-delivery-cart/v1.0/carts/{cartId}/comments");
 
 			httpInvoker.path("cartId", cartId);
@@ -794,7 +812,7 @@ public interface CartCommentResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-commerce-delivery-cart/v1.0/carts/{cartId}/comments");
 
 			httpInvoker.path("cartId", cartId);

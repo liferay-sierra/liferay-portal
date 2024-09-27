@@ -21,7 +21,6 @@ import com.liferay.dynamic.data.mapping.exception.StructureDefinitionException;
 import com.liferay.dynamic.data.mapping.exception.StructureLayoutException;
 import com.liferay.dynamic.data.mapping.form.builder.context.DDMFormContextDeserializer;
 import com.liferay.dynamic.data.mapping.form.builder.context.DDMFormContextDeserializerRequest;
-import com.liferay.dynamic.data.mapping.form.web.internal.configuration.activator.FFSubmissionsSettingsConfigurationActivator;
 import com.liferay.dynamic.data.mapping.form.web.internal.portlet.action.util.DDMFormInstanceFieldSettingsValidator;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
@@ -39,10 +38,11 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.redirect.RedirectURLSettings;
+import com.liferay.portal.kernel.security.auth.AuthTokenUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -81,7 +81,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marcellus Tavares
  */
-@Component(immediate = true, service = SaveFormInstanceMVCCommandHelper.class)
+@Component(service = SaveFormInstanceMVCCommandHelper.class)
 public class SaveFormInstanceMVCCommandHelper {
 
 	public Map<Locale, String> getNameMap(
@@ -96,8 +96,7 @@ public class SaveFormInstanceMVCCommandHelper {
 		if (nameMap.isEmpty() || Validator.isNull(nameMap.get(defaultLocale))) {
 			nameMap.put(
 				defaultLocale,
-				LanguageUtil.get(
-					_getResourceBundle(defaultLocale), defaultName));
+				_language.get(_getResourceBundle(defaultLocale), defaultName));
 		}
 
 		return nameMap;
@@ -114,6 +113,10 @@ public class SaveFormInstanceMVCCommandHelper {
 			PortletRequest portletRequest, PortletResponse portletResponse,
 			boolean validateDDMFormFieldSettings)
 		throws Exception {
+
+		AuthTokenUtil.checkCSRFToken(
+			_portal.getHttpServletRequest(portletRequest),
+			SaveFormInstanceMVCCommandHelper.class.getName());
 
 		long formInstanceId = ParamUtil.getLong(
 			portletRequest, "formInstanceId");
@@ -284,7 +287,7 @@ public class SaveFormInstanceMVCCommandHelper {
 	private String _getRedirectURLExceptionMessage(
 		HttpServletRequest httpServletRequest, String fieldName, String value) {
 
-		return LanguageUtil.format(
+		return _language.format(
 			httpServletRequest,
 			"the-external-redirect-url-x-is-not-allowed.-set-it-in-the-x-" +
 				"field-of-the-x-configuration-in-x-to-allow-it",
@@ -372,12 +375,6 @@ public class SaveFormInstanceMVCCommandHelper {
 
 	private void _validateExpirationDate(DDMFormValues ddmFormValues)
 		throws Exception {
-
-		if (!_ffSubmissionsSettingsConfigurationActivator.
-				expirationDateEnabled()) {
-
-			return;
-		}
 
 		Map<String, List<DDMFormFieldValue>> ddmFormFieldValuesMap =
 			ddmFormValues.getDDMFormFieldValuesMap(false);
@@ -490,7 +487,7 @@ public class SaveFormInstanceMVCCommandHelper {
 			}
 
 			throw new FormInstanceSettingsRedirectURLException(
-				LanguageUtil.get(
+				_language.get(
 					httpServletRequest,
 					"the-specified-redirect-url-is-not-allowed"));
 		}
@@ -526,7 +523,7 @@ public class SaveFormInstanceMVCCommandHelper {
 
 		if (Validator.isNull(objectDefinitionId)) {
 			throw new FormInstanceSettingsStorageTypeException(
-				LanguageUtil.get(
+				_language.get(
 					httpServletRequest,
 					"you-must-define-an-object-for-the-selected-storage-type"));
 		}
@@ -536,8 +533,7 @@ public class SaveFormInstanceMVCCommandHelper {
 		SaveFormInstanceMVCCommandHelper.class);
 
 	@Reference
-	private FFSubmissionsSettingsConfigurationActivator
-		_ffSubmissionsSettingsConfigurationActivator;
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

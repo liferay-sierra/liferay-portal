@@ -160,13 +160,11 @@ public class FragmentEntryStagedModelDataHandler
 
 		importedFragmentEntry.setGroupId(portletDataContext.getScopeGroupId());
 		importedFragmentEntry.setFragmentCollectionId(fragmentCollectionId);
-
-		String html =
+		importedFragmentEntry.setHtml(
 			_dlReferencesExportImportContentProcessor.
 				replaceImportContentReferences(
-					portletDataContext, fragmentEntry, fragmentEntry.getHtml());
-
-		importedFragmentEntry.setHtml(html);
+					portletDataContext, fragmentEntry,
+					fragmentEntry.getHtml()));
 
 		FragmentEntry existingFragmentEntry =
 			_stagedModelRepository.fetchStagedModelByUuidAndGroupId(
@@ -188,7 +186,17 @@ public class FragmentEntryStagedModelDataHandler
 				portletDataContext, importedFragmentEntry);
 		}
 
-		if (fragmentEntry.getPreviewFileEntryId() > 0) {
+		if ((fragmentEntry.getPreviewFileEntryId() == 0) &&
+			(importedFragmentEntry.getPreviewFileEntryId() > 0)) {
+
+			PortletFileRepositoryUtil.deletePortletFileEntry(
+				importedFragmentEntry.getPreviewFileEntryId());
+
+			importedFragmentEntry =
+				_fragmentEntryLocalService.updateFragmentEntry(
+					importedFragmentEntry.getFragmentEntryId(), 0);
+		}
+		else if (fragmentEntry.getPreviewFileEntryId() > 0) {
 			Map<Long, Long> fileEntryIds =
 				(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
 					FileEntry.class);

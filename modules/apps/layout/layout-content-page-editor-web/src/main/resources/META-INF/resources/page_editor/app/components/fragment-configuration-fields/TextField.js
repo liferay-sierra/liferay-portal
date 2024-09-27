@@ -17,23 +17,31 @@ import PropTypes from 'prop-types';
 import React, {useState} from 'react';
 
 import useControlledState from '../../../core/hooks/useControlledState';
+import {useId} from '../../../core/hooks/useId';
 import {ConfigurationFieldPropTypes} from '../../../prop-types/index';
 
 export function TextField({field, onValueSelect, value}) {
 	const [errorMessage, setErrorMessage] = useState('');
+	const helpTextId = useId();
+	const inputId = useId();
 
 	const [nextValue, setNextValue] = useControlledState(value);
 
-	const {additionalProps = {}, type = 'text'} = parseTypeOptions(
-		field.typeOptions
-	);
+	const {
+		additionalProps = {},
+		component = 'input',
+		placeholder = '',
+		type = 'text',
+	} = parseTypeOptions(field.typeOptions);
 
 	return (
 		<ClayForm.Group className={errorMessage ? 'has-error' : ''}>
-			<label htmlFor={field.name}>{field.label}</label>
+			<label htmlFor={inputId}>{field.label}</label>
 
 			<ClayInput
-				id={field.name}
+				aria-describedby={helpTextId}
+				component={component}
+				id={inputId}
 				onBlur={(event) => {
 					if (event.target.checkValidity()) {
 						setErrorMessage('');
@@ -61,14 +69,27 @@ export function TextField({field, onValueSelect, value}) {
 
 					setNextValue(event.target.value);
 				}}
-				placeholder={
-					field.typeOptions ? field.typeOptions.placeholder : ''
-				}
+				onKeyDown={(event) => {
+					if (event.key === 'Enter' && event.target.checkValidity()) {
+						setErrorMessage('');
+
+						if (nextValue !== value) {
+							onValueSelect(field.name, nextValue);
+						}
+					}
+				}}
+				placeholder={placeholder}
 				sizing="sm"
 				type={type}
 				value={nextValue || ''}
 				{...additionalProps}
 			/>
+
+			{field.description ? (
+				<p className="m-0 mt-1 small text-secondary" id={helpTextId}>
+					{field.description}
+				</p>
+			) : null}
 
 			{errorMessage && (
 				<ClayForm.FeedbackGroup>
@@ -85,12 +106,13 @@ export function TextField({field, onValueSelect, value}) {
 
 function parseTypeOptions(typeOptions = {}) {
 	if (!typeOptions.validation) {
-		return {type: 'text'};
+		return {...typeOptions, type: 'text'};
 	}
 
 	const {type: validationType, ...properties} = typeOptions.validation;
 
 	const result = {
+		...typeOptions,
 		additionalProps: {},
 		type: 'text',
 	};

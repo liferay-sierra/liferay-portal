@@ -24,7 +24,7 @@ import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.NoSuchImageException;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Group;
@@ -45,14 +45,14 @@ import com.liferay.portal.kernel.servlet.PortalSessionThreadLocal;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.zip.ZipWriter;
-import com.liferay.portal.kernel.zip.ZipWriterFactoryUtil;
+import com.liferay.portal.kernel.zip.ZipWriterFactory;
 import com.liferay.sync.SyncSiteUnavailableException;
 import com.liferay.sync.internal.configuration.SyncServiceConfigurationValues;
 import com.liferay.sync.model.SyncDLFileVersionDiff;
@@ -121,7 +121,8 @@ public class SyncDownloadServlet extends HttpServlet {
 			PermissionThreadLocal.setPermissionChecker(
 				PermissionCheckerFactoryUtil.create(user));
 
-			String path = _http.fixPath(httpServletRequest.getPathInfo());
+			String path = HttpComponentsUtil.fixPath(
+				httpServletRequest.getPathInfo());
 
 			String[] pathArray = StringUtil.split(path, CharPool.SLASH);
 
@@ -139,7 +140,7 @@ public class SyncDownloadServlet extends HttpServlet {
 						"Missing parameter zipFileIds");
 				}
 
-				JSONArray zipFileIdsJSONArray = JSONFactoryUtil.createJSONArray(
+				JSONArray zipFileIdsJSONArray = _jsonFactory.createJSONArray(
 					zipFileIds);
 
 				_sendZipFile(httpServletResponse, zipFileIdsJSONArray);
@@ -513,9 +514,9 @@ public class SyncDownloadServlet extends HttpServlet {
 			JSONArray zipFileIdsJSONArray)
 		throws Exception {
 
-		ZipWriter zipWriter = ZipWriterFactoryUtil.getZipWriter();
+		ZipWriter zipWriter = _zipWriterFactory.getZipWriter();
 
-		JSONObject errorsJSONObject = JSONFactoryUtil.createJSONObject();
+		JSONObject errorsJSONObject = _jsonFactory.createJSONObject();
 
 		for (int i = 0; i < zipFileIdsJSONArray.length(); i++) {
 			JSONObject zipObjectJSONObject = zipFileIdsJSONArray.getJSONObject(
@@ -559,7 +560,7 @@ public class SyncDownloadServlet extends HttpServlet {
 			long repositoryId, long folderId)
 		throws Exception {
 
-		ZipWriter zipWriter = ZipWriterFactoryUtil.getZipWriter();
+		ZipWriter zipWriter = _zipWriterFactory.getZipWriter();
 
 		_addZipFolderEntry(
 			userId, repositoryId, folderId, StringPool.BLANK, zipWriter);
@@ -576,11 +577,10 @@ public class SyncDownloadServlet extends HttpServlet {
 	private DLFileEntryLocalService _dlFileEntryLocalService;
 	private DLFileVersionLocalService _dlFileVersionLocalService;
 	private GroupLocalService _groupLocalService;
+	private ImageLocalService _imageLocalService;
 
 	@Reference
-	private Http _http;
-
-	private ImageLocalService _imageLocalService;
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Portal _portal;
@@ -589,5 +589,8 @@ public class SyncDownloadServlet extends HttpServlet {
 	private SyncHelper _syncHelper;
 
 	private UserLocalService _userLocalService;
+
+	@Reference
+	private ZipWriterFactory _zipWriterFactory;
 
 }

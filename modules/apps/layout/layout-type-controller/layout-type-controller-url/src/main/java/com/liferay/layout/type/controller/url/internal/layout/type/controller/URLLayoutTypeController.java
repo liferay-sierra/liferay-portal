@@ -35,7 +35,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true, property = "layout.type=" + LayoutConstants.TYPE_URL,
+	property = "layout.type=" + LayoutConstants.TYPE_URL,
 	service = LayoutTypeController.class
 )
 public class URLLayoutTypeController extends BaseLayoutTypeControllerImpl {
@@ -97,20 +97,22 @@ public class URLLayoutTypeController extends BaseLayoutTypeControllerImpl {
 	}
 
 	@Override
-	protected String getViewPage() {
-		return StringPool.BLANK;
+	protected ServletContext getServletContext() {
+		return _servletContext;
 	}
 
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.layout.type.controller.url)",
-		unbind = "-"
-	)
-	protected void setServletContext(ServletContext servletContext) {
-		this.servletContext = servletContext;
+	@Override
+	protected String getViewPage() {
+		return StringPool.BLANK;
 	}
 
 	private static final String _EDIT_PAGE = "/layout/edit/url.jsp";
 
 	private static final String _URL = "${url}";
+
+	@Reference(
+		target = "(osgi.web.symbolicname=com.liferay.layout.type.controller.url)"
+	)
+	private ServletContext _servletContext;
 
 }

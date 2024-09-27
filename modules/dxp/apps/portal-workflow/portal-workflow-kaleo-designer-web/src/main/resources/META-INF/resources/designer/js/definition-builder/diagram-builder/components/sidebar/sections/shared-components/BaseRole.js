@@ -14,8 +14,9 @@ import {useResource} from '@clayui/data-provider';
 import ClayDropDown from '@clayui/drop-down';
 import ClayForm, {ClayInput} from '@clayui/form';
 import PropTypes from 'prop-types';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 
+import {contextUrl} from '../../../../../constants';
 import {headers, userBaseURL} from '../../../../../util/fetchUtil';
 
 export default function BaseRole({
@@ -37,11 +38,25 @@ export default function BaseRole({
 			},
 		},
 		fetchPolicy: 'cache-first',
-		link: `${window.location.origin}${userBaseURL}/roles`,
+		link: `${window.location.origin}${contextUrl}${userBaseURL}/roles`,
 		onNetworkStatusChange: setNetworkStatus,
+		variables: {
+			pageSize: -1,
+		},
 	});
 
-	const initialLoading = networkStatus === 1;
+	useEffect(() => {
+		if (defaultFieldValue.name !== '') {
+			setFieldValues((previousValues) => {
+				const updatedValues = {...previousValues};
+				updatedValues.name = defaultFieldValue.name;
+
+				return updatedValues;
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [defaultFieldValue]);
+
 	const loading = networkStatus < 4;
 	const error = networkStatus === 5;
 
@@ -69,9 +84,8 @@ export default function BaseRole({
 	const handleItemClick = (item) => {
 		setFieldValues({id: item.id, name: item.name});
 		setActive(false);
-		if (updateSelectedItem) {
-			updateSelectedItem(item);
-		}
+
+		updateSelectedItem(item);
 	};
 
 	return (
@@ -90,7 +104,7 @@ export default function BaseRole({
 					/>
 
 					<ClayAutocomplete.DropDown
-						active={(!!resource && active) || initialLoading}
+						active={!!resource && active}
 						closeOnClickOutside
 						onSetActive={setActive}
 					>

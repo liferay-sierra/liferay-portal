@@ -53,10 +53,9 @@ definition {
 			roleKey = "Roles Regrole Name",
 			roleTitle = "Roles Regrole Name");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Roles");
+		Role.openRolesAdmin();
+
+		// The define permission via json macro is not able to change the permission scope
 
 		Role.definePermissionCmdCP(
 			permissionDefinitionKey = "SITE_ADMIN_CONTENT_DOCUMENTS_AND_MEDIA_GENERAL_PERMISSIONS_ACCESS_IN_SITE_ADMINISTRATION_CHECKBOX",
@@ -82,77 +81,61 @@ definition {
 		AssertConsoleTextNotPresent(value1 = "javax.portlet.PortletException");
 	}
 
-	@priority = "4"
-	test CanRemoveSiteInScope {
-		property test.name.skip.portal.instance = "RolesandpermissionsUsecase#CanRemoveSiteInScope";
-
-		var siteName = TestCase.getSiteName(siteName = "${siteName}");
-
-		JSONRole.addRegularRole(
-			roleKey = "Remove Permission Scope",
-			roleTitle = "Remove Permission Scope");
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Roles");
-
-		Role.definePermissionCmdCP(
-			permissionDefinitionKey = "SITE_ADMIN_APPLICATIONS_DOCUMENTS_AND_MEDIA_RESOURCE_PERMISSIONS_DOCUMENT_VIEW_CHECKBOX",
-			permissionDefinitionValue = "View",
-			roleTitle = "Remove Permission Scope",
-			siteNameScope = "${siteName}");
-
-		Role.viewPermissionCP(
-			permissionDefinitionValue = "View",
-			permissionNavigationValue = "Documents and Media > Document",
-			siteNameScope = "${siteName}");
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Roles");
-
-		Role.definePermissionCmdCP(
-			permissionDefinitionKey = "SITE_ADMIN_APPLICATIONS_DOCUMENTS_AND_MEDIA_RESOURCE_PERMISSIONS_DOCUMENT_VIEW_CHECKBOX",
-			permissionDefinitionValue = "View",
-			removeSiteScope = "${siteName}",
-			roleTitle = "Remove Permission Scope");
-
-		Role.viewPermissionCP(
-			permissionDefinitionValue = "View",
-			permissionNavigationValue = "Documents and Media > Document",
-			siteNameScope = "All Sites and Asset Libraries");
-	}
-
-	@description = "This is a use case for LPS-116055."
+	@description = "This is a test for LPS-148855. The default site role shouldn't be inherited by Guest."
 	@priority = "5"
-	test ChangeScope {
-		property test.name.skip.portal.instance = "RolesandpermissionsUsecase#ChangeScope";
+	test DefaultSiteRoleIsNotInheritedByGuestUser {
+		task ("Assign default site to a new regular Role") {
+			JSONRole.addRegularRole(
+				roleKey = "Document Viewer",
+				roleTitle = "Document Viewer");
 
-		var siteName = TestCase.getSiteName(siteName = "${siteName}");
+			JSONRole.assignRoleToGroup(
+				groupName = "Guest",
+				roleTitle = "Document Viewer");
+		}
 
-		JSONRole.addRegularRole(
-			roleKey = "Permission Scope",
-			roleTitle = "Permission Scope");
+		task ("Add the DM portlet with a file to a public page on a new site") {
+			JSONGroup.addGroup(groupName = "Site Name");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Roles");
+			JSONLayout.addPublicLayout(
+				groupName = "Site Name",
+				layoutName = "Public Widget Page");
 
-		Role.definePermissionCmdCP(
-			permissionDefinitionKey = "SITE_ADMIN_APPLICATIONS_DOCUMENTS_AND_MEDIA_RESOURCE_PERMISSIONS_DOCUMENT_VIEW_CHECKBOX",
-			permissionDefinitionValue = "View",
-			roleTitle = "Permission Scope",
-			siteNameScope = "${siteName}");
+			JSONDocument.addFileWithUploadedFile(
+				dmDocumentTitle = "For Document Viewers Eyes Only",
+				groupName = "Site Name",
+				mimeType = "image/jpeg",
+				sourceFileName = "Document_4.jpg");
 
-		Role.viewPermissionCP(
-			permissionDefinitionValue = "View",
-			permissionNavigationValue = "Documents and Media > Document",
-			siteNameScope = "${siteName}");
+			JSONLayout.addWidgetToPublicLayout(
+				groupName = "Site Name",
+				layoutName = "Public Widget Page",
+				widgetName = "Documents and Media");
+		}
 
-		AssertConsoleTextNotPresent(value1 = "java.lang.NumberFormatException");
+		task ("Define view permission for Guest and Document Viewer Roles on the DM portlet") {
+			DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "Site Name");
+
+			DMNavigator.gotoDocumentPermissionsCP(dmDocumentTitle = "For Document Viewers Eyes Only");
+
+			PermissionsInline.addOrRemoveViewPermissionFromAllRoles(
+				addOrRemoveViewPermission = "Add",
+				roleList = "Document Viewer");
+
+			PermissionsInline.addOrRemoveViewPermissionFromAllRoles(
+				addOrRemoveViewPermission = "Remove",
+				roleList = "Guest");
+		}
+
+		task ("Assert guest user cannot view the file") {
+			User.logoutPG();
+
+			Navigator.gotoSitePage(
+				pageName = "Public Widget Page",
+				siteName = "Site Name");
+
+			DMDocument.cannotViewCP(dmDocumentTitle = "For Document Viewers Eyes Only");
+		}
 	}
 
 	@priority = "4"
@@ -209,7 +192,7 @@ definition {
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "Site Page Name");
+		PagesAdmin.addPage(pageName = "Site Page Name");
 
 		JSONUser.addUser(
 			userEmailAddress = "userea@liferay.com",
@@ -368,10 +351,15 @@ definition {
 			permissionNavigationValue = "Web Content > Web Content Article");
 
 		Role.viewPermissionCP(
-			assigneeName = "Site Name",
-			assigneeType = "Sites",
 			permissionDefinitionValue = "Update Discussion",
 			permissionNavigationValue = "Web Content > Web Content Article");
+
+		Role.openRolesAdmin();
+
+		Role.viewAssignee(
+			assigneeName = "Site Name",
+			assigneeType = "Sites",
+			roleTitle = "Web Content Comment Reviewer");
 
 		Role.openRolesAdmin();
 
@@ -384,23 +372,17 @@ definition {
 
 	@priority = "4"
 	test GroupScopePermissionCheck {
-		property osgi.app.includes = "bookmarks";
-		property portal.release = "false";
 		property test.name.skip.portal.instance = "RolesandpermissionsUsecase#GroupScopePermissionCheck";
 
 		var siteName = TestCase.getSiteName(siteName = "${siteName}");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Roles");
+		Role.openRolesAdmin();
 
 		Role.add(roleTitle = "Group Scope Role Name");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Roles");
+		Role.openRolesAdmin();
+
+		// The define permission via json macro is not able to change the permission scope
 
 		Role.definePermissionCmdCP(
 			permissionDefinitionKey = "SITE_ADMIN_APPLICATIONS_BOOKMARKS_RESOURCE_PERMISSIONS_BOOKMARKS_ENTRY_VIEW_CHECKBOX",
@@ -413,7 +395,7 @@ definition {
 			portlet = "Pages",
 			site = "${siteName}");
 
-		PagesAdmin.addPublicPage(pageName = "Bookmarks Page");
+		PagesAdmin.addPage(pageName = "Bookmarks Page");
 
 		Navigator.gotoPage(pageName = "Bookmarks Page");
 
@@ -441,7 +423,7 @@ definition {
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "Bookmarks Page");
+		PagesAdmin.addPage(pageName = "Bookmarks Page");
 
 		Navigator.gotoSitePage(
 			pageName = "Bookmarks Page",
@@ -538,6 +520,7 @@ definition {
 	@priority = "3"
 	test NoGuestRolePermissionsFromPrivateLayout {
 		property custom.properties = "permissions.check.guest.enabled=false";
+		property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
 
 		ApplicationsMenu.gotoPortlet(
 			category = "Sites",
@@ -578,402 +561,18 @@ definition {
 	}
 
 	@priority = "4"
-	test RolesSitesPermissionsInheritance {
-		property custom.properties = "jsonws.web.service.paths.excludes=";
-
-		var siteName = TestCase.getSiteName(siteName = "${siteName}");
-
-		for (var userNumber : list "1,2,3") {
-			JSONUser.addUser(
-				userEmailAddress = "userea${userNumber}@liferay.com",
-				userFirstName = "userfn${userNumber}",
-				userLastName = "userln${userNumber}",
-				userScreenName = "usersn${userNumber}");
-
-			JSONUser.setFirstPassword(
-				agreeToTermsAndAnswerReminderQuery = "true",
-				requireReset = "false",
-				userEmailAddress = "userea${userNumber}@liferay.com");
-		}
-
-		JSONOrganization.addOrganization(organizationName = "Organization Name 1");
-
-		JSONOrganization.addOrganization(organizationName = "Organization Name 2");
-
-		SiteTemplates.addCP(siteTemplateName = "Site Template Name");
-
-		SiteTemplates.addSitePageViaSiteTemplateCP(
-			pageName = "MB Page",
-			siteTemplateName = "Site Template Name");
-
-		SiteTemplatesNavigator.gotoSiteTemplatesPage(
-			pageName = "MB Page",
-			siteName = "${siteName}",
-			siteTemplateName = "Site Template Name");
-
-		Portlet.addPG(
-			defaultURL = "false",
-			portletName = "Message Boards");
-
-		Close.closeAndSelectWindow(locator1 = "Site Templates - ${siteName}");
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
-
-		UsersAndOrganizationsNavigator.gotoOrganizations();
-
-		Organization.addSiteCP(
-			orgName = "Organization Name 2",
-			siteTemplateName = "Site Template Name");
-
-		JSONOrganization.addOrganization(organizationName = "Organization Name 3");
-
-		JSONOrganization.assignUserToOrganization(
-			organizationName = "Organization Name 1",
-			userEmailAddress = "userea1@liferay.com");
-
-		JSONOrganization.assignUserToOrganization(
-			organizationName = "Organization Name 2",
-			userEmailAddress = "userea2@liferay.com");
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
-
-		UsersAndOrganizationsNavigator.gotoOrganizations();
-
-		Organization.assignOrgRoleCP(
-			orgName = "Organization Name 2",
-			roleTitle = "Organization Administrator",
-			userFirstName = "userfn2",
-			userLastName = "userln2",
-			userScreenName = "usersn2");
-
-		JSONOrganization.assignUserToOrganization(
-			organizationName = "Organization Name 3",
-			userEmailAddress = "userea3@liferay.com");
-
-		JSONUserGroup.addUserGroup(
-			userGroupDescription = "UG UserGroup1 Description",
-			userGroupName = "UG UserGroup1 Name");
-
-		JSONUserGroup.addUserGroup(
-			userGroupDescription = "UG UserGroup2 Description",
-			userGroupName = "UG UserGroup2 Name");
-
-		JSONUserGroup.addUserGroup(
-			userGroupDescription = "UG UserGroup3 Description",
-			userGroupName = "UG UserGroup3 Name");
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "User Groups");
-
-		UserGroup.assignMemberCP(
-			userGroupName = "UG UserGroup1 Name",
-			userScreenName = "usersn1");
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "User Groups");
-
-		UserGroup.assignMemberCP(
-			userGroupName = "UG UserGroup2 Name",
-			userScreenName = "usersn2");
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "User Groups");
-
-		UserGroup.assignMemberCP(
-			userGroupName = "UG UserGroup3 Name",
-			userScreenName = "usersn3");
-
-		JSONGroup.addGroup(groupName = "Site Name");
-
-		JSONLayout.addPublicLayout(
-			groupName = "Site Name",
-			layoutName = "Asset Publisher Page");
-
-		JSONRole.addSiteRole(
-			roleKey = "Movie Blogger Name",
-			roleTitle = "Movie Blogger Name");
-
-		Permissions.definePermissionViaJSONAPI(
-			resourceAction = "ADD_ENTRY",
-			resourceName = "com.liferay.blogs",
-			roleTitle = "Movie Blogger Name",
-			roleType = "site");
-
-		Permissions.definePermissionViaJSONAPI(
-			resourceAction = "VIEW",
-			resourceName = "com.liferay.blogs.model.BlogsEntry",
-			roleTitle = "Movie Blogger Name",
-			roleType = "site");
-
-		for (var resourceActionIndex : list "VIEW,ADD_TO_PAGE") {
-			Permissions.definePermissionViaJSONAPI(
-				resourceAction = "${resourceActionIndex}",
-				resourceName = "com_liferay_asset_publisher_web_portlet_AssetPublisherPortlet",
-				roleTitle = "Movie Blogger Name",
-				roleType = "site");
-		}
-
-		JSONRole.addSiteRole(
-			roleKey = "Music Fan Name",
-			roleTitle = "Music Fan Name");
-
-		for (var resourceActionIndex : list "VIEW,ADD_CATEGORY,ADD_MESSAGE") {
-			Permissions.definePermissionViaJSONAPI(
-				resourceAction = "${resourceActionIndex}",
-				resourceName = "com.liferay.message.boards",
-				roleTitle = "Music Fan Name",
-				roleType = "site");
-		}
-
-		for (var resourceActionIndex : list "VIEW,ADD_MESSAGE") {
-			Permissions.definePermissionViaJSONAPI(
-				resourceAction = "${resourceActionIndex}",
-				resourceName = "com.liferay.message.boards.kernel.model.MBCategory",
-				roleTitle = "Music Fan Name",
-				roleType = "site");
-		}
-
-		Permissions.definePermissionViaJSONAPI(
-			resourceAction = "VIEW",
-			resourceName = "com.liferay.message.boards.kernel.model.MBMessage",
-			roleTitle = "Music Fan Name",
-			roleType = "site");
-
-		for (var resourceActionIndex : list "VIEW,ADD_TO_PAGE") {
-			Permissions.definePermissionViaJSONAPI(
-				resourceAction = "${resourceActionIndex}",
-				resourceName = "com_liferay_asset_publisher_web_portlet_AssetPublisherPortlet",
-				roleTitle = "Music Fan Name",
-				roleType = "site");
-		}
-
-		JSONRole.addSiteRole(
-			roleKey = "Sports Journalist Name",
-			roleTitle = "Sports Journalist Name");
-
-		for (var resourceActionIndex : list "ADD_DISCUSSION,DELETE,DELETE_DISCUSSION,EXPIRE,PERMISSIONS,SUBSCRIBE,UPDATE,UPDATE_DISCUSSION,VIEW") {
-			Permissions.definePermissionViaJSONAPI(
-				resourceAction = "${resourceActionIndex}",
-				resourceName = "com.liferay.journal.model.JournalArticle",
-				roleTitle = "Sports Journalist Name",
-				roleType = "site");
-		}
-
-		for (var resourceActionIndex : list "ADD_ARTICLE,ADD_FEED,ADD_FOLDER,ADD_STRUCTURE,ADD_TEMPLATE,PERMISSIONS,SUBSCRIBE,UPDATE,VIEW") {
-			Permissions.definePermissionViaJSONAPI(
-				resourceAction = "${resourceActionIndex}",
-				resourceName = "com.liferay.journal",
-				roleTitle = "Sports Journalist Name",
-				roleType = "site");
-		}
-
-		for (var resourceActionIndex : list "VIEW,ADD_TO_PAGE") {
-			Permissions.definePermissionViaJSONAPI(
-				resourceAction = "${resourceActionIndex}",
-				resourceName = "com_liferay_asset_publisher_web_portlet_AssetPublisherPortlet",
-				roleTitle = "Sports Journalist Name",
-				roleType = "site");
-		}
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "People",
-			portlet = "Memberships");
-
-		Site.assignUserAsMemberCP(
-			userFirstName = "userfn1",
-			userLastName = "userln1",
-			userScreenName = "usersn1");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "People",
-			portlet = "Memberships");
-
-		Site.assignOrganizationAsMemberCP(orgName = "Organization Name 2");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "People",
-			portlet = "Memberships");
-
-		Site.assignUserGroupAsMemberCP(userGroupName = "UG UserGroup3 Name");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "People",
-			portlet = "Memberships");
-
-		Site.assignSiteRoleCP(
-			resourceName = "userfn1 userln1",
-			roleTitle = "Music Fan Name");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "People",
-			portlet = "Memberships");
-
-		Site.assignSiteRoleCP(
-			resourceName = "userfn2 userln2",
-			roleTitle = "Movie Blogger Name");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "People",
-			portlet = "Memberships");
-
-		Navigator.gotoNavItem(navItem = "User Groups");
-
-		Site.assignSiteRoleToUserGroup(
-			roleName = "Sports Journalist Name",
-			userGroupName = "UG UserGroup3 Name");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		Portlet.addPG(portletName = "Asset Publisher");
-
-		Navigator.openSiteURL(siteName = "Site Name");
-
-		Portlet.addPG(portletName = "Message Boards");
-
-		User.logoutPG();
-
-		User.loginUserPG(
-			password = "test",
-			userEmailAddress = "userea1@liferay.com");
-
-		Navigator.gotoSitePage(
-			pageName = "Asset Publisher Page",
-			siteName = "Site Name");
-
-		AssertTextEquals(
-			key_portletTitleName = "Message Boards",
-			locator1 = "Portlet#SPECIFIC_TITLE",
-			value1 = "Message Boards");
-
-		AssertTextEquals(
-			key_portletTitleName = "Asset Publisher",
-			locator1 = "Portlet#SPECIFIC_TITLE",
-			value1 = "Asset Publisher");
-
-		MessageboardsThread.addPG(
-			threadBody = "This is a thread by usersn1",
-			threadSubject = "Music Thread 1");
-
-		User.logoutPG();
-
-		User.loginUserPG(
-			password = "test",
-			userEmailAddress = "userea2@liferay.com");
-
-		Navigator.gotoSitePage(
-			pageName = "Asset Publisher Page",
-			siteName = "Site Name");
-
-		AssertTextEquals(
-			key_portletTitleName = "Message Boards",
-			locator1 = "Portlet#SPECIFIC_TITLE",
-			value1 = "Message Boards");
-
-		AssertTextEquals(
-			key_portletTitleName = "Asset Publisher",
-			locator1 = "Portlet#SPECIFIC_TITLE",
-			value1 = "Asset Publisher");
-
-		AssertElementNotPresent(locator1 = "MessageBoards#ADD_CATEGORY_BUTTON");
-
-		Blogs.addViaAP(
-			entryContent = "This is a movie blog by usersn2",
-			entryTitle = "Movie Blog");
-
-		Navigator.gotoSitePage(
-			pageName = "MB Page",
-			siteName = "Organization Name 2");
-
-		AssertTextEquals(
-			key_portletTitleName = "Message Boards",
-			locator1 = "Portlet#SPECIFIC_TITLE",
-			value1 = "Message Boards");
-
-		AssertTextEquals(
-			locator1 = "Button#ADD_CATEGORY",
-			value1 = "Add Category");
-
-		AssertTextEquals(
-			locator1 = "Button#NEW_THREAD",
-			value1 = "New Thread");
-
-		User.logoutPG();
-
-		User.loginUserPG(
-			password = "test",
-			userEmailAddress = "userea3@liferay.com");
-
-		Navigator.gotoSitePage(
-			pageName = "Asset Publisher Page",
-			siteName = "Site Name");
-
-		AssertTextEquals(
-			key_portletTitleName = "Message Boards",
-			locator1 = "Portlet#SPECIFIC_TITLE",
-			value1 = "Message Boards");
-
-		AssertTextEquals(
-			key_portletTitleName = "Asset Publisher",
-			locator1 = "Portlet#SPECIFIC_TITLE",
-			value1 = "Asset Publisher");
-
-		AssertElementNotPresent(locator1 = "Button#ADD_CATEGORY");
-
-		WebContent.addPGViaAP(
-			webContentContent = "This article is by usersn3, a member of user group 3 but not site name 1",
-			webContentTitle = "User Group Article");
-
-		User.logoutPG();
-
-		User.loginUserPG(
-			password = "test",
-			userEmailAddress = "test@liferay.com");
-	}
-
-	@priority = "4"
 	test SiteRoleBookmarksInlinePermissions {
-		property osgi.app.includes = "bookmarks";
-		property portal.release = "false";
-
 		var siteName = TestCase.getSiteName(siteName = "${siteName}");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Roles");
+		Role.openRolesAdmin();
 
 		RoleNavigator.gotoRoleType(roleType = "Site");
 
 		Role.add(roleTitle = "Roles Siterole Name");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Roles");
+		Role.openRolesAdmin();
+
+		// The define permission via json macro is not able to change the permission scope
 
 		Role.definePermissionCmdCP(
 			permissionDefinitionKey = "SITE_ADMIN_APPLICATIONS_BOOKMARKS_RESOURCE_PERMISSIONS_BOOKMARKS_ENTRY_VIEW_CHECKBOX",
@@ -986,7 +585,7 @@ definition {
 			portlet = "Pages",
 			site = "${siteName}");
 
-		PagesAdmin.addPublicPage(pageName = "Bookmarks Page");
+		PagesAdmin.addPage(pageName = "Bookmarks Page");
 
 		Navigator.gotoPage(pageName = "Bookmarks Page");
 
@@ -1134,7 +733,7 @@ definition {
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(
+		PagesAdmin.addPage(
 			pageName = "USA Ice Hockey Team Search",
 			pageTemplateName = "Search");
 
@@ -1251,7 +850,7 @@ definition {
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(
+		PagesAdmin.addPage(
 			pageName = "Search Page",
 			pageTemplateName = "Search");
 
@@ -1316,9 +915,9 @@ definition {
 			pageName = "Search Page",
 			siteName = "Organization Name");
 
-		SearchPortlets.searchWidget(searchTerm = "Test Blog");
+		SearchPortlets.searchWidget(searchTerm = "\"Test Blog\"");
 
-		SearchResultPortlet.viewNoSearchResults(searchTerm = "Test Blog");
+		SearchResultPortlet.viewNoSearchResults(searchTerm = "\"Test Blog\"");
 
 		User.logoutPG();
 
@@ -1515,28 +1114,28 @@ definition {
 
 		Role.add(roleTitle = "Roles Regrole Name");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Roles");
+		Role.openRolesAdmin();
+
+		// This macro can not be replaced by the one define permission via json, since no additional role automatically added when using json api
 
 		Role.definePermissionCP(
 			permissionDefinitionKey = "CONTROL_PANEL_USERS_USERS_AND_ORGANIZATIONS_GENERAL_PERMISSIONS_ACCESS_IN_CONTROL_PANEL_CHECKBOX",
 			permissionDefinitionValue = "Access in Control Panel",
+			permissionNavigationKey = "CONTROL_PANEL_USERS_USERS_AND_ORGANIZATIONS",
+			permissionNavigationValue = "Users and Organizations",
 			roleTitle = "Roles Regrole Name");
 
 		Role.viewPermissionCP(
 			permissionDefinitionValue = "View Control Panel Menu",
 			permissionNavigationValue = "Portal");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Roles");
+		Role.openRolesAdmin();
 
 		Role.definePermissionCP(
 			permissionDefinitionKey = "SITE_ADMIN_PAGES_SITE_PAGES_GENERAL_PERMISSIONS_ACCESS_IN_SITE_ADMINISTRATION_CHECKBOX",
 			permissionDefinitionValue = "Access in Site and Asset Library Administration",
+			permissionNavigationKey = "SITE_ADMIN_PAGES_SITE_PAGES",
+			permissionNavigationValue = "Pages",
 			roleTitle = "Roles Regrole Name");
 
 		Role.viewPermissionCP(
@@ -1544,70 +1143,37 @@ definition {
 			permissionNavigationValue = "Settings > Site");
 	}
 
-	@description = "This is a use case for LPS-97321. All subdirectories in Define Permissions should display."
-	@priority = "4"
-	test ViewDefinePermissionsSubdirectoriesDisplay {
-		var siteName = TestCase.getSiteName(siteName = "${siteName}");
-
-		JSONRole.addRegularRole(
-			roleKey = "User Permission",
-			roleTitle = "User Permission");
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Roles");
-
-		Role.viewCP(roleTitle = "User Permission");
-
-		Navigator.gotoNavItem(navItem = "Define Permissions");
-
-		Role.viewPermissionSubdirectory(
-			navItem = "Control Panel",
-			subItemList = "General Permissions,Users,Sites,Configuration,Security,System,Marketplace,Accounts");
-
-		Role.viewPermissionSubdirectory(
-			navItem = "Site and Asset Library Administration",
-			subItemList = "Site Builder,Content & Data,Categorization,Recycle Bin,People,Configuration,Publishing,Applications");
-
-		Role.viewPermissionSubdirectory(
-			navItem = "User",
-			subItemList = "Notifications,My Submissions,My Workflow Tasks,Account Settings,My Organizations");
-
-		Role.viewPermissionSubdirectory(
-			navItem = "Applications Menu",
-			subItemList = "Content,Workflow,Communication");
-	}
-
 	@priority = "4"
 	test ViewDocumentsAndMediaAddRepositoryPermissionSiteMemberRole {
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Roles");
+		Permissions.definePermissionViaJSONAPI(
+			resourceAction = "ADD_REPOSITORY",
+			resourceName = "com.liferay.document.library",
+			roleTitle = "Site Member");
 
-		Role.definePermissionCP(
-			permissionDefinitionKey = "SITE_ADMIN_APPLICATIONS_DOCUMENTS_AND_MEDIA_RESOURCE_PERMISSIONS_DOCUMENTS_ADD_REPOSITORY_CHECKBOX",
-			permissionDefinitionValue = "Add Repository",
-			roleTitle = "Site Member",
-			roleType = "Site");
+		Role.openRolesAdmin();
 
 		AssertTextNotPresent(value1 = "action.ADD_REPOSITORY");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Roles");
+		Role.openRolesAdmin();
 
 		Role.removePermissionCP(
 			permissionDefinitionKey = "SITE_ADMIN_APPLICATIONS_DOCUMENTS_AND_MEDIA_RESOURCE_PERMISSIONS_DOCUMENTS_ADD_REPOSITORY_CHECKBOX",
 			permissionDefinitionValue = "Add Repository",
 			roleTitle = "Site Member",
 			roleType = "Site");
+
+		var key_permissionDefinitionValue = "Add Repository";
+		var key_permissionNavigationValue = "SITE_ADMIN_APPLICATIONS_DOCUMENTS_AND_MEDIA_RESOURCE_PERMISSIONS_DOCUMENTS_ADD_REPOSITORY_CHECKBOX";
+
+		AssertElementNotPresent(locator1 = "RolesPermissionsSummary#PERMISSION_TABLE_PERMISSIONS");
+
+		AssertElementNotPresent(locator1 = "RolesPermissionsSummary#PERMISSION_TABLE_REMOVE");
 	}
 
 	@priority = "4"
 	test ViewPrivatePageSiteMemberRole {
+		property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
+
 		var siteName = TestCase.getSiteName(siteName = "${siteName}");
 
 		JSONUser.addUser(
@@ -1667,6 +1233,8 @@ definition {
 
 	@priority = "4"
 	test ViewRegRolePermissionsDefaultView {
+		property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
+
 		JSONRole.addRegularRole(
 			roleKey = "Roles Regrole Name",
 			roleTitle = "Roles Regrole Name");
@@ -1768,13 +1336,144 @@ definition {
 
 		AssertVisible(locator1 = "Button#PLUS");
 
-		Pause(locator1 = "3000");
-
 		LexiconEntry.gotoAdd();
 
-		Pause(locator1 = "3000");
-
 		WebContent.viewWCViewableByPermissions();
+	}
+
+	@description = "This is a use case for LPS-115692."
+	@priority = "4"
+	test ViewTeamUserOnStagingSite {
+		task ("Add new Site Role") {
+			JSONRole.addSiteRole(
+				roleKey = "Roles Siterole Name",
+				roleTitle = "Roles Siterole Name");
+		}
+
+		task ("Define permission to new Site Role") {
+			for (var resourceActionIndex : list "VIEW_SITE_ADMINISTRATION,VIEW_STAGING") {
+				Permissions.definePermissionViaJSONAPI(
+					resourceAction = "${resourceActionIndex}",
+					resourceName = "com.liferay.portal.kernel.model.Group",
+					roleTitle = "Roles Siterole Name",
+					roleType = "site");
+			}
+
+			Permissions.definePermissionViaJSONAPI(
+				resourceAction = "VIEW",
+				resourceName = "com.liferay.journal",
+				roleTitle = "Roles Siterole Name",
+				roleType = "site");
+
+			Permissions.definePermissionViaJSONAPI(
+				resourceAction = "ACCESS_IN_CONTROL_PANEL",
+				resourceName = "com_liferay_journal_web_portlet_JournalPortlet",
+				roleTitle = "Roles Siterole Name",
+				roleType = "site");
+		}
+
+		task ("Add new User") {
+			JSONUser.addUser(
+				userEmailAddress = "userea@liferay.com",
+				userFirstName = "userfn",
+				userLastName = "userln",
+				userScreenName = "usersn");
+		}
+
+		var siteName = TestCase.getSiteName(siteName = "${siteName}");
+
+		task ("Assgin Default Site to new user") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Users",
+				panel = "Control Panel",
+				portlet = "Users and Organizations");
+
+			User.editUserSiteCP(
+				siteName = "${siteName}",
+				userScreenName = "usersn");
+		}
+
+		task ("Assgin New Site Role to new user") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Users",
+				panel = "Control Panel",
+				portlet = "Users and Organizations");
+
+			User.assignSiteRoleCP(
+				siteRoleName = "Roles Siterole Name",
+				userScreenName = "usersn");
+		}
+
+		task ("Add New team and assign new user to team") {
+			Navigator.openURL();
+
+			ProductMenu.gotoPortlet(
+				category = "People",
+				portlet = "Teams");
+
+			PortletEntry.viewEmptyMessage(entity = "Teams");
+
+			ProductMenu.gotoPortlet(
+				category = "People",
+				portlet = "Teams");
+
+			Team.addCP(
+				teamDescription = "Site Team Description",
+				teamName = "Site Team Name");
+
+			Team.assignMembersCP(
+				teamName = "Site Team Name",
+				userScreenName = "usersn");
+		}
+
+		task ("Add a new web content folder") {
+			JSONWebcontent.addFolder(
+				folderName = "WC Folder Name",
+				groupName = "Guest");
+		}
+
+		task ("Add a permission for new site role") {
+			ProductMenu.gotoPortlet(
+				category = "Content & Data",
+				portlet = "Web Content");
+
+			Click.waitForMenuToggleJSClick(
+				key_webContentTitle = "WC Folder Name",
+				locator1 = "WC#ENTRY_LIST_MENULIST_ICON");
+
+			MenuItem.click(menuItem = "Permissions");
+
+			Role.definePermissionPG(
+				permissionDefinitionKey = "INLINE_PERMISSIONS_ADD_WEB_CONTENT_CHECKBOX",
+				roleTitle = "Roles Siterole Name");
+
+			Refresh();
+		}
+
+		var siteName = TestCase.getSiteName(siteName = "${siteName}");
+
+		task ("Activate Staging of Default site") {
+			ProductMenu.gotoPortlet(
+				category = "Publishing",
+				portlet = "Staging",
+				site = "Guest");
+
+			Staging.activateStagingCP(siteName = "${siteName}");
+		}
+
+		task ("Assert team user on staging site") {
+			ProductMenu.gotoStagingSite(site = "${siteName}");
+
+			ProductMenu.gotoPortlet(
+				category = "People",
+				portlet = "Teams");
+
+			Team.viewMemberCP(
+				membershipType = "User",
+				teamName = "Site Team Name",
+				userFirstName = "userfn",
+				userLastName = "userln");
+		}
 	}
 
 }

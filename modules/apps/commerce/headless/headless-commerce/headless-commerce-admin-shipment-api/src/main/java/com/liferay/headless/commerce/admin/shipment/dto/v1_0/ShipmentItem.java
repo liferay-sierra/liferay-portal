@@ -123,8 +123,36 @@ public class ShipmentItem implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
 	protected Date createDate;
 
-	@DecimalMin("0")
 	@Schema
+	public String getExternalReferenceCode() {
+		return externalReferenceCode;
+	}
+
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		this.externalReferenceCode = externalReferenceCode;
+	}
+
+	@JsonIgnore
+	public void setExternalReferenceCode(
+		UnsafeSupplier<String, Exception> externalReferenceCodeUnsafeSupplier) {
+
+		try {
+			externalReferenceCode = externalReferenceCodeUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String externalReferenceCode;
+
+	@DecimalMin("0")
+	@Schema(example = "30130")
 	public Long getId() {
 		return id;
 	}
@@ -179,7 +207,7 @@ public class ShipmentItem implements Serializable {
 	protected Date modifiedDate;
 
 	@DecimalMin("0")
-	@Schema
+	@Schema(example = "30130")
 	public Long getOrderItemId() {
 		return orderItemId;
 	}
@@ -209,7 +237,7 @@ public class ShipmentItem implements Serializable {
 	protected Long orderItemId;
 
 	@DecimalMin("0")
-	@Schema
+	@Schema(example = "1")
 	public Integer getQuantity() {
 		return quantity;
 	}
@@ -238,8 +266,40 @@ public class ShipmentItem implements Serializable {
 	@NotNull
 	protected Integer quantity;
 
-	@DecimalMin("0")
 	@Schema
+	public String getShipmentExternalReferenceCode() {
+		return shipmentExternalReferenceCode;
+	}
+
+	public void setShipmentExternalReferenceCode(
+		String shipmentExternalReferenceCode) {
+
+		this.shipmentExternalReferenceCode = shipmentExternalReferenceCode;
+	}
+
+	@JsonIgnore
+	public void setShipmentExternalReferenceCode(
+		UnsafeSupplier<String, Exception>
+			shipmentExternalReferenceCodeUnsafeSupplier) {
+
+		try {
+			shipmentExternalReferenceCode =
+				shipmentExternalReferenceCodeUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String shipmentExternalReferenceCode;
+
+	@DecimalMin("0")
+	@Schema(example = "30130")
 	public Long getShipmentId() {
 		return shipmentId;
 	}
@@ -267,7 +327,7 @@ public class ShipmentItem implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
 	protected Long shipmentId;
 
-	@Schema
+	@Schema(example = "John")
 	public String getUserName() {
 		return userName;
 	}
@@ -295,8 +355,36 @@ public class ShipmentItem implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
 	protected String userName;
 
+	@Schema(example = "true")
+	public Boolean getValidateInventory() {
+		return validateInventory;
+	}
+
+	public void setValidateInventory(Boolean validateInventory) {
+		this.validateInventory = validateInventory;
+	}
+
+	@JsonIgnore
+	public void setValidateInventory(
+		UnsafeSupplier<Boolean, Exception> validateInventoryUnsafeSupplier) {
+
+		try {
+			validateInventory = validateInventoryUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected Boolean validateInventory;
+
 	@DecimalMin("0")
-	@Schema
+	@Schema(example = "30130")
 	public Long getWarehouseId() {
 		return warehouseId;
 	}
@@ -379,6 +467,20 @@ public class ShipmentItem implements Serializable {
 			sb.append("\"");
 		}
 
+		if (externalReferenceCode != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"externalReferenceCode\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(externalReferenceCode));
+
+			sb.append("\"");
+		}
+
 		if (id != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -423,6 +525,20 @@ public class ShipmentItem implements Serializable {
 			sb.append(quantity);
 		}
 
+		if (shipmentExternalReferenceCode != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"shipmentExternalReferenceCode\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(shipmentExternalReferenceCode));
+
+			sb.append("\"");
+		}
+
 		if (shipmentId != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -445,6 +561,16 @@ public class ShipmentItem implements Serializable {
 			sb.append(_escape(userName));
 
 			sb.append("\"");
+		}
+
+		if (validateInventory != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"validateInventory\": ");
+
+			sb.append(validateInventory);
 		}
 
 		if (warehouseId != null) {

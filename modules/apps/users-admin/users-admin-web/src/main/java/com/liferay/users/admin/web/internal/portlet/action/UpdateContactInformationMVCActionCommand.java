@@ -50,8 +50,8 @@ import com.liferay.portal.kernel.service.PhoneService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.WebsiteLocalService;
 import com.liferay.portal.kernel.service.WebsiteService;
-import com.liferay.portal.kernel.service.permission.OrganizationPermissionUtil;
-import com.liferay.portal.kernel.service.permission.UserPermissionUtil;
+import com.liferay.portal.kernel.service.permission.OrganizationPermission;
+import com.liferay.portal.kernel.service.permission.UserPermission;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
@@ -80,7 +80,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Drew Brokke
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + UsersAdminPortletKeys.MY_ACCOUNT,
 		"javax.portlet.name=" + UsersAdminPortletKeys.MY_ORGANIZATIONS,
@@ -163,13 +162,13 @@ public class UpdateContactInformationMVCActionCommand
 		throws PortalException {
 
 		if (Objects.equals(className, Organization.class.getName())) {
-			OrganizationPermissionUtil.check(
+			_organizationPermission.check(
 				permissionChecker, classPK, ActionKeys.UPDATE);
 		}
 		else {
 			User user = _userLocalService.getUserByContactId(classPK);
 
-			UserPermissionUtil.check(
+			_userPermission.check(
 				permissionChecker, user.getUserId(), ActionKeys.UPDATE);
 		}
 	}
@@ -253,6 +252,9 @@ public class UpdateContactInformationMVCActionCommand
 	private EmailAddressService _emailAddressService;
 
 	@Reference
+	private OrganizationPermission _organizationPermission;
+
+	@Reference
 	private OrgLaborLocalService _orgLaborLocalService;
 
 	@Reference
@@ -269,6 +271,9 @@ public class UpdateContactInformationMVCActionCommand
 
 	@Reference
 	private UserLocalService _userLocalService;
+
+	@Reference
+	private UserPermission _userPermission;
 
 	@Reference
 	private UsersAdmin _usersAdmin;

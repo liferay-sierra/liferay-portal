@@ -24,7 +24,7 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
-import com.liferay.portal.kernel.service.permission.UserPermissionUtil;
+import com.liferay.portal.kernel.service.permission.UserPermission;
 
 import javax.servlet.ServletContext;
 
@@ -35,7 +35,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Michael C. Han
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + ContactsPortletKeys.CONCTACTS_CENTER,
 	service = AssetRendererFactory.class
 )
@@ -99,30 +98,19 @@ public class UserAssetRendererFactory extends BaseAssetRendererFactory<User> {
 			PermissionChecker permissionChecker, long classPK, String actionId)
 		throws Exception {
 
-		return UserPermissionUtil.contains(
-			permissionChecker, classPK, actionId);
+		return _userPermission.contains(permissionChecker, classPK, actionId);
 	}
 
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.contacts.web)",
-		unbind = "-"
-	)
-	public void setServletContext(ServletContext servletContext) {
-		_servletContext = servletContext;
-	}
-
-	@Reference(unbind = "-")
-	protected void setGroupLocalService(GroupLocalService groupLocalService) {
-		_groupLocalService = groupLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setUserLocalService(UserLocalService userLocalService) {
-		_userLocalService = userLocalService;
-	}
-
+	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference(target = "(osgi.web.symbolicname=com.liferay.contacts.web)")
 	private ServletContext _servletContext;
+
+	@Reference
 	private UserLocalService _userLocalService;
+
+	@Reference
+	private UserPermission _userPermission;
 
 }

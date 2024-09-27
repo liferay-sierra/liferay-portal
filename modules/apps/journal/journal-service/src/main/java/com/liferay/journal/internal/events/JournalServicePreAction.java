@@ -16,6 +16,7 @@ package com.liferay.journal.internal.events;
 
 import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.service.AssetEntryLocalService;
+import com.liferay.asset.util.LinkedAssetEntryIdsUtil;
 import com.liferay.journal.exception.NoSuchArticleException;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.service.JournalArticleService;
@@ -83,6 +84,9 @@ public class JournalServicePreAction extends Action {
 
 			httpServletRequest.setAttribute(
 				WebKeys.LAYOUT_ASSET_ENTRY, layoutAssetEntry);
+
+			LinkedAssetEntryIdsUtil.addLinkedAssetEntryId(
+				httpServletRequest, layoutAssetEntry.getEntryId());
 		}
 		catch (NoSuchArticleException noSuchArticleException) {
 			if (_log.isWarnEnabled()) {
@@ -91,26 +95,15 @@ public class JournalServicePreAction extends Action {
 		}
 	}
 
-	@Reference(unbind = "-")
-	protected void setAssetEntryLocalService(
-		AssetEntryLocalService assetEntryLocalService) {
-
-		_assetEntryLocalService = assetEntryLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setJournalArticleService(
-		JournalArticleService journalArticleService) {
-
-		_journalArticleService = journalArticleService;
-	}
-
 	private static final String _PATH_PORTAL_LAYOUT = "/portal/layout";
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		JournalServicePreAction.class);
 
+	@Reference
 	private AssetEntryLocalService _assetEntryLocalService;
+
+	@Reference
 	private JournalArticleService _journalArticleService;
 
 	@Reference

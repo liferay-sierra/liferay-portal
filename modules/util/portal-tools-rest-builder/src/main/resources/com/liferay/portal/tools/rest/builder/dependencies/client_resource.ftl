@@ -79,6 +79,12 @@ public interface ${schemaName}Resource {
 			return new ${schemaName}ResourceImpl(this);
 		}
 
+		public Builder contextPath(String contextPath) {
+			_contextPath = contextPath;
+
+			return this;
+		}
+
 		public Builder endpoint(String host, int port, String scheme) {
 			_host = host;
 			_port = port;
@@ -124,6 +130,7 @@ public interface ${schemaName}Resource {
 		private Builder() {
 		}
 
+		private String _contextPath = "";
 		private Map<String, String> _headers = new LinkedHashMap<>();
 		private String _host = "localhost";
 		private Locale _locale;
@@ -260,7 +267,7 @@ public interface ${schemaName}Resource {
 
 				<#list javaMethodSignature.javaMethodParameters as javaMethodParameter>
 					<#if stringUtil.equals(javaMethodParameter.parameterType, "java.util.Date")>
-						DateFormat liferayToJSONDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+						DateFormat liferayToJSONDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXX");
 
 						<#break>
 					</#if>
@@ -305,7 +312,7 @@ public interface ${schemaName}Resource {
 					</#if>
 				</#list>
 
-				httpInvoker.path(_builder._scheme + "://" + _builder._host + ":" + _builder._port + "/o${configYAML.application.baseURI}/${openAPIYAML.info.version}${javaMethodSignature.path}");
+				httpInvoker.path(_builder._scheme + "://" + _builder._host + ":" + _builder._port + _builder._contextPath + "/o${configYAML.application.baseURI}/${openAPIYAML.info.version}${javaMethodSignature.path}");
 
 				<#list javaMethodSignature.pathJavaMethodParameters as javaMethodParameter>
 					httpInvoker.path("${javaMethodParameter.parameterName}", ${javaMethodParameter.parameterName});

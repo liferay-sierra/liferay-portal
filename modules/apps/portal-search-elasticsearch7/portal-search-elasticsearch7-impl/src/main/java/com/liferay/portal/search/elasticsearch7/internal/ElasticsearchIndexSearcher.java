@@ -181,8 +181,7 @@ public class ElasticsearchIndexSearcher extends BaseIndexSearcher {
 
 				_log.info(
 					StringBundler.concat(
-						"Searching ", query, " took ", stopWatch.getTime(),
-						" ms"));
+						"Searching took ", stopWatch.getTime(), " ms"));
 			}
 		}
 	}
@@ -231,16 +230,9 @@ public class ElasticsearchIndexSearcher extends BaseIndexSearcher {
 
 				_log.info(
 					StringBundler.concat(
-						"Searching ", query.toString(), " took ",
-						stopWatch.getTime(), " ms"));
+						"Searching took ", stopWatch.getTime(), " ms"));
 			}
 		}
-	}
-
-	@Override
-	@Reference(target = "(search.engine.impl=Elasticsearch)", unbind = "-")
-	public void setQuerySuggester(QuerySuggester querySuggester) {
-		super.setQuerySuggester(querySuggester);
 	}
 
 	protected SearchSearchRequest createSearchSearchRequest(
@@ -280,12 +272,10 @@ public class ElasticsearchIndexSearcher extends BaseIndexSearcher {
 		searchSearchRequest.setLocale(queryConfig.getLocale());
 		searchSearchRequest.setHighlightRequireFieldMatch(
 			queryConfig.isHighlightRequireFieldMatch());
-
-		boolean luceneSyntax = GetterUtil.getBoolean(
-			searchContext.getAttribute(
-				SearchContextAttributes.ATTRIBUTE_KEY_LUCENE_SYNTAX));
-
-		searchSearchRequest.setLuceneSyntax(luceneSyntax);
+		searchSearchRequest.setLuceneSyntax(
+			GetterUtil.getBoolean(
+				searchContext.getAttribute(
+					SearchContextAttributes.ATTRIBUTE_KEY_LUCENE_SYNTAX)));
 
 		String preference = (String)searchContext.getAttribute(
 			ElasticsearchSearchContextAttributes.
@@ -307,10 +297,13 @@ public class ElasticsearchIndexSearcher extends BaseIndexSearcher {
 		searchSearchRequest.setSorts(searchContext.getSorts());
 		searchSearchRequest.setSorts(searchRequest.getSorts());
 		searchSearchRequest.setStats(searchContext.getStats());
-		searchSearchRequest.setTrackTotalHits(
-			_elasticsearchConfigurationWrapper.trackTotalHits());
 
 		return searchSearchRequest;
+	}
+
+	@Override
+	protected QuerySuggester getQuerySuggester() {
+		return _querySuggester;
 	}
 
 	protected boolean handle(Exception exception) {
@@ -339,18 +332,6 @@ public class ElasticsearchIndexSearcher extends BaseIndexSearcher {
 		return false;
 	}
 
-	@Reference(unbind = "-")
-	protected void setElasticsearchConfigurationWrapper(
-		ElasticsearchConfigurationWrapper elasticsearchConfigurationWrapper) {
-
-		_elasticsearchConfigurationWrapper = elasticsearchConfigurationWrapper;
-	}
-
-	@Reference(unbind = "-")
-	protected void setIndexNameBuilder(IndexNameBuilder indexNameBuilder) {
-		_indexNameBuilder = indexNameBuilder;
-	}
-
 	protected void setIndexNames(
 		BaseSearchRequest baseSearchRequest, SearchRequest searchRequest,
 		SearchContext searchContext) {
@@ -359,36 +340,10 @@ public class ElasticsearchIndexSearcher extends BaseIndexSearcher {
 			_getIndexes(searchRequest, searchContext));
 	}
 
-	@Reference(unbind = "-")
-	protected void setProps(Props props) {
-		_props = props;
-	}
-
 	protected void setQuery(
 		BaseSearchRequest baseSearchRequest, SearchRequest searchRequest) {
 
 		baseSearchRequest.setQuery(searchRequest.getQuery());
-	}
-
-	@Reference(target = "(search.engine.impl=Elasticsearch)", unbind = "-")
-	protected void setSearchEngineAdapter(
-		SearchEngineAdapter searchEngineAdapter) {
-
-		_searchEngineAdapter = searchEngineAdapter;
-	}
-
-	@Reference(unbind = "-")
-	protected void setSearchRequestBuilderFactory(
-		SearchRequestBuilderFactory searchRequestBuilderFactory) {
-
-		_searchRequestBuilderFactory = searchRequestBuilderFactory;
-	}
-
-	@Reference(unbind = "-")
-	protected void setSearchResponseBuilderFactory(
-		SearchResponseBuilderFactory searchResponseBuilderFactory) {
-
-		_searchResponseBuilderFactory = searchResponseBuilderFactory;
 	}
 
 	private CountSearchRequest _createCountSearchRequest(
@@ -493,6 +448,8 @@ public class ElasticsearchIndexSearcher extends BaseIndexSearcher {
 			searchRequest.getPostFilterComplexQueryParts());
 		baseSearchRequest.setRescores(searchRequest.getRescores());
 		baseSearchRequest.setStatsRequests(searchRequest.getStatsRequests());
+		baseSearchRequest.setTrackTotalHits(
+			_elasticsearchConfigurationWrapper.trackTotalHits());
 
 		_setAggregations(baseSearchRequest, searchRequest);
 		_setConnectionId(baseSearchRequest, searchRequest);
@@ -547,12 +504,26 @@ public class ElasticsearchIndexSearcher extends BaseIndexSearcher {
 	private static final Log _log = LogFactoryUtil.getLog(
 		ElasticsearchIndexSearcher.class);
 
+	@Reference
 	private volatile ElasticsearchConfigurationWrapper
 		_elasticsearchConfigurationWrapper;
+
+	@Reference
 	private IndexNameBuilder _indexNameBuilder;
+
+	@Reference
 	private Props _props;
+
+	@Reference(target = "(search.engine.impl=Elasticsearch)")
+	private QuerySuggester _querySuggester;
+
+	@Reference(target = "(search.engine.impl=Elasticsearch)")
 	private SearchEngineAdapter _searchEngineAdapter;
+
+	@Reference
 	private SearchRequestBuilderFactory _searchRequestBuilderFactory;
+
+	@Reference
 	private SearchResponseBuilderFactory _searchResponseBuilderFactory;
 
 }

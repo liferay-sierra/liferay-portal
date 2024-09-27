@@ -39,19 +39,29 @@ const SimpleInputModal = ({
 	initialVisible,
 	mainFieldLabel,
 	mainFieldName,
+	mainFieldValue = '',
+	method = 'POST',
 	namespace,
 	onFormSuccess,
 	placeholder,
 }) => {
 	const isMounted = useIsMounted();
 	const [errorMessage, setErrorMessage] = useState();
+	const [highlighted, setHighlighted] = useState(false);
 	const [loadingResponse, setLoadingResponse] = useState(false);
 	const [visible, setVisible] = useState(initialVisible);
-	const [inputValue, setInputValue] = useState('');
+	const [inputValue, setInputValue] = useState(mainFieldValue);
 	const [isChecked, setChecked] = useState(checkboxFieldValue);
 
 	const handleFormError = (responseContent) => {
 		setErrorMessage(responseContent.error || '');
+	};
+
+	const handleMainFieldRef = (mainFieldElement) => {
+		if (mainFieldElement && mainFieldValue && !highlighted) {
+			mainFieldElement.setSelectionRange(0, mainFieldValue.length);
+			setHighlighted(true);
+		}
 	};
 
 	const _handleSubmit = (event) => {
@@ -63,7 +73,7 @@ const SimpleInputModal = ({
 
 		fetch(formSubmitURL, {
 			body: formData,
-			method: 'POST',
+			method,
 		})
 			.then((response) => response.json())
 			.then((responseContent) => {
@@ -156,6 +166,7 @@ const SimpleInputModal = ({
 									setInputValue(event.target.value)
 								}
 								placeholder={placeholder}
+								ref={handleMainFieldRef}
 								required
 								type="text"
 								value={inputValue}

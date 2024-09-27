@@ -5,7 +5,9 @@ definition {
 
 		LexiconEntry.gotoAdd();
 
-		PortletEntry.inputName(name = "${userGroupName}");
+		Type.type(
+			locator1 = "TextInput#NAME",
+			value1 = "${userGroupName}");
 
 		if ("${selectSiteTemplate}" == "true") {
 			Select(
@@ -34,7 +36,7 @@ definition {
 			Alert.viewDuplicateErrorMessage();
 		}
 		else if ("${userGroupNameVariation}" == "Null") {
-			Alert.viewRequiredField();
+			Alert.viewSpecificRequiredField(fieldFieldLabel = "Name");
 		}
 		else {
 			Alert.viewSuccessMessage();
@@ -81,8 +83,6 @@ definition {
 		Check(
 			key_userScreenName = "${userScreenName}",
 			locator1 = "UserGroupsAssignUsers#USER_TABLE_CHECKBOX");
-
-		Pause(locator1 = "3000");
 
 		SelectFrameTop();
 
@@ -163,6 +163,16 @@ definition {
 		LexiconEntry.gotoEllipsisMenuItem(
 			menuItem = "Manage Pages",
 			rowEntry = "${userGroupName}");
+	}
+
+	macro gotoProfilePages {
+		Search.searchCP(searchTerm = "${userGroupName}");
+
+		LexiconEntry.gotoEllipsisMenuItem(
+			menuItem = "Go to Profile Pages",
+			rowEntry = "${userGroupName}");
+
+		SelectWindow(locator1 = "Home - ${userGroupName} - ${siteName}");
 	}
 
 	macro openUserGroupsAdmin {

@@ -21,7 +21,7 @@ import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuil
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.ViewTypeItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.ViewTypeItemList;
 import com.liferay.layout.set.prototype.constants.LayoutSetPrototypePortletKeys;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
+import com.liferay.layout.set.prototype.web.internal.servlet.taglib.util.LayoutSetPrototypeActionDropdownItemsProvider;
 import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -29,6 +29,7 @@ import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.LayoutSetPrototype;
 import com.liferay.portal.kernel.portlet.SearchDisplayStyleUtil;
 import com.liferay.portal.kernel.portlet.SearchOrderByUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.LayoutSetPrototypeLocalServiceUtil;
 import com.liferay.portal.kernel.service.permission.PortalPermissionUtil;
@@ -141,6 +142,19 @@ public class LayoutSetPrototypeDisplayContext {
 					LanguageUtil.get(_httpServletRequest, "order-by"));
 			}
 		).build();
+	}
+
+	public List<DropdownItem> getLayoutSetPrototypeActionDropdownItems(
+			LayoutSetPrototype layoutSetPrototype)
+		throws Exception {
+
+		LayoutSetPrototypeActionDropdownItemsProvider
+			layoutSetPrototypeActionDropdownItemsProvider =
+				new LayoutSetPrototypeActionDropdownItemsProvider(
+					layoutSetPrototype, _renderRequest, _renderResponse);
+
+		return layoutSetPrototypeActionDropdownItemsProvider.
+			getActionDropdownItems();
 	}
 
 	public String getOrderByCol() {
@@ -261,14 +275,6 @@ public class LayoutSetPrototypeDisplayContext {
 		return false;
 	}
 
-	public boolean isDisabledManagementBar() {
-		if ((_getTotal() > 0) || !Objects.equals(_getNavigation(), "all")) {
-			return false;
-		}
-
-		return true;
-	}
-
 	public boolean isIconView() {
 		if (Objects.equals(getDisplayStyle(), "icon")) {
 			return true;
@@ -336,16 +342,6 @@ public class LayoutSetPrototypeDisplayContext {
 		return _keywords;
 	}
 
-	private String _getNavigation() {
-		if (Validator.isNotNull(_navigation)) {
-			return _navigation;
-		}
-
-		_navigation = ParamUtil.getString(_httpServletRequest, "navigation");
-
-		return _navigation;
-	}
-
 	private List<DropdownItem> _getOrderByDropdownItems() {
 		return DropdownItemListBuilder.add(
 			dropdownItem -> {
@@ -370,7 +366,6 @@ public class LayoutSetPrototypeDisplayContext {
 	private String _displayStyle;
 	private final HttpServletRequest _httpServletRequest;
 	private String _keywords;
-	private String _navigation;
 	private String _orderByCol;
 	private String _orderByType;
 	private final RenderRequest _renderRequest;

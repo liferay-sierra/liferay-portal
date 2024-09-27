@@ -15,17 +15,17 @@
 package com.liferay.marketplace.app.manager.web.internal.portlet.configuration.icon;
 
 import com.liferay.marketplace.app.manager.web.internal.constants.MarketplaceAppManagerPortletKeys;
-import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.portlet.configuration.icon.BaseJSPPortletConfigurationIcon;
+import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.portlet.LiferayWindowState;
+import com.liferay.portal.kernel.portlet.configuration.icon.BasePortletConfigurationIcon;
 import com.liferay.portal.kernel.portlet.configuration.icon.PortletConfigurationIcon;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
-
-import java.util.ResourceBundle;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.WebKeys;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletResponse;
-
-import javax.servlet.ServletContext;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -39,26 +39,35 @@ import org.osgi.service.component.annotations.Reference;
 	service = PortletConfigurationIcon.class
 )
 public class InstallFromURLPortletConfigurationIcon
-	extends BaseJSPPortletConfigurationIcon {
-
-	@Override
-	public String getJspPath() {
-		return "/configuration/icon/install_from_url.jsp";
-	}
+	extends BasePortletConfigurationIcon {
 
 	@Override
 	public String getMessage(PortletRequest portletRequest) {
-		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-			"content.Language", getLocale(portletRequest), getClass());
-
-		return LanguageUtil.get(resourceBundle, "install-from-url");
+		return _language.get(getLocale(portletRequest), "install-from-url");
 	}
 
 	@Override
 	public String getURL(
 		PortletRequest portletRequest, PortletResponse portletResponse) {
 
-		return "javascript:;";
+		return PortletURLBuilder.create(
+			_portal.getControlPanelPortletURL(
+				portletRequest,
+				MarketplaceAppManagerPortletKeys.MARKETPLACE_APP_MANAGER,
+				PortletRequest.RENDER_PHASE)
+		).setMVCPath(
+			"/install_remote_app.jsp"
+		).setRedirect(
+			() -> {
+				ThemeDisplay themeDisplay =
+					(ThemeDisplay)portletRequest.getAttribute(
+						WebKeys.THEME_DISPLAY);
+
+				return themeDisplay.getURLCurrent();
+			}
+		).setWindowState(
+			LiferayWindowState.POP_UP
+		).buildString();
 	}
 
 	@Override
@@ -72,17 +81,14 @@ public class InstallFromURLPortletConfigurationIcon
 	}
 
 	@Override
-	public boolean isToolTip() {
-		return false;
+	public boolean isUseDialog() {
+		return true;
 	}
 
-	@Override
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.marketplace.app.manager.web)",
-		unbind = "-"
-	)
-	public void setServletContext(ServletContext servletContext) {
-		super.setServletContext(servletContext);
-	}
+	@Reference
+	private Language _language;
+
+	@Reference
+	private Portal _portal;
 
 }

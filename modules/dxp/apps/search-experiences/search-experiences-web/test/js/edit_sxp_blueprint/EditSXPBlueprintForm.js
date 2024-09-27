@@ -66,7 +66,7 @@ function renderEditSXPBlueprintForm(props) {
 			initialDescription={{}}
 			initialSXPElementInstances={[]}
 			initialTitle={{
-				en_US: 'Test Title',
+				'en-US': 'Test Title',
 			}}
 			sxpBlueprintId="0"
 			{...props}
@@ -77,10 +77,12 @@ function renderEditSXPBlueprintForm(props) {
 describe('EditSXPBlueprintForm', () => {
 	global.URL.createObjectURL = jest.fn();
 
-	it('renders the configuration set form', () => {
-		const {container} = renderEditSXPBlueprintForm();
+	it('renders the edit blueprint form without errors', async () => {
+		const {findByText} = renderEditSXPBlueprintForm();
 
-		expect(container).not.toBeNull();
+		const titleElement = await findByText('Test Title');
+
+		expect(titleElement).not.toBeNull();
 	});
 
 	it('renders the query elements', async () => {

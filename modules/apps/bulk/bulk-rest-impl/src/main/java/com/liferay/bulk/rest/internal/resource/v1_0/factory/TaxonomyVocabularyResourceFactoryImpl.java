@@ -14,6 +14,7 @@
 
 package com.liferay.bulk.rest.internal.resource.v1_0.factory;
 
+import com.liferay.bulk.rest.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.bulk.rest.resource.v1_0.TaxonomyVocabularyResource;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -33,14 +34,18 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -58,7 +61,10 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @author Alejandro Tardín
  * @generated
  */
-@Component(immediate = true, service = TaxonomyVocabularyResource.Factory.class)
+@Component(
+	property = "resource.locator.key=/bulk/v1.0/TaxonomyVocabulary",
+	service = TaxonomyVocabularyResource.Factory.class
+)
 @Generated("")
 public class TaxonomyVocabularyResourceFactoryImpl
 	implements TaxonomyVocabularyResource.Factory {
@@ -73,9 +79,7 @@ public class TaxonomyVocabularyResourceFactoryImpl
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (TaxonomyVocabularyResource)ProxyUtil.newProxyInstance(
-					TaxonomyVocabularyResource.class.getClassLoader(),
-					new Class<?>[] {TaxonomyVocabularyResource.class},
+				return _taxonomyVocabularyResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -134,14 +138,32 @@ public class TaxonomyVocabularyResourceFactoryImpl
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		TaxonomyVocabularyResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, TaxonomyVocabularyResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		TaxonomyVocabularyResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			TaxonomyVocabularyResource.class.getClassLoader(),
+			TaxonomyVocabularyResource.class);
+
+		try {
+			Constructor<TaxonomyVocabularyResource> constructor =
+				(Constructor<TaxonomyVocabularyResource>)
+					proxyClass.getConstructor(InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -164,7 +186,7 @@ public class TaxonomyVocabularyResourceFactoryImpl
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		TaxonomyVocabularyResource taxonomyVocabularyResource =
@@ -191,6 +213,7 @@ public class TaxonomyVocabularyResourceFactoryImpl
 		taxonomyVocabularyResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		taxonomyVocabularyResource.setRoleLocalService(_roleLocalService);
+		taxonomyVocabularyResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(taxonomyVocabularyResource, arguments);
@@ -206,6 +229,10 @@ public class TaxonomyVocabularyResourceFactoryImpl
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, TaxonomyVocabularyResource>
+		_taxonomyVocabularyResourceProxyProviderFunction =
+			_getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -228,9 +255,6 @@ public class TaxonomyVocabularyResourceFactoryImpl
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -239,6 +263,9 @@ public class TaxonomyVocabularyResourceFactoryImpl
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

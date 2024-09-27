@@ -21,16 +21,14 @@ import com.liferay.commerce.tax.exception.CommerceTaxMethodNameException;
 import com.liferay.commerce.tax.exception.NoSuchTaxMethodException;
 import com.liferay.commerce.tax.model.CommerceTaxMethod;
 import com.liferay.commerce.tax.service.CommerceTaxMethodService;
-import com.liferay.commerce.util.CommerceTaxEngineRegistry;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.Constants;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.Portal;
 
 import java.util.Locale;
 import java.util.Map;
@@ -45,7 +43,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = {
 		"javax.portlet.name=" + CommercePortletKeys.COMMERCE_TAX_METHODS,
 		"mvc.command.name=/commerce_tax_methods/edit_commerce_tax_method"
@@ -99,11 +97,10 @@ public class EditCommerceTaxMethodMVCActionCommand
 		long commerceTaxMethodId = ParamUtil.getLong(
 			actionRequest, "commerceTaxMethodId");
 
-		Map<Locale, String> nameMap = LocalizationUtil.getLocalizationMap(
+		Map<Locale, String> nameMap = _localization.getLocalizationMap(
 			actionRequest, "nameMapAsXML");
-		Map<Locale, String> descriptionMap =
-			LocalizationUtil.getLocalizationMap(
-				actionRequest, "descriptionMapAsXML");
+		Map<Locale, String> descriptionMap = _localization.getLocalizationMap(
+			actionRequest, "descriptionMapAsXML");
 		boolean percentage = ParamUtil.getBoolean(actionRequest, "percentage");
 		boolean active = ParamUtil.getBoolean(actionRequest, "active");
 
@@ -137,12 +134,9 @@ public class EditCommerceTaxMethodMVCActionCommand
 	private CommerceChannelService _commerceChannelService;
 
 	@Reference
-	private CommerceTaxEngineRegistry _commerceTaxEngineRegistry;
-
-	@Reference
 	private CommerceTaxMethodService _commerceTaxMethodService;
 
 	@Reference
-	private Portal _portal;
+	private Localization _localization;
 
 }

@@ -3,7 +3,7 @@ definition {
 
 	property custom.properties = "minifier.enabled=true";
 	property osgi.module.configuration.file.names = "com.liferay.frontend.js.loader.modules.extender.internal.configuration.Details.config";
-	property osgi.module.configurations = "waitTimeout=&quot;15&quot;";
+	property osgi.module.configurations = "waitTimeout=\"15\"";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Forms";
@@ -106,7 +106,7 @@ definition {
 
 		Form.gotoAdvancedTab();
 
-		FormViewBuilder.setFieldPredefinedDate(fieldValue = "FF0D0D");
+		FormViewBuilder.setFieldPredefinedDate(fieldValue = "ff0d0d");
 
 		FormViewBuilder.clickActionMenuFieldset();
 
@@ -118,11 +118,11 @@ definition {
 
 		FormFields.viewColorValue(
 			fieldName = "Color",
-			fieldValue = "FF0D0D");
+			fieldValue = "ff0d0d");
 
 		FormFields.viewColorValue(
 			fieldName = "Field",
-			fieldValue = "FF0D0D");
+			fieldValue = "ff0d0d");
 
 		FormFields.viewFieldHelpText(
 			fieldHelpText = "Help Text Test",
@@ -200,7 +200,7 @@ definition {
 		FormPortlet.submitWithValidationError(validationErrorMessage = "This field is required.");
 
 		FormFields.editColor(
-			colorSwatchItem = "FF0D0D",
+			colorSwatchItem = "#FF0D0D",
 			fieldLabel = "Color");
 
 		FormPortlet.submitSuccessfully();
@@ -243,18 +243,30 @@ definition {
 			rowNumber = "2");
 
 		FormFields.editColorField(
-			colorValue = "FF0D0D",
+			colorValue = "ff0d0d",
 			fieldLabel = "Color",
 			fieldName = "Color",
 			rowNumber = "1");
 
 		FormFields.selectColorFromColorPicker(
-			colorValue = "FF0D0D",
+			colorValue = "#FF0D0D",
 			fieldLabel = "Color",
 			fieldName = "Color",
 			rowNumber = "2");
 
-		FormPortlet.submitSuccessfullyAndViewSuccessPage();
+		FormPortlet.submitSuccessfully();
+
+		Navigator.openURL();
+
+		ProductMenu.gotoPortlet(
+			category = "Content & Data",
+			portlet = "Forms");
+
+		FormsAdminNavigator.gotoViewEntries();
+
+		FormsAdmin.viewFormTableEntry(
+			fieldLabel = "Color",
+			fieldValue = "ff0d0d, FF0D0D");
 	}
 
 	@description = "Verify that a Form can be submitted with the Color Field"
@@ -275,7 +287,7 @@ definition {
 		FormsAdminNavigator.gotoPublishedForm();
 
 		FormFields.editColor(
-			colorSwatchItem = "CBCBCB",
+			colorSwatchItem = "#CBCBCB",
 			fieldLabel = "Color");
 
 		FormPortlet.submitSuccessfully();
@@ -341,7 +353,7 @@ definition {
 			fieldName = "Color");
 
 		FormFields.editColor(
-			colorSwatchItem = "FF0D0D",
+			colorSwatchItem = "#FF0D0D",
 			fieldLabel = "Color");
 
 		FormPortlet.submitSuccessfullyAndViewSuccessPage();
@@ -416,13 +428,13 @@ definition {
 			fieldPositionNumber = "0",
 			fieldType = "Color");
 
-		FormFields.editPredefinedValueInput(fieldValue = "7F26FF");
+		FormFields.editPredefinedValueInput(fieldValue = "7f26ff");
 
 		Form.save();
 
 		FormFields.viewColorValue(
 			fieldName = "Color",
-			fieldValue = "7F26FF");
+			fieldValue = "7f26ff");
 
 		Form.publishForm();
 
@@ -430,7 +442,7 @@ definition {
 
 		FormFields.viewColorValue(
 			fieldName = "Color",
-			fieldValue = "7F26FF");
+			fieldValue = "7f26ff");
 
 		FormPortlet.submitSuccessfully();
 

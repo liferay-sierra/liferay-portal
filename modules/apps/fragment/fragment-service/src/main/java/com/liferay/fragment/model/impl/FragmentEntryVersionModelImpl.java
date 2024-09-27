@@ -35,7 +35,6 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 
 import java.sql.Blob;
@@ -85,9 +84,9 @@ public class FragmentEntryVersionModelImpl
 		{"cacheable", Types.BOOLEAN}, {"configuration", Types.CLOB},
 		{"icon", Types.VARCHAR}, {"previewFileEntryId", Types.BIGINT},
 		{"readOnly", Types.BOOLEAN}, {"type_", Types.INTEGER},
-		{"lastPublishDate", Types.TIMESTAMP}, {"status", Types.INTEGER},
-		{"statusByUserId", Types.BIGINT}, {"statusByUserName", Types.VARCHAR},
-		{"statusDate", Types.TIMESTAMP}
+		{"typeOptions", Types.CLOB}, {"lastPublishDate", Types.TIMESTAMP},
+		{"status", Types.INTEGER}, {"statusByUserId", Types.BIGINT},
+		{"statusByUserName", Types.VARCHAR}, {"statusDate", Types.TIMESTAMP}
 	};
 
 	public static final Map<String, Integer> TABLE_COLUMNS_MAP =
@@ -118,6 +117,7 @@ public class FragmentEntryVersionModelImpl
 		TABLE_COLUMNS_MAP.put("previewFileEntryId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("readOnly", Types.BOOLEAN);
 		TABLE_COLUMNS_MAP.put("type_", Types.INTEGER);
+		TABLE_COLUMNS_MAP.put("typeOptions", Types.CLOB);
 		TABLE_COLUMNS_MAP.put("lastPublishDate", Types.TIMESTAMP);
 		TABLE_COLUMNS_MAP.put("status", Types.INTEGER);
 		TABLE_COLUMNS_MAP.put("statusByUserId", Types.BIGINT);
@@ -126,7 +126,7 @@ public class FragmentEntryVersionModelImpl
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table FragmentEntryVersion (mvccVersion LONG default 0 not null,ctCollectionId LONG default 0 not null,fragmentEntryVersionId LONG not null,version INTEGER,uuid_ VARCHAR(75) null,fragmentEntryId LONG,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,fragmentCollectionId LONG,fragmentEntryKey VARCHAR(75) null,name VARCHAR(75) null,css TEXT null,html TEXT null,js TEXT null,cacheable BOOLEAN,configuration TEXT null,icon VARCHAR(75) null,previewFileEntryId LONG,readOnly BOOLEAN,type_ INTEGER,lastPublishDate DATE null,status INTEGER,statusByUserId LONG,statusByUserName VARCHAR(75) null,statusDate DATE null,primary key (fragmentEntryVersionId, ctCollectionId))";
+		"create table FragmentEntryVersion (mvccVersion LONG default 0 not null,ctCollectionId LONG default 0 not null,fragmentEntryVersionId LONG not null,version INTEGER,uuid_ VARCHAR(75) null,fragmentEntryId LONG,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,fragmentCollectionId LONG,fragmentEntryKey VARCHAR(75) null,name VARCHAR(75) null,css TEXT null,html TEXT null,js TEXT null,cacheable BOOLEAN,configuration TEXT null,icon VARCHAR(75) null,previewFileEntryId LONG,readOnly BOOLEAN,type_ INTEGER,typeOptions TEXT null,lastPublishDate DATE null,status INTEGER,statusByUserId LONG,statusByUserName VARCHAR(75) null,statusDate DATE null,primary key (fragmentEntryVersionId, ctCollectionId))";
 
 	public static final String TABLE_SQL_DROP =
 		"drop table FragmentEntryVersion";
@@ -302,34 +302,6 @@ public class FragmentEntryVersionModelImpl
 		return _attributeSetterBiConsumers;
 	}
 
-	private static Function<InvocationHandler, FragmentEntryVersion>
-		_getProxyProviderFunction() {
-
-		Class<?> proxyClass = ProxyUtil.getProxyClass(
-			FragmentEntryVersion.class.getClassLoader(),
-			FragmentEntryVersion.class, ModelWrapper.class);
-
-		try {
-			Constructor<FragmentEntryVersion> constructor =
-				(Constructor<FragmentEntryVersion>)proxyClass.getConstructor(
-					InvocationHandler.class);
-
-			return invocationHandler -> {
-				try {
-					return constructor.newInstance(invocationHandler);
-				}
-				catch (ReflectiveOperationException
-							reflectiveOperationException) {
-
-					throw new InternalError(reflectiveOperationException);
-				}
-			};
-		}
-		catch (NoSuchMethodException noSuchMethodException) {
-			throw new InternalError(noSuchMethodException);
-		}
-	}
-
 	private static final Map<String, Function<FragmentEntryVersion, Object>>
 		_attributeGetterFunctions;
 	private static final Map<String, BiConsumer<FragmentEntryVersion, Object>>
@@ -484,6 +456,12 @@ public class FragmentEntryVersionModelImpl
 			(BiConsumer<FragmentEntryVersion, Integer>)
 				FragmentEntryVersion::setType);
 		attributeGetterFunctions.put(
+			"typeOptions", FragmentEntryVersion::getTypeOptions);
+		attributeSetterBiConsumers.put(
+			"typeOptions",
+			(BiConsumer<FragmentEntryVersion, String>)
+				FragmentEntryVersion::setTypeOptions);
+		attributeGetterFunctions.put(
 			"lastPublishDate", FragmentEntryVersion::getLastPublishDate);
 		attributeSetterBiConsumers.put(
 			"lastPublishDate",
@@ -546,6 +524,7 @@ public class FragmentEntryVersionModelImpl
 		fragmentEntry.setPreviewFileEntryId(getPreviewFileEntryId());
 		fragmentEntry.setReadOnly(getReadOnly());
 		fragmentEntry.setType(getType());
+		fragmentEntry.setTypeOptions(getTypeOptions());
 		fragmentEntry.setLastPublishDate(getLastPublishDate());
 		fragmentEntry.setStatus(getStatus());
 		fragmentEntry.setStatusByUserId(getStatusByUserId());
@@ -1070,6 +1049,25 @@ public class FragmentEntryVersionModelImpl
 	}
 
 	@Override
+	public String getTypeOptions() {
+		if (_typeOptions == null) {
+			return "";
+		}
+		else {
+			return _typeOptions;
+		}
+	}
+
+	@Override
+	public void setTypeOptions(String typeOptions) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_typeOptions = typeOptions;
+	}
+
+	@Override
 	public Date getLastPublishDate() {
 		return _lastPublishDate;
 	}
@@ -1334,6 +1332,7 @@ public class FragmentEntryVersionModelImpl
 		fragmentEntryVersionImpl.setPreviewFileEntryId(getPreviewFileEntryId());
 		fragmentEntryVersionImpl.setReadOnly(isReadOnly());
 		fragmentEntryVersionImpl.setType(getType());
+		fragmentEntryVersionImpl.setTypeOptions(getTypeOptions());
 		fragmentEntryVersionImpl.setLastPublishDate(getLastPublishDate());
 		fragmentEntryVersionImpl.setStatus(getStatus());
 		fragmentEntryVersionImpl.setStatusByUserId(getStatusByUserId());
@@ -1398,6 +1397,8 @@ public class FragmentEntryVersionModelImpl
 			this.<Boolean>getColumnOriginalValue("readOnly"));
 		fragmentEntryVersionImpl.setType(
 			this.<Integer>getColumnOriginalValue("type_"));
+		fragmentEntryVersionImpl.setTypeOptions(
+			this.<String>getColumnOriginalValue("typeOptions"));
 		fragmentEntryVersionImpl.setLastPublishDate(
 			this.<Date>getColumnOriginalValue("lastPublishDate"));
 		fragmentEntryVersionImpl.setStatus(
@@ -1616,6 +1617,14 @@ public class FragmentEntryVersionModelImpl
 
 		fragmentEntryVersionCacheModel.type = getType();
 
+		fragmentEntryVersionCacheModel.typeOptions = getTypeOptions();
+
+		String typeOptions = fragmentEntryVersionCacheModel.typeOptions;
+
+		if ((typeOptions != null) && (typeOptions.length() == 0)) {
+			fragmentEntryVersionCacheModel.typeOptions = null;
+		}
+
 		Date lastPublishDate = getLastPublishDate();
 
 		if (lastPublishDate != null) {
@@ -1701,42 +1710,12 @@ public class FragmentEntryVersionModelImpl
 		return sb.toString();
 	}
 
-	@Override
-	public String toXmlString() {
-		Map<String, Function<FragmentEntryVersion, Object>>
-			attributeGetterFunctions = getAttributeGetterFunctions();
-
-		StringBundler sb = new StringBundler(
-			(5 * attributeGetterFunctions.size()) + 4);
-
-		sb.append("<model><model-name>");
-		sb.append(getModelClassName());
-		sb.append("</model-name>");
-
-		for (Map.Entry<String, Function<FragmentEntryVersion, Object>> entry :
-				attributeGetterFunctions.entrySet()) {
-
-			String attributeName = entry.getKey();
-			Function<FragmentEntryVersion, Object> attributeGetterFunction =
-				entry.getValue();
-
-			sb.append("<column><column-name>");
-			sb.append(attributeName);
-			sb.append("</column-name><column-value><![CDATA[");
-			sb.append(
-				attributeGetterFunction.apply((FragmentEntryVersion)this));
-			sb.append("]]></column-value></column>");
-		}
-
-		sb.append("</model>");
-
-		return sb.toString();
-	}
-
 	private static class EscapedModelProxyProviderFunctionHolder {
 
 		private static final Function<InvocationHandler, FragmentEntryVersion>
-			_escapedModelProxyProviderFunction = _getProxyProviderFunction();
+			_escapedModelProxyProviderFunction =
+				ProxyUtil.getProxyProviderFunction(
+					FragmentEntryVersion.class, ModelWrapper.class);
 
 	}
 
@@ -1765,6 +1744,7 @@ public class FragmentEntryVersionModelImpl
 	private long _previewFileEntryId;
 	private boolean _readOnly;
 	private int _type;
+	private String _typeOptions;
 	private Date _lastPublishDate;
 	private int _status;
 	private long _statusByUserId;
@@ -1826,6 +1806,7 @@ public class FragmentEntryVersionModelImpl
 		_columnOriginalValues.put("previewFileEntryId", _previewFileEntryId);
 		_columnOriginalValues.put("readOnly", _readOnly);
 		_columnOriginalValues.put("type_", _type);
+		_columnOriginalValues.put("typeOptions", _typeOptions);
 		_columnOriginalValues.put("lastPublishDate", _lastPublishDate);
 		_columnOriginalValues.put("status", _status);
 		_columnOriginalValues.put("statusByUserId", _statusByUserId);
@@ -1903,15 +1884,17 @@ public class FragmentEntryVersionModelImpl
 
 		columnBitmasks.put("type_", 8388608L);
 
-		columnBitmasks.put("lastPublishDate", 16777216L);
+		columnBitmasks.put("typeOptions", 16777216L);
 
-		columnBitmasks.put("status", 33554432L);
+		columnBitmasks.put("lastPublishDate", 33554432L);
 
-		columnBitmasks.put("statusByUserId", 67108864L);
+		columnBitmasks.put("status", 67108864L);
 
-		columnBitmasks.put("statusByUserName", 134217728L);
+		columnBitmasks.put("statusByUserId", 134217728L);
 
-		columnBitmasks.put("statusDate", 268435456L);
+		columnBitmasks.put("statusByUserName", 268435456L);
+
+		columnBitmasks.put("statusDate", 536870912L);
 
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}

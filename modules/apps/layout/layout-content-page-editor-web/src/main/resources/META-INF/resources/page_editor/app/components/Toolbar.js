@@ -12,17 +12,16 @@
  * details.
  */
 
-import {ClayButtonWithIcon, default as ClayButton} from '@clayui/button';
+import ClayButton from '@clayui/button';
 import ClayLayout from '@clayui/layout';
-import {useModal} from '@clayui/modal';
 import {ReactPortal, useIsMounted} from '@liferay/frontend-js-react-web';
 import classNames from 'classnames';
+import {openConfirmModal} from 'frontend-js-web';
 import React, {useEffect, useState} from 'react';
 
 import useLazy from '../../core/hooks/useLazy';
 import useLoad from '../../core/hooks/useLoad';
 import usePlugins from '../../core/hooks/usePlugins';
-import CreateLayoutPageTemplateEntryButton from '../../plugins/create-layout-page-template-entry-modal/components/CreateLayoutPageTemplateEntryButton';
 import * as Actions from '../actions/index';
 import {LAYOUT_TYPES} from '../config/constants/layoutTypes';
 import {SERVICE_NETWORK_STATUS_TYPES} from '../config/constants/serviceNetworkStatusTypes';
@@ -36,8 +35,8 @@ import undo from '../thunks/undo';
 import {useDropClear} from '../utils/drag-and-drop/useDragAndDrop';
 import EditModeSelector from './EditModeSelector';
 import ExperimentsLabel from './ExperimentsLabel';
+import HideSidebarButton from './HideSidebarButton';
 import NetworkStatusBar from './NetworkStatusBar';
-import PreviewModal from './PreviewModal';
 import PublishButton from './PublishButton';
 import Translation from './Translation';
 import UnsafeHTML from './UnsafeHTML';
@@ -60,6 +59,7 @@ function ToolbarBody({className}) {
 	const canPublish = selectCanPublish(store);
 
 	const [publishPending, setPublishPending] = useState(false);
+	const [enableDiscard, setEnableDiscard] = useState(false);
 
 	const {
 		network,
@@ -68,15 +68,13 @@ function ToolbarBody({className}) {
 		selectedViewportSize,
 	} = store;
 
-	const [openPreviewModal, setOpenPreviewModal] = useState(false);
-
-	const {observer: observerPreviewModal} = useModal({
-		onClose: () => {
-			if (isMounted()) {
-				setOpenPreviewModal(false);
-			}
-		},
-	});
+	useEffect(() => {
+		setEnableDiscard(
+			network.status === SERVICE_NETWORK_STATUS_TYPES.draftSaved ||
+				config.draft ||
+				config.isConversionDraft
+		);
+	}, [network]);
 
 	const loadingRef = useRef(() => {
 		Promise.all(
@@ -133,30 +131,34 @@ function ToolbarBody({className}) {
 		}, [])
 	);
 
-	const handleDiscardVariant = (event) => {
-		if (
-			!confirm(
-				Liferay.Language.get(
-					'are-you-sure-you-want-to-discard-current-draft-and-apply-latest-published-changes'
-				)
-			)
-		) {
-			event.preventDefault();
-		}
+	const handleDiscardDraft = (event) => {
+		openConfirmModal({
+			message: Liferay.Language.get(
+				'are-you-sure-you-want-to-discard-current-draft-and-apply-latest-published-changes'
+			),
+			onConfirm: (isConfirmed) => {
+				if (!isConfirmed) {
+					event.preventDefault();
+				}
+			},
+		});
 	};
 
-	const handleSubmit = (event) => {
-		event.preventDefault();
-
-		if (
-			!config.masterUsed ||
-			confirm(
-				Liferay.Language.get(
-					'changes-made-on-this-master-are-going-to-be-propagated-to-all-page-templates,-display-page-templates,-and-pages-using-it.are-you-sure-you-want-to-proceed'
-				)
-			)
-		) {
+	const onPublish = () => {
+		if (!config.masterUsed) {
 			setPublishPending(true);
+		}
+		else {
+			openConfirmModal({
+				message: Liferay.Language.get(
+					'changes-made-on-this-master-are-going-to-be-propagated-to-all-page-templates,-display-page-templates,-and-pages-using-it.are-you-sure-you-want-to-proceed'
+				),
+				onConfirm: (isConfirmed) => {
+					if (isConfirmed) {
+						setPublishPending(true);
+					}
+				},
+			});
 		}
 	};
 
@@ -173,6 +175,15 @@ function ToolbarBody({className}) {
 			selectItem(null);
 		}
 	};
+
+	let draftButtonLabel = Liferay.Language.get('discard-draft');
+
+	if (config.isConversionDraft) {
+		draftButtonLabel = Liferay.Language.get('discard-conversion-draft');
+	}
+	else if (config.singleSegmentsExperienceMode) {
+		draftButtonLabel = Liferay.Language.get('discard-variant');
+	}
 
 	let publishButtonLabel = Liferay.Language.get('publish');
 
@@ -216,6 +227,9 @@ function ToolbarBody({className}) {
 									<Suspense
 										fallback={
 											<UnsafeHTML
+												hideFromAccessibilityTree={
+													false
+												}
 												markup={loadingPlaceholder}
 											/>
 										}
@@ -282,56 +296,35 @@ function ToolbarBody({className}) {
 				<li className="nav-item">
 					<ul className="navbar-nav">
 						<li className="nav-item">
-							<ClayButtonWithIcon
-								className="btn btn-secondary"
-								displayType="secondary"
-								onClick={() => setOpenPreviewModal(true)}
-								small
-								symbol="view"
-								title={Liferay.Language.get('preview')}
-								type="button"
-							>
-								{Liferay.Language.get('preview')}
-							</ClayButtonWithIcon>
+							<HideSidebarButton />
 						</li>
-
-						{config.layoutType === LAYOUT_TYPES.content && (
-							<li className="nav-item">
-								<CreateLayoutPageTemplateEntryButton />
-							</li>
-						)}
 					</ul>
 				</li>
 
-				{config.singleSegmentsExperienceMode && (
-					<li className="nav-item">
-						<form action={config.discardDraftURL} method="POST">
-							<ClayButton
-								className="btn btn-secondary"
-								displayType="secondary"
-								onClick={handleDiscardVariant}
-								small
-								type="submit"
-							>
-								{Liferay.Language.get('discard-variant')}
-							</ClayButton>
-						</form>
-					</li>
-				)}
+				<li className="nav-item">
+					<form action={config.discardDraftURL} method="POST">
+						<ClayButton
+							className="btn btn-secondary"
+							disabled={!enableDiscard}
+							displayType="secondary"
+							onClick={handleDiscardDraft}
+							small
+							type="submit"
+						>
+							{draftButtonLabel}
+						</ClayButton>
+					</form>
+				</li>
 
 				<li className="nav-item">
 					<PublishButton
 						canPublish={canPublish}
 						formRef={formRef}
-						handleSubmit={handleSubmit}
 						label={publishButtonLabel}
+						onPublish={onPublish}
 					/>
 				</li>
 			</ul>
-
-			{openPreviewModal && (
-				<PreviewModal observer={observerPreviewModal} />
-			)}
 		</ClayLayout.ContainerFluid>
 	);
 }

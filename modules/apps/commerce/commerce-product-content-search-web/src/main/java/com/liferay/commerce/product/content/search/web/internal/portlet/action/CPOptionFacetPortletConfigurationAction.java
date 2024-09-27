@@ -15,17 +15,13 @@
 package com.liferay.commerce.product.content.search.web.internal.portlet.action;
 
 import com.liferay.commerce.product.constants.CPPortletKeys;
-import com.liferay.commerce.product.content.search.web.internal.configuration.CPOptionFacetsPortletInstanceConfiguration;
 import com.liferay.portal.kernel.portlet.ConfigurationAction;
 import com.liferay.portal.kernel.portlet.DefaultConfigurationAction;
 import com.liferay.portal.kernel.servlet.SessionErrors;
-import com.liferay.portal.kernel.theme.PortletDisplay;
-import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropertiesParamUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.util.WebKeys;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -39,7 +35,7 @@ import org.osgi.service.component.annotations.Component;
  * @author Andrea Sbarra
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = "javax.portlet.name=" + CPPortletKeys.CP_OPTION_FACETS,
 	service = ConfigurationAction.class
 )
@@ -62,28 +58,17 @@ public class CPOptionFacetPortletConfigurationAction
 
 		String maxTerms = unicodeProperties.getProperty("maxTerms");
 
-		if (Validator.isNumber(maxTerms)) {
-			ThemeDisplay themeDisplay =
-				(ThemeDisplay)actionRequest.getAttribute(WebKeys.THEME_DISPLAY);
+		if (Validator.isNumber(maxTerms) &&
+			(GetterUtil.getInteger(maxTerms) > _MAX_TERMS_LIMIT)) {
 
-			PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
-
-			CPOptionFacetsPortletInstanceConfiguration
-				cpOptionFacetsPortletInstanceConfiguration =
-					portletDisplay.getPortletInstanceConfiguration(
-						CPOptionFacetsPortletInstanceConfiguration.class);
-
-			if (GetterUtil.getInteger(maxTerms) >
-					cpOptionFacetsPortletInstanceConfiguration.
-						limitMaxTerms()) {
-
-				SessionErrors.add(actionRequest, "exceededMaxTermsLimit");
-			}
+			SessionErrors.add(actionRequest, "exceededMaxTermsLimit");
 		}
 
 		if (SessionErrors.isEmpty(actionRequest)) {
 			super.processAction(portletConfig, actionRequest, actionResponse);
 		}
 	}
+
+	private static final int _MAX_TERMS_LIMIT = 100;
 
 }

@@ -289,7 +289,7 @@ public abstract class BaseJSONParser<T> {
 
 	private void _init(String json) {
 		_captureStartStack = new Stack<>();
-		_dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		_dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXX");
 		_index = 0;
 		_json = json.trim();
 		_lastChar = 0;
@@ -353,6 +353,14 @@ public abstract class BaseJSONParser<T> {
 
 	private boolean _isLastCharNegative() {
 		if (_lastChar == '-') {
+			return true;
+		}
+
+		return false;
+	}
+
+	private boolean _isLastCharPositive() {
+		if (_lastChar == '+') {
 			return true;
 		}
 
@@ -584,7 +592,8 @@ public abstract class BaseJSONParser<T> {
 			_readNextChar();
 		}
 		while (_isLastCharDigit() || _isLastCharDecimalSeparator() ||
-			   _isLastCharNegative() || _isLastCharScientificNotation());
+			   _isLastCharNegative() || _isLastCharPositive() ||
+			   _isLastCharScientificNotation());
 
 		return _getCapturedSubstring();
 	}

@@ -59,7 +59,7 @@ definition {
 				fragmentName = "Heading",
 				id = "element-text");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Mark the display page template as default") {
@@ -87,7 +87,7 @@ definition {
 				menuItem = "View Display Page",
 				rowEntry = "Category Name");
 
-			ControlMenu.viewHeaderTitle(headerTitle = "Display Page Name");
+			ControlMenu.viewHeaderTitle(headerTitle = "Category Name");
 
 			ContentPages.viewFragmentText(
 				fragmentName = "heading",
@@ -96,7 +96,7 @@ definition {
 		}
 	}
 
-	@description = "This is a test for LPS-110247. The user can select the specific display page template in category editor."
+	@description = "This is a test for LPS-110247 and LPS-158711. The user can select the specific display page template in category editor."
 	@priority = "5"
 	test SelectSpecificDisplayPageTemplateInCategoryEditor {
 		property portal.acceptance = "true";
@@ -124,7 +124,7 @@ definition {
 				fragmentName = "Button",
 				id = "link");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Add the second display page template for Category") {
@@ -150,7 +150,7 @@ definition {
 				fragmentName = "Heading",
 				id = "element-text");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Add a vocabulary") {
@@ -177,6 +177,19 @@ definition {
 				displayPageTemplateType = "Specific",
 				selectedDisplayPageName = "Display Page Name 1",
 				vocabularyName = "Vocabulary Name");
+		}
+
+		task ("View mapped content in associated display page template") {
+			LexiconEntry.gotoEntryMenuItem(
+				menuItem = "View Display Page",
+				rowEntry = "Category Name");
+
+			ControlMenu.viewHeaderTitle(headerTitle = "Category Name");
+
+			ContentPages.viewFragmentText(
+				fragmentName = "heading",
+				id = "element-text",
+				text = "This is a description");
 		}
 	}
 
@@ -208,7 +221,7 @@ definition {
 				fragmentName = "Button",
 				id = "link");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Add the second display page template for Category") {
@@ -234,7 +247,7 @@ definition {
 				fragmentName = "Heading",
 				id = "element-text");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Add a vocabulary") {
@@ -276,7 +289,7 @@ definition {
 				menuItem = "View Display Page",
 				rowEntry = "Grand Subcategory Name");
 
-			ControlMenu.viewHeaderTitle(headerTitle = "Display Page Name 2");
+			ControlMenu.viewHeaderTitle(headerTitle = "Grand Subcategory Name");
 
 			ContentPages.viewFragmentText(
 				fragmentName = "heading",
@@ -491,7 +504,7 @@ definition {
 				fragmentName = "Button",
 				id = "link");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Add a vocabulary") {
@@ -523,7 +536,7 @@ definition {
 				menuItem = "View Display Page",
 				rowEntry = "Subcategory Name");
 
-			ControlMenu.viewHeaderTitle(headerTitle = "Display Page Name");
+			ControlMenu.viewHeaderTitle(headerTitle = "Subcategory Name");
 
 			ContentPages.viewFragmentText(
 				fragmentName = "button",
@@ -571,7 +584,7 @@ definition {
 				fragmentName = "Heading",
 				id = "element-text");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Add a vocabulary") {
@@ -631,7 +644,7 @@ definition {
 				menuItem = "View Display Page",
 				rowEntry = "Category Name");
 
-			ControlMenu.viewHeaderTitle(headerTitle = "Display Page Name");
+			ControlMenu.viewHeaderTitle(headerTitle = "Category Name");
 
 			var n = "1";
 
@@ -691,7 +704,7 @@ definition {
 				fieldName = "Main Image",
 				panel = "Styles");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Add a vocabulary") {
@@ -732,7 +745,7 @@ definition {
 				menuItem = "View Display Page",
 				rowEntry = "Category Name");
 
-			ControlMenu.viewHeaderTitle(headerTitle = "Display Page Name");
+			ControlMenu.viewHeaderTitle(headerTitle = "Category Name");
 
 			ContentPages.viewFragmentText(
 				fragmentName = "heading",

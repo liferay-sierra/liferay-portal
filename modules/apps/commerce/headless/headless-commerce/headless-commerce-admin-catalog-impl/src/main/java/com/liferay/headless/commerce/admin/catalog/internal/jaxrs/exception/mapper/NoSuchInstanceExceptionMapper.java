@@ -27,11 +27,10 @@ import org.osgi.service.component.annotations.Component;
  * @author Igor Beslic
  */
 @Component(
-	enabled = false,
 	property = {
 		"osgi.jaxrs.application.select=(osgi.jaxrs.name=Liferay.Headless.Commerce.Admin.Catalog)",
 		"osgi.jaxrs.extension=true",
-		"osgi.jaxrs.name=Liferay.Headless.Commerce.Admin.Catalog.NoSuchInstanceException"
+		"osgi.jaxrs.name=Liferay.Headless.Commerce.Admin.Catalog.NoSuchInstanceExceptionMapper"
 	},
 	service = ExceptionMapper.class
 )

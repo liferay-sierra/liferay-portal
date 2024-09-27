@@ -44,7 +44,7 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 import com.liferay.segments.exception.NoSuchExperimentException;
 import com.liferay.segments.model.SegmentsExperiment;
 import com.liferay.segments.model.SegmentsExperimentTable;
@@ -212,7 +212,7 @@ public class SegmentsExperimentPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<SegmentsExperiment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SegmentsExperiment segmentsExperiment : list) {
@@ -609,7 +609,7 @@ public class SegmentsExperimentPersistenceImpl
 
 			finderArgs = new Object[] {uuid};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -745,7 +745,7 @@ public class SegmentsExperimentPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = finderCache.getResult(
-				_finderPathFetchByUUID_G, finderArgs);
+				_finderPathFetchByUUID_G, finderArgs, this);
 		}
 
 		if (result instanceof SegmentsExperiment) {
@@ -865,7 +865,7 @@ public class SegmentsExperimentPersistenceImpl
 
 			finderArgs = new Object[] {uuid, groupId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1037,7 +1037,7 @@ public class SegmentsExperimentPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<SegmentsExperiment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SegmentsExperiment segmentsExperiment : list) {
@@ -1463,7 +1463,7 @@ public class SegmentsExperimentPersistenceImpl
 
 			finderArgs = new Object[] {uuid, companyId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1626,7 +1626,7 @@ public class SegmentsExperimentPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<SegmentsExperiment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SegmentsExperiment segmentsExperiment : list) {
@@ -2333,7 +2333,7 @@ public class SegmentsExperimentPersistenceImpl
 
 			finderArgs = new Object[] {groupId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2532,7 +2532,7 @@ public class SegmentsExperimentPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<SegmentsExperiment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SegmentsExperiment segmentsExperiment : list) {
@@ -2944,7 +2944,7 @@ public class SegmentsExperimentPersistenceImpl
 
 			finderArgs = new Object[] {segmentsExperimentKey};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -3087,7 +3087,8 @@ public class SegmentsExperimentPersistenceImpl
 		Object result = null;
 
 		if (useFinderCache && productionMode) {
-			result = finderCache.getResult(_finderPathFetchByG_S, finderArgs);
+			result = finderCache.getResult(
+				_finderPathFetchByG_S, finderArgs, this);
 		}
 
 		if (result instanceof SegmentsExperiment) {
@@ -3211,7 +3212,7 @@ public class SegmentsExperimentPersistenceImpl
 
 			finderArgs = new Object[] {groupId, segmentsExperimentKey};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -3388,7 +3389,7 @@ public class SegmentsExperimentPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<SegmentsExperiment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SegmentsExperiment segmentsExperiment : list) {
@@ -4181,7 +4182,7 @@ public class SegmentsExperimentPersistenceImpl
 
 			finderArgs = new Object[] {groupId, classNameId, classPK};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -4417,7 +4418,7 @@ public class SegmentsExperimentPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<SegmentsExperiment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SegmentsExperiment segmentsExperiment : list) {
@@ -4850,7 +4851,7 @@ public class SegmentsExperimentPersistenceImpl
 				segmentsExperienceId, classNameId, classPK
 			};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -5034,7 +5035,7 @@ public class SegmentsExperimentPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<SegmentsExperiment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SegmentsExperiment segmentsExperiment : list) {
@@ -5525,10 +5526,10 @@ public class SegmentsExperimentPersistenceImpl
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SegmentsExperimentModelImpl</code>.
 	 * </p>
 	 *
-	 * @param segmentsExperienceId the segments experience ID
+	 * @param segmentsExperienceIds the segments experience IDs
 	 * @param classNameId the class name ID
 	 * @param classPK the class pk
-	 * @param status the status
+	 * @param statuses the statuses
 	 * @param start the lower bound of the range of segments experiments
 	 * @param end the upper bound of the range of segments experiments (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
@@ -5589,7 +5590,7 @@ public class SegmentsExperimentPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<SegmentsExperiment>)finderCache.getResult(
-				_finderPathWithPaginationFindByS_C_C_S, finderArgs);
+				_finderPathWithPaginationFindByS_C_C_S, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SegmentsExperiment segmentsExperiment : list) {
@@ -5741,7 +5742,7 @@ public class SegmentsExperimentPersistenceImpl
 				segmentsExperienceId, classNameId, classPK, status
 			};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -5836,7 +5837,7 @@ public class SegmentsExperimentPersistenceImpl
 			};
 
 			count = (Long)finderCache.getResult(
-				_finderPathWithPaginationCountByS_C_C_S, finderArgs);
+				_finderPathWithPaginationCountByS_C_C_S, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -6085,7 +6086,7 @@ public class SegmentsExperimentPersistenceImpl
 		segmentsExperiment.setNew(true);
 		segmentsExperiment.setPrimaryKey(segmentsExperimentId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		segmentsExperiment.setUuid(uuid);
 
@@ -6212,7 +6213,7 @@ public class SegmentsExperimentPersistenceImpl
 			(SegmentsExperimentModelImpl)segmentsExperiment;
 
 		if (Validator.isNull(segmentsExperiment.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			segmentsExperiment.setUuid(uuid);
 		}
@@ -6340,7 +6341,9 @@ public class SegmentsExperimentPersistenceImpl
 	 */
 	@Override
 	public SegmentsExperiment fetchByPrimaryKey(Serializable primaryKey) {
-		if (ctPersistenceHelper.isProductionMode(SegmentsExperiment.class)) {
+		if (ctPersistenceHelper.isProductionMode(
+				SegmentsExperiment.class, primaryKey)) {
+
 			return super.fetchByPrimaryKey(primaryKey);
 		}
 
@@ -6562,7 +6565,7 @@ public class SegmentsExperimentPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<SegmentsExperiment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -6638,7 +6641,7 @@ public class SegmentsExperimentPersistenceImpl
 
 		if (productionMode) {
 			count = (Long)finderCache.getResult(
-				_finderPathCountAll, FINDER_ARGS_EMPTY);
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 		}
 
 		if (count == null) {
@@ -7092,7 +7095,6 @@ public class SegmentsExperimentPersistenceImpl
 	}
 
 	@Reference
-	private SegmentsExperimentModelArgumentsResolver
-		_segmentsExperimentModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

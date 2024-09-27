@@ -21,9 +21,14 @@ const FormView: React.FC<IProps> = ({description, title, ...otherProps}) => {
 	return (
 		<>
 			{title && (
-				<DefaultPageHeader description={description} title={title} />
+				<DefaultPageHeader
+					description={description}
+					hideBackButton
+					title={title}
+				/>
 			)}
-			<DataEngineFormView {...otherProps} />
+
+			<DataEngineFormView {...{...otherProps, title}} />
 		</>
 	);
 };

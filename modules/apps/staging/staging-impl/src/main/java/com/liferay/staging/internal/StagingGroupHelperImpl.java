@@ -44,7 +44,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Akos Thurzo
  */
-@Component(immediate = true, service = StagingGroupHelper.class)
+@Component(service = StagingGroupHelper.class)
 public class StagingGroupHelperImpl implements StagingGroupHelper {
 
 	@Override
@@ -284,9 +284,8 @@ public class StagingGroupHelperImpl implements StagingGroupHelper {
 
 	@Override
 	public boolean isStagedPortlet(long groupId, String portletId) {
-		Group group = _groupLocalService.fetchGroup(groupId);
-
-		return isStagedPortlet(group, portletId);
+		return isStagedPortlet(
+			_groupLocalService.fetchGroup(groupId), portletId);
 	}
 
 	@Override

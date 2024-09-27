@@ -33,6 +33,8 @@ import java.sql.Types;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Alexander Chow
@@ -64,6 +66,13 @@ public class PostgreSQLDB extends BaseDB {
 
 	public PostgreSQLDB(int majorVersion, int minorVersion) {
 		super(DBType.POSTGRESQL, majorVersion, minorVersion);
+
+		if (majorVersion >= 13) {
+			_supportsNewUuidFunction = true;
+		}
+		else {
+			_supportsNewUuidFunction = false;
+		}
 	}
 
 	@Override
@@ -109,6 +118,11 @@ public class PostgreSQLDB extends BaseDB {
 	}
 
 	@Override
+	public String getNewUuidFunctionName() {
+		return "gen_random_uuid()";
+	}
+
+	@Override
 	public String getPopulateSQL(String databaseName, String sqlContent) {
 		return StringBundler.concat("\\c ", databaseName, ";\n\n", sqlContent);
 	}
@@ -118,6 +132,11 @@ public class PostgreSQLDB extends BaseDB {
 		return StringBundler.concat(
 			"drop database ", databaseName, ";\n", "create database ",
 			databaseName, " encoding = 'UNICODE';\n");
+	}
+
+	@Override
+	public boolean isSupportsNewUuidFunction() {
+		return _supportsNewUuidFunction;
 	}
 
 	@Override
@@ -191,7 +210,10 @@ public class PostgreSQLDB extends BaseDB {
 					String[] template = buildTableNameTokens(line);
 
 					line = StringUtil.replace(
-						"alter table @old-table@ rename to @new-table@;",
+						StringBundler.concat(
+							"alter table @old-table@ rename to @new-table@;",
+							"alter table @new-table@ rename constraint ",
+							"@old-table@_pkey to @new-table@_pkey;"),
 						RENAME_TABLE_TEMPLATE, template);
 				}
 				else if (line.startsWith(CREATE_TABLE)) {
@@ -213,11 +235,15 @@ public class PostgreSQLDB extends BaseDB {
 						"@table@", tokens[2]);
 				}
 				else if (line.contains(getTemplateBlob())) {
-					String[] tokens = StringUtil.split(line, ' ');
+					Matcher matcher = _oidPattern.matcher(line);
 
-					createRulesSQLSB.append(StringPool.NEW_LINE);
-					createRulesSQLSB.append(
-						getCreateRulesSQL(tableName, tokens[0]));
+					if (matcher.find()) {
+						String[] tokens = StringUtil.split(line, ' ');
+
+						createRulesSQLSB.append(StringPool.NEW_LINE);
+						createRulesSQLSB.append(
+							getCreateRulesSQL(tableName, tokens[0]));
+					}
 				}
 				else if (line.contains("\\\'")) {
 					line = StringUtil.replace(line, "\\\'", "\'\'");
@@ -249,5 +275,10 @@ public class PostgreSQLDB extends BaseDB {
 	};
 
 	private static final boolean _SUPPORTS_QUERYING_AFTER_EXCEPTION = false;
+
+	private static final Pattern _oidPattern = Pattern.compile(
+		" oid(\\W|$)", Pattern.CASE_INSENSITIVE);
+
+	private final boolean _supportsNewUuidFunction;
 
 }

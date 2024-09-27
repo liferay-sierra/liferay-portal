@@ -26,8 +26,8 @@ import com.liferay.portal.kernel.spring.osgi.OSGiBeanProperties;
 import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.InfrastructureUtil;
 import com.liferay.portal.kernel.util.MethodKey;
+import com.liferay.portal.kernel.util.ModuleFrameworkPropsValues;
 import com.liferay.portal.spring.configurator.ConfigurableApplicationContextConfigurator;
-import com.liferay.portal.util.PropsValues;
 
 import java.lang.reflect.Method;
 
@@ -42,7 +42,6 @@ import javax.servlet.ServletContextEvent;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 
-import org.springframework.beans.factory.BeanIsAbstractException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -182,10 +181,8 @@ public class PortletContextLoaderListener extends ContextLoaderListener {
 		ServletContext servletContext,
 		ConfigurableWebApplicationContext configurableWebApplicationContext) {
 
-		String configLocation = servletContext.getInitParameter(
-			_PORTAL_CONFIG_LOCATION_PARAM);
-
-		configurableWebApplicationContext.setConfigLocation(configLocation);
+		configurableWebApplicationContext.setConfigLocation(
+			servletContext.getInitParameter(_PORTAL_CONFIG_LOCATION_PARAM));
 
 		configurableWebApplicationContext.addBeanFactoryPostProcessor(
 			configurableListableBeanFactory -> {
@@ -231,11 +228,6 @@ public class PortletContextLoaderListener extends ContextLoaderListener {
 						_serviceRegistrations.add(serviceRegistration);
 					}
 				}
-				catch (BeanIsAbstractException beanIsAbstractException) {
-					if (_log.isDebugEnabled()) {
-						_log.debug(beanIsAbstractException);
-					}
-				}
 				catch (Exception exception) {
 					_log.error(exception);
 				}
@@ -252,7 +244,8 @@ public class PortletContextLoaderListener extends ContextLoaderListener {
 
 		Set<String> names = OSGiBeanProperties.Service.interfaceNames(
 			bean, osgiBeanProperties,
-			PropsValues.MODULE_FRAMEWORK_SERVICES_IGNORED_INTERFACES);
+			ModuleFrameworkPropsValues.
+				MODULE_FRAMEWORK_SERVICES_IGNORED_INTERFACES);
 
 		if (names.isEmpty()) {
 			return null;

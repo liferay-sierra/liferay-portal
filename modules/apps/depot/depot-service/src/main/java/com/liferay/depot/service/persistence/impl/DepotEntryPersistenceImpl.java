@@ -46,7 +46,7 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 
 import java.io.Serializable;
 
@@ -193,7 +193,7 @@ public class DepotEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<DepotEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (DepotEntry depotEntry : list) {
@@ -573,7 +573,7 @@ public class DepotEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -703,7 +703,7 @@ public class DepotEntryPersistenceImpl
 
 		if (useFinderCache) {
 			result = finderCache.getResult(
-				_finderPathFetchByUUID_G, finderArgs);
+				_finderPathFetchByUUID_G, finderArgs, this);
 		}
 
 		if (result instanceof DepotEntry) {
@@ -814,7 +814,7 @@ public class DepotEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid, groupId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -980,7 +980,7 @@ public class DepotEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<DepotEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (DepotEntry depotEntry : list) {
@@ -1392,7 +1392,7 @@ public class DepotEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid, companyId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -1517,7 +1517,7 @@ public class DepotEntryPersistenceImpl
 
 		if (useFinderCache) {
 			result = finderCache.getResult(
-				_finderPathFetchByGroupId, finderArgs);
+				_finderPathFetchByGroupId, finderArgs, this);
 		}
 
 		if (result instanceof DepotEntry) {
@@ -1607,7 +1607,7 @@ public class DepotEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {groupId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -1780,7 +1780,7 @@ public class DepotEntryPersistenceImpl
 		depotEntry.setNew(true);
 		depotEntry.setPrimaryKey(depotEntryId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		depotEntry.setUuid(uuid);
 
@@ -1896,7 +1896,7 @@ public class DepotEntryPersistenceImpl
 			(DepotEntryModelImpl)depotEntry;
 
 		if (Validator.isNull(depotEntry.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			depotEntry.setUuid(uuid);
 		}
@@ -2091,7 +2091,7 @@ public class DepotEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<DepotEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -2161,7 +2161,7 @@ public class DepotEntryPersistenceImpl
 	@Override
 	public int countAll() {
 		Long count = (Long)finderCache.getResult(
-			_finderPathCountAll, FINDER_ARGS_EMPTY);
+			_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -2378,6 +2378,6 @@ public class DepotEntryPersistenceImpl
 	}
 
 	@Reference
-	private DepotEntryModelArgumentsResolver _depotEntryModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

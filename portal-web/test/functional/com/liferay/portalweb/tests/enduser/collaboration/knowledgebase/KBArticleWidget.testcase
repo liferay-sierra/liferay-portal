@@ -37,17 +37,19 @@ definition {
 	}
 
 	@priority = "3"
-	@refactorneeded
+	@refactordone
 	test DeleteKBArticleViaKBArticle {
-		KBAdmin.openKBAdmin(siteURLKey = "guest");
+		property custom.properties = "feature.flag.LPS-125653=true${line.separator}feature.flag.LPS-156421=true";
 
-		KBArticle.addCP(
+		JSONKnowledgeBase.addkBArticle(
+			groupName = "Guest",
 			kbArticleContent = "Knowledge Base Article Content",
 			kbArticleTitle = "Knowledge Base Article Title");
 
 		Navigator.gotoPage(pageName = "Knowledge Base Article Page");
 
 		KBArticle.selectPGViaKBArticle(
+			kbArticle = "true",
 			kbArticleTitle = "Knowledge Base Article Title",
 			pageName = "Knowledge Base Article Page");
 
@@ -63,7 +65,9 @@ definition {
 
 		KBAdmin.openKBAdmin(siteURLKey = "guest");
 
-		KBArticle.viewDefaultCP();
+		KBArticle.viewDefaultCP(
+			defaultHome = "true",
+			featureFlag = "true");
 	}
 
 }

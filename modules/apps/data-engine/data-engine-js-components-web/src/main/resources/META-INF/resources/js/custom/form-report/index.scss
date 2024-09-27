@@ -25,10 +25,158 @@
 	}
 }
 
+.col-md-4 {
+	.lfr-de__form-report .pie-chart .recharts-responsive-container {
+		min-height: 250px;
+	}
+
+	.recharts-pie {
+		font-size: 10px;
+	}
+}
+
+.col-md-4,
+.col-md-6 {
+	.lfr-de__form-report {
+		.card .card-body .legend-container {
+			margin-top: 0;
+			width: 100%;
+		}
+
+		.recharts-responsive-container {
+			width: 100% !important;
+		}
+	}
+}
+
+.col-md-4,
+.col-md-6,
+.col-md-8 {
+	.lfr-de__form-report {
+		&--cards-area,
+		.card-item {
+			margin-left: 0;
+			padding-left: 0;
+			padding-right: 0;
+			width: auto;
+		}
+	}
+}
+
+.col-md-4 {
+	.lfr-de__form-report {
+		display: block;
+	}
+}
+
+.col-md-6 {
+	.lfr-de__form-report {
+		display: block;
+	}
+}
+
+.col-md-8 {
+	.lfr-de__form-report {
+		display: flex;
+	}
+}
+
+//Show collapsed vertical navigation for the smallest widget page sizes
+.col-md-4,
+.col-md-6 {
+	.lfr-de__form-report--cards-shortcut {
+		display: none;
+	}
+
+	.lfr-de__form-report--vertical-nav {
+		display: block;
+
+		.menubar-toggler {
+			display: block;
+		}
+	}
+
+	.menubar-vertical-expand-lg.menubar-transparent .menubar-toggler {
+		color: #272833;
+		font-size: 0.875rem;
+		font-weight: var(--font-weight-semi-bold, 600);
+		text-decoration: none;
+		transition: box-shadow 0.15s ease-in-out;
+	}
+
+	.menubar-vertical-expand-lg.menubar-transparent .menubar-collapse {
+		background-color: #fff;
+		border-color: #e7e7ed;
+		border-radius: 0.25rem;
+		box-shadow: 0 1px 5px -1px rgb(0 0 0 / 30%);
+	}
+
+	.menubar-vertical-expand-lg.menubar-transparent {
+		background-color: #fff;
+		z-index: 1;
+	}
+
+	.menubar-vertical-expand-lg .menubar-collapse {
+		display: none;
+
+		&.show {
+			display: block;
+		}
+	}
+
+	.menubar-vertical-expand-lg {
+		align-items: center;
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		margin-bottom: 1.5rem;
+		margin-left: -12px;
+		margin-right: -12px;
+	}
+
+	.menubar-vertical-expand-lg .menubar-collapse {
+		border-color: transparent;
+		border-style: solid;
+		border-width: 0.0625rem;
+		display: none;
+		left: -0.0625rem;
+		position: absolute;
+		right: -0.0625rem;
+		top: 100%;
+		z-index: 499;
+	}
+}
+
+.col-md-8,
+.col-md-12 {
+	.pie-chart {
+		display: flex;
+	}
+}
+
+.col-md-6 {
+	.pie-chart {
+		display: block;
+	}
+}
+
+.ddm-user-view-content {
+	.lfr-de__form-report {
+		&--cards-shortcut {
+			top: 78px;
+		}
+	}
+}
+
+.ddm-form-builder-app {
+	.lfr-de__form-report--cards-area {
+		margin-left: 0;
+		width: 100%;
+	}
+}
+
 .lfr-de__form-report {
 	display: flex;
-	max-width: 808px;
-
 	&-sidebar {
 		top: 56px;
 		transform: translateX(100%);
@@ -124,6 +272,7 @@
 
 		.card-body {
 			display: flex;
+			margin-top: 48px;
 			min-height: 242px;
 			padding: 0;
 
@@ -137,8 +286,7 @@
 			}
 
 			.legend-container {
-				margin-left: 50px;
-				width: 50%;
+				width: 30%;
 
 				ul {
 					font-size: 14px;
@@ -146,6 +294,7 @@
 
 					li {
 						display: flex;
+						flex-wrap: wrap;
 						padding-bottom: 10px;
 
 						p {
@@ -208,6 +357,7 @@
 			flex-direction: column;
 			padding: 12px 16px;
 			width: auto;
+			word-break: break-all;
 
 			ul {
 				font-size: 12px;
@@ -249,8 +399,7 @@
 		}
 
 		.field-info {
-			margin-bottom: 24px;
-			margin-left: 52px;
+			margin: 0 52px 24px;
 		}
 
 		.field-list {
@@ -289,10 +438,6 @@
 		}
 	}
 
-	.card-item {
-		width: 808px;
-	}
-
 	.card-item::before {
 		content: ' ';
 		display: block;
@@ -320,25 +465,6 @@
 		}
 		.color-text {
 			padding-top: 4px;
-		}
-	}
-
-	.custom-chart-size {
-		display: flex;
-		min-height: 400px;
-		min-width: 400px;
-		width: 100%;
-
-		&.multi-bar-chart {
-			margin-left: -32px;
-		}
-
-		&.pie-chart {
-			margin-left: 63px;
-		}
-
-		&.simple-bar-chart {
-			margin-left: -43px;
 		}
 	}
 
@@ -383,6 +509,10 @@
 		ul {
 			list-style-type: none;
 		}
+	}
+
+	.lfr-de-recharts {
+		padding: 10px 0 0;
 	}
 
 	.loading-wrapper {
@@ -438,13 +568,13 @@
 	}
 
 	.recharts-responsive-container {
-		height: 400px !important;
 		min-height: 400px;
-		min-width: 400px;
 	}
 
-	.report-cards-area {
+	&--cards-area {
+		margin-left: 20px;
 		transition: all 0.3s cubic-bezier(0.25, 0.11, 0.25, 1);
+		width: 808px;
 
 		.sheet {
 			margin-top: 24px;
@@ -452,19 +582,20 @@
 		}
 	}
 
-	.report-cards-shortcut {
+	&--cards-shortcut {
 		align-self: flex-start;
 		margin-top: 24px;
 		padding-left: 24px;
 		position: sticky;
-		top: 78px;
+		top: 112px;
+		width: 30%;
 
 		ul {
+			float: right;
 			list-style-type: none;
 			max-height: calc(100vh - 92px);
-			overflow-y: auto;
+			max-width: 180px;
 			padding: 0;
-			width: 240px;
 
 			li {
 				padding-bottom: 16px;
@@ -487,19 +618,7 @@
 					&:hover {
 						color: $dark;
 						cursor: pointer;
-
-						.indicator,
-						.field-label {
-							transition: all 0.3s
-								cubic-bezier(0.25, 0.11, 0.25, 1);
-						}
-
-						.indicator {
-							background-color: $dark;
-							height: 1px;
-							margin-right: 8px;
-							width: 8px;
-						}
+						font-weight: 600;
 					}
 
 					&.selected {
@@ -507,16 +626,73 @@
 							color: $dark;
 							font-weight: 600;
 						}
-
-						& > .indicator {
-							background-color: $dark;
-							height: 2px;
-							margin-right: 8px;
-							width: 16px;
-						}
 					}
 				}
 			}
+		}
+	}
+}
+
+.lfr-de__form-report--vertical-nav {
+	.menubar-toggler {
+		z-index: 1;
+	}
+
+	.menubar {
+		align-items: center;
+		height: 53px;
+		justify-content: center;
+		margin-left: 0;
+		max-width: 100%;
+	}
+}
+
+//Form Entries Media queries
+
+@media only screen and (min-width: 767.98px) {
+	.lfr-de__form-report--vertical-nav {
+		display: none;
+	}
+}
+
+@media only screen and (max-width: 767.98px) {
+	.lfr-de__form-report {
+		display: block;
+	}
+
+	.lfr-de__form-report--cards-shortcut {
+		display: none;
+	}
+
+	.lfr-de__form-report--vertical-nav {
+		display: block;
+	}
+
+	.lfr-de__form-report--cards-area {
+		width: auto;
+	}
+
+	.col-md-6,
+	.col-md-8 {
+		.lfr-de__form-report {
+			display: block;
+		}
+	}
+
+	.col-md-12,
+	.col-md-8 {
+		.lfr-de__form-report {
+			.recharts-responsive-container {
+				width: 100% !important;
+			}
+
+			.card .card-body .legend-container {
+				width: 100%;
+			}
+		}
+
+		.pie-chart {
+			display: block;
 		}
 	}
 }

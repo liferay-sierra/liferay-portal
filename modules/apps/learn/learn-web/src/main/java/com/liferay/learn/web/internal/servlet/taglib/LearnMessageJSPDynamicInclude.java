@@ -27,8 +27,13 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Hai Yu
  */
-@Component(immediate = true, service = DynamicInclude.class)
+@Component(service = DynamicInclude.class)
 public class LearnMessageJSPDynamicInclude extends BaseJSPDynamicInclude {
+
+	@Override
+	public ServletContext getServletContext() {
+		return _servletContext;
+	}
 
 	@Override
 	public void register(DynamicIncludeRegistry dynamicIncludeRegistry) {
@@ -46,15 +51,10 @@ public class LearnMessageJSPDynamicInclude extends BaseJSPDynamicInclude {
 		return _log;
 	}
 
-	@Override
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.learn.web)", unbind = "-"
-	)
-	protected void setServletContext(ServletContext servletContext) {
-		super.setServletContext(servletContext);
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		LearnMessageJSPDynamicInclude.class);
+
+	@Reference(target = "(osgi.web.symbolicname=com.liferay.learn.web)")
+	private ServletContext _servletContext;
 
 }

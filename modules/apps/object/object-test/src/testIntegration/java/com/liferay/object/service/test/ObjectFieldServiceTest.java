@@ -16,13 +16,16 @@ package com.liferay.object.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.object.constants.ObjectDefinitionConstants;
+import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectFieldService;
+import com.liferay.object.service.test.util.ObjectDefinitionTestUtil;
 import com.liferay.object.util.LocalizedMapUtil;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
@@ -65,19 +68,8 @@ public class ObjectFieldServiceTest {
 	public void setUp() throws Exception {
 		_defaultUser = _userLocalService.getDefaultUser(
 			TestPropsValues.getCompanyId());
-		_originalName = PrincipalThreadLocal.getName();
-		_originalPermissionChecker =
-			PermissionThreadLocal.getPermissionChecker();
-		_user = TestPropsValues.getUser();
-
-		_objectDefinition =
-			_objectDefinitionLocalService.addCustomObjectDefinition(
-				TestPropsValues.getUserId(),
-				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
-				"A" + RandomTestUtil.randomString(), null, null,
-				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
-				ObjectDefinitionConstants.SCOPE_COMPANY, null);
-
+		_objectDefinition = ObjectDefinitionTestUtil.addObjectDefinition(
+			_objectDefinitionLocalService);
 		_systemObjectDefinition =
 			_objectDefinitionLocalService.addSystemObjectDefinition(
 				TestPropsValues.getUserId(), "Test", null,
@@ -86,6 +78,10 @@ public class ObjectFieldServiceTest {
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				ObjectDefinitionConstants.SCOPE_COMPANY, 1,
 				Collections.<ObjectField>emptyList());
+		_originalName = PrincipalThreadLocal.getName();
+		_originalPermissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+		_user = TestPropsValues.getUser();
 	}
 
 	@After
@@ -170,9 +166,9 @@ public class ObjectFieldServiceTest {
 	}
 
 	@Test
-	public void testUpdateCustomObjectField() throws Exception {
+	public void testUpdateObjectField() throws Exception {
 		try {
-			_testUpdateCustomObjectField(_defaultUser);
+			_testUpdateObjectField(_defaultUser);
 
 			Assert.fail();
 		}
@@ -185,15 +181,17 @@ public class ObjectFieldServiceTest {
 						" must have UPDATE permission for"));
 		}
 
-		_testUpdateCustomObjectField(_user);
+		_testUpdateObjectField(_user);
 	}
 
 	private ObjectField _addObjectField(User user) throws Exception {
 		return _objectFieldLocalService.addCustomObjectField(
-			user.getUserId(), 0, _objectDefinition.getObjectDefinitionId(),
-			"Text", "String", false, false, null,
+			null, user.getUserId(), 0,
+			_objectDefinition.getObjectDefinitionId(),
+			ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+			ObjectFieldConstants.DB_TYPE_STRING, null, false, false, null,
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
-			StringUtil.randomId(), true, Collections.emptyList());
+			StringUtil.randomId(), true, false, Collections.emptyList());
 	}
 
 	private void _setUser(User user) {
@@ -212,9 +210,11 @@ public class ObjectFieldServiceTest {
 			_setUser(user);
 
 			objectField = _objectFieldService.addCustomObjectField(
-				0, objectDefinitionId, "Text", "String", false, false, null,
+				null, 0, objectDefinitionId,
+				ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+				ObjectFieldConstants.DB_TYPE_STRING, null, false, false, null,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
-				StringUtil.randomId(), true, Collections.emptyList());
+				StringUtil.randomId(), true, false, Collections.emptyList());
 		}
 		finally {
 			if (objectField != null) {
@@ -259,7 +259,7 @@ public class ObjectFieldServiceTest {
 		}
 	}
 
-	private void _testUpdateCustomObjectField(User user) throws Exception {
+	private void _testUpdateObjectField(User user) throws Exception {
 		ObjectField objectField = null;
 
 		try {
@@ -267,10 +267,11 @@ public class ObjectFieldServiceTest {
 
 			objectField = _addObjectField(user);
 
-			objectField = _objectFieldService.updateCustomObjectField(
-				objectField.getObjectFieldId(), 0, "Text", "String", true,
-				false, LanguageUtil.getLanguageId(LocaleUtil.getDefault()),
-				LocalizedMapUtil.getLocalizedMap("baker"), "baker", true,
+			objectField = _objectFieldService.updateObjectField(
+				StringPool.BLANK, objectField.getObjectFieldId(), 0, "Text",
+				"String", null, true, false,
+				LanguageUtil.getLanguageId(LocaleUtil.getDefault()),
+				LocalizedMapUtil.getLocalizedMap("baker"), "baker", true, false,
 				Collections.emptyList());
 		}
 		finally {

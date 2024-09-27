@@ -94,7 +94,12 @@ public interface CommerceAccountGroupLocalService extends BaseLocalService {
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<CommerceAccountGroup>
-		getCommerceAccountGroupsByCommerceAccountId(long commerceAccountId);
+		getCommerceAccountGroupsByCommerceAccountId(
+			long commerceAccountId, int start, int end);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int getCommerceAccountGroupsByCommerceAccountIdCount(
+		long commerceAccountId);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getCommerceAccountGroupsCount(long companyId);
@@ -116,8 +121,8 @@ public interface CommerceAccountGroupLocalService extends BaseLocalService {
 		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public int searchCommerceAccountsGroupCount(long companyId, String keywords)
-		throws PortalException;
+	public int searchCommerceAccountsGroupCount(
+		long companyId, String keywords);
 
 	@Indexable(type = IndexableType.REINDEX)
 	public CommerceAccountGroup updateCommerceAccountGroup(

@@ -49,7 +49,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Brian Wing Shun Chan
  */
-@Component(immediate = true, service = DSEnvelopeManager.class)
+@Component(service = DSEnvelopeManager.class)
 public class DSEnvelopeManagerImpl implements DSEnvelopeManager {
 
 	@Override
@@ -264,7 +264,9 @@ public class DSEnvelopeManagerImpl implements DSEnvelopeManager {
 		}
 		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn("Invalid local date time " + localDateTimeString);
+				_log.warn(
+					"Invalid local date time " + localDateTimeString,
+					exception);
 			}
 
 			return null;

@@ -1,24 +1,18 @@
 @component-name = "portal-ab-test"
 definition {
 
-	property portal.release = "false";
+	property portal.release = "true";
 	property portal.upstream = "true";
 	property property.group = "analytics.cloud.profile";
 	property testray.main.component.name = "Content Performance";
 
 	setUp {
 		task ("Open Analytics Cloud") {
-			var analyticsCloudURL = PropsUtil.get("analytics.cloud.url");
-
-			Navigator.openURL(baseURL = "${analyticsCloudURL}");
+			ACUtils.launchAC();
 		}
 
 		task ("Take token from Analytics Cloud") {
-			AnalyticsCloud.loginAnalyticsCloud(
-				emailAddress = "test@liferay.com",
-				password = "test");
-
-			AnalyticsCloud.takeTokenFromAnalyticsCloud();
+			ACSettings.takeTokenFromAnalyticsCloud();
 		}
 
 		task ("Go to DXP portal, login and create site") {
@@ -32,7 +26,7 @@ definition {
 		}
 
 		task ("Connect and synchronyze with Analytics Cloud") {
-			AnalyticsCloud.syncAnalyticsCloud(siteName = "Test Site Name");
+			ACDXPSettings.connectDXPtoAnalyticsCloud(siteName = "Test Site Name");
 		}
 
 		task ("Create content page") {
@@ -161,7 +155,7 @@ definition {
 	@priority = "3"
 	test AuthorNotShowInWidgetPage {
 		task ("Create and go to Widget Page") {
-			PagesAdmin.addPublicPage(
+			PagesAdmin.addPage(
 				pageName = "Widget Page Name",
 				sitePageType = "Widget Page");
 
@@ -291,9 +285,7 @@ definition {
 				locator1 = "ContentPerformance#CONTENT_PERFORMANCE_URL",
 				value1 = "pt/web/test-site-name/test-widget-page-name");
 
-			AssertTextEquals(
-				locator1 = "ContentPerformance#TOTAL_VIEWS_NUMBER",
-				value1 = "0");
+			ContentPerformance.viewTotalViews(numberViews = "0");
 		}
 	}
 
@@ -320,7 +312,7 @@ definition {
 		task ("Create Widget Page") {
 			Navigator.openWithAppendToBaseURL(urlAppend = "web/test-site-name");
 
-			PagesAdmin.addPublicPage(
+			PagesAdmin.addPage(
 				pageName = "Widget Page Name",
 				sitePageType = "Widget Page");
 		}
@@ -342,9 +334,7 @@ definition {
 				locator1 = "ContentPerformance#CONTENT_PERFORMANCE_URL",
 				value1 = "pt/web/test-site-name");
 
-			AssertTextEquals(
-				locator1 = "ContentPerformance#TOTAL_VIEWS_NUMBER",
-				value1 = "0");
+			ContentPerformance.viewTotalViews(numberViews = "0");
 		}
 	}
 
@@ -353,12 +343,6 @@ definition {
 	test CheckAllInfoDisplayed {
 		task ("Open Content Performance") {
 			ContentPerformance.openContentPerformance();
-
-			if (IsVisible(locator1 = "ContentPerformance#CONTENT_PERFORMANCE_PANEL")) {
-				Click(locator1 = "ContentPerformance#CONTENT_PERFORMANCE_BUTTON");
-			}
-
-			Click(locator1 = "ContentPerformance#CONTENT_PERFORMANCE_BUTTON");
 		}
 
 		task ("Assert Title is present") {
@@ -415,23 +399,36 @@ definition {
 		}
 	}
 
+	@description = "LPS-150536 Bug: Traffic sources with link and full pie chart when the content was published today and there is some data for that content in AC side"
+	@priority = "4"
+	test EmptyDataAtPieChartPublishedToday {
+		task ("Create and go to content page") {
+			JSONLayout.addPublicLayout(
+				groupName = "Test Site Name",
+				layoutName = "Content Page 2",
+				type = "content");
+
+			Navigator.openWithAppendToBaseURL(urlAppend = "web/test-site-name/content-page-2");
+		}
+
+		task ("Open Content Performance panel") {
+			ContentPerformance.openContentPerformance();
+		}
+
+		task ("Check that graph is empty (grey/gray)") {
+			AssertElementPresent(
+				colorHex = "f1f2f5",
+				locator1 = "ContentPerformance#PIE_CHART_WITH_COLOR");
+		}
+	}
+
 	@description = "LPS-105216: Validate that Free trial and dismiss buttons ARE NOT displayed when AC is enabled"
 	@priority = "3"
 	test FreeTrialButtonNotPresent {
 		task ("Open Content Performance and Assert if element is not present") {
-			if (IsVisible(locator1 = "ContentPerformance#CONTENT_PERFORMANCE_PANEL")) {
-				Click(locator1 = "ContentPerformance#CONTENT_PERFORMANCE_BUTTON");
-			}
+			ContentPerformance.openContentPerformance();
 
-			Click(locator1 = "ContentPerformance#CONTENT_PERFORMANCE_BUTTON");
-
-			AssertElementNotPresent(
-				locator1 = "ContentPerformance#CONTENT_PERFORMANCE_START_FREE_TRIAL",
-				value1 = "Start Free Trial");
-
-			AssertElementNotPresent(
-				locator1 = "ContentPerformance#CONTENT_PERFORMANCE_DO_NOT_SHOW_AGAIN",
-				value1 = "Do not show me this again.");
+			AssertElementNotPresent(locator1 = "ContentPerformance#CONTENT_PERFORMANCE_DO_NOT_SHOW_AGAIN");
 		}
 	}
 
@@ -587,7 +584,7 @@ definition {
 				id = "element-text",
 				text = "Texto en Español");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Open Content Performance") {
@@ -615,7 +612,7 @@ definition {
 			Click(locator1 = "ContentPerformance#LANGUAGE_DROPDOWN_BUTTON");
 		}
 
-		task ("Check that there is not any  Translated/Unstraslated label") {
+		task ("Check that there is not any Translated/Unstraslated label") {
 			AssertTextEquals(
 				locator1 = "ContentPerformance#LANGUAGE_LABEL",
 				value1 = "Default");
@@ -664,9 +661,7 @@ definition {
 				locator1 = "ContentPerformance#CONTENT_PERFORMANCE_TITLE",
 				pageName = "Test Widget Page Name");
 
-			AssertTextEquals(
-				locator1 = "ContentPerformance#TOTAL_VIEWS_NUMBER",
-				value1 = "0");
+			ContentPerformance.viewTotalViews(numberViews = "0");
 		}
 	}
 
@@ -682,9 +677,7 @@ definition {
 				locator1 = "ContentPerformance#CONTENT_PERFORMANCE_TITLE",
 				pageName = "Content Page");
 
-			AssertTextEquals(
-				locator1 = "ContentPerformance#TOTAL_VIEWS_NUMBER",
-				value1 = "0");
+			ContentPerformance.viewTotalViews(numberViews = "0");
 		}
 	}
 
@@ -722,9 +715,7 @@ definition {
 				locator1 = "ContentPerformance#CONTENT_PERFORMANCE_TITLE",
 				pageName = "Test Widget Page Name");
 
-			AssertTextEquals(
-				locator1 = "ContentPerformance#TOTAL_VIEWS_NUMBER",
-				value1 = "0");
+			ContentPerformance.viewTotalViews(numberViews = "0");
 		}
 	}
 
@@ -732,7 +723,7 @@ definition {
 	@priority = "4"
 	test MetricsIconVisibleInWidgetPage {
 		task ("Create Widget Page") {
-			PagesAdmin.addPublicPage(
+			PagesAdmin.addPage(
 				pageName = "Widget Page Name",
 				sitePageType = "Widget Page");
 		}
@@ -750,9 +741,7 @@ definition {
 				locator1 = "ContentPerformance#CONTENT_PERFORMANCE_TITLE",
 				pageName = "Widget Page Name");
 
-			AssertTextEquals(
-				locator1 = "ContentPerformance#TOTAL_VIEWS_NUMBER",
-				value1 = "0");
+			ContentPerformance.viewTotalViews(numberViews = "0");
 		}
 	}
 
@@ -771,15 +760,13 @@ definition {
 				contentType = "Web Content Article",
 				displayPageTemplateEntryName = "Display Page Name",
 				groupName = "Test Site Name",
+				statusKey = "APPROVED",
 				subType = "Basic Web Content");
 
-			DisplayPageTemplatesAdmin.openDisplayPagesAdmin(siteURLKey = "test-site-name");
-
-			DisplayPageTemplatesAdmin.gotoDisplayPage(displayPageName = "Display Page Name");
-
-			PageEditor.clickPublish();
-
-			DisplayPageTemplatesAdmin.markDisplayPageAsDefault(displayPageName = "Display Page Name");
+			JSONLayoutpagetemplate.setLayoutPageTemplateEntryAsDefault(
+				groupName = "Test Site Name",
+				layoutPageTemplateEntryName = "Display Page Name",
+				type = "Display Page Template");
 		}
 
 		task ("Navigate to Content Dashboard") {
@@ -856,16 +843,17 @@ definition {
 		}
 
 		task ("Create a default Display Page Template") {
-			DisplayPageTemplatesAdmin.openDisplayPagesAdmin(siteURLKey = "test-site-name");
-
-			DisplayPageTemplatesAdmin.addDisplayPage(
+			JSONLayoutpagetemplate.addDisplayPageTemplateEntry(
 				contentType = "Web Content Article",
-				displayPageName = "Display Page Name",
+				displayPageTemplateEntryName = "Display Page Name",
+				groupName = "Test Site Name",
+				statusKey = "APPROVED",
 				subType = "Basic Web Content");
 
-			PageEditor.clickPublish();
-
-			DisplayPageTemplatesAdmin.markDisplayPageAsDefault(displayPageName = "Display Page Name");
+			JSONLayoutpagetemplate.setLayoutPageTemplateEntryAsDefault(
+				groupName = "Test Site Name",
+				layoutPageTemplateEntryName = "Display Page Name",
+				type = "Display Page Template");
 		}
 
 		task ("Login with user created") {
@@ -879,7 +867,7 @@ definition {
 		}
 
 		task ("Assert that 'View metrics' option is not displayed") {
-			Click.clickNoMouseOver(locator1 = "ContentDashboard#ROW_PANEL_WC");
+			Click.clickNoMouseOver(locator1 = "ContentDashboard#ROW_PANEL");
 
 			AssertElementNotPresent(locator1 = "ContentPerformance#CONTENT_PERFORMANCE_BUTTON");
 		}
@@ -910,7 +898,7 @@ definition {
 		}
 
 		task ("Assert that 'View metrics' option is not displayed") {
-			Click.clickNoMouseOver(locator1 = "ContentDashboard#ROW_PANEL_WC");
+			Click.clickNoMouseOver(locator1 = "ContentDashboard#ROW_PANEL");
 
 			AssertElementNotPresent(locator1 = "ContentPerformance#CONTENT_PERFORMANCE_BUTTON");
 		}
@@ -967,17 +955,18 @@ definition {
 				userEmailAddress = "userea@liferay.com");
 		}
 
-		task ("Create a DPT and set as Default") {
-			DisplayPageTemplatesAdmin.openDisplayPagesAdmin(siteURLKey = "test-site-name");
-
-			DisplayPageTemplatesAdmin.addDisplayPage(
+		task ("Create a default Display Page Template") {
+			JSONLayoutpagetemplate.addDisplayPageTemplateEntry(
 				contentType = "Web Content Article",
-				displayPageName = "Display Page Name",
+				displayPageTemplateEntryName = "Display Page Name",
+				groupName = "Test Site Name",
+				statusKey = "APPROVED",
 				subType = "Basic Web Content");
 
-			PageEditor.clickPublish();
-
-			DisplayPageTemplatesAdmin.markDisplayPageAsDefault(displayPageName = "Display Page Name");
+			JSONLayoutpagetemplate.setLayoutPageTemplateEntryAsDefault(
+				groupName = "Test Site Name",
+				layoutPageTemplateEntryName = "Display Page Name",
+				type = "Display Page Template");
 		}
 
 		task ("Logout and login with created user") {
@@ -989,9 +978,11 @@ definition {
 		task ("Check if button is present in Content Dashboard") {
 			ContentDashboard.goToContentDashboard();
 
-			Click.clickNoMouseOver(locator1 = "ContentDashboard#ROW_PANEL_WC");
+			Click.clickNoMouseOver(locator1 = "ContentDashboard#ROW_PANEL");
 
-			AssertVisible(locator1 = "ContentPerformance#ICON_VIEW_METRICS");
+			AssertVisible(
+				locator1 = "ContentDashboard#QUICK_ACTION_ICON",
+				title = "View Metrics");
 		}
 
 		task ("Login with Test user, to allow tearDown") {
@@ -1059,17 +1050,18 @@ definition {
 				userEmailAddress = "userea@liferay.com");
 		}
 
-		task ("Create a DPT and set as Default") {
-			DisplayPageTemplatesAdmin.openDisplayPagesAdmin(siteURLKey = "test-site-name");
-
-			DisplayPageTemplatesAdmin.addDisplayPage(
+		task ("Create a default Display Page Template") {
+			JSONLayoutpagetemplate.addDisplayPageTemplateEntry(
 				contentType = "Web Content Article",
-				displayPageName = "Display Page Name",
+				displayPageTemplateEntryName = "Display Page Name",
+				groupName = "Test Site Name",
+				statusKey = "APPROVED",
 				subType = "Basic Web Content");
 
-			PageEditor.clickPublish();
-
-			DisplayPageTemplatesAdmin.markDisplayPageAsDefault(displayPageName = "Display Page Name");
+			JSONLayoutpagetemplate.setLayoutPageTemplateEntryAsDefault(
+				groupName = "Test Site Name",
+				layoutPageTemplateEntryName = "Display Page Name",
+				type = "Display Page Template");
 		}
 
 		task ("Logout and login with created user") {
@@ -1081,9 +1073,11 @@ definition {
 		task ("Check if button is present in Content Dashboard") {
 			ContentDashboard.goToContentDashboard();
 
-			Click(locator1 = "ContentDashboard#ROW_PANEL_WC");
+			Click(locator1 = "ContentDashboard#ROW_PANEL");
 
-			AssertVisible(locator1 = "ContentPerformance#ICON_VIEW_METRICS");
+			AssertVisible(
+				locator1 = "ContentDashboard#QUICK_ACTION_ICON",
+				title = "View Metrics");
 		}
 
 		task ("Login with Test user, to allow tearDown") {
@@ -1139,20 +1133,18 @@ definition {
 				userEmailAddress = "userea@liferay.com");
 		}
 
-		task ("Create a DPT and set as Default") {
+		task ("Create a default Display Page Template") {
 			JSONLayoutpagetemplate.addDisplayPageTemplateEntry(
 				contentType = "Web Content Article",
 				displayPageTemplateEntryName = "Display Page Name",
 				groupName = "Test Site Name",
+				statusKey = "APPROVED",
 				subType = "Basic Web Content");
 
-			DisplayPageTemplatesAdmin.openDisplayPagesAdmin(siteURLKey = "test-site-name");
-
-			DisplayPageTemplatesAdmin.gotoDisplayPage(displayPageName = "Display Page Name");
-
-			PageEditor.clickPublish();
-
-			DisplayPageTemplatesAdmin.markDisplayPageAsDefault(displayPageName = "Display Page Name");
+			JSONLayoutpagetemplate.setLayoutPageTemplateEntryAsDefault(
+				groupName = "Test Site Name",
+				layoutPageTemplateEntryName = "Display Page Name",
+				type = "Display Page Template");
 		}
 
 		task ("Logout and login with created user") {
@@ -1164,9 +1156,11 @@ definition {
 		task ("Check if button is present in Content Dashboard") {
 			ContentDashboard.goToContentDashboard();
 
-			Click(locator1 = "ContentDashboard#ROW_PANEL_WC");
+			Click(locator1 = "ContentDashboard#ROW_PANEL");
 
-			AssertElementNotPresent(locator1 = "ContentPerformance#ICON_VIEW_METRICS");
+			AssertElementNotPresent(
+				locator1 = "ContentDashboard#QUICK_ACTION_ICON",
+				title = "View Metrics");
 		}
 
 		task ("Login with Test user, to allow tearDown") {
@@ -1229,17 +1223,18 @@ definition {
 				userEmailAddress = "userea@liferay.com");
 		}
 
-		task ("Create a DPT and set as Default") {
-			DisplayPageTemplatesAdmin.openDisplayPagesAdmin(siteURLKey = "test-site-name");
-
-			DisplayPageTemplatesAdmin.addDisplayPage(
+		task ("Create a default Display Page Template") {
+			JSONLayoutpagetemplate.addDisplayPageTemplateEntry(
 				contentType = "Web Content Article",
-				displayPageName = "Display Page Name",
+				displayPageTemplateEntryName = "Display Page Name",
+				groupName = "Test Site Name",
+				statusKey = "APPROVED",
 				subType = "Basic Web Content");
 
-			PageEditor.clickPublish();
-
-			DisplayPageTemplatesAdmin.markDisplayPageAsDefault(displayPageName = "Display Page Name");
+			JSONLayoutpagetemplate.setLayoutPageTemplateEntryAsDefault(
+				groupName = "Test Site Name",
+				layoutPageTemplateEntryName = "Display Page Name",
+				type = "Display Page Template");
 		}
 
 		task ("Logout and login with created user") {
@@ -1251,9 +1246,11 @@ definition {
 		task ("Check if button is present in Content Dashboard") {
 			ContentDashboard.goToContentDashboard();
 
-			Click(locator1 = "ContentDashboard#ROW_PANEL_WC");
+			Click(locator1 = "ContentDashboard#ROW_PANEL");
 
-			AssertVisible(locator1 = "ContentPerformance#ICON_VIEW_METRICS");
+			AssertVisible(
+				locator1 = "ContentDashboard#QUICK_ACTION_ICON",
+				title = "View Metrics");
 		}
 
 		task ("Login with Test user, to allow tearDown") {
@@ -1268,24 +1265,24 @@ definition {
 	@description = "LPS-111042: As a content writer I want to know the keywords driving traffic to my contents by different countries"
 	@priority = "4"
 	test NoNavigationWithoutIncomingTraffic {
-		task ("Open Content Performance and Assert") {
-			if (IsVisible(locator1 = "ContentPerformance#CONTENT_PERFORMANCE_PANEL")) {
-				Click(locator1 = "ContentPerformance#CONTENT_PERFORMANCE_BUTTON");
-			}
-
-			Click(locator1 = "ContentPerformance#CONTENT_PERFORMANCE_BUTTON");
-
-			AssertElementPresent(
-				locator1 = "ContentPerformance#SELECT_TRAFFIC_SOURCES_NUMBER",
-				value1 = "0");
+		task ("Open Content Performance") {
+			ContentPerformance.openContentPerformance();
 		}
 
-		task ("Click and Assert if element still present") {
-			ClickNoError(locator1 = "ContentPerformance#SELECT_TRAFFIC_SOURCES_NUMBER");
+		task ("Check the value of engagement data") {
+			for (var channel : list "Referral,Social,Paid,Direct,Organic") {
+				ContentPerformance.viewTrafficViews(
+					key_numberViews = "0",
+					trafficChannel = "${channel}");
+			}
+		}
 
-			AssertElementPresent(
-				locator1 = "ContentPerformance#SELECT_TRAFFIC_SOURCES_NUMBER",
-				value1 = "0");
+		task ("Chech that channels are not clickable") {
+			for (var channel : list "Referral,Social,Paid,Direct,Organic") {
+				AssertVisible(
+					locator1 = "ContentPerformance#TRAFFIC_CHANNELS_TEXT",
+					trafficChannel = "${channel}");
+			}
 		}
 	}
 
@@ -1397,7 +1394,7 @@ definition {
 	@priority = "3"
 	test PanelInformationInWidgetPage {
 		task ("Create Widget Page") {
-			PagesAdmin.addPublicPage(
+			PagesAdmin.addPage(
 				pageName = "Widget Page Name",
 				sitePageType = "Widget Page");
 		}
@@ -1424,12 +1421,23 @@ definition {
 	}
 
 	@description = "LPS-109417: When the graphic shows the publication date, all previous dots will be 0"
-	@ignore = "true"
 	@priority = "5"
 	test PublicationDatePreviousSet0 {
+		task ("Open Content Performance panel") {
+			ContentPerformance.openContentPerformance();
+		}
 
-		// TODO LPS-139242 PublicationDatePreviousSet0 pending implementation
+		task ("Check that publication date is represented at graph") {
+			AssertVisible(locator1 = "ContentPerformance#DOT_GRAPH_TODAY_ZERO");
+		}
 
+		task ("Check that dates before publication date have no dots/0") {
+			for (var index : list "2,3,4,5,6,7") {
+				AssertElementNotPresent(
+					key_index = "${index}",
+					locator1 = "ContentPerformance#DOT_GRAPH_INDEX");
+			}
+		}
 	}
 
 	@description = "LPS-126044: When the user accesses to the content performance panel of a blog display page, the views graph is shown in the content performance panel"

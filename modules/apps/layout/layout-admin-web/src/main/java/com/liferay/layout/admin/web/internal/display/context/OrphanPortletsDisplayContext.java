@@ -15,7 +15,6 @@
 package com.liferay.layout.admin.web.internal.display.context;
 
 import com.liferay.layout.admin.constants.LayoutAdminPortletKeys;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.language.LanguageUtil;
@@ -28,6 +27,7 @@ import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.SearchDisplayStyleUtil;
 import com.liferay.portal.kernel.portlet.SearchOrderByUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.service.PortletLocalServiceUtil;
 import com.liferay.portal.kernel.service.PortletPreferencesLocalServiceUtil;
@@ -175,14 +175,7 @@ public class OrphanPortletsDisplayContext {
 		orphanPortletsSearchContainer.setId("portlets");
 		orphanPortletsSearchContainer.setOrderByCol("name");
 		orphanPortletsSearchContainer.setOrderByType(getOrderByType());
-
-		List<Portlet> portlets = getOrphanPortlets();
-
-		orphanPortletsSearchContainer.setResultsAndTotal(
-			() -> ListUtil.subList(
-				portlets, orphanPortletsSearchContainer.getStart(),
-				orphanPortletsSearchContainer.getEnd()),
-			portlets.size());
+		orphanPortletsSearchContainer.setResultsAndTotal(getOrphanPortlets());
 
 		Layout selLayout = getSelLayout();
 

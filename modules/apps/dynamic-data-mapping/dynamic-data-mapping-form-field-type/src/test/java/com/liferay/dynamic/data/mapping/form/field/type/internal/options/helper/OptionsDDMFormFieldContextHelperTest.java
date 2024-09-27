@@ -21,8 +21,11 @@ import com.liferay.dynamic.data.mapping.render.DDMFormFieldRenderingContext;
 import com.liferay.portal.json.JSONFactoryImpl;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoader;
+import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoaderUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.List;
 import java.util.Locale;
@@ -32,25 +35,25 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import org.mockito.Matchers;
-
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.Mockito;
 
 /**
  * @author Carolina Barbosa
  */
-@PrepareForTest(ResourceBundleUtil.class)
-@RunWith(PowerMockRunner.class)
 public class OptionsDDMFormFieldContextHelperTest {
 
-	@Before
-	public void setUp() {
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
+	@BeforeClass
+	public static void setUpClass() {
 		_setUpLanguageUtil();
 		_setUpResourceBundleUtil();
 	}
@@ -84,6 +87,39 @@ public class OptionsDDMFormFieldContextHelperTest {
 		Assert.assertTrue(matcher.matches());
 	}
 
+	private static Language _mockLanguage() {
+		Language language = Mockito.mock(Language.class);
+
+		Mockito.when(
+			language.get(
+				Mockito.any(ResourceBundle.class), Mockito.eq("option"))
+		).thenReturn(
+			"Option"
+		);
+
+		return language;
+	}
+
+	private static void _setUpLanguageUtil() {
+		LanguageUtil languageUtil = new LanguageUtil();
+
+		languageUtil.setLanguage(_mockLanguage());
+	}
+
+	private static void _setUpResourceBundleUtil() {
+		ResourceBundleLoader resourceBundleLoader = Mockito.mock(
+			ResourceBundleLoader.class);
+
+		ResourceBundleLoaderUtil.setPortalResourceBundleLoader(
+			resourceBundleLoader);
+
+		Mockito.when(
+			resourceBundleLoader.loadResourceBundle(_defaultLocale)
+		).thenReturn(
+			ResourceBundleUtil.EMPTY_RESOURCE_BUNDLE
+		);
+	}
+
 	private DDMForm _createDDMForm() {
 		DDMForm ddmForm = new DDMForm();
 
@@ -93,39 +129,7 @@ public class OptionsDDMFormFieldContextHelperTest {
 		return ddmForm;
 	}
 
-	private Language _mockLanguage() {
-		Language language = PowerMockito.mock(Language.class);
-
-		PowerMockito.when(
-			language.get(
-				Matchers.any(ResourceBundle.class), Matchers.eq("option"))
-		).thenReturn(
-			"Option"
-		);
-
-		return language;
-	}
-
-	private void _setUpLanguageUtil() {
-		LanguageUtil languageUtil = new LanguageUtil();
-
-		languageUtil.setLanguage(_mockLanguage());
-	}
-
-	private void _setUpResourceBundleUtil() {
-		PowerMockito.mockStatic(ResourceBundleUtil.class);
-
-		PowerMockito.when(
-			ResourceBundleUtil.getBundle(
-				Matchers.anyString(), Matchers.eq(_defaultLocale),
-				Matchers.any(ClassLoader.class))
-		).thenReturn(
-			ResourceBundleUtil.EMPTY_RESOURCE_BUNDLE
-		);
-	}
-
+	private static final Locale _defaultLocale = LocaleUtil.US;
 	private static final Pattern _pattern = Pattern.compile("^Option[\\d]{8}$");
-
-	private final Locale _defaultLocale = LocaleUtil.US;
 
 }

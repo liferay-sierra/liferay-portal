@@ -21,8 +21,11 @@ import com.liferay.commerce.product.exception.DuplicateCPSpecificationOptionKeyE
 import com.liferay.commerce.product.model.CPDefinition;
 import com.liferay.commerce.product.model.CPDefinitionSpecificationOptionValue;
 import com.liferay.commerce.product.model.CPSpecificationOption;
+import com.liferay.commerce.product.service.CPDefinitionSpecificationOptionValueLocalService;
 import com.liferay.commerce.product.service.base.CPSpecificationOptionLocalServiceBaseImpl;
 import com.liferay.expando.kernel.service.ExpandoRowLocalService;
+import com.liferay.petra.string.CharPool;
+import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -43,7 +46,9 @@ import com.liferay.portal.kernel.search.QueryConfig;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.SearchException;
 import com.liferay.portal.kernel.search.Sort;
+import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.transaction.TransactionCommitCallbackUtil;
 import com.liferay.portal.kernel.util.FriendlyURLNormalizer;
@@ -51,8 +56,8 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.spring.extender.service.ServiceReference;
 
 import java.io.Serializable;
 
@@ -62,10 +67,17 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+
 /**
  * @author Andrea Di Giorgi
  * @author Alessio Antonio Rendina
  */
+@Component(
+	property = "model.class.name=com.liferay.commerce.product.model.CPSpecificationOption",
+	service = AopService.class
+)
 public class CPSpecificationOptionLocalServiceImpl
 	extends CPSpecificationOptionLocalServiceBaseImpl {
 
@@ -77,11 +89,13 @@ public class CPSpecificationOptionLocalServiceImpl
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
+
+		key = StringUtil.replace(key, CharPool.UNDERLINE, CharPool.DASH);
 
 		key = _friendlyURLNormalizer.normalize(key);
 
-		validate(0, user.getCompanyId(), titleMap, key);
+		_validate(0, user.getCompanyId(), titleMap, key);
 
 		long cpSpecificationOptionId = counterLocalService.increment();
 
@@ -103,7 +117,7 @@ public class CPSpecificationOptionLocalServiceImpl
 
 		// Resources
 
-		resourceLocalService.addModelResources(
+		_resourceLocalService.addModelResources(
 			cpSpecificationOption, serviceContext);
 
 		return cpSpecificationOption;
@@ -122,13 +136,13 @@ public class CPSpecificationOptionLocalServiceImpl
 
 		// Commerce product definition specification option values
 
-		cpDefinitionSpecificationOptionValueLocalService.
+		_cpDefinitionSpecificationOptionValueLocalService.
 			deleteCPSpecificationOptionDefinitionValues(
 				cpSpecificationOption.getCPSpecificationOptionId());
 
 		// Resources
 
-		resourceLocalService.deleteResource(
+		_resourceLocalService.deleteResource(
 			cpSpecificationOption, ResourceConstants.SCOPE_INDIVIDUAL);
 
 		// Expando
@@ -171,7 +185,8 @@ public class CPSpecificationOptionLocalServiceImpl
 	public CPSpecificationOption fetchCPSpecificationOption(
 		long companyId, String key) {
 
-		return cpSpecificationOptionPersistence.fetchByC_K(companyId, key);
+		return cpSpecificationOptionPersistence.fetchByC_K(
+			companyId, _friendlyURLNormalizer.normalize(key));
 	}
 
 	@Override
@@ -179,7 +194,8 @@ public class CPSpecificationOptionLocalServiceImpl
 			long companyId, String key)
 		throws PortalException {
 
-		return cpSpecificationOptionPersistence.findByC_K(companyId, key);
+		return cpSpecificationOptionPersistence.findByC_K(
+			companyId, _friendlyURLNormalizer.normalize(key));
 	}
 
 	@Override
@@ -189,10 +205,10 @@ public class CPSpecificationOptionLocalServiceImpl
 				int end, Sort sort)
 		throws PortalException {
 
-		SearchContext searchContext = buildSearchContext(
+		SearchContext searchContext = _buildSearchContext(
 			companyId, facetable, keywords, start, end, sort);
 
-		return searchCPSpecificationOptions(searchContext);
+		return _searchCPSpecificationOptions(searchContext);
 	}
 
 	@Override
@@ -221,9 +237,11 @@ public class CPSpecificationOptionLocalServiceImpl
 			cpSpecificationOptionPersistence.findByPrimaryKey(
 				cpSpecificationOptionId);
 
+		key = StringUtil.replace(key, CharPool.UNDERLINE, CharPool.DASH);
+
 		key = _friendlyURLNormalizer.normalize(key);
 
-		validate(
+		_validate(
 			cpSpecificationOption.getCPSpecificationOptionId(),
 			cpSpecificationOption.getCompanyId(), titleMap, key);
 
@@ -237,13 +255,13 @@ public class CPSpecificationOptionLocalServiceImpl
 		cpSpecificationOption = cpSpecificationOptionPersistence.update(
 			cpSpecificationOption);
 
-		reindexCPDefinitions(
+		_reindexCPDefinitions1(
 			cpSpecificationOption.getCompanyId(), cpSpecificationOptionId);
 
 		return cpSpecificationOption;
 	}
 
-	protected SearchContext buildSearchContext(
+	private SearchContext _buildSearchContext(
 		long companyId, Boolean facetable, String keywords, int start, int end,
 		Sort sort) {
 
@@ -296,7 +314,7 @@ public class CPSpecificationOptionLocalServiceImpl
 		return searchContext;
 	}
 
-	protected List<CPSpecificationOption> getCPSpecificationOptions(Hits hits)
+	private List<CPSpecificationOption> _getCPSpecificationOptions(Hits hits)
 		throws PortalException {
 
 		List<Document> documents = hits.toList();
@@ -330,19 +348,62 @@ public class CPSpecificationOptionLocalServiceImpl
 		return cpSpecificationOptions;
 	}
 
-	protected void reindexCPDefinitions(
+	private void _reindexCPDefinitions1(
 		long companyId, long cpSpecificationOptionId) {
 
 		TransactionCommitCallbackUtil.registerCallback(
 			() -> {
-				_reindexCPDefinitions(companyId, cpSpecificationOptionId);
+				_reindexCPDefinitions2(companyId, cpSpecificationOptionId);
 
 				return null;
 			});
 	}
 
-	protected BaseModelSearchResult<CPSpecificationOption>
-			searchCPSpecificationOptions(SearchContext searchContext)
+	private void _reindexCPDefinitions2(
+			long companyId, long cpSpecificationOptionId)
+		throws Exception {
+
+		Indexer<CPDefinition> indexer = IndexerRegistryUtil.nullSafeGetIndexer(
+			CPDefinition.class);
+
+		IndexableActionableDynamicQuery indexableActionableDynamicQuery =
+			_cpDefinitionSpecificationOptionValueLocalService.
+				getIndexableActionableDynamicQuery();
+
+		indexableActionableDynamicQuery.setCompanyId(companyId);
+		indexableActionableDynamicQuery.setAddCriteriaMethod(
+			dynamicQuery -> dynamicQuery.add(
+				RestrictionsFactoryUtil.eq(
+					"CPSpecificationOptionId", cpSpecificationOptionId)));
+		indexableActionableDynamicQuery.setPerformActionMethod(
+			(CPDefinitionSpecificationOptionValue
+				cpDefinitionSpecificationOptionValue) -> {
+
+				try {
+					indexableActionableDynamicQuery.addDocuments(
+						indexer.getDocument(
+							cpDefinitionSpecificationOptionValue.
+								getCPDefinition()));
+				}
+				catch (PortalException portalException) {
+					if (_log.isWarnEnabled()) {
+						CPDefinition cpDefinition =
+							cpDefinitionSpecificationOptionValue.
+								getCPDefinition();
+
+						_log.warn(
+							"Unable to index commerce product definition " +
+								cpDefinition,
+							portalException);
+					}
+				}
+			});
+
+		indexableActionableDynamicQuery.performActions();
+	}
+
+	private BaseModelSearchResult<CPSpecificationOption>
+			_searchCPSpecificationOptions(SearchContext searchContext)
 		throws PortalException {
 
 		Indexer<CPSpecificationOption> indexer =
@@ -352,7 +413,7 @@ public class CPSpecificationOptionLocalServiceImpl
 			Hits hits = indexer.search(searchContext, _SELECTED_FIELD_NAMES);
 
 			List<CPSpecificationOption> cpSpecificationOptions =
-				getCPSpecificationOptions(hits);
+				_getCPSpecificationOptions(hits);
 
 			if (cpSpecificationOptions != null) {
 				return new BaseModelSearchResult<>(
@@ -364,7 +425,7 @@ public class CPSpecificationOptionLocalServiceImpl
 			"Unable to fix the search index after 10 attempts");
 	}
 
-	protected void validate(
+	private void _validate(
 			long cpSpecificationOptionId, long companyId,
 			Map<Locale, String> titleMap, String key)
 		throws PortalException {
@@ -392,53 +453,6 @@ public class CPSpecificationOptionLocalServiceImpl
 		}
 	}
 
-	private void _reindexCPDefinitions(
-			long companyId, long cpSpecificationOptionId)
-		throws Exception {
-
-		Indexer<CPDefinition> indexer = IndexerRegistryUtil.nullSafeGetIndexer(
-			CPDefinition.class);
-
-		IndexableActionableDynamicQuery indexableActionableDynamicQuery =
-			cpDefinitionSpecificationOptionValueLocalService.
-				getIndexableActionableDynamicQuery();
-
-		indexableActionableDynamicQuery.setCompanyId(companyId);
-		indexableActionableDynamicQuery.setAddCriteriaMethod(
-			dynamicQuery -> dynamicQuery.add(
-				RestrictionsFactoryUtil.eq(
-					"CPSpecificationOptionId", cpSpecificationOptionId)));
-
-		indexableActionableDynamicQuery.setPerformActionMethod(
-			(CPDefinitionSpecificationOptionValue
-				cpDefinitionSpecificationOptionValue) -> {
-
-				try {
-					indexableActionableDynamicQuery.addDocuments(
-						indexer.getDocument(
-							cpDefinitionSpecificationOptionValue.
-								getCPDefinition()));
-				}
-				catch (PortalException portalException) {
-					if (_log.isWarnEnabled()) {
-						CPDefinition cpDefinition =
-							cpDefinitionSpecificationOptionValue.
-								getCPDefinition();
-
-						_log.warn(
-							"Unable to index commerce product definition " +
-								cpDefinition,
-							portalException);
-					}
-				}
-			});
-
-		indexableActionableDynamicQuery.setSearchEngineId(
-			indexer.getSearchEngineId());
-
-		indexableActionableDynamicQuery.performActions();
-	}
-
 	private static final String[] _SELECTED_FIELD_NAMES = {
 		Field.ENTRY_CLASS_PK, Field.COMPANY_ID, Field.UID
 	};
@@ -446,10 +460,20 @@ public class CPSpecificationOptionLocalServiceImpl
 	private static final Log _log = LogFactoryUtil.getLog(
 		CPSpecificationOptionLocalServiceImpl.class);
 
-	@ServiceReference(type = ExpandoRowLocalService.class)
+	@Reference
+	private CPDefinitionSpecificationOptionValueLocalService
+		_cpDefinitionSpecificationOptionValueLocalService;
+
+	@Reference
 	private ExpandoRowLocalService _expandoRowLocalService;
 
-	@ServiceReference(type = FriendlyURLNormalizer.class)
+	@Reference
 	private FriendlyURLNormalizer _friendlyURLNormalizer;
+
+	@Reference
+	private ResourceLocalService _resourceLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

@@ -23,13 +23,14 @@ import com.liferay.message.boards.service.MBDiscussionLocalService;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.notifications.BaseModelUserNotificationHandler;
 import com.liferay.portal.kernel.notifications.UserNotificationDefinition;
 import com.liferay.portal.kernel.notifications.UserNotificationHandler;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.util.HtmlParser;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.Portal;
 
@@ -86,7 +87,7 @@ public class CommentUserNotificationHandler
 
 	@Override
 	protected String getBodyContent(JSONObject jsonObject) {
-		return HtmlUtil.extractText(super.getBodyContent(jsonObject));
+		return _htmlParser.extractText(super.getBodyContent(jsonObject));
 	}
 
 	@Override
@@ -126,7 +127,7 @@ public class CommentUserNotificationHandler
 		}
 
 		if (assetRenderer != null) {
-			message = LanguageUtil.format(
+			message = _language.format(
 				serviceContext.getLocale(), message,
 				new String[] {
 					HtmlUtil.escape(
@@ -138,7 +139,7 @@ public class CommentUserNotificationHandler
 				false);
 		}
 		else {
-			message = LanguageUtil.format(
+			message = _language.format(
 				serviceContext.getLocale(), message,
 				new String[] {
 					HtmlUtil.escape(
@@ -171,6 +172,12 @@ public class CommentUserNotificationHandler
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		CommentUserNotificationHandler.class);
+
+	@Reference
+	private HtmlParser _htmlParser;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private MBDiscussionLocalService _mbDiscussionLocalService;

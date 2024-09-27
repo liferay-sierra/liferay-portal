@@ -49,7 +49,7 @@ import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.HtmlParser;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -107,7 +107,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 			ActionKeys.ADD_DISCUSSION);
 
 		return mbMessageLocalService.addDiscussionMessage(
-			user.getUserId(), null, groupId, className, classPK, threadId,
+			null, user.getUserId(), null, groupId, className, classPK, threadId,
 			parentMessageId, subject, body, serviceContext);
 	}
 
@@ -233,7 +233,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 		MBMessage parentMessage = mbMessagePersistence.findByPrimaryKey(
 			parentMessageId);
 
-		checkReplyToPermission(
+		_checkReplyToPermission(
 			parentMessage.getGroupId(), parentMessage.getCategoryId(),
 			parentMessageId);
 
@@ -483,7 +483,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 			}
 		}
 
-		return exportToRSS(
+		return _exportToRSS(
 			name, description, type, version, displayStyle, feedURL, entryURL,
 			messages, themeDisplay);
 	}
@@ -561,7 +561,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 			}
 		}
 
-		return exportToRSS(
+		return _exportToRSS(
 			name, description, type, version, displayStyle, feedURL, entryURL,
 			messages, themeDisplay);
 	}
@@ -617,7 +617,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 			}
 		}
 
-		return exportToRSS(
+		return _exportToRSS(
 			name, description, type, version, displayStyle, feedURL, entryURL,
 			messages, themeDisplay);
 	}
@@ -664,7 +664,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 			}
 		}
 
-		return exportToRSS(
+		return _exportToRSS(
 			name, description, type, version, displayStyle, feedURL, entryURL,
 			messages, themeDisplay);
 	}
@@ -776,7 +776,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 			}
 		}
 
-		return exportToRSS(
+		return _exportToRSS(
 			name, description, type, version, displayStyle, feedURL, entryURL,
 			messages, themeDisplay);
 	}
@@ -824,7 +824,8 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 	}
 
 	@Override
-	public void updateAnswer(long messageId, boolean answer, boolean cascade)
+	public MBMessage updateAnswer(
+			long messageId, boolean answer, boolean cascade)
 		throws PortalException {
 
 		MBMessage message = mbMessagePersistence.findByPrimaryKey(messageId);
@@ -833,7 +834,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 			getPermissionChecker(), message.getRootMessageId(),
 			ActionKeys.UPDATE);
 
-		mbMessageLocalService.updateAnswer(messageId, answer, cascade);
+		return mbMessageLocalService.updateAnswer(messageId, answer, cascade);
 	}
 
 	@Override
@@ -866,7 +867,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 			_messageModelResourcePermission.contains(
 				getPermissionChecker(), message, ActionKeys.UPDATE)) {
 
-			checkReplyToPermission(
+			_checkReplyToPermission(
 				message.getGroupId(), message.getCategoryId(),
 				message.getParentMessageId());
 		}
@@ -909,7 +910,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 			priority, allowPingbacks, serviceContext);
 	}
 
-	protected void checkReplyToPermission(
+	private void _checkReplyToPermission(
 			long groupId, long categoryId, long parentMessageId)
 		throws PortalException {
 
@@ -939,7 +940,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 		}
 	}
 
-	protected String exportToRSS(
+	private String _exportToRSS(
 		String name, String description, String type, double version,
 		String displayStyle, String feedURL, String entryURL,
 		List<MBMessage> messages, ThemeDisplay themeDisplay) {
@@ -971,7 +972,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 
 			if (displayStyle.equals(RSSUtil.DISPLAY_STYLE_ABSTRACT)) {
 				value = StringUtil.shorten(
-					HtmlUtil.extractText(message.getBody()),
+					_htmlParser.extractText(message.getBody()),
 					PropsValues.MESSAGE_BOARDS_RSS_ABSTRACT_LENGTH,
 					StringPool.BLANK);
 			}
@@ -1034,6 +1035,9 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 
 	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private HtmlParser _htmlParser;
 
 	@Reference
 	private Language _language;

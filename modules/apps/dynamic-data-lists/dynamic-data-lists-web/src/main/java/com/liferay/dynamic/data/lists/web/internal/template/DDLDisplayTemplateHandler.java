@@ -34,7 +34,7 @@ import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
 import com.liferay.dynamic.data.mapping.template.BaseDDMTemplateHandler;
 import com.liferay.dynamic.data.mapping.template.DDMTemplateVariableCodeHandler;
 import com.liferay.portal.kernel.configuration.Filter;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Release;
 import com.liferay.portal.kernel.template.TemplateHandler;
 import com.liferay.portal.kernel.template.TemplateVariableCodeHandler;
@@ -57,7 +57,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marcellus Tavares
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + DDLPortletKeys.DYNAMIC_DATA_LISTS_DISPLAY,
 	service = TemplateHandler.class
 )
@@ -83,7 +82,7 @@ public class DDLDisplayTemplateHandler extends BaseDDMTemplateHandler {
 			ResourceBundleUtil.getBundle(
 				"content.Language", locale, getClass()));
 
-		return LanguageUtil.format(locale, "x-template", portletTitle, false);
+		return _language.format(locale, "x-template", portletTitle, false);
 	}
 
 	@Override
@@ -195,6 +194,9 @@ public class DDLDisplayTemplateHandler extends BaseDDMTemplateHandler {
 
 	@Reference
 	private DLURLHelper _dlURLHelper;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

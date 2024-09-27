@@ -109,7 +109,8 @@ public class SearcherImpl implements Searcher {
 	protected IndexSearcherHelper indexSearcherHelper;
 
 	@Reference
-	protected SearchRequestContributorsHolder searchRequestContributorsHolder;
+	protected SearchRequestContributorsRegistry
+		searchRequestContributorsRegistry;
 
 	@Reference
 	protected SearchResponseBuilderFactory searchResponseBuilderFactory;
@@ -118,21 +119,20 @@ public class SearcherImpl implements Searcher {
 		SearchRequest searchRequest,
 		SearchResponseBuilder searchResponseBuilder) {
 
-		List<SearchRequest> list = searchRequest.getFederatedSearchRequests();
+		List<SearchRequest> federatedSearchRequests =
+			searchRequest.getFederatedSearchRequests();
 
-		list.stream(
-		).map(
-			this::search
-		).forEach(
-			searchResponseBuilder::addFederatedSearchResponse
-		);
+		for (SearchRequest federatedSearchRequest : federatedSearchRequests) {
+			searchResponseBuilder.addFederatedSearchResponse(
+				search(federatedSearchRequest));
+		}
 	}
 
 	private Stream<Function<SearchRequest, SearchRequest>> _getContributors(
 		SearchRequest searchRequest) {
 
 		Stream<SearchRequestContributor> stream =
-			searchRequestContributorsHolder.stream(
+			searchRequestContributorsRegistry.stream(
 				searchRequest.getIncludeContributors(),
 				searchRequest.getExcludeContributors());
 

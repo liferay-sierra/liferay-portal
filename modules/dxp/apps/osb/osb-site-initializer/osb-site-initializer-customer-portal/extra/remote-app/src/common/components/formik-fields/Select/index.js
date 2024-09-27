@@ -60,10 +60,10 @@ const Select = ({
 					<ClayIcon className="select-icon" symbol="caret-bottom" />
 
 					<ClaySelect {...field} {...props}>
-						{options.map(({disabled, label, value}) => (
+						{options.map(({disabled, label, value}, index) => (
 							<ClaySelect.Option
 								disabled={disabled}
-								key={value}
+								key={`${value}-${index}`}
 								label={label}
 								value={value}
 							/>
@@ -78,7 +78,11 @@ const Select = ({
 				</Badge>
 			)}
 
-			{helper && <div>{helper}</div>}
+			{helper && (
+				<div className="ml-3 pl-3 text-neutral-6 text-paragraph-sm">
+					{helper}
+				</div>
+			)}
 		</ClayForm.Group>
 	);
 };

@@ -42,9 +42,7 @@ BackgroundTask backgroundTask = (BackgroundTask)row.getObject();
 		%>
 
 		<liferay-ui:icon
-			data='<%=
-				Collections.singletonMap("senna-off", "true")
-			%>'
+			data='<%= Collections.singletonMap("senna-off", "true") %>'
 			label="<%= true %>"
 			markupView="lexicon"
 			message="<%= sb.toString() %>"
@@ -63,6 +61,7 @@ BackgroundTask backgroundTask = (BackgroundTask)row.getObject();
 	%>
 
 	<liferay-ui:icon-delete
+		confirmation='<%= ((completionDate != null) && completionDate.before(new Date())) ? "are-you-sure-you-want-to-delete-this" : "are-you-sure-you-want-to-cancel" %>'
 		label="<%= true %>"
 		message='<%= ((completionDate != null) && completionDate.before(new Date())) ? "delete" : "cancel" %>'
 		url="<%= deleteBackgroundTaskURL.toString() %>"

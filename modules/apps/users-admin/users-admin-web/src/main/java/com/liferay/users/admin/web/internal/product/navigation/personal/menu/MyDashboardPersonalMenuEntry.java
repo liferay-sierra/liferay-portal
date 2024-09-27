@@ -15,7 +15,7 @@
 package com.liferay.users.admin.web.internal.product.navigation.personal.menu;
 
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
@@ -41,7 +41,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pei-Jung Lan
  */
 @Component(
-	immediate = true,
 	property = {
 		"product.navigation.personal.menu.entry.order:Integer=300",
 		"product.navigation.personal.menu.group:Integer=100"
@@ -52,7 +51,7 @@ public class MyDashboardPersonalMenuEntry implements PersonalMenuEntry {
 
 	@Override
 	public String getLabel(Locale locale) {
-		return LanguageUtil.get(locale, "my-dashboard");
+		return _language.get(locale, "my-dashboard");
 	}
 
 	@Override
@@ -118,6 +117,9 @@ public class MyDashboardPersonalMenuEntry implements PersonalMenuEntry {
 
 	@Reference
 	protected RoleLocalService roleLocalService;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

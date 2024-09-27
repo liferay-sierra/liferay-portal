@@ -19,12 +19,9 @@ import ClayLabel from '@clayui/label';
 import classNames from 'classnames';
 import React from 'react';
 
-import {
-	dateToInternationalHuman,
-	normalizeRating,
-	stripHTML,
-} from '../utils/utils.es';
+import {normalizeRating, stripHTML} from '../utils/utils.es';
 import ArticleBodyRenderer from './ArticleBodyRenderer.es';
+import EditedTimestamp from './EditedTimestamp.es';
 import Link from './Link.es';
 import QuestionBadge from './QuestionsBadge.es';
 import SectionLabel from './SectionLabel.es';
@@ -32,9 +29,13 @@ import TagList from './TagList.es';
 import UserIcon from './UserIcon.es';
 
 export default function QuestionRow({
+	context,
+	creatorId,
 	currentSection,
 	items,
+	linkProps,
 	question,
+	rowSelected,
 	showSectionLabel,
 }) {
 	const sectionTitle =
@@ -45,7 +46,7 @@ export default function QuestionRow({
 
 	const creatorInformation = question.creator
 		? {
-				link: `/questions/${sectionTitle}/creator/${question.creator.id}`,
+				link: `/questions/all/creator/${question.creator.id}`,
 				name: question.creator.name,
 				portraitURL: question.creator.image,
 				userId: String(question.creator.id),
@@ -57,8 +58,15 @@ export default function QuestionRow({
 				userId: '0',
 		  };
 
+	const isRowSelected = question.friendlyUrlPath === rowSelected;
+
 	return (
-		<div className="c-mt-4 c-p-3 position-relative question-row text-secondary">
+		<div
+			className={classNames(
+				'c-mt-4 c-p-3 position-relative question-row text-secondary',
+				{'question-row-selected': isRowSelected}
+			)}
+		>
 			<div className="align-items-center d-flex flex-wrap justify-content-between">
 				<span>
 					{showSectionLabel && (
@@ -125,6 +133,7 @@ export default function QuestionRow({
 			<Link
 				className="questions-title stretched-link"
 				to={`/questions/${sectionTitle}/${question.friendlyUrlPath}`}
+				{...linkProps}
 			>
 				<h2
 					className={classNames(
@@ -132,7 +141,11 @@ export default function QuestionRow({
 						'stretched-link-layer',
 						'text-dark',
 						{
-							'question-seen': question.seen,
+							'question-seen':
+								question.seen ||
+								context?.questionsVisited?.includes(
+									question.id
+								),
 						}
 					)}
 				>
@@ -170,7 +183,12 @@ export default function QuestionRow({
 
 			<div className="align-items-sm-center align-items-start d-flex flex-column-reverse flex-sm-row justify-content-between">
 				<div className="c-mt-3 c-mt-sm-0 stretched-link-layer">
-					<Link to={creatorInformation.link}>
+					<Link
+						className={classNames({
+							'disabled-link': !!creatorId,
+						})}
+						to={creatorInformation.link}
+					>
 						<UserIcon
 							fullName={creatorInformation.name}
 							portraitURL={creatorInformation.portraitURL}
@@ -186,9 +204,11 @@ export default function QuestionRow({
 						</strong>
 					</Link>
 
-					<span className="c-ml-2 small">
-						{'- ' + dateToInternationalHuman(question.dateModified)}
-					</span>
+					<EditedTimestamp
+						dateCreated={question.dateCreated}
+						dateModified={question.dateModified}
+						operationText={Liferay.Language.get('asked')}
+					/>
 				</div>
 
 				<TagList sectionTitle={sectionTitle} tags={question.keywords} />

@@ -14,13 +14,14 @@
 
 import {ClayButtonWithIcon} from '@clayui/button';
 import ClayForm, {ClayInput} from '@clayui/form';
+import {sub} from 'frontend-js-web';
 import PropTypes from 'prop-types';
 import React from 'react';
 
 import {VIEWPORT_SIZES} from '../../app/config/constants/viewportSizes';
 import {useSelector} from '../../app/contexts/StoreContext';
 import {selectPageContents} from '../../app/selectors/selectPageContents';
-import {useId} from '../../app/utils/useId';
+import {useId} from '../../core/hooks/useId';
 import {openImageSelector} from '../../core/openImageSelector';
 
 export function ImageSelector({
@@ -76,7 +77,7 @@ export function ImageSelector({
 							}
 							small
 							symbol={hasImageTitle ? 'change' : 'plus'}
-							title={Liferay.Util.sub(
+							title={sub(
 								hasImageTitle
 									? Liferay.Language.get('change-x')
 									: Liferay.Language.get('select-x'),

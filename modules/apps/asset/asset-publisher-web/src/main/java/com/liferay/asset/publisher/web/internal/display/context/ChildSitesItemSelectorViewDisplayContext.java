@@ -15,7 +15,6 @@
 package com.liferay.asset.publisher.web.internal.display.context;
 
 import com.liferay.asset.publisher.util.AssetPublisherHelper;
-import com.liferay.item.selector.criteria.group.criterion.GroupItemSelectorCriterion;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Organization;
@@ -45,13 +44,9 @@ public class ChildSitesItemSelectorViewDisplayContext
 
 	public ChildSitesItemSelectorViewDisplayContext(
 		HttpServletRequest httpServletRequest,
-		AssetPublisherHelper assetPublisherHelper,
-		GroupItemSelectorCriterion groupItemSelectorCriterion,
-		String itemSelectedEventName, PortletURL portletURL) {
+		AssetPublisherHelper assetPublisherHelper, PortletURL portletURL) {
 
-		super(
-			httpServletRequest, assetPublisherHelper,
-			groupItemSelectorCriterion, itemSelectedEventName, portletURL);
+		super(httpServletRequest, assetPublisherHelper, portletURL);
 	}
 
 	@Override
@@ -61,23 +56,19 @@ public class ChildSitesItemSelectorViewDisplayContext
 				WebKeys.THEME_DISPLAY);
 
 		GroupSearch groupSearch = new GroupSearch(
-			getPortletRequest(), getPortletURL());
+			getPortletRequest(), portletURL);
 
 		GroupSearchTerms groupSearchTerms =
 			(GroupSearchTerms)groupSearch.getSearchTerms();
 
-		List<Group> groups = _filterGroups(
-			GroupLocalServiceUtil.search(
-				themeDisplay.getCompanyId(), _CLASS_NAME_IDS,
-				groupSearchTerms.getKeywords(), _getGroupParams(),
-				QueryUtil.ALL_POS, QueryUtil.ALL_POS,
-				groupSearch.getOrderByComparator()),
-			themeDisplay.getPermissionChecker());
-
 		groupSearch.setResultsAndTotal(
-			() -> groups.subList(
-				groupSearch.getStart(), groupSearch.getResultEnd()),
-			groups.size());
+			_filterGroups(
+				GroupLocalServiceUtil.search(
+					themeDisplay.getCompanyId(), _CLASS_NAME_IDS,
+					groupSearchTerms.getKeywords(), _getGroupParams(),
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					groupSearch.getOrderByComparator()),
+				themeDisplay.getPermissionChecker()));
 
 		return groupSearch;
 	}
@@ -96,7 +87,7 @@ public class ChildSitesItemSelectorViewDisplayContext
 		return filteredGroups;
 	}
 
-	private LinkedHashMap<String, Object> _getGroupParams() throws Exception {
+	private LinkedHashMap<String, Object> _getGroupParams() {
 		if (_groupParams != null) {
 			return _groupParams;
 		}

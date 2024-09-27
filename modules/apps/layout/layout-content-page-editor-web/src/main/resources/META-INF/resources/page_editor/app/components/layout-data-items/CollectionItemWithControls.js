@@ -16,6 +16,7 @@ import classNames from 'classnames';
 import React, {useContext} from 'react';
 
 import {CollectionItemContext} from '../../contexts/CollectionItemContext';
+import getLayoutDataItemTopperUniqueClassName from '../../utils/getLayoutDataItemTopperUniqueClassName';
 import TopperEmpty from '../topper/TopperEmpty';
 
 const CollectionItemWithControls = React.forwardRef(({children, item}, ref) => {
@@ -28,10 +29,14 @@ const CollectionItemWithControls = React.forwardRef(({children, item}, ref) => {
 	return (
 		<div
 			className={classNames('page-editor__collection__block', {
-				empty: !title,
+				'empty': !title,
+				'flex-grow-1': !children.length,
 			})}
 		>
-			<TopperEmpty item={item}>
+			<TopperEmpty
+				className={getLayoutDataItemTopperUniqueClassName(item.itemId)}
+				item={item}
+			>
 				{React.Children.count(children) === 0 ? (
 					<div
 						className={classNames('page-editor__collection-item', {

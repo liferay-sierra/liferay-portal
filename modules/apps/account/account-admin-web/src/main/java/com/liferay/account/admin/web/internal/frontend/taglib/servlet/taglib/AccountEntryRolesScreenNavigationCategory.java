@@ -15,14 +15,14 @@
 package com.liferay.account.admin.web.internal.frontend.taglib.servlet.taglib;
 
 import com.liferay.account.admin.web.internal.constants.AccountScreenNavigationEntryConstants;
-import com.liferay.account.admin.web.internal.display.AccountEntryDisplay;
 import com.liferay.account.admin.web.internal.security.permission.resource.AccountEntryPermission;
 import com.liferay.account.admin.web.internal.util.AllowEditAccountRoleThreadLocal;
 import com.liferay.account.constants.AccountActionKeys;
 import com.liferay.account.constants.AccountConstants;
+import com.liferay.account.model.AccountEntry;
 import com.liferay.frontend.taglib.servlet.taglib.ScreenNavigationCategory;
 import com.liferay.frontend.taglib.servlet.taglib.ScreenNavigationEntry;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 
@@ -30,9 +30,11 @@ import java.util.Locale;
 import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Pei-Jung Lan
+ * @author Alessio Antonio Rendina
  */
 @Component(
 	property = {
@@ -62,26 +64,27 @@ public class AccountEntryRolesScreenNavigationCategory
 
 	@Override
 	public String getLabel(Locale locale) {
-		return LanguageUtil.get(locale, "roles");
+		return _language.get(locale, "roles");
 	}
 
 	@Override
-	public boolean isVisible(
-		User user, AccountEntryDisplay accountEntryDisplay) {
-
-		if (!AllowEditAccountRoleThreadLocal.isAllowEditAccountRole() ||
+	public boolean isVisible(User user, AccountEntry accountEntry) {
+		if ((accountEntry == null) ||
+			!AllowEditAccountRoleThreadLocal.isAllowEditAccountRole() ||
 			Objects.equals(
-				accountEntryDisplay.getType(),
-				AccountConstants.ACCOUNT_ENTRY_TYPE_GUEST) ||
-			(accountEntryDisplay.getAccountEntryId() <= 0)) {
+				accountEntry.getType(),
+				AccountConstants.ACCOUNT_ENTRY_TYPE_GUEST)) {
 
 			return false;
 		}
 
 		return AccountEntryPermission.contains(
 			PermissionCheckerFactoryUtil.create(user),
-			accountEntryDisplay.getAccountEntryId(),
+			accountEntry.getAccountEntryId(),
 			AccountActionKeys.VIEW_ACCOUNT_ROLES);
 	}
+
+	@Reference
+	private Language _language;
 
 }

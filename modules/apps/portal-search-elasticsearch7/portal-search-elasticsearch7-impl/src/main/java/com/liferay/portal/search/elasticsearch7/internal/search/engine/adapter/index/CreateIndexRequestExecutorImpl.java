@@ -27,7 +27,7 @@ import java.io.IOException;
 import org.elasticsearch.client.IndicesClient;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.xcontent.XContentType;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -75,13 +75,6 @@ public class CreateIndexRequestExecutorImpl
 		return elasticsearchCreateIndexRequest;
 	}
 
-	@Reference(unbind = "-")
-	protected void setElasticsearchClientResolver(
-		ElasticsearchClientResolver elasticsearchClientResolver) {
-
-		_elasticsearchClientResolver = elasticsearchClientResolver;
-	}
-
 	private org.elasticsearch.action.admin.indices.create.CreateIndexResponse
 		_getCreateIndexResponse(
 			org.elasticsearch.action.admin.indices.create.CreateIndexRequest
@@ -107,6 +100,7 @@ public class CreateIndexRequestExecutorImpl
 	private static final Log _log = LogFactoryUtil.getLog(
 		CreateIndexRequestExecutorImpl.class);
 
+	@Reference
 	private ElasticsearchClientResolver _elasticsearchClientResolver;
 
 }

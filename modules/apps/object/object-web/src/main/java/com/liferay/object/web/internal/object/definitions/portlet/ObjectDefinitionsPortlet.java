@@ -26,7 +26,6 @@ import org.osgi.service.component.annotations.Component;
  * @author Brian Wing Shun Chan
  */
 @Component(
-	immediate = true,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.css-class-wrapper=portlet-objects",
@@ -46,7 +45,8 @@ import org.osgi.service.component.annotations.Component;
 		"javax.portlet.init-param.view-template=/object_definitions/view.jsp",
 		"javax.portlet.name=" + ObjectPortletKeys.OBJECT_DEFINITIONS,
 		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=administrator"
+		"javax.portlet.security-role-ref=administrator",
+		"javax.portlet.version=3.0"
 	},
 	service = Portlet.class
 )

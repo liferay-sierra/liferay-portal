@@ -23,7 +23,7 @@ import com.liferay.commerce.product.model.CProduct;
 import com.liferay.commerce.product.service.CPDefinitionService;
 import com.liferay.headless.commerce.admin.catalog.dto.v1_0.ProductGroupProduct;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
 
@@ -37,7 +37,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Riccardo Alberti
  */
 @Component(
-	enabled = false,
 	property = "dto.class.name=com.liferay.commerce.pricing.model.CommercePricingClassCPDefinitionRel",
 	service = {DTOConverter.class, ProductGroupProductDTOConverter.class}
 )
@@ -70,7 +69,7 @@ public class ProductGroupProductDTOConverter
 
 		Locale locale = dtoConverterContext.getLocale();
 
-		String languageId = LanguageUtil.getLanguageId(locale);
+		String languageId = _language.getLanguageId(locale);
 
 		return new ProductGroupProduct() {
 			{
@@ -98,7 +97,7 @@ public class ProductGroupProductDTOConverter
 		}
 
 		if (cpInstances.size() > 1) {
-			return LanguageUtil.get(locale, "multiple-skus");
+			return _language.get(locale, "multiple-skus");
 		}
 
 		CPInstance cpInstance = cpInstances.get(0);
@@ -112,5 +111,8 @@ public class ProductGroupProductDTOConverter
 
 	@Reference
 	private CPDefinitionService _cpDefinitionService;
+
+	@Reference
+	private Language _language;
 
 }

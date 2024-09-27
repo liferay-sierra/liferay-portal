@@ -1,6 +1,8 @@
 @component-name = "portal-analytics-cloud"
 definition {
 
+	property analytics.cloud.release = "true";
+	property analytics.cloud.upstream = "true";
 	property portal.release = "false";
 	property portal.upstream = "true";
 	property property.group = "analytics.cloud.profile";
@@ -17,18 +19,20 @@ definition {
 	tearDown {
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
-		ACUtils.tearDownDXP();
+		ACUtils.tearDownAC();
 
 		if ("${testPortalInstance}" == "true") {
 			PortalInstances.tearDownCP();
 		}
-
-		ACUtils.tearDownAC();
 	}
 
 	@description = "Feature ID: Legacy | Automation ID: LRAC-8155 | Test Summary: Delete a CSV data source and assert that the details from that data source are removed"
+	@ignore = "true"
 	@priority = "5"
 	test DeleteCSVDataSourceAndAssertDetailsFromDataSourceRemoved {
+
+		// CSV data source tests are no longer possible to run due to this ticket LRAC-11651
+
 		task ("Add a CSV Data Source") {
 			ACSettings.addCSVDataSource(
 				dataSourceName = "CSV Data Source",
@@ -46,7 +50,7 @@ definition {
 		task ("View the CSV Data Source is deleted") {
 			ACUtils.searchBar(searchItem = "CSV Data Source");
 
-			ACUtils.viewNoResultsMessage(noResultMessage = "There are no Data Sources found.");
+			ACUtils.viewGenericText(textValueList = "There are no results found.,Please try a different search term.");
 		}
 	}
 

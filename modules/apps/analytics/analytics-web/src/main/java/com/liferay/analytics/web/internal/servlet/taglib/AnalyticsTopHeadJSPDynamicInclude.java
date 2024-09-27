@@ -50,8 +50,13 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marcellus Tavares
  */
-@Component(immediate = true, service = DynamicInclude.class)
+@Component(service = DynamicInclude.class)
 public class AnalyticsTopHeadJSPDynamicInclude extends BaseJSPDynamicInclude {
+
+	@Override
+	public ServletContext getServletContext() {
+		return _servletContext;
+	}
 
 	@Override
 	public void include(
@@ -70,7 +75,6 @@ public class AnalyticsTopHeadJSPDynamicInclude extends BaseJSPDynamicInclude {
 		httpServletRequest.setAttribute(
 			AnalyticsWebKeys.ANALYTICS_CLIENT_CHANNEL_ID,
 			_getLiferayAnalyticsChannelId(httpServletRequest, themeDisplay));
-
 		httpServletRequest.setAttribute(
 			AnalyticsWebKeys.ANALYTICS_CLIENT_CONFIG,
 			_serialize(
@@ -84,7 +88,6 @@ public class AnalyticsTopHeadJSPDynamicInclude extends BaseJSPDynamicInclude {
 					"projectId",
 					_getLiferayAnalyticsProjectId(themeDisplay.getCompany())
 				).build()));
-
 		httpServletRequest.setAttribute(
 			AnalyticsWebKeys.ANALYTICS_CLIENT_GROUP_IDS,
 			_serialize(
@@ -117,15 +120,6 @@ public class AnalyticsTopHeadJSPDynamicInclude extends BaseJSPDynamicInclude {
 	@Override
 	protected Log getLog() {
 		return _log;
-	}
-
-	@Override
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.analytics.web)",
-		unbind = "-"
-	)
-	protected void setServletContext(ServletContext servletContext) {
-		super.setServletContext(servletContext);
 	}
 
 	private String _getLiferayAnalyticsChannelId(
@@ -247,5 +241,8 @@ public class AnalyticsTopHeadJSPDynamicInclude extends BaseJSPDynamicInclude {
 
 	@Reference
 	private JSONFactory _jsonFactory;
+
+	@Reference(target = "(osgi.web.symbolicname=com.liferay.analytics.web)")
+	private ServletContext _servletContext;
 
 }

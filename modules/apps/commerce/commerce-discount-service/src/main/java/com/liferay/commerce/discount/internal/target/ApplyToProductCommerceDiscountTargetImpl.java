@@ -21,7 +21,7 @@ import com.liferay.commerce.discount.service.CommerceDiscountRelLocalService;
 import com.liferay.commerce.discount.target.CommerceDiscountProductTarget;
 import com.liferay.commerce.discount.target.CommerceDiscountTarget;
 import com.liferay.commerce.product.model.CPDefinition;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.filter.BooleanFilter;
@@ -44,7 +44,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = {
 		"commerce.discount.target.key=" + CommerceDiscountConstants.TARGET_PRODUCTS,
 		"commerce.discount.target.order:Integer=20"
@@ -86,7 +86,7 @@ public class ApplyToProductCommerceDiscountTargetImpl
 		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
 			"content.Language", locale, getClass());
 
-		return LanguageUtil.get(resourceBundle, "products");
+		return _language.get(resourceBundle, "products");
 	}
 
 	@Override
@@ -119,5 +119,8 @@ public class ApplyToProductCommerceDiscountTargetImpl
 
 	@Reference
 	private CommerceDiscountRelLocalService _commerceDiscountRelLocalService;
+
+	@Reference
+	private Language _language;
 
 }

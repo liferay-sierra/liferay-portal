@@ -64,7 +64,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
@@ -128,7 +128,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = "site.initializer.key=" + MiniumSiteInitializer.KEY,
 	service = SiteInitializer.class
 )
@@ -141,7 +141,7 @@ public class MiniumSiteInitializer implements SiteInitializer {
 		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
 			"content.Language", locale, getClass());
 
-		return LanguageUtil.get(resourceBundle, "minium-description");
+		return _language.get(resourceBundle, "minium-description");
 	}
 
 	@Override
@@ -154,7 +154,7 @@ public class MiniumSiteInitializer implements SiteInitializer {
 		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
 			"content.Language", locale, getClass());
 
-		return LanguageUtil.get(resourceBundle, "minium");
+		return _language.get(resourceBundle, "minium");
 	}
 
 	@Override
@@ -202,7 +202,7 @@ public class MiniumSiteInitializer implements SiteInitializer {
 			_createRoles(
 				serviceContext, commerceChannel.getCommerceChannelId());
 
-			_configureB2BSite(commerceChannel.getGroupId(), serviceContext);
+			_configureB2BSite(commerceChannel.getGroup(), serviceContext);
 
 			_miniumLayoutsInitializer.initialize(serviceContext);
 
@@ -304,10 +304,8 @@ public class MiniumSiteInitializer implements SiteInitializer {
 		_cpDefinitions = null;
 	}
 
-	private void _configureB2BSite(long groupId, ServiceContext serviceContext)
+	private void _configureB2BSite(Group group, ServiceContext serviceContext)
 		throws Exception {
-
-		Group group = _groupLocalService.getGroup(groupId);
 
 		group.setType(GroupConstants.TYPE_SITE_PRIVATE);
 		group.setManualMembership(true);
@@ -323,7 +321,7 @@ public class MiniumSiteInitializer implements SiteInitializer {
 
 		Settings settings = _settingsFactory.getSettings(
 			new GroupServiceSettingsLocator(
-				groupId, CommerceAccountConstants.SERVICE_NAME));
+				group.getGroupId(), CommerceAccountConstants.SERVICE_NAME));
 
 		ModifiableSettings modifiableSettings =
 			settings.getModifiableSettings();
@@ -335,7 +333,8 @@ public class MiniumSiteInitializer implements SiteInitializer {
 		modifiableSettings.store();
 
 		_accountEntryGroupSettings.setAllowedTypes(
-			serviceContext.getScopeGroupId(), _getAllowedTypes(groupId));
+			serviceContext.getScopeGroupId(),
+			_getAllowedTypes(group.getGroupId()));
 	}
 
 	private CommerceCatalog _createCatalog(ServiceContext serviceContext)
@@ -432,7 +431,7 @@ public class MiniumSiteInitializer implements SiteInitializer {
 		serviceContext.setAddGroupPermissions(true);
 		serviceContext.setAddGuestPermissions(true);
 		serviceContext.setCompanyId(group.getCompanyId());
-		serviceContext.setLanguageId(LanguageUtil.getLanguageId(locale));
+		serviceContext.setLanguageId(_language.getLanguageId(locale));
 		serviceContext.setScopeGroupId(groupId);
 		serviceContext.setTimeZone(user.getTimeZone());
 		serviceContext.setUserId(user.getUserId());
@@ -570,9 +569,21 @@ public class MiniumSiteInitializer implements SiteInitializer {
 			_log.info("Importing commerce price entries...");
 		}
 
+		JSONArray jsonArray = _getJSONArray("price-entries.json");
+
+		for (int i = 0; i < jsonArray.length(); i++) {
+			JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+			String sku = jsonObject.getString("sku");
+
+			String externalReferenceCode =
+				sku + _siteInitializerDependencyResolver.getKey();
+
+			jsonObject.put("externalReferenceCode", externalReferenceCode);
+		}
+
 		_commercePriceEntriesImporter.importCommercePriceEntries(
-			_getJSONArray("price-entries.json"), catalogGroupId,
-			serviceContext.getUserId());
+			jsonArray, catalogGroupId, serviceContext.getUserId());
 
 		if (_log.isInfoEnabled()) {
 			_log.info("Commerce price entries successfully imported");
@@ -637,6 +648,26 @@ public class MiniumSiteInitializer implements SiteInitializer {
 
 				jsonObject.put(
 					"externalReferenceCode", newExternalReferenceCode);
+
+				JSONArray skusJSONArray = jsonObject.getJSONArray("skus");
+
+				if (skusJSONArray != null) {
+					for (int j = 0; j < skusJSONArray.length(); j++) {
+						JSONObject skuJSONObject = skusJSONArray.getJSONObject(
+							j);
+
+						String skuExternalReferenceCode =
+							skuJSONObject.getString("externalReferenceCode");
+
+						String newSkuExternalReferenceCode =
+							skuExternalReferenceCode +
+								_siteInitializerDependencyResolver.getKey();
+
+						skuJSONObject.put(
+							"externalReferenceCode",
+							newSkuExternalReferenceCode);
+					}
+				}
 			}
 		}
 
@@ -870,7 +901,7 @@ public class MiniumSiteInitializer implements SiteInitializer {
 				HashMapBuilder.put(
 					locale, commerceShippingEngine.getDescription(locale)
 				).build(),
-				null, shippingMethod, 0, true);
+				true, shippingMethod, null, 0, StringPool.BLANK);
 
 		_setCommerceShippingOption(
 			commerceShippingMethod, "Standard Delivery", StringPool.BLANK,
@@ -888,14 +919,15 @@ public class MiniumSiteInitializer implements SiteInitializer {
 
 		_commerceShippingFixedOptionLocalService.addCommerceShippingFixedOption(
 			serviceContext.getUserId(), commerceShippingMethod.getGroupId(),
-			commerceShippingMethod.getCommerceShippingMethodId(),
-			HashMapBuilder.put(
-				serviceContext.getLocale(), name
-			).build(),
+			commerceShippingMethod.getCommerceShippingMethodId(), price,
 			HashMapBuilder.put(
 				serviceContext.getLocale(), description
 			).build(),
-			price, 0);
+			null,
+			HashMapBuilder.put(
+				serviceContext.getLocale(), name
+			).build(),
+			0);
 	}
 
 	private void _setDefaultCatalogImage(
@@ -1120,6 +1152,9 @@ public class MiniumSiteInitializer implements SiteInitializer {
 
 	@Reference
 	private KBArticleImporter _kbArticleImporter;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private MiniumLayoutsInitializer _miniumLayoutsInitializer;

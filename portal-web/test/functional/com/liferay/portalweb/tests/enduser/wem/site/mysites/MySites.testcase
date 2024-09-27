@@ -374,7 +374,7 @@ definition {
 		task ("Make user a member of new site via User Admin CP") {
 			User.openUsersAdmin();
 
-			Site.assignUserSitesCP(
+			User.editUserSiteCP(
 				siteName = "Site Name",
 				userScreenName = "usersn");
 		}
@@ -542,6 +542,7 @@ definition {
 	@description = "Assert a user can navigate to a Site's public or private pages via MySites widget"
 	@priority = "3"
 	test ViewSitePages {
+		property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
 		property testray.component.names = "Site Administration";
 
 		task ("Add a site with a public and private page") {
@@ -594,9 +595,7 @@ definition {
 
 			Site.openSiteSettingsAdmin(siteURLKey = "site-name");
 
-			for (var tagName : list "apple,banana,mango") {
-				Tag.addViaSiteCP(tagName = "${tagName}");
-			}
+			Tag.addViaSiteCP(tagNameList = "apple,banana,mango");
 		}
 
 		task ("Add My Sites widget to Site Page in Home Site") {
@@ -615,9 +614,7 @@ definition {
 				memberCount = "1 User",
 				siteName = "Site Name");
 
-			for (var tagName : list "apple,banana,mango") {
-				MySites.viewTags(tagName = "${tagName}");
-			}
+			MySites.viewTags(tagNameList = "apple,banana,mango");
 		}
 	}
 

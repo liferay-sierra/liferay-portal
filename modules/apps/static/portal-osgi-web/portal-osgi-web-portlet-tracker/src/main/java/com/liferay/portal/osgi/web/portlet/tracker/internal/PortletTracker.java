@@ -19,7 +19,6 @@ import com.liferay.petra.executor.PortalExecutorManager;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.asm.ASMWrapperUtil;
 import com.liferay.portal.kernel.application.type.ApplicationType;
 import com.liferay.portal.kernel.bean.BeanProperties;
 import com.liferay.portal.kernel.configuration.Configuration;
@@ -53,6 +52,7 @@ import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
+import com.liferay.portal.kernel.util.DelegateProxyFactory;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortletKeys;
@@ -273,7 +273,9 @@ public class PortletTracker
 	}
 
 	@Activate
-	protected void activate(BundleContext bundleContext) {
+	protected void activate(
+		BundleContext bundleContext, Map<String, Object> properties) {
+
 		_bundleContext = bundleContext;
 
 		_executorService = _portalExecutorManager.getPortalExecutor(
@@ -319,6 +321,20 @@ public class PortletTracker
 		if (_log.isInfoEnabled()) {
 			_log.info("Activated");
 		}
+
+		List<String> httpServiceEndpoints = StringPlus.asList(
+			properties.get(HttpServiceRuntimeConstants.HTTP_SERVICE_ENDPOINT));
+
+		if (!httpServiceEndpoints.isEmpty()) {
+			_httpServiceEndpoint = httpServiceEndpoints.get(0);
+		}
+
+		if ((_httpServiceEndpoint.length() > 0) &&
+			_httpServiceEndpoint.endsWith("/")) {
+
+			_httpServiceEndpoint = _httpServiceEndpoint.substring(
+				0, _httpServiceEndpoint.length() - 1);
+		}
 	}
 
 	@Deactivate
@@ -336,25 +352,6 @@ public class PortletTracker
 		ServiceReference<Portlet> serviceReference, String property) {
 
 		return serviceReference.getProperty(_NAMESPACE + property);
-	}
-
-	@Reference(unbind = "-")
-	protected void setHttpServiceRuntime(
-		HttpServiceRuntime httpServiceRuntime, Map<String, Object> properties) {
-
-		List<String> httpServiceEndpoints = StringPlus.asList(
-			properties.get(HttpServiceRuntimeConstants.HTTP_SERVICE_ENDPOINT));
-
-		if (!httpServiceEndpoints.isEmpty()) {
-			_httpServiceEndpoint = httpServiceEndpoints.get(0);
-		}
-
-		if ((_httpServiceEndpoint.length() > 0) &&
-			_httpServiceEndpoint.endsWith("/")) {
-
-			_httpServiceEndpoint = _httpServiceEndpoint.substring(
-				0, _httpServiceEndpoint.length() - 1);
-		}
 	}
 
 	private com.liferay.portal.kernel.model.Portlet _addingPortlet(
@@ -415,12 +412,10 @@ public class PortletTracker
 						"com.liferay.portlet.company"));
 
 			portletModel.setPortletName(portletName);
-
-			String displayName = GetterUtil.getString(
-				serviceReference.getProperty("javax.portlet.display-name"),
-				portletName);
-
-			portletModel.setDisplayName(displayName);
+			portletModel.setDisplayName(
+				GetterUtil.getString(
+					serviceReference.getProperty("javax.portlet.display-name"),
+					portletName));
 
 			Class<?> portletClazz = portlet.getClass();
 
@@ -532,10 +527,9 @@ public class PortletTracker
 		ServiceReference<Portlet> serviceReference,
 		com.liferay.portal.kernel.model.Portlet portletModel) {
 
-		boolean asyncSupported = GetterUtil.getBoolean(
-			serviceReference.getProperty("javax.portlet.async-supported"));
-
-		portletModel.setAsyncSupported(asyncSupported);
+		portletModel.setAsyncSupported(
+			GetterUtil.getBoolean(
+				serviceReference.getProperty("javax.portlet.async-supported")));
 	}
 
 	private void _collectContainerRuntimeOptions(
@@ -712,13 +706,10 @@ public class PortletTracker
 		portletModel.setAjaxable(
 			GetterUtil.getBoolean(
 				get(serviceReference, "ajaxable"), portletModel.isAjaxable()));
-
-		Set<String> autopropagatedParameters = SetUtil.fromCollection(
-			StringPlus.asList(
-				get(serviceReference, "autopropagated-parameters")));
-
-		portletModel.setAutopropagatedParameters(autopropagatedParameters);
-
+		portletModel.setAutopropagatedParameters(
+			SetUtil.fromCollection(
+				StringPlus.asList(
+					get(serviceReference, "autopropagated-parameters"))));
 		portletModel.setControlPanelEntryWeight(
 			GetterUtil.getDouble(
 				get(serviceReference, "control-panel-entry-weight"),
@@ -737,6 +728,10 @@ public class PortletTracker
 		portletModel.setFooterPortletJavaScript(
 			StringPlus.asList(
 				get(serviceReference, "footer-portlet-javascript")));
+		portletModel.setFriendlyURLMapperClass(
+			GetterUtil.getString(
+				get(serviceReference, "friendly-url-mapper-class"),
+				portletModel.getFriendlyURLMapperClass()));
 		portletModel.setFriendlyURLMapping(
 			GetterUtil.getString(
 				get(serviceReference, "friendly-url-mapping"),
@@ -1310,7 +1305,7 @@ public class PortletTracker
 
 		PortletApp portletAppDefault = _portalPortletModel.getPortletApp();
 
-		portletApp = ASMWrapperUtil.createASMWrapper(
+		portletApp = _delegateProxyFactory.newDelegateProxyInstance(
 			PortletTracker.class.getClassLoader(), PortletApp.class,
 			bundlePortletAppDelegate, portletAppDefault);
 
@@ -1348,7 +1343,7 @@ public class PortletTracker
 
 		List<Future<Void>> futures = new ArrayList<>();
 
-		List<Company> companies = _companyLocalService.getCompanies(false);
+		List<Company> companies = _companyLocalService.getCompanies();
 
 		for (Company company : companies) {
 			futures.add(
@@ -1473,8 +1468,14 @@ public class PortletTracker
 	@Reference
 	private CompanyLocalService _companyLocalService;
 
+	@Reference
+	private DelegateProxyFactory _delegateProxyFactory;
+
 	private ExecutorService _executorService;
 	private String _httpServiceEndpoint = StringPool.BLANK;
+
+	@Reference
+	private HttpServiceRuntime _httpServiceRuntime;
 
 	@Reference(
 		target = ModuleServiceLifecycle.PORTLETS_INITIALIZED, unbind = "-"
@@ -1597,6 +1598,9 @@ public class PortletTracker
 					_servletContextHelperRegistrationServiceReference);
 			}
 			catch (IllegalStateException illegalStateException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(illegalStateException);
+				}
 			}
 		}
 

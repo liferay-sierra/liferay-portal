@@ -14,6 +14,7 @@
 
 package com.liferay.layout.admin.web.internal.info.item.helper;
 
+import com.liferay.fragment.entry.processor.constants.FragmentEntryProcessorConstants;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.service.FragmentEntryLinkLocalService;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -22,7 +23,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.segments.constants.SegmentsExperienceConstants;
+import com.liferay.segments.service.SegmentsExperienceLocalServiceUtil;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -84,7 +85,11 @@ public class LayoutInfoItemLanguagesProviderHelper {
 	private List<FragmentEntryLink> _getFragmentEntryLinks(
 		Layout layout, long segmentsExperienceId) {
 
-		if (segmentsExperienceId == SegmentsExperienceConstants.ID_DEFAULT) {
+		long defaultSegmentsExperienceId =
+			SegmentsExperienceLocalServiceUtil.fetchDefaultSegmentsExperienceId(
+				layout.getPlid());
+
+		if (segmentsExperienceId == defaultSegmentsExperienceId) {
 			return _fragmentEntryLinkLocalService.getFragmentEntryLinksByPlid(
 				layout.getGroupId(), layout.getPlid());
 		}
@@ -140,10 +145,9 @@ public class LayoutInfoItemLanguagesProviderHelper {
 	}
 
 	private static final String[] _TRANSLATABLE_FRAGMENTS = {
-		"com.liferay.fragment.entry.processor.background.image." +
-			"BackgroundImageFragmentEntryProcessor",
-		"com.liferay.fragment.entry.processor.editable." +
-			"EditableFragmentEntryProcessor"
+		FragmentEntryProcessorConstants.
+			KEY_BACKGROUND_IMAGE_FRAGMENT_ENTRY_PROCESSOR,
+		FragmentEntryProcessorConstants.KEY_EDITABLE_FRAGMENT_ENTRY_PROCESSOR
 	};
 
 	private final FragmentEntryLinkLocalService _fragmentEntryLinkLocalService;

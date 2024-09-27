@@ -16,6 +16,7 @@ package com.liferay.portal.search.tuning.rankings.web.internal.index.creation.mo
 
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.search.engine.SearchEngineInformation;
 import com.liferay.portal.search.tuning.rankings.web.internal.index.RankingIndexCreator;
 import com.liferay.portal.search.tuning.rankings.web.internal.index.RankingIndexReader;
 import com.liferay.portal.search.tuning.rankings.web.internal.index.name.RankingIndexNameBuilder;
@@ -26,9 +27,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 
 /**
  * @author Wade Cao
@@ -42,8 +41,6 @@ public class RankingIndexCreationCompanyModelListenerTest {
 
 	@Before
 	public void setUp() throws Exception {
-		MockitoAnnotations.initMocks(this);
-
 		_rankingIndexCreationCompanyModelListener =
 			new RankingIndexCreationCompanyModelListener();
 
@@ -56,6 +53,9 @@ public class RankingIndexCreationCompanyModelListenerTest {
 		ReflectionTestUtil.setFieldValue(
 			_rankingIndexCreationCompanyModelListener, "_rankingIndexReader",
 			_rankingIndexReader);
+		ReflectionTestUtil.setFieldValue(
+			_rankingIndexCreationCompanyModelListener,
+			"_searchEngineInformation", _searchEngineInformation);
 	}
 
 	@Test
@@ -68,13 +68,13 @@ public class RankingIndexCreationCompanyModelListenerTest {
 		Mockito.verify(
 			_rankingIndexReader, Mockito.times(1)
 		).isExists(
-			Mockito.anyObject()
+			Mockito.any()
 		);
 
 		Mockito.verify(
 			_rankingIndexCreator, Mockito.times(1)
 		).create(
-			Mockito.anyObject()
+			Mockito.any()
 		);
 	}
 
@@ -88,13 +88,13 @@ public class RankingIndexCreationCompanyModelListenerTest {
 		Mockito.verify(
 			_rankingIndexReader, Mockito.times(1)
 		).isExists(
-			Mockito.anyObject()
+			Mockito.any()
 		);
 
 		Mockito.verify(
 			_rankingIndexCreator, Mockito.times(0)
 		).create(
-			Mockito.anyObject()
+			Mockito.any()
 		);
 	}
 
@@ -108,13 +108,13 @@ public class RankingIndexCreationCompanyModelListenerTest {
 		Mockito.verify(
 			_rankingIndexReader, Mockito.times(1)
 		).isExists(
-			Mockito.anyObject()
+			Mockito.any()
 		);
 
 		Mockito.verify(
 			_rankingIndexCreator, Mockito.times(0)
 		).delete(
-			Mockito.anyObject()
+			Mockito.any()
 		);
 	}
 
@@ -128,13 +128,13 @@ public class RankingIndexCreationCompanyModelListenerTest {
 		Mockito.verify(
 			_rankingIndexReader, Mockito.times(1)
 		).isExists(
-			Mockito.anyObject()
+			Mockito.any()
 		);
 
 		Mockito.verify(
 			_rankingIndexCreator, Mockito.times(1)
 		).delete(
-			Mockito.anyObject()
+			Mockito.any()
 		);
 	}
 
@@ -144,20 +144,19 @@ public class RankingIndexCreationCompanyModelListenerTest {
 		).when(
 			_rankingIndexReader
 		).isExists(
-			Mockito.anyObject()
+			Mockito.any()
 		);
 	}
 
 	private RankingIndexCreationCompanyModelListener
 		_rankingIndexCreationCompanyModelListener;
-
-	@Mock
-	private RankingIndexCreator _rankingIndexCreator;
-
-	@Mock
-	private RankingIndexNameBuilder _rankingIndexNameBuilder;
-
-	@Mock
-	private RankingIndexReader _rankingIndexReader;
+	private final RankingIndexCreator _rankingIndexCreator = Mockito.mock(
+		RankingIndexCreator.class);
+	private final RankingIndexNameBuilder _rankingIndexNameBuilder =
+		Mockito.mock(RankingIndexNameBuilder.class);
+	private final RankingIndexReader _rankingIndexReader = Mockito.mock(
+		RankingIndexReader.class);
+	private final SearchEngineInformation _searchEngineInformation =
+		Mockito.mock(SearchEngineInformation.class);
 
 }

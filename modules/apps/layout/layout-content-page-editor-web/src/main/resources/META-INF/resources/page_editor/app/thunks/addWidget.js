@@ -20,18 +20,16 @@ export default function addWidget({
 	portletId,
 	portletItemId,
 	position,
-	store,
+	selectItem = () => {},
 }) {
-	return (dispatch) => {
-		const {segmentsExperienceId} = store;
-
+	return (dispatch, getState) => {
 		WidgetService.addPortlet({
 			onNetworkStatus: dispatch,
 			parentItemId,
 			portletId,
 			portletItemId,
 			position,
-			segmentsExperienceId,
+			segmentsExperienceId: getState().segmentsExperienceId,
 		}).then(({addedItemId, fragmentEntryLink, layoutData}) => {
 			dispatch(
 				addFragmentEntryLinks({
@@ -40,6 +38,10 @@ export default function addWidget({
 					layoutData,
 				})
 			);
+
+			if (addedItemId) {
+				selectItem(addedItemId);
+			}
 		});
 	};
 }

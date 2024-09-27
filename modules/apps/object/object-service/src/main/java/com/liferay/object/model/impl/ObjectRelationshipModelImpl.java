@@ -40,7 +40,6 @@ import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 
 import java.sql.Blob;
@@ -88,6 +87,7 @@ public class ObjectRelationshipModelImpl
 		{"createDate", Types.TIMESTAMP}, {"modifiedDate", Types.TIMESTAMP},
 		{"objectDefinitionId1", Types.BIGINT},
 		{"objectDefinitionId2", Types.BIGINT}, {"objectFieldId2", Types.BIGINT},
+		{"parameterObjectFieldId", Types.BIGINT},
 		{"deletionType", Types.VARCHAR}, {"dbTableName", Types.VARCHAR},
 		{"label", Types.VARCHAR}, {"name", Types.VARCHAR},
 		{"reverse", Types.BOOLEAN}, {"type_", Types.VARCHAR}
@@ -108,6 +108,7 @@ public class ObjectRelationshipModelImpl
 		TABLE_COLUMNS_MAP.put("objectDefinitionId1", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("objectDefinitionId2", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("objectFieldId2", Types.BIGINT);
+		TABLE_COLUMNS_MAP.put("parameterObjectFieldId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("deletionType", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("dbTableName", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("label", Types.VARCHAR);
@@ -117,7 +118,7 @@ public class ObjectRelationshipModelImpl
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table ObjectRelationship (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,objectRelationshipId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,objectDefinitionId1 LONG,objectDefinitionId2 LONG,objectFieldId2 LONG,deletionType VARCHAR(75) null,dbTableName VARCHAR(75) null,label STRING null,name VARCHAR(75) null,reverse BOOLEAN,type_ VARCHAR(75) null)";
+		"create table ObjectRelationship (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,objectRelationshipId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,objectDefinitionId1 LONG,objectDefinitionId2 LONG,objectFieldId2 LONG,parameterObjectFieldId LONG,deletionType VARCHAR(75) null,dbTableName VARCHAR(75) null,label STRING null,name VARCHAR(75) null,reverse BOOLEAN,type_ VARCHAR(75) null)";
 
 	public static final String TABLE_SQL_DROP = "drop table ObjectRelationship";
 
@@ -143,50 +144,56 @@ public class ObjectRelationshipModelImpl
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long NAME_COLUMN_BITMASK = 2L;
+	public static final long DELETIONTYPE_COLUMN_BITMASK = 2L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long OBJECTDEFINITIONID1_COLUMN_BITMASK = 4L;
+	public static final long NAME_COLUMN_BITMASK = 4L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long OBJECTDEFINITIONID2_COLUMN_BITMASK = 8L;
+	public static final long OBJECTDEFINITIONID1_COLUMN_BITMASK = 8L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long OBJECTFIELDID2_COLUMN_BITMASK = 16L;
+	public static final long OBJECTDEFINITIONID2_COLUMN_BITMASK = 16L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long REVERSE_COLUMN_BITMASK = 32L;
+	public static final long OBJECTFIELDID2_COLUMN_BITMASK = 32L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long TYPE_COLUMN_BITMASK = 64L;
+	public static final long REVERSE_COLUMN_BITMASK = 64L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long UUID_COLUMN_BITMASK = 128L;
+	public static final long TYPE_COLUMN_BITMASK = 128L;
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
+	 */
+	@Deprecated
+	public static final long UUID_COLUMN_BITMASK = 256L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
 	 *		#getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long OBJECTRELATIONSHIPID_COLUMN_BITMASK = 256L;
+	public static final long OBJECTRELATIONSHIPID_COLUMN_BITMASK = 512L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
@@ -287,34 +294,6 @@ public class ObjectRelationshipModelImpl
 		return _attributeSetterBiConsumers;
 	}
 
-	private static Function<InvocationHandler, ObjectRelationship>
-		_getProxyProviderFunction() {
-
-		Class<?> proxyClass = ProxyUtil.getProxyClass(
-			ObjectRelationship.class.getClassLoader(), ObjectRelationship.class,
-			ModelWrapper.class);
-
-		try {
-			Constructor<ObjectRelationship> constructor =
-				(Constructor<ObjectRelationship>)proxyClass.getConstructor(
-					InvocationHandler.class);
-
-			return invocationHandler -> {
-				try {
-					return constructor.newInstance(invocationHandler);
-				}
-				catch (ReflectiveOperationException
-							reflectiveOperationException) {
-
-					throw new InternalError(reflectiveOperationException);
-				}
-			};
-		}
-		catch (NoSuchMethodException noSuchMethodException) {
-			throw new InternalError(noSuchMethodException);
-		}
-	}
-
 	private static final Map<String, Function<ObjectRelationship, Object>>
 		_attributeGetterFunctions;
 	private static final Map<String, BiConsumer<ObjectRelationship, Object>>
@@ -394,6 +373,13 @@ public class ObjectRelationshipModelImpl
 			"objectFieldId2",
 			(BiConsumer<ObjectRelationship, Long>)
 				ObjectRelationship::setObjectFieldId2);
+		attributeGetterFunctions.put(
+			"parameterObjectFieldId",
+			ObjectRelationship::getParameterObjectFieldId);
+		attributeSetterBiConsumers.put(
+			"parameterObjectFieldId",
+			(BiConsumer<ObjectRelationship, Long>)
+				ObjectRelationship::setParameterObjectFieldId);
 		attributeGetterFunctions.put(
 			"deletionType", ObjectRelationship::getDeletionType);
 		attributeSetterBiConsumers.put(
@@ -681,6 +667,21 @@ public class ObjectRelationshipModelImpl
 
 	@JSON
 	@Override
+	public long getParameterObjectFieldId() {
+		return _parameterObjectFieldId;
+	}
+
+	@Override
+	public void setParameterObjectFieldId(long parameterObjectFieldId) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_parameterObjectFieldId = parameterObjectFieldId;
+	}
+
+	@JSON
+	@Override
 	public String getDeletionType() {
 		if (_deletionType == null) {
 			return "";
@@ -697,6 +698,15 @@ public class ObjectRelationshipModelImpl
 		}
 
 		_deletionType = deletionType;
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getColumnOriginalValue(String)}
+	 */
+	@Deprecated
+	public String getOriginalDeletionType() {
+		return getColumnOriginalValue("deletionType");
 	}
 
 	@JSON
@@ -1059,6 +1069,8 @@ public class ObjectRelationshipModelImpl
 		objectRelationshipImpl.setObjectDefinitionId1(getObjectDefinitionId1());
 		objectRelationshipImpl.setObjectDefinitionId2(getObjectDefinitionId2());
 		objectRelationshipImpl.setObjectFieldId2(getObjectFieldId2());
+		objectRelationshipImpl.setParameterObjectFieldId(
+			getParameterObjectFieldId());
 		objectRelationshipImpl.setDeletionType(getDeletionType());
 		objectRelationshipImpl.setDBTableName(getDBTableName());
 		objectRelationshipImpl.setLabel(getLabel());
@@ -1098,6 +1110,8 @@ public class ObjectRelationshipModelImpl
 			this.<Long>getColumnOriginalValue("objectDefinitionId2"));
 		objectRelationshipImpl.setObjectFieldId2(
 			this.<Long>getColumnOriginalValue("objectFieldId2"));
+		objectRelationshipImpl.setParameterObjectFieldId(
+			this.<Long>getColumnOriginalValue("parameterObjectFieldId"));
 		objectRelationshipImpl.setDeletionType(
 			this.<String>getColumnOriginalValue("deletionType"));
 		objectRelationshipImpl.setDBTableName(
@@ -1239,6 +1253,9 @@ public class ObjectRelationshipModelImpl
 
 		objectRelationshipCacheModel.objectFieldId2 = getObjectFieldId2();
 
+		objectRelationshipCacheModel.parameterObjectFieldId =
+			getParameterObjectFieldId();
+
 		objectRelationshipCacheModel.deletionType = getDeletionType();
 
 		String deletionType = objectRelationshipCacheModel.deletionType;
@@ -1334,41 +1351,12 @@ public class ObjectRelationshipModelImpl
 		return sb.toString();
 	}
 
-	@Override
-	public String toXmlString() {
-		Map<String, Function<ObjectRelationship, Object>>
-			attributeGetterFunctions = getAttributeGetterFunctions();
-
-		StringBundler sb = new StringBundler(
-			(5 * attributeGetterFunctions.size()) + 4);
-
-		sb.append("<model><model-name>");
-		sb.append(getModelClassName());
-		sb.append("</model-name>");
-
-		for (Map.Entry<String, Function<ObjectRelationship, Object>> entry :
-				attributeGetterFunctions.entrySet()) {
-
-			String attributeName = entry.getKey();
-			Function<ObjectRelationship, Object> attributeGetterFunction =
-				entry.getValue();
-
-			sb.append("<column><column-name>");
-			sb.append(attributeName);
-			sb.append("</column-name><column-value><![CDATA[");
-			sb.append(attributeGetterFunction.apply((ObjectRelationship)this));
-			sb.append("]]></column-value></column>");
-		}
-
-		sb.append("</model>");
-
-		return sb.toString();
-	}
-
 	private static class EscapedModelProxyProviderFunctionHolder {
 
 		private static final Function<InvocationHandler, ObjectRelationship>
-			_escapedModelProxyProviderFunction = _getProxyProviderFunction();
+			_escapedModelProxyProviderFunction =
+				ProxyUtil.getProxyProviderFunction(
+					ObjectRelationship.class, ModelWrapper.class);
 
 	}
 
@@ -1384,6 +1372,7 @@ public class ObjectRelationshipModelImpl
 	private long _objectDefinitionId1;
 	private long _objectDefinitionId2;
 	private long _objectFieldId2;
+	private long _parameterObjectFieldId;
 	private String _deletionType;
 	private String _dbTableName;
 	private String _label;
@@ -1433,6 +1422,8 @@ public class ObjectRelationshipModelImpl
 		_columnOriginalValues.put("objectDefinitionId1", _objectDefinitionId1);
 		_columnOriginalValues.put("objectDefinitionId2", _objectDefinitionId2);
 		_columnOriginalValues.put("objectFieldId2", _objectFieldId2);
+		_columnOriginalValues.put(
+			"parameterObjectFieldId", _parameterObjectFieldId);
 		_columnOriginalValues.put("deletionType", _deletionType);
 		_columnOriginalValues.put("dbTableName", _dbTableName);
 		_columnOriginalValues.put("label", _label);
@@ -1485,17 +1476,19 @@ public class ObjectRelationshipModelImpl
 
 		columnBitmasks.put("objectFieldId2", 1024L);
 
-		columnBitmasks.put("deletionType", 2048L);
+		columnBitmasks.put("parameterObjectFieldId", 2048L);
 
-		columnBitmasks.put("dbTableName", 4096L);
+		columnBitmasks.put("deletionType", 4096L);
 
-		columnBitmasks.put("label", 8192L);
+		columnBitmasks.put("dbTableName", 8192L);
 
-		columnBitmasks.put("name", 16384L);
+		columnBitmasks.put("label", 16384L);
 
-		columnBitmasks.put("reverse", 32768L);
+		columnBitmasks.put("name", 32768L);
 
-		columnBitmasks.put("type_", 65536L);
+		columnBitmasks.put("reverse", 65536L);
+
+		columnBitmasks.put("type_", 131072L);
 
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}

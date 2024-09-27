@@ -165,18 +165,11 @@ export function formatItemChanges(itemChanges) {
 	return formattedChanges;
 }
 
-export function executeAsyncAction(url, method = 'GET') {
-	return fetch(url, {
-		headers: {
-			'Accept': 'application/json',
-			'Accept-Language': Liferay.ThemeDisplay.getBCP47LanguageId(),
-			'Content-Type': 'application/json',
-		},
-		method,
-	});
-}
-
 export function formatActionURL(url, item) {
+	if (!url) {
+		return '';
+	}
+
 	const replacedURL = url.replace(new RegExp('{(.*?)}', 'mg'), (matched) =>
 		getValueFromItem(
 			item,
@@ -230,7 +223,7 @@ export function getFiltersString(odataFiltersStrings, providedFilters) {
 	return filtersString;
 }
 
-export function loadData(
+export async function loadData(
 	apiURL,
 	currentURL,
 	odataFiltersStrings,
@@ -239,7 +232,12 @@ export function loadData(
 	page = 1,
 	sorting = []
 ) {
-	const url = new URL(apiURL, themeDisplay.getPortalURL());
+	const fullUrl = apiURL.startsWith('/')
+		? themeDisplay.getPortalURL() + themeDisplay.getPathContext() + apiURL
+		: apiURL;
+
+	const url = new URL(fullUrl);
+
 	const providedFilters = url.searchParams.get('filter');
 
 	url.searchParams.delete('filter');
@@ -250,6 +248,10 @@ export function loadData(
 			'filter',
 			getFiltersString(odataFiltersStrings, providedFilters)
 		);
+	}
+
+	if (themeDisplay.isImpersonated()) {
+		url.searchParams.append('doAsUserId', themeDisplay.getUserId());
 	}
 
 	url.searchParams.append('page', page);
@@ -266,7 +268,21 @@ export function loadData(
 		);
 	}
 
-	return executeAsyncAction(url, 'GET').then((response) => response.json());
+	const response = await fetch(url, {
+		headers: {
+			'Accept': 'application/json',
+			'Accept-Language': Liferay.ThemeDisplay.getBCP47LanguageId(),
+			'Content-Type': 'application/json',
+		},
+		method: 'GET',
+	});
+	const responseJSON = await response.json();
+
+	return {
+		data: responseJSON,
+		ok: response.ok,
+		status: response.status,
+	};
 }
 
 export function getCurrentItemUpdates(

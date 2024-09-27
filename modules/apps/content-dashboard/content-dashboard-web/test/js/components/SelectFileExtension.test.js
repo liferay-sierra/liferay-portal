@@ -76,22 +76,25 @@ const mockProps = {
 		'_com_liferay_item_selector_web_portlet_ItemSelectorPortlet_',
 };
 
-describe('SelectFileExtension', () => {
-	beforeEach(() => {
-		window.Liferay.Util.getOpener = jest.fn().mockReturnValue({
-			Liferay: {
-				fire: jest.fn(),
-			},
-		});
-	});
+jest.mock('frontend-js-web', () => ({
+	...jest.requireActual('frontend-js-web'),
+	getOpener: jest.fn(() => ({
+		Liferay: {
+			fire: jest.fn(),
+		},
+	})),
+}));
 
+describe('SelectFileExtension', () => {
 	it('renders a TreeFilter with parent nodes indicating the number of children', () => {
 		const {getByRole, getByText, queryByText} = render(
 			<SelectFileExtension {...mockProps} />
 		);
 
 		const {className} = getByRole('tree');
-		expect(className).toContain('lfr-treeview-node-list');
+		expect(className).toContain(
+			'treeview show-quick-actions-on-hover treeview-light'
+		);
 
 		expect(
 			getByText('Audio (5 items)', {exact: false})

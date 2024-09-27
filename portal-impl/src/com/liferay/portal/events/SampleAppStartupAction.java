@@ -68,14 +68,13 @@ public class SampleAppStartupAction extends SimpleAction {
 		boolean autoScreenName = false;
 		String screenName = "paul";
 		String emailAddress = "paul@liferay.com";
-		long facebookId = 0;
-		String openId = StringPool.BLANK;
+
 		Locale locale = LocaleUtil.US;
 		String firstName = "Paul";
 		String middleName = StringPool.BLANK;
 		String lastName = "Smith";
-		long prefixId = 0;
-		long suffixId = 0;
+		long prefixListTypeId = 0;
+		long suffixListTypeId = 0;
 		boolean male = true;
 		int birthdayMonth = Calendar.JANUARY;
 		int birthdayDay = 1;
@@ -91,8 +90,8 @@ public class SampleAppStartupAction extends SimpleAction {
 
 		User paulUser = UserLocalServiceUtil.addUser(
 			creatorUserId, companyId, autoPassword, password1, password2,
-			autoScreenName, screenName, emailAddress, facebookId, openId,
-			locale, firstName, middleName, lastName, prefixId, suffixId, male,
+			autoScreenName, screenName, emailAddress, locale, firstName,
+			middleName, lastName, prefixListTypeId, suffixListTypeId, male,
 			birthdayMonth, birthdayDay, birthdayYear, jobTitle, groupIds,
 			organizationIds, roleIds, userGroupIds, sendEmail, serviceContext);
 
@@ -108,8 +107,8 @@ public class SampleAppStartupAction extends SimpleAction {
 
 		User janeUser = UserLocalServiceUtil.addUser(
 			creatorUserId, companyId, autoPassword, password1, password2,
-			autoScreenName, screenName, emailAddress, facebookId, openId,
-			locale, firstName, middleName, lastName, prefixId, suffixId, male,
+			autoScreenName, screenName, emailAddress, locale, firstName,
+			middleName, lastName, prefixListTypeId, suffixListTypeId, male,
 			birthdayMonth, birthdayDay, birthdayYear, jobTitle, groupIds,
 			organizationIds, roleIds, userGroupIds, sendEmail, serviceContext);
 

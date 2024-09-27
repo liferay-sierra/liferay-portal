@@ -24,6 +24,7 @@ import {
 	useConfig,
 	useFormState,
 } from 'data-engine-js-components-web';
+import {formatStorage, openSelectionModal, sub} from 'frontend-js-web';
 import React, {useEffect, useMemo, useState} from 'react';
 
 import {FieldBase} from '../FieldBase/ReactFieldBase.es';
@@ -259,7 +260,7 @@ const Main = ({
 	_onBlur,
 	_onFocus,
 	allowGuestUsers,
-	displayErrors: initialDisplayErrors,
+	displayErrors: initialDisplayErrors = false,
 	editingLanguageId,
 	errorMessage: initialErrorMessage,
 	fieldName,
@@ -272,6 +273,7 @@ const Main = ({
 	maximumSubmissionLimitReached,
 	message,
 	name,
+	objectFieldAcceptedFileExtensions,
 	onBlur,
 	onChange,
 	onFocus,
@@ -293,7 +295,11 @@ const Main = ({
 
 	const isSignedIn = Liferay.ThemeDisplay.isSignedIn();
 
-	const getErrorMessages = (errorMessage, isSignedIn) => {
+	const getErrorMessages = (
+		errorMessage,
+		isSignedIn,
+		objectFieldInvalidExtension
+	) => {
 		const errorMessages = [errorMessage];
 
 		if (!allowGuestUsers && !isSignedIn) {
@@ -317,6 +323,16 @@ const Main = ({
 				)
 			);
 		}
+		else if (objectFieldInvalidExtension) {
+			errorMessages.push(
+				Liferay.Util.sub(
+					Liferay.Language.get(
+						'please-enter-a-file-with-a-valid-extension-x'
+					),
+					objectFieldAcceptedFileExtensions
+				)
+			);
+		}
 
 		return errorMessages.join(' ');
 	};
@@ -334,10 +350,22 @@ const Main = ({
 	}, [allowGuestUsers, isSignedIn, showUploadPermissionMessage]);
 
 	useEffect(() => {
-		setCurrentValue(value);
-		setDisplayErrors(initialDisplayErrors);
-		setErrorMessage(getErrorMessages(initialErrorMessage, isSignedIn));
-		setValid(initialValid);
+		const objectFieldInvalidExtension = isObjectFieldInvalidExtension(
+			value
+		);
+
+		setCurrentValue(objectFieldInvalidExtension ? null : value);
+		setDisplayErrors(
+			objectFieldInvalidExtension ? true : initialDisplayErrors
+		);
+		setErrorMessage(
+			getErrorMessages(
+				initialErrorMessage,
+				isSignedIn,
+				objectFieldInvalidExtension
+			)
+		);
+		setValid(objectFieldInvalidExtension ? false : initialValid);
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [initialDisplayErrors, initialErrorMessage, initialValid, value]);
@@ -371,11 +399,11 @@ const Main = ({
 	const handleSelectButtonClicked = ({portletNamespace}, event) => {
 		onFocus(event);
 
-		Liferay.Util.openSelectionModal({
+		openSelectionModal({
 			onClose: () => onBlur(event),
 			onSelect: handleFieldChanged,
 			selectEventName: `${portletNamespace}selectDocumentLibrary`,
-			title: Liferay.Util.sub(
+			title: sub(
 				Liferay.Language.get('select-x'),
 				Liferay.Language.get('document')
 			),
@@ -393,7 +421,11 @@ const Main = ({
 	};
 
 	const disableSubmitButton = (disable = true) => {
-		document.getElementById('ddm-form-submit').disabled = disable;
+		const ddmFormSubmitButton = document.getElementById('ddm-form-submit');
+
+		if (ddmFormSubmitButton) {
+			ddmFormSubmitButton.disabled = disable;
+		}
 	};
 
 	const handleGuestUploadFileChanged = (errorMessage, event, value) => {
@@ -412,14 +444,40 @@ const Main = ({
 			return false;
 		}
 
-		const errorMessage = Liferay.Util.sub(
+		const errorMessage = sub(
 			Liferay.Language.get(
 				'please-enter-a-file-with-a-valid-file-size-no-larger-than-x'
 			),
-			[Liferay.Util.formatStorage(uploadRequestSizeLimit)]
+			[formatStorage(uploadRequestSizeLimit)]
 		);
 
 		handleGuestUploadFileChanged(errorMessage, {}, null);
+
+		return true;
+	};
+
+	const isObjectFieldInvalidExtension = (value) => {
+		if (!value || !objectFieldAcceptedFileExtensions) {
+			return false;
+		}
+
+		const fileEntryJSON = JSON.parse(value);
+
+		const fileExtension = fileEntryJSON.mimeType
+			? fileEntryJSON.mimeType.split('/')[1]
+			: fileEntryJSON.extension;
+
+		if (!fileExtension) {
+			return false;
+		}
+
+		const supportedExtensions = objectFieldAcceptedFileExtensions.split(
+			', '
+		);
+
+		if (supportedExtensions.includes(fileExtension)) {
+			return false;
+		}
 
 		return true;
 	};

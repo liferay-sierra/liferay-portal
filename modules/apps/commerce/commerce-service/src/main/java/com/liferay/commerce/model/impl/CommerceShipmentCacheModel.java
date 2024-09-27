@@ -78,10 +78,14 @@ public class CommerceShipmentCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(35);
+		StringBundler sb = new StringBundler(41);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", uuid=");
+		sb.append(uuid);
+		sb.append(", externalReferenceCode=");
+		sb.append(externalReferenceCode);
 		sb.append(", commerceShipmentId=");
 		sb.append(commerceShipmentId);
 		sb.append(", groupId=");
@@ -102,16 +106,18 @@ public class CommerceShipmentCacheModel
 		sb.append(commerceAddressId);
 		sb.append(", commerceShippingMethodId=");
 		sb.append(commerceShippingMethodId);
-		sb.append(", shippingOptionName=");
-		sb.append(shippingOptionName);
 		sb.append(", carrier=");
 		sb.append(carrier);
-		sb.append(", trackingNumber=");
-		sb.append(trackingNumber);
-		sb.append(", shippingDate=");
-		sb.append(shippingDate);
 		sb.append(", expectedDate=");
 		sb.append(expectedDate);
+		sb.append(", shippingDate=");
+		sb.append(shippingDate);
+		sb.append(", shippingOptionName=");
+		sb.append(shippingOptionName);
+		sb.append(", trackingNumber=");
+		sb.append(trackingNumber);
+		sb.append(", trackingURL=");
+		sb.append(trackingURL);
 		sb.append(", status=");
 		sb.append(status);
 		sb.append("}");
@@ -124,6 +130,22 @@ public class CommerceShipmentCacheModel
 		CommerceShipmentImpl commerceShipmentImpl = new CommerceShipmentImpl();
 
 		commerceShipmentImpl.setMvccVersion(mvccVersion);
+
+		if (uuid == null) {
+			commerceShipmentImpl.setUuid("");
+		}
+		else {
+			commerceShipmentImpl.setUuid(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			commerceShipmentImpl.setExternalReferenceCode("");
+		}
+		else {
+			commerceShipmentImpl.setExternalReferenceCode(
+				externalReferenceCode);
+		}
+
 		commerceShipmentImpl.setCommerceShipmentId(commerceShipmentId);
 		commerceShipmentImpl.setGroupId(groupId);
 		commerceShipmentImpl.setCompanyId(companyId);
@@ -155,13 +177,6 @@ public class CommerceShipmentCacheModel
 		commerceShipmentImpl.setCommerceShippingMethodId(
 			commerceShippingMethodId);
 
-		if (shippingOptionName == null) {
-			commerceShipmentImpl.setShippingOptionName("");
-		}
-		else {
-			commerceShipmentImpl.setShippingOptionName(shippingOptionName);
-		}
-
 		if (carrier == null) {
 			commerceShipmentImpl.setCarrier("");
 		}
@@ -169,11 +184,11 @@ public class CommerceShipmentCacheModel
 			commerceShipmentImpl.setCarrier(carrier);
 		}
 
-		if (trackingNumber == null) {
-			commerceShipmentImpl.setTrackingNumber("");
+		if (expectedDate == Long.MIN_VALUE) {
+			commerceShipmentImpl.setExpectedDate(null);
 		}
 		else {
-			commerceShipmentImpl.setTrackingNumber(trackingNumber);
+			commerceShipmentImpl.setExpectedDate(new Date(expectedDate));
 		}
 
 		if (shippingDate == Long.MIN_VALUE) {
@@ -183,11 +198,25 @@ public class CommerceShipmentCacheModel
 			commerceShipmentImpl.setShippingDate(new Date(shippingDate));
 		}
 
-		if (expectedDate == Long.MIN_VALUE) {
-			commerceShipmentImpl.setExpectedDate(null);
+		if (shippingOptionName == null) {
+			commerceShipmentImpl.setShippingOptionName("");
 		}
 		else {
-			commerceShipmentImpl.setExpectedDate(new Date(expectedDate));
+			commerceShipmentImpl.setShippingOptionName(shippingOptionName);
+		}
+
+		if (trackingNumber == null) {
+			commerceShipmentImpl.setTrackingNumber("");
+		}
+		else {
+			commerceShipmentImpl.setTrackingNumber(trackingNumber);
+		}
+
+		if (trackingURL == null) {
+			commerceShipmentImpl.setTrackingURL("");
+		}
+		else {
+			commerceShipmentImpl.setTrackingURL(trackingURL);
 		}
 
 		commerceShipmentImpl.setStatus(status);
@@ -202,6 +231,8 @@ public class CommerceShipmentCacheModel
 		throws ClassNotFoundException, IOException {
 
 		mvccVersion = objectInput.readLong();
+		uuid = objectInput.readUTF();
+		externalReferenceCode = objectInput.readUTF();
 
 		commerceShipmentId = objectInput.readLong();
 
@@ -219,11 +250,12 @@ public class CommerceShipmentCacheModel
 		commerceAddressId = objectInput.readLong();
 
 		commerceShippingMethodId = objectInput.readLong();
-		shippingOptionName = (String)objectInput.readObject();
 		carrier = objectInput.readUTF();
-		trackingNumber = objectInput.readUTF();
-		shippingDate = objectInput.readLong();
 		expectedDate = objectInput.readLong();
+		shippingDate = objectInput.readLong();
+		shippingOptionName = (String)objectInput.readObject();
+		trackingNumber = objectInput.readUTF();
+		trackingURL = objectInput.readUTF();
 
 		status = objectInput.readInt();
 	}
@@ -231,6 +263,20 @@ public class CommerceShipmentCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		if (uuid == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(externalReferenceCode);
+		}
 
 		objectOutput.writeLong(commerceShipmentId);
 
@@ -256,18 +302,21 @@ public class CommerceShipmentCacheModel
 
 		objectOutput.writeLong(commerceShippingMethodId);
 
-		if (shippingOptionName == null) {
-			objectOutput.writeObject("");
-		}
-		else {
-			objectOutput.writeObject(shippingOptionName);
-		}
-
 		if (carrier == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
 			objectOutput.writeUTF(carrier);
+		}
+
+		objectOutput.writeLong(expectedDate);
+		objectOutput.writeLong(shippingDate);
+
+		if (shippingOptionName == null) {
+			objectOutput.writeObject("");
+		}
+		else {
+			objectOutput.writeObject(shippingOptionName);
 		}
 
 		if (trackingNumber == null) {
@@ -277,13 +326,19 @@ public class CommerceShipmentCacheModel
 			objectOutput.writeUTF(trackingNumber);
 		}
 
-		objectOutput.writeLong(shippingDate);
-		objectOutput.writeLong(expectedDate);
+		if (trackingURL == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(trackingURL);
+		}
 
 		objectOutput.writeInt(status);
 	}
 
 	public long mvccVersion;
+	public String uuid;
+	public String externalReferenceCode;
 	public long commerceShipmentId;
 	public long groupId;
 	public long companyId;
@@ -294,11 +349,12 @@ public class CommerceShipmentCacheModel
 	public long commerceAccountId;
 	public long commerceAddressId;
 	public long commerceShippingMethodId;
-	public String shippingOptionName;
 	public String carrier;
-	public String trackingNumber;
-	public long shippingDate;
 	public long expectedDate;
+	public long shippingDate;
+	public String shippingOptionName;
+	public String trackingNumber;
+	public String trackingURL;
 	public int status;
 
 }

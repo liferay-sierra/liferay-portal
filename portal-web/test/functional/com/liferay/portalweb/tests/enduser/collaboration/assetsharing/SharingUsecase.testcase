@@ -1,4 +1,4 @@
-@component-name = "portal-collaboration"
+@component-name = "portal-lima"
 definition {
 
 	property custom.properties = "jsonws.web.service.paths.excludes=";
@@ -30,15 +30,23 @@ definition {
 	}
 
 	tearDown {
-		JSONGroup.deleteGroupByName(groupName = "Test Site");
+		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
-		JSONUser.tearDownNonAdminUsers();
+		if ("${testPortalInstance}" == "true") {
+			PortalInstances.tearDownCP();
+		}
+		else {
+			JSONGroup.deleteGroupByName(groupName = "Test Site");
+
+			JSONUser.tearDownNonAdminUsers();
+		}
 	}
 
 	@description = "This test ensures that Sharing can be disabled at the instance level."
 	@priority = "4"
 	@refactordone
 	test CanDisableSharingAtInstanceScope {
+		property custom.properties = "dl.actions.visible=true";
 		property test.name.skip.portal.instance = "SharingUsecase#CanDisableSharingAtInstanceScope";
 
 		SystemSettings.openSystemSettingsAdmin();
@@ -61,8 +69,6 @@ definition {
 		Navigator.gotoSitePage(
 			pageName = "Test Page",
 			siteName = "Test Site");
-
-		DMDocument.enableActionsMenuOnPortlet();
 
 		JSONDocument.addFileWithUploadedFile(
 			dmDocumentTitle = "Document with sharing disabled",
@@ -100,6 +106,7 @@ definition {
 	@priority = "4"
 	@refactordone
 	test CanDisableSharingAtSystemScope {
+		property custom.properties = "dl.actions.visible=true";
 		property test.name.skip.portal.instance = "SharingUsecase#CanDisableSharingAtSystemScope";
 
 		SystemSettings.openSystemSettingsAdmin();
@@ -122,8 +129,6 @@ definition {
 		Navigator.gotoSitePage(
 			pageName = "Test Page",
 			siteName = "Test Site");
-
-		DMDocument.enableActionsMenuOnPortlet();
 
 		JSONDocument.addFileWithUploadedFile(
 			dmDocumentTitle = "Document with sharing disabled",
@@ -161,6 +166,8 @@ definition {
 	@priority = "3"
 	@refactordone
 	test CanFilterByAssetType {
+		property custom.properties = "dl.actions.visible=true";
+
 		JSONLayout.addWidgetToPublicLayout(
 			groupName = "Test Site",
 			layoutName = "Test Page",
@@ -169,8 +176,6 @@ definition {
 		Navigator.gotoSitePage(
 			pageName = "Test Page",
 			siteName = "Test Site");
-
-		DMDocument.enableActionsMenuOnPortlet();
 
 		JSONDocument.addFileWithUploadedFile(
 			dmDocumentDescription = "DM Document Description",
@@ -236,6 +241,8 @@ definition {
 	@priority = "3"
 	@refactordone
 	test CanOrderBySharedDate {
+		property custom.properties = "dl.actions.visible=true";
+
 		JSONLayout.addWidgetToPublicLayout(
 			groupName = "Test Site",
 			layoutName = "Test Page",
@@ -244,8 +251,6 @@ definition {
 		Navigator.gotoSitePage(
 			pageName = "Test Page",
 			siteName = "Test Site");
-
-		DMDocument.enableActionsMenuOnPortlet();
 
 		for (var num : list "1,2") {
 			JSONDocument.addFileWithUploadedFile(

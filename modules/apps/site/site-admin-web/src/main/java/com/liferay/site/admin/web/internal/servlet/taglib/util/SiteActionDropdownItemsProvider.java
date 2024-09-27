@@ -18,13 +18,13 @@ import com.liferay.configuration.admin.constants.ConfigurationAdminPortletKeys;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
 import com.liferay.petra.function.UnsafeConsumer;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.membershippolicy.SiteMembershipPolicyUtil;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
@@ -70,40 +70,68 @@ public class SiteActionDropdownItemsProvider {
 		boolean hasUpdatePermission = GroupPermissionUtil.contains(
 			_themeDisplay.getPermissionChecker(), _group, ActionKeys.UPDATE);
 
-		return DropdownItemListBuilder.add(
-			() -> hasUpdatePermission && (count > 0),
-			_getViewChildSitesActionUnsafeConsumer()
-		).add(
-			() ->
-				hasUpdatePermission &&
-				_siteAdminDisplayContext.hasAddChildSitePermission(_group),
-			_getAddChildSiteActionUnsafeConsumer()
-		).add(
-			() -> hasUpdatePermission,
-			_getViewSiteSettingsActionUnsafeConsumer()
-		).add(
-			() -> _group.isActive() && (_group.getPublicLayoutsPageCount() > 0),
-			_getViewSitePublicPagesActionUnsafeConsumer()
-		).add(
-			() ->
-				_group.isActive() && (_group.getPrivateLayoutsPageCount() > 0),
-			_getViewSitePrivatePagesActionUnsafeConsumer()
-		).add(
-			() -> _hasEditAssignmentsPermission(),
-			_getLeaveSiteActionUnsafeConsumer()
-		).add(
-			() ->
-				hasUpdatePermission && _group.isActive() &&
-				!_group.isCompany() && !_group.isGuest(),
-			_getDeactivateSiteActionUnsafeConsumer()
-		).add(
-			() ->
-				hasUpdatePermission && !_group.isActive() &&
-				!_group.isCompany(),
-			_getActivateSiteActionUnsafeConsumer()
-		).add(
-			() -> _hasDeleteGroupPermission(),
-			_getDeleteSiteActionUnsafeConsumer()
+		return DropdownItemListBuilder.addGroup(
+			dropdownGroupItem -> {
+				dropdownGroupItem.setDropdownItems(
+					DropdownItemListBuilder.add(
+						() ->
+							hasUpdatePermission && !_group.isActive() &&
+							!_group.isCompany(),
+						_getActivateSiteActionUnsafeConsumer()
+					).add(
+						() ->
+							hasUpdatePermission && _group.isActive() &&
+							!_group.isCompany() && !_group.isGuest(),
+						_getDeactivateSiteActionUnsafeConsumer()
+					).add(
+						() -> _hasEditAssignmentsPermission(),
+						_getLeaveSiteActionUnsafeConsumer()
+					).build());
+				dropdownGroupItem.setSeparator(true);
+			}
+		).addGroup(
+			dropdownGroupItem -> {
+				dropdownGroupItem.setDropdownItems(
+					DropdownItemListBuilder.add(
+						() ->
+							hasUpdatePermission &&
+							_siteAdminDisplayContext.hasAddChildSitePermission(
+								_group),
+						_getAddChildSiteActionUnsafeConsumer()
+					).add(
+						() -> hasUpdatePermission && (count > 0),
+						_getViewChildSitesActionUnsafeConsumer()
+					).build());
+				dropdownGroupItem.setSeparator(true);
+			}
+		).addGroup(
+			dropdownGroupItem -> {
+				dropdownGroupItem.setDropdownItems(
+					DropdownItemListBuilder.add(
+						() ->
+							_group.isActive() &&
+							(_group.getPrivateLayoutsPageCount() > 0),
+						_getViewSitePrivatePagesActionUnsafeConsumer()
+					).add(
+						() ->
+							_group.isActive() &&
+							(_group.getPublicLayoutsPageCount() > 0),
+						_getViewSitePublicPagesActionUnsafeConsumer()
+					).add(
+						() -> hasUpdatePermission,
+						_getViewSiteSettingsActionUnsafeConsumer()
+					).build());
+				dropdownGroupItem.setSeparator(true);
+			}
+		).addGroup(
+			dropdownGroupItem -> {
+				dropdownGroupItem.setDropdownItems(
+					DropdownItemListBuilder.add(
+						() -> _hasDeleteGroupPermission(),
+						_getDeleteSiteActionUnsafeConsumer()
+					).build());
+				dropdownGroupItem.setSeparator(true);
+			}
 		).build();
 	}
 
@@ -179,6 +207,7 @@ public class SiteActionDropdownItemsProvider {
 				).setParameter(
 					"groupId", _group.getGroupId()
 				).buildString());
+			dropdownItem.setIcon("trash");
 			dropdownItem.setLabel(
 				LanguageUtil.get(_httpServletRequest, "delete"));
 		};

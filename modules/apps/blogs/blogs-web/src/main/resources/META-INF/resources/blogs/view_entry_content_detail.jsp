@@ -104,7 +104,7 @@ BlogsPortletInstanceConfiguration blogsPortletInstanceConfiguration = BlogsPortl
 											).buildString()
 										%>"
 									>
-										<span class="hide-accessible"><liferay-ui:message key="edit-entry" /></span>
+										<span class="hide-accessible sr-only"><liferay-ui:message key="edit-entry" /></span>
 
 										<clay:icon
 											symbol="pencil"
@@ -150,7 +150,7 @@ BlogsPortletInstanceConfiguration blogsPortletInstanceConfiguration = BlogsPortl
 									</div>
 
 									<div>
-										<span class="hide-accessible"><liferay-ui:message key="published-date" /></span><liferay-ui:message arguments="<%= LanguageUtil.getTimeDescription(request, System.currentTimeMillis() - entry.getStatusDate().getTime(), true) %>" key="x-ago" translateArguments="<%= false %>" />
+										<span class="hide-accessible sr-only"><liferay-ui:message key="published-date" /></span><liferay-ui:message arguments="<%= LanguageUtil.getTimeDescription(request, System.currentTimeMillis() - entry.getStatusDate().getTime(), true) %>" key="x-ago" translateArguments="<%= false %>" />
 
 										<c:if test="<%= blogsPortletInstanceConfiguration.enableReadingTime() %>">
 											- <liferay-reading-time:reading-time displayStyle="descriptive" model="<%= entry %>" />
@@ -248,7 +248,13 @@ BlogsPortletInstanceConfiguration blogsPortletInstanceConfiguration = BlogsPortl
 							<liferay-asset:asset-tags-summary
 								className="<%= BlogsEntry.class.getName() %>"
 								classPK="<%= entry.getEntryId() %>"
-								portletURL="<%= renderResponse.createRenderURL() %>"
+								portletURL='<%=
+									PortletURLBuilder.createRenderURL(
+										renderResponse
+									).setRedirect(
+										ParamUtil.getString(request, "redirect")
+									).buildPortletURL()
+								%>'
 							/>
 						</div>
 					</clay:col>
@@ -300,7 +306,7 @@ BlogsPortletInstanceConfiguration blogsPortletInstanceConfiguration = BlogsPortl
 
 		<%
 		if (searchContainer != null) {
-			searchContainer.setTotal(searchContainer.getTotal() - 1);
+			searchContainer.setResultsAndTotal(searchContainer::getResults, searchContainer.getTotal() - 1);
 		}
 		%>
 

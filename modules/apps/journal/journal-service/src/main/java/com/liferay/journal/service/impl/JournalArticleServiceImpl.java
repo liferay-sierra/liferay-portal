@@ -384,8 +384,14 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 			long groupId, long classNameId, long classPK,
 			Map<Locale, String> titleMap, Map<Locale, String> descriptionMap,
 			String content, String ddmStructureKey, String ddmTemplateKey,
-			String layoutUuid, boolean indexable, boolean smallImage,
-			String smallImageURL, File smallImageFile,
+			String layoutUuid, int displayDateMonth, int displayDateDay,
+			int displayDateYear, int displayDateHour, int displayDateMinute,
+			int expirationDateMonth, int expirationDateDay,
+			int expirationDateYear, int expirationDateHour,
+			int expirationDateMinute, boolean neverExpire, int reviewDateMonth,
+			int reviewDateDay, int reviewDateYear, int reviewDateHour,
+			int reviewDateMinute, boolean neverReview, boolean indexable,
+			boolean smallImage, String smallImageURL, File smallImageFile,
 			ServiceContext serviceContext)
 		throws PortalException {
 
@@ -400,7 +406,12 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 		return journalArticleLocalService.addArticleDefaultValues(
 			getUserId(), groupId, classNameId, classPK, titleMap,
 			descriptionMap, content, ddmStructureKey, ddmTemplateKey,
-			layoutUuid, indexable, smallImage, smallImageURL, smallImageFile,
+			layoutUuid, displayDateMonth, displayDateDay, displayDateYear,
+			displayDateHour, displayDateMinute, expirationDateMonth,
+			expirationDateDay, expirationDateYear, expirationDateHour,
+			expirationDateMinute, neverExpire, reviewDateMonth, reviewDateDay,
+			reviewDateYear, reviewDateHour, reviewDateMinute, neverReview,
+			indexable, smallImage, smallImageURL, smallImageFile,
 			serviceContext);
 	}
 
@@ -483,11 +494,10 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		JournalArticle article = journalArticleLocalService.getArticle(
-			groupId, articleId);
-
 		_journalArticleModelResourcePermission.check(
-			getPermissionChecker(), article, ActionKeys.DELETE);
+			getPermissionChecker(),
+			journalArticleLocalService.getArticle(groupId, articleId),
+			ActionKeys.DELETE);
 
 		journalArticleLocalService.deleteArticle(
 			groupId, articleId, serviceContext);
@@ -571,11 +581,10 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		JournalArticle article = journalArticleLocalService.getArticle(
-			groupId, articleId);
-
 		_journalArticleModelResourcePermission.check(
-			getPermissionChecker(), article, ActionKeys.EXPIRE);
+			getPermissionChecker(),
+			journalArticleLocalService.getArticle(groupId, articleId),
+			ActionKeys.EXPIRE);
 
 		journalArticleLocalService.expireArticle(
 			getUserId(), groupId, articleId, articleURL, serviceContext);
@@ -830,6 +839,20 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 
 		return journalArticleFinder.filterFindByG_F_L(
 			groupId, folderIds, locale, queryDefinition);
+	}
+
+	@Override
+	public List<JournalArticle> getArticlesByArticleId(
+		long groupId, String articleId, int status, int start, int end,
+		OrderByComparator<JournalArticle> orderByComparator) {
+
+		if (status == WorkflowConstants.STATUS_ANY) {
+			return journalArticlePersistence.filterFindByG_A(
+				groupId, articleId, start, end, orderByComparator);
+		}
+
+		return journalArticlePersistence.filterFindByG_A_ST(
+			groupId, articleId, status, start, end, orderByComparator);
 	}
 
 	/**
@@ -1192,6 +1215,19 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 	@Override
 	public int getArticlesCountByArticleId(long groupId, String articleId) {
 		return journalArticlePersistence.filterCountByG_A(groupId, articleId);
+	}
+
+	@Override
+	public int getArticlesCountByArticleId(
+		long groupId, String articleId, int status) {
+
+		if (status == WorkflowConstants.STATUS_ANY) {
+			return journalArticlePersistence.filterCountByG_A(
+				groupId, articleId);
+		}
+
+		return journalArticlePersistence.filterCountByG_A_ST(
+			groupId, articleId, status);
 	}
 
 	/**
@@ -1752,11 +1788,10 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 			_journalFolderModelResourcePermission, getPermissionChecker(),
 			groupId, newFolderId, ActionKeys.ADD_ARTICLE);
 
-		JournalArticle article = journalArticleLocalService.getArticle(
-			groupId, articleId);
-
 		_journalArticleModelResourcePermission.check(
-			getPermissionChecker(), article, ActionKeys.UPDATE);
+			getPermissionChecker(),
+			journalArticleLocalService.getArticle(groupId, articleId),
+			ActionKeys.UPDATE);
 
 		journalArticleLocalService.moveArticle(
 			groupId, articleId, newFolderId, serviceContext);
@@ -1845,11 +1880,10 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 	public JournalArticle moveArticleToTrash(long groupId, String articleId)
 		throws PortalException {
 
-		JournalArticle article = journalArticleLocalService.getArticle(
-			groupId, articleId);
-
 		_journalArticleModelResourcePermission.check(
-			getPermissionChecker(), article, ActionKeys.DELETE);
+			getPermissionChecker(),
+			journalArticleLocalService.getArticle(groupId, articleId),
+			ActionKeys.DELETE);
 
 		return journalArticleLocalService.moveArticleToTrash(
 			getUserId(), groupId, articleId);
@@ -2793,8 +2827,15 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 			long groupId, String articleId, Map<Locale, String> titleMap,
 			Map<Locale, String> descriptionMap, String content,
 			String ddmStructureKey, String ddmTemplateKey, String layoutUuid,
-			boolean indexable, boolean smallImage, String smallImageURL,
-			File smallImageFile, ServiceContext serviceContext)
+			int displayDateMonth, int displayDateDay, int displayDateYear,
+			int displayDateHour, int displayDateMinute, int expirationDateMonth,
+			int expirationDateDay, int expirationDateYear,
+			int expirationDateHour, int expirationDateMinute,
+			boolean neverExpire, int reviewDateMonth, int reviewDateDay,
+			int reviewDateYear, int reviewDateHour, int reviewDateMinute,
+			boolean neverReview, boolean indexable, boolean smallImage,
+			String smallImageURL, File smallImageFile,
+			ServiceContext serviceContext)
 		throws PortalException {
 
 		DDMStructure ddmStructure = _ddmStructureService.getStructure(
@@ -2807,8 +2848,13 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 
 		return journalArticleLocalService.updateArticleDefaultValues(
 			getUserId(), groupId, articleId, titleMap, descriptionMap, content,
-			ddmStructureKey, ddmTemplateKey, layoutUuid, indexable, smallImage,
-			smallImageURL, smallImageFile, serviceContext);
+			ddmStructureKey, ddmTemplateKey, layoutUuid, displayDateMonth,
+			displayDateDay, displayDateYear, displayDateHour, displayDateMinute,
+			expirationDateMonth, expirationDateDay, expirationDateYear,
+			expirationDateHour, expirationDateMinute, neverExpire,
+			reviewDateMonth, reviewDateDay, reviewDateYear, reviewDateHour,
+			reviewDateMinute, neverReview, indexable, smallImage, smallImageURL,
+			smallImageFile, serviceContext);
 	}
 
 	/**

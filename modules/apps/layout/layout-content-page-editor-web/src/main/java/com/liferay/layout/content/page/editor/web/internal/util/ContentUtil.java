@@ -20,14 +20,14 @@ import com.liferay.asset.kernel.model.AssetRendererFactory;
 import com.liferay.asset.kernel.model.ClassType;
 import com.liferay.asset.kernel.model.ClassTypeReader;
 import com.liferay.document.library.constants.DLPortletKeys;
-import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.util.DLURLHelperUtil;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.service.FragmentEntryLinkLocalServiceUtil;
 import com.liferay.info.item.InfoItemReference;
 import com.liferay.layout.content.page.editor.constants.ContentPageEditorPortletKeys;
 import com.liferay.layout.content.page.editor.web.internal.info.display.url.provider.InfoEditURLProviderUtil;
-import com.liferay.layout.content.page.editor.web.internal.layout.display.page.LayoutDisplayPageProviderTrackerUtil;
+import com.liferay.layout.content.page.editor.web.internal.info.search.InfoSearchClassMapperRegistryUtil;
+import com.liferay.layout.content.page.editor.web.internal.layout.display.page.LayoutDisplayPageProviderRegistryUtil;
 import com.liferay.layout.content.page.editor.web.internal.security.permission.resource.ModelResourcePermissionUtil;
 import com.liferay.layout.content.page.editor.web.internal.util.layout.structure.LayoutStructureUtil;
 import com.liferay.layout.display.page.LayoutDisplayPageObjectProvider;
@@ -37,7 +37,6 @@ import com.liferay.layout.service.LayoutClassedModelUsageLocalServiceUtil;
 import com.liferay.layout.util.structure.ContainerStyledLayoutStructureItem;
 import com.liferay.layout.util.structure.LayoutStructure;
 import com.liferay.layout.util.structure.LayoutStructureItem;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -49,10 +48,12 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.LiferayPortletURL;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
@@ -60,11 +61,8 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
-import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.segments.constants.SegmentsExperienceConstants;
@@ -125,14 +123,16 @@ public class ContentUtil {
 
 	public static JSONArray getPageContentsJSONArray(
 			HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse, long plid)
+			HttpServletResponse httpServletResponse, long plid,
+			long segmentsExperienceId)
 		throws PortalException {
 
 		return JSONUtil.concat(
 			_getLayoutClassedModelPageContentsJSONArray(
-				httpServletRequest, plid),
+				httpServletRequest, plid, segmentsExperienceId),
 			AssetListEntryUsagesUtil.getPageContentsJSONArray(
-				httpServletRequest, httpServletResponse, plid));
+				httpServletRequest, httpServletResponse, plid,
+				segmentsExperienceId));
 	}
 
 	private static String _generateUniqueLayoutClassedModelUsageKey(
@@ -147,36 +147,29 @@ public class ContentUtil {
 			ThemeDisplay themeDisplay, HttpServletRequest httpServletRequest)
 		throws Exception {
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
-
 		String className = layoutClassedModelUsage.getClassName();
 
+		boolean hasUpdatePermission = ModelResourcePermissionUtil.contains(
+			themeDisplay.getPermissionChecker(), className,
+			layoutClassedModelUsage.getClassPK(), ActionKeys.UPDATE);
+
 		LayoutDisplayPageProvider<?> layoutDisplayPageProvider =
-			LayoutDisplayPageProviderTrackerUtil.getLayoutDisplayPageProvider(
-				layoutClassedModelUsage.getClassName());
+			LayoutDisplayPageProviderRegistryUtil.getLayoutDisplayPageProvider(
+				className);
 
 		LayoutDisplayPageObjectProvider<?> layoutDisplayPageObjectProvider =
 			layoutDisplayPageProvider.getLayoutDisplayPageObjectProvider(
 				new InfoItemReference(
 					className, layoutClassedModelUsage.getClassPK()));
 
-		if (ModelResourcePermissionUtil.contains(
-				themeDisplay.getPermissionChecker(),
-				layoutClassedModelUsage.getClassName(),
-				layoutClassedModelUsage.getClassPK(), ActionKeys.UPDATE)) {
+		return JSONUtil.put(
+			"editImage",
+			() -> {
+				if (!hasUpdatePermission ||
+					!Objects.equals(className, FileEntry.class.getName())) {
 
-			String editURL = InfoEditURLProviderUtil.getURLEdit(
-				layoutClassedModelUsage.getClassName(),
-				layoutDisplayPageObjectProvider.getDisplayObject(),
-				httpServletRequest);
-
-			if (editURL != null) {
-				jsonObject.put("editURL", editURL);
-			}
-
-			if (Objects.equals(
-					layoutClassedModelUsage.getClassName(),
-					FileEntry.class.getName())) {
+					return null;
+				}
 
 				FileEntry fileEntry =
 					(FileEntry)
@@ -197,68 +190,86 @@ public class ContentUtil {
 					ActionRequest.ACTION_NAME,
 					"/document_library/edit_file_entry_image_editor");
 
-				jsonObject.put(
-					"editImage",
-					JSONUtil.put(
-						"editImageURL", portletURL.toString()
-					).put(
-						"fileEntryId", fileEntry.getFileEntryId()
-					).put(
-						"previewURL",
-						DLURLHelperUtil.getPreviewURL(
-							fileEntry, fileEntry.getFileVersion(), themeDisplay,
-							StringPool.BLANK)
-					));
+				return JSONUtil.put(
+					"editImageURL", portletURL.toString()
+				).put(
+					"fileEntryId", fileEntry.getFileEntryId()
+				).put(
+					"previewURL",
+					DLURLHelperUtil.getPreviewURL(
+						fileEntry, fileEntry.getFileVersion(), themeDisplay,
+						StringPool.BLANK)
+				);
 			}
-		}
+		).put(
+			"editURL",
+			() -> {
+				if (!hasUpdatePermission) {
+					return null;
+				}
 
-		if (ModelResourcePermissionUtil.contains(
-				themeDisplay.getPermissionChecker(),
-				layoutClassedModelUsage.getClassName(),
-				layoutClassedModelUsage.getClassPK(), ActionKeys.PERMISSIONS)) {
-
-			String permissionsURL = PermissionsURLTag.doTag(
-				StringPool.BLANK, layoutClassedModelUsage.getClassName(),
-				HtmlUtil.escape(
-					layoutDisplayPageObjectProvider.getTitle(
-						themeDisplay.getLocale())),
-				null, String.valueOf(layoutClassedModelUsage.getClassPK()),
-				LiferayWindowState.POP_UP.toString(), null, httpServletRequest);
-
-			if (Validator.isNotNull(permissionsURL)) {
-				jsonObject.put("permissionsURL", permissionsURL);
+				return InfoEditURLProviderUtil.getURLEdit(
+					className,
+					layoutDisplayPageObjectProvider.getDisplayObject(),
+					httpServletRequest);
 			}
-		}
+		).put(
+			"permissionsURL",
+			() -> {
+				if (!ModelResourcePermissionUtil.contains(
+						themeDisplay.getPermissionChecker(), className,
+						layoutClassedModelUsage.getClassPK(),
+						ActionKeys.PERMISSIONS)) {
 
-		return jsonObject.put(
+					return null;
+				}
+
+				return PermissionsURLTag.doTag(
+					StringPool.BLANK, className,
+					HtmlUtil.escape(
+						layoutDisplayPageObjectProvider.getTitle(
+							themeDisplay.getLocale())),
+					null, String.valueOf(layoutClassedModelUsage.getClassPK()),
+					LiferayWindowState.POP_UP.toString(), null,
+					httpServletRequest);
+			}
+		).put(
 			"viewUsagesURL",
-			PortletURLBuilder.create(
-				PortletURLFactoryUtil.create(
-					httpServletRequest,
-					ContentPageEditorPortletKeys.CONTENT_PAGE_EDITOR_PORTLET,
-					PortletRequest.RENDER_PHASE)
-			).setMVCPath(
-				"/view_layout_classed_model_usages.jsp"
-			).setParameter(
-				"className", layoutClassedModelUsage.getClassName()
-			).setParameter(
-				"classPK", layoutClassedModelUsage.getClassPK()
-			).setWindowState(
-				LiferayWindowState.POP_UP
-			).buildString());
+			() -> {
+				if (!ModelResourcePermissionUtil.contains(
+						themeDisplay.getPermissionChecker(), className,
+						layoutClassedModelUsage.getClassPK(),
+						ActionKeys.VIEW)) {
+
+					return null;
+				}
+
+				return PortletURLBuilder.create(
+					PortletURLFactoryUtil.create(
+						httpServletRequest,
+						ContentPageEditorPortletKeys.
+							CONTENT_PAGE_EDITOR_PORTLET,
+						PortletRequest.RENDER_PHASE)
+				).setMVCPath(
+					"/view_layout_classed_model_usages.jsp"
+				).setParameter(
+					"className", className
+				).setParameter(
+					"classPK", layoutClassedModelUsage.getClassPK()
+				).setWindowState(
+					LiferayWindowState.POP_UP
+				).buildString();
+			}
+		);
 	}
 
 	private static AssetRendererFactory<?> _getAssetRendererFactory(
 		String className) {
 
-		// LPS-111037
-
-		if (Objects.equals(className, FileEntry.class.getName())) {
-			className = DLFileEntry.class.getName();
-		}
-
 		return AssetRendererFactoryRegistryUtil.
-			getAssetRendererFactoryByClassName(className);
+			getAssetRendererFactoryByClassName(
+				InfoSearchClassMapperRegistryUtil.getSearchClassName(
+					className));
 	}
 
 	private static Set<LayoutDisplayPageObjectProvider<?>>
@@ -410,14 +421,24 @@ public class ContentUtil {
 	}
 
 	private static JSONArray _getLayoutClassedModelPageContentsJSONArray(
-			HttpServletRequest httpServletRequest, long plid)
+			HttpServletRequest httpServletRequest, long plid,
+			long segmentsExperienceId)
 		throws PortalException {
 
 		JSONArray mappedContentsJSONArray = JSONFactoryUtil.createJSONArray();
 
 		long fragmentEntryLinkClassNameId = PortalUtil.getClassNameId(
 			FragmentEntryLink.class);
-		LayoutStructure layoutStructure = null;
+		long portletClassNameId = PortalUtil.getClassNameId(Portlet.class);
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
+		LayoutStructure layoutStructure =
+			LayoutStructureUtil.getLayoutStructure(
+				themeDisplay.getScopeGroupId(), plid, segmentsExperienceId);
+
 		Set<String> uniqueLayoutClassedModelUsageKeys = new HashSet<>();
 
 		List<LayoutClassedModelUsage> layoutClassedModelUsages =
@@ -451,9 +472,7 @@ public class ContentUtil {
 
 				if (!Objects.equals(
 						fragmentEntryLink.getSegmentsExperienceId(),
-						ParamUtil.getLong(
-							httpServletRequest, "segmentExperienceId",
-							SegmentsExperienceConstants.ID_DEFAULT))) {
+						segmentsExperienceId)) {
 
 					continue;
 				}
@@ -469,14 +488,19 @@ public class ContentUtil {
 					layoutStructure.getLayoutStructureItemByFragmentEntryLinkId(
 						fragmentEntryLink.getFragmentEntryLinkId());
 
-				if (ListUtil.exists(
-						layoutStructure.getDeletedLayoutStructureItems(),
-						deletedLayoutStructureItem -> Objects.equals(
-							deletedLayoutStructureItem.getItemId(),
-							layoutStructureItem.getItemId()))) {
+				if ((layoutStructureItem == null) ||
+					fragmentEntryLink.isDeleted()) {
 
 					continue;
 				}
+			}
+
+			if ((layoutClassedModelUsage.getContainerType() ==
+					portletClassNameId) &&
+				layoutStructure.isPortletMarkedForDeletion(
+					layoutClassedModelUsage.getContainerKey())) {
+
+				continue;
 			}
 
 			try {
@@ -528,7 +552,7 @@ public class ContentUtil {
 		String className = PortalUtil.getClassName(classNameId);
 
 		LayoutDisplayPageProvider<?> layoutDisplayPageProvider =
-			LayoutDisplayPageProviderTrackerUtil.getLayoutDisplayPageProvider(
+			LayoutDisplayPageProviderRegistryUtil.getLayoutDisplayPageProvider(
 				className);
 
 		if (layoutDisplayPageProvider == null) {
@@ -553,11 +577,8 @@ public class ContentUtil {
 
 			if (!(layoutStructureItem instanceof
 					ContainerStyledLayoutStructureItem) ||
-				ListUtil.exists(
-					layoutStructure.getDeletedLayoutStructureItems(),
-					deletedLayoutStructureItem ->
-						deletedLayoutStructureItem.containsItemId(
-							layoutStructureItem.getItemId()))) {
+				layoutStructure.isItemMarkedForDeletion(
+					layoutStructureItem.getItemId())) {
 
 				continue;
 			}
@@ -610,12 +631,10 @@ public class ContentUtil {
 				long groupId, long plid, Set<Long> mappedClassPKs)
 		throws PortalException {
 
-		LayoutStructure layoutStructure =
-			LayoutStructureUtil.getLayoutStructure(
-				groupId, plid, SegmentsExperienceConstants.ID_DEFAULT);
-
 		return _getLayoutMappedLayoutDisplayPageObjectProviders(
-			layoutStructure, mappedClassPKs);
+			LayoutStructureUtil.getLayoutStructure(
+				groupId, plid, SegmentsExperienceConstants.KEY_DEFAULT),
+			mappedClassPKs);
 	}
 
 	private static Set<LayoutDisplayPageObjectProvider<?>>
@@ -678,7 +697,7 @@ public class ContentUtil {
 		);
 
 		LayoutDisplayPageProvider<?> layoutDisplayPageProvider =
-			LayoutDisplayPageProviderTrackerUtil.getLayoutDisplayPageProvider(
+			LayoutDisplayPageProviderRegistryUtil.getLayoutDisplayPageProvider(
 				layoutClassedModelUsage.getClassName());
 
 		LayoutDisplayPageObjectProvider<?> layoutDisplayPageObjectProvider =
@@ -790,6 +809,10 @@ public class ContentUtil {
 			return classType.getName();
 		}
 		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return StringPool.BLANK;
 		}
 	}

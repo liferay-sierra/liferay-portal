@@ -42,8 +42,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.commerce.google.merchant.internal.configuration.ProductDefinitionConfiguration",
-	enabled = false, immediate = true,
-	service = ProductDefinitionMessageListener.class
+	immediate = true, service = ProductDefinitionMessageListener.class
 )
 public class ProductDefinitionMessageListener extends BaseMessageListener {
 
@@ -114,13 +113,11 @@ public class ProductDefinitionMessageListener extends BaseMessageListener {
 
 	}
 
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
-	protected void setModuleServiceLifecycle(
-		ModuleServiceLifecycle moduleServiceLifecycle) {
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		ProductDefinitionMessageListener.class);
+
+	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
+	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
 	@Reference
 	private SchedulerEngineHelper _schedulerEngineHelper;

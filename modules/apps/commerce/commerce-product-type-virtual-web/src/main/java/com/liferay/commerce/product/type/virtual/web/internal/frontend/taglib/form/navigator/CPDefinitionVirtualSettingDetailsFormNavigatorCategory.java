@@ -16,17 +16,18 @@ package com.liferay.commerce.product.type.virtual.web.internal.frontend.taglib.f
 
 import com.liferay.commerce.product.type.virtual.web.internal.servlet.taglib.ui.constants.CPDefinitionVirtualSettingFormNavigatorConstants;
 import com.liferay.frontend.taglib.form.navigator.FormNavigatorCategory;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 
 import java.util.Locale;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, property = "form.navigator.category.order:Integer=100",
+	property = "form.navigator.category.order:Integer=100",
 	service = FormNavigatorCategory.class
 )
 public class CPDefinitionVirtualSettingDetailsFormNavigatorCategory
@@ -46,7 +47,10 @@ public class CPDefinitionVirtualSettingDetailsFormNavigatorCategory
 
 	@Override
 	public String getLabel(Locale locale) {
-		return LanguageUtil.get(locale, "details");
+		return _language.get(locale, "details");
 	}
+
+	@Reference
+	private Language _language;
 
 }

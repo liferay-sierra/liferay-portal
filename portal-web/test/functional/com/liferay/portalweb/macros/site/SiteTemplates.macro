@@ -85,7 +85,7 @@ definition {
 				value1 = "${rowEntry}");
 		}
 		else if ("${rowEntry}" == "Content Page") {
-			LexiconCard.clickCard(card = "Blank");
+			ContentPages._selectCard(masterLayoutName = "${masterLayoutName}");
 		}
 		else {
 			LexiconCard.clickCard(card = "${rowEntry}");
@@ -117,9 +117,16 @@ definition {
 			category = "Site Builder",
 			portlet = "Pages");
 
-		Click(
-			key_pageName = "${pageName}",
-			locator1 = "Icon#COG_PAGE");
+		if (isSet(pageName)) {
+			Click(
+				key_pageName = "${pageName}",
+				locator1 = "Icon#COG_PAGE");
+		}
+		else {
+			Click(locator1 = "Icon#HEADER_VERTICAL_ELLIPSIS");
+
+			MenuItem.click(menuItem = "Configuration");
+		}
 
 		Navigator.gotoNavTab(navTab = "Advanced");
 
@@ -234,7 +241,7 @@ definition {
 
 		AssertTextEquals.assertPartialText(
 			locator1 = "Message#CUSTOMIZED_PAGE_INFO",
-			value1 = "Each page modification can trigger a propagation from the site template to the connected sites. You can disable the propagation temporally and enable it later when the template is ready.");
+			value1 = "Each page modification can trigger a propagation from the site template to the connected sites. You can disable the propagation temporally and enable it later when the template is ready. Automatic propagation can be resource intensive depending on the scope of changes made to the template.");
 
 		AssertTextEquals(
 			locator1 = "Button#DISABLE_PROPAGATION",
@@ -246,7 +253,7 @@ definition {
 
 		AssertTextEquals.assertPartialText(
 			locator1 = "Message#ALERT_DISMISSIBLE",
-			value1 = "Propagation is disabled. Connected sites might not have been updated yet. Propagation is only triggered when a site created from the template is visited.");
+			value1 = "Propagation is disabled. Connected sites might not have been updated yet. Initial propagations to sites that are being created from this template still run.");
 	}
 
 	macro editCP {
@@ -284,13 +291,28 @@ definition {
 
 		SelectFrame(locator1 = "DocumentsAndMedia#CONFIGURATION_IFRAME");
 
-		AssertElementPresent.pauseAssertVisible(locator1 = "Checkbox#SHOW_ACTIONS_CHECKBOX");
+		AssertElementPresent(locator1 = "Checkbox#SHOW_ACTIONS_CHECKBOX");
 
 		Check(locator1 = "Checkbox#SHOW_ACTIONS_CHECKBOX");
 
 		Button.clickSave();
 
 		Alert.viewSuccessMessage();
+	}
+
+	macro enableAutomaticPropagation {
+		SystemSettings.openSystemSettingsAdmin();
+
+		SystemSettings.gotoConfiguration(
+			configurationCategory = "Infrastructure",
+			configurationName = "Site Templates",
+			configurationScope = "Virtual Instance Scope");
+
+		Check.checkToggleSwitch(
+			key_toggleSwitchLabel = "Trigger Propagation",
+			locator1 = "ToggleSwitch#ANY_TOGGLE_SWITCH");
+
+		Button.clickSave();
 	}
 
 	macro enablePropagation {
@@ -314,7 +336,7 @@ definition {
 
 		AssertTextEquals.assertPartialText(
 			locator1 = "Message#CUSTOMIZED_PAGE_INFO",
-			value1 = "Each page modification can trigger a propagation from the site template to the connected sites. You can disable the propagation temporally and enable it later when the template is ready.");
+			value1 = "Each page modification can trigger a propagation from the site template to the connected sites. You can disable the propagation temporally and enable it later when the template is ready. Automatic propagation can be resource intensive depending on the scope of changes made to the template.");
 
 		AssertTextEquals(
 			locator1 = "Button#ENABLE_PROPAGATION",
@@ -343,28 +365,12 @@ definition {
 		echo("## * SQL Query Result is: ${sqlResults}");
 
 		var modifiedDate = StringUtil.regexReplaceAll("${sqlResults}", "[\r\n]", "");
+
 		var modifiedDate = StringUtil.extractDigits("${modifiedDate}");
 
 		echo("## * Modification Date is: ${modifiedDate}");
 
 		return "${modifiedDate}";
-	}
-
-	macro getSiteTemplateID {
-		LexiconEntry.gotoEntryMenuItem(
-			menuItem = "Manage",
-			rowEntry = "${siteTemplateName}");
-
-		Pause(locator1 = "1000");
-
-		var currentURL = Navigator.getCurrentURL();
-
-		var siteTemplateURL = StringUtil.extractFirst("${currentURL}", "/~/");
-		var siteTemplateId = StringUtil.extractLast("${siteTemplateURL}", "/");
-
-		echo("siteTemplateID: ${siteTemplateId}");
-
-		return "${siteTemplateId}";
 	}
 
 	macro gotoSettingsCP {
@@ -404,7 +410,7 @@ definition {
 	}
 
 	macro openSiteTemplateInEditMode {
-		var templateId = SiteTemplates.getSiteTemplateID(siteTemplateName = "${siteTemplateName}");
+		var templateId = JSONSiteTemplate.getSiteTemplateIdByName(siteTemplateName = "${siteTemplateName}");
 
 		if (isSet(widgetPage)) {
 			Navigator.openWithAppendToBaseURL(urlAppend = "group/${templateId}");
@@ -427,17 +433,17 @@ definition {
 			locator1 = "Button#RESET_CHANGES",
 			value1 = "Reset Changes");
 
-		if (isSet(widgetName)) {
-			AssertElementNotPresent(
-				key_portletName = "${widgetName}",
-				locator1 = "Home#PORTLET_BORDERLESS");
-		}
-		else {
+		if (isSet(columnNumberTo)) {
 			AssertTextEquals(
 				key_pageColumnNumber = "${columnNumberTo}",
 				key_portletName = "${portletName}",
 				locator1 = "Portlet#PORTLET_TITLE_INSIDE_PAGE_COLUMN",
 				value1 = "${portletName}");
+		}
+		else if (!(isSet(columnNumberTo)) && isSet(portletName)) {
+			AssertElementNotPresent(
+				key_portletName = "${portletName}",
+				locator1 = "Home#PORTLET_BORDERLESS");
 		}
 
 		AssertClick(
@@ -551,9 +557,16 @@ definition {
 			category = "Site Builder",
 			portlet = "Pages");
 
-		Click(
-			key_pageName = "${pageName}",
-			locator1 = "Icon#COG_PAGE");
+		if (isSet(pageName)) {
+			Click(
+				key_pageName = "${pageName}",
+				locator1 = "Icon#COG_PAGE");
+		}
+		else {
+			Click(locator1 = "Icon#HEADER_VERTICAL_ELLIPSIS");
+
+			MenuItem.click(menuItem = "Configuration");
+		}
 
 		Navigator.gotoNavTab(navTab = "Advanced");
 

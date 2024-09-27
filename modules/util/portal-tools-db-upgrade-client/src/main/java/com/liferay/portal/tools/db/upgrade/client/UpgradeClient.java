@@ -269,6 +269,17 @@ public class UpgradeClient {
 	}
 
 	public void verifyProperties() {
+		File file = new File(
+			System.getProperty("user.home") + "/portal-ext.properties");
+
+		if (file.exists()) {
+			System.err.println(
+				"Remove " + file + " prior to running an upgrade to prevent " +
+					"possible conflicts.");
+
+			System.exit(0);
+		}
+
 		try {
 			_verifyAppServerProperties();
 			_verifyPortalUpgradeDatabaseProperties();
@@ -353,14 +364,14 @@ public class UpgradeClient {
 
 		_appendClassPath(sb, _jarDir);
 
-		_appendClassPath(sb, _appServer.getGlobalLibDir());
-
 		sb.append(_appServer.getPortalClassesDir());
 		sb.append(File.pathSeparator);
 
 		_appendClassPath(sb, _appServer.getPortalLibDir());
 
 		_appendClassPath(sb, _appServer.getPortalShieldedContainerLibDir());
+
+		_appendClassPath(sb, _appServer.getGlobalLibDir());
 
 		_appendClassPath(sb, _appServer.getExtraLibDirs());
 

@@ -152,12 +152,11 @@ public class CommerceOrderStatusNotificationTest {
 			CommerceOrderConstants.ORDER_STATUS_PENDING,
 			_commerceOrder.getOrderStatus());
 
-		int commerceNotificationQueueEntriesCount =
+		Assert.assertEquals(
+			1,
 			_commerceNotificationQueueEntryLocalService.
 				getCommerceNotificationQueueEntriesCount(
-					_commerceChannel.getGroupId());
-
-		Assert.assertEquals(1, commerceNotificationQueueEntriesCount);
+					_commerceChannel.getGroupId()));
 
 		_checkCommerceNotificationTemplate(
 			CommerceOrderConstants.ORDER_NOTIFICATION_PLACED);
@@ -175,12 +174,11 @@ public class CommerceOrderStatusNotificationTest {
 		_commerceOrder = _commerceOrderEngine.checkoutCommerceOrder(
 			_commerceOrder, _user.getUserId());
 
-		int commerceNotificationQueueEntriesCount =
+		Assert.assertEquals(
+			1,
 			_commerceNotificationQueueEntryLocalService.
 				getCommerceNotificationQueueEntriesCount(
-					_commerceChannel.getGroupId());
-
-		Assert.assertEquals(1, commerceNotificationQueueEntriesCount);
+					_commerceChannel.getGroupId()));
 
 		_checkCommerceNotificationTemplate(
 			CommerceOrderConstants.ORDER_NOTIFICATION_PLACED);
@@ -189,12 +187,11 @@ public class CommerceOrderStatusNotificationTest {
 			_commerceOrder, CommerceOrderConstants.ORDER_STATUS_PROCESSING,
 			_user.getUserId());
 
-		commerceNotificationQueueEntriesCount =
+		Assert.assertEquals(
+			2,
 			_commerceNotificationQueueEntryLocalService.
 				getCommerceNotificationQueueEntriesCount(
-					_commerceChannel.getGroupId());
-
-		Assert.assertEquals(2, commerceNotificationQueueEntriesCount);
+					_commerceChannel.getGroupId()));
 
 		_checkCommerceNotificationTemplate(
 			CommerceOrderConstants.ORDER_NOTIFICATION_PROCESSING);
@@ -216,22 +213,21 @@ public class CommerceOrderStatusNotificationTest {
 				commerceInventoryWarehouses.get(0);
 
 			_commerceShipmentItemLocalService.addCommerceShipmentItem(
-				commerceShipment.getCommerceShipmentId(),
+				null, commerceShipment.getCommerceShipmentId(),
 				commerceOrderItem.getCommerceOrderItemId(),
 				commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
-				commerceOrderItem.getQuantity(), _serviceContext);
+				commerceOrderItem.getQuantity(), true, _serviceContext);
 		}
 
 		_commerceShipmentLocalService.updateStatus(
 			commerceShipment.getCommerceShipmentId(),
 			CommerceShipmentConstants.SHIPMENT_STATUS_SHIPPED);
 
-		commerceNotificationQueueEntriesCount =
+		Assert.assertEquals(
+			3,
 			_commerceNotificationQueueEntryLocalService.
 				getCommerceNotificationQueueEntriesCount(
-					_commerceChannel.getGroupId());
-
-		Assert.assertEquals(3, commerceNotificationQueueEntriesCount);
+					_commerceChannel.getGroupId()));
 
 		_checkCommerceNotificationTemplate(
 			CommerceOrderConstants.ORDER_NOTIFICATION_SHIPPED);
@@ -243,12 +239,11 @@ public class CommerceOrderStatusNotificationTest {
 			_commerceOrder, CommerceOrderConstants.ORDER_STATUS_COMPLETED,
 			_user.getUserId());
 
-		commerceNotificationQueueEntriesCount =
+		Assert.assertEquals(
+			4,
 			_commerceNotificationQueueEntryLocalService.
 				getCommerceNotificationQueueEntriesCount(
-					_commerceChannel.getGroupId());
-
-		Assert.assertEquals(4, commerceNotificationQueueEntriesCount);
+					_commerceChannel.getGroupId()));
 
 		_checkCommerceNotificationTemplate(
 			CommerceOrderConstants.ORDER_NOTIFICATION_COMPLETED);

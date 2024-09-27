@@ -291,8 +291,14 @@ public interface JournalArticleService extends BaseService {
 			long groupId, long classNameId, long classPK,
 			Map<Locale, String> titleMap, Map<Locale, String> descriptionMap,
 			String content, String ddmStructureKey, String ddmTemplateKey,
-			String layoutUuid, boolean indexable, boolean smallImage,
-			String smallImageURL, File smallImageFile,
+			String layoutUuid, int displayDateMonth, int displayDateDay,
+			int displayDateYear, int displayDateHour, int displayDateMinute,
+			int expirationDateMonth, int expirationDateDay,
+			int expirationDateYear, int expirationDateHour,
+			int expirationDateMinute, boolean neverExpire, int reviewDateMonth,
+			int reviewDateDay, int reviewDateYear, int reviewDateHour,
+			int reviewDateMinute, boolean neverReview, boolean indexable,
+			boolean smallImage, String smallImageURL, File smallImageFile,
 			ServiceContext serviceContext)
 		throws PortalException;
 
@@ -541,6 +547,11 @@ public interface JournalArticleService extends BaseService {
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<JournalArticle> getArticles(
 		long groupId, long folderId, Locale locale, int start, int end,
+		OrderByComparator<JournalArticle> orderByComparator);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<JournalArticle> getArticlesByArticleId(
+		long groupId, String articleId, int status, int start, int end,
 		OrderByComparator<JournalArticle> orderByComparator);
 
 	/**
@@ -839,6 +850,10 @@ public interface JournalArticleService extends BaseService {
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getArticlesCountByArticleId(long groupId, String articleId);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int getArticlesCountByArticleId(
+		long groupId, String articleId, int status);
 
 	/**
 	 * Returns the number of web content articles matching the group, class name
@@ -2069,8 +2084,15 @@ public interface JournalArticleService extends BaseService {
 			long groupId, String articleId, Map<Locale, String> titleMap,
 			Map<Locale, String> descriptionMap, String content,
 			String ddmStructureKey, String ddmTemplateKey, String layoutUuid,
-			boolean indexable, boolean smallImage, String smallImageURL,
-			File smallImageFile, ServiceContext serviceContext)
+			int displayDateMonth, int displayDateDay, int displayDateYear,
+			int displayDateHour, int displayDateMinute, int expirationDateMonth,
+			int expirationDateDay, int expirationDateYear,
+			int expirationDateHour, int expirationDateMinute,
+			boolean neverExpire, int reviewDateMonth, int reviewDateDay,
+			int reviewDateYear, int reviewDateHour, int reviewDateMinute,
+			boolean neverReview, boolean indexable, boolean smallImage,
+			String smallImageURL, File smallImageFile,
+			ServiceContext serviceContext)
 		throws PortalException;
 
 	/**

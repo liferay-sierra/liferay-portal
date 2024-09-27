@@ -19,13 +19,17 @@ import com.liferay.portal.kernel.cache.thread.local.Lifecycle;
 import com.liferay.portal.kernel.cache.thread.local.ThreadLocalCacheManager;
 import com.liferay.portal.kernel.cluster.ClusterInvokeThreadLocal;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
 import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.GroupThreadLocal;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
@@ -66,6 +70,27 @@ public abstract class BaseBackgroundTaskTestCase {
 		backgroundTaskThreadLocalManagerImpl.companyLocalService =
 			companyLocalService;
 
+		GroupLocalService groupLocalService = Mockito.mock(
+			GroupLocalService.class);
+
+		Group group = Mockito.mock(Group.class);
+
+		Mockito.when(
+			group.getCompanyId()
+		).thenReturn(
+			_COMPANY_ID
+		);
+
+		Mockito.when(
+			groupLocalService.fetchGroup(_GROUP_ID)
+		).thenReturn(
+			group
+		);
+
+		ReflectionTestUtil.setFieldValue(
+			backgroundTaskThreadLocalManagerImpl, "_groupLocalService",
+			groupLocalService);
+
 		PermissionCheckerFactory permissionCheckerFactory = Mockito.mock(
 			PermissionCheckerFactory.class);
 
@@ -78,25 +103,30 @@ public abstract class BaseBackgroundTaskTestCase {
 			permissionChecker
 		);
 
-		backgroundTaskThreadLocalManagerImpl.setPermissionCheckerFactory(
+		ReflectionTestUtil.setFieldValue(
+			backgroundTaskThreadLocalManagerImpl, "_permissionCheckerFactory",
 			permissionCheckerFactory);
 
 		UserLocalService userLocalService = Mockito.mock(
 			UserLocalService.class);
 
+		User user = Mockito.mock(User.class);
+
+		Mockito.when(
+			user.getCompanyId()
+		).thenReturn(
+			_COMPANY_ID
+		);
+
 		Mockito.when(
 			userLocalService.fetchUser(Mockito.anyLong())
 		).thenReturn(
-			Mockito.mock(User.class)
+			user
 		);
 
-		backgroundTaskThreadLocalManagerImpl.setUserLocalService(
+		ReflectionTestUtil.setFieldValue(
+			backgroundTaskThreadLocalManagerImpl, "_userLocalService",
 			userLocalService);
-
-		_companyId = 1234L;
-		_groupId = 1234L;
-
-		_principalName = String.valueOf(1234L);
 	}
 
 	@After
@@ -106,14 +136,14 @@ public abstract class BaseBackgroundTaskTestCase {
 
 	protected void assertThreadLocalValues() {
 		Assert.assertEquals(
-			Long.valueOf(_companyId), CompanyThreadLocal.getCompanyId());
+			Long.valueOf(_COMPANY_ID), CompanyThreadLocal.getCompanyId());
 		Assert.assertEquals(
 			_CLUSTER_INVOKE_ENABLED, ClusterInvokeThreadLocal.isEnabled());
 		Assert.assertEquals(
 			_defaultLocale, LocaleThreadLocal.getDefaultLocale());
 		Assert.assertEquals(
-			Long.valueOf(_groupId), GroupThreadLocal.getGroupId());
-		Assert.assertEquals(_principalName, PrincipalThreadLocal.getName());
+			Long.valueOf(_GROUP_ID), GroupThreadLocal.getGroupId());
+		Assert.assertEquals(_PRINCIPAL_NAME, PrincipalThreadLocal.getName());
 		Assert.assertEquals(
 			_siteDefaultLocale, LocaleThreadLocal.getSiteDefaultLocale());
 		Assert.assertEquals(
@@ -127,14 +157,14 @@ public abstract class BaseBackgroundTaskTestCase {
 		Assert.assertTrue(MapUtil.isNotEmpty(threadLocalValues));
 		Assert.assertEquals(
 			threadLocalValues.toString(), 7, threadLocalValues.size());
-		Assert.assertEquals(_companyId, threadLocalValues.get("companyId"));
+		Assert.assertEquals(_COMPANY_ID, threadLocalValues.get("companyId"));
 		Assert.assertEquals(
 			_CLUSTER_INVOKE_ENABLED, threadLocalValues.get("clusterInvoke"));
 		Assert.assertEquals(
 			_defaultLocale, threadLocalValues.get("defaultLocale"));
-		Assert.assertEquals(_groupId, threadLocalValues.get("groupId"));
+		Assert.assertEquals(_GROUP_ID, threadLocalValues.get("groupId"));
 		Assert.assertEquals(
-			_principalName, threadLocalValues.get("principalName"));
+			_PRINCIPAL_NAME, threadLocalValues.get("principalName"));
 		Assert.assertNull(threadLocalValues.get("principalPassword"));
 		Assert.assertEquals(
 			_siteDefaultLocale, threadLocalValues.get("siteDefaultLocale"));
@@ -143,26 +173,26 @@ public abstract class BaseBackgroundTaskTestCase {
 	}
 
 	protected void initalizeThreadLocals() {
-		CompanyThreadLocal.setCompanyId(_companyId);
+		CompanyThreadLocal.setCompanyId(_COMPANY_ID);
 		ClusterInvokeThreadLocal.setEnabled(true);
-		GroupThreadLocal.setGroupId(_groupId);
+		GroupThreadLocal.setGroupId(_GROUP_ID);
 		LocaleThreadLocal.setDefaultLocale(_defaultLocale);
 		LocaleThreadLocal.setSiteDefaultLocale(_siteDefaultLocale);
 		LocaleThreadLocal.setThemeDisplayLocale(_themeDisplayLocale);
-		PrincipalThreadLocal.setName(_principalName);
+		PrincipalThreadLocal.setName(_PRINCIPAL_NAME);
 	}
 
 	protected HashMap<String, Serializable> initializeThreadLocalValues() {
 		return HashMapBuilder.<String, Serializable>put(
 			"clusterInvoke", _CLUSTER_INVOKE_ENABLED
 		).put(
-			"companyId", _companyId
+			"companyId", _COMPANY_ID
 		).put(
 			"defaultLocale", _defaultLocale
 		).put(
-			"groupId", _groupId
+			"groupId", _GROUP_ID
 		).put(
-			"principalName", _principalName
+			"principalName", _PRINCIPAL_NAME
 		).put(
 			"siteDefaultLocale", _siteDefaultLocale
 		).put(
@@ -181,10 +211,14 @@ public abstract class BaseBackgroundTaskTestCase {
 
 	private static final boolean _CLUSTER_INVOKE_ENABLED = true;
 
-	private long _companyId;
+	private static final long _COMPANY_ID = RandomTestUtil.randomLong();
+
+	private static final long _GROUP_ID = RandomTestUtil.randomLong();
+
+	private static final String _PRINCIPAL_NAME = String.valueOf(
+		RandomTestUtil.randomLong());
+
 	private final Locale _defaultLocale = LocaleUtil.US;
-	private long _groupId;
-	private String _principalName;
 	private final Locale _siteDefaultLocale = LocaleUtil.CANADA;
 	private final Locale _themeDisplayLocale = LocaleUtil.FRANCE;
 

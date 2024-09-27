@@ -104,20 +104,13 @@ public class ThemeContributorTopHeadDynamicInclude implements DynamicInclude {
 			"/html/common/themes/top_head.jsp#post");
 	}
 
-	@Reference(unbind = "-")
-	public void setPortal(Portal portal) {
-		String pathContext = portal.getPathContext();
-
-		_comboContextPath = pathContext.concat("/combo");
-
-		_portal = portal;
-	}
-
 	@Activate
 	protected void activate(BundleContext bundleContext) {
 		_bundleContext = bundleContext;
 
 		_rebuild();
+
+		_comboContextPath = _portal.getPathContext() + "/combo";
 	}
 
 	@Reference(
@@ -248,14 +241,13 @@ public class ThemeContributorTopHeadDynamicInclude implements DynamicInclude {
 		String portalURL, PrintWriter printWriter, String[] resourceURLs) {
 
 		for (String resourceURL : resourceURLs) {
-			String staticResourceURL = _portal.getStaticResourceURL(
-				httpServletRequest,
-				StringBundler.concat(
-					portalURL, _portal.getPathProxy(), resourceURL),
-				themeLastModified);
-
 			printWriter.write("<link data-senna-track=\"permanent\" href=\"");
-			printWriter.write(staticResourceURL);
+			printWriter.write(
+				_portal.getStaticResourceURL(
+					httpServletRequest,
+					StringBundler.concat(
+						portalURL, _portal.getPathProxy(), resourceURL),
+					themeLastModified));
 			printWriter.write("\" rel=\"stylesheet\" type = \"text/css\" />\n");
 		}
 	}
@@ -265,14 +257,13 @@ public class ThemeContributorTopHeadDynamicInclude implements DynamicInclude {
 		String portalURL, PrintWriter printWriter, String[] resourceURLs) {
 
 		for (String resourceURL : resourceURLs) {
-			String staticResourceURL = _portal.getStaticResourceURL(
-				httpServletRequest,
-				StringBundler.concat(
-					portalURL, _portal.getPathProxy(), resourceURL),
-				themeLastModified);
-
 			printWriter.write("<script data-senna-track=\"permanent\" src=\"");
-			printWriter.write(staticResourceURL);
+			printWriter.write(
+				_portal.getStaticResourceURL(
+					httpServletRequest,
+					StringBundler.concat(
+						portalURL, _portal.getPathProxy(), resourceURL),
+					themeLastModified));
 			printWriter.write("\" type = \"text/javascript\"></script>\n");
 		}
 	}
@@ -285,6 +276,8 @@ public class ThemeContributorTopHeadDynamicInclude implements DynamicInclude {
 	private volatile String[] _jsResourceURLs = StringPool.EMPTY_ARRAY;
 	private volatile String _mergedCSSResourceURLs;
 	private volatile String _mergedJSResourceURLs;
+
+	@Reference
 	private Portal _portal;
 
 }

@@ -17,11 +17,13 @@ package com.liferay.layout.admin.web.internal.servlet.taglib.util;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
 import com.liferay.layout.admin.web.internal.display.context.LayoutsAdminDisplayContext;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.bean.BeanPropertiesUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.permission.LayoutPermissionUtil;
@@ -32,6 +34,7 @@ import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.segments.service.SegmentsExperienceLocalServiceUtil;
 import com.liferay.translation.constants.TranslationActionKeys;
 import com.liferay.translation.security.permission.TranslationPermission;
 import com.liferay.translation.url.provider.TranslationURLProvider;
@@ -62,9 +65,10 @@ public class LayoutActionDropdownItemsProvider {
 	}
 
 	public List<DropdownItem> getActionDropdownItems(
-		Layout layout, boolean includeAddChildPageAction) {
+			Layout layout, boolean includeAddChildPageAction)
+		throws Exception {
 
-		Layout draftLayout = layout.fetchDraftLayout();
+		Layout draftLayout = _layoutsAdminDisplayContext.getDraftLayout(layout);
 
 		return DropdownItemListBuilder.addGroup(
 			dropdownGroupItem -> {
@@ -80,6 +84,7 @@ public class LayoutActionDropdownItemsProvider {
 							dropdownItem.setHref(
 								_layoutsAdminDisplayContext.getEditLayoutURL(
 									layout));
+							dropdownItem.setIcon("pencil");
 
 							String label = LanguageUtil.get(
 								_httpServletRequest, "edit");
@@ -118,16 +123,31 @@ public class LayoutActionDropdownItemsProvider {
 
 										return portletDisplay.getId();
 									}
+								).setParameter(
+									"segmentsExperienceId",
+									SegmentsExperienceLocalServiceUtil.
+										fetchDefaultSegmentsExperienceId(
+											layout.getPlid())
 								).buildString());
+							dropdownItem.setIcon("automatic-translate");
 							dropdownItem.setLabel(
 								LanguageUtil.get(
 									_httpServletRequest, "translate"));
 						}
 					).add(
 						dropdownItem -> {
+							if (layout.isTypeContent() &&
+								!GetterUtil.getBoolean(
+									draftLayout.getTypeSettingsProperty(
+										"published"))) {
+
+								dropdownItem.setDisabled(true);
+							}
+
 							dropdownItem.setHref(
 								_layoutsAdminDisplayContext.getViewLayoutURL(
 									layout));
+							dropdownItem.setIcon("view");
 
 							String label = LanguageUtil.get(
 								_httpServletRequest, "view");
@@ -138,14 +158,9 @@ public class LayoutActionDropdownItemsProvider {
 							}
 
 							dropdownItem.setLabel(label);
-
-							if (layout.isTypeContent() &&
-								!GetterUtil.getBoolean(
-									draftLayout.getTypeSettingsProperty(
-										"published"))) {
-
-								dropdownItem.setDisabled(true);
-							}
+							dropdownItem.setTarget(
+								HtmlUtil.escape(
+									layout.getTypeSettingsProperty("target")));
 						}
 					).add(
 						() ->
@@ -178,9 +193,7 @@ public class LayoutActionDropdownItemsProvider {
 							dropdownItem.setHref(
 								_layoutsAdminDisplayContext.
 									getSelectLayoutPageTemplateEntryURL(
-										_layoutsAdminDisplayContext.
-											getFirstLayoutPageTemplateCollectionId(),
-										layout.getPlid(),
+										0, layout.getPlid(),
 										layout.isPrivateLayout()));
 							dropdownItem.setLabel(
 								LanguageUtil.get(
@@ -195,6 +208,7 @@ public class LayoutActionDropdownItemsProvider {
 							dropdownItem.setHref(
 								_layoutsAdminDisplayContext.
 									getLayoutConversionPreviewURL(layout));
+							dropdownItem.setIcon("page");
 							dropdownItem.setLabel(
 								LanguageUtil.get(
 									_httpServletRequest,
@@ -274,6 +288,7 @@ public class LayoutActionDropdownItemsProvider {
 								dropdownItem.setDisabled(true);
 							}
 
+							dropdownItem.setIcon("copy");
 							dropdownItem.setLabel(
 								LanguageUtil.get(
 									_httpServletRequest, "copy-page"));
@@ -306,6 +321,7 @@ public class LayoutActionDropdownItemsProvider {
 										return portletDisplay.getId();
 									}
 								).buildString());
+							dropdownItem.setIcon("upload");
 							dropdownItem.setLabel(
 								LanguageUtil.get(
 									_httpServletRequest,
@@ -337,6 +353,7 @@ public class LayoutActionDropdownItemsProvider {
 										return portletDisplay.getId();
 									}
 								).buildString());
+							dropdownItem.setIcon("download");
 							dropdownItem.setLabel(
 								LanguageUtil.get(
 									_httpServletRequest, "import-translation"));
@@ -354,6 +371,7 @@ public class LayoutActionDropdownItemsProvider {
 							dropdownItem.setHref(
 								_layoutsAdminDisplayContext.
 									getConfigureLayoutURL(layout));
+							dropdownItem.setIcon("cog");
 							dropdownItem.setLabel(
 								LanguageUtil.get(
 									_httpServletRequest, "configure"));
@@ -368,6 +386,7 @@ public class LayoutActionDropdownItemsProvider {
 								"permissionLayoutURL",
 								_layoutsAdminDisplayContext.getPermissionsURL(
 									layout));
+							dropdownItem.setIcon("password-policies");
 							dropdownItem.setLabel(
 								LanguageUtil.get(
 									_httpServletRequest, "permissions"));
@@ -421,6 +440,7 @@ public class LayoutActionDropdownItemsProvider {
 										layout.getName(
 											_themeDisplay.getLocale()))));
 
+							dropdownItem.setIcon("trash");
 							dropdownItem.setLabel(
 								LanguageUtil.get(
 									_httpServletRequest, "delete"));
@@ -477,6 +497,10 @@ public class LayoutActionDropdownItemsProvider {
 			return false;
 		}
 		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return false;
 		}
 	}
@@ -490,6 +514,9 @@ public class LayoutActionDropdownItemsProvider {
 
 		return false;
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		LayoutActionDropdownItemsProvider.class);
 
 	private final HttpServletRequest _httpServletRequest;
 	private final LayoutsAdminDisplayContext _layoutsAdminDisplayContext;

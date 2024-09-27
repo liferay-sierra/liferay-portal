@@ -23,17 +23,20 @@ import com.liferay.mail.kernel.template.MailTemplate;
 import com.liferay.mail.kernel.template.MailTemplateContext;
 import com.liferay.mail.kernel.template.MailTemplateContextBuilder;
 import com.liferay.mail.kernel.template.MailTemplateFactoryUtil;
-import com.liferay.petra.encryptor.Encryptor;
-import com.liferay.petra.encryptor.EncryptorException;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.bean.BeanReference;
+import com.liferay.portal.kernel.cache.PortalCache;
+import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
+import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
 import com.liferay.portal.kernel.cache.PortalCacheMapSynchronizeUtil;
 import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.dao.orm.EntityCache;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.WildcardMode;
+import com.liferay.portal.kernel.encryptor.EncryptorException;
+import com.liferay.portal.kernel.encryptor.EncryptorUtil;
 import com.liferay.portal.kernel.exception.CompanyMaxUsersException;
 import com.liferay.portal.kernel.exception.ContactBirthdayException;
 import com.liferay.portal.kernel.exception.ContactNameException;
@@ -165,7 +168,6 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.PropsKeys;
-import com.liferay.portal.kernel.util.PwdGenerator;
 import com.liferay.portal.kernel.util.ServiceProxyFactory;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -272,10 +274,8 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			screenName = screenName + i;
 		}
 
-		long facebookId = 0;
-		String openId = StringPool.BLANK;
-		long prefixId = 0;
-		long suffixId = 0;
+		long prefixListTypeId = 0;
+		long suffixListTypeId = 0;
 		boolean male = true;
 		int birthdayMonth = Calendar.JANUARY;
 		int birthdayDay = 1;
@@ -308,8 +308,8 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		User defaultAdminUser = addUser(
 			creatorUserId, companyId, autoPassword, password1, password2,
-			autoScreenName, screenName, emailAddress, facebookId, openId,
-			locale, firstName, middleName, lastName, prefixId, suffixId, male,
+			autoScreenName, screenName, emailAddress, locale, firstName,
+			middleName, lastName, prefixListTypeId, suffixListTypeId, male,
 			birthdayMonth, birthdayDay, birthdayYear, jobTitle, groupIds,
 			organizationIds, roleIds, userGroupIds, sendEmail, serviceContext);
 
@@ -445,13 +445,13 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			}
 		}
 
-		if (roleIdSet.isEmpty()) {
-			return false;
-		}
-
 		long[] roleIds = ArrayUtil.toArray(roleIdSet.toArray(new Long[0]));
 
 		roleIds = UsersAdminUtil.addRequiredRoles(user, roleIds);
+
+		if (ArrayUtil.containsAll(userRoleIds, roleIds)) {
+			return false;
+		}
 
 		userPersistence.addRoles(userId, roleIds);
 
@@ -644,9 +644,9 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			boolean autoPassword, String password1, String password2,
 			boolean autoScreenName, String screenName, String emailAddress,
 			Locale locale, String firstName, String middleName, String lastName,
-			long prefixId, long suffixId, boolean male, int birthdayMonth,
-			int birthdayDay, int birthdayYear, String jobTitle,
-			boolean sendEmail, ServiceContext serviceContext)
+			long prefixListTypeId, long suffixListTypeId, boolean male,
+			int birthdayMonth, int birthdayDay, int birthdayYear,
+			String jobTitle, boolean sendEmail, ServiceContext serviceContext)
 		throws PortalException {
 
 		User user = userPersistence.fetchByC_ERC(
@@ -656,9 +656,10 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			user = addUserWithWorkflow(
 				creatorUserId, companyId, autoPassword, password1, password2,
 				autoScreenName, screenName, emailAddress, locale, firstName,
-				middleName, lastName, prefixId, suffixId, male, birthdayMonth,
-				birthdayDay, birthdayYear, jobTitle, new long[0], new long[0],
-				new long[0], new long[0], sendEmail, serviceContext);
+				middleName, lastName, prefixListTypeId, suffixListTypeId, male,
+				birthdayMonth, birthdayDay, birthdayYear, jobTitle, new long[0],
+				new long[0], new long[0], new long[0], sendEmail,
+				serviceContext);
 
 			user.setExternalReferenceCode(externalReferenceCode);
 
@@ -678,12 +679,13 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 				user.getReminderQueryQuestion(), user.getReminderQueryAnswer(),
 				screenName, emailAddress, hasPortrait, null,
 				user.getLanguageId(), user.getTimeZoneId(), user.getGreeting(),
-				user.getComments(), firstName, middleName, lastName, prefixId,
-				suffixId, male, birthdayMonth, birthdayDay, birthdayYear,
-				contact.getSmsSn(), contact.getFacebookSn(),
-				contact.getJabberSn(), contact.getSkypeSn(),
-				contact.getTwitterSn(), jobTitle, user.getGroupIds(),
-				user.getOrganizationIds(), user.getRoleIds(),
+				user.getComments(), firstName, middleName, lastName,
+				prefixListTypeId, suffixListTypeId, male, birthdayMonth,
+				birthdayDay, birthdayYear, contact.getSmsSn(),
+				contact.getFacebookSn(), contact.getJabberSn(),
+				contact.getSkypeSn(), contact.getTwitterSn(), jobTitle,
+				user.getGroupIds(), user.getOrganizationIds(),
+				user.getRoleIds(),
 				_userGroupRoleLocalService.getUserGroupRoles(user.getUserId()),
 				user.getUserGroupIds(), serviceContext);
 		}
@@ -866,8 +868,8 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @param  firstName the user's first name
 	 * @param  middleName the user's middle name
 	 * @param  lastName the user's last name
-	 * @param  prefixId the user's name prefix ID
-	 * @param  suffixId the user's name suffix ID
+	 * @param  prefixListTypeId the user's name prefix ID
+	 * @param  suffixListTypeId the user's name suffix ID
 	 * @param  male whether the user is male
 	 * @param  birthdayMonth the user's birthday month (0-based, meaning 0 for
 	 *         January)
@@ -891,100 +893,8 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			long creatorUserId, long companyId, boolean autoPassword,
 			String password1, String password2, boolean autoScreenName,
 			String screenName, String emailAddress, Locale locale,
-			String firstName, String middleName, String lastName, long prefixId,
-			long suffixId, boolean male, int birthdayMonth, int birthdayDay,
-			int birthdayYear, String jobTitle, long[] groupIds,
-			long[] organizationIds, long[] roleIds, long[] userGroupIds,
-			boolean sendEmail, ServiceContext serviceContext)
-		throws PortalException {
-
-		boolean workflowEnabled = WorkflowThreadLocal.isEnabled();
-
-		try {
-			WorkflowThreadLocal.setEnabled(false);
-
-			if (serviceContext == null) {
-				serviceContext = new ServiceContext();
-			}
-
-			if (serviceContext.getWorkflowAction() !=
-					WorkflowConstants.ACTION_PUBLISH) {
-
-				serviceContext.setWorkflowAction(
-					WorkflowConstants.ACTION_PUBLISH);
-			}
-
-			return addUserWithWorkflow(
-				creatorUserId, companyId, autoPassword, password1, password2,
-				autoScreenName, screenName, emailAddress, locale, firstName,
-				middleName, lastName, prefixId, suffixId, male, birthdayMonth,
-				birthdayDay, birthdayYear, jobTitle, groupIds, organizationIds,
-				roleIds, userGroupIds, sendEmail, serviceContext);
-		}
-		finally {
-			WorkflowThreadLocal.setEnabled(workflowEnabled);
-		}
-	}
-
-	/**
-	 * Adds a user.
-	 *
-	 * <p>
-	 * This method handles the creation and bookkeeping of the user including
-	 * its resources, metadata, and internal data structures. It is not
-	 * necessary to make subsequent calls to any methods to setup default
-	 * groups, resources, etc.
-	 * </p>
-	 *
-	 * @param      creatorUserId the primary key of the creator
-	 * @param      companyId the primary key of the user's company
-	 * @param      autoPassword whether a password should be automatically
-	 *             generated for the user
-	 * @param      password1 the user's password
-	 * @param      password2 the user's password confirmation
-	 * @param      autoScreenName whether a screen name should be automatically
-	 *             generated for the user
-	 * @param      screenName the user's screen name
-	 * @param      emailAddress the user's email address
-	 * @param      facebookId the user's facebook ID
-	 * @param      openId the user's OpenID
-	 * @param      locale the user's locale
-	 * @param      firstName the user's first name
-	 * @param      middleName the user's middle name
-	 * @param      lastName the user's last name
-	 * @param      prefixId the user's name prefix ID
-	 * @param      suffixId the user's name suffix ID
-	 * @param      male whether the user is male
-	 * @param      birthdayMonth the user's birthday month (0-based, meaning 0
-	 *             for January)
-	 * @param      birthdayDay the user's birthday day
-	 * @param      birthdayYear the user's birthday year
-	 * @param      jobTitle the user's job title
-	 * @param      groupIds the primary keys of the user's groups
-	 * @param      organizationIds the primary keys of the user's organizations
-	 * @param      roleIds the primary keys of the roles this user possesses
-	 * @param      userGroupIds the primary keys of the user's user groups
-	 * @param      sendEmail whether to send the user an email notification
-	 *             about their new account
-	 * @param      serviceContext the service context to be applied (optionally
-	 *             <code>null</code>). Can set the UUID (with the
-	 *             <code>uuid</code> attribute), asset category IDs, asset tag
-	 *             names, and expando bridge attributes for the user.
-	 * @return     the new user
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #addUser(long,
-	 *             long, boolean, String, String, boolean, String, String,
-	 *             Locale, String, String, String, long, long, boolean, int,
-	 *             int, int, String, long[], long[], long[], long[], boolean,
-	 *             ServiceContext)}
-	 */
-	@Deprecated
-	@Override
-	public User addUser(
-			long creatorUserId, long companyId, boolean autoPassword,
-			String password1, String password2, boolean autoScreenName,
-			String screenName, String emailAddress, long facebookId,
-			String openId, Locale locale, String firstName, String middleName,
-			String lastName, long prefixId, long suffixId, boolean male,
+			String firstName, String middleName, String lastName,
+			long prefixListTypeId, long suffixListTypeId, boolean male,
 			int birthdayMonth, int birthdayDay, int birthdayYear,
 			String jobTitle, long[] groupIds, long[] organizationIds,
 			long[] roleIds, long[] userGroupIds, boolean sendEmail,
@@ -1009,10 +919,10 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 			return addUserWithWorkflow(
 				creatorUserId, companyId, autoPassword, password1, password2,
-				autoScreenName, screenName, emailAddress, facebookId, openId,
-				locale, firstName, middleName, lastName, prefixId, suffixId,
-				male, birthdayMonth, birthdayDay, birthdayYear, jobTitle,
-				groupIds, organizationIds, roleIds, userGroupIds, sendEmail,
+				autoScreenName, screenName, emailAddress, locale, firstName,
+				middleName, lastName, prefixListTypeId, suffixListTypeId, male,
+				birthdayMonth, birthdayDay, birthdayYear, jobTitle, groupIds,
+				organizationIds, roleIds, userGroupIds, sendEmail,
 				serviceContext);
 		}
 		finally {
@@ -1112,8 +1022,8 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @param  firstName the user's first name
 	 * @param  middleName the user's middle name
 	 * @param  lastName the user's last name
-	 * @param  prefixId the user's name prefix ID
-	 * @param  suffixId the user's name suffix ID
+	 * @param  prefixListTypeId the user's name prefix ID
+	 * @param  suffixListTypeId the user's name suffix ID
 	 * @param  male whether the user is male
 	 * @param  birthdayMonth the user's birthday month (0-based, meaning 0 for
 	 *         January)
@@ -1137,11 +1047,12 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			long creatorUserId, long companyId, boolean autoPassword,
 			String password1, String password2, boolean autoScreenName,
 			String screenName, String emailAddress, Locale locale,
-			String firstName, String middleName, String lastName, long prefixId,
-			long suffixId, boolean male, int birthdayMonth, int birthdayDay,
-			int birthdayYear, String jobTitle, long[] groupIds,
-			long[] organizationIds, long[] roleIds, long[] userGroupIds,
-			boolean sendEmail, ServiceContext serviceContext)
+			String firstName, String middleName, String lastName,
+			long prefixListTypeId, long suffixListTypeId, boolean male,
+			int birthdayMonth, int birthdayDay, int birthdayYear,
+			String jobTitle, long[] groupIds, long[] organizationIds,
+			long[] roleIds, long[] userGroupIds, boolean sendEmail,
+			ServiceContext serviceContext)
 		throws PortalException {
 
 		// User
@@ -1206,11 +1117,10 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		FullNameGenerator fullNameGenerator =
 			FullNameGeneratorFactory.getInstance();
 
-		String fullName = fullNameGenerator.getFullName(
-			firstName, middleName, lastName);
-
 		String greeting = LanguageUtil.format(
-			locale, "welcome-x", fullName, false);
+			locale, "welcome-x",
+			fullNameGenerator.getFullName(firstName, middleName, lastName),
+			false);
 
 		User user = userPersistence.create(userId);
 
@@ -1296,8 +1206,8 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		contact.setFirstName(firstName);
 		contact.setMiddleName(middleName);
 		contact.setLastName(lastName);
-		contact.setPrefixId(prefixId);
-		contact.setSuffixId(suffixId);
+		contact.setPrefixListTypeId(prefixListTypeId);
+		contact.setSuffixListTypeId(suffixListTypeId);
 		contact.setMale(male);
 		contact.setBirthday(
 			getBirthday(birthdayMonth, birthdayDay, birthdayYear));
@@ -1424,88 +1334,6 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		return user;
 	}
 
-	/**
-	 * Adds a user with workflow.
-	 *
-	 * <p>
-	 * This method handles the creation and bookkeeping of the user including
-	 * its resources, metadata, and internal data structures. It is not
-	 * necessary to make subsequent calls to any methods to setup default
-	 * groups, resources, etc.
-	 * </p>
-	 *
-	 * @param      creatorUserId the primary key of the creator
-	 * @param      companyId the primary key of the user's company
-	 * @param      autoPassword whether a password should be automatically
-	 *             generated for the user
-	 * @param      password1 the user's password
-	 * @param      password2 the user's password confirmation
-	 * @param      autoScreenName whether a screen name should be automatically
-	 *             generated for the user
-	 * @param      screenName the user's screen name
-	 * @param      emailAddress the user's email address
-	 * @param      facebookId the user's facebook ID
-	 * @param      openId the user's OpenID
-	 * @param      locale the user's locale
-	 * @param      firstName the user's first name
-	 * @param      middleName the user's middle name
-	 * @param      lastName the user's last name
-	 * @param      prefixId the user's name prefix ID
-	 * @param      suffixId the user's name suffix ID
-	 * @param      male whether the user is male
-	 * @param      birthdayMonth the user's birthday month (0-based, meaning 0
-	 *             for January)
-	 * @param      birthdayDay the user's birthday day
-	 * @param      birthdayYear the user's birthday year
-	 * @param      jobTitle the user's job title
-	 * @param      groupIds the primary keys of the user's groups
-	 * @param      organizationIds the primary keys of the user's organizations
-	 * @param      roleIds the primary keys of the roles this user possesses
-	 * @param      userGroupIds the primary keys of the user's user groups
-	 * @param      sendEmail whether to send the user an email notification
-	 *             about their new account
-	 * @param      serviceContext the service context to be applied (optionally
-	 *             <code>null</code>). Can set the UUID (with the
-	 *             <code>uuid</code> attribute), asset category IDs, asset tag
-	 *             names, and expando bridge attributes for the user.
-	 * @return     the new user
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 *             #addUserWithWorkflow(long, long, boolean, String, String,
-	 *             boolean, String, String, Locale, String, String, String,
-	 *             long, long, boolean, int, int, int, String, long[], long[],
-	 *             long[], long[], boolean, ServiceContext)}
-	 */
-	@Deprecated
-	@Override
-	public User addUserWithWorkflow(
-			long creatorUserId, long companyId, boolean autoPassword,
-			String password1, String password2, boolean autoScreenName,
-			String screenName, String emailAddress, long facebookId,
-			String openId, Locale locale, String firstName, String middleName,
-			String lastName, long prefixId, long suffixId, boolean male,
-			int birthdayMonth, int birthdayDay, int birthdayYear,
-			String jobTitle, long[] groupIds, long[] organizationIds,
-			long[] roleIds, long[] userGroupIds, boolean sendEmail,
-			ServiceContext serviceContext)
-		throws PortalException {
-
-		User user = userLocalService.addUserWithWorkflow(
-			creatorUserId, companyId, autoPassword, password1, password2,
-			autoScreenName, screenName, emailAddress, locale, firstName,
-			middleName, lastName, prefixId, suffixId, male, birthdayMonth,
-			birthdayDay, birthdayYear, jobTitle, groupIds, organizationIds,
-			roleIds, userGroupIds, sendEmail, serviceContext);
-
-		openId = StringUtil.trim(openId);
-
-		validateOpenId(companyId, user.getUserId(), openId);
-
-		user.setFacebookId(facebookId);
-		user.setOpenId(openId);
-
-		return userLocalService.updateUser(user);
-	}
-
 	@Override
 	public void afterPropertiesSet() {
 		super.afterPropertiesSet();
@@ -1514,9 +1342,17 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		serviceLatch.waitFor(
 			EntityCache.class,
-			entityCache -> PortalCacheMapSynchronizeUtil.synchronize(
-				entityCache.getPortalCache(UserImpl.class), _defaultUsers,
-				_synchronizer));
+			entityCache -> {
+				PortalCache<?, ?> portalCache = entityCache.getPortalCache(
+					UserImpl.class);
+
+				PortalCacheMapSynchronizeUtil.synchronize(
+					PortalCacheHelperUtil.getPortalCache(
+						PortalCacheManagerNames.MULTI_VM,
+						portalCache.getPortalCacheName(), portalCache.isMVCC(),
+						portalCache.isSharded()),
+					_defaultUsers, _synchronizer);
+			});
 
 		serviceLatch.openOn(
 			() -> {
@@ -1786,83 +1622,6 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	}
 
 	/**
-	 * Attempts to authenticate the user using JAAS credentials, without using
-	 * the AuthPipeline.
-	 *
-	 * @param  userId the primary key of the user
-	 * @param  encPassword the encrypted password
-	 * @return <code>true</code> if authentication is successful;
-	 *         <code>false</code> otherwise
-	 * @deprecated As of Cavanaugh (7.4.x), with no replacement
-	 */
-	@Deprecated
-	@Override
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public boolean authenticateForJAAS(long userId, String encPassword) {
-		if (PropsValues.AUTH_LOGIN_DISABLED) {
-			return false;
-		}
-
-		try {
-			User user = userPersistence.findByPrimaryKey(userId);
-
-			if (user.isDefaultUser()) {
-				if (_log.isInfoEnabled()) {
-					_log.info(
-						"JAAS authentication is disabled for the default user");
-				}
-
-				return false;
-			}
-			else if (!user.isActive()) {
-				if (_log.isInfoEnabled()) {
-					_log.info(
-						"JAAS authentication is disabled for inactive user " +
-							userId);
-				}
-
-				return false;
-			}
-
-			String userPassword = user.getPassword();
-
-			if (user.isPasswordEncrypted()) {
-				if (userPassword.equals(encPassword)) {
-					return true;
-				}
-
-				if (!PropsValues.PORTAL_JAAS_STRICT_PASSWORD) {
-					encPassword = PasswordEncryptorUtil.encrypt(
-						encPassword, userPassword);
-
-					if (userPassword.equals(encPassword)) {
-						return true;
-					}
-				}
-			}
-			else {
-				if (!PropsValues.PORTAL_JAAS_STRICT_PASSWORD &&
-					userPassword.equals(encPassword)) {
-
-					return true;
-				}
-
-				userPassword = PasswordEncryptorUtil.encrypt(
-					userPassword, encPassword);
-
-				if (userPassword.equals(encPassword)) {
-					return true;
-				}
-			}
-		}
-		catch (Exception exception) {
-			_log.error("Unable to authenticate for JAAS", exception);
-		}
-
-		return false;
-	}
-
-	/**
 	 * Checks if the user is currently locked out based on the password policy,
 	 * and performs maintenance on the user's lockout and failed login data.
 	 *
@@ -1994,11 +1753,9 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 				password = regExpToolkit.generate(null);
 			}
 			else {
-				PasswordPolicy passwordPolicy =
+				password = PwdToolkitUtil.generate(
 					_passwordPolicyLocalService.getPasswordPolicy(
-						user.getCompanyId(), user.getOrganizationIds());
-
-				password = PwdToolkitUtil.generate(passwordPolicy);
+						user.getCompanyId(), user.getOrganizationIds()));
 			}
 
 			serviceContext.setAttribute("passwordUnencrypted", password);
@@ -2064,14 +1821,14 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		Company company = _companyPersistence.findByPrimaryKey(companyId);
 
 		try {
-			name = Encryptor.decrypt(company.getKeyObj(), name);
+			name = EncryptorUtil.decrypt(company.getKeyObj(), name);
 		}
 		catch (EncryptorException encryptorException) {
 			throw new SystemException(encryptorException);
 		}
 
 		try {
-			password = Encryptor.decrypt(company.getKeyObj(), password);
+			password = EncryptorUtil.decrypt(company.getKeyObj(), password);
 		}
 		catch (EncryptorException encryptorException) {
 			throw new SystemException(encryptorException);
@@ -2321,7 +2078,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			user.getCompanyId());
 
 		try {
-			return Encryptor.encrypt(company.getKeyObj(), name);
+			return EncryptorUtil.encrypt(company.getKeyObj(), name);
 		}
 		catch (EncryptorException encryptorException) {
 			throw new SystemException(encryptorException);
@@ -3792,63 +3549,6 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		return counts;
 	}
 
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
-	 *             #searchBySocial(long, int[], String, int, int)}
-	 */
-	@Deprecated
-	@Override
-	public List<User> searchSocial(
-			long userId, int[] socialRelationTypes, String keywords, int start,
-			int end)
-		throws PortalException {
-
-		return searchBySocial(
-			userId, socialRelationTypes, keywords, start, end);
-	}
-
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
-	 *             #searchBySocial(long, long[], String, int, int)}
-	 */
-	@Deprecated
-	@Override
-	public List<User> searchSocial(
-		long companyId, long[] groupIds, String keywords, int start, int end) {
-
-		return searchBySocial(companyId, groupIds, keywords, start, end);
-	}
-
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
-	 *             #searchBySocial(long, long[], String, int, int,
-	 *             OrderByComparator)}
-	 */
-	@Deprecated
-	@Override
-	public List<User> searchSocial(
-		long companyId, long[] groupIds, String keywords, int start, int end,
-		OrderByComparator<User> orderByComparator) {
-
-		return searchBySocial(
-			companyId, groupIds, keywords, start, end, orderByComparator);
-	}
-
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
-	 *             #searchBySocial(long[], long, int[], String, int, int)}
-	 */
-	@Deprecated
-	@Override
-	public List<User> searchSocial(
-			long[] groupIds, long userId, int[] socialRelationTypes,
-			String keywords, int start, int end)
-		throws PortalException {
-
-		return searchBySocial(
-			groupIds, userId, socialRelationTypes, keywords, start, end);
-	}
-
 	@Override
 	public BaseModelSearchResult<User> searchUsers(
 			long companyId, String keywords, int status,
@@ -4703,8 +4403,8 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @param  firstName the user's first name
 	 * @param  middleName the user's middle name
 	 * @param  lastName the user's last name
-	 * @param  prefixId the user's name prefix ID
-	 * @param  suffixId the user's name suffix ID
+	 * @param  prefixListTypeId the user's name prefix ID
+	 * @param  suffixListTypeId the user's name suffix ID
 	 * @param  male whether the user is male
 	 * @param  birthdayMonth the user's birthday month (0-based, meaning 0 for
 	 *         January)
@@ -4724,10 +4424,11 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			long creatorUserId, long companyId, boolean autoPassword,
 			String password1, String password2, boolean autoScreenName,
 			String screenName, String emailAddress, Locale locale,
-			String firstName, String middleName, String lastName, long prefixId,
-			long suffixId, boolean male, int birthdayMonth, int birthdayDay,
-			int birthdayYear, String jobTitle, boolean updateUserInformation,
-			boolean sendEmail, ServiceContext serviceContext)
+			String firstName, String middleName, String lastName,
+			long prefixListTypeId, long suffixListTypeId, boolean male,
+			int birthdayMonth, int birthdayDay, int birthdayYear,
+			String jobTitle, boolean updateUserInformation, boolean sendEmail,
+			ServiceContext serviceContext)
 		throws PortalException {
 
 		User user = getUserByEmailAddress(companyId, emailAddress);
@@ -4775,11 +4476,10 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			FullNameGenerator fullNameGenerator =
 				FullNameGeneratorFactory.getInstance();
 
-			String fullName = fullNameGenerator.getFullName(
-				firstName, middleName, lastName);
-
 			String greeting = LanguageUtil.format(
-				locale, "welcome-x", fullName, false);
+				locale, "welcome-x",
+				fullNameGenerator.getFullName(firstName, middleName, lastName),
+				false);
 
 			if (Validator.isNotNull(password1)) {
 				user.setPassword(PasswordEncryptorUtil.encrypt(password1));
@@ -4806,8 +4506,8 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			contact.setFirstName(firstName);
 			contact.setMiddleName(middleName);
 			contact.setLastName(lastName);
-			contact.setPrefixId(prefixId);
-			contact.setSuffixId(suffixId);
+			contact.setPrefixListTypeId(prefixListTypeId);
+			contact.setSuffixListTypeId(suffixListTypeId);
 			contact.setMale(male);
 			contact.setBirthday(birthday);
 			contact.setJobTitle(jobTitle);
@@ -4852,93 +4552,6 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	}
 
 	/**
-	 * Updates a user account that was automatically created when a guest user
-	 * participated in an action (e.g. posting a comment) and only provided his
-	 * name and email address.
-	 *
-	 * @param      creatorUserId the primary key of the creator
-	 * @param      companyId the primary key of the user's company
-	 * @param      autoPassword whether a password should be automatically
-	 *             generated for the user
-	 * @param      password1 the user's password
-	 * @param      password2 the user's password confirmation
-	 * @param      autoScreenName whether a screen name should be automatically
-	 *             generated for the user
-	 * @param      screenName the user's screen name
-	 * @param      emailAddress the user's email address
-	 * @param      facebookId the user's facebook ID
-	 * @param      openId the user's OpenID
-	 * @param      locale the user's locale
-	 * @param      firstName the user's first name
-	 * @param      middleName the user's middle name
-	 * @param      lastName the user's last name
-	 * @param      prefixId the user's name prefix ID
-	 * @param      suffixId the user's name suffix ID
-	 * @param      male whether the user is male
-	 * @param      birthdayMonth the user's birthday month (0-based, meaning 0
-	 *             for January)
-	 * @param      birthdayDay the user's birthday day
-	 * @param      birthdayYear the user's birthday year
-	 * @param      jobTitle the user's job title
-	 * @param      updateUserInformation whether to update the user's
-	 *             information
-	 * @param      sendEmail whether to send the user an email notification
-	 *             about their new account
-	 * @param      serviceContext the service context to be applied (optionally
-	 *             <code>null</code>). Can set expando bridge attributes for the
-	 *             user.
-	 * @return     the user
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 *             #updateIncompleteUser(long, long, boolean, String, String,
-	 *             boolean, String, String, Locale, String, String, String,
-	 *             long, long, boolean, int, int, int, String, boolean, boolean,
-	 *             ServiceContext)}
-	 */
-	@Deprecated
-	@Override
-	public User updateIncompleteUser(
-			long creatorUserId, long companyId, boolean autoPassword,
-			String password1, String password2, boolean autoScreenName,
-			String screenName, String emailAddress, long facebookId,
-			String openId, Locale locale, String firstName, String middleName,
-			String lastName, long prefixId, long suffixId, boolean male,
-			int birthdayMonth, int birthdayDay, int birthdayYear,
-			String jobTitle, boolean updateUserInformation, boolean sendEmail,
-			ServiceContext serviceContext)
-		throws PortalException {
-
-		User user = getUserByEmailAddress(companyId, emailAddress);
-
-		if (facebookId > 0) {
-			autoPassword = false;
-
-			if ((password1 == null) || (password2 == null)) {
-				password1 = PwdGenerator.getPassword();
-
-				password2 = password1;
-			}
-
-			sendEmail = false;
-		}
-
-		if (updateUserInformation) {
-			validateOpenId(companyId, user.getUserId(), openId);
-		}
-
-		user = userLocalService.updateIncompleteUser(
-			creatorUserId, companyId, autoPassword, password1, password2,
-			autoScreenName, screenName, emailAddress, locale, firstName,
-			middleName, lastName, prefixId, suffixId, male, birthdayMonth,
-			birthdayDay, birthdayYear, jobTitle, updateUserInformation,
-			sendEmail, serviceContext);
-
-		user.setFacebookId(facebookId);
-		user.setOpenId(openId);
-
-		return userLocalService.updateUser(user);
-	}
-
-	/**
 	 * Updates the user's job title.
 	 *
 	 * @param  userId the primary key of the user
@@ -4974,6 +4587,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @return the user
 	 */
 	@CTAware(onProduction = true)
+	@Indexable(type = IndexableType.REINDEX)
 	@Override
 	public User updateLastLogin(long userId, String loginIP)
 		throws PortalException {
@@ -5504,8 +5118,8 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @param  firstName the user's new first name
 	 * @param  middleName the user's new middle name
 	 * @param  lastName the user's new last name
-	 * @param  prefixId the user's new name prefix ID
-	 * @param  suffixId the user's new name suffix ID
+	 * @param  prefixListTypeId the user's new name prefix ID
+	 * @param  suffixListTypeId the user's new name suffix ID
 	 * @param  male whether user is male
 	 * @param  birthdayMonth the user's new birthday month (0-based, meaning 0
 	 *         for January)
@@ -5536,11 +5150,11 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			String screenName, String emailAddress, boolean hasPortrait,
 			byte[] portraitBytes, String languageId, String timeZoneId,
 			String greeting, String comments, String firstName,
-			String middleName, String lastName, long prefixId, long suffixId,
-			boolean male, int birthdayMonth, int birthdayDay, int birthdayYear,
-			String smsSn, String facebookSn, String jabberSn, String skypeSn,
-			String twitterSn, String jobTitle, long[] groupIds,
-			long[] organizationIds, long[] roleIds,
+			String middleName, String lastName, long prefixListTypeId,
+			long suffixListTypeId, boolean male, int birthdayMonth,
+			int birthdayDay, int birthdayYear, String smsSn, String facebookSn,
+			String jabberSn, String skypeSn, String twitterSn, String jobTitle,
+			long[] groupIds, long[] organizationIds, long[] roleIds,
 			List<UserGroupRole> userGroupRoles, long[] userGroupIds,
 			ServiceContext serviceContext)
 		throws PortalException {
@@ -5683,8 +5297,8 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		contact.setFirstName(firstName);
 		contact.setMiddleName(middleName);
 		contact.setLastName(lastName);
-		contact.setPrefixId(prefixId);
-		contact.setSuffixId(suffixId);
+		contact.setPrefixListTypeId(prefixListTypeId);
+		contact.setSuffixListTypeId(suffixListTypeId);
 		contact.setMale(male);
 		contact.setBirthday(
 			getBirthday(birthdayMonth, birthdayDay, birthdayYear));
@@ -5767,102 +5381,6 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		}
 
 		return user;
-	}
-
-	/**
-	 * Updates the user.
-	 *
-	 * @param      userId the primary key of the user
-	 * @param      oldPassword the user's old password
-	 * @param      newPassword1 the user's new password (optionally
-	 *             <code>null</code>)
-	 * @param      newPassword2 the user's new password confirmation (optionally
-	 *             <code>null</code>)
-	 * @param      passwordReset whether the user should be asked to reset their
-	 *             password the next time they login
-	 * @param      reminderQueryQuestion the user's new password reset question
-	 * @param      reminderQueryAnswer the user's new password reset answer
-	 * @param      screenName the user's new screen name
-	 * @param      emailAddress the user's new email address
-	 * @param      facebookId the user's new Facebook ID
-	 * @param      openId the user's new OpenID
-	 * @param      hasPortrait if the user has a custom portrait image
-	 * @param      portraitBytes the new portrait image data
-	 * @param      languageId the user's new language ID
-	 * @param      timeZoneId the user's new time zone ID
-	 * @param      greeting the user's new greeting
-	 * @param      comments the user's new comments
-	 * @param      firstName the user's new first name
-	 * @param      middleName the user's new middle name
-	 * @param      lastName the user's new last name
-	 * @param      prefixId the user's new name prefix ID
-	 * @param      suffixId the user's new name suffix ID
-	 * @param      male whether user is male
-	 * @param      birthdayMonth the user's new birthday month (0-based, meaning
-	 *             0 for January)
-	 * @param      birthdayDay the user's new birthday day
-	 * @param      birthdayYear the user's birthday year
-	 * @param      smsSn the user's new SMS screen name
-	 * @param      facebookSn the user's new Facebook screen name
-	 * @param      jabberSn the user's new Jabber screen name
-	 * @param      skypeSn the user's new Skype screen name
-	 * @param      twitterSn the user's new Twitter screen name
-	 * @param      jobTitle the user's new job title
-	 * @param      groupIds the primary keys of the user's groups
-	 * @param      organizationIds the primary keys of the user's organizations
-	 * @param      roleIds the primary keys of the user's roles
-	 * @param      userGroupRoles the user user's group roles
-	 * @param      userGroupIds the primary keys of the user's user groups
-	 * @param      serviceContext the service context to be applied (optionally
-	 *             <code>null</code>). Can set the UUID (with the
-	 *             <code>uuid</code> attribute), asset category IDs, asset tag
-	 *             names, and expando bridge attributes for the user.
-	 * @return     the user
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 *             #updateUser(long, String, String, String, boolean, String,
-	 *             String, String, String, boolean, byte[], String, String,
-	 *             String, String, String, String, String, long, long, boolean,
-	 *             int, int, int, String, String, String, String, String,
-	 *             String, long[], long[], long[], List, long[], ServiceContext)
-	 *             }
-	 */
-	@Deprecated
-	@Override
-	public User updateUser(
-			long userId, String oldPassword, String newPassword1,
-			String newPassword2, boolean passwordReset,
-			String reminderQueryQuestion, String reminderQueryAnswer,
-			String screenName, String emailAddress, long facebookId,
-			String openId, boolean hasPortrait, byte[] portraitBytes,
-			String languageId, String timeZoneId, String greeting,
-			String comments, String firstName, String middleName,
-			String lastName, long prefixId, long suffixId, boolean male,
-			int birthdayMonth, int birthdayDay, int birthdayYear, String smsSn,
-			String facebookSn, String jabberSn, String skypeSn,
-			String twitterSn, String jobTitle, long[] groupIds,
-			long[] organizationIds, long[] roleIds,
-			List<UserGroupRole> userGroupRoles, long[] userGroupIds,
-			ServiceContext serviceContext)
-		throws PortalException {
-
-		User user = userLocalService.updateUser(
-			userId, oldPassword, newPassword1, newPassword2, passwordReset,
-			reminderQueryQuestion, reminderQueryAnswer, screenName,
-			emailAddress, hasPortrait, portraitBytes, languageId, timeZoneId,
-			greeting, comments, firstName, middleName, lastName, prefixId,
-			suffixId, male, birthdayMonth, birthdayDay, birthdayYear, smsSn,
-			facebookSn, jabberSn, skypeSn, twitterSn, jobTitle, groupIds,
-			organizationIds, roleIds, userGroupRoles, userGroupIds,
-			serviceContext);
-
-		openId = StringUtil.trim(openId);
-
-		validateOpenId(user.getCompanyId(), userId, openId);
-
-		user.setFacebookId(facebookId);
-		user.setOpenId(openId);
-
-		return userLocalService.updateUser(user);
 	}
 
 	/**
@@ -6105,14 +5623,18 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		}
 
 		if (user == null) {
+			if ((authResult == Authenticator.SUCCESS) &&
+				PropsValues.AUTH_PIPELINE_ENABLE_LIFERAY_CHECK) {
+
+				PwdAuthenticator.pretendToAuthenticate();
+			}
+
 			return Authenticator.DNE;
 		}
 
 		if (!isUserAllowedToAuthenticate(user)) {
 			return Authenticator.FAILURE;
 		}
-
-		user = _checkPasswordPolicy(user);
 
 		if (!user.isPasswordEncrypted()) {
 			user.setPassword(PasswordEncryptorUtil.encrypt(user.getPassword()));
@@ -6165,6 +5687,15 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		}
 
 		if (authResult == Authenticator.SUCCESS) {
+			try {
+				user = _checkPasswordPolicy(user);
+			}
+			catch (PortalException portalException) {
+				handleAuthenticationFailure(
+					login, authType, user, headerMap, parameterMap);
+
+				throw portalException;
+			}
 
 			// Update digest
 
@@ -6528,6 +6059,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			}
 			else if (!key.equals(Field.GROUP_ID) &&
 					 !key.equals("accountEntryIds") &&
+					 !key.equals("emailAddressDomains") &&
 					 !key.equals("usersGroups") && !key.equals("usersOrgs") &&
 					 !key.equals("usersOrgsCount") &&
 					 !key.equals("usersRoles") && !key.equals("usersTeams") &&
@@ -7187,7 +6719,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		Company company = _companyPersistence.findByPrimaryKey(companyId);
 
-		if (company.isSystem() || (company.getMaxUsers() == 0)) {
+		if (company.getMaxUsers() == 0) {
 			return;
 		}
 

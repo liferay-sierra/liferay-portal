@@ -51,6 +51,7 @@ import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portlet.test.MockLiferayPortletContext;
 
+import java.util.Locale;
 import java.util.Map;
 
 import javax.portlet.Portlet;
@@ -166,7 +167,7 @@ public class ContentDashboardAdminPortletGetPropsTest {
 				String.valueOf(props.get("vocabularies")));
 		}
 		finally {
-			_assetVocabularyLocalService.deleteAssetVocabulary(assetVocabulary);
+			_assetVocabularyLocalService.deleteVocabulary(assetVocabulary);
 		}
 	}
 
@@ -483,9 +484,8 @@ public class ContentDashboardAdminPortletGetPropsTest {
 				String.valueOf(props.get("vocabularies")));
 		}
 		finally {
-			_assetVocabularyLocalService.deleteAssetVocabulary(assetVocabulary);
-			_assetVocabularyLocalService.deleteAssetVocabulary(
-				childAssetVocabulary);
+			_assetVocabularyLocalService.deleteVocabulary(assetVocabulary);
+			_assetVocabularyLocalService.deleteVocabulary(childAssetVocabulary);
 		}
 	}
 
@@ -592,9 +592,8 @@ public class ContentDashboardAdminPortletGetPropsTest {
 				String.valueOf(props.get("vocabularies")));
 		}
 		finally {
-			_assetVocabularyLocalService.deleteAssetVocabulary(assetVocabulary);
-			_assetVocabularyLocalService.deleteAssetVocabulary(
-				childAssetVocabulary);
+			_assetVocabularyLocalService.deleteVocabulary(assetVocabulary);
+			_assetVocabularyLocalService.deleteVocabulary(childAssetVocabulary);
 		}
 	}
 
@@ -623,7 +622,6 @@ public class ContentDashboardAdminPortletGetPropsTest {
 
 		mockLiferayPortletRenderRequest.setAttribute(
 			WebKeys.COMPANY_ID, _company.getCompanyId());
-
 		mockLiferayPortletRenderRequest.setAttribute(
 			StringBundler.concat(
 				mockLiferayPortletRenderRequest.getPortletName(), "-",
@@ -633,7 +631,6 @@ public class ContentDashboardAdminPortletGetPropsTest {
 		String path = "/view.jsp";
 
 		mockLiferayPortletRenderRequest.setParameter("mvcPath", path);
-
 		mockLiferayPortletRenderRequest.setAttribute(
 			MVCRenderConstants.
 				PORTLET_CONTEXT_OVERRIDE_REQUEST_ATTIBUTE_NAME_PREFIX + path,
@@ -654,7 +651,12 @@ public class ContentDashboardAdminPortletGetPropsTest {
 		ThemeDisplay themeDisplay = new ThemeDisplay();
 
 		themeDisplay.setCompany(_company);
-		themeDisplay.setLocale(LocaleUtil.getSiteDefault());
+
+		Locale locale = LocaleUtil.getSiteDefault();
+
+		themeDisplay.setLanguageId(LocaleUtil.toLanguageId(locale));
+		themeDisplay.setLocale(locale);
+
 		themeDisplay.setPermissionChecker(
 			PermissionThreadLocal.getPermissionChecker());
 		themeDisplay.setUser(_company.getDefaultUser());

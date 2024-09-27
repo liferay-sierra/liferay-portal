@@ -26,7 +26,7 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.upgrade.util.UpgradeProcessUtil;
 import com.liferay.portal.kernel.util.LoggingTimer;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 import com.liferay.portal.verify.VerifyProcess;
 
 import org.osgi.service.component.annotations.Component;
@@ -36,15 +36,37 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
-	property = "verify.process.name=com.liferay.commerce.product.service",
+	immediate = true,
+	property = {
+		"initial.deployment=true",
+		"verify.process.name=com.liferay.commerce.product.service"
+	},
 	service = {CommerceProductServiceVerifyProcess.class, VerifyProcess.class}
 )
 public class CommerceProductServiceVerifyProcess extends VerifyProcess {
 
+	public void verifyCPMeasurementUnits() throws Exception {
+		try (LoggingTimer loggingTimer = new LoggingTimer()) {
+			_companyLocalService.forEachCompanyId(
+				companyId -> {
+					ServiceContext serviceContext = new ServiceContext();
+
+					serviceContext.setCompanyId(companyId);
+					serviceContext.setLanguageId(
+						UpgradeProcessUtil.getDefaultLanguageId(companyId));
+					serviceContext.setScopeGroupId(0);
+					serviceContext.setUserId(_getAdminUserId(companyId));
+					serviceContext.setUuid(_portalUUID.generate());
+
+					_cpMeasurementUnitLocalService.importDefaultValues(
+						serviceContext);
+				});
+		}
+	}
+
 	@Override
 	protected void doVerify() throws Exception {
-		_verifyCPMeasurementUnits();
+		verifyCPMeasurementUnits();
 	}
 
 	private long _getAdminUserId(long companyId) throws PortalException {
@@ -63,30 +85,14 @@ public class CommerceProductServiceVerifyProcess extends VerifyProcess {
 		return userIds[0];
 	}
 
-	private void _verifyCPMeasurementUnits() throws Exception {
-		try (LoggingTimer loggingTimer = new LoggingTimer()) {
-			_companyLocalService.forEachCompanyId(
-				companyId -> {
-					ServiceContext serviceContext = new ServiceContext();
-
-					serviceContext.setCompanyId(companyId);
-					serviceContext.setLanguageId(
-						UpgradeProcessUtil.getDefaultLanguageId(companyId));
-					serviceContext.setScopeGroupId(0);
-					serviceContext.setUserId(_getAdminUserId(companyId));
-					serviceContext.setUuid(PortalUUIDUtil.generate());
-
-					_cpMeasurementUnitLocalService.importDefaultValues(
-						serviceContext);
-				});
-		}
-	}
-
 	@Reference
 	private CompanyLocalService _companyLocalService;
 
 	@Reference
 	private CPMeasurementUnitLocalService _cpMeasurementUnitLocalService;
+
+	@Reference
+	private PortalUUID _portalUUID;
 
 	@Reference
 	private RoleLocalService _roleLocalService;

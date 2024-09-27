@@ -14,6 +14,7 @@
 
 package com.liferay.headless.commerce.admin.shipment.internal.resource.v1_0.factory;
 
+import com.liferay.headless.commerce.admin.shipment.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.headless.commerce.admin.shipment.resource.v1_0.ShipmentResource;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -33,14 +34,18 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -59,7 +62,8 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @generated
  */
 @Component(
-	enabled = false, immediate = true, service = ShipmentResource.Factory.class
+	property = "resource.locator.key=/headless-commerce-admin-shipment/v1.0/Shipment",
+	service = ShipmentResource.Factory.class
 )
 @Generated("")
 public class ShipmentResourceFactoryImpl implements ShipmentResource.Factory {
@@ -74,9 +78,7 @@ public class ShipmentResourceFactoryImpl implements ShipmentResource.Factory {
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (ShipmentResource)ProxyUtil.newProxyInstance(
-					ShipmentResource.class.getClassLoader(),
-					new Class<?>[] {ShipmentResource.class},
+				return _shipmentResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -135,14 +137,31 @@ public class ShipmentResourceFactoryImpl implements ShipmentResource.Factory {
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		ShipmentResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, ShipmentResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		ShipmentResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			ShipmentResource.class.getClassLoader(), ShipmentResource.class);
+
+		try {
+			Constructor<ShipmentResource> constructor =
+				(Constructor<ShipmentResource>)proxyClass.getConstructor(
+					InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -165,7 +184,7 @@ public class ShipmentResourceFactoryImpl implements ShipmentResource.Factory {
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		ShipmentResource shipmentResource =
@@ -189,6 +208,7 @@ public class ShipmentResourceFactoryImpl implements ShipmentResource.Factory {
 		shipmentResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		shipmentResource.setRoleLocalService(_roleLocalService);
+		shipmentResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(shipmentResource, arguments);
@@ -204,6 +224,9 @@ public class ShipmentResourceFactoryImpl implements ShipmentResource.Factory {
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, ShipmentResource>
+		_shipmentResourceProxyProviderFunction = _getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -225,9 +248,6 @@ public class ShipmentResourceFactoryImpl implements ShipmentResource.Factory {
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -236,6 +256,9 @@ public class ShipmentResourceFactoryImpl implements ShipmentResource.Factory {
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

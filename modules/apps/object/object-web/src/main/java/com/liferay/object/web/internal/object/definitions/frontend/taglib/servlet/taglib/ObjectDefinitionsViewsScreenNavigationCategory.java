@@ -17,10 +17,9 @@ package com.liferay.object.web.internal.object.definitions.frontend.taglib.servl
 import com.liferay.frontend.taglib.servlet.taglib.ScreenNavigationCategory;
 import com.liferay.frontend.taglib.servlet.taglib.ScreenNavigationEntry;
 import com.liferay.object.model.ObjectDefinition;
-import com.liferay.object.web.internal.configuration.activator.FFObjectViewConfigurationActivator;
 import com.liferay.object.web.internal.object.definitions.constants.ObjectDefinitionsScreenNavigationEntryConstants;
 import com.liferay.object.web.internal.object.definitions.display.context.ObjectDefinitionsViewsDisplayContext;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -67,18 +66,12 @@ public class ObjectDefinitionsViewsScreenNavigationCategory
 
 	@Override
 	public String getLabel(Locale locale) {
-		return LanguageUtil.get(locale, "views");
+		return _language.get(locale, "views");
 	}
 
 	@Override
 	public boolean isVisible(User user, ObjectDefinition objectDefinition) {
-		if (!objectDefinition.isSystem() &&
-			_ffObjectViewConfigurationActivator.enabled()) {
-
-			return true;
-		}
-
-		return false;
+		return !objectDefinition.isSystem();
 	}
 
 	@Override
@@ -96,8 +89,7 @@ public class ObjectDefinitionsViewsScreenNavigationCategory
 	}
 
 	@Reference
-	private FFObjectViewConfigurationActivator
-		_ffObjectViewConfigurationActivator;
+	private Language _language;
 
 	@Reference(
 		target = "(model.class.name=com.liferay.object.model.ObjectDefinition)"

@@ -14,80 +14,98 @@
 
 import ClayButton from '@clayui/button';
 import ClayForm from '@clayui/form';
-import ClayModal from '@clayui/modal';
+import ClayLabel from '@clayui/label';
+import ClayModal, {useModal} from '@clayui/modal';
 import ClayProgressBar from '@clayui/progress-bar';
 import PropTypes from 'prop-types';
 import React from 'react';
 
-import {importStatus} from '../BatchPlannerImport';
+import {fetchErrorReportFile, importStatus} from '../BatchPlannerImport';
 import Poller from '../Poller';
 
-const ImportModal = ({
-	closeModal,
-	formDataQuerySelector,
-	formSubmitURL,
-	observer,
-}) => {
-	const {errorMessage, loading, percentage} = Poller(
+const ImportModal = ({closeModal, formDataQuerySelector, formImportURL}) => {
+	const {
+		downloadFile,
+		errorMessage,
+		externalReferenceCode,
+		loading,
+		percentage,
+		ready,
+	} = Poller(
 		formDataQuerySelector,
-		formSubmitURL,
-		importStatus
+		formImportURL,
+		importStatus,
+		fetchErrorReportFile
 	);
+	const {observer, onClose} = useModal({
+		onClose: () => {
+			closeModal();
+		},
+	});
+
+	let modalStatus;
+	let title;
+	let labelType;
+	let label;
+
+	if (ready) {
+		modalStatus = 'success';
+		title = Liferay.Language.get(
+			'the-import-process-completed-successfully'
+		);
+		labelType = 'success';
+		label = Liferay.Language.get('completed');
+	}
+	else if (errorMessage) {
+		modalStatus = 'danger';
+		title = errorMessage;
+		labelType = 'danger';
+		label = Liferay.Language.get('failed');
+	}
+	else {
+		modalStatus = 'info';
+		title = Liferay.Language.get(
+			'data-is-importing.-you-can-safely-close-the-dialog'
+		);
+		labelType = 'warning';
+		label = Liferay.Language.get('running');
+	}
 
 	return (
-		<ClayModal observer={observer} size="md">
+		<ClayModal observer={observer} size="md" status={modalStatus}>
 			<ClayModal.Header>
-				{Liferay.Language.get('import')}
+				{Liferay.Language.get('import-file')}
 			</ClayModal.Header>
 
 			<ClayModal.Body>
-				<ClayForm.Group className={errorMessage ? 'has-error' : ''}>
-					<div className="progress-container">
-						<ClayProgressBar
-							value={percentage}
-							warn={!!errorMessage}
-						/>
-					</div>
+				<ClayForm.Group>
+					<ClayForm.FeedbackGroup>
+						<ClayForm.FeedbackItem>{title}</ClayForm.FeedbackItem>
 
-					{errorMessage && (
-						<ClayForm.FeedbackGroup>
-							<ClayForm.FeedbackItem>
-								<ClayForm.FeedbackIndicator symbol="exclamation-full" />
+						<ClayLabel displayType={labelType}>{label}</ClayLabel>
+					</ClayForm.FeedbackGroup>
 
-								{errorMessage}
-							</ClayForm.FeedbackItem>
-						</ClayForm.FeedbackGroup>
-					)}
+					<ClayProgressBar value={percentage} warn={!!errorMessage} />
 				</ClayForm.Group>
 			</ClayModal.Body>
 
 			<ClayModal.Footer
 				last={
 					<ClayButton.Group spaced>
-						<ClayButton
-							displayType="secondary"
-							onClick={closeModal}
-						>
-							{Liferay.Language.get('cancel')}
+						<ClayButton displayType={null} onClick={onClose}>
+							{Liferay.Language.get('back-to-the-list')}
 						</ClayButton>
 
-						<ClayButton
-							disabled={loading}
-							displayType="primary"
-							onClick={closeModal}
-							type="submit"
-						>
-							{loading && (
-								<span className="inline-item inline-item-before">
-									<span
-										aria-hidden="true"
-										className="loading-animation"
-									></span>
-								</span>
-							)}
-
-							{Liferay.Language.get('done')}
-						</ClayButton>
+						{modalStatus === 'danger' && !!externalReferenceCode && (
+							<ClayButton
+								disabled={loading}
+								displayType="danger"
+								onClick={downloadFile}
+								type="submit"
+							>
+								{Liferay.Language.get('download-error-report')}
+							</ClayButton>
+						)}
 					</ClayButton.Group>
 				}
 			/>
@@ -96,9 +114,7 @@ const ImportModal = ({
 };
 
 ImportModal.propTypes = {
-	closeModal: PropTypes.func.isRequired,
-	formSubmitURL: PropTypes.string.isRequired,
-	observer: PropTypes.object,
+	formImportURL: PropTypes.string.isRequired,
 };
 
 export default ImportModal;

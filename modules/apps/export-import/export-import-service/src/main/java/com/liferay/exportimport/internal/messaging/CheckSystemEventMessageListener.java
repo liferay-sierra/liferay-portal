@@ -35,7 +35,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Akos Thurzo
  */
-@Component(immediate = true, service = CheckSystemEventMessageListener.class)
+@Component(service = {})
 public class CheckSystemEventMessageListener extends BaseMessageListener {
 
 	@Activate
@@ -65,26 +65,13 @@ public class CheckSystemEventMessageListener extends BaseMessageListener {
 		_systemEventLocalService.checkSystemEvents();
 	}
 
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
-	protected void setModuleServiceLifecycle(
-		ModuleServiceLifecycle moduleServiceLifecycle) {
-	}
+	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
+	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
-	@Reference(unbind = "-")
-	protected void setSchedulerEngineHelper(
-		SchedulerEngineHelper schedulerEngineHelper) {
-
-		_schedulerEngineHelper = schedulerEngineHelper;
-	}
-
-	@Reference(unbind = "-")
-	protected void setSystemEventLocalService(
-		SystemEventLocalService systemEventLocalService) {
-
-		_systemEventLocalService = systemEventLocalService;
-	}
-
+	@Reference
 	private SchedulerEngineHelper _schedulerEngineHelper;
+
+	@Reference
 	private SystemEventLocalService _systemEventLocalService;
 
 	@Reference

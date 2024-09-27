@@ -1,6 +1,9 @@
 @component-name = "portal-publications"
 definition {
 
+	property database.types = "db2,hypersonic,mariadb,mysql,oracle,postgresql,sqlserver";
+	property osgi.module.configuration.file.names = "com.liferay.change.tracking.configuration.CTSettingsConfiguration.config";
+	property osgi.module.configurations = "enabled=B\"true\"";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Publications";
@@ -9,8 +12,6 @@ definition {
 		TestCase.setUpPortalInstance();
 
 		User.firstLoginPG();
-
-		JSONPublications.enablePublications();
 	}
 
 	tearDown {
@@ -97,9 +98,11 @@ definition {
 	test AssertModificationDeletionConflictDisplays {
 		property portal.acceptance = "true";
 
+		JSONGroup.addGroup(groupName = "Site Name");
+
 		JSONDocument.addFileWithUploadedFile(
 			dmDocumentTitle = "DM Document Title",
-			groupName = "Guest",
+			groupName = "Site Name",
 			mimeType = "text/plain",
 			sourceFileName = "Document_1.txt");
 
@@ -107,7 +110,7 @@ definition {
 
 		JSONPublications.selectPublication(publicationName = "Publication Name 1");
 
-		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
+		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "Site Name");
 
 		DMDocument.editCP(
 			dmDocumentTitle = "DM Document Title",
@@ -119,7 +122,7 @@ definition {
 
 		JSONDocument.deleteFile(
 			dmDocumentTitle = "DM Document Title",
-			groupName = "Guest");
+			groupName = "Site Name");
 
 		JSONPublications.selectPublication(publicationName = "Publication Name 1");
 
@@ -127,7 +130,7 @@ definition {
 
 		Publications.viewPublicationPublished(publicationName = "Publication Name 1");
 
-		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
+		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "Site Name");
 
 		DMNavigator.gotoDocumentCP(dmDocumentTitle = "DM Document Title Edit");
 
@@ -135,7 +138,7 @@ definition {
 
 		JSONPublications.selectPublication(publicationName = "Publication Name 2");
 
-		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
+		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "Site Name");
 
 		DMDocument.viewDefault();
 
@@ -159,10 +162,12 @@ definition {
 	test AssertNoConflictForDeletionsCombinationPublications {
 		property portal.acceptance = "true";
 
+		JSONGroup.addGroup(groupName = "Site Name");
+
 		JSONDocument.addFileWithUploadedFile(
 			dmDocumentDescription = "DM Document Description",
 			dmDocumentTitle = "DM Document Title",
-			groupName = "Guest",
+			groupName = "Site Name",
 			mimeType = "application/msword",
 			sourceFileName = "Document_1.doc");
 
@@ -172,17 +177,17 @@ definition {
 
 		JSONDocument.deleteFile(
 			dmDocumentTitle = "DM Document Title",
-			groupName = "Guest");
+			groupName = "Site Name");
 
 		JSONPublications.addPublication(publicationName = "Publication Name 2");
 
 		JSONPublications.selectPublication(publicationName = "Publication Name 2");
 
-		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
+		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "site-name");
 
 		JSONDocument.deleteFile(
 			dmDocumentTitle = "DM Document Title",
-			groupName = "Guest");
+			groupName = "Site Name");
 
 		JSONPublications.selectPublication(publicationName = "Publication Name 1");
 
@@ -190,13 +195,13 @@ definition {
 
 		Publications.viewPublicationPublished(publicationName = "Publication Name 1");
 
-		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
+		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "site-name");
 
 		DMDocument.viewDefault();
 
 		JSONPublications.selectPublication(publicationName = "Publication Name 2");
 
-		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
+		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "site-name");
 
 		DMDocument.viewDefault();
 
@@ -211,6 +216,11 @@ definition {
 
 	@priority = "5"
 	test ConflictingPublicationsAutomaticallyResolved {
+
+		// Workaround LPS-140997
+
+		property database.types = "hypersonic,mariadb,mysql,oracle,postgresql,sqlserver";
+
 		JSONWebcontent.addWebContent(
 			content = "WC WebContent Content",
 			groupName = "Guest",
@@ -276,9 +286,170 @@ definition {
 		Publications.viewPublicationPublished(publicationName = "Publication Name");
 	}
 
+	@description = "Assert explanation of addition conflict displays"
+	@priority = "4"
+	test ExplainAdditionConflict {
+		JSONWebcontent.addFolder(
+			folderName = "WC Folder Name",
+			groupName = "Guest");
+
+		JSONPublications.addPublication(publicationName = "Publication Name");
+
+		JSONPublications.selectPublication(publicationName = "Publication Name");
+
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "guest");
+
+		WebContentFolder.moveToRecycleBinCP(
+			assetType = "Web Content Folder",
+			folderName = "WC Folder Name");
+
+		RecycleBin.openRecycleBinAdmin(siteURLKey = "guest");
+
+		RecycleBin.deleteCP(
+			assetName = "WC Folder Name",
+			assetType = "Web Content Folder");
+
+		JSONPublications.publishPublication(publicationName = "Publication Name");
+
+		Publications.viewPublicationPublished(publicationName = "Publication Name");
+
+		PublicationsNavigator.openPublicationsHistory();
+
+		Publications.revertPublication(
+			publicationName = "Publication Name",
+			publishNow = "true");
+
+		AssertTextEquals.assertPartialText(
+			locator1 = "Message#SUCCESS",
+			value1 = "No unresolved conflicts, ready to publish.");
+
+		Publications.publishPublication(publicationName = "Revert \"Publication Name\"");
+
+		PublicationsNavigator.openPublicationsHistory();
+
+		ManagementBar.toggleViewOrder(order = "list-down");
+
+		Publications.revertPublication(
+			publicationName = "Publication Name",
+			publishNow = "true");
+
+		Publications.viewConflictingChangesWarning(warningMessage = "This publication contains conflicting changes that must be manually resolved before publishing.");
+
+		Publications.viewNeedsManualResolution(
+			entryTitle = "WC Folder Name",
+			warningMessage = "Addition Conflict: New item already exists.");
+	}
+
+	@description = "Assert explanation of duplicate conflict displays"
+	@priority = "4"
+	test ExplainDuplicationConflict {
+		JSONPublications.addPublication(publicationName = "Publication 1 Name");
+
+		JSONPublications.selectPublication(publicationName = "Publication 1 Name");
+
+		JSONWebcontent.addFolder(
+			folderName = "WC Folder Name",
+			groupName = "Guest");
+
+		JSONPublications.addPublication(publicationName = "Publication 2 Name");
+
+		JSONPublications.selectPublication(publicationName = "Publication 2 Name");
+
+		JSONWebcontent.addFolder(
+			folderName = "WC Folder Name",
+			groupName = "Guest");
+
+		PublicationsNavigator.gotoReviewChanges(
+			gotoPublicationsAdmin = "true",
+			publicationName = "Publication 1 Name");
+
+		PublicationsChanges.viewChanges(
+			changeCategory = "Web Content Folder",
+			changeSite = "Guest",
+			changeTitle = "WC Folder Name",
+			changeType = "Added",
+			changeUser = "Test Test");
+
+		JSONPublications.publishPublication(publicationName = "Publication 1 Name");
+
+		PublicationsNavigator.gotoReviewChanges(
+			gotoPublicationsAdmin = "true",
+			publicationName = "Publication 2 Name");
+
+		PublicationsChanges.viewChanges(
+			changeCategory = "Web Content Folder",
+			changeSite = "Guest",
+			changeTitle = "WC Folder Name",
+			changeType = "Added",
+			changeUser = "Test Test");
+
+		PublicationsNavigator.gotoPublish(publicationName = "Publication 2 Name");
+
+		Publications.viewConflictingChangesWarning(warningMessage = "This publication contains conflicting changes that must be manually resolved before publishing.");
+
+		Publications.viewNeedsManualResolution(
+			entryTitle = "WC Folder Name",
+			warningMessage = "Duplicate Folder Name: Rename the folder in the publication.");
+	}
+
+	@description = "Assert explanation of missing requirements conflict displays"
+	@priority = "4"
+	test ExplainMissingRequirementConflict {
+		JSONWebcontent.addFolder(
+			folderName = "WC Folder Name",
+			groupName = "Guest");
+
+		JSONPublications.addPublication(publicationName = "Publication Name");
+
+		JSONPublications.selectPublication(publicationName = "Publication Name");
+
+		JSONWebcontent.addFolder(
+			folderDescription = "WC SubFolder Description",
+			folderName = "WC SubFolder Name",
+			groupName = "Guest",
+			parentFolderName = "WC Folder Name");
+
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "guest");
+
+		Publications.workOnProduction();
+
+		WebContentFolder.moveToRecycleBinCP(
+			assetType = "Web Content Folder",
+			folderName = "WC Folder Name");
+
+		RecycleBin.openRecycleBinAdmin(siteURLKey = "guest");
+
+		RecycleBin.emptyCP();
+
+		JSONPublications.selectPublication(publicationName = "Publication Name");
+
+		PublicationsNavigator.gotoReviewChanges(
+			gotoPublicationsAdmin = "true",
+			publicationName = "Publication Name");
+
+		PublicationsChanges.viewChanges(
+			changeCategory = "Web Content Folder",
+			changeSite = "Guest",
+			changeTitle = "WC SubFolder Name",
+			changeType = "Added",
+			changeUser = "Test Test");
+
+		PublicationsNavigator.gotoPublish(publicationName = "Publication Name");
+
+		Publications.viewConflictingChangesWarning(warningMessage = "This publication contains conflicting changes that must be manually resolved before publishing.");
+
+		Publications.viewNeedsManualResolution(
+			entryTitle = "WC SubFolder Name",
+			warningMessage = "Missing Requirement Conflict: Cannot be added because a required Web Content Folder has been deleted.");
+	}
+
 	@description = "Assert the conflict changes disply when modifying and deleting the same document in two Publications and discard the changes"
 	@priority = "5"
 	test ResolveDeletionModificationConflictPublicationsByDiscarding {
+
+		// Workaround LPS-140997
+
+		property database.types = "hypersonic,mariadb,mysql,oracle,postgresql,sqlserver";
 		property portal.acceptance = "true";
 
 		JSONWebcontent.addWebContent(
@@ -439,6 +610,7 @@ definition {
 			warningMessage = "Duplicate Folder Name: Rename the folder in the publication.");
 
 		PublicationsChanges.gotoEditChanges(
+			changeCategory = "Documents Folder",
 			changeTitle = "DM Folder Name",
 			editInLocation = "Publication Name 2");
 

@@ -26,10 +26,10 @@ import com.liferay.commerce.product.util.comparator.CPTaxCategoryCreateDateCompa
 import com.liferay.commerce.tax.engine.fixed.web.internal.display.context.helper.CommerceTaxFixedRateRequestHelper;
 import com.liferay.commerce.tax.model.CommerceTaxMethod;
 import com.liferay.commerce.tax.service.CommerceTaxMethodService;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -138,13 +138,12 @@ public class BaseCommerceTaxFixedRateDisplayContext {
 				commerceChannel.getCompanyId(),
 				commerceChannel.getCommerceCurrencyCode());
 
-		String localizedPercentage = percentageFormatter.getLocalizedPercentage(
-			locale, commerceCurrency.getMaxFractionDigits(),
-			commerceCurrency.getMinFractionDigits(),
-			new BigDecimal(percentage));
-
 		return StringUtil.removeSubstring(
-			localizedPercentage, StringPool.PERCENT);
+			percentageFormatter.getLocalizedPercentage(
+				locale, commerceCurrency.getMaxFractionDigits(),
+				commerceCurrency.getMinFractionDigits(),
+				new BigDecimal(percentage)),
+			StringPool.PERCENT);
 	}
 
 	public String getLocalizedRate(
@@ -230,13 +229,11 @@ public class BaseCommerceTaxFixedRateDisplayContext {
 	}
 
 	public boolean hasUpdateCommerceChannelPermission() throws PortalException {
-		CommerceChannel commerceChannel =
-			commerceChannelLocalService.getCommerceChannel(
-				getCommerceChannelId());
-
 		return modelResourcePermission.contains(
 			commerceTaxFixedRateRequestHelper.getPermissionChecker(),
-			commerceChannel, ActionKeys.UPDATE);
+			commerceChannelLocalService.getCommerceChannel(
+				getCommerceChannelId()),
+			ActionKeys.UPDATE);
 	}
 
 	protected final CommerceChannelLocalService commerceChannelLocalService;

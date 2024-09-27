@@ -29,7 +29,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Carolina Barbosa
  */
-@Component(immediate = true, service = {})
+@Component(service = {})
 public class ObjectFieldSearchRegistrar {
 
 	@Activate
@@ -40,6 +40,8 @@ public class ObjectFieldSearchRegistrar {
 				modelSearchDefinition.setDefaultSelectedFieldNames(
 					Field.COMPANY_ID, Field.ENTRY_CLASS_NAME,
 					Field.ENTRY_CLASS_PK, Field.NAME, Field.UID);
+				modelSearchDefinition.setDefaultSelectedLocalizedFieldNames(
+					"label");
 				modelSearchDefinition.setModelIndexWriteContributor(
 					_modelIndexWriterContributor);
 			});

@@ -21,8 +21,11 @@ import com.liferay.frontend.js.module.launcher.JSModuleResolver;
 import com.liferay.frontend.taglib.internal.util.ServicesProvider;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.frontend.icons.FrontendIconsUtil;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONSerializer;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.taglib.aui.ScriptData;
 import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -149,6 +152,10 @@ public class ComponentTag extends ParamAndPropertyAncestorTagImpl {
 			JSModuleResolver jsModuleResolver =
 				ServicesProvider.getJSModuleResolver();
 
+			if (_log.isDebugEnabled()) {
+				_log.debug(unsupportedOperationException);
+			}
+
 			return jsModuleResolver.resolveModule(servletContext, null);
 		}
 	}
@@ -230,8 +237,7 @@ public class ComponentTag extends ParamAndPropertyAncestorTagImpl {
 				).put(
 					"namespace", portletDisplay.getNamespace()
 				).put(
-					"spritemap",
-					themeDisplay.getPathThemeImages() + "/clay/icons.svg"
+					"spritemap", FrontendIconsUtil.getSpritemap(themeDisplay)
 				).build()));
 
 		String containerId = getContainerId();
@@ -322,6 +328,8 @@ public class ComponentTag extends ParamAndPropertyAncestorTagImpl {
 	private static final char[] _UNSAFE_MODULE_NAME_CHARS = {
 		CharPool.PERIOD, CharPool.DASH
 	};
+
+	private static final Log _log = LogFactoryUtil.getLog(ComponentTag.class);
 
 	private String _componentId;
 	private String _containerId;

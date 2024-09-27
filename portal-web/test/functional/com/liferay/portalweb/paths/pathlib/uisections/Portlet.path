@@ -97,7 +97,7 @@
 </tr>
 <tr>
 	<td>OPTIONS_ICON</td>
-	<td>//div[@id='main-content']//div[contains(@class,'portlet-options')]/a</td>
+	<td>//div[@id='main-content']//button[*//*[name()='svg'][contains(@class,'icon-ellipsis-v')]]</td>
 	<td></td>
 </tr>
 <tr>
@@ -113,6 +113,11 @@
 <tr>
 	<td>PORTLET_CONTENT</td>
 	<td>//section[@id='content']//div[contains(@class,'portlet-content')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>PORTLET_SELECTOR</td>
+	<td>//section[contains(.,'${key_portletName}')]//div[@class='portlet-body']//a[contains(@onclick,'portletSelector')][normalize-space(text())='${key_text}']</td>
 	<td></td>
 </tr>
 <tr>
@@ -137,12 +142,17 @@
 </tr>
 <tr>
 	<td>SPECIFIC_BORDERLESS_ELLIPSIS_ICON</td>
-	<td>//header[contains(@class,'portlet-topper') and contains(.,'${key_portletName}')]//div[contains(@class,'portlet-options')]/a</td>
+	<td>//header[contains(@class,'portlet-topper') and contains(.,'${key_portletName}')]//button[*//*[name()='svg'][contains(@class,'icon-ellipsis-v')]]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>SPECIFIC_BORDERLESS_ELLIPSIS_ICON_INDEX</td>
+	<td>xpath=(//header[contains(@class,'portlet-topper') and contains(.,'${key_portletName}')])[${portletIndex}]//button[*//*[name()='svg'][contains(@class,'icon-ellipsis-v')]]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>SPECIFIC_ELLIPSIS_ICON</td>
-	<td>//div[@id='main-content']//header[contains(.,'${key_portletName}')]//menu/div[contains(@class,'portlet-options')]/a</td>
+	<td>//div[@id='main-content']//header[contains(.,'${key_portletName}')]//button[*//*[name()='svg'][contains(@class,'icon-ellipsis-v')]]</td>
 	<td></td>
 </tr>
 <tr>
@@ -167,9 +177,23 @@
 </tr>
 <tr>
 	<td>TITLE</td>
-	<td>//h2[contains(@class,'portlet-title') and contains(.,'${key_portletName}')] | //h1[contains(text(), '${key_portletName}')]</td>
+	<td>//h2[contains(@class,'portlet-title') and contains(.,'${key_portletName}')]</td>
 	<td></td>
 </tr>
+
+<!--PORTLET_SECTION-->
+
+<tr>
+	<td>PORTLET_SECTION</td>
+	<td>//div[@id='main-content']//section[contains(@id,'portlet')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>SPECIFIC_PORTLET_SECTION</td>
+	<td>//section[contains(@id,'portlet')][*//div[contains(@class,'portlet-title')][contains(.,'${key_portletName}')]]</td>
+	<td></td>
+</tr>
+
 </tbody>
 </table>
 </body>

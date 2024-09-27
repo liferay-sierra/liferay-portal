@@ -154,8 +154,8 @@ definition {
 
 		Translations.viewTargetFields(
 			webContentContent = "Contenido de WC",
-			webContentDescription = "Descripción de WC",
-			webContentTitle = "Título WC");
+			webContentDescription = "Descripción del WC",
+			webContentTitle = "Título del WC");
 
 		PortletEntry.publish();
 
@@ -168,8 +168,8 @@ definition {
 
 		Translations.viewTargetFields(
 			webContentContent = "Contenido de WC",
-			webContentDescription = "Descripción de WC",
-			webContentTitle = "Título WC");
+			webContentDescription = "Descripción del WC",
+			webContentTitle = "Título del WC");
 	}
 
 	@description = "This ensures that the web content title can be translated independently"

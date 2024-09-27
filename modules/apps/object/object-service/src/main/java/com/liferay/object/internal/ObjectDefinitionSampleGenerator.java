@@ -16,11 +16,12 @@ package com.liferay.object.internal;
 
 import com.liferay.application.list.constants.PanelCategoryKeys;
 import com.liferay.object.constants.ObjectDefinitionConstants;
+import com.liferay.object.constants.ObjectFieldConstants;
+import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.util.LocalizedMapUtil;
-import com.liferay.object.util.ObjectFieldUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
@@ -51,7 +52,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Brian Wing Shun Chan
  * @review
  */
-@Component(enabled = false, immediate = true, service = {})
+@Component(enabled = false, service = {})
 public class ObjectDefinitionSampleGenerator {
 
 	@Activate
@@ -91,37 +92,48 @@ public class ObjectDefinitionSampleGenerator {
 				PanelCategoryKeys.CONTROL_PANEL_SITES,
 				LocalizedMapUtil.getLocalizedMap("Sample Object Definitions"),
 				ObjectDefinitionConstants.SCOPE_COMPANY,
+				ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT,
 				Arrays.asList(
 					ObjectFieldUtil.createObjectField(
-						"LongInteger", "Long", true, false, null, "Able",
-						"able", false),
+						ObjectFieldConstants.BUSINESS_TYPE_LONG_INTEGER,
+						ObjectFieldConstants.DB_TYPE_LONG, true, false, null,
+						"Able", "able", false),
 					ObjectFieldUtil.createObjectField(
-						"Boolean", "Boolean", true, false, null, "Baker",
-						"baker", false),
+						ObjectFieldConstants.BUSINESS_TYPE_BOOLEAN,
+						ObjectFieldConstants.DB_TYPE_BOOLEAN, true, false, null,
+						"Baker", "baker", false),
 					ObjectFieldUtil.createObjectField(
-						"Date", "Date", true, false, null, "Charlie", "charlie",
-						false),
+						ObjectFieldConstants.BUSINESS_TYPE_DATE,
+						ObjectFieldConstants.DB_TYPE_DATE, true, false, null,
+						"Charlie", "charlie", false),
 					ObjectFieldUtil.createObjectField(
-						"Text", "String", true, false, null, "Dog", "dog",
-						false),
+						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+						ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
+						"Dog", "dog", false),
 					ObjectFieldUtil.createObjectField(
-						0, "Text", null, "String", true, true, null, "Easy",
-						"easy", false),
+						0, ObjectFieldConstants.BUSINESS_TYPE_TEXT, null,
+						ObjectFieldConstants.DB_TYPE_STRING, true, true, null,
+						"Easy", "easy", false, false),
 					ObjectFieldUtil.createObjectField(
-						0, "Text", null, "String", true, false, "en_US", "Fox",
-						"fox", false),
+						0, ObjectFieldConstants.BUSINESS_TYPE_TEXT, null,
+						ObjectFieldConstants.DB_TYPE_STRING, true, false,
+						"en_US", "Fox", "fox", false, false),
 					ObjectFieldUtil.createObjectField(
-						0, "Text", null, "String", false, false, null, "George",
-						"george", false),
+						0, ObjectFieldConstants.BUSINESS_TYPE_TEXT, null,
+						ObjectFieldConstants.DB_TYPE_STRING, false, false, null,
+						"George", "george", false, false),
 					ObjectFieldUtil.createObjectField(
-						"Decimal", "Double", true, false, null, "How", "how",
-						false),
+						ObjectFieldConstants.BUSINESS_TYPE_DECIMAL,
+						ObjectFieldConstants.DB_TYPE_DOUBLE, true, false, null,
+						"How", "how", false),
 					ObjectFieldUtil.createObjectField(
-						"Integer", "Integer", true, false, null, "Item", "item",
-						false),
+						ObjectFieldConstants.BUSINESS_TYPE_INTEGER,
+						ObjectFieldConstants.DB_TYPE_INTEGER, true, false, null,
+						"Item", "item", false),
 					ObjectFieldUtil.createObjectField(
-						"PrecisionDecimal", "BigDecimal", true, false, null,
-						"Jig", "jig", false)));
+						ObjectFieldConstants.BUSINESS_TYPE_PRECISION_DECIMAL,
+						ObjectFieldConstants.DB_TYPE_BIG_DECIMAL, true, false,
+						null, "Jig", "jig", false)));
 
 		objectDefinition =
 			_objectDefinitionLocalService.publishCustomObjectDefinition(

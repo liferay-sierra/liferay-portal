@@ -22,7 +22,6 @@ import com.liferay.asset.list.model.AssetListEntry;
 import com.liferay.asset.util.AssetHelper;
 import com.liferay.asset.util.AssetPublisherAddItemHolder;
 import com.liferay.layout.content.page.editor.constants.ContentPageEditorPortletKeys;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.model.PortletPreferencesIds;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
@@ -31,11 +30,12 @@ import com.liferay.portal.kernel.portlet.LiferayRenderRequest;
 import com.liferay.portal.kernel.portlet.PortletConfigFactoryUtil;
 import com.liferay.portal.kernel.portlet.PortletInstanceFactoryUtil;
 import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.PortletLocalService;
 import com.liferay.portal.kernel.service.PortletPreferencesLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
-import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -64,7 +64,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Jürgen Kappler
  */
-@Component(immediate = true, service = {})
+@Component(service = {})
 public class AssetHelperUtil {
 
 	public static List<AssetPublisherAddItemHolder>
@@ -74,14 +74,13 @@ public class AssetHelperUtil {
 				HttpServletResponse httpServletResponse)
 		throws Exception {
 
-		long[] segmentsEntryIds = _segmentsEntryRetriever.getSegmentsEntryIds(
-			_portal.getScopeGroupId(httpServletRequest),
-			_portal.getUserId(httpServletRequest),
-			_requestContextMapper.map(httpServletRequest));
-
 		AssetEntryQuery assetEntryQuery =
 			_assetListAssetEntryProvider.getAssetEntryQuery(
-				assetListEntry, segmentsEntryIds);
+				assetListEntry,
+				_segmentsEntryRetriever.getSegmentsEntryIds(
+					_portal.getScopeGroupId(httpServletRequest),
+					_portal.getUserId(httpServletRequest),
+					_requestContextMapper.map(httpServletRequest)));
 
 		long[] allTagIds = assetEntryQuery.getAllTagIds();
 
@@ -217,12 +216,12 @@ public class AssetHelperUtil {
 			ThemeDisplay themeDisplay)
 		throws Exception {
 
-		String currentURL = HttpUtil.addParameter(
+		String currentURL = HttpComponentsUtil.addParameter(
 			_portal.getLayoutRelativeURL(
 				themeDisplay.getLayout(), themeDisplay),
 			"p_l_mode", Constants.EDIT);
 
-		return HttpUtil.addParameter(
+		return HttpComponentsUtil.addParameter(
 			PortletURLBuilder.create(
 				PortalUtil.getControlPanelPortletURL(
 					httpServletRequest,

@@ -59,62 +59,6 @@ definition {
 			locator1 = "AP#ASSET_ABSTRACT_TITLE");
 	}
 
-	macro configureAddSiteScopes {
-		AssetPublisherPortlet.gotoConfigurationPG();
-
-		Navigator.gotoNavTab(navTab = "Asset Selection");
-
-		Panel.expandPanel(panel = "Scope");
-
-		if (isSet(globalSite)) {
-			Click(locator1 = "Configuration#SCOPE_SELECT");
-
-			MenuItem.click(menuItem = "Global");
-		}
-
-		if (isSet(otherSite)) {
-			Click(locator1 = "Configuration#SCOPE_SELECT");
-
-			MenuItem.click(menuItem = "Other Site or Asset Library...");
-
-			SelectFrame(value1 = "relative=top");
-
-			SelectFrame(locator1 = "IFrame#SELECT_SITES");
-
-			Navigator.gotoNavTab(navTab = "Sites That I Administer");
-
-			SiteSelector.selectSite(site = "${otherSite}");
-		}
-
-		if (isSet(depotName)) {
-			Click(locator1 = "Configuration#SCOPE_SELECT");
-
-			MenuItem.click(menuItem = "Other Site or Asset Library...");
-
-			SelectFrame(value1 = "relative=top");
-
-			SelectFrame(locator1 = "IFrame#SELECT_SITES");
-
-			Navigator.gotoNavTab(navTab = "Asset Libraries");
-
-			Click(
-				key_card = "${depotName}",
-				locator1 = "Card#CARD_TITLE");
-		}
-
-		if (isSet(defaultSite)) {
-			Click(locator1 = "Configuration#SCOPE_SELECT");
-
-			MenuItem.click(menuItem = "Current Site");
-		}
-
-		SelectFrameTop();
-
-		SelectFrame(locator1 = "IFrame#MODAL_BODY");
-
-		Alert.viewSuccessMessage();
-	}
-
 	macro configureAPSelectMoreThanOnePG {
 		AssetPublisherPortlet.gotoConfigurationPG(portletName = "${portletName}");
 
@@ -155,11 +99,20 @@ definition {
 
 		var key_sortOrder = "${sortOrder}";
 
-		if (isSet(sortOrder) && (IsVisible(locator1 = "APConfiguration#ORDERING_AND_GROUPING_ORDER_DIRECTIONAL_ICON"))) {
-			Click(locator1 = "APConfiguration#ORDERING_AND_GROUPING_ORDER_DIRECTIONAL_ICON");
+		if (isSet(sortOrder) && (IsNotVisible(locator1 = "APConfiguration#ORDERING_AND_GROUPING_ORDER_DIRECTIONAL_ICON"))) {
+			if ("${sortOrder}" == "Ascending") {
+				Click(
+					key_sortOrder = "Descending",
+					locator1 = "APConfiguration#ORDERING_AND_GROUPING_ORDER_DIRECTIONAL_ICON");
+			}
+			else {
+				Click(
+					key_sortOrder = "Ascending",
+					locator1 = "APConfiguration#ORDERING_AND_GROUPING_ORDER_DIRECTIONAL_ICON");
+			}
 		}
 
-		AssertNotVisible(locator1 = "APConfiguration#ORDERING_AND_GROUPING_ORDER_DIRECTIONAL_ICON");
+		AssertVisible(locator1 = "APConfiguration#ORDERING_AND_GROUPING_ORDER_DIRECTIONAL_ICON");
 
 		PortletEntry.save();
 	}
@@ -253,7 +206,9 @@ definition {
 
 		AssetCategorization.gotoSelectCategory();
 
-		Portlet.selectTreeNode(nodeName = "${categoryName}");
+		Check.checkNotVisible(
+			key_nodeName = "${categoryName}",
+			locator1 = "Treeview#NODE_CHECKBOX");
 
 		SelectFrameTop();
 
@@ -308,9 +263,11 @@ definition {
 
 		Panel.expandPanel(panel = "Asset Selection");
 
-		Click(locator1 = "APConfiguration#ASSET_SELECTION_ASSET_LIST");
+		if (IsNotChecked(locator1 = "APConfiguration#ASSET_SELECTION_ASSET_LIST")) {
+			Check(locator1 = "APConfiguration#ASSET_SELECTION_ASSET_LIST");
 
-		Alert.viewSuccessMessage();
+			Alert.viewSuccessMessage();
+		}
 
 		Panel.expandPanel(panel = "Select Collection");
 
@@ -404,6 +361,23 @@ definition {
 		PortletEntry.save();
 
 		SelectFrame(value1 = "relative=top");
+	}
+
+	macro configureDynamicAssetSelectionPG {
+		if (IsElementPresent(key_portletName = "${portletName}", key_text = "Select a collection to make it visible.", locator1 = "Portlet#PORTLET_SELECTOR")) {
+			AssetPublisherPortlet.gotoSelectCollection(portletName = "${portletName}");
+		}
+		else {
+			AssetPublisherPortlet.gotoConfigurationPG(portletName = "${portletName}");
+		}
+
+		Navigator.gotoNavTab(navTab = "Asset Selection");
+
+		Click(locator1 = "APConfiguration#ASSET_SELECTION_DYNAMIC");
+
+		Alert.viewSuccessMessage();
+
+		IFrame.closeFrame();
 	}
 
 	macro configureFilterByFieldPG {
@@ -567,7 +541,7 @@ definition {
 	}
 
 	macro configurePaginationPG {
-		AssetPublisherPortlet.gotoConfigurationPG();
+		AssetPublisherPortlet.gotoConfigurationPG(portletIndex = "${portletIndex}");
 
 		Navigator.gotoNavTab(navTab = "Display Settings");
 
@@ -580,6 +554,60 @@ definition {
 			value1 = "${paginationType}");
 
 		PortletEntry.save();
+	}
+
+	macro configureScope {
+		AssetPublisherPortlet.gotoConfigurationPG();
+
+		Navigator.gotoNavTab(navTab = "Asset Selection");
+
+		Panel.expandPanel(panel = "Scope");
+
+		Click(locator1 = "Configuration#SCOPE_SELECT");
+
+		if (isSet(globalSite)) {
+			MenuItem.click(menuItem = "Global");
+		}
+
+		if (isSet(otherSite)) {
+			MenuItem.click(menuItem = "Other Site or Asset Library...");
+
+			SelectFrame(value1 = "relative=top");
+
+			SelectFrame(locator1 = "IFrame#SELECT_SITES");
+
+			Navigator.gotoNavTab(navTab = "Sites That I Administer");
+
+			SiteSelector.selectSite(site = "${otherSite}");
+		}
+
+		if (isSet(depotName)) {
+			MenuItem.click(menuItem = "Other Site or Asset Library...");
+
+			SelectFrame(value1 = "relative=top");
+
+			SelectFrame(locator1 = "IFrame#SELECT_SITES");
+
+			Navigator.gotoNavTab(navTab = "Asset Libraries");
+
+			Click(
+				key_card = "${depotName}",
+				locator1 = "Card#CARD_TITLE");
+		}
+
+		if (isSet(defaultSite)) {
+			MenuItem.click(menuItem = "Current Site");
+		}
+
+		if (isSet(pageName)) {
+			MenuItem.click(menuItem = "Current Page (${pageName})");
+		}
+
+		SelectFrameTop();
+
+		SelectFrame(locator1 = "IFrame#MODAL_BODY");
+
+		Alert.viewSuccessMessage();
 	}
 
 	macro configureSelectedPG {
@@ -690,10 +718,6 @@ definition {
 			AssertTextEquals(
 				locator1 = "APConfigurationSites#SITES_TABLE_NAME",
 				value1 = "${siteName}");
-
-			AssertTextEquals(
-				locator1 = "APConfigurationSites#SITES_TABLE_TYPE",
-				value1 = "${siteScopeType}");
 
 			Click(locator1 = "SitesSelectSite#SITES_TABLE_CHOOSE_SITE_LINK");
 
@@ -824,8 +848,10 @@ definition {
 
 		AssetCategorization.gotoSelectCategory();
 
-		for (var categoryName : list "${categoryNames}") {
-			Portlet.selectTreeNode(nodeName = "${categoryName}");
+		for (var categoryName : list "${categoryNameList}") {
+			Check.checkNotVisible(
+				key_nodeName = "${categoryName}",
+				locator1 = "Treeview#NODE_CHECKBOX");
 		}
 
 		SelectFrameTop();
@@ -890,6 +916,7 @@ definition {
 		WaitForLiferayEvent.initializeLiferayEventLog();
 
 		Portlet.gotoPortletOptions(
+			portletIndex = "${portletIndex}",
 			portletName = "${portletName}",
 			portletOption = "Configuration");
 
@@ -908,10 +935,25 @@ definition {
 		MenuItem.click(menuItem = "Edit");
 	}
 
-	macro gotoViewInContext {
-		AssertClick(
-			locator1 = "Link#VIEW_IN_CONTEXT",
-			value1 = "View in Context »");
+	macro gotoSelectCollection {
+		if (!(isSet(portletName))) {
+			var portletName = "Asset Publisher";
+		}
+
+		WaitForLiferayEvent.initializeLiferayEventLog();
+
+		Click(
+			key_portletName = "${portletName}",
+			key_text = "Select a collection to make it visible.",
+			locator1 = "Portlet#PORTLET_SELECTOR");
+
+		SelectFrame(locator1 = "IFrame#MODAL_BODY");
+	}
+
+	macro gotoViewOnNewPage {
+		Click(
+			key_text = "View in Context »",
+			locator1 = "Link#ANY");
 	}
 
 	macro removeSiteScope {
@@ -975,21 +1017,29 @@ definition {
 	}
 
 	macro selectAssetList {
-		Portlet.gotoPortletOptions(
-			portletName = "Asset Publisher",
-			portletOption = "Configuration");
+		if (IsElementPresent(key_tab = "Asset Selection", locator1 = "NavTab#TAB_LINK")) {
+			Navigator.gotoNavTab(navTab = "Asset Selection");
+		}
+		else {
+			if (IsElementPresent(key_portletName = "Asset Publisher", key_text = "Select a collection to make it visible.", locator1 = "Portlet#PORTLET_SELECTOR")) {
+				AssetPublisherPortlet.gotoSelectCollection();
+			}
+			else {
+				AssetPublisherPortlet.gotoConfigurationPG();
+			}
+
+			Navigator.gotoNavTab(navTab = "Asset Selection");
+		}
 
 		var key_title = "${assetListName}";
 
-		SelectFrame(locator1 = "IFrame#MODAL_BODY");
-
-		Navigator.gotoNavTab(navTab = "Asset Selection");
-
 		Panel.expandPanel(panel = "Asset Selection");
 
-		Click(locator1 = "APConfiguration#ASSET_SELECTION_ASSET_LIST");
+		if (IsNotChecked(locator1 = "APConfiguration#ASSET_SELECTION_ASSET_LIST")) {
+			Check(locator1 = "APConfiguration#ASSET_SELECTION_ASSET_LIST");
 
-		Alert.viewSuccessMessage();
+			Alert.viewSuccessMessage();
+		}
 
 		Panel.expandPanel(panel = "Select Collection");
 
@@ -1079,6 +1129,12 @@ definition {
 			AssertTextEquals.assertPartialText(
 				locator1 = "AP#ASSET_ABSTRACT_DETAIL_CONTENT",
 				value1 = "${assetContent}");
+
+			if (isSet(imageThumbnailName)) {
+				AssertVisible(
+					key_thumbnailName = "${imageThumbnailName}",
+					locator1 = "AP#ASSET_ABSTRACT_DETAIL_IMAGE_THUMBNAIL");
+			}
 		}
 	}
 
@@ -1176,8 +1232,8 @@ definition {
 		AssertElementNotPresent(locator1 = "Link#READ_MORE");
 
 		AssertVisible(
-			locator1 = "Link#VIEW_IN_CONTEXT",
-			value1 = "View in Context »");
+			key_text = "View on New Page »",
+			locator1 = "Link#ANY");
 
 		AssertVisible(
 			key_text = "${url}",
@@ -1281,10 +1337,6 @@ definition {
 			AssertTextEquals(
 				locator1 = "APConfigurationSites#SITES_TABLE_NAME",
 				value1 = "${liferaySiteName}");
-
-			AssertTextEquals(
-				locator1 = "APConfigurationSites#SITES_TABLE_TYPE",
-				value1 = "${liferaySiteType}");
 
 			AssertElementPresent(locator1 = "SitesSelectSite#SITES_TABLE_CHOOSE_SITE_LINK");
 		}

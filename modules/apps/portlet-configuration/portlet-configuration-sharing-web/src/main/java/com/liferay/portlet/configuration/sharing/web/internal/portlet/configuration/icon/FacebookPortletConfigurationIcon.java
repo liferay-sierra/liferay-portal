@@ -15,23 +15,21 @@
 package com.liferay.portlet.configuration.sharing.web.internal.portlet.configuration.icon;
 
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.configuration.icon.BasePortletConfigurationIcon;
 import com.liferay.portal.kernel.portlet.configuration.icon.PortletConfigurationIcon;
 import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-
-import java.util.ResourceBundle;
 
 import javax.portlet.PortletPreferences;
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletResponse;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Eudaldo Alonso
@@ -42,15 +40,7 @@ public class FacebookPortletConfigurationIcon
 
 	@Override
 	public String getMessage(PortletRequest portletRequest) {
-		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-			"content.Language", getLocale(portletRequest), getClass());
-
-		return LanguageUtil.get(resourceBundle, "add-to-facebook");
-	}
-
-	@Override
-	public String getMethod() {
-		return "get";
+		return _language.get(getLocale(portletRequest), "add-to-facebook");
 	}
 
 	@Override
@@ -74,11 +64,6 @@ public class FacebookPortletConfigurationIcon
 	@Override
 	public double getWeight() {
 		return 4.0;
-	}
-
-	@Override
-	public boolean isLabel() {
-		return true;
 	}
 
 	@Override
@@ -109,5 +94,8 @@ public class FacebookPortletConfigurationIcon
 
 		return false;
 	}
+
+	@Reference
+	private Language _language;
 
 }

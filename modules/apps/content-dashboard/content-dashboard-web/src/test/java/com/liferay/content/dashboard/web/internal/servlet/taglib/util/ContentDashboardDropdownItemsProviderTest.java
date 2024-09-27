@@ -16,13 +16,13 @@ package com.liferay.content.dashboard.web.internal.servlet.taglib.util;
 
 import com.liferay.asset.kernel.model.AssetCategory;
 import com.liferay.asset.kernel.model.AssetTag;
+import com.liferay.content.dashboard.item.ContentDashboardItem;
+import com.liferay.content.dashboard.item.ContentDashboardItemVersion;
 import com.liferay.content.dashboard.item.action.ContentDashboardItemAction;
-import com.liferay.content.dashboard.web.internal.item.ContentDashboardItem;
-import com.liferay.content.dashboard.web.internal.item.type.ContentDashboardItemSubtype;
+import com.liferay.content.dashboard.item.type.ContentDashboardItemSubtype;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.info.item.InfoItemReference;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletRenderRequest;
@@ -30,14 +30,12 @@ import com.liferay.portal.kernel.test.portlet.MockLiferayPortletRenderResponse;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletURL;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.language.LanguageImpl;
 import com.liferay.portal.language.LanguageResources;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
-import com.liferay.portal.util.HttpImpl;
 import com.liferay.portal.util.PortalImpl;
 
 import java.util.Collections;
@@ -67,8 +65,6 @@ public class ContentDashboardDropdownItemsProviderTest {
 
 	@BeforeClass
 	public static void setUpClass() {
-		_http = new HttpImpl();
-
 		_language = new LanguageImpl();
 
 		LanguageResources languageResources = new LanguageResources();
@@ -90,25 +86,23 @@ public class ContentDashboardDropdownItemsProviderTest {
 			new MockLiferayPortletRenderRequest();
 
 		mockLiferayPortletRenderRequest.setAttribute(
-			"null-" + WebKeys.CURRENT_PORTLET_URL, new MockLiferayPortletURL());
-
-		mockLiferayPortletRenderRequest.setAttribute(
 			WebKeys.LOCALE, LocaleUtil.US);
+		mockLiferayPortletRenderRequest.setAttribute(
+			"null-" + WebKeys.CURRENT_PORTLET_URL, new MockLiferayPortletURL());
 
 		ContentDashboardDropdownItemsProvider
 			contentDashboardDropdownItemsProvider =
 				new ContentDashboardDropdownItemsProvider(
-					_http, _language, mockLiferayPortletRenderRequest,
+					_language, mockLiferayPortletRenderRequest,
 					new MockLiferayPortletRenderResponse(), new PortalImpl());
-
-		ContentDashboardItem contentDashboardItem = _getContentDashboardItem(
-			Collections.singletonList(
-				_getContentDashboardItemAction(
-					"edit", ContentDashboardItemAction.Type.EDIT, "validURL")));
 
 		List<DropdownItem> dropdownItems =
 			contentDashboardDropdownItemsProvider.getDropdownItems(
-				contentDashboardItem);
+				_getContentDashboardItem(
+					Collections.singletonList(
+						_getContentDashboardItemAction(
+							"edit", ContentDashboardItemAction.Type.EDIT,
+							"validURL"))));
 
 		Stream<DropdownItem> stream = dropdownItems.stream();
 
@@ -121,8 +115,7 @@ public class ContentDashboardDropdownItemsProviderTest {
 		);
 
 		Assert.assertEquals(
-			"validURL",
-			_http.getPath(String.valueOf(editDropdownItem.get("href"))));
+			"validURL", String.valueOf(editDropdownItem.get("href")));
 	}
 
 	@Test
@@ -131,27 +124,24 @@ public class ContentDashboardDropdownItemsProviderTest {
 			new MockLiferayPortletRenderRequest();
 
 		mockLiferayPortletRenderRequest.setAttribute(
-			"null-" + WebKeys.CURRENT_PORTLET_URL, new MockLiferayPortletURL());
-
-		mockLiferayPortletRenderRequest.setAttribute(
 			WebKeys.LOCALE, LocaleUtil.US);
+		mockLiferayPortletRenderRequest.setAttribute(
+			"null-" + WebKeys.CURRENT_PORTLET_URL, new MockLiferayPortletURL());
 
 		ContentDashboardDropdownItemsProvider
 			contentDashboardDropdownItemsProvider =
 				new ContentDashboardDropdownItemsProvider(
-					_http, _language, mockLiferayPortletRenderRequest,
+					_language, mockLiferayPortletRenderRequest,
 					new MockLiferayPortletRenderResponse(), new PortalImpl());
-
-		ContentDashboardItem contentDashboardItem = _getContentDashboardItem(
-			Collections.singletonList(
-				_getContentDashboardItemAction(
-					"viewInPanel",
-					ContentDashboardItemAction.Type.VIEW_IN_PANEL,
-					"validURL")));
 
 		List<DropdownItem> dropdownItems =
 			contentDashboardDropdownItemsProvider.getDropdownItems(
-				contentDashboardItem);
+				_getContentDashboardItem(
+					Collections.singletonList(
+						_getContentDashboardItemAction(
+							"viewInPanel",
+							ContentDashboardItemAction.Type.VIEW_IN_PANEL,
+							"validURL"))));
 
 		Stream<DropdownItem> stream = dropdownItems.stream();
 
@@ -176,25 +166,23 @@ public class ContentDashboardDropdownItemsProviderTest {
 			new MockLiferayPortletRenderRequest();
 
 		mockLiferayPortletRenderRequest.setAttribute(
-			"null-" + WebKeys.CURRENT_PORTLET_URL, new MockLiferayPortletURL());
-
-		mockLiferayPortletRenderRequest.setAttribute(
 			WebKeys.LOCALE, LocaleUtil.US);
+		mockLiferayPortletRenderRequest.setAttribute(
+			"null-" + WebKeys.CURRENT_PORTLET_URL, new MockLiferayPortletURL());
 
 		ContentDashboardDropdownItemsProvider
 			contentDashboardDropdownItemsProvider =
 				new ContentDashboardDropdownItemsProvider(
-					_http, _language, mockLiferayPortletRenderRequest,
+					_language, mockLiferayPortletRenderRequest,
 					new MockLiferayPortletRenderResponse(), new PortalImpl());
-
-		ContentDashboardItem contentDashboardItem = _getContentDashboardItem(
-			Collections.singletonList(
-				_getContentDashboardItemAction(
-					"view", ContentDashboardItemAction.Type.VIEW, "validURL")));
 
 		List<DropdownItem> dropdownItems =
 			contentDashboardDropdownItemsProvider.getDropdownItems(
-				contentDashboardItem);
+				_getContentDashboardItem(
+					Collections.singletonList(
+						_getContentDashboardItemAction(
+							"view", ContentDashboardItemAction.Type.VIEW,
+							"validURL"))));
 
 		Stream<DropdownItem> stream = dropdownItems.stream();
 
@@ -207,8 +195,7 @@ public class ContentDashboardDropdownItemsProviderTest {
 		);
 
 		Assert.assertEquals(
-			"validURL",
-			_http.getPath(String.valueOf(viewDropdownItem.get("href"))));
+			"validURL", String.valueOf(viewDropdownItem.get("href")));
 	}
 
 	private ContentDashboardItem _getContentDashboardItem(
@@ -266,11 +253,6 @@ public class ContentDashboardDropdownItemsProviderTest {
 			}
 
 			@Override
-			public Map<String, Object> getData(Locale locale) {
-				return null;
-			}
-
-			@Override
 			public ContentDashboardItemAction
 				getDefaultContentDashboardItemAction(
 					HttpServletRequest httpServletRequest) {
@@ -301,6 +283,13 @@ public class ContentDashboardDropdownItemsProviderTest {
 			}
 
 			@Override
+			public List<ContentDashboardItemVersion>
+				getLatestContentDashboardItemVersions(Locale locale) {
+
+				return null;
+			}
+
+			@Override
 			public Date getModifiedDate() {
 				return null;
 			}
@@ -311,8 +300,8 @@ public class ContentDashboardDropdownItemsProviderTest {
 			}
 
 			@Override
-			public JSONObject getSpecificInformationJSONObject(Locale locale) {
-				return null;
+			public Map<String, Object> getSpecificInformation(Locale locale) {
+				return Collections.emptyMap();
 			}
 
 			@Override
@@ -333,11 +322,6 @@ public class ContentDashboardDropdownItemsProviderTest {
 			@Override
 			public String getUserName() {
 				return RandomTestUtil.randomString();
-			}
-
-			@Override
-			public List<Version> getVersions(Locale locale) {
-				return null;
 			}
 
 			@Override
@@ -386,7 +370,6 @@ public class ContentDashboardDropdownItemsProviderTest {
 		};
 	}
 
-	private static Http _http;
 	private static Language _language;
 
 }

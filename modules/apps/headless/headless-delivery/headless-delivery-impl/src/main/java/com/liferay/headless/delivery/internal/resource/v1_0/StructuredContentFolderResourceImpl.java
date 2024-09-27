@@ -17,11 +17,11 @@ package com.liferay.headless.delivery.internal.resource.v1_0;
 import com.liferay.dynamic.data.mapping.util.DDMIndexer;
 import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
 import com.liferay.expando.kernel.service.ExpandoTableLocalService;
+import com.liferay.headless.common.spi.odata.entity.EntityFieldsUtil;
 import com.liferay.headless.common.spi.service.context.ServiceContextRequestUtil;
 import com.liferay.headless.delivery.dto.v1_0.StructuredContentFolder;
 import com.liferay.headless.delivery.dto.v1_0.util.CustomFieldsUtil;
 import com.liferay.headless.delivery.internal.dto.v1_0.converter.StructuredContentFolderDTOConverter;
-import com.liferay.headless.delivery.internal.dto.v1_0.util.EntityFieldsUtil;
 import com.liferay.headless.delivery.internal.odata.entity.v1_0.StructuredContentFolderEntityModel;
 import com.liferay.headless.delivery.resource.v1_0.StructuredContentFolderResource;
 import com.liferay.headless.delivery.search.aggregation.AggregationUtil;
@@ -30,6 +30,7 @@ import com.liferay.headless.delivery.search.sort.SortUtil;
 import com.liferay.journal.constants.JournalConstants;
 import com.liferay.journal.constants.JournalFolderConstants;
 import com.liferay.journal.model.JournalFolder;
+import com.liferay.journal.service.JournalFolderLocalService;
 import com.liferay.journal.service.JournalFolderService;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
 import com.liferay.portal.kernel.search.Field;
@@ -43,6 +44,7 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.search.aggregation.Aggregations;
+import com.liferay.portal.search.expando.ExpandoBridgeIndexer;
 import com.liferay.portal.search.legacy.searcher.SearchRequestBuilderFactory;
 import com.liferay.portal.search.query.Queries;
 import com.liferay.portal.search.searcher.SearchRequestBuilder;
@@ -52,7 +54,6 @@ import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
-import com.liferay.portal.vulcan.resource.EntityModelResource;
 import com.liferay.portal.vulcan.util.SearchUtil;
 
 import java.io.Serializable;
@@ -74,14 +75,49 @@ import org.osgi.service.component.annotations.ServiceScope;
 	service = StructuredContentFolderResource.class
 )
 public class StructuredContentFolderResourceImpl
-	extends BaseStructuredContentFolderResourceImpl
-	implements EntityModelResource {
+	extends BaseStructuredContentFolderResourceImpl {
+
+	@Override
+	public void
+			deleteAssetLibraryStructuredContentFolderByExternalReferenceCode(
+				Long assetLibraryId, String externalReferenceCode)
+		throws Exception {
+
+		JournalFolder journalFolder =
+			_journalFolderService.getFolderByExternalReferenceCode(
+				assetLibraryId, externalReferenceCode);
+
+		_journalFolderService.deleteFolder(journalFolder.getFolderId());
+	}
+
+	@Override
+	public void deleteSiteStructuredContentFolderByExternalReferenceCode(
+			Long siteId, String externalReferenceCode)
+		throws Exception {
+
+		JournalFolder journalFolder =
+			_journalFolderService.getFolderByExternalReferenceCode(
+				siteId, externalReferenceCode);
+
+		_journalFolderService.deleteFolder(journalFolder.getFolderId());
+	}
 
 	@Override
 	public void deleteStructuredContentFolder(Long structuredContentFolderId)
 		throws Exception {
 
 		_journalFolderService.deleteFolder(structuredContentFolderId);
+	}
+
+	@Override
+	public StructuredContentFolder
+			getAssetLibraryStructuredContentFolderByExternalReferenceCode(
+				Long assetLibraryId, String externalReferenceCode)
+		throws Exception {
+
+		return _toStructuredContentFolder(
+			_journalFolderService.getFolderByExternalReferenceCode(
+				assetLibraryId, externalReferenceCode));
 	}
 
 	@Override
@@ -92,9 +128,45 @@ public class StructuredContentFolderResourceImpl
 				Sort[] sorts)
 		throws Exception {
 
-		return getSiteStructuredContentFoldersPage(
-			assetLibraryId, flatten, search, aggregation, filter, pagination,
-			sorts);
+		Long parentStructuredContentFolderId = null;
+
+		if (!GetterUtil.getBoolean(flatten)) {
+			parentStructuredContentFolderId =
+				JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID;
+		}
+
+		return _getStructuredContentFoldersPage(
+			HashMapBuilder.put(
+				"create",
+				addAction(
+					ActionKeys.UPDATE,
+					"postAssetLibraryStructuredContentFolder",
+					JournalConstants.RESOURCE_NAME, assetLibraryId)
+			).put(
+				"createBatch",
+				addAction(
+					ActionKeys.UPDATE,
+					"postAssetLibraryStructuredContentFolderBatch",
+					JournalConstants.RESOURCE_NAME, assetLibraryId)
+			).put(
+				"deleteBatch",
+				addAction(
+					ActionKeys.DELETE, "deleteStructuredContentFolderBatch",
+					JournalConstants.RESOURCE_NAME, null)
+			).put(
+				"get",
+				addAction(
+					ActionKeys.VIEW,
+					"getAssetLibraryStructuredContentFoldersPage",
+					JournalConstants.RESOURCE_NAME, assetLibraryId)
+			).put(
+				"updateBatch",
+				addAction(
+					ActionKeys.UPDATE, "putStructuredContentFolderBatch",
+					JournalConstants.RESOURCE_NAME, null)
+			).build(),
+			parentStructuredContentFolderId, assetLibraryId, search,
+			aggregation, filter, pagination, sorts);
 	}
 
 	@Override
@@ -102,8 +174,19 @@ public class StructuredContentFolderResourceImpl
 		return new StructuredContentFolderEntityModel(
 			EntityFieldsUtil.getEntityFields(
 				_portal.getClassNameId(JournalFolder.class.getName()),
-				contextCompany.getCompanyId(), _expandoColumnLocalService,
-				_expandoTableLocalService));
+				contextCompany.getCompanyId(), _expandoBridgeIndexer,
+				_expandoColumnLocalService, _expandoTableLocalService));
+	}
+
+	@Override
+	public StructuredContentFolder
+			getSiteStructuredContentFolderByExternalReferenceCode(
+				Long siteId, String externalReferenceCode)
+		throws Exception {
+
+		return _toStructuredContentFolder(
+			_journalFolderService.getFolderByExternalReferenceCode(
+				siteId, externalReferenceCode));
 	}
 
 	@Override
@@ -120,17 +203,32 @@ public class StructuredContentFolderResourceImpl
 				JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID;
 		}
 
-		return _getFoldersPage(
+		return _getStructuredContentFoldersPage(
 			HashMapBuilder.put(
 				"create",
 				addAction(
 					ActionKeys.UPDATE, "postSiteStructuredContentFolder",
 					JournalConstants.RESOURCE_NAME, siteId)
 			).put(
+				"createBatch",
+				addAction(
+					ActionKeys.UPDATE, "postSiteStructuredContentFolderBatch",
+					JournalConstants.RESOURCE_NAME, siteId)
+			).put(
+				"deleteBatch",
+				addAction(
+					ActionKeys.DELETE, "deleteStructuredContentFolderBatch",
+					JournalConstants.RESOURCE_NAME, null)
+			).put(
 				"get",
 				addAction(
 					ActionKeys.VIEW, "getSiteStructuredContentFoldersPage",
 					JournalConstants.RESOURCE_NAME, siteId)
+			).put(
+				"updateBatch",
+				addAction(
+					ActionKeys.UPDATE, "putStructuredContentFolderBatch",
+					JournalConstants.RESOURCE_NAME, null)
 			).build(),
 			parentStructuredContentFolderId, siteId, search, aggregation,
 			filter, pagination, sorts);
@@ -156,7 +254,7 @@ public class StructuredContentFolderResourceImpl
 		JournalFolder journalFolder = _journalFolderService.getFolder(
 			parentStructuredContentFolderId);
 
-		return _getFoldersPage(
+		return _getStructuredContentFoldersPage(
 			HashMapBuilder.put(
 				"add-subfolder",
 				addAction(
@@ -198,7 +296,8 @@ public class StructuredContentFolderResourceImpl
 		throws Exception {
 
 		return _addStructuredContentFolder(
-			siteId, JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			structuredContentFolder.getExternalReferenceCode(), siteId,
+			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			structuredContentFolder);
 	}
 
@@ -213,7 +312,56 @@ public class StructuredContentFolderResourceImpl
 			parentStructuredContentFolderId);
 
 		return _addStructuredContentFolder(
+			structuredContentFolder.getExternalReferenceCode(),
 			journalFolder.getGroupId(), parentStructuredContentFolderId,
+			structuredContentFolder);
+	}
+
+	@Override
+	public StructuredContentFolder
+			putAssetLibraryStructuredContentFolderByExternalReferenceCode(
+				Long assetLibraryId, String externalReferenceCode,
+				StructuredContentFolder structuredContentFolder)
+		throws Exception {
+
+		JournalFolder journalFolder =
+			_journalFolderLocalService.
+				fetchJournalFolderByExternalReferenceCode(
+					assetLibraryId, externalReferenceCode);
+
+		if (journalFolder != null) {
+			return _updateStructuredContentFolder(
+				assetLibraryId, journalFolder.getFolderId(),
+				journalFolder.getParentFolderId(), structuredContentFolder);
+		}
+
+		return _addStructuredContentFolder(
+			externalReferenceCode, assetLibraryId,
+			structuredContentFolder.getParentStructuredContentFolderId(),
+			structuredContentFolder);
+	}
+
+	@Override
+	public StructuredContentFolder
+			putSiteStructuredContentFolderByExternalReferenceCode(
+				Long siteId, String externalReferenceCode,
+				StructuredContentFolder structuredContentFolder)
+		throws Exception {
+
+		JournalFolder journalFolder =
+			_journalFolderLocalService.
+				fetchJournalFolderByExternalReferenceCode(
+					siteId, externalReferenceCode);
+
+		if (journalFolder != null) {
+			return _updateStructuredContentFolder(
+				siteId, journalFolder.getFolderId(),
+				journalFolder.getParentFolderId(), structuredContentFolder);
+		}
+
+		return _addStructuredContentFolder(
+			externalReferenceCode, siteId,
+			structuredContentFolder.getParentStructuredContentFolderId(),
 			structuredContentFolder);
 	}
 
@@ -280,13 +428,18 @@ public class StructuredContentFolderResourceImpl
 	}
 
 	private StructuredContentFolder _addStructuredContentFolder(
-			Long siteId, Long parentFolderId,
+			String externalReferenceCode, Long siteId, Long parentFolderId,
 			StructuredContentFolder structuredContentFolder)
 		throws Exception {
 
+		if (parentFolderId == null) {
+			parentFolderId = JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID;
+		}
+
 		return _toStructuredContentFolder(
 			_journalFolderService.addFolder(
-				siteId, parentFolderId, structuredContentFolder.getName(),
+				externalReferenceCode, siteId, parentFolderId,
+				structuredContentFolder.getName(),
 				structuredContentFolder.getDescription(),
 				ServiceContextRequestUtil.createServiceContext(
 					_getExpandoBridgeAttributes(structuredContentFolder),
@@ -303,7 +456,7 @@ public class StructuredContentFolderResourceImpl
 			contextAcceptLanguage.getPreferredLocale());
 	}
 
-	private Page<StructuredContentFolder> _getFoldersPage(
+	private Page<StructuredContentFolder> _getStructuredContentFoldersPage(
 			Map<String, Map<String, String>> actions,
 			Long parentStructuredContentFolderId, Long siteId, String keywords,
 			Aggregation aggregation, Filter filter, Pagination pagination,
@@ -393,6 +546,22 @@ public class StructuredContentFolderResourceImpl
 				contextUser));
 	}
 
+	private StructuredContentFolder _updateStructuredContentFolder(
+			Long siteId, Long folderId, Long parentFolderId,
+			StructuredContentFolder structuredContentFolder)
+		throws Exception {
+
+		return _toStructuredContentFolder(
+			_journalFolderService.updateFolder(
+				siteId, folderId, parentFolderId,
+				structuredContentFolder.getName(),
+				structuredContentFolder.getDescription(), false,
+				ServiceContextRequestUtil.createServiceContext(
+					_getExpandoBridgeAttributes(structuredContentFolder),
+					siteId, contextHttpServletRequest,
+					structuredContentFolder.getViewableByAsString())));
+	}
+
 	@Reference
 	private Aggregations _aggregations;
 
@@ -403,10 +572,16 @@ public class StructuredContentFolderResourceImpl
 	private DTOConverterRegistry _dtoConverterRegistry;
 
 	@Reference
+	private ExpandoBridgeIndexer _expandoBridgeIndexer;
+
+	@Reference
 	private ExpandoColumnLocalService _expandoColumnLocalService;
 
 	@Reference
 	private ExpandoTableLocalService _expandoTableLocalService;
+
+	@Reference
+	private JournalFolderLocalService _journalFolderLocalService;
 
 	@Reference
 	private JournalFolderService _journalFolderService;

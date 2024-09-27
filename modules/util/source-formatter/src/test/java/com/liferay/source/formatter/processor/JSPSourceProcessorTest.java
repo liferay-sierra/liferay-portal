@@ -42,6 +42,11 @@ public class JSPSourceProcessorTest extends BaseSourceProcessorTestCase {
 	}
 
 	@Test
+	public void testFormatJSPExpressionTag() throws Exception {
+		test("FormatJSPExpressionTag.testjsp");
+	}
+
+	@Test
 	public void testFormatSelfClosingTags() throws Exception {
 		test("FormatSelfClosingTags.testjsp");
 	}
@@ -59,6 +64,11 @@ public class JSPSourceProcessorTest extends BaseSourceProcessorTestCase {
 	@Test
 	public void testFormatTagLineBreaks() throws Exception {
 		test("FormatTagLineBreaks.testjsp");
+	}
+
+	@Test
+	public void testGetStaticResourceURL() throws Exception {
+		test("GetStaticResourceURL.testjsp");
 	}
 
 	@Test
@@ -80,6 +90,13 @@ public class JSPSourceProcessorTest extends BaseSourceProcessorTestCase {
 				"Use type 'LiferayPortletResponse' to call 'getNamespace()'"
 			},
 			new Integer[] {21, 28});
+	}
+
+	@Test
+	public void testLanguageUtilCall() throws Exception {
+		test(
+			"LanguageUtilCall.testjsp",
+			"Use <liferay-ui:message> tag instead of LanguageUtil.get", 17);
 	}
 
 	@Test

@@ -41,7 +41,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Juergen Kappler
  */
 @Component(
-	immediate = true,
 	property = "layout.type=" + FullPageApplicationLayoutTypeControllerConstants.LAYOUT_TYPE_FULL_PAGE_APPLICATION,
 	service = LayoutTypeController.class
 )
@@ -133,6 +132,11 @@ public class FullPageApplicationLayoutTypeController
 	}
 
 	@Override
+	protected ServletContext getServletContext() {
+		return _servletContext;
+	}
+
+	@Override
 	protected String getViewPage() {
 		return _VIEW_PAGE;
 	}
@@ -151,14 +155,6 @@ public class FullPageApplicationLayoutTypeController
 		_portletLocalService = portletLocalService;
 	}
 
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.layout.type.controller.full.page.application)",
-		unbind = "-"
-	)
-	protected void setServletContext(ServletContext servletContext) {
-		this.servletContext = servletContext;
-	}
-
 	private static final String _EDIT_PAGE =
 		"/layout/edit/full_page_application.jsp";
 
@@ -170,5 +166,10 @@ public class FullPageApplicationLayoutTypeController
 		"/layout/view/full_page_application.jsp";
 
 	private PortletLocalService _portletLocalService;
+
+	@Reference(
+		target = "(osgi.web.symbolicname=com.liferay.layout.type.controller.full.page.application)"
+	)
+	private ServletContext _servletContext;
 
 }

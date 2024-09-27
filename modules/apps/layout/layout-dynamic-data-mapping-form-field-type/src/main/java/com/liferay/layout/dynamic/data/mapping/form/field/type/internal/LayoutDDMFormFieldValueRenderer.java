@@ -21,7 +21,7 @@ import com.liferay.layout.dynamic.data.mapping.form.field.type.constants.LayoutD
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
@@ -37,7 +37,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pavel Savinov
  */
 @Component(
-	immediate = true,
 	property = "ddm.form.field.type.name=" + LayoutDDMFormFieldTypeConstants.LINK_TO_LAYOUT,
 	service = DDMFormFieldValueRenderer.class
 )
@@ -72,7 +71,7 @@ public class LayoutDDMFormFieldValueRenderer
 				_log.debug(exception);
 			}
 
-			return LanguageUtil.format(
+			return _language.format(
 				locale, "is-temporarily-unavailable", "page");
 		}
 	}
@@ -82,6 +81,9 @@ public class LayoutDDMFormFieldValueRenderer
 
 	@Reference
 	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private LayoutService _layoutService;

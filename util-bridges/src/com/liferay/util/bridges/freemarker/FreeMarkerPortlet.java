@@ -23,7 +23,6 @@ import com.liferay.portal.kernel.template.Template;
 import com.liferay.portal.kernel.template.TemplateConstants;
 import com.liferay.portal.kernel.template.TemplateException;
 import com.liferay.portal.kernel.template.TemplateManagerUtil;
-import com.liferay.portal.kernel.template.TemplateResource;
 import com.liferay.portal.kernel.template.TemplateResourceLoaderUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.UnsyncPrintWriterPool;
@@ -41,15 +40,6 @@ import javax.portlet.PortletResponse;
  * @author Raymond Augé
  */
 public class FreeMarkerPortlet extends MVCPortlet {
-
-	@Override
-	public void destroy() {
-		super.destroy();
-
-		Class<?> clazz = getClass();
-
-		TemplateManagerUtil.destroy(clazz.getClassLoader());
-	}
 
 	@Override
 	protected void include(
@@ -79,12 +69,11 @@ public class FreeMarkerPortlet extends MVCPortlet {
 		}
 		else {
 			try {
-				TemplateResource templateResource =
-					TemplateResourceLoaderUtil.getTemplateResource(
-						TemplateConstants.LANG_TYPE_FTL, resourcePath);
-
 				Template template = TemplateManagerUtil.getTemplate(
-					TemplateConstants.LANG_TYPE_FTL, templateResource, false);
+					TemplateConstants.LANG_TYPE_FTL,
+					TemplateResourceLoaderUtil.getTemplateResource(
+						TemplateConstants.LANG_TYPE_FTL, resourcePath),
+					false);
 
 				template.prepareTaglib(
 					PortalUtil.getHttpServletRequest(portletRequest),

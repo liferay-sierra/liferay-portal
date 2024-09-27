@@ -24,12 +24,15 @@ import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Projection;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.service.BaseLocalService;
 import com.liferay.portal.kernel.service.PersistedModelLocalService;
+import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.transaction.Isolation;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
@@ -38,6 +41,8 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 import java.io.Serializable;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -64,6 +69,12 @@ public interface ObjectValidationRuleLocalService
 	 *
 	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.object.service.impl.ObjectValidationRuleLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the object validation rule local service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link ObjectValidationRuleLocalServiceUtil} if injection and service tracking are not available.
 	 */
+	@Indexable(type = IndexableType.REINDEX)
+	public ObjectValidationRule addObjectValidationRule(
+			long userId, long objectDefinitionId, boolean active, String engine,
+			Map<Locale, String> errorLabelMap, Map<Locale, String> nameMap,
+			String script)
+		throws PortalException;
 
 	/**
 	 * Adds the object validation rule to the database. Also notifies the appropriate model listeners.
@@ -122,8 +133,12 @@ public interface ObjectValidationRuleLocalService
 	 * @return the object validation rule that was removed
 	 */
 	@Indexable(type = IndexableType.DELETE)
+	@SystemEvent(type = SystemEventConstants.TYPE_DELETE)
 	public ObjectValidationRule deleteObjectValidationRule(
 		ObjectValidationRule objectValidationRule);
+
+	public void deleteObjectValidationRules(Long objectDefinitionId)
+		throws PortalException;
 
 	/**
 	 * @throws PortalException
@@ -271,7 +286,11 @@ public interface ObjectValidationRuleLocalService
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<ObjectValidationRule> getObjectValidationRules(
-		long objectDefinitionId, boolean active, int start, int end);
+		long objectDefinitionId);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<ObjectValidationRule> getObjectValidationRules(
+		long objectDefinitionId, boolean active);
 
 	/**
 	 * Returns the number of object validation rules.
@@ -296,6 +315,13 @@ public interface ObjectValidationRuleLocalService
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
 		throws PortalException;
 
+	@Indexable(type = IndexableType.REINDEX)
+	public ObjectValidationRule updateObjectValidationRule(
+			long objectValidationRuleId, boolean active, String engine,
+			Map<Locale, String> errorLabelMap, Map<Locale, String> nameMap,
+			String script)
+		throws PortalException;
+
 	/**
 	 * Updates the object validation rule in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
@@ -310,9 +336,10 @@ public interface ObjectValidationRuleLocalService
 	public ObjectValidationRule updateObjectValidationRule(
 		ObjectValidationRule objectValidationRule);
 
+	@Transactional(readOnly = true)
 	public void validate(
-			long userId, long objectDefinitionId,
-			BaseModel<?> originalBaseModel, BaseModel<?> baseModel)
+			BaseModel<?> baseModel, long objectDefinitionId,
+			JSONObject payloadJSONObject, long userId)
 		throws PortalException;
 
 }

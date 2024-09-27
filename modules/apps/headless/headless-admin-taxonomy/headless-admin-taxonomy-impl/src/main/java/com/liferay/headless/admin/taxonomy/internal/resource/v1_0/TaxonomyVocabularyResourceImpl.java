@@ -49,10 +49,9 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.odata.entity.EntityModel;
+import com.liferay.portal.vulcan.aggregation.Aggregation;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
-import com.liferay.portal.vulcan.permission.PermissionUtil;
-import com.liferay.portal.vulcan.resource.EntityModelResource;
 import com.liferay.portal.vulcan.util.ContentLanguageUtil;
 import com.liferay.portal.vulcan.util.GroupUtil;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
@@ -62,6 +61,7 @@ import com.liferay.portlet.asset.util.AssetVocabularySettingsHelper;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -73,9 +73,6 @@ import java.util.stream.Stream;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.core.MultivaluedMap;
-
-import org.apache.commons.collections.ListUtils;
-import org.apache.commons.collections.MapUtils;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -89,7 +86,21 @@ import org.osgi.service.component.annotations.ServiceScope;
 	scope = ServiceScope.PROTOTYPE, service = TaxonomyVocabularyResource.class
 )
 public class TaxonomyVocabularyResourceImpl
-	extends BaseTaxonomyVocabularyResourceImpl implements EntityModelResource {
+	extends BaseTaxonomyVocabularyResourceImpl {
+
+	@Override
+	public void deleteAssetLibraryTaxonomyVocabularyByExternalReferenceCode(
+			Long assetLibraryId, String externalReferenceCode)
+		throws Exception {
+
+		AssetVocabulary assetVocabulary =
+			_assetVocabularyLocalService.
+				getAssetVocabularyByExternalReferenceCode(
+					assetLibraryId, externalReferenceCode);
+
+		_assetVocabularyService.deleteVocabulary(
+			assetVocabulary.getVocabularyId());
+	}
 
 	@Override
 	public void deleteSiteTaxonomyVocabularyByExternalReferenceCode(
@@ -114,12 +125,51 @@ public class TaxonomyVocabularyResourceImpl
 
 	@Override
 	public Page<TaxonomyVocabulary> getAssetLibraryTaxonomyVocabulariesPage(
-			Long assetLibraryId, String search, Filter filter,
-			Pagination pagination, Sort[] sorts)
+			Long assetLibraryId, String search, Aggregation aggregation,
+			Filter filter, Pagination pagination, Sort[] sorts)
 		throws Exception {
 
-		return getSiteTaxonomyVocabulariesPage(
-			assetLibraryId, search, filter, pagination, sorts);
+		return _getTaxonomyVocabulariesPage(
+			HashMapBuilder.put(
+				"create",
+				addAction(
+					ActionKeys.ADD_VOCABULARY,
+					"postAssetLibraryTaxonomyVocabulary",
+					AssetCategoriesPermission.RESOURCE_NAME, assetLibraryId)
+			).put(
+				"createBatch",
+				addAction(
+					ActionKeys.ADD_VOCABULARY,
+					"postAssetLibraryTaxonomyVocabularyBatch",
+					AssetCategoriesPermission.RESOURCE_NAME, assetLibraryId)
+			).put(
+				"deleteBatch",
+				addAction(
+					ActionKeys.DELETE, "deleteTaxonomyVocabularyBatch",
+					AssetCategoriesPermission.RESOURCE_NAME, null)
+			).put(
+				"get",
+				addAction(
+					ActionKeys.VIEW, "getAssetLibraryTaxonomyVocabulariesPage",
+					AssetCategoriesPermission.RESOURCE_NAME, assetLibraryId)
+			).put(
+				"updateBatch",
+				addAction(
+					ActionKeys.UPDATE, "putTaxonomyVocabularyBatch",
+					AssetCategoriesPermission.RESOURCE_NAME, null)
+			).build(),
+			assetLibraryId, search, aggregation, filter, pagination, sorts);
+	}
+
+	@Override
+	public TaxonomyVocabulary
+			getAssetLibraryTaxonomyVocabularyByExternalReferenceCode(
+				Long assetLibraryId, String externalReferenceCode)
+		throws Exception {
+
+		return _toTaxonomyVocabulary(
+			_assetVocabularyService.getAssetVocabularyByExternalReferenceCode(
+				assetLibraryId, externalReferenceCode));
 	}
 
 	@Override
@@ -129,36 +179,39 @@ public class TaxonomyVocabularyResourceImpl
 
 	@Override
 	public Page<TaxonomyVocabulary> getSiteTaxonomyVocabulariesPage(
-			Long siteId, String search, Filter filter, Pagination pagination,
-			Sort[] sorts)
+			Long siteId, String search, Aggregation aggregation, Filter filter,
+			Pagination pagination, Sort[] sorts)
 		throws Exception {
 
-		return SearchUtil.search(
+		return _getTaxonomyVocabulariesPage(
 			HashMapBuilder.put(
 				"create",
 				addAction(
 					ActionKeys.ADD_VOCABULARY, "postSiteTaxonomyVocabulary",
 					AssetCategoriesPermission.RESOURCE_NAME, siteId)
 			).put(
+				"createBatch",
+				addAction(
+					ActionKeys.ADD_VOCABULARY,
+					"postSiteTaxonomyVocabularyBatch",
+					AssetCategoriesPermission.RESOURCE_NAME, siteId)
+			).put(
+				"deleteBatch",
+				addAction(
+					ActionKeys.DELETE, "deleteTaxonomyVocabularyBatch",
+					AssetCategoriesPermission.RESOURCE_NAME, null)
+			).put(
 				"get",
 				addAction(
 					ActionKeys.VIEW, "getSiteTaxonomyVocabulariesPage",
 					AssetCategoriesPermission.RESOURCE_NAME, siteId)
+			).put(
+				"updateBatch",
+				addAction(
+					ActionKeys.UPDATE, "putTaxonomyVocabularyBatch",
+					AssetCategoriesPermission.RESOURCE_NAME, null)
 			).build(),
-			booleanQuery -> {
-			},
-			filter, AssetVocabulary.class.getName(), search, pagination,
-			queryConfig -> queryConfig.setSelectedFieldNames(
-				Field.ASSET_VOCABULARY_ID),
-			searchContext -> {
-				searchContext.setCompanyId(contextCompany.getCompanyId());
-				searchContext.setGroupIds(new long[] {siteId});
-			},
-			sorts,
-			document -> _toTaxonomyVocabulary(
-				_assetVocabularyService.getVocabulary(
-					GetterUtil.getLong(
-						document.get(Field.ASSET_VOCABULARY_ID)))));
+			siteId, search, aggregation, filter, pagination, sorts);
 	}
 
 	@Override
@@ -166,21 +219,9 @@ public class TaxonomyVocabularyResourceImpl
 			Long siteId, String externalReferenceCode)
 		throws Exception {
 
-		AssetVocabulary assetVocabulary =
-			_assetVocabularyLocalService.
-				getAssetVocabularyByExternalReferenceCode(
-					siteId, externalReferenceCode);
-
-		String resourceName = getPermissionCheckerResourceName(
-			assetVocabulary.getVocabularyId());
-		Long resourceId = getPermissionCheckerResourceId(
-			assetVocabulary.getVocabularyId());
-
-		PermissionUtil.checkPermission(
-			ActionKeys.VIEW, groupLocalService, resourceName, resourceId,
-			getPermissionCheckerGroupId(assetVocabulary.getVocabularyId()));
-
-		return _toTaxonomyVocabulary(assetVocabulary);
+		return _toTaxonomyVocabulary(
+			_assetVocabularyService.getAssetVocabularyByExternalReferenceCode(
+				siteId, externalReferenceCode));
 	}
 
 	@Override
@@ -267,6 +308,28 @@ public class TaxonomyVocabularyResourceImpl
 	}
 
 	@Override
+	public TaxonomyVocabulary
+			putAssetLibraryTaxonomyVocabularyByExternalReferenceCode(
+				Long assetLibraryId, String externalReferenceCode,
+				TaxonomyVocabulary taxonomyVocabulary)
+		throws Exception {
+
+		AssetVocabulary assetVocabulary =
+			_assetVocabularyLocalService.
+				fetchAssetVocabularyByExternalReferenceCode(
+					assetLibraryId, externalReferenceCode);
+
+		if (assetVocabulary != null) {
+			return _toTaxonomyVocabulary(
+				_updateVocabulary(assetVocabulary, taxonomyVocabulary));
+		}
+
+		return _toTaxonomyVocabulary(
+			_addAssetVocabulary(
+				externalReferenceCode, assetLibraryId, taxonomyVocabulary));
+	}
+
+	@Override
 	public TaxonomyVocabulary putSiteTaxonomyVocabularyByExternalReferenceCode(
 			Long siteId, String externalReferenceCode,
 			TaxonomyVocabulary taxonomyVocabulary)
@@ -317,6 +380,11 @@ public class TaxonomyVocabularyResourceImpl
 		return AssetVocabulary.class.getName();
 	}
 
+	private static void _map(String assetType, String className) {
+		_assetTypeTypeToClassNames.put(assetType, className);
+		_classNameToAssetTypeTypes.put(className, assetType);
+	}
+
 	private AssetVocabulary _addAssetVocabulary(
 			String externalReferenceCode, Long siteId,
 			TaxonomyVocabulary taxonomyVocabulary)
@@ -353,6 +421,7 @@ public class TaxonomyVocabularyResourceImpl
 			{
 				required = ArrayUtil.contains(
 					requiredClassNameIds, classNameId);
+
 				setSubtype(
 					() -> {
 						if (classTypePK ==
@@ -442,7 +511,7 @@ public class TaxonomyVocabularyResourceImpl
 	private String _getAvailableAssetTypes(
 		List<AssetRendererFactory<?>> categorizableAssetRenderFactories) {
 
-		List<String> assetTypes = ListUtils.union(
+		List<String> assetTypes = ListUtil.concat(
 			transform(
 				categorizableAssetRenderFactories,
 				assetRenderedFactory -> {
@@ -575,6 +644,31 @@ public class TaxonomyVocabularyResourceImpl
 		return assetVocabularySettingsHelper.toString();
 	}
 
+	private Page<TaxonomyVocabulary> _getTaxonomyVocabulariesPage(
+			Map<String, Map<String, String>> actions, Long groupId,
+			String search, Aggregation aggregation, Filter filter,
+			Pagination pagination, Sort[] sorts)
+		throws Exception {
+
+		return SearchUtil.search(
+			actions,
+			booleanQuery -> {
+			},
+			filter, AssetVocabulary.class.getName(), search, pagination,
+			queryConfig -> queryConfig.setSelectedFieldNames(
+				Field.ASSET_VOCABULARY_ID),
+			searchContext -> {
+				searchContext.addVulcanAggregation(aggregation);
+				searchContext.setCompanyId(contextCompany.getCompanyId());
+				searchContext.setGroupIds(new long[] {groupId});
+			},
+			sorts,
+			document -> _toTaxonomyVocabulary(
+				_assetVocabularyService.getVocabulary(
+					GetterUtil.getLong(
+						document.get(Field.ASSET_VOCABULARY_ID)))));
+	}
+
 	private TaxonomyVocabulary _toTaxonomyVocabulary(
 		AssetVocabulary assetVocabulary) {
 
@@ -583,7 +677,7 @@ public class TaxonomyVocabularyResourceImpl
 
 		return new TaxonomyVocabulary() {
 			{
-				actions = HashMapBuilder.put(
+				actions = HashMapBuilder.<String, Map<String, String>>put(
 					"delete",
 					addAction(
 						ActionKeys.DELETE, assetVocabulary,
@@ -669,28 +763,26 @@ public class TaxonomyVocabularyResourceImpl
 	}
 
 	private static final Map<String, String> _assetTypeTypeToClassNames =
-		HashMapBuilder.put(
-			"BlogPosting", "com.liferay.blogs.model.BlogsEntry"
-		).put(
-			"Document", "com.liferay.document.library.kernel.model.DLFileEntry"
-		).put(
-			"KnowledgeBaseArticle", "com.liferay.knowledge.base.model.KBArticle"
-		).put(
-			"Organization", Organization.class.getName()
-		).put(
-			"StructuredContent", "com.liferay.journal.model.JournalArticle"
-		).put(
-			"UserAccount", User.class.getName()
-		).put(
-			"WebPage", Layout.class.getName()
-		).put(
-			"WebSite", Group.class.getName()
-		).put(
-			"WikiPage", "com.liferay.wiki.model.WikiPage"
-		).build();
+		new HashMap<>();
 	private static final Map<String, String> _classNameToAssetTypeTypes =
-		MapUtils.invertMap(_assetTypeTypeToClassNames);
+		new HashMap<>();
 	private static final EntityModel _entityModel = new VocabularyEntityModel();
+
+	static {
+		_map("BlogPosting", "com.liferay.blogs.model.BlogsEntry");
+		_map(
+			"Document",
+			"com.liferay.document.library.kernel.model.DLFileEntry");
+		_map(
+			"KnowledgeBaseArticle",
+			"com.liferay.knowledge.base.model.KBArticle");
+		_map("Organization", Organization.class.getName());
+		_map("StructuredContent", "com.liferay.journal.model.JournalArticle");
+		_map("UserAccount", User.class.getName());
+		_map("WebPage", Layout.class.getName());
+		_map("WebSite", Group.class.getName());
+		_map("WikiPage", "com.liferay.wiki.model.WikiPage");
+	}
 
 	@Reference
 	private AssetVocabularyLocalService _assetVocabularyLocalService;

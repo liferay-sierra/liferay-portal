@@ -19,6 +19,7 @@ import ClayModal from '@clayui/modal';
 import ClayToolbar from '@clayui/toolbar';
 import {useIsMounted} from '@liferay/frontend-js-react-web';
 import classNames from 'classnames';
+import {sub} from 'frontend-js-web';
 import React, {useEffect, useRef, useState} from 'react';
 
 import {useSelector} from '../../../../../app/contexts/StoreContext';
@@ -102,7 +103,7 @@ export default function CollectionFilterConfigurationModal({
 			observer={observer}
 		>
 			<ClayModal.Header>
-				{Liferay.Language.get('filter-collection')}
+				{Liferay.Language.get('prefilter-collection')}
 			</ClayModal.Header>
 
 			<ClayModal.Body className="pt-0">
@@ -112,19 +113,25 @@ export default function CollectionFilterConfigurationModal({
 					setItemConfig={setItemConfig}
 				/>
 
-				<div className="p-4">
+				<div className="pb-4 pt-3 px-4">
+					<p className="mb-4 page-editor__collection-filter-configuration-modal__type-label">
+						{Liferay.Language.get(
+							'by-prefiltering-the-collection-you-narrow-down-the-results-that-appear-on-the-page'
+						)}
+					</p>
+
 					{typeLabel && (
 						<p
 							className={classNames(
 								'page-editor__collection-filter-configuration-modal__type-label',
 								{
 									'mb-0': subtypeLabel,
-									'mb-3': !subtypeLabel,
+									'mb-4': !subtypeLabel,
 								}
 							)}
 						>
 							<span className="mr-1">
-								{Liferay.Language.get('type')}:
+								{Liferay.Language.get('content-type')}:
 							</span>
 
 							{typeLabel}
@@ -204,9 +211,9 @@ const FilterInformationToolbar = ({
 	const [enableShowAll, setEnableShowAll] = useState(false);
 	const filterInformationMessageElementRef = useRef();
 
-	const hasConfigurationValues =
-		Object.values(collectionConfigurationValues).filter((value) => !!value)
-			.length > 0;
+	const hasConfigurationValues = !!Object.values(
+		collectionConfigurationValues
+	).filter((value) => !!value).length;
 
 	const filterInformationMessage = getFilterInformationMessage({
 		collectionConfiguration,
@@ -250,13 +257,13 @@ const FilterInformationToolbar = ({
 								ref={filterInformationMessageElementRef}
 							>
 								{totalNumberOfItems === 1
-									? Liferay.Util.sub(
+									? sub(
 											Liferay.Language.get(
 												'there-is-1-result-for-x'
 											),
 											filterInformationMessage
 									  )
-									: Liferay.Util.sub(
+									: sub(
 											Liferay.Language.get(
 												'there-are-x-results-for-x'
 											),

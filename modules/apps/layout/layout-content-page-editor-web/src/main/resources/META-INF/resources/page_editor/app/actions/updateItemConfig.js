@@ -14,10 +14,17 @@
 
 import {UPDATE_ITEM_CONFIG} from './types';
 
-export default function updateItemConfig({itemId, layoutData}) {
+export default function updateItemConfig({
+	itemId,
+	layoutData,
+	overridePreviousConfig = false,
+	pageContents,
+}) {
 	return {
 		itemId,
 		layoutData,
+		overridePreviousConfig,
+		pageContents,
 		type: UPDATE_ITEM_CONFIG,
 	};
 }

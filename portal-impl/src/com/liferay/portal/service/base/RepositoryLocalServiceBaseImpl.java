@@ -37,6 +37,8 @@ import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.PersistedModel;
 import com.liferay.portal.kernel.model.Repository;
 import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
@@ -140,10 +142,13 @@ public abstract class RepositoryLocalServiceBaseImpl
 	 *
 	 * @param repository the repository
 	 * @return the repository that was removed
+	 * @throws PortalException
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	@Override
-	public Repository deleteRepository(Repository repository) {
+	public Repository deleteRepository(Repository repository)
+		throws PortalException {
+
 		return repositoryPersistence.remove(repository);
 	}
 
@@ -430,6 +435,11 @@ public abstract class RepositoryLocalServiceBaseImpl
 	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
 		throws PortalException {
 
+		if (_log.isWarnEnabled()) {
+			_log.warn(
+				"Implement RepositoryLocalServiceImpl#deleteRepository(Repository) to avoid orphaned data");
+		}
+
 		return repositoryLocalService.deleteRepository(
 			(Repository)persistedModel);
 	}
@@ -701,6 +711,9 @@ public abstract class RepositoryLocalServiceBaseImpl
 	)
 	protected com.liferay.counter.kernel.service.CounterLocalService
 		counterLocalService;
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		RepositoryLocalServiceBaseImpl.class);
 
 	@BeanReference(type = PersistedModelLocalServiceRegistry.class)
 	protected PersistedModelLocalServiceRegistry

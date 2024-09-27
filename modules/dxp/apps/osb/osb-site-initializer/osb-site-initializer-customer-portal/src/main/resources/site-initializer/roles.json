@@ -3,15 +3,7 @@
 		"actions": [
 		],
 		"description": "",
-		"name": "Customer Portal Member",
-		"subtype": "",
-		"type": 1
-	},
-	{
-		"actions": [
-		],
-		"description": "",
-		"name": "Requestor",
+		"name": "Requester",
 		"subtype": "",
 		"type": 6
 	},
@@ -30,5 +22,21 @@
 		"name": "Partner Member",
 		"subtype": "",
 		"type": 6
+	},
+	{
+		"actions": [
+		],
+		"description": "",
+		"name": "Provisioning",
+		"subtype": "",
+		"type": 6
+	},
+	{
+		"actions": [
+		],
+		"description": "",
+		"name": "Provisioning Admin",
+		"subtype": "",
+		"type": 1
 	}
 ]

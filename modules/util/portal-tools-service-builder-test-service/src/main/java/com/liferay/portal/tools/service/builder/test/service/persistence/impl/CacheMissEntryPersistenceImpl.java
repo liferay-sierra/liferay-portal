@@ -386,7 +386,9 @@ public class CacheMissEntryPersistenceImpl
 	 */
 	@Override
 	public CacheMissEntry fetchByPrimaryKey(Serializable primaryKey) {
-		if (ctPersistenceHelper.isProductionMode(CacheMissEntry.class)) {
+		if (ctPersistenceHelper.isProductionMode(
+				CacheMissEntry.class, primaryKey)) {
+
 			return super.fetchByPrimaryKey(primaryKey);
 		}
 
@@ -605,7 +607,7 @@ public class CacheMissEntryPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<CacheMissEntry>)dummyFinderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -681,7 +683,7 @@ public class CacheMissEntryPersistenceImpl
 
 		if (productionMode) {
 			count = (Long)dummyFinderCache.getResult(
-				_finderPathCountAll, FINDER_ARGS_EMPTY);
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 		}
 
 		if (count == null) {

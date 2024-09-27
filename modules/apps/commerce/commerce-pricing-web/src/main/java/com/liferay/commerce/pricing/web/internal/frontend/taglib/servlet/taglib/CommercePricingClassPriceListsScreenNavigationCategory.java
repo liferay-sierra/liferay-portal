@@ -16,12 +16,12 @@ package com.liferay.commerce.pricing.web.internal.frontend.taglib.servlet.taglib
 
 import com.liferay.commerce.pricing.model.CommercePricingClass;
 import com.liferay.commerce.pricing.service.CommercePricingClassService;
+import com.liferay.commerce.pricing.web.internal.constants.CommercePricingClassScreenNavigationConstants;
 import com.liferay.commerce.pricing.web.internal.display.context.CommercePricingClassPriceListDisplayContext;
-import com.liferay.commerce.pricing.web.internal.servlet.taglib.ui.constants.CommercePricingClassScreenNavigationConstants;
 import com.liferay.frontend.taglib.servlet.taglib.ScreenNavigationCategory;
 import com.liferay.frontend.taglib.servlet.taglib.ScreenNavigationEntry;
 import com.liferay.frontend.taglib.servlet.taglib.util.JSPRenderer;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
@@ -46,7 +46,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Riccardo Alberti
  */
 @Component(
-	enabled = false,
 	property = {
 		"screen.navigation.category.order:Integer=30",
 		"screen.navigation.entry.order:Integer=10"
@@ -74,7 +73,7 @@ public class CommercePricingClassPriceListsScreenNavigationCategory
 		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
 			"content.Language", locale, getClass());
 
-		return LanguageUtil.get(
+		return _language.get(
 			resourceBundle,
 			CommercePricingClassScreenNavigationConstants.
 				CATEGORY_KEY_PRICE_LISTS);
@@ -148,5 +147,8 @@ public class CommercePricingClassPriceListsScreenNavigationCategory
 
 	@Reference
 	private JSPRenderer _jspRenderer;
+
+	@Reference
+	private Language _language;
 
 }

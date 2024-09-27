@@ -1,6 +1,9 @@
 @component-name = "portal-publications"
 definition {
 
+	property database.types = "db2,hypersonic,mariadb,mysql,oracle,postgresql,sqlserver";
+	property osgi.module.configuration.file.names = "com.liferay.change.tracking.configuration.CTSettingsConfiguration.config";
+	property osgi.module.configurations = "enabled=B\"true\"";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Publications";
@@ -9,8 +12,6 @@ definition {
 		TestCase.setUpPortalInstance();
 
 		User.firstLoginPG();
-
-		JSONPublications.enablePublications();
 	}
 
 	tearDown {
@@ -54,7 +55,7 @@ definition {
 			portlet = "Pages",
 			site = "Child Site Name");
 
-		PagesAdmin.addPublicPage(pageName = "Child Site Page");
+		PagesAdmin.addPage(pageName = "Child Site Page");
 
 		PublicationsNavigator.gotoReviewChanges();
 
@@ -78,6 +79,11 @@ definition {
 
 	@priority = "4"
 	test PublishSiteCreatedInPublication {
+
+		// Workaround LPS-129369 and LPS-148424
+
+		property database.types = "db2,hypersonic,mariadb,mysql,postgresql,sqlserver";
+
 		JSONPublications.addPublication(publicationName = "Publication Name");
 
 		JSONPublications.selectPublication(publicationName = "Publication Name");

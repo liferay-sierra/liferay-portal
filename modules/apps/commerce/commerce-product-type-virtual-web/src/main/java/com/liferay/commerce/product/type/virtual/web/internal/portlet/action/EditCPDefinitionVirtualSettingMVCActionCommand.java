@@ -34,7 +34,7 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.Constants;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.ParamUtil;
 
 import java.util.Locale;
@@ -51,7 +51,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = {
 		"javax.portlet.name=" + CPPortletKeys.CP_DEFINITIONS,
 		"mvc.command.name=/cp_definitions/edit_cp_definition_virtual_setting"
@@ -130,7 +130,7 @@ public class EditCPDefinitionVirtualSettingMVCActionCommand
 		boolean termsOfUseRequired = ParamUtil.getBoolean(
 			actionRequest, "termsOfUseRequired");
 		Map<Locale, String> termsOfUseContentMap =
-			LocalizationUtil.getLocalizationMap(
+			_localization.getLocalizationMap(
 				actionRequest, "termsOfUseContent");
 		long termsOfUseJournalArticleResourcePrimKey = ParamUtil.getLong(
 			actionRequest, "termsOfUseJournalArticleResourcePrimKey");
@@ -180,5 +180,8 @@ public class EditCPDefinitionVirtualSettingMVCActionCommand
 	@Reference
 	private CPDefinitionVirtualSettingService
 		_cpDefinitionVirtualSettingService;
+
+	@Reference
+	private Localization _localization;
 
 }

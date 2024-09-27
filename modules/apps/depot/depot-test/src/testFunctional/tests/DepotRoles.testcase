@@ -96,9 +96,9 @@ definition {
 		UserNavigator.gotoMemberships();
 
 		AssertElementNotPresent(
-			key_depotName = "Test Depot Name",
-			locator1 = "UsersAndOrganizationsEditUser#DEPOT_TABLE_NAME",
-			value1 = "Test Depot Name");
+			key_assetType = "depotGroups",
+			key_assigneeName = "Test Depot Name",
+			locator1 = "UsersAndOrganizationsEditUser#MEMBERSHIPS_TABLE_ENTRY_NAME");
 
 		UserNavigator.gotoRoles();
 
@@ -164,7 +164,7 @@ definition {
 			panel = "Control Panel",
 			portlet = "Users and Organizations");
 
-		Site.assignUserSitesCP(
+		User.editUserSiteCP(
 			siteName = "Site Name",
 			userScreenName = "usersn");
 
@@ -505,19 +505,17 @@ definition {
 
 		Role.add(roleTitle = "AL Role Name");
 
-		Role.openRolesAdmin();
-
-		Role.definePermissionCP(
-			permissionDefinitionKey = "SITE_ADMIN_APPLICATIONS_DOCUMENTS_AND_MEDIA_RESOURCE_PERMISSIONS_DOCUMENT_VIEW_CHECKBOX",
-			permissionDefinitionValue = "View",
+		Permissions.definePermissionViaJSONAPI(
+			resourceAction = "VIEW",
+			resourceName = "com.liferay.document.library.kernel.model.DLFileEntry",
 			roleTitle = "AL Role Name",
-			roleType = "Asset Library");
+			roleType = "asset library");
 
 		Role.openRolesAdmin();
 
 		RoleNavigator.gotoRoleType(roleType = "Asset Library");
 
-		Role.deleteCP(roleTitle = "AL Role Name");
+		LexiconEntry.delete(rowEntry = "AL Role Name");
 
 		Role.openRolesAdmin();
 
@@ -538,11 +536,11 @@ definition {
 
 		Role.openRolesAdmin();
 
-		Role.definePermissionCP(
-			permissionDefinitionKey = "SITE_ADMIN_APPLICATIONS_DOCUMENTS_AND_MEDIA_RESOURCE_PERMISSIONS_DOCUMENT_VIEW_CHECKBOX",
-			permissionDefinitionValue = "View",
+		Permissions.definePermissionViaJSONAPI(
+			resourceAction = "VIEW",
+			resourceName = "com.liferay.document.library.kernel.model.DLFileEntry",
 			roleTitle = "AL Role Name",
-			roleType = "Asset Library");
+			roleType = "asset library");
 
 		Role.openRolesAdmin();
 
@@ -555,6 +553,7 @@ definition {
 		Role.definePermissionCP(
 			permissionDefinitionKey = "SITE_ADMIN_CONTENT_DOCUMENTS_AND_MEDIA_RESOURCE_PERMISSIONS_DOCUMENTS_ADD_DOCUMENT_CHECKBOX",
 			permissionDefinitionValue = "Add Document",
+			permissionNavigationValue = "Documents and Media",
 			roleTitle = "AL Role Name",
 			roleTitleEdit = "AL Role Name Edit",
 			roleType = "Asset Library");
@@ -582,15 +581,24 @@ definition {
 
 		DepotNavigator.openDepotMembershipsAdmin(depotName = "Test Depot Name");
 
-		LexiconEntry.gotoEntryMenuItem(
-			menuItem = "Assign Roles",
-			rowEntry = "userfn userln");
+		Depot.assignAssetLibraryRole(
+			checkAllRoles = "Asset Library Administrator,Asset Library Owner,Asset Library Content Reviewer",
+			resourceName = "userfn userln",
+			roleTitle = "Asset Library Owner");
+
+		ManagementBar.setFilterAndOrder(filterBy = "Roles");
 
 		SelectFrame(locator1 = "IFrame#MODAL_BODY");
 
 		for (var roleTitle : list "Asset Library Administrator,Asset Library Owner,Asset Library Content Reviewer") {
 			LexiconEntry.viewEntryName(rowEntry = "${roleTitle}");
 		}
+
+		LexiconCard.clickCardTitle(card = "Asset Library Owner");
+
+		SelectFrameTop();
+
+		LexiconCard.viewCardTitle(card = "userfn userln");
 	}
 
 	@description = "This ensures that an asset library role can be edited."
@@ -700,7 +708,7 @@ definition {
 			panel = "Control Panel",
 			portlet = "Users and Organizations");
 
-		Site.assignUserSitesCP(
+		User.editUserSiteCP(
 			siteName = "Site Name",
 			userScreenName = "usersn");
 

@@ -15,6 +15,8 @@
 package com.liferay.portal.servlet.filters.i18n;
 
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.cookies.CookiesManagerUtil;
+import com.liferay.portal.kernel.cookies.constants.CookiesConstants;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -24,7 +26,6 @@ import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.servlet.HttpMethods;
-import com.liferay.portal.kernel.util.CookieKeys;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -151,10 +152,8 @@ public class I18nFilter extends BasePortalFilter {
 		requestURI = StringUtil.replace(
 			requestURI, StringPool.DOUBLE_SLASH, StringPool.SLASH);
 
-		String i18nPathLanguageId = PortalUtil.getI18nPathLanguageId(
-			locale, i18nLanguageId);
-
-		String i18nPath = StringPool.SLASH.concat(i18nPathLanguageId);
+		String i18nPath = StringPool.SLASH.concat(
+			PortalUtil.getI18nPathLanguageId(locale, i18nLanguageId));
 
 		if (requestURI.contains(i18nPath.concat(StringPool.SLASH))) {
 			return null;
@@ -235,8 +234,9 @@ public class I18nFilter extends BasePortalFilter {
 		}
 
 		if (Validator.isNull(requestedLanguageId)) {
-			requestedLanguageId = CookieKeys.getCookie(
-				httpServletRequest, CookieKeys.GUEST_LANGUAGE_ID, false);
+			requestedLanguageId = CookiesManagerUtil.getCookieValue(
+				CookiesConstants.NAME_GUEST_LANGUAGE_ID, httpServletRequest,
+				false);
 		}
 
 		return requestedLanguageId;
@@ -253,14 +253,12 @@ public class I18nFilter extends BasePortalFilter {
 			Group group = GroupLocalServiceUtil.getFriendlyURLGroup(
 				companyId, friendlyURL);
 
-			Locale siteDefaultLocale = PortalUtil.getSiteDefaultLocale(
-				group.getGroupId());
-
-			return LocaleUtil.toLanguageId(siteDefaultLocale);
+			return LocaleUtil.toLanguageId(
+				PortalUtil.getSiteDefaultLocale(group.getGroupId()));
 		}
 		catch (PortalException portalException) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(portalException.getMessage(), portalException);
+				_log.debug(portalException);
 			}
 
 			return StringPool.BLANK;

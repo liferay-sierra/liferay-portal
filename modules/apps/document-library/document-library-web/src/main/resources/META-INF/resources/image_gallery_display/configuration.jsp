@@ -101,9 +101,7 @@ IGConfigurationDisplayContext igConfigurationDisplayContext = (IGConfigurationDi
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button type="submit" />
-
-		<aui:button type="cancel" />
+		<liferay-frontend:edit-form-buttons />
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>
 
@@ -164,7 +162,7 @@ IGConfigurationDisplayContext igConfigurationDisplayContext = (IGConfigurationDi
 
 		Liferay.Util.postForm(form, {
 			data: {
-				mimeTypes: Liferay.Util.listSelect(
+				mimeTypes: Liferay.Util.getSelectedOptionValues(
 					Liferay.Util.getFormElement(form, 'currentMimeTypes')
 				),
 			},

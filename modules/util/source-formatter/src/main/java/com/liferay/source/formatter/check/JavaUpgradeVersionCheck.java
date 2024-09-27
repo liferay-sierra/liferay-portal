@@ -21,8 +21,12 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.NaturalOrderStringComparator;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
+import com.liferay.source.formatter.BNDSettings;
+import com.liferay.source.formatter.check.util.BNDSourceUtil;
 import com.liferay.source.formatter.check.util.JavaSourceUtil;
 import com.liferay.source.formatter.parser.JavaClass;
 import com.liferay.source.formatter.parser.JavaTerm;
@@ -63,6 +67,18 @@ public class JavaUpgradeVersionCheck extends BaseJavaTermCheck {
 			return content;
 		}
 
+		BNDSettings bndSettings = getBNDSettings(fileName);
+
+		boolean liferayService = false;
+
+		if ((bndSettings != null) &&
+			GetterUtil.getBoolean(
+				BNDSourceUtil.getDefinitionValue(
+					bndSettings.getContent(), "Liferay-Service"))) {
+
+			liferayService = true;
+		}
+
 		for (JavaTerm childJavaTerm : javaClass.getChildJavaTerms()) {
 			if (!childJavaTerm.isJavaMethod()) {
 				continue;
@@ -74,12 +90,17 @@ public class JavaUpgradeVersionCheck extends BaseJavaTermCheck {
 				continue;
 			}
 
-			String latestUpgradeVersion = _checkLatestUpgradeVersion(
+			_checkLatestUpgradeVersion(
 				fileName, absolutePath, childJavaTerm,
 				javaClass.getImportNames(), javaClass.getPackageName());
 
-			content = _fixDummyUpgradeStepVersion(
-				content, childJavaTerm, latestUpgradeVersion);
+			if (liferayService) {
+				_checkServiceUpgradeStepVersion(fileName, childJavaTerm);
+			}
+			else {
+				content = _fixMissingRegisterInitialization(
+					absolutePath, content, childJavaTerm, fileName);
+			}
 		}
 
 		return content;
@@ -173,7 +194,7 @@ public class JavaUpgradeVersionCheck extends BaseJavaTermCheck {
 		return incrementType;
 	}
 
-	private String _checkLatestUpgradeVersion(
+	private void _checkLatestUpgradeVersion(
 			String fileName, String absolutePath, JavaTerm javaTerm,
 			List<String> imports, String upgradePackageName)
 		throws IOException {
@@ -183,7 +204,7 @@ public class JavaUpgradeVersionCheck extends BaseJavaTermCheck {
 		int x = content.lastIndexOf("registry.register(");
 
 		if (x == -1) {
-			return null;
+			return;
 		}
 
 		List<String> parameterList = JavaSourceUtil.getParameterList(
@@ -197,45 +218,35 @@ public class JavaUpgradeVersionCheck extends BaseJavaTermCheck {
 					_JAVA_UPGRADE_PROCESS_EXCLUDES, absolutePath,
 					toSchemaVersion.toString())) {
 
-				return null;
+				return;
 			}
 
 			Version fromSchemaVersion = new Version(
 				StringUtil.removeChar(parameterList.get(0), CharPool.QUOTE));
 
-			String expectedIncrementType = _getExpectedIncrementType(
-				absolutePath, parameterList.subList(2, parameterList.size()),
-				imports, upgradePackageName);
-
 			Version expectedSchemaVersion = _getExpectedSchemaVersion(
-				fromSchemaVersion, expectedIncrementType);
+				fromSchemaVersion,
+				_getExpectedIncrementType(
+					absolutePath,
+					parameterList.subList(2, parameterList.size()), imports,
+					upgradePackageName));
 
 			if (expectedSchemaVersion.compareTo(toSchemaVersion) > 0) {
 				addMessage(
 					fileName,
 					"Expected new schema version: " + expectedSchemaVersion,
 					javaTerm.getLineNumber(x));
-
-				return null;
 			}
-
-			return toSchemaVersion.toString();
 		}
 		catch (IllegalArgumentException illegalArgumentException) {
 			if (_log.isDebugEnabled()) {
 				_log.debug(illegalArgumentException);
 			}
-
-			return null;
 		}
 	}
 
-	private String _fixDummyUpgradeStepVersion(
-		String content, JavaTerm javaTerm, String latestUpgradeVersion) {
-
-		if (latestUpgradeVersion == null) {
-			return content;
-		}
+	private void _checkServiceUpgradeStepVersion(
+		String fileName, JavaTerm javaTerm) {
 
 		String methodContent = javaTerm.getContent();
 
@@ -245,33 +256,97 @@ public class JavaUpgradeVersionCheck extends BaseJavaTermCheck {
 			x = methodContent.indexOf("registry.register(", x + 1);
 
 			if (x == -1) {
-				return content;
+				return;
 			}
 
 			List<String> parameterList = JavaSourceUtil.getParameterList(
 				methodContent.substring(x));
 
-			if ((parameterList.size() != 3) ||
-				!Objects.equals(parameterList.get(0), "\"0.0.0\"") ||
-				!Objects.equals(
-					parameterList.get(2), "new DummyUpgradeStep()") ||
-				!Objects.equals(
-					parameterList.get(2), "new DummyUpgradeProcess()")) {
+			String fromVersion = StringUtil.removeChar(
+				parameterList.get(0), CharPool.QUOTE);
 
+			if (fromVersion.equals("0.0.0")) {
+				addMessage(
+					fileName,
+					"Upgrades from version 0.0.0 for service builder modules " +
+						"are not allowed",
+					javaTerm.getLineNumber(x));
+			}
+		}
+	}
+
+	private String _fixMissingRegisterInitialization(
+		String absolutePath, String content, JavaTerm javaTerm,
+		String fileName) {
+
+		if (!isAttributeValue(
+				_CHECK_MISSING_REGISTER_INITIALIZATION_KEY, absolutePath)) {
+
+			return content;
+		}
+
+		String methodContent = javaTerm.getContent();
+
+		if (methodContent.contains("registry.registerInitialization()")) {
+			return content;
+		}
+
+		int x = methodContent.indexOf("registry.register(");
+
+		if (x == -1) {
+			return content;
+		}
+
+		String methodCall = JavaSourceUtil.getMethodCall(methodContent, x);
+
+		List<String> parameterList = JavaSourceUtil.getParameterList(
+			methodCall);
+
+		String newMethodContent = null;
+
+		if (!Objects.equals(parameterList.get(0), "\"0.0.0\"")) {
+			String version = StringUtil.unquote(parameterList.get(0));
+
+			if (!version.matches("\\d+\\.\\d+\\.\\d+")) {
 				return content;
 			}
 
-			String toVersion = StringUtil.removeChar(
-				parameterList.get(1), CharPool.QUOTE);
+			int y = methodContent.lastIndexOf(StringPool.NEW_LINE, x);
 
-			if (!toVersion.equals(latestUpgradeVersion)) {
-				String newMethodContent = StringUtil.replaceFirst(
-					methodContent, toVersion, latestUpgradeVersion, x);
+			String precedingPlaceholder = methodContent.substring(y, x);
 
-				return StringUtil.replaceFirst(
-					content, methodContent, newMethodContent);
+			newMethodContent = StringUtil.insert(
+				methodContent,
+				precedingPlaceholder + "registry.registerInitialization();\n",
+				y);
+		}
+		else {
+			if (parameterList.size() != 3) {
+				return content;
+			}
+
+			if (Objects.equals(
+					parameterList.get(2), "new DummyUpgradeProcess()") ||
+				Objects.equals(
+					parameterList.get(2), "new DummyUpgradeStep()")) {
+
+				newMethodContent = StringUtil.replaceFirst(
+					methodContent, methodCall,
+					"registry.registerInitialization()", x);
 			}
 		}
+
+		if (Validator.isNotNull(newMethodContent)) {
+			return StringUtil.replaceFirst(
+				content, methodContent, newMethodContent);
+		}
+
+		addMessage(
+			fileName,
+			"The upgrade process from version 0.0.0 should be replaced by " +
+				"'registry.registerInitialization()'");
+
+		return content;
 	}
 
 	private String _getColumnType(
@@ -560,6 +635,9 @@ public class JavaUpgradeVersionCheck extends BaseJavaTermCheck {
 
 		return true;
 	}
+
+	private static final String _CHECK_MISSING_REGISTER_INITIALIZATION_KEY =
+		"checkMissingRegisterInitialization";
 
 	private static final String _INCREMENT_TYPE_MAJOR = "MAJOR";
 

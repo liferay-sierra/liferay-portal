@@ -18,7 +18,7 @@ import com.liferay.analytics.message.sender.model.AnalyticsMessage;
 import com.liferay.analytics.message.sender.util.AnalyticsExpandoBridgeUtil;
 import com.liferay.analytics.message.storage.service.AnalyticsMessageLocalService;
 import com.liferay.analytics.settings.configuration.AnalyticsConfiguration;
-import com.liferay.analytics.settings.configuration.AnalyticsConfigurationTracker;
+import com.liferay.analytics.settings.configuration.AnalyticsConfigurationRegistry;
 import com.liferay.analytics.settings.security.constants.AnalyticsSecurityConstants;
 import com.liferay.expando.kernel.model.ExpandoRow;
 import com.liferay.expando.kernel.model.ExpandoTable;
@@ -54,6 +54,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
@@ -163,7 +164,9 @@ public abstract class BaseEntityModelListener<T extends BaseModel<T>>
 			Object associationClassPK)
 		throws ModelListenerException {
 
-		if (!analyticsConfigurationTracker.isActive()) {
+		if (GetterUtil.getBoolean(PropsUtil.get("feature.flag.LRAC-10632")) ||
+			!analyticsConfigurationRegistry.isActive()) {
+
 			return;
 		}
 
@@ -174,7 +177,9 @@ public abstract class BaseEntityModelListener<T extends BaseModel<T>>
 
 	@Override
 	public void onAfterCreate(T model) throws ModelListenerException {
-		if (!analyticsConfigurationTracker.isActive()) {
+		if (GetterUtil.getBoolean(PropsUtil.get("feature.flag.LRAC-10632")) ||
+			!analyticsConfigurationRegistry.isActive()) {
+
 			return;
 		}
 
@@ -190,7 +195,9 @@ public abstract class BaseEntityModelListener<T extends BaseModel<T>>
 			Object associationClassPK)
 		throws ModelListenerException {
 
-		if (!analyticsConfigurationTracker.isActive()) {
+		if (GetterUtil.getBoolean(PropsUtil.get("feature.flag.LRAC-10632")) ||
+			!analyticsConfigurationRegistry.isActive()) {
+
 			return;
 		}
 
@@ -201,7 +208,9 @@ public abstract class BaseEntityModelListener<T extends BaseModel<T>>
 
 	@Override
 	public void onBeforeRemove(T model) throws ModelListenerException {
-		if (!analyticsConfigurationTracker.isActive()) {
+		if (GetterUtil.getBoolean(PropsUtil.get("feature.flag.LRAC-10632")) ||
+			!analyticsConfigurationRegistry.isActive()) {
+
 			return;
 		}
 
@@ -212,7 +221,9 @@ public abstract class BaseEntityModelListener<T extends BaseModel<T>>
 	public void onBeforeUpdate(T originalModel, T model)
 		throws ModelListenerException {
 
-		if (!analyticsConfigurationTracker.isActive()) {
+		if (GetterUtil.getBoolean(PropsUtil.get("feature.flag.LRAC-10632")) ||
+			!analyticsConfigurationRegistry.isActive()) {
+
 			return;
 		}
 
@@ -275,7 +286,7 @@ public abstract class BaseEntityModelListener<T extends BaseModel<T>>
 
 	protected List<String> getUserAttributeNames(long companyId) {
 		AnalyticsConfiguration analyticsConfiguration =
-			analyticsConfigurationTracker.getAnalyticsConfiguration(companyId);
+			analyticsConfigurationRegistry.getAnalyticsConfiguration(companyId);
 
 		if (ArrayUtil.isEmpty(analyticsConfiguration.syncedUserFieldNames())) {
 			return _userAttributeNames;
@@ -325,7 +336,7 @@ public abstract class BaseEntityModelListener<T extends BaseModel<T>>
 		ShardedModel shardedModel = (ShardedModel)model;
 
 		Dictionary<String, Object> analyticsConfigurationProperties =
-			analyticsConfigurationTracker.getAnalyticsConfigurationProperties(
+			analyticsConfigurationRegistry.getAnalyticsConfigurationProperties(
 				shardedModel.getCompanyId());
 
 		if (analyticsConfigurationProperties == null) {
@@ -347,7 +358,7 @@ public abstract class BaseEntityModelListener<T extends BaseModel<T>>
 		}
 
 		AnalyticsConfiguration analyticsConfiguration =
-			analyticsConfigurationTracker.getAnalyticsConfiguration(
+			analyticsConfigurationRegistry.getAnalyticsConfiguration(
 				user.getCompanyId());
 
 		if (analyticsConfiguration.syncAllContacts()) {
@@ -466,7 +477,7 @@ public abstract class BaseEntityModelListener<T extends BaseModel<T>>
 							ShardedModel shardedModel = (ShardedModel)baseModel;
 
 							AnalyticsConfiguration analyticsConfiguration =
-								analyticsConfigurationTracker.
+								analyticsConfigurationRegistry.
 									getAnalyticsConfiguration(
 										shardedModel.getCompanyId());
 
@@ -542,7 +553,7 @@ public abstract class BaseEntityModelListener<T extends BaseModel<T>>
 		String preferencePropertyName) {
 
 		Dictionary<String, Object> configurationProperties =
-			analyticsConfigurationTracker.getAnalyticsConfigurationProperties(
+			analyticsConfigurationRegistry.getAnalyticsConfigurationProperties(
 				companyId);
 
 		if (configurationProperties == null) {
@@ -595,7 +606,7 @@ public abstract class BaseEntityModelListener<T extends BaseModel<T>>
 	}
 
 	@Reference
-	protected AnalyticsConfigurationTracker analyticsConfigurationTracker;
+	protected AnalyticsConfigurationRegistry analyticsConfigurationRegistry;
 
 	@Reference
 	protected AnalyticsMessageLocalService analyticsMessageLocalService;
@@ -725,8 +736,8 @@ public abstract class BaseEntityModelListener<T extends BaseModel<T>>
 
 				if (user.fetchContact() != null) {
 					AnalyticsConfiguration analyticsConfiguration =
-						analyticsConfigurationTracker.getAnalyticsConfiguration(
-							user.getCompanyId());
+						analyticsConfigurationRegistry.
+							getAnalyticsConfiguration(user.getCompanyId());
 
 					addAnalyticsMessage(
 						"update",

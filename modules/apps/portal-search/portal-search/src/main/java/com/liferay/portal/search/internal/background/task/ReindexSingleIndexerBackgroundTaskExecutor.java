@@ -16,6 +16,7 @@ package com.liferay.portal.search.internal.background.task;
 
 import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerList;
 import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerListFactory;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTask;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskExecutor;
 import com.liferay.portal.kernel.backgroundtask.constants.BackgroundTaskConstants;
@@ -34,7 +35,6 @@ import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
 
-import java.util.Collection;
 import java.util.Map;
 
 import org.osgi.framework.BundleContext;
@@ -104,8 +104,7 @@ public class ReindexSingleIndexerBackgroundTaskExecutor
 			return;
 		}
 
-		Collection<SearchEngine> searchEngines =
-			searchEngineHelper.getSearchEngines();
+		SearchEngine searchEngine = searchEngineHelper.getSearchEngine();
 
 		boolean systemIndexer = _isSystemIndexer(indexer);
 
@@ -120,13 +119,18 @@ public class ReindexSingleIndexerBackgroundTaskExecutor
 				ReindexBackgroundTaskConstants.SINGLE_START, companyId,
 				companyIds);
 
+			if (_log.isInfoEnabled()) {
+				_log.info(
+					StringBundler.concat(
+						"Start reindexing company ", companyId,
+						" for class name ", className));
+			}
+
 			try {
-				for (SearchEngine searchEngine : searchEngines) {
-					searchEngine.initialize(companyId);
-				}
+				searchEngine.initialize(companyId);
 
 				indexWriterHelper.deleteEntityDocuments(
-					indexer.getSearchEngineId(), companyId, className, true);
+					companyId, className, true);
 
 				indexer.reindex(new String[] {String.valueOf(companyId)});
 			}
@@ -137,6 +141,13 @@ public class ReindexSingleIndexerBackgroundTaskExecutor
 				reindexStatusMessageSender.sendStatusMessage(
 					ReindexBackgroundTaskConstants.SINGLE_END, companyId,
 					companyIds);
+
+				if (_log.isInfoEnabled()) {
+					_log.info(
+						StringBundler.concat(
+							"Finished reindexing company ", companyId,
+							" for class name ", className));
+				}
 			}
 		}
 	}

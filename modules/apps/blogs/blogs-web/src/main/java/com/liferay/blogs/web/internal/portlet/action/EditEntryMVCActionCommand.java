@@ -68,7 +68,7 @@ import com.liferay.portal.kernel.upload.UploadRequestSizeException;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -260,6 +260,8 @@ public class EditEntryMVCActionCommand extends BaseMVCActionCommand {
 		catch (Throwable throwable) {
 			_log.error(throwable, throwable);
 
+			SessionErrors.add(actionRequest, throwable.getClass());
+
 			actionResponse.setRenderParameter("mvcPath", "/blogs/error.jsp");
 
 			hideDefaultSuccessMessage(actionRequest);
@@ -331,7 +333,6 @@ public class EditEntryMVCActionCommand extends BaseMVCActionCommand {
 			PortletRequest.RENDER_PHASE);
 
 		portletURL.setParameter("mvcRenderCommandName", "/blogs/edit_entry");
-
 		portletURL.setParameter(Constants.CMD, Constants.UPDATE, false);
 		portletURL.setParameter("redirect", redirect, false);
 		portletURL.setParameter(
@@ -361,15 +362,15 @@ public class EditEntryMVCActionCommand extends BaseMVCActionCommand {
 
 		String redirect = ParamUtil.getString(actionRequest, "redirect");
 
-		String portletResource = _http.getParameter(
+		String portletResource = HttpComponentsUtil.getParameter(
 			redirect, "portletResource", false);
 
 		if (Validator.isNotNull(portletResource)) {
 			String namespace = _portal.getPortletNamespace(portletResource);
 
-			redirect = _http.addParameter(
+			redirect = HttpComponentsUtil.addParameter(
 				redirect, namespace + "className", BlogsEntry.class.getName());
-			redirect = _http.addParameter(
+			redirect = HttpComponentsUtil.addParameter(
 				redirect, namespace + "classPK", entryId);
 		}
 
@@ -397,7 +398,7 @@ public class EditEntryMVCActionCommand extends BaseMVCActionCommand {
 
 		String namespace = actionResponse.getNamespace();
 
-		redirect = _http.setParameter(
+		redirect = HttpComponentsUtil.setParameter(
 			redirect, namespace + "redirectToLastFriendlyURL", false);
 
 		sendRedirect(
@@ -529,6 +530,10 @@ public class EditEntryMVCActionCommand extends BaseMVCActionCommand {
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			BlogsEntry.class.getName(), actionRequest);
 
+		serviceContext.setAttribute(
+			"updateAutoTags",
+			ParamUtil.getBoolean(actionRequest, "updateAutoTags"));
+
 		BlogsEntry entry = null;
 
 		if (entryId <= 0) {
@@ -635,9 +640,6 @@ public class EditEntryMVCActionCommand extends BaseMVCActionCommand {
 
 	@Reference
 	private BlogsEntryService _blogsEntryService;
-
-	@Reference
-	private Http _http;
 
 	@Reference
 	private Portal _portal;

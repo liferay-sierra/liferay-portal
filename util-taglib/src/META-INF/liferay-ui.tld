@@ -134,47 +134,6 @@
 		</attribute>
 	</tag>
 	<tag>
-		<description>Deprecated as of 7.3.0, replaced by the <![CDATA[<code>liferay-site-navigation:breadcrumb</code>]]> tag.</description>
-		<name>breadcrumb</name>
-		<tag-class>com.liferay.taglib.ui.BreadcrumbTag</tag-class>
-		<body-content>JSP</body-content>
-		<attribute>
-			<name>ddmTemplateGroupId</name>
-			<required>false</required>
-			<rtexprvalue>true</rtexprvalue>
-		</attribute>
-		<attribute>
-			<name>ddmTemplateKey</name>
-			<required>false</required>
-			<rtexprvalue>true</rtexprvalue>
-		</attribute>
-		<attribute>
-			<name>showCurrentGroup</name>
-			<required>false</required>
-			<rtexprvalue>true</rtexprvalue>
-		</attribute>
-		<attribute>
-			<name>showGuestGroup</name>
-			<required>false</required>
-			<rtexprvalue>true</rtexprvalue>
-		</attribute>
-		<attribute>
-			<name>showLayout</name>
-			<required>false</required>
-			<rtexprvalue>true</rtexprvalue>
-		</attribute>
-		<attribute>
-			<name>showParentGroups</name>
-			<required>false</required>
-			<rtexprvalue>true</rtexprvalue>
-		</attribute>
-		<attribute>
-			<name>showPortletBreadcrumb</name>
-			<required>false</required>
-			<rtexprvalue>true</rtexprvalue>
-		</attribute>
-	</tag>
-	<tag>
 		<name>diff-html</name>
 		<tag-class>com.liferay.taglib.ui.DiffHtmlTag</tag-class>
 		<body-content>JSP</body-content>
@@ -444,6 +403,7 @@
 			<type>boolean</type>
 		</attribute>
 		<attribute>
+			<description>Deprecated as of 7.4.0, with no direct replacement.</description>
 			<name>markupView</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
@@ -657,6 +617,12 @@
 			<type>boolean</type>
 		</attribute>
 		<attribute>
+			<description>A CSS class for styling the dropdown.</description>
+			<name>dropdownCssClass</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
 			<description>Whether to extend the icon menu trigger by wrapping it in a button. The default value is <![CDATA[<code>true</code>]]>.</description>
 			<name>extended</name>
 			<required>false</required>
@@ -683,6 +649,7 @@
 			<type>boolean</type>
 		</attribute>
 		<attribute>
+			<description>Deprecated as of 7.4.0, with no direct replacement.</description>
 			<name>markupView</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
@@ -1554,6 +1521,7 @@
 			<rtexprvalue>true</rtexprvalue>
 		</attribute>
 		<attribute>
+			<description>Deprecated as of 7.4.0, with no direct replacement.</description>
 			<name>markupView</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
@@ -1858,6 +1826,7 @@
 			<rtexprvalue>true</rtexprvalue>
 		</attribute>
 		<attribute>
+			<description>Deprecated as of 7.4.0, with no direct replacement.</description>
 			<name>maxFileSize</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
@@ -2024,6 +1993,7 @@
 			<rtexprvalue>true</rtexprvalue>
 		</attribute>
 		<attribute>
+			<description>Deprecated as of 7.4.0, with no direct replacement.</description>
 			<name>markupView</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
@@ -2110,6 +2080,7 @@
 			<rtexprvalue>true</rtexprvalue>
 		</attribute>
 		<attribute>
+			<description>Deprecated as of 7.4.0, with no direct replacement.</description>
 			<name>markupView</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
@@ -2172,6 +2143,7 @@
 			<rtexprvalue>true</rtexprvalue>
 		</attribute>
 		<attribute>
+			<description>Deprecated as of 7.4.0, with no direct replacement.</description>
 			<name>markupView</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
@@ -2902,6 +2874,12 @@
 		<tei-class>com.liferay.taglib.ui.SearchContainerResultsTei</tei-class>
 		<body-content>JSP</body-content>
 		<attribute>
+			<name>calculateStartAndEnd</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<type>boolean</type>
+		</attribute>
+		<attribute>
 			<description>A list of objects to display in the search container.</description>
 			<name>results</name>
 			<required>false</required>
@@ -3052,6 +3030,7 @@
 			<rtexprvalue>true</rtexprvalue>
 		</attribute>
 		<attribute>
+			<description>Deprecated as of 7.4.0, with no direct replacement.</description>
 			<name>markupView</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
@@ -3099,6 +3078,7 @@
 			<rtexprvalue>true</rtexprvalue>
 		</attribute>
 		<attribute>
+			<description>Deprecated as of 7.4.0, with no direct replacement.</description>
 			<name>markupView</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
@@ -3147,6 +3127,7 @@
 			<rtexprvalue>true</rtexprvalue>
 		</attribute>
 		<attribute>
+			<description>Deprecated as of 7.4.0, with no direct replacement.</description>
 			<name>markupView</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
@@ -3376,6 +3357,7 @@
 			<rtexprvalue>true</rtexprvalue>
 		</attribute>
 		<attribute>
+			<description>Deprecated as of 7.4.0, with no direct replacement.</description>
 			<name>markupView</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>

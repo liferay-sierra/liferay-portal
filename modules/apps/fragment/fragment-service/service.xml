@@ -151,6 +151,7 @@
 		<column name="previewFileEntryId" type="long" />
 		<column name="readOnly" type="boolean" />
 		<column name="type" type="int" />
+		<column name="typeOptions" type="String" />
 		<column name="lastPublishDate" type="Date" />
 		<column name="status" type="int" />
 		<column name="statusByUserId" type="long" />
@@ -170,6 +171,9 @@
 		</finder>
 		<finder name="FragmentCollectionId" return-type="Collection">
 			<finder-column name="fragmentCollectionId" />
+		</finder>
+		<finder name="Type" return-type="Collection">
+			<finder-column name="type" />
 		</finder>
 		<finder name="G_FCI" return-type="Collection">
 			<finder-column name="groupId" />
@@ -237,10 +241,12 @@
 		<column name="html" type="String" />
 		<column name="js" type="String" />
 		<column name="configuration" type="String" />
+		<column name="deleted" type="boolean" />
 		<column name="editableValues" type="String" />
 		<column name="namespace" type="String" />
 		<column name="position" type="int" />
 		<column name="rendererKey" type="String" />
+		<column name="type" type="int" />
 		<column name="lastPropagationDate" type="Date" />
 		<column name="lastPublishDate" type="Date" />
 
@@ -258,7 +264,7 @@
 			<finder-column name="groupId" />
 		</finder>
 		<finder name="FragmentEntryId" return-type="Collection">
-			<finder-column name="fragmentEntryId" />
+			<finder-column arrayable-operator="true" name="fragmentEntryId" />
 		</finder>
 		<finder name="RendererKey" return-type="Collection">
 			<finder-column name="rendererKey" />
@@ -296,6 +302,11 @@
 			<finder-column name="classNameId" />
 			<finder-column name="classPK" />
 		</finder>
+		<finder name="G_P_D" return-type="Collection">
+			<finder-column name="groupId" />
+			<finder-column name="plid" />
+			<finder-column name="deleted" />
+		</finder>
 		<finder name="G_F_C_C" return-type="Collection">
 			<finder-column name="groupId" />
 			<finder-column name="fragmentEntryId" />
@@ -322,10 +333,13 @@
 		<exception>DuplicateFragmentEntry</exception>
 		<exception>DuplicateFragmentEntryKey</exception>
 		<exception>FragmentCollectionName</exception>
+		<exception>FragmentCompositionDescription</exception>
 		<exception>FragmentCompositionName</exception>
 		<exception>FragmentEntryConfiguration</exception>
 		<exception>FragmentEntryContent</exception>
+		<exception>FragmentEntryFieldTypes</exception>
 		<exception>FragmentEntryName</exception>
+		<exception>FragmentEntryTypeOptions</exception>
 		<exception>InvalidFile</exception>
 		<exception>InvalidFragmentCompositionKey</exception>
 		<exception>RequiredFragmentEntry</exception>

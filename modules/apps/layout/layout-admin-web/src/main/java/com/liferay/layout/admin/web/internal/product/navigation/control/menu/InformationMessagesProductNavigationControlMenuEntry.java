@@ -27,7 +27,7 @@ import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.product.navigation.control.menu.BaseJSPProductNavigationControlMenuEntry;
 import com.liferay.product.navigation.control.menu.ProductNavigationControlMenuEntry;
 import com.liferay.product.navigation.control.menu.constants.ProductNavigationControlMenuCategoryKeys;
-import com.liferay.sites.kernel.util.SitesUtil;
+import com.liferay.sites.kernel.util.Sites;
 
 import java.io.IOException;
 
@@ -42,7 +42,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Julio Camarero
  */
 @Component(
-	immediate = true,
 	property = {
 		"product.navigation.control.menu.category.key=" + ProductNavigationControlMenuCategoryKeys.TOOLS,
 		"product.navigation.control.menu.entry.order:Integer=300"
@@ -123,12 +122,8 @@ public class InformationMessagesProductNavigationControlMenuEntry
 	}
 
 	@Override
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.layout.admin.web)",
-		unbind = "-"
-	)
-	public void setServletContext(ServletContext servletContext) {
-		super.setServletContext(servletContext);
+	protected ServletContext getServletContext() {
+		return _servletContext;
 	}
 
 	private boolean _isLinkedLayout(ThemeDisplay themeDisplay)
@@ -138,7 +133,7 @@ public class InformationMessagesProductNavigationControlMenuEntry
 
 		Group group = layout.getGroup();
 
-		if (!SitesUtil.isLayoutUpdateable(layout) ||
+		if (!_sites.isLayoutUpdateable(layout) ||
 			(layout.isLayoutPrototypeLinkActive() &&
 			 !group.hasStagingGroup())) {
 
@@ -163,7 +158,7 @@ public class InformationMessagesProductNavigationControlMenuEntry
 		LayoutSet layoutSet = layout.getLayoutSet();
 
 		if (!layoutSet.isLayoutSetPrototypeLinkActive() ||
-			!SitesUtil.isLayoutModifiedSinceLastMerge(layout) ||
+			!_sites.isLayoutModifiedSinceLastMerge(layout) ||
 			!hasUpdateLayoutPermission(themeDisplay)) {
 
 			return false;
@@ -174,5 +169,11 @@ public class InformationMessagesProductNavigationControlMenuEntry
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		InformationMessagesProductNavigationControlMenuEntry.class);
+
+	@Reference(target = "(osgi.web.symbolicname=com.liferay.layout.admin.web)")
+	private ServletContext _servletContext;
+
+	@Reference
+	private Sites _sites;
 
 }

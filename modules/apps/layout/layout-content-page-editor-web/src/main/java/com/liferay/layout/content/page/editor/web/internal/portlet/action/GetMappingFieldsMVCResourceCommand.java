@@ -14,12 +14,11 @@
 
 package com.liferay.layout.content.page.editor.web.internal.portlet.action;
 
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.layout.content.page.editor.constants.ContentPageEditorPortletKeys;
 import com.liferay.layout.content.page.editor.web.internal.util.MappingContentUtil;
-import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
@@ -41,7 +40,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Jorge Ferrer
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + ContentPageEditorPortletKeys.CONTENT_PAGE_EDITOR_PORTLET,
 		"mvc.command.name=/layout_content_page_editor/get_mapping_fields"
@@ -63,14 +61,12 @@ public class GetMappingFieldsMVCResourceCommand extends BaseMVCResourceCommand {
 		long classNameId = ParamUtil.getLong(resourceRequest, "classNameId");
 
 		try {
-			JSONArray mappingFieldsJSONArray =
+			JSONPortletResponseUtil.writeJSON(
+				resourceRequest, resourceResponse,
 				MappingContentUtil.getMappingFieldsJSONArray(
 					classTypeId, themeDisplay.getScopeGroupId(),
-					_infoItemServiceTracker, _portal.getClassName(classNameId),
-					themeDisplay.getLocale());
-
-			JSONPortletResponseUtil.writeJSON(
-				resourceRequest, resourceResponse, mappingFieldsJSONArray);
+					_infoItemServiceRegistry, _portal.getClassName(classNameId),
+					themeDisplay.getLocale()));
 		}
 		catch (Exception exception) {
 			_log.error("Unable to get mapping fields", exception);
@@ -79,7 +75,7 @@ public class GetMappingFieldsMVCResourceCommand extends BaseMVCResourceCommand {
 				resourceRequest, resourceResponse,
 				JSONUtil.put(
 					"error",
-					LanguageUtil.get(
+					_language.get(
 						themeDisplay.getRequest(),
 						"an-unexpected-error-occurred")));
 		}
@@ -89,7 +85,10 @@ public class GetMappingFieldsMVCResourceCommand extends BaseMVCResourceCommand {
 		GetMappingFieldsMVCResourceCommand.class);
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

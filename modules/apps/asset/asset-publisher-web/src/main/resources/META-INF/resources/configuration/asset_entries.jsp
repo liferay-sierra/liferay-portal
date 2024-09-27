@@ -30,7 +30,8 @@ List<AssetEntry> assetEntries = assetPublisherHelper.getAssetEntries(renderReque
 	total="<%= assetEntries.size() %>"
 >
 	<liferay-ui:search-container-results
-		results="<%= assetEntries.subList(searchContainer.getStart(), searchContainer.getResultEnd()) %>"
+		calculateStartAndEnd="<%= true %>"
+		results="<%= assetEntries %>"
 	/>
 
 	<liferay-ui:search-container-row
@@ -163,7 +164,7 @@ for (long groupId : groupIds) {
 						data="<%= data %>"
 						id="<%= curGroupId + FriendlyURLNormalizerUtil.normalize(type) %>"
 						message="<%= HtmlUtil.escape(type) %>"
-						url="javascript:;"
+						url="javascript:void(0);"
 					/>
 				</c:when>
 				<c:otherwise>
@@ -192,7 +193,7 @@ for (long groupId : groupIds) {
 							data="<%= data %>"
 							id="<%= curGroupId + FriendlyURLNormalizerUtil.normalize(type) %>"
 							message="<%= HtmlUtil.escape(type) %>"
-							url="javascript:;"
+							url="javascript:void(0);"
 						/>
 
 					<%
@@ -234,7 +235,9 @@ for (long groupId : groupIds) {
 	}
 </script>
 
-<aui:script require="frontend-js-web/liferay/delegate/delegate.es as delegateModule">
+<aui:script require="frontend-js-web/index as frontendJsWeb">
+	var {delegate} = frontendJsWeb;
+
 	function selectAssets(assetEntryList) {
 		var assetClassName = '';
 		var assetEntryIds = [];
@@ -254,8 +257,6 @@ for (long groupId : groupIds) {
 			},
 		});
 	}
-
-	var delegate = delegateModule.default;
 
 	var delegateHandler = delegate(
 		document.body,

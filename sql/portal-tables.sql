@@ -11,8 +11,8 @@ create table Address (
 	classNameId LONG,
 	classPK LONG,
 	countryId LONG,
+	listTypeId LONG,
 	regionId LONG,
-	typeId LONG,
 	city VARCHAR(75) null,
 	description STRING null,
 	latitude DOUBLE,
@@ -211,7 +211,6 @@ create table Company (
 	mx VARCHAR(200) null,
 	homeURL STRING null,
 	logoId LONG,
-	system_ BOOLEAN,
 	maxUsers INTEGER,
 	active_ BOOLEAN,
 	name VARCHAR(75) null,
@@ -247,8 +246,8 @@ create table Contact_ (
 	firstName VARCHAR(75) null,
 	middleName VARCHAR(75) null,
 	lastName VARCHAR(75) null,
-	prefixId LONG,
-	suffixId LONG,
+	prefixListTypeId LONG,
+	suffixListTypeId LONG,
 	male BOOLEAN,
 	birthday DATE null,
 	smsSn VARCHAR(75) null,
@@ -446,6 +445,7 @@ create table DLFolder (
 	mvccVersion LONG default 0 not null,
 	ctCollectionId LONG default 0 not null,
 	uuid_ VARCHAR(75) null,
+	externalReferenceCode VARCHAR(75) null,
 	folderId LONG not null,
 	groupId LONG,
 	companyId LONG,
@@ -483,7 +483,7 @@ create table EmailAddress (
 	classNameId LONG,
 	classPK LONG,
 	address VARCHAR(254) null,
-	typeId LONG,
+	listTypeId LONG,
 	primary_ BOOLEAN
 );
 
@@ -492,6 +492,7 @@ create table ExpandoColumn (
 	ctCollectionId LONG default 0 not null,
 	columnId LONG not null,
 	companyId LONG,
+	modifiedDate DATE null,
 	tableId LONG,
 	name VARCHAR(75) null,
 	type_ INTEGER,
@@ -561,6 +562,7 @@ create table Group_ (
 	groupId LONG not null,
 	companyId LONG,
 	creatorUserId LONG,
+	modifiedDate DATE null,
 	classNameId LONG,
 	classPK LONG,
 	parentGroupId LONG,
@@ -654,6 +656,7 @@ create table Layout (
 	styleBookEntryId LONG,
 	css TEXT null,
 	priority INTEGER,
+	faviconFileEntryId LONG,
 	masterLayoutPlid LONG,
 	layoutPrototypeUuid VARCHAR(75) null,
 	layoutPrototypeLinkEnabled BOOLEAN,
@@ -759,6 +762,7 @@ create table LayoutSet (
 	logoId LONG,
 	themeId VARCHAR(75) null,
 	colorSchemeId VARCHAR(75) null,
+	faviconFileEntryId LONG,
 	css TEXT null,
 	settings_ TEXT null,
 	layoutSetPrototypeUuid VARCHAR(75) null,
@@ -824,6 +828,28 @@ create table MembershipRequest (
 	statusId LONG
 );
 
+create table OrgLabor (
+	mvccVersion LONG default 0 not null,
+	orgLaborId LONG not null primary key,
+	companyId LONG,
+	organizationId LONG,
+	listTypeId LONG,
+	sunOpen INTEGER,
+	sunClose INTEGER,
+	monOpen INTEGER,
+	monClose INTEGER,
+	tueOpen INTEGER,
+	tueClose INTEGER,
+	wedOpen INTEGER,
+	wedClose INTEGER,
+	thuOpen INTEGER,
+	thuClose INTEGER,
+	friOpen INTEGER,
+	friClose INTEGER,
+	satOpen INTEGER,
+	satClose INTEGER
+);
+
 create table Organization_ (
 	mvccVersion LONG default 0 not null,
 	ctCollectionId LONG default 0 not null,
@@ -842,41 +868,10 @@ create table Organization_ (
 	recursable BOOLEAN,
 	regionId LONG,
 	countryId LONG,
-	statusId LONG,
+	statusListTypeId LONG,
 	comments STRING null,
 	logoId LONG,
 	primary key (organizationId, ctCollectionId)
-);
-
-create table OrgGroupRole (
-	mvccVersion LONG default 0 not null,
-	organizationId LONG not null,
-	groupId LONG not null,
-	roleId LONG not null,
-	companyId LONG,
-	primary key (organizationId, groupId, roleId)
-);
-
-create table OrgLabor (
-	mvccVersion LONG default 0 not null,
-	orgLaborId LONG not null primary key,
-	companyId LONG,
-	organizationId LONG,
-	typeId LONG,
-	sunOpen INTEGER,
-	sunClose INTEGER,
-	monOpen INTEGER,
-	monClose INTEGER,
-	tueOpen INTEGER,
-	tueClose INTEGER,
-	wedOpen INTEGER,
-	wedClose INTEGER,
-	thuOpen INTEGER,
-	thuClose INTEGER,
-	friOpen INTEGER,
-	friClose INTEGER,
-	satOpen INTEGER,
-	satClose INTEGER
 );
 
 create table PasswordPolicy (
@@ -948,7 +943,7 @@ create table Phone (
 	classPK LONG,
 	number_ VARCHAR(75) null,
 	extension VARCHAR(75) null,
-	typeId LONG,
+	listTypeId LONG,
 	primary_ BOOLEAN
 );
 
@@ -1212,7 +1207,7 @@ create table Role_ (
 	classPK LONG,
 	name VARCHAR(75) null,
 	title STRING null,
-	description STRING null,
+	description TEXT null,
 	type_ INTEGER,
 	subtype VARCHAR(75) null,
 	primary key (roleId, ctCollectionId)
@@ -1642,7 +1637,7 @@ create table Website (
 	classNameId LONG,
 	classPK LONG,
 	url STRING null,
-	typeId LONG,
+	listTypeId LONG,
 	primary_ BOOLEAN,
 	lastPublishDate DATE null
 );

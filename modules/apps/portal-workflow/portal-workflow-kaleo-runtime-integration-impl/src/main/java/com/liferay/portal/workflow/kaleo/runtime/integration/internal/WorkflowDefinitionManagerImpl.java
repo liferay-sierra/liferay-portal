@@ -16,6 +16,7 @@ package com.liferay.portal.workflow.kaleo.runtime.integration.internal;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.exception.NoSuchModelException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.model.WorkflowDefinitionLink;
@@ -24,6 +25,7 @@ import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.uuid.PortalUUID;
+import com.liferay.portal.kernel.workflow.NoSuchWorkflowDefinitionException;
 import com.liferay.portal.kernel.workflow.RequiredWorkflowDefinitionException;
 import com.liferay.portal.kernel.workflow.WorkflowDefinition;
 import com.liferay.portal.kernel.workflow.WorkflowDefinitionManager;
@@ -32,7 +34,6 @@ import com.liferay.portal.kernel.workflow.comparator.WorkflowComparatorFactory;
 import com.liferay.portal.lock.service.LockLocalService;
 import com.liferay.portal.workflow.constants.WorkflowDefinitionConstants;
 import com.liferay.portal.workflow.kaleo.KaleoWorkflowModelConverter;
-import com.liferay.portal.workflow.kaleo.definition.parser.WorkflowModelParser;
 import com.liferay.portal.workflow.kaleo.model.KaleoDefinition;
 import com.liferay.portal.workflow.kaleo.model.KaleoDefinitionVersion;
 import com.liferay.portal.workflow.kaleo.runtime.WorkflowEngine;
@@ -52,10 +53,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Michael C. Han
  * @author Eduardo Lundgren
  */
-@Component(
-	immediate = true, property = "proxy.bean=false",
-	service = WorkflowDefinitionManager.class
-)
+@Component(service = WorkflowDefinitionManager.class)
 public class WorkflowDefinitionManagerImpl
 	implements WorkflowDefinitionManager {
 
@@ -183,12 +181,9 @@ public class WorkflowDefinitionManagerImpl
 
 			serviceContext.setCompanyId(companyId);
 
-			KaleoDefinition kaleoDefinition =
-				_kaleoDefinitionLocalService.getKaleoDefinition(
-					name, serviceContext);
-
 			return _kaleoWorkflowModelConverter.toWorkflowDefinition(
-				kaleoDefinition);
+				_kaleoDefinitionLocalService.getKaleoDefinition(
+					name, serviceContext));
 		}
 		catch (WorkflowException workflowException) {
 			throw workflowException;
@@ -264,17 +259,37 @@ public class WorkflowDefinitionManagerImpl
 	}
 
 	@Override
+	public WorkflowDefinition getWorkflowDefinition(long workflowDefinitionId)
+		throws WorkflowException {
+
+		try {
+			return _kaleoWorkflowModelConverter.toWorkflowDefinition(
+				_kaleoDefinitionLocalService.getKaleoDefinition(
+					workflowDefinitionId));
+		}
+		catch (NoSuchModelException noSuchModelException) {
+			throw new NoSuchWorkflowDefinitionException(noSuchModelException);
+		}
+		catch (WorkflowException workflowException) {
+			throw workflowException;
+		}
+		catch (Exception exception) {
+			throw new WorkflowException(exception);
+		}
+	}
+
+	@Override
 	public WorkflowDefinition getWorkflowDefinition(
 			long companyId, String name, int version)
 		throws WorkflowException {
 
 		try {
-			KaleoDefinitionVersion kaleoDefinitionVersion =
-				_kaleoDefinitionVersionLocalService.getKaleoDefinitionVersion(
-					companyId, name, getVersion(version));
-
 			return _kaleoWorkflowModelConverter.toWorkflowDefinition(
-				kaleoDefinitionVersion);
+				_kaleoDefinitionVersionLocalService.getKaleoDefinitionVersion(
+					companyId, name, getVersion(version)));
+		}
+		catch (NoSuchModelException noSuchModelException) {
+			throw new NoSuchWorkflowDefinitionException(noSuchModelException);
 		}
 		catch (WorkflowException workflowException) {
 			throw workflowException;
@@ -512,8 +527,5 @@ public class WorkflowDefinitionManagerImpl
 
 	@Reference
 	private WorkflowEngine _workflowEngine;
-
-	@Reference
-	private WorkflowModelParser _workflowModelParser;
 
 }

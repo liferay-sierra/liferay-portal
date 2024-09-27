@@ -55,7 +55,6 @@ import org.osgi.service.component.annotations.ServiceScope;
  * @author Riccardo Alberti
  */
 @Component(
-	enabled = false,
 	properties = "OSGI-INF/liferay/rest/v2_0/price-modifier.properties",
 	scope = ServiceScope.PROTOTYPE, service = PriceModifierResource.class
 )
@@ -335,9 +334,10 @@ public class PriceModifierResourceImpl extends BasePriceModifierResourceImpl {
 		throws Exception {
 
 		PriceModifierUtil.addOrUpdateCommercePriceModifierRels(
-			_assetCategoryLocalService, _commercePricingClassService,
-			_cProductLocalService, _commercePriceModifierRelService,
-			priceModifier, commercePriceModifier, _serviceContextHelper);
+			contextCompany.getGroupId(), _assetCategoryLocalService,
+			_commercePricingClassService, _cProductLocalService,
+			_commercePriceModifierRelService, priceModifier,
+			commercePriceModifier, _serviceContextHelper);
 	}
 
 	private CommercePriceModifier _updatePriceModifier(

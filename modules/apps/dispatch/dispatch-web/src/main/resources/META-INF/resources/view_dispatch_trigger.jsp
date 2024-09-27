@@ -41,7 +41,6 @@ PortletURL portletURL = PortletURLBuilder.create(
 		<aui:form action="<%= portletURL %>" method="post" name="fm">
 			<aui:input name="<%= Constants.CMD %>" type="hidden" />
 			<aui:input name="redirect" type="hidden" value="<%= portletURL.toString() %>" />
-			<aui:input name="deleteDispatchTriggerIds" type="hidden" />
 
 			<liferay-ui:search-container
 				id="dispatchTriggers"
@@ -52,13 +51,8 @@ PortletURL portletURL = PortletURLBuilder.create(
 					keyProperty="dispatchTriggerId"
 					modelVar="dispatchTrigger"
 				>
-					<liferay-ui:search-container-column-jsp
-						cssClass="entry-action-column"
-						path="/dispatch_trigger_action.jsp"
-					/>
-
 					<liferay-ui:search-container-column-text
-						cssClass="important table-cell-expand"
+						cssClass="font-weight-bold important table-cell-expand"
 						href='<%=
 							PortletURLBuilder.createRenderURL(
 								renderResponse
@@ -70,12 +64,14 @@ PortletURL portletURL = PortletURLBuilder.create(
 								"dispatchTriggerId", dispatchTrigger.getDispatchTriggerId()
 							).buildPortletURL()
 						%>'
-						property="name"
+						name="name"
+						value="<%= HtmlUtil.escape(dispatchTrigger.getName()) %>"
 					/>
 
 					<liferay-ui:search-container-column-text
 						name="task-executor-type"
 						property="dispatchTaskExecutorType"
+						translate="<%= true %>"
 					/>
 
 					<liferay-ui:search-container-column-text
@@ -94,17 +90,18 @@ PortletURL portletURL = PortletURLBuilder.create(
 					String nextFireDateString = LanguageUtil.get(request, "not-scheduled");
 
 					if (dispatchTriggerMetadata.isDispatchTaskExecutorReady() && (dispatchTrigger.getNextFireDate() != null)) {
-						nextFireDateString = fastDateFormat.format(dispatchTrigger.getNextFireDate());
+						nextFireDateString = fastDateTimeFormat.format(dispatchTrigger.getNextFireDate());
 					}
 					%>
 
 					<liferay-ui:search-container-column-text
+						cssClass="table-cell-ws-nowrap"
 						name="next-fire-date"
 						value="<%= nextFireDateString %>"
 					/>
 
 					<liferay-ui:search-container-column-text
-						cssClass="important table-cell-ws-nowrap"
+						cssClass="font-weight-bold important table-cell-ws-nowrap"
 						name="status"
 					>
 
@@ -126,7 +123,7 @@ PortletURL portletURL = PortletURLBuilder.create(
 						</c:when>
 						<c:otherwise>
 							<liferay-ui:search-container-column-text
-								cssClass="important table-cell-ws-nowrap"
+								cssClass="font-weight-bold important table-cell-ws-nowrap"
 							>
 								<h6 class="background-task-status-row text-warning">
 									<liferay-ui:message key="incomplete" />
@@ -134,6 +131,11 @@ PortletURL portletURL = PortletURLBuilder.create(
 							</liferay-ui:search-container-column-text>
 						</c:otherwise>
 					</c:choose>
+
+					<liferay-ui:search-container-column-jsp
+						cssClass="entry-action-column"
+						path="/dispatch_trigger_action.jsp"
+					/>
 				</liferay-ui:search-container-row>
 
 				<liferay-ui:search-iterator

@@ -23,6 +23,7 @@ definition {
 
 		if (isSet(databaseName)) {
 			var originalDatabaseName = PropsUtil.get("database.mysql.schema");
+
 			var jdbcURL = StringUtil.replace("${jdbcURL}", "${originalDatabaseName}", "${databaseName}");
 		}
 
@@ -83,10 +84,7 @@ definition {
 
 		User.acceptEndUserLicenseAgreement();
 
-		User.resetPassword(
-			resetPassword = "${resetPassword}",
-			setupWizardEnabled = "${setupWizardEnabled}",
-			syntaxCheckingEnabled = "${syntaxCheckingEnabled}");
+		User.resetPassword(newPassword = "${newPassword}");
 
 		User.answerPasswordReminder();
 
@@ -137,15 +135,14 @@ definition {
 			Navigator.openSpecificURL(url = "${virtualHostsURL}");
 		}
 		else {
-			Navigator.openURL();
+			var baseURL = PropsUtil.get("portal.url");
+
+			Open.openNoError(locator1 = "${baseURL}/web/guest/home");
 		}
 
 		User.acceptEndUserLicenseAgreement();
 
-		User.resetPassword(
-			resetPassword = "${resetPassword}",
-			setupWizardEnabled = "${setupWizardEnabled}",
-			syntaxCheckingEnabled = "${syntaxCheckingEnabled}");
+		User.resetPassword(newPassword = "${newPassword}");
 
 		User.answerPasswordReminder();
 
@@ -153,7 +150,7 @@ definition {
 
 		var testRunEnvironment = PropsUtil.get("test.run.environment");
 
-		if ("${testRunEnvironment}" == "EE") {
+		if (IsElementPresent(locator1 = "Button#DONE")) {
 			Click(locator1 = "Button#DONE");
 		}
 
@@ -225,16 +222,16 @@ definition {
 			AssertConsoleTextPresent(value1 = "Using dialect com.liferay.portal.dao.orm.hibernate.HSQLDialect for HSQL Database Engine");
 		}
 		else if ("${databaseType}" == "MariaDB") {
-			AssertConsoleTextPresent(value1 = "Using dialect com.liferay.portal.dao.orm.hibernate.MariaDBDialect for MySQL");
+			AssertConsoleTextPresent(value1 = "Using dialect com.liferay.portal.dao.orm.hibernate.MariaDBDialect for MariaDB");
 		}
 		else if ("${databaseType}" == "MySQL") {
-			AssertConsoleTextPresent(value1 = "Using dialect org.hibernate.dialect.MySQLDialect for MySQL");
+			AssertConsoleTextPresent(value1 = "Using dialect org.hibernate.dialect.MySQL57Dialect for MySQL");
 		}
 		else if ("${databaseType}" == "Oracle") {
 			AssertConsoleTextPresent(value1 = "Using dialect org.hibernate.dialect.Oracle10gDialect for Oracle");
 		}
 		else if ("${databaseType}" == "PostgreSQL") {
-			AssertConsoleTextPresent(value1 = "Using dialect org.hibernate.dialect.PostgreSQLDialect for PostgreSQL");
+			AssertConsoleTextPresent(value1 = "Using dialect org.hibernate.dialect.PostgreSQL10Dialect for PostgreSQL");
 		}
 		else if ("${databaseType}" == "Sybase") {
 			AssertConsoleTextPresent(value1 = "Using dialect com.liferay.portal.dao.orm.hibernate.SybaseASE157Dialect for Adaptive Server Enterprise");
@@ -350,13 +347,11 @@ definition {
 
 			Navigator.gotoBack();
 
-			Organization.gotoCP(
-				orgName = "Liferay DXP, Inc.",
-				searchToken = "Liferay DXP, Inc.");
+			Organization.gotoCP(orgName = "Liferay DXP, Inc.");
 
 			User.searchCP(searchTerm = "Test DLC 1");
 
-			Organization.viewAssignMemberCP(userName = "Test DLC 1");
+			Organization.viewUser(userName = "Test DLC 1");
 
 			Search.searchCP(searchTerm = "Liferay DXPChicago");
 
@@ -387,13 +382,11 @@ definition {
 
 			Navigator.gotoBack();
 
-			Organization.gotoCP(
-				orgName = "Liferay, Inc.",
-				searchToken = "Liferay, Inc.");
+			Organization.gotoCP(orgName = "Liferay, Inc.");
 
 			User.searchCP(searchTerm = "Test DLC 1");
 
-			Organization.viewAssignMemberCP(userName = "Test DLC 1");
+			Organization.viewUser(userName = "Test DLC 1");
 
 			Search.searchCP(searchTerm = "LiferayChicago");
 
@@ -421,6 +414,7 @@ definition {
 
 	macro viewSampleDataEnabledInPropertiesFile {
 		var liferayHome = PropsUtil.get("liferay.home.dir.name");
+
 		var fileContent = FileUtil.read("${liferayHome}/portal-setup-wizard.properties");
 
 		if (contains("${fileContent}", "setup.wizard.add.sample.data=on")) {

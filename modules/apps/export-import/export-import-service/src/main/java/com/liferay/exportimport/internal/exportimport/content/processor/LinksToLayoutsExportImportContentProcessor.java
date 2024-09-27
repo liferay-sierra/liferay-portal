@@ -50,7 +50,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Gergely Mathe
  */
 @Component(
-	immediate = true, property = "content.processor.type=LinksToLayouts",
+	property = "content.processor.type=LinksToLayouts",
 	service = ExportImportContentProcessor.class
 )
 public class LinksToLayoutsExportImportContentProcessor
@@ -83,13 +83,6 @@ public class LinksToLayoutsExportImportContentProcessor
 		if (_isValidateLinksToLayoutsReferences()) {
 			_validateLinksToLayoutsReferences(content);
 		}
-	}
-
-	@Reference(unbind = "-")
-	protected void setConfigurationProvider(
-		ConfigurationProvider configurationProvider) {
-
-		_configurationProvider = configurationProvider;
 	}
 
 	private boolean _isValidateLinksToLayoutsReferences() {
@@ -338,6 +331,7 @@ public class LinksToLayoutsExportImportContentProcessor
 	private static final Pattern _importLinksToLayoutPattern = Pattern.compile(
 		"\\[([\\d]+)@(private(-group|-user)?|public)@([\\d]+)(@([\\d]+))?\\]");
 
+	@Reference
 	private ConfigurationProvider _configurationProvider;
 
 	@Reference

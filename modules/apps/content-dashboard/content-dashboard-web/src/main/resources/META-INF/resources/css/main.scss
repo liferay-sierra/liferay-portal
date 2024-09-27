@@ -63,6 +63,10 @@ html#{$cadmin-selector} {
 				line:not(:last-child):not(:first-child) {
 				stroke-opacity: 0;
 			}
+
+			.recharts-brush-texts .recharts-text {
+				fill: $cadmin-secondary;
+			}
 		}
 
 		.custom-tooltip {
@@ -110,40 +114,46 @@ html#{$cadmin-selector} {
 				width: $sidebarWidth;
 				z-index: $cadmin-zindex-dropdown - 1;
 
-				.sidebar-body {
-					padding-top: 0;
-
-					& > .sidebar-section {
+				.sidebar-body,
+				.sidebar-header {
+					.sidebar-section {
 						margin-bottom: 1rem;
 
 						&--compress {
 							margin-bottom: 8px;
 						}
-						&--spaced {
-							margin-bottom: 1.5rem;
-						}
-
-						&-subtitle {
-							border-bottom: 1px solid $cadmin-secondary-l2;
-							font-size: 0.75rem;
-							margin-bottom: 1rem;
-							margin-top: 1.875rem;
-							padding-bottom: 0.375rem;
-						}
 					}
 
 					.sidebar-section-subtitle-sm {
-						font-size: 12px;
 						line-height: 18px;
 					}
+				}
+
+				.sidebar-body {
+					padding-top: 0;
 
 					.file-url-copy-button {
 						.form-group {
 							margin-bottom: 8px;
 						}
 					}
+
+					.sidebar-list-group .list-group-item .autofit-col {
+						padding-bottom: 12px;
+						padding-top: 12px;
+					}
+				}
+
+				.sidebar-header {
+					top: 0;
 				}
 			}
+		}
+
+		.is-sticky {
+			background-color: $cadmin-white;
+			position: sticky;
+			z-index: $z-index-for-sticky-items;
 		}
 
 		.sidebar-wrapper {
@@ -178,6 +188,8 @@ html#{$cadmin-selector} {
 				top: 1rem;
 			}
 		}
+
+		@import './manage-collaborators';
 	}
 
 	.has-control-menu {

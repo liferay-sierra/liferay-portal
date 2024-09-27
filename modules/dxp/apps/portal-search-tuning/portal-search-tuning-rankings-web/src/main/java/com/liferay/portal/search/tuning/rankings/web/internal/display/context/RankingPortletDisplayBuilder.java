@@ -18,7 +18,6 @@ import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenuBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
@@ -26,12 +25,14 @@ import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.portlet.SearchDisplayStyleUtil;
 import com.liferay.portal.kernel.portlet.SearchOrderByUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.util.Html;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.search.engine.SearchEngineInformation;
 import com.liferay.portal.search.engine.adapter.SearchEngineAdapter;
 import com.liferay.portal.search.hits.SearchHit;
 import com.liferay.portal.search.hits.SearchHits;
@@ -66,7 +67,8 @@ public class RankingPortletDisplayBuilder {
 		HttpServletRequest httpServletRequest, Language language, Portal portal,
 		Queries queries, RankingIndexNameBuilder rankingIndexNameBuilder,
 		Sorts sorts, RenderRequest renderRequest, RenderResponse renderResponse,
-		SearchEngineAdapter searchEngineAdapter) {
+		SearchEngineAdapter searchEngineAdapter,
+		SearchEngineInformation searchEngineInformation) {
 
 		_documentToRankingTranslator = documentToRankingTranslator;
 		_httpServletRequest = httpServletRequest;
@@ -78,11 +80,18 @@ public class RankingPortletDisplayBuilder {
 		_renderRequest = renderRequest;
 		_renderResponse = renderResponse;
 		_searchEngineAdapter = searchEngineAdapter;
+		_searchEngineInformation = searchEngineInformation;
 	}
 
 	public RankingPortletDisplayContext build() {
 		RankingPortletDisplayContext rankingPortletDisplayContext =
 			new RankingPortletDisplayContext();
+
+		if (Objects.equals(
+				_searchEngineInformation.getVendorString(), "Solr")) {
+
+			return rankingPortletDisplayContext;
+		}
 
 		SearchContainer<RankingEntryDisplayContext> searchContainer = _search();
 
@@ -404,6 +413,7 @@ public class RankingPortletDisplayBuilder {
 	private final RenderRequest _renderRequest;
 	private final RenderResponse _renderResponse;
 	private final SearchEngineAdapter _searchEngineAdapter;
+	private final SearchEngineInformation _searchEngineInformation;
 	private final Sorts _sorts;
 
 }

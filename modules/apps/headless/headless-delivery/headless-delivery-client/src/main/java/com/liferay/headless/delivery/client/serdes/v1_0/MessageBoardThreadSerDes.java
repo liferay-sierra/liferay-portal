@@ -63,7 +63,7 @@ public class MessageBoardThreadSerDes {
 		sb.append("{");
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+			"yyyy-MM-dd'T'HH:mm:ssXX");
 
 		if (messageBoardThread.getActions() != null) {
 			if (sb.length() > 1) {
@@ -269,6 +269,16 @@ public class MessageBoardThreadSerDes {
 			sb.append("\"locked\": ");
 
 			sb.append(messageBoardThread.getLocked());
+		}
+
+		if (messageBoardThread.getMessageBoardRootMessageId() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"messageBoardRootMessageId\": ");
+
+			sb.append(messageBoardThread.getMessageBoardRootMessageId());
 		}
 
 		if (messageBoardThread.getMessageBoardSectionId() != null) {
@@ -489,7 +499,7 @@ public class MessageBoardThreadSerDes {
 		Map<String, String> map = new TreeMap<>();
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+			"yyyy-MM-dd'T'HH:mm:ssXX");
 
 		if (messageBoardThread.getActions() == null) {
 			map.put("actions", null);
@@ -616,6 +626,16 @@ public class MessageBoardThreadSerDes {
 		}
 		else {
 			map.put("locked", String.valueOf(messageBoardThread.getLocked()));
+		}
+
+		if (messageBoardThread.getMessageBoardRootMessageId() == null) {
+			map.put("messageBoardRootMessageId", null);
+		}
+		else {
+			map.put(
+				"messageBoardRootMessageId",
+				String.valueOf(
+					messageBoardThread.getMessageBoardRootMessageId()));
 		}
 
 		if (messageBoardThread.getMessageBoardSectionId() == null) {
@@ -856,6 +876,14 @@ public class MessageBoardThreadSerDes {
 			else if (Objects.equals(jsonParserFieldName, "locked")) {
 				if (jsonParserFieldValue != null) {
 					messageBoardThread.setLocked((Boolean)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "messageBoardRootMessageId")) {
+
+				if (jsonParserFieldValue != null) {
+					messageBoardThread.setMessageBoardRootMessageId(
+						Long.valueOf((String)jsonParserFieldValue));
 				}
 			}
 			else if (Objects.equals(

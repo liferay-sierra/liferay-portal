@@ -17,15 +17,13 @@ package com.liferay.marketplace.app.manager.web.internal.display.context;
 import com.liferay.marketplace.app.manager.web.internal.util.BundleManagerUtil;
 import com.liferay.marketplace.app.manager.web.internal.util.MarketplaceAppManagerSearchUtil;
 import com.liferay.marketplace.app.manager.web.internal.util.comparator.MarketplaceAppManagerComparator;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
-
-import java.util.List;
 
 import javax.portlet.PortletURL;
 
@@ -100,17 +98,12 @@ public class AppManagerSearchResultsManagementToolbarDisplayContext
 
 		searchContainer.setOrderByCol(getOrderByCol());
 		searchContainer.setOrderByType(getOrderByType());
-
-		List<Object> results = ListUtil.sort(
-			MarketplaceAppManagerSearchUtil.getResults(
-				BundleManagerUtil.getBundles(), getKeywords(),
-				httpServletRequest.getLocale()),
-			new MarketplaceAppManagerComparator(getOrderByType()));
-
 		searchContainer.setResultsAndTotal(
-			() -> results.subList(
-				searchContainer.getStart(), searchContainer.getResultEnd()),
-			results.size());
+			ListUtil.sort(
+				MarketplaceAppManagerSearchUtil.getResults(
+					BundleManagerUtil.getBundles(), getKeywords(),
+					httpServletRequest.getLocale()),
+				new MarketplaceAppManagerComparator(getOrderByType())));
 
 		_searchContainer = searchContainer;
 

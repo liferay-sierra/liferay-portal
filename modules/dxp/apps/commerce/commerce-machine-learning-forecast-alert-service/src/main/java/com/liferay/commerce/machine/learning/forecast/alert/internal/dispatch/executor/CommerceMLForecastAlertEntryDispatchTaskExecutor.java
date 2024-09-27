@@ -45,7 +45,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Riccardo Ferrari
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = {
 		"dispatch.task.executor.name=" + CommerceMLForecastAlertEntryDispatchTaskExecutor.KEY,
 		"dispatch.task.executor.type=" + CommerceMLForecastAlertEntryDispatchTaskExecutor.KEY
@@ -87,12 +87,10 @@ public class CommerceMLForecastAlertEntryDispatchTaskExecutor
 					COMMERCE_ML_FORECAST_ALERT_ENTRY_THRESHOLD),
 			_DEFAULT_COMMERCE_ML_FORECAST_ALERT_ENTRY_THRESHOLD);
 
-		List<CommerceAccount> commerceAccounts =
-			_commerceAccountLocalService.getCommerceAccounts(
-				QueryUtil.ALL_POS, QueryUtil.ALL_POS);
-
 		long[] commerceAccountIds = ListUtil.toLongArray(
-			commerceAccounts, CommerceAccount::getCommerceAccountId);
+			_commerceAccountLocalService.getCommerceAccounts(
+				QueryUtil.ALL_POS, QueryUtil.ALL_POS),
+			CommerceAccount::getCommerceAccountId);
 
 		List<CommerceAccountCommerceMLForecast>
 			commerceAccountCommerceMLForecasts =

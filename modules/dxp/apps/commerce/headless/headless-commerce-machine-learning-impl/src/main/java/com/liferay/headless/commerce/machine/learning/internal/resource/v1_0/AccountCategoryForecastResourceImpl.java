@@ -44,7 +44,6 @@ import org.osgi.service.component.annotations.ServiceScope;
  * @author Riccardo Ferrari
  */
 @Component(
-	enabled = false,
 	properties = "OSGI-INF/liferay/rest/v1_0/account-category-forecast.properties",
 	scope = ServiceScope.PROTOTYPE,
 	service = AccountCategoryForecastResource.class
@@ -58,39 +57,40 @@ public class AccountCategoryForecastResourceImpl
 			Map<String, Serializable> parameters)
 		throws Exception {
 
-		for (AccountCategoryForecast accountCategoryForecast :
-				accountCategoryForecasts) {
+		contextBatchUnsafeConsumer.accept(
+			accountCategoryForecasts,
+			accountCategoryForecast -> {
+				AssetCategoryCommerceMLForecast
+					assetCategoryCommerceMLForecast =
+						_assetCategoryCommerceMLForecastManager.create();
 
-			AssetCategoryCommerceMLForecast assetCategoryCommerceMLForecast =
-				_assetCategoryCommerceMLForecastManager.create();
+				if (accountCategoryForecast.getActual() != null) {
+					assetCategoryCommerceMLForecast.setActual(
+						accountCategoryForecast.getActual());
+				}
 
-			if (accountCategoryForecast.getActual() != null) {
-				assetCategoryCommerceMLForecast.setActual(
-					accountCategoryForecast.getActual());
-			}
+				assetCategoryCommerceMLForecast.setAssetCategoryId(
+					accountCategoryForecast.getCategory());
+				assetCategoryCommerceMLForecast.setCommerceAccountId(
+					accountCategoryForecast.getAccount());
+				assetCategoryCommerceMLForecast.setCompanyId(
+					contextCompany.getCompanyId());
+				assetCategoryCommerceMLForecast.setForecast(
+					accountCategoryForecast.getForecast());
+				assetCategoryCommerceMLForecast.setForecastLowerBound(
+					accountCategoryForecast.getForecastLowerBound());
+				assetCategoryCommerceMLForecast.setForecastUpperBound(
+					accountCategoryForecast.getForecastUpperBound());
+				assetCategoryCommerceMLForecast.setPeriod("month");
+				assetCategoryCommerceMLForecast.setScope("asset-category");
+				assetCategoryCommerceMLForecast.setTarget("revenue");
+				assetCategoryCommerceMLForecast.setTimestamp(
+					accountCategoryForecast.getTimestamp());
 
-			assetCategoryCommerceMLForecast.setAssetCategoryId(
-				accountCategoryForecast.getCategory());
-			assetCategoryCommerceMLForecast.setCommerceAccountId(
-				accountCategoryForecast.getAccount());
-			assetCategoryCommerceMLForecast.setCompanyId(
-				contextCompany.getCompanyId());
-			assetCategoryCommerceMLForecast.setForecast(
-				accountCategoryForecast.getForecast());
-			assetCategoryCommerceMLForecast.setForecastLowerBound(
-				accountCategoryForecast.getForecastLowerBound());
-			assetCategoryCommerceMLForecast.setForecastUpperBound(
-				accountCategoryForecast.getForecastUpperBound());
-			assetCategoryCommerceMLForecast.setPeriod("month");
-			assetCategoryCommerceMLForecast.setScope("asset-category");
-			assetCategoryCommerceMLForecast.setTarget("revenue");
-			assetCategoryCommerceMLForecast.setTimestamp(
-				accountCategoryForecast.getTimestamp());
-
-			_assetCategoryCommerceMLForecastManager.
-				addAssetCategoryCommerceMLForecast(
-					assetCategoryCommerceMLForecast);
-		}
+				_assetCategoryCommerceMLForecastManager.
+					addAssetCategoryCommerceMLForecast(
+						assetCategoryCommerceMLForecast);
+			});
 	}
 
 	@Override

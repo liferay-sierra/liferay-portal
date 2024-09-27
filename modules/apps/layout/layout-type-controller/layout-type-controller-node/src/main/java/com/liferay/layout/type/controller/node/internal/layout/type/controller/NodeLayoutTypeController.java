@@ -32,7 +32,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Juergen Kappler
  */
 @Component(
-	immediate = true,
 	property = "layout.type=" + NodeLayoutTypeControllerConstants.LAYOUT_TYPE_NODE,
 	service = LayoutTypeController.class
 )
@@ -88,16 +87,13 @@ public class NodeLayoutTypeController extends BaseLayoutTypeControllerImpl {
 	}
 
 	@Override
-	protected String getViewPage() {
-		return _VIEW_PAGE;
+	protected ServletContext getServletContext() {
+		return _servletContext;
 	}
 
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.layout.type.controller.node)",
-		unbind = "-"
-	)
-	protected void setServletContext(ServletContext servletContext) {
-		this.servletContext = servletContext;
+	@Override
+	protected String getViewPage() {
+		return _VIEW_PAGE;
 	}
 
 	private static final String _EDIT_PAGE = "/layout/edit/node.jsp";
@@ -108,5 +104,10 @@ public class NodeLayoutTypeController extends BaseLayoutTypeControllerImpl {
 		"layoutId=${liferay:layoutId}");
 
 	private static final String _VIEW_PAGE = "/layout/view/node.jsp";
+
+	@Reference(
+		target = "(osgi.web.symbolicname=com.liferay.layout.type.controller.node)"
+	)
+	private ServletContext _servletContext;
 
 }

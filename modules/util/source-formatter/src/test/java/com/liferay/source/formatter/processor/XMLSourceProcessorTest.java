@@ -28,6 +28,15 @@ public class XMLSourceProcessorTest extends BaseSourceProcessorTestCase {
 	}
 
 	@Test
+	public void testIncorrectMessageInEchoTag() throws Exception {
+		test(
+			"IncorrectEchoTagWithMessage.testxml",
+			"Do not use self-closing tag for attribute 'message' in '" +
+				"<echo>' tag",
+			9);
+	}
+
+	@Test
 	public void testIncorrectTabs() throws Exception {
 		test("IncorrectTabs1.testaction");
 		test("IncorrectTabs2.testaction");

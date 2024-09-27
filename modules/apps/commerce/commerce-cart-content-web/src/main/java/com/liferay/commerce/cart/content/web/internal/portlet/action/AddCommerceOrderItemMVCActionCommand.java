@@ -25,11 +25,10 @@ import com.liferay.commerce.order.CommerceOrderValidatorResult;
 import com.liferay.commerce.product.model.CPInstance;
 import com.liferay.commerce.product.util.CPInstanceHelper;
 import com.liferay.commerce.service.CommerceOrderItemService;
-import com.liferay.commerce.service.CommerceOrderService;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
@@ -56,7 +55,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marco Leo
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = {
 		"javax.portlet.name=" + CommercePortletKeys.COMMERCE_CART_CONTENT,
 		"javax.portlet.name=" + CommercePortletKeys.COMMERCE_CART_CONTENT_MINI,
@@ -120,20 +119,18 @@ public class AddCommerceOrderItemMVCActionCommand extends BaseMVCActionCommand {
 					ddmFormValues, quantity, 0, commerceContext,
 					serviceContext);
 
-			int commerceOrderItemsQuantity =
-				_commerceOrderItemService.getCommerceOrderItemsQuantity(
-					commerceOrder.getCommerceOrderId());
-
 			jsonObject.put(
 				"commerceOrderItemId",
 				commerceOrderItem.getCommerceOrderItemId()
 			).put(
-				"commerceOrderItemsQuantity", commerceOrderItemsQuantity
+				"commerceOrderItemsQuantity",
+				_commerceOrderItemService.getCommerceOrderItemsQuantity(
+					commerceOrder.getCommerceOrderId())
 			).put(
 				"success", true
 			).put(
 				"successMessage",
-				LanguageUtil.get(
+				_language.get(
 					httpServletRequest,
 					"the-product-was-successfully-added-to-the-cart")
 			);
@@ -205,13 +202,13 @@ public class AddCommerceOrderItemMVCActionCommand extends BaseMVCActionCommand {
 	private CommerceOrderItemService _commerceOrderItemService;
 
 	@Reference
-	private CommerceOrderService _commerceOrderService;
-
-	@Reference
 	private CPInstanceHelper _cpInstanceHelper;
 
 	@Reference
 	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

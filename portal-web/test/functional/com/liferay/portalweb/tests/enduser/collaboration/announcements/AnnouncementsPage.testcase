@@ -1,4 +1,4 @@
-@component-name = "portal-collaboration"
+@component-name = "portal-lima"
 definition {
 
 	property custom.properties = "default.layout.template.id=1_column";
@@ -66,10 +66,12 @@ definition {
 			entryURL = "http://www.liferay.com");
 	}
 
+	@e2etest
 	@priority = "4"
 	@refactordone
-	@uitest
 	test CanAddAnnouncementsEntryFutureDate {
+		property custom.properties = "company.default.time.zone=America/Los_Angeles";
+
 		AnnouncementsNavigator.openToEntriesTab(
 			layoutName = "announcements-page",
 			siteURLKey = "guest",
@@ -81,7 +83,13 @@ definition {
 			entryTitle = "Announcements Entry Title",
 			entryURL = "http://www.liferay.com");
 
+		var currentTime = DateUtil.getFormattedCurrentDate("h:mm", "UTC");
+
+		echo("Current Time: ${currentTime}");
+
 		AnnouncementsEntry.viewNoPG(entryTitle = "Announcements Entry Title");
+
+		// We need to wait for the system time to pass by 2 minutes in order to verify the announcement display date. There is currently no easy way to manipulate the system time in CI for automation. 1 minute is the shortest value we can set while ensuring the stability of the test. See LPS-157957.
 
 		Pause(locator1 = "120000");
 
@@ -164,9 +172,9 @@ definition {
 			entryTitle = "Announcements Entry Title Edit");
 	}
 
+	@e2etest
 	@priority = "3"
 	@refactordone
-	@uitest
 	test CannotAddAnnouncementsEntryPastExpirationDate {
 		AnnouncementsNavigator.openToEntriesTab(
 			layoutName = "announcements-page",
@@ -289,10 +297,7 @@ definition {
 				userPassword = "test");
 		}
 
-		AnnouncementsNavigator.openToEntriesTab(
-			layoutName = "announcements-page",
-			siteURLKey = "guest",
-			tabName = "unread");
+		Navigator.gotoPage(pageName = "Announcements Page");
 
 		AnnouncementsPortlet.configureDisplayCountPG(maxDisplayItems = "4");
 
@@ -438,6 +443,29 @@ definition {
 			siteName = "Guest");
 
 		AssertAccessible();
+	}
+
+	@description = "This test covers LPS-147716. It checks that the javascript in the user name will not be executed when viewing an announcement on page."
+	@priority = "3"
+	test XSSIsNotExecutedWhenViewingUsernameInAnnouncement {
+		Navigator.openURL();
+
+		UserBar.gotoDropdownItem(dropdownItem = "Account Settings");
+
+		User.editUserInformation(userLastNameEdit = '''Test<script>alert('hello!')</script>''');
+
+		AnnouncementsNavigator.openToEntriesTab(
+			layoutName = "announcements-page",
+			siteURLKey = "guest",
+			tabName = "unread");
+
+		AnnouncementsEntry.addPG(
+			distributionScope = "General",
+			entryContent = "Announcements Entry Content",
+			entryTitle = '''<script>alert('hello!')</script>''',
+			entryURL = "http://www.liferay.com");
+
+		AssertAlertNotPresent();
 	}
 
 }

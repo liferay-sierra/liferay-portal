@@ -19,48 +19,84 @@ import PropTypes from 'prop-types';
 import React, {useState} from 'react';
 
 import {
-	convertObjectDateToIsoString,
 	formatDateObject,
 	formatDateRangeObject,
 	getDateFromDateString,
 } from '../../../utils/dates';
 
-function getOdataString(value, key) {
-	if (value.from && value.to) {
-		return `${key} ge ${convertObjectDateToIsoString(
-			value.from,
-			'from'
-		)}) and (${key} le ${convertObjectDateToIsoString(value.to, 'to')}`;
+const getIsoString = ({direction, entityFieldType, objectDate}) => {
+	const timestamp = Date.UTC(
+		objectDate.year,
+		objectDate.month - 1,
+		objectDate.day
+	);
+
+	const date = new Date(timestamp);
+
+	if (direction === 'from') {
+		date.setUTCHours(0, 0, 0, 0);
 	}
-	if (value.from) {
-		return `${key} ge ${convertObjectDateToIsoString(value.from, 'from')}`;
+	else {
+		date.setUTCHours(23, 59, 59, 999);
 	}
-	if (value.to) {
-		return `${key} le ${convertObjectDateToIsoString(value.to, 'to')}`;
+
+	const dateISOString = date.toISOString();
+
+	if (entityFieldType === 'date') {
+		return dateISOString.split('T')[0];
 	}
-}
-function DateRangeFilter({
+
+	return dateISOString;
+};
+
+const getSelectedItemsLabel = ({selectedData}) => {
+	return formatDateRangeObject(selectedData);
+};
+
+const getOdataString = ({entityFieldType, id, selectedData}) => {
+	const {from, to} = selectedData;
+
+	const fromIsoString =
+		from &&
+		getIsoString({direction: 'from', entityFieldType, objectDate: from});
+
+	const toIsoString =
+		to && getIsoString({direction: 'to', entityFieldType, objectDate: to});
+
+	if (from && to) {
+		return `${id} ge ${fromIsoString}) and (${id} le ${toIsoString}`;
+	}
+	if (from) {
+		return `${id} ge ${fromIsoString}`;
+	}
+	if (to) {
+		return `${id} le ${toIsoString}`;
+	}
+};
+
+const DateRangeFilter = ({
+	entityFieldType,
 	id,
 	max,
 	min,
 	placeholder,
-	updateFilterState,
-	value: valueProp,
-}) {
+	selectedData,
+	setFilter,
+}) => {
 	const [fromValue, setFromValue] = useState(
-		valueProp?.from && formatDateObject(valueProp.from)
+		selectedData?.from && formatDateObject(selectedData.from)
 	);
 	const [toValue, setToValue] = useState(
-		valueProp?.to && formatDateObject(valueProp.to)
+		selectedData?.to && formatDateObject(selectedData.to)
 	);
 
 	let actionType = 'edit';
 
-	if (valueProp && !fromValue && !toValue) {
+	if (selectedData && !fromValue && !toValue) {
 		actionType = 'delete';
 	}
 
-	if (!valueProp) {
+	if (!selectedData) {
 		actionType = 'add';
 	}
 
@@ -68,14 +104,14 @@ function DateRangeFilter({
 
 	if (
 		actionType === 'delete' ||
-		((!valueProp || !valueProp.from) && fromValue) ||
-		((!valueProp || !valueProp.to) && toValue) ||
-		(valueProp &&
-			valueProp.from &&
-			fromValue !== formatDateObject(valueProp.from)) ||
-		(valueProp &&
-			valueProp.to &&
-			toValue !== formatDateObject(valueProp.to))
+		((!selectedData || !selectedData.from) && fromValue) ||
+		((!selectedData || !selectedData.to) && toValue) ||
+		(selectedData &&
+			selectedData.from &&
+			fromValue !== formatDateObject(selectedData.from)) ||
+		(selectedData &&
+			selectedData.to &&
+			toValue !== formatDateObject(selectedData.to))
 	) {
 		submitDisabled = false;
 	}
@@ -129,10 +165,10 @@ function DateRangeFilter({
 					disabled={submitDisabled}
 					onClick={() => {
 						if (actionType === 'delete') {
-							updateFilterState(id);
+							setFilter({active: false, id});
 						}
 						else {
-							const newValue = {
+							const newSelectedData = {
 								from: fromValue
 									? getDateFromDateString(fromValue)
 									: null,
@@ -140,12 +176,20 @@ function DateRangeFilter({
 									? getDateFromDateString(toValue)
 									: null,
 							};
-							updateFilterState(
+
+							setFilter({
+								active: true,
 								id,
-								newValue,
-								formatDateRangeObject(newValue),
-								getOdataString(newValue, id)
-							);
+								odataFilterString: getOdataString({
+									entityFieldType,
+									id,
+									selectedData: newSelectedData,
+								}),
+								selectedData: newSelectedData,
+								selectedItemsLabel: getSelectedItemsLabel({
+									selectedData: newSelectedData,
+								}),
+							});
 						}
 					}}
 					small
@@ -161,7 +205,7 @@ function DateRangeFilter({
 			</ClayDropDown.Caption>
 		</>
 	);
-}
+};
 
 const dateShape = PropTypes.shape({
 	day: PropTypes.number,
@@ -174,11 +218,11 @@ DateRangeFilter.propTypes = {
 	max: dateShape,
 	min: dateShape,
 	placeholder: PropTypes.string,
-	updateFilterState: PropTypes.func.isRequired,
-	value: PropTypes.shape({
+	selectedData: PropTypes.shape({
 		from: dateShape,
 		to: dateShape,
 	}),
 };
 
+export {getSelectedItemsLabel, getOdataString};
 export default DateRangeFilter;

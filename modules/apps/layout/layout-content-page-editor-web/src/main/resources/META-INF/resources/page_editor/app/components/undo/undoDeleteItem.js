@@ -20,18 +20,24 @@ function undoAction({action, store}) {
 	const {itemId, portletIds} = action;
 
 	return (dispatch) => {
-		return LayoutService.unmarkItemForDeletion({
-			itemId,
+		return LayoutService.unmarkItemsForDeletion({
+			itemIds: [itemId],
 			onNetworkStatus: dispatch,
 			segmentsExperienceId: store.segmentsExperienceId,
-		}).then(({layoutData}) => {
+		}).then(({layoutData, pageContents}) => {
 			const fragmentEntryLinkIds = getFragmentEntryLinkIdsFromItemId({
 				itemId,
 				layoutData,
 			});
 
 			dispatch(
-				addItem({fragmentEntryLinkIds, itemId, layoutData, portletIds})
+				addItem({
+					fragmentEntryLinkIds,
+					itemId,
+					layoutData,
+					pageContents,
+					portletIds,
+				})
 			);
 		});
 	};

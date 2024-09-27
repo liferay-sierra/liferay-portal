@@ -25,6 +25,7 @@ import com.liferay.marketplace.model.App;
 import com.liferay.marketplace.model.Module;
 import com.liferay.marketplace.service.ModuleLocalService;
 import com.liferay.marketplace.service.base.AppLocalServiceBaseImpl;
+import com.liferay.marketplace.service.persistence.ModulePersistence;
 import com.liferay.marketplace.util.comparator.AppTitleComparator;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -36,6 +37,7 @@ import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.plugin.PluginPackage;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -97,7 +99,7 @@ public class AppLocalServiceImpl extends AppLocalServiceBaseImpl {
 
 		// Module
 
-		List<Module> modules = modulePersistence.findByAppId(app.getAppId());
+		List<Module> modules = _modulePersistence.findByAppId(app.getAppId());
 
 		for (Module module : modules) {
 			_moduleLocalService.deleteModule(module);
@@ -160,7 +162,7 @@ public class AppLocalServiceImpl extends AppLocalServiceBaseImpl {
 		for (PluginPackage pluginPackage :
 				PluginPackageUtil.getInstalledPluginPackages()) {
 
-			List<Module> modules = modulePersistence.findByContextName(
+			List<Module> modules = _modulePersistence.findByContextName(
 				pluginPackage.getContext());
 
 			boolean installedApp = false;
@@ -276,7 +278,7 @@ public class AppLocalServiceImpl extends AppLocalServiceBaseImpl {
 			File file = new File(
 				StringBundler.concat(
 					SystemProperties.get(SystemProperties.TMP_DIR),
-					StringPool.SLASH, encodeSafeFileName(app.getTitle()),
+					StringPool.SLASH, _encodeSafeFileName(app.getTitle()),
 					StringPool.PERIOD,
 					FileUtil.getExtension(app.getFileName())));
 
@@ -301,7 +303,7 @@ public class AppLocalServiceImpl extends AppLocalServiceBaseImpl {
 
 		App app = appPersistence.findByRemoteAppId(remoteAppId);
 
-		List<Module> modules = modulePersistence.findByAppId(app.getAppId());
+		List<Module> modules = _modulePersistence.findByAppId(app.getAppId());
 
 		for (Module module : modules) {
 			_moduleLocalService.deleteModule(module.getModuleId());
@@ -315,7 +317,7 @@ public class AppLocalServiceImpl extends AppLocalServiceBaseImpl {
 
 	@Override
 	public App updateApp(long userId, File file) throws PortalException {
-		Properties properties = getMarketplaceProperties(file);
+		Properties properties = _getMarketplaceProperties(file);
 
 		if (properties == null) {
 			throw new AppPropertiesException(
@@ -346,10 +348,10 @@ public class AppLocalServiceImpl extends AppLocalServiceBaseImpl {
 
 		// App
 
-		User user = userLocalService.fetchUser(userId);
+		User user = _userLocalService.fetchUser(userId);
 		Date date = new Date();
 
-		validate(title, version);
+		_validate(title, version);
 
 		App app = appPersistence.fetchByRemoteAppId(remoteAppId);
 
@@ -408,7 +410,7 @@ public class AppLocalServiceImpl extends AppLocalServiceBaseImpl {
 		return app;
 	}
 
-	protected String encodeSafeFileName(String fileName) {
+	private String _encodeSafeFileName(String fileName) {
 		if (fileName == null) {
 			return StringPool.BLANK;
 		}
@@ -419,7 +421,7 @@ public class AppLocalServiceImpl extends AppLocalServiceBaseImpl {
 			fileName, _SAFE_FILE_NAME_1, _SAFE_FILE_NAME_2);
 	}
 
-	protected Properties getMarketplaceProperties(File liferayPackageFile) {
+	private Properties _getMarketplaceProperties(File liferayPackageFile) {
 		try (ZipFile zipFile = new ZipFile(liferayPackageFile)) {
 			ZipEntry zipEntry = zipFile.getEntry(
 				"liferay-marketplace.properties");
@@ -437,7 +439,7 @@ public class AppLocalServiceImpl extends AppLocalServiceBaseImpl {
 
 						file = FileUtil.createTempFile(subsystemInputStream);
 
-						return getMarketplaceProperties(file);
+						return _getMarketplaceProperties(file);
 					}
 					finally {
 						FileUtil.delete(file);
@@ -462,7 +464,7 @@ public class AppLocalServiceImpl extends AppLocalServiceBaseImpl {
 		}
 	}
 
-	protected void validate(String title, String version)
+	private void _validate(String title, String version)
 		throws PortalException {
 
 		if (Validator.isNull(title)) {
@@ -500,8 +502,14 @@ public class AppLocalServiceImpl extends AppLocalServiceBaseImpl {
 	private ModuleLocalService _moduleLocalService;
 
 	@Reference
+	private ModulePersistence _modulePersistence;
+
+	@Reference
 	private Portal _portal;
 
 	private Map<String, String> _prepackagedApps;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

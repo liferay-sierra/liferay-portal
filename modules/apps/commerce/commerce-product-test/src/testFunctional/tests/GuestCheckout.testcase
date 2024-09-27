@@ -1,37 +1,18 @@
 @component-name = "portal-commerce"
 definition {
 
+	property custom.properties = "jsonws.web.service.paths.excludes=${line.separator}company.security.strangers.verify=false";
 	property portal.release = "true";
 	property portal.upstream = "true";
+	property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
 	property testray.main.component.name = "Shopping Experience";
 
 	setUp {
-		TestCase.setUpPortalInstance();
-
-		User.firstLoginPG();
-
-		PortalSettings.gotoConfiguration(
-			configurationCategory = "User Authentication",
-			configurationName = "General",
-			configurationScope = "Virtual Instance Scope");
-
-		Uncheck(locator1 = "PortalSettingsAuthentication#AUTHENTICATION_GENERAL_REQUIRE_STRANGERS_TO_VERIFY_THEIR_EMAIL_ADDRESS_CHECKBOX");
-
-		PortletEntry.save();
+		CommerceConfiguration.commerceSetUp();
 	}
 
 	tearDown {
-		Navigator.openURL();
-
-		if (IsElementPresent(locator1 = "UserBar#USER_AVATAR_IMAGE")) {
-			User.logoutPG();
-		}
-
-		User.firstLoginPG();
-
-		CommerceConfiguration.commerceAdminTearDown(userScreenName = "buyer");
-
-		CommerceConfiguration.commerceInitializersTearDown();
+		CommerceConfiguration.commerceTearDown();
 	}
 
 	test AssertGuestCartIsTransferredToAccount {
@@ -99,8 +80,6 @@ definition {
 			productName = "U-Joint",
 			productQuantity = "1");
 
-		Pause(locator1 = "5000");
-
 		CommerceNavigator.gotoMiniCart();
 
 		FrontStore.viewMiniCart(
@@ -114,8 +93,8 @@ definition {
 		CommerceNavigator.gotoSpeedwellAccountDropdownItem(dropdownItem = "Sign In");
 
 		CommerceLogin.loginPG(
+			newPassword = "test",
 			password = "ttest",
-			resetPassword = "test",
 			samlEnabled = "true",
 			userEmailAddress = "buyer@liferay.com");
 
@@ -190,8 +169,8 @@ definition {
 		User.logoutPG();
 
 		CommerceLogin.speedwellLogin(
+			newPassword = "test",
 			password = "ttest",
-			resetPassword = "test",
 			urlAppend = "web/speedwell",
 			userEmailAddress = "buyer@liferay.com");
 
@@ -200,8 +179,6 @@ definition {
 		FrontStore.addInitializerProductToCart(
 			productName = "U-Joint",
 			productQuantity = "1");
-
-		Pause(locator1 = "5000");
 
 		CommerceNavigator.gotoMiniCart();
 
@@ -225,8 +202,6 @@ definition {
 		FrontStore.addInitializerProductToCart(
 			productName = "U-Joint",
 			productQuantity = "5");
-
-		Pause(locator1 = "5000");
 
 		CommerceNavigator.gotoMiniCart();
 
@@ -318,8 +293,8 @@ definition {
 		User.logoutPG();
 
 		CommerceLogin.speedwellLogin(
+			newPassword = "test",
 			password = "ttest",
-			resetPassword = "test",
 			urlAppend = "web/speedwell",
 			userEmailAddress = "buyer@liferay.com");
 
@@ -328,8 +303,6 @@ definition {
 		FrontStore.addInitializerProductToCart(
 			productName = "U-Joint",
 			productQuantity = "1");
-
-		Pause(locator1 = "5000");
 
 		CommerceNavigator.gotoMiniCart();
 
@@ -353,8 +326,6 @@ definition {
 		FrontStore.addInitializerProductToCart(
 			productName = "Transmission Cooler Line Assembly",
 			productQuantity = "5");
-
-		Pause(locator1 = "5000");
 
 		CommerceNavigator.gotoMiniCart();
 
@@ -429,8 +400,6 @@ definition {
 			productName = "U-Joint",
 			productQuantity = "1");
 
-		Pause(locator1 = "5000");
-
 		CommerceNavigator.gotoMiniCart();
 
 		Button.click(button = "Submit");
@@ -479,8 +448,6 @@ definition {
 			productName = "U-Joint",
 			productQuantity = "1");
 
-		Pause(locator1 = "5000");
-
 		CommerceNavigator.gotoMiniCart();
 
 		Button.click(button = "Submit");
@@ -507,8 +474,6 @@ definition {
 		FrontStore.addInitializerProductToCart(
 			productName = "U-Joint",
 			productQuantity = "1");
-
-		Pause(locator1 = "5000");
 
 		CommerceNavigator.gotoMiniCart();
 
@@ -538,23 +503,29 @@ definition {
 			panel = "Control Panel",
 			portlet = "Accounts");
 
+		LexiconEntry.viewEntryStatus(
+			rowEntry = "Guest Account 1",
+			rowStatus = "Active");
+
 		CommerceNavigator.gotoEntry(entryName = "Guest Account 1");
 
 		CommerceEntry.viewAccountsEntry(
 			accountEmail = "buyer@liferay.com",
 			accountName = "Guest Account 1",
-			accountType = "Guest",
-			isAccountActive = "true");
+			accountType = "Guest");
 
 		Click(locator1 = "Icon#BACK");
+
+		LexiconEntry.viewEntryStatus(
+			rowEntry = "Guest Account 2",
+			rowStatus = "Active");
 
 		CommerceNavigator.gotoEntry(entryName = "Guest Account 2");
 
 		CommerceEntry.viewAccountsEntry(
 			accountEmail = "buyer@liferay.com",
 			accountName = "Guest Account 2",
-			accountType = "Guest",
-			isAccountActive = "true");
+			accountType = "Guest");
 	}
 
 	test AssertNewAccountIsCreatedAfterGuestCheckout {
@@ -593,8 +564,6 @@ definition {
 		FrontStore.addInitializerProductToCart(
 			productName = "U-Joint",
 			productQuantity = "1");
-
-		Pause(locator1 = "5000");
 
 		CommerceNavigator.gotoMiniCart();
 
@@ -695,8 +664,8 @@ definition {
 		User.logoutPG();
 
 		CommerceLogin.speedwellLogin(
+			newPassword = "test",
 			password = "ttest",
-			resetPassword = "test",
 			urlAppend = "web/speedwell",
 			userEmailAddress = "buyer@liferay.com");
 
@@ -705,8 +674,6 @@ definition {
 		FrontStore.addInitializerProductToCart(
 			productName = "U-Joint",
 			productQuantity = "1");
-
-		Pause(locator1 = "5000");
 
 		CommerceNavigator.gotoMiniCart();
 
@@ -733,8 +700,6 @@ definition {
 		FrontStore.addInitializerProductToCart(
 			productName = "U-Joint",
 			productQuantity = "1");
-
-		Pause(locator1 = "5000");
 
 		CommerceNavigator.gotoMiniCart();
 
@@ -781,23 +746,29 @@ definition {
 			panel = "Control Panel",
 			portlet = "Accounts");
 
+		LexiconEntry.viewEntryStatus(
+			rowEntry = "Buyer User",
+			rowStatus = "Active");
+
 		CommerceNavigator.gotoEntry(entryName = "Buyer User");
 
 		CommerceEntry.viewAccountsEntry(
 			accountEmail = "buyer@liferay.com",
 			accountName = "Buyer User",
-			accountType = "Person",
-			isAccountActive = "true");
+			accountType = "Person");
 
 		Click(locator1 = "Icon#BACK");
+
+		LexiconEntry.viewEntryStatus(
+			rowEntry = "Guest Account",
+			rowStatus = "Active");
 
 		CommerceNavigator.gotoEntry(entryName = "Guest Account");
 
 		CommerceEntry.viewAccountsEntry(
 			accountEmail = "buyer@liferay.com",
 			accountName = "Guest Account",
-			accountType = "Guest",
-			isAccountActive = "true");
+			accountType = "Guest");
 	}
 
 	test GuestCheckoutDisabled {
@@ -869,8 +840,6 @@ definition {
 			productName = "U-Joint",
 			productQuantity = "1");
 
-		Pause(locator1 = "5000");
-
 		CommerceNavigator.gotoMiniCart();
 
 		Button.click(button = "Submit");
@@ -925,8 +894,6 @@ definition {
 		FrontStore.addInitializerProductToCart(
 			productName = "U-Joint",
 			productQuantity = "1");
-
-		Pause(locator1 = "5000");
 
 		CommerceNavigator.gotoMiniCart();
 
@@ -998,8 +965,6 @@ definition {
 			productName = "U-Joint",
 			productQuantity = "1");
 
-		Pause(locator1 = "5000");
-
 		CommerceNavigator.gotoMiniCart();
 
 		Button.click(button = "Submit");
@@ -1059,8 +1024,6 @@ definition {
 		FrontStore.addInitializerProductToCart(
 			productName = "U-Joint",
 			productQuantity = "1");
-
-		Pause(locator1 = "5000");
 
 		CommerceNavigator.gotoMiniCart();
 
@@ -1142,8 +1105,6 @@ definition {
 			productName = "U-Joint",
 			productQuantity = "1");
 
-		Pause(locator1 = "5000");
-
 		CommerceNavigator.gotoMiniCart();
 
 		Button.click(button = "Submit");
@@ -1171,8 +1132,6 @@ definition {
 			productName = "U-Joint",
 			productQuantity = "1");
 
-		Pause(locator1 = "5000");
-
 		CommerceNavigator.gotoMiniCart();
 
 		Button.click(button = "Submit");
@@ -1187,8 +1146,8 @@ definition {
 			userScreenName = "buyeruser");
 
 		CommerceLogin.speedwellLogin(
+			newPassword = "test",
 			password = "ttest",
-			resetPassword = "test",
 			urlAppend = "web/speedwell",
 			userEmailAddress = "buyer@liferay.com");
 
@@ -1229,23 +1188,29 @@ definition {
 			panel = "Control Panel",
 			portlet = "Accounts");
 
+		LexiconEntry.viewEntryStatus(
+			rowEntry = "Guest Account",
+			rowStatus = "Active");
+
 		CommerceNavigator.gotoEntry(entryName = "Guest Account");
 
 		CommerceEntry.viewAccountsEntry(
 			accountEmail = "buyer@liferay.com",
 			accountName = "Guest Account",
-			accountType = "Guest",
-			isAccountActive = "true");
+			accountType = "Guest");
 
 		Click(locator1 = "Icon#BACK");
+
+		LexiconEntry.viewEntryStatus(
+			rowEntry = "Buyer User",
+			rowStatus = "Active");
 
 		CommerceNavigator.gotoEntry(entryName = "Buyer User");
 
 		CommerceEntry.viewAccountsEntry(
 			accountEmail = "buyer@liferay.com",
 			accountName = "Buyer User",
-			accountType = "Person",
-			isAccountActive = "true");
+			accountType = "Person");
 	}
 
 }

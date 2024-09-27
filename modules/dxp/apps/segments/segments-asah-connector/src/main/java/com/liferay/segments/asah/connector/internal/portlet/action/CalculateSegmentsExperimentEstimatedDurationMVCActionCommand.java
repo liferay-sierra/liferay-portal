@@ -15,10 +15,10 @@
 package com.liferay.segments.asah.connector.internal.portlet.action;
 
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
@@ -58,7 +58,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author David Arques
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + SegmentsPortletKeys.SEGMENTS_EXPERIMENT,
 		"mvc.command.name=/calculate_segments_experiment_estimated_duration"
@@ -104,7 +103,7 @@ public class CalculateSegmentsExperimentEstimatedDurationMVCActionCommand
 
 			jsonObject = JSONUtil.put(
 				"error",
-				LanguageUtil.get(
+				_language.get(
 					themeDisplay.getRequest(), "an-unexpected-error-occurred"));
 		}
 
@@ -149,7 +148,7 @@ public class CalculateSegmentsExperimentEstimatedDurationMVCActionCommand
 					actionRequest, "segmentsExperimentRels");
 
 				JSONObject segmentsExperimentRelsJSONObject =
-					JSONFactoryUtil.createJSONObject(segmentsExperimentRels);
+					_jsonFactory.createJSONObject(segmentsExperimentRels);
 
 				Iterator<String> iterator =
 					segmentsExperimentRelsJSONObject.keys();
@@ -181,7 +180,13 @@ public class CalculateSegmentsExperimentEstimatedDurationMVCActionCommand
 	private AsahFaroBackendClient _asahFaroBackendClient;
 
 	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
 	private JSONWebServiceClient _jsonWebServiceClient;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

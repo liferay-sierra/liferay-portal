@@ -33,7 +33,8 @@ import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalServ
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
 import com.liferay.layout.seo.service.LayoutSEOEntryLocalService;
 import com.liferay.layout.util.structure.LayoutStructure;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutTypeController;
 import com.liferay.portal.kernel.service.UserLocalService;
@@ -46,11 +47,9 @@ import com.liferay.portal.util.LayoutTypeControllerTracker;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
-import com.liferay.portal.vulcan.util.TransformUtil;
 import com.liferay.ratings.kernel.service.RatingsStatsLocalService;
-import com.liferay.segments.constants.SegmentsEntryConstants;
+import com.liferay.segments.constants.SegmentsExperienceConstants;
 import com.liferay.segments.model.SegmentsExperience;
-import com.liferay.segments.service.SegmentsExperienceService;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -163,8 +162,8 @@ public class SitePageDTOConverter implements DTOConverter<Layout, SitePage> {
 							return null;
 						}
 
-						long segmentsExperienceId =
-							SegmentsEntryConstants.ID_DEFAULT;
+						String segmentsExperienceKey =
+							SegmentsExperienceConstants.KEY_DEFAULT;
 
 						SegmentsExperience segmentsExperience =
 							(SegmentsExperience)
@@ -172,13 +171,13 @@ public class SitePageDTOConverter implements DTOConverter<Layout, SitePage> {
 									"segmentsExperience");
 
 						if (segmentsExperience != null) {
-							segmentsExperienceId =
-								segmentsExperience.getSegmentsExperienceId();
+							segmentsExperienceKey =
+								segmentsExperience.getSegmentsExperienceKey();
 						}
 
 						LayoutStructure layoutStructure = LayoutStructure.of(
 							layoutPageTemplateStructure.getData(
-								segmentsExperienceId));
+								segmentsExperienceKey));
 
 						return _pageDefinitionDTOConverter.toDTO(
 							dtoConverterContext, layoutStructure);
@@ -189,7 +188,7 @@ public class SitePageDTOConverter implements DTOConverter<Layout, SitePage> {
 							LayoutTypeControllerTracker.getLayoutTypeController(
 								layout.getType());
 
-						return LanguageUtil.get(
+						return _language.get(
 							dtoConverterContext.getHttpServletRequest(),
 							ResourceBundleUtil.getBundle(
 								"content.Language",
@@ -217,6 +216,9 @@ public class SitePageDTOConverter implements DTOConverter<Layout, SitePage> {
 	private ExperienceDTOConverter _experienceDTOConverter;
 
 	@Reference
+	private Language _language;
+
+	@Reference
 	private LayoutPageTemplateEntryLocalService
 		_layoutPageTemplateEntryLocalService;
 
@@ -235,9 +237,6 @@ public class SitePageDTOConverter implements DTOConverter<Layout, SitePage> {
 
 	@Reference
 	private RatingsStatsLocalService _ratingsStatsLocalService;
-
-	@Reference
-	private SegmentsExperienceService _segmentsExperienceService;
 
 	@Reference
 	private StorageEngineManager _storageEngineManager;

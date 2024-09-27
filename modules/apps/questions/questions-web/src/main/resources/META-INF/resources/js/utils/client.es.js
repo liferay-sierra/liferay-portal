@@ -72,8 +72,12 @@ export const createCommentQuery = `
 			creator {
 				name
 			}
+			dateCreated
 			dateModified
+			friendlyUrlPath
+			hasCompanyMx
 			id
+			status
 		}
 	}
 `;
@@ -217,12 +221,14 @@ export const deleteMessageBoardThreadQuery = `
 export const getTagsOrderByDateCreatedQuery = `
 	query keywords(
 		$page: Int!
+		$filter: String
 		$pageSize: Int!
 		$search: String
 		$siteKey: String!
 	) {
 		keywords(
 			page: $page
+			filter: $filter
 			pageSize: $pageSize
 			search: $search
 			siteKey: $siteKey
@@ -320,6 +326,7 @@ export const getThreadQuery = `
 			friendlyUrlPath
 			headline
 			id
+			messageBoardRootMessageId
 			keywords
 			locked
 			messageBoardSection {
@@ -335,6 +342,15 @@ export const getThreadQuery = `
 			status
 			subscribed
 			viewCount
+			withValidAnswers: messageBoardMessages(filter: "showAsAnswer eq true") {
+				totalCount
+				items {
+				  id
+				  headline
+				  articleBody
+				  showAsAnswer
+				}
+			  }
 		}
 	}
 `;
@@ -402,11 +418,13 @@ export const getMessagesQuery = `
 					postsNumber
 					rank
 				}
+				dateCreated
 				dateModified
 				encodingFormat
 				friendlyUrlPath
+				hasCompanyMx
 				id
-				messageBoardMessages(flatten: true) {
+				messageBoardMessages(flatten: true, sort: "dateCreated:asc") {
 					items {
 						actions
 						articleBody
@@ -415,9 +433,12 @@ export const getMessagesQuery = `
 							image
 							name
 						}
+						dateCreated
 						dateModified
 						encodingFormat
+						hasCompanyMx
 						id
+						friendlyUrlPath
 						showAsAnswer
 						status
 					}
@@ -444,14 +465,20 @@ export const hasListPermissionsQuery = `
 
 export const getSectionThreadsQuery = `
 	query messageBoardSectionMessageBoardThreads(
+		$filter: String
 		$messageBoardSectionId: Long!
 		$page: Int!
 		$pageSize: Int!
+		$search: String
+		$sort: String
 	) {
 		messageBoardSectionMessageBoardThreads(
+			filter: $filter
 			messageBoardSectionId: $messageBoardSectionId
 			page: $page
 			pageSize: $pageSize
+			search: $search
+			sort: $sort
 		) {
 			items {
 				aggregateRating {
@@ -465,6 +492,7 @@ export const getSectionThreadsQuery = `
 					image
 					name
 				}
+				dateCreated
 				dateModified
 				friendlyUrlPath
 				hasValidAnswer
@@ -491,12 +519,12 @@ export const getSectionThreadsQuery = `
 
 export const getThreadsQuery = `
 	query messageBoardThreads(
-		$filter: String!
+		$filter: String
 		$page: Int!
 		$pageSize: Int!
-		$search: String!
+		$search: String
 		$siteKey: String!
-		$sort: String!
+		$sort: String
 	) {
 		messageBoardThreads(
 			filter: $filter
@@ -519,6 +547,7 @@ export const getThreadsQuery = `
 					image
 					name
 				}
+				dateCreated
 				dateModified
 				friendlyUrlPath
 				hasValidAnswer
@@ -732,14 +761,19 @@ export function getThread(friendlyUrlPath, siteKey) {
 	});
 }
 
-export function getMessages(messageBoardThreadId, page, pageSize) {
+export function getMessages(
+	messageBoardThreadId,
+	page,
+	pageSize,
+	sortBy = 'dateCreated:asc'
+) {
 	return clientNestedFields.request({
 		query: getMessagesQuery,
 		variables: {
 			messageBoardThreadId,
 			page,
 			pageSize,
-			sort: 'dateCreated:asc',
+			sort: sortBy,
 		},
 	});
 }
@@ -946,6 +980,7 @@ export const getSubscriptionsQuery = `
 						myRating {
 							ratingValue
 						}
+						showAsQuestion
 						subscribed
 						viewCount
 					}

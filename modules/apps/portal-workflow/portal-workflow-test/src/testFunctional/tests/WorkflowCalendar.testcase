@@ -10,7 +10,6 @@ definition {
 		TestCase.setUpPortalInstance();
 
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
-
 		var siteName = TestCase.getSiteName(siteName = "${siteName}");
 
 		User.firstLoginPG();
@@ -26,14 +25,13 @@ definition {
 			panel = "Site Administration",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(
+		PagesAdmin.addPage(
 			pageName = "Calendar Page",
 			sitePageType = "Widget Page");
 
 		PagesAdmin.configurePage(
 			columnName = "1 Column",
 			pageName = "Calendar Page",
-			privacy = "Public Pages",
 			sitePageType = "Widget Page");
 
 		Navigator.gotoPage(pageName = "Calendar Page");
@@ -109,7 +107,7 @@ definition {
 
 		Button.clickNoError(button = "Delete");
 
-		AssertConfirm(value1 = "Deleting this event will cancel the meeting with your guests. Would you like to delete?");
+		AssertConfirm(value1 = "Deleting this event will cancel the meeting with your guests. Would you like to delete it?");
 
 		Navigator.gotoPage(pageName = "Calendar Page");
 

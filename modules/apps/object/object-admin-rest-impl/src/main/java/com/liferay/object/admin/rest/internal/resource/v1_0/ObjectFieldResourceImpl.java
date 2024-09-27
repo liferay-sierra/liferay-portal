@@ -14,20 +14,30 @@
 
 package com.liferay.object.admin.rest.internal.resource.v1_0;
 
+import com.liferay.list.type.service.ListTypeDefinitionLocalService;
+import com.liferay.list.type.service.ListTypeEntryLocalService;
 import com.liferay.object.admin.rest.dto.v1_0.ObjectDefinition;
 import com.liferay.object.admin.rest.dto.v1_0.ObjectField;
+import com.liferay.object.admin.rest.internal.dto.v1_0.converter.ObjectFieldDTOConverter;
 import com.liferay.object.admin.rest.internal.dto.v1_0.util.ObjectFieldSettingUtil;
 import com.liferay.object.admin.rest.internal.dto.v1_0.util.ObjectFieldUtil;
+import com.liferay.object.admin.rest.internal.odata.entity.v1_0.ObjectFieldEntityModel;
 import com.liferay.object.admin.rest.resource.v1_0.ObjectFieldResource;
+import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectFieldService;
 import com.liferay.object.service.ObjectFieldSettingLocalService;
-import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.object.service.ObjectFilterLocalService;
 import com.liferay.portal.kernel.search.Field;
+import com.liferay.portal.kernel.search.Sort;
+import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.odata.entity.EntityModel;
+import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.portal.vulcan.fields.NestedField;
 import com.liferay.portal.vulcan.fields.NestedFieldSupport;
 import com.liferay.portal.vulcan.pagination.Page;
@@ -36,6 +46,8 @@ import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 import com.liferay.portal.vulcan.util.SearchUtil;
 
 import java.util.Objects;
+
+import javax.ws.rs.core.MultivaluedMap;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -57,10 +69,16 @@ public class ObjectFieldResourceImpl
 		_objectFieldService.deleteObjectField(objectFieldId);
 	}
 
+	@Override
+	public EntityModel getEntityModel(MultivaluedMap multivaluedMap) {
+		return _entityModel;
+	}
+
 	@NestedField(parentClass = ObjectDefinition.class, value = "objectFields")
 	@Override
 	public Page<ObjectField> getObjectDefinitionObjectFieldsPage(
-			Long objectDefinitionId, String search, Pagination pagination)
+			Long objectDefinitionId, String search, Filter filter,
+			Pagination pagination, Sort[] sorts)
 		throws Exception {
 
 		com.liferay.object.model.ObjectDefinition objectDefinition =
@@ -75,25 +93,44 @@ public class ObjectFieldResourceImpl
 					com.liferay.object.model.ObjectDefinition.class.getName(),
 					objectDefinitionId)
 			).put(
+				"createBatch",
+				addAction(
+					ActionKeys.UPDATE, "postObjectDefinitionObjectFieldBatch",
+					com.liferay.object.model.ObjectDefinition.class.getName(),
+					objectDefinitionId)
+			).put(
+				"deleteBatch",
+				addAction(
+					ActionKeys.DELETE, "deleteObjectFieldBatch",
+					com.liferay.object.model.ObjectDefinition.class.getName(),
+					null)
+			).put(
 				"get",
 				addAction(
 					ActionKeys.VIEW, "getObjectDefinitionObjectFieldsPage",
 					com.liferay.object.model.ObjectDefinition.class.getName(),
 					objectDefinitionId)
+			).put(
+				"updateBatch",
+				addAction(
+					ActionKeys.UPDATE, "putObjectFieldBatch",
+					com.liferay.object.model.ObjectDefinition.class.getName(),
+					null)
 			).build(),
 			booleanQuery -> {
 			},
-			null, com.liferay.object.model.ObjectField.class.getName(), search,
-			pagination,
+			filter, com.liferay.object.model.ObjectField.class.getName(),
+			search, pagination,
 			queryConfig -> queryConfig.setSelectedFieldNames(
 				Field.ENTRY_CLASS_PK),
 			searchContext -> {
 				searchContext.setAttribute(Field.NAME, search);
+				searchContext.setAttribute("label", search);
 				searchContext.setAttribute(
 					"objectDefinitionId", objectDefinitionId);
 				searchContext.setCompanyId(contextCompany.getCompanyId());
 			},
-			null,
+			sorts,
 			document -> _toObjectField(
 				objectDefinition,
 				_objectFieldService.getObjectField(
@@ -111,23 +148,42 @@ public class ObjectFieldResourceImpl
 			Long objectDefinitionId, ObjectField objectField)
 		throws Exception {
 
+		if (!GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-164948")) &&
+			Objects.equals(
+				objectField.getBusinessTypeAsString(),
+				ObjectFieldConstants.BUSINESS_TYPE_FORMULA)) {
+
+			throw new UnsupportedOperationException();
+		}
+
 		return _toObjectField(
 			_objectFieldService.addCustomObjectField(
-				objectField.getListTypeDefinitionId(), objectDefinitionId,
-				objectField.getBusinessTypeAsString(),
+				objectField.getExternalReferenceCode(),
+				ObjectFieldUtil.getListTypeDefinitionId(
+					contextUser.getCompanyId(), _listTypeDefinitionLocalService,
+					objectField),
+				objectDefinitionId, objectField.getBusinessTypeAsString(),
 				ObjectFieldUtil.getDBType(
 					objectField.getDBTypeAsString(),
 					objectField.getTypeAsString()),
-				objectField.getIndexed(), objectField.getIndexedAsKeyword(),
+				objectField.getDefaultValue(), objectField.getIndexed(),
+				objectField.getIndexedAsKeyword(),
 				objectField.getIndexedLanguageId(),
 				LocalizedMapUtil.getLocalizedMap(objectField.getLabel()),
 				objectField.getName(), objectField.getRequired(),
+				GetterUtil.getBoolean(objectField.getState()),
 				transformToList(
 					objectField.getObjectFieldSettings(),
 					objectFieldSetting ->
 						ObjectFieldSettingUtil.toObjectFieldSetting(
-							objectFieldSetting,
-							_objectFieldSettingLocalService))));
+							objectField.getBusinessTypeAsString(),
+							ObjectFieldUtil.addListTypeDefinition(
+								contextUser.getCompanyId(),
+								_listTypeDefinitionLocalService,
+								_listTypeEntryLocalService, objectField,
+								contextUser.getUserId()),
+							objectFieldSetting, _objectFieldSettingLocalService,
+							_objectFilterLocalService))));
 	}
 
 	@Override
@@ -135,28 +191,65 @@ public class ObjectFieldResourceImpl
 			Long objectFieldId, ObjectField objectField)
 		throws Exception {
 
+		if (!GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-164948")) &&
+			Objects.equals(
+				objectField.getBusinessTypeAsString(),
+				ObjectFieldConstants.BUSINESS_TYPE_FORMULA)) {
+
+			throw new UnsupportedOperationException();
+		}
+
+		com.liferay.object.model.ObjectField serviceBuilderObjectField =
+			_objectFieldService.getObjectField(objectFieldId);
+
+		com.liferay.object.model.ObjectDefinition
+			serviceBuilderObjectDefinition =
+				_objectDefinitionLocalService.getObjectDefinition(
+					serviceBuilderObjectField.getObjectDefinitionId());
+
+		if (!serviceBuilderObjectDefinition.isApproved()) {
+			objectField.setListTypeDefinitionId(
+				ObjectFieldUtil.addListTypeDefinition(
+					contextUser.getCompanyId(), _listTypeDefinitionLocalService,
+					_listTypeEntryLocalService, objectField,
+					contextUser.getUserId()));
+		}
+
+		if (Validator.isNull(objectField.getListTypeDefinitionId())) {
+			objectField.setListTypeDefinitionId(
+				serviceBuilderObjectField.getListTypeDefinitionId());
+		}
+
 		return _toObjectField(
-			_objectFieldService.updateCustomObjectField(
-				objectFieldId, objectField.getListTypeDefinitionId(),
+			_objectFieldService.updateObjectField(
+				objectField.getExternalReferenceCode(), objectFieldId,
+				ObjectFieldUtil.getListTypeDefinitionId(
+					contextUser.getCompanyId(), _listTypeDefinitionLocalService,
+					objectField),
 				objectField.getBusinessTypeAsString(),
 				ObjectFieldUtil.getDBType(
 					objectField.getDBTypeAsString(),
 					objectField.getTypeAsString()),
-				objectField.getIndexed(), objectField.getIndexedAsKeyword(),
+				objectField.getDefaultValue(), objectField.getIndexed(),
+				objectField.getIndexedAsKeyword(),
 				objectField.getIndexedLanguageId(),
 				LocalizedMapUtil.getLocalizedMap(objectField.getLabel()),
 				objectField.getName(), objectField.getRequired(),
+				GetterUtil.getBoolean(objectField.getState()),
 				transformToList(
 					objectField.getObjectFieldSettings(),
 					objectFieldSetting ->
 						ObjectFieldSettingUtil.toObjectFieldSetting(
-							objectFieldSetting,
-							_objectFieldSettingLocalService))));
+							objectField.getBusinessTypeAsString(),
+							objectField.getListTypeDefinitionId(),
+							objectFieldSetting, _objectFieldSettingLocalService,
+							_objectFilterLocalService))));
 	}
 
 	private ObjectField _toObjectField(
-		com.liferay.object.model.ObjectDefinition objectDefinition,
-		com.liferay.object.model.ObjectField objectField) {
+			com.liferay.object.model.ObjectDefinition objectDefinition,
+			com.liferay.object.model.ObjectField objectField)
+		throws Exception {
 
 		boolean updateable =
 			(!objectDefinition.isApproved() && !objectDefinition.isSystem()) ||
@@ -164,49 +257,55 @@ public class ObjectFieldResourceImpl
 				objectDefinition.getExtensionDBTableName(),
 				objectField.getDBTableName());
 
-		return ObjectFieldUtil.toObjectField(
-			HashMapBuilder.put(
-				"delete",
-				() -> {
-					if (!updateable ||
-						Validator.isNotNull(
-							objectField.getRelationshipType())) {
+		return _objectFieldDTOConverter.toDTO(
+			new DefaultDTOConverterContext(
+				false,
+				HashMapBuilder.put(
+					"delete",
+					() -> {
+						if (!updateable ||
+							Validator.isNotNull(
+								objectField.getRelationshipType()) ||
+							objectField.isSystem()) {
 
-						return null;
+							return null;
+						}
+
+						return addAction(
+							ActionKeys.UPDATE, "deleteObjectField",
+							com.liferay.object.model.ObjectDefinition.class.
+								getName(),
+							objectField.getObjectDefinitionId());
 					}
-
-					return addAction(
-						ActionKeys.UPDATE, "deleteObjectField",
+				).put(
+					"get",
+					addAction(
+						ActionKeys.VIEW, "getObjectField",
 						com.liferay.object.model.ObjectDefinition.class.
 							getName(),
-						objectField.getObjectDefinitionId());
-				}
-			).put(
-				"get",
-				addAction(
-					ActionKeys.VIEW, "getObjectField",
-					com.liferay.object.model.ObjectDefinition.class.getName(),
-					objectField.getObjectDefinitionId())
-			).put(
-				"update",
-				() -> {
-					if (!updateable) {
-						return null;
-					}
+						objectField.getObjectDefinitionId())
+				).put(
+					"update",
+					() -> {
+						if (!updateable) {
+							return null;
+						}
 
-					return addAction(
-						ActionKeys.UPDATE, "putObjectField",
-						com.liferay.object.model.ObjectDefinition.class.
-							getName(),
-						objectField.getObjectDefinitionId());
-				}
-			).build(),
+						return addAction(
+							ActionKeys.UPDATE, "putObjectField",
+							com.liferay.object.model.ObjectDefinition.class.
+								getName(),
+							objectField.getObjectDefinitionId());
+					}
+				).build(),
+				null, null, contextAcceptLanguage.getPreferredLocale(), null,
+				null),
 			objectField);
 	}
 
 	private ObjectField _toObjectField(
 			com.liferay.object.model.ObjectField objectField)
-		throws PortalException {
+		throws Exception {
 
 		return _toObjectField(
 			_objectDefinitionLocalService.getObjectDefinition(
@@ -214,13 +313,28 @@ public class ObjectFieldResourceImpl
 			objectField);
 	}
 
+	private static final EntityModel _entityModel =
+		new ObjectFieldEntityModel();
+
+	@Reference
+	private ListTypeDefinitionLocalService _listTypeDefinitionLocalService;
+
+	@Reference
+	private ListTypeEntryLocalService _listTypeEntryLocalService;
+
 	@Reference
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;
+
+	@Reference
+	private ObjectFieldDTOConverter _objectFieldDTOConverter;
 
 	@Reference
 	private ObjectFieldService _objectFieldService;
 
 	@Reference
 	private ObjectFieldSettingLocalService _objectFieldSettingLocalService;
+
+	@Reference
+	private ObjectFilterLocalService _objectFilterLocalService;
 
 }

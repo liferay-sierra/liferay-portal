@@ -316,6 +316,31 @@ public class DLFolderLocalServiceUtil {
 	}
 
 	/**
+	 * Returns the document library folder with the matching external reference code and group.
+	 *
+	 * @param groupId the primary key of the group
+	 * @param externalReferenceCode the document library folder's external reference code
+	 * @return the matching document library folder, or <code>null</code> if a matching document library folder could not be found
+	 */
+	public static DLFolder fetchDLFolderByExternalReferenceCode(
+		long groupId, String externalReferenceCode) {
+
+		return getService().fetchDLFolderByExternalReferenceCode(
+			groupId, externalReferenceCode);
+	}
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link #fetchDLFolderByExternalReferenceCode(long, String)}
+	 */
+	@Deprecated
+	public static DLFolder fetchDLFolderByReferenceCode(
+		long groupId, String externalReferenceCode) {
+
+		return getService().fetchDLFolderByReferenceCode(
+			groupId, externalReferenceCode);
+	}
+
+	/**
 	 * Returns the document library folder matching the UUID and group.
 	 *
 	 * @param uuid the document library folder's UUID
@@ -402,6 +427,22 @@ public class DLFolderLocalServiceUtil {
 	 */
 	public static DLFolder getDLFolder(long folderId) throws PortalException {
 		return getService().getDLFolder(folderId);
+	}
+
+	/**
+	 * Returns the document library folder with the matching external reference code and group.
+	 *
+	 * @param groupId the primary key of the group
+	 * @param externalReferenceCode the document library folder's external reference code
+	 * @return the matching document library folder
+	 * @throws PortalException if a matching document library folder could not be found
+	 */
+	public static DLFolder getDLFolderByExternalReferenceCode(
+			long groupId, String externalReferenceCode)
+		throws PortalException {
+
+		return getService().getDLFolderByExternalReferenceCode(
+			groupId, externalReferenceCode);
 	}
 
 	/**
@@ -540,22 +581,6 @@ public class DLFolderLocalServiceUtil {
 
 		return getService().getFolders(
 			groupId, parentFolderId, includeMountfolders, start, end,
-			orderByComparator);
-	}
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 #getFolders(long, long, boolean, int, int,
-	 OrderByComparator)}
-	 */
-	@Deprecated
-	public static List<DLFolder> getFolders(
-		long groupId, long parentFolderId, int status,
-		boolean includeMountfolders, int start, int end,
-		OrderByComparator<DLFolder> orderByComparator) {
-
-		return getService().getFolders(
-			groupId, parentFolderId, status, includeMountfolders, start, end,
 			orderByComparator);
 	}
 

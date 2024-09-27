@@ -15,14 +15,22 @@
 package com.liferay.translation.web.internal.servlet;
 
 import com.liferay.info.exception.NoSuchInfoItemException;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemReference;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFieldValuesProvider;
 import com.liferay.info.item.provider.InfoItemObjectProvider;
+import com.liferay.info.item.provider.InfoItemPermissionProvider;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
@@ -32,13 +40,11 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.zip.ZipWriter;
-import com.liferay.portal.kernel.zip.ZipWriterFactoryUtil;
+import com.liferay.portal.kernel.zip.ZipWriterFactory;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.segments.constants.SegmentsExperienceConstants;
-import com.liferay.segments.model.SegmentsExperience;
 import com.liferay.segments.service.SegmentsExperienceLocalService;
 import com.liferay.translation.exporter.TranslationInfoItemFieldValuesExporter;
-import com.liferay.translation.exporter.TranslationInfoItemFieldValuesExporterTracker;
+import com.liferay.translation.exporter.TranslationInfoItemFieldValuesExporterRegistry;
 import com.liferay.translation.web.internal.helper.InfoItemHelper;
 import com.liferay.translation.web.internal.helper.TranslationRequestHelper;
 
@@ -78,12 +84,20 @@ public class ExportTranslationServlet extends HttpServlet {
 		throws IOException {
 
 		try {
+			User user = _portal.getUser(httpServletRequest);
+
+			if ((user == null) || user.isDefaultUser()) {
+				throw new PrincipalException.MustBeAuthenticated(
+					StringPool.BLANK);
+			}
+
 			long[] segmentsExperienceIds = ParamUtil.getLongValues(
 				httpServletRequest, "segmentsExperienceIds");
 
 			TranslationRequestHelper translationRequestHelper =
 				new TranslationRequestHelper(
-					httpServletRequest, _infoItemServiceTracker);
+					httpServletRequest, _infoItemServiceRegistry,
+					_segmentsExperienceLocalService);
 
 			String className = translationRequestHelper.getClassName(
 				segmentsExperienceIds);
@@ -95,29 +109,36 @@ public class ExportTranslationServlet extends HttpServlet {
 			String[] targetLanguageIds = ParamUtil.getStringValues(
 				httpServletRequest, "targetLanguageIds");
 
-			ZipWriter zipWriter = ZipWriterFactoryUtil.getZipWriter();
+			ZipWriter zipWriter = _zipWriterFactory.getZipWriter();
 
 			Set<Long> classPKs = SetUtil.fromArray(
 				_getClassPKs(
 					className, segmentsExperienceIds,
 					translationRequestHelper));
 
-			for (long classPK : classPKs) {
-				if ((classPK == SegmentsExperienceConstants.ID_DEFAULT) &&
-					className.equals(SegmentsExperience.class.getName())) {
+			InfoItemPermissionProvider infoItemPermissionProvider =
+				_infoItemServiceRegistry.getFirstInfoItemService(
+					InfoItemPermissionProvider.class, className);
 
-					_addZipEntry(
-						zipWriter, translationRequestHelper.getModelClassName(),
-						translationRequestHelper.getModelClassPK(),
-						exportMimeType, sourceLanguageId, targetLanguageIds,
-						_portal.getLocale(httpServletRequest));
+			PermissionChecker permissionChecker =
+				_permissionCheckerFactory.create(user);
+
+			PermissionThreadLocal.setPermissionChecker(permissionChecker);
+
+			for (long classPK : classPKs) {
+				if ((infoItemPermissionProvider != null) &&
+					!infoItemPermissionProvider.hasPermission(
+						permissionChecker,
+						new InfoItemReference(className, classPK),
+						ActionKeys.VIEW)) {
+
+					throw new PrincipalException();
 				}
-				else {
-					_addZipEntry(
-						zipWriter, className, classPK, exportMimeType,
-						sourceLanguageId, targetLanguageIds,
-						_portal.getLocale(httpServletRequest));
-				}
+
+				_addZipEntry(
+					zipWriter, className, classPK, exportMimeType,
+					sourceLanguageId, targetLanguageIds,
+					_portal.getLocale(httpServletRequest));
 			}
 
 			try (InputStream inputStream = new FileInputStream(
@@ -128,10 +149,11 @@ public class ExportTranslationServlet extends HttpServlet {
 					_getZipFileName(
 						translationRequestHelper.getModelClassName(),
 						translationRequestHelper.getModelClassPK(),
-						LanguageUtil.get(
+						_language.get(
 							_portal.getLocale(httpServletRequest),
 							"model.resource." + className),
-						_isMultipleModels(classPKs, segmentsExperienceIds),
+						_isMultipleModels(
+							translationRequestHelper.getModelClassPKs()),
 						sourceLanguageId,
 						_portal.getLocale(httpServletRequest)),
 					inputStream, ContentTypes.APPLICATION_ZIP);
@@ -149,28 +171,28 @@ public class ExportTranslationServlet extends HttpServlet {
 		throws IOException, PortalException {
 
 		InfoItemHelper infoItemHelper = new InfoItemHelper(
-			className, _infoItemServiceTracker);
+			className, _infoItemServiceRegistry);
 
 		Optional<String> infoItemTitleOptional =
 			infoItemHelper.getInfoItemTitleOptional(classPK, locale);
 
 		String infoItemTitle = infoItemTitleOptional.orElseGet(
 			() ->
-				LanguageUtil.get(locale, "model.resource." + className) +
+				_language.get(locale, "model.resource." + className) +
 					StringPool.SPACE + classPK);
 
 		Optional<TranslationInfoItemFieldValuesExporter>
 			exportFileFormatOptional =
-				_translationInfoItemFieldValuesExporterTracker.
+				_translationInfoItemFieldValuesExporterRegistry.
 					getTranslationInfoItemFieldValuesExporterOptional(
 						exportMimeType);
 
 		InfoItemFieldValuesProvider<Object> infoItemFieldValuesProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFieldValuesProvider.class, className);
 
 		InfoItemObjectProvider<Object> infoItemObjectProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemObjectProvider.class, className);
 
 		Object object = infoItemObjectProvider.getInfoItem(classPK);
@@ -238,7 +260,7 @@ public class ExportTranslationServlet extends HttpServlet {
 
 		if (multipleModels) {
 			return classNameTitle + StringPool.SPACE +
-				LanguageUtil.get(locale, "translations");
+				_language.get(locale, "translations");
 		}
 
 		return infoItemTitleOptional.orElseGet(
@@ -262,25 +284,22 @@ public class ExportTranslationServlet extends HttpServlet {
 		throws NoSuchInfoItemException {
 
 		InfoItemHelper infoItemHelper = new InfoItemHelper(
-			className, _infoItemServiceTracker);
+			className, _infoItemServiceRegistry);
 
 		Optional<String> infoItemTitleOptional =
 			infoItemHelper.getInfoItemTitleOptional(classPK, locale);
 
-		String prefixName = _getPrefixName(
-			classPK, classNameTitle, infoItemTitleOptional, multipleModels,
-			locale);
-
 		return StringBundler.concat(
 			StringUtil.removeSubstrings(
-				prefixName, PropsValues.DL_CHAR_BLACKLIST),
+				_getPrefixName(
+					classPK, classNameTitle, infoItemTitleOptional,
+					multipleModels, locale),
+				PropsValues.DL_CHAR_BLACKLIST),
 			StringPool.DASH, sourceLanguageId, ".zip");
 	}
 
-	private boolean _isMultipleModels(
-		Set<Long> classPKs, long[] segmentsExperienceIds) {
-
-		if ((segmentsExperienceIds.length < 1) && (classPKs.size() > 1)) {
+	private boolean _isMultipleModels(long[] classPKs) {
+		if (classPKs.length > 1) {
 			return true;
 		}
 
@@ -288,10 +307,16 @@ public class ExportTranslationServlet extends HttpServlet {
 	}
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;
+
+	@Reference
+	private PermissionCheckerFactory _permissionCheckerFactory;
 
 	@Reference
 	private Portal _portal;
@@ -300,7 +325,10 @@ public class ExportTranslationServlet extends HttpServlet {
 	private SegmentsExperienceLocalService _segmentsExperienceLocalService;
 
 	@Reference
-	private TranslationInfoItemFieldValuesExporterTracker
-		_translationInfoItemFieldValuesExporterTracker;
+	private TranslationInfoItemFieldValuesExporterRegistry
+		_translationInfoItemFieldValuesExporterRegistry;
+
+	@Reference
+	private ZipWriterFactory _zipWriterFactory;
 
 }

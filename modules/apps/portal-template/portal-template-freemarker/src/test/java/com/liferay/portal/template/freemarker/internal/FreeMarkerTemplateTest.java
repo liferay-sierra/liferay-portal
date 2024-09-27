@@ -23,7 +23,7 @@ import com.liferay.portal.kernel.template.TemplateResource;
 import com.liferay.portal.kernel.template.TemplateResourceCache;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.template.TemplateContextHelper;
+import com.liferay.portal.template.engine.TemplateContextHelper;
 import com.liferay.portal.template.freemarker.configuration.FreeMarkerEngineConfiguration;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
@@ -453,9 +453,7 @@ public class FreeMarkerTemplateTest {
 		extends TemplateContextHelper {
 
 		@Override
-		public Map<String, Object> getHelperUtilities(
-			ClassLoader classLoader, boolean restricted) {
-
+		public Map<String, Object> getHelperUtilities(boolean restricted) {
 			return Collections.emptyMap();
 		}
 

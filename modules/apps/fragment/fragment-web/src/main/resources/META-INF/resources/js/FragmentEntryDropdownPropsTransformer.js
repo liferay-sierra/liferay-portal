@@ -12,7 +12,14 @@
  * details.
  */
 
-import {openSelectionModal, openSimpleInputModal} from 'frontend-js-web';
+import {
+	openConfirmModal,
+	openSelectionModal,
+	openSimpleInputModal,
+	setFormValues,
+} from 'frontend-js-web';
+
+import openDeleteFragmentModal from './openDeleteFragmentModal';
 
 const ACTIONS = {
 	copyFragmentEntry(
@@ -24,7 +31,7 @@ const ACTIONS = {
 		);
 
 		if (form) {
-			Liferay.Util.setFormValues(form, {
+			setFormValues(form, {
 				fragmentCollectionId,
 				fragmentEntryIds: fragmentEntryId,
 			});
@@ -45,7 +52,7 @@ const ACTIONS = {
 					);
 
 					if (form) {
-						Liferay.Util.setFormValues(form, {
+						setFormValues(form, {
 							fragmentCollectionId: selectedItem.id,
 							fragmentEntryIds: fragmentEntryId,
 						});
@@ -61,23 +68,24 @@ const ACTIONS = {
 	},
 
 	deleteDraftFragmentEntry({deleteDraftFragmentEntryURL}) {
-		if (
-			confirm(
-				Liferay.Language.get('are-you-sure-you-want-to-delete-this')
-			)
-		) {
-			submitForm(document.hrefFm, deleteDraftFragmentEntryURL);
-		}
+		openConfirmModal({
+			message: Liferay.Language.get(
+				'are-you-sure-you-want-to-delete-this'
+			),
+			onConfirm: (isConfirmed) => {
+				if (isConfirmed) {
+					submitForm(document.hrefFm, deleteDraftFragmentEntryURL);
+				}
+			},
+		});
 	},
 
 	deleteFragmentEntry({deleteFragmentEntryURL}) {
-		if (
-			confirm(
-				Liferay.Language.get('are-you-sure-you-want-to-delete-this')
-			)
-		) {
-			submitForm(document.hrefFm, deleteFragmentEntryURL);
-		}
+		openDeleteFragmentModal({
+			onDelete: () => {
+				submitForm(document.hrefFm, deleteFragmentEntryURL);
+			},
+		});
 	},
 
 	deleteFragmentEntryPreview({deleteFragmentEntryPreviewURL}) {
@@ -96,7 +104,7 @@ const ACTIONS = {
 					);
 
 					if (form) {
-						Liferay.Util.setFormValues(form, {
+						setFormValues(form, {
 							fragmentCollectionId: selectedItem.id,
 							fragmentEntryIds: fragmentEntryId,
 						});
@@ -142,7 +150,7 @@ const ACTIONS = {
 					);
 
 					if (form) {
-						Liferay.Util.setFormValues(form, {
+						setFormValues(form, {
 							fileEntryId: itemValue.fileEntryId,
 							fragmentEntryId,
 						});
@@ -187,6 +195,6 @@ export default function propsTransformer({
 
 	return {
 		...props,
-		actions: actions.map(transformAction),
+		actions: (actions || []).map(transformAction),
 	};
 }

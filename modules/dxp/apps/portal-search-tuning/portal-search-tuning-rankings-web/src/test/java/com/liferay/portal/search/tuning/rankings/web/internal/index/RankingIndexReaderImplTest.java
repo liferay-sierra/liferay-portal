@@ -28,7 +28,6 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import org.mockito.Mock;
 import org.mockito.Mockito;
 
 /**
@@ -42,18 +41,17 @@ public class RankingIndexReaderImplTest extends BaseRankingsIndexTestCase {
 		LiferayUnitTestRule.INSTANCE;
 
 	@Before
-	@Override
 	public void setUp() throws Exception {
-		super.setUp();
-
 		_rankingIndexReaderImpl = new RankingIndexReaderImpl();
 
 		ReflectionTestUtil.setFieldValue(
 			_rankingIndexReaderImpl, "_documentToRankingTranslator",
 			_documentToRankingTranslator);
-
-		_rankingIndexReaderImpl.setQueries(queries);
-		_rankingIndexReaderImpl.setSearchEngineAdapter(searchEngineAdapter);
+		ReflectionTestUtil.setFieldValue(
+			_rankingIndexReaderImpl, "_queries", queries);
+		ReflectionTestUtil.setFieldValue(
+			_rankingIndexReaderImpl, "_searchEngineAdapter",
+			searchEngineAdapter);
 	}
 
 	@Test
@@ -135,15 +133,14 @@ public class RankingIndexReaderImplTest extends BaseRankingsIndexTestCase {
 		).when(
 			_documentToRankingTranslator
 		).translate(
-			Mockito.anyObject(), Mockito.anyString()
+			Mockito.any(), Mockito.nullable(String.class)
 		);
 
 		return ranking;
 	}
 
-	@Mock
-	private DocumentToRankingTranslator _documentToRankingTranslator;
-
+	private final DocumentToRankingTranslator _documentToRankingTranslator =
+		Mockito.mock(DocumentToRankingTranslator.class);
 	private RankingIndexReaderImpl _rankingIndexReaderImpl;
 
 }

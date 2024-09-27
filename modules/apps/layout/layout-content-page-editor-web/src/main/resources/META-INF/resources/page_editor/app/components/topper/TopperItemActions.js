@@ -15,53 +15,78 @@
 import ClayButton from '@clayui/button';
 import ClayDropDown, {Align} from '@clayui/drop-down';
 import ClayIcon from '@clayui/icon';
+import {openToast} from 'frontend-js-web';
 import PropTypes from 'prop-types';
 import React, {useMemo, useState} from 'react';
 
 import {getLayoutDataItemPropTypes} from '../../../prop-types/index';
+import {FRAGMENT_ENTRY_TYPES} from '../../config/constants/fragmentEntryTypes';
+import {LAYOUT_DATA_ITEM_TYPES} from '../../config/constants/layoutDataItemTypes';
 import {useSelectItem} from '../../contexts/ControlsContext';
 import {useDispatch, useSelector} from '../../contexts/StoreContext';
-import {useWidgets} from '../../contexts/WidgetsContext';
 import deleteItem from '../../thunks/deleteItem';
 import duplicateItem from '../../thunks/duplicateItem';
 import canBeDuplicated from '../../utils/canBeDuplicated';
 import canBeRemoved from '../../utils/canBeRemoved';
 import canBeSaved from '../../utils/canBeSaved';
-import updateItemStyle from '../../utils/updateItemStyle';
+import {
+	FORM_ERROR_TYPES,
+	getFormErrorDescription,
+} from '../../utils/getFormErrorDescription';
+import hideFragment from '../../utils/hideFragment';
+import useHasRequiredChild from '../../utils/useHasRequiredChild';
 import SaveFragmentCompositionModal from '../SaveFragmentCompositionModal';
+import hasDropZoneChild from '../layout-data-items/hasDropZoneChild';
 
 export default function TopperItemActions({item}) {
 	const [active, setActive] = useState(false);
 	const dispatch = useDispatch();
+	const hasRequiredChild = useHasRequiredChild(item.itemId);
 	const selectItem = useSelectItem();
-	const widgets = useWidgets();
+	const widgets = useSelector((state) => state.widgets);
 
-	const {
-		fragmentEntryLinks,
-		layoutData,
-		segmentsExperienceId,
-		selectedViewportSize,
-	} = useSelector((state) => state);
+	const {fragmentEntryLinks, layoutData, selectedViewportSize} = useSelector(
+		(state) => state
+	);
 
 	const [openSaveModal, setOpenSaveModal] = useState(false);
+
+	const isInputFragment =
+		item.type === LAYOUT_DATA_ITEM_TYPES.fragment &&
+		fragmentEntryLinks[item.config.fragmentEntryLinkId]
+			.fragmentEntryType === FRAGMENT_ENTRY_TYPES.input;
 
 	const dropdownItems = useMemo(() => {
 		const items = [];
 
-		items.push({
-			action: () => {
-				updateItemStyle({
-					dispatch,
-					itemId: item.itemId,
-					segmentsExperienceId,
-					selectedViewportSize,
-					styleName: 'display',
-					styleValue: 'none',
-				});
-			},
-			icon: 'hidden',
-			label: Liferay.Language.get('hide-fragment'),
-		});
+		if (
+			item.type !== LAYOUT_DATA_ITEM_TYPES.dropZone &&
+			!hasDropZoneChild(item, layoutData) &&
+			!isInputFragment
+		) {
+			items.push({
+				action: () => {
+					hideFragment({
+						dispatch,
+						itemId: item.itemId,
+						selectedViewportSize,
+					});
+
+					if (hasRequiredChild()) {
+						const {message} = getFormErrorDescription({
+							type: FORM_ERROR_TYPES.hiddenFragment,
+						});
+
+						openToast({
+							message,
+							type: 'warning',
+						});
+					}
+				},
+				icon: 'hidden',
+				label: Liferay.Language.get('hide-fragment'),
+			});
+		}
 
 		if (canBeSaved(item, layoutData)) {
 			items.push({
@@ -83,11 +108,10 @@ export default function TopperItemActions({item}) {
 					dispatch(
 						duplicateItem({
 							itemId: item.itemId,
-							segmentsExperienceId,
 							selectItem,
 						})
 					),
-				icon: 'paste',
+				icon: 'copy',
 				label: Liferay.Language.get('duplicate'),
 			});
 
@@ -105,7 +129,7 @@ export default function TopperItemActions({item}) {
 							selectItem,
 						})
 					),
-				icon: 'times-circle',
+				icon: 'trash',
 				label: Liferay.Language.get('delete'),
 			});
 		}
@@ -114,9 +138,10 @@ export default function TopperItemActions({item}) {
 	}, [
 		dispatch,
 		fragmentEntryLinks,
+		hasRequiredChild,
+		isInputFragment,
 		item,
 		layoutData,
-		segmentsExperienceId,
 		selectedViewportSize,
 		selectItem,
 		widgets,

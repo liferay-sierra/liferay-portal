@@ -133,10 +133,10 @@ public class UpdateMembershipsMVCActionCommandTest {
 			_user.getEmailAddress(), true, null, _user.getLanguageId(),
 			_user.getTimeZoneId(), _user.getGreeting(), _user.getComments(),
 			_user.getFirstName(), _user.getMiddleName(), _user.getLastName(),
-			contact.getPrefixId(), contact.getSuffixId(), _user.isMale(),
-			birthdayCal.get(Calendar.MONTH), birthdayCal.get(Calendar.DATE),
-			birthdayCal.get(Calendar.YEAR), contact.getSmsSn(),
-			contact.getFacebookSn(), contact.getJabberSn(),
+			contact.getPrefixListTypeId(), contact.getSuffixListTypeId(),
+			_user.isMale(), birthdayCal.get(Calendar.MONTH),
+			birthdayCal.get(Calendar.DATE), birthdayCal.get(Calendar.YEAR),
+			contact.getSmsSn(), contact.getFacebookSn(), contact.getJabberSn(),
 			contact.getSkypeSn(), contact.getTwitterSn(), _user.getJobTitle(),
 			ArrayUtil.toLongArray(groupIds), _user.getOrganizationIds(), null,
 			null, _user.getUserGroupIds(),
@@ -318,13 +318,10 @@ public class UpdateMembershipsMVCActionCommandTest {
 			ThemeDisplay themeDisplay = new ThemeDisplay();
 
 			themeDisplay.setCompany(_company);
-
-			themeDisplay.setUser(_user);
-
-			themeDisplay.setScopeGroupId(_group.getGroupId());
-
 			themeDisplay.setPermissionChecker(
 				PermissionCheckerFactoryUtil.create(TestPropsValues.getUser()));
+			themeDisplay.setScopeGroupId(_group.getGroupId());
+			themeDisplay.setUser(_user);
 
 			return themeDisplay;
 		}

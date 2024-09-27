@@ -21,7 +21,6 @@ CPInstanceCommercePriceEntryDisplayContext cpInstanceCommercePriceEntryDisplayCo
 
 CPInstance cpInstance = cpInstanceCommercePriceEntryDisplayContext.getCPInstance();
 long cpInstanceId = cpInstanceCommercePriceEntryDisplayContext.getCPInstanceId();
-PortletURL portletURL = cpInstanceCommercePriceEntryDisplayContext.getPortletURL();
 %>
 
 <portlet:actionURL name="/cp_definitions/edit_cp_instance_commerce_price_entry" var="addCommercePriceEntryURL" />
@@ -34,7 +33,7 @@ PortletURL portletURL = cpInstanceCommercePriceEntryDisplayContext.getPortletURL
 </aui:form>
 
 <div id="<portlet:namespace />entriesContainer">
-	<aui:form action="<%= portletURL %>" method="post" name="fm">
+	<aui:form action="<%= cpInstanceCommercePriceEntryDisplayContext.getPortletURL() %>" method="post" name="fm">
 		<aui:input name="<%= Constants.CMD %>" type="hidden" />
 		<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
 		<aui:input name="deleteCommercePriceEntryIds" type="hidden" />
@@ -44,6 +43,8 @@ PortletURL portletURL = cpInstanceCommercePriceEntryDisplayContext.getPortletURL
 		<frontend-data-set:classic-display
 			contextParams='<%=
 				HashMapBuilder.<String, String>put(
+					"cpDefinitionId", String.valueOf(cpInstance.getCPDefinitionId())
+				).put(
 					"cpInstanceId", String.valueOf(cpInstanceId)
 				).build()
 			%>'
@@ -52,9 +53,6 @@ PortletURL portletURL = cpInstanceCommercePriceEntryDisplayContext.getPortletURL
 			formName="fm"
 			id="<%= CommercePricingFDSNames.INSTANCE_PRICE_ENTRIES %>"
 			itemsPerPage="<%= 10 %>"
-			namespace="<%= liferayPortletResponse.getNamespace() %>"
-			pageNumber="<%= 1 %>"
-			portletURL="<%= portletURL %>"
 			style="stacked"
 		/>
 	</aui:form>

@@ -14,12 +14,20 @@
 
 package com.liferay.object.internal.deployer;
 
+import com.liferay.asset.kernel.service.AssetCategoryLocalService;
+import com.liferay.asset.kernel.service.AssetTagLocalService;
+import com.liferay.asset.kernel.service.AssetVocabularyLocalService;
 import com.liferay.info.collection.provider.InfoCollectionProvider;
 import com.liferay.list.type.service.ListTypeEntryLocalService;
+import com.liferay.notification.constants.NotificationTermContributorConstants;
+import com.liferay.notification.handler.NotificationHandler;
+import com.liferay.notification.term.contributor.NotificationTermContributor;
 import com.liferay.object.deployer.ObjectDefinitionDeployer;
-import com.liferay.object.internal.configuration.activator.FFObjectViewKeywordQueryConfigurationActivator;
 import com.liferay.object.internal.info.collection.provider.ObjectEntrySingleFormVariationInfoCollectionProvider;
 import com.liferay.object.internal.language.ObjectResourceBundle;
+import com.liferay.object.internal.notification.handler.ObjectDefinitionNotificationHandler;
+import com.liferay.object.internal.notification.term.contributor.ObjectDefinitionNotificationTermContributor;
+import com.liferay.object.internal.persistence.ObjectDefinitionTableArgumentsResolver;
 import com.liferay.object.internal.related.models.ObjectEntry1to1ObjectRelatedModelsProviderImpl;
 import com.liferay.object.internal.related.models.ObjectEntry1toMObjectRelatedModelsProviderImpl;
 import com.liferay.object.internal.related.models.ObjectEntryMtoMObjectRelatedModelsProviderImpl;
@@ -35,25 +43,35 @@ import com.liferay.object.internal.workflow.ObjectEntryWorkflowHandler;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.related.models.ObjectRelatedModelsProvider;
 import com.liferay.object.rest.context.path.RESTContextPathResolver;
+import com.liferay.object.rest.manager.v1_0.ObjectEntryManagerRegistry;
 import com.liferay.object.scope.ObjectScopeProviderRegistry;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
+import com.liferay.object.service.ObjectEntryService;
 import com.liferay.object.service.ObjectFieldLocalService;
+import com.liferay.object.service.ObjectLayoutLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.object.service.ObjectViewLocalService;
 import com.liferay.petra.reflect.ReflectionUtil;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.dao.orm.ArgumentsResolver;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.security.permission.ResourceActions;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
 import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermissionFactory;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.PersistedModelLocalServiceRegistry;
+import com.liferay.portal.kernel.service.PortletLocalService;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowHandler;
+import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.search.batch.DynamicQueryBatchIndexingActionableFactory;
 import com.liferay.portal.search.spi.model.index.contributor.ModelDocumentContributor;
@@ -62,6 +80,7 @@ import com.liferay.portal.search.spi.model.query.contributor.KeywordQueryContrib
 import com.liferay.portal.search.spi.model.query.contributor.ModelPreFilterContributor;
 import com.liferay.portal.search.spi.model.registrar.ModelSearchRegistrarHelper;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -76,39 +95,52 @@ import org.osgi.framework.ServiceRegistration;
 public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 
 	public ObjectDefinitionDeployerImpl(
+		AssetCategoryLocalService assetCategoryLocalService,
+		AssetTagLocalService assetTagLocalService,
+		AssetVocabularyLocalService assetVocabularyLocalService,
 		BundleContext bundleContext,
 		DynamicQueryBatchIndexingActionableFactory
 			dynamicQueryBatchIndexingActionableFactory,
-		FFObjectViewKeywordQueryConfigurationActivator
-			ffObjectViewKeywordQueryConfigurationActivator,
+		GroupLocalService groupLocalService,
 		ListTypeEntryLocalService listTypeEntryLocalService,
 		ModelSearchRegistrarHelper modelSearchRegistrarHelper,
 		ObjectDefinitionLocalService objectDefinitionLocalService,
 		ObjectEntryLocalService objectEntryLocalService,
+		ObjectEntryManagerRegistry objectEntryManagerRegistry,
+		ObjectEntryService objectEntryService,
 		ObjectFieldLocalService objectFieldLocalService,
+		ObjectLayoutLocalService objectLayoutLocalService,
 		ObjectRelationshipLocalService objectRelationshipLocalService,
 		ObjectScopeProviderRegistry objectScopeProviderRegistry,
 		ObjectViewLocalService objectViewLocalService,
 		PersistedModelLocalServiceRegistry persistedModelLocalServiceRegistry,
-		ResourceActions resourceActions,
+		PortletLocalService portletLocalService,
+		ResourceActions resourceActions, UserLocalService userLocalService,
 		ModelPreFilterContributor workflowStatusModelPreFilterContributor) {
 
+		_assetCategoryLocalService = assetCategoryLocalService;
+		_assetTagLocalService = assetTagLocalService;
+		_assetVocabularyLocalService = assetVocabularyLocalService;
 		_bundleContext = bundleContext;
 		_dynamicQueryBatchIndexingActionableFactory =
 			dynamicQueryBatchIndexingActionableFactory;
-		_ffObjectViewKeywordQueryConfigurationActivator =
-			ffObjectViewKeywordQueryConfigurationActivator;
+		_groupLocalService = groupLocalService;
 		_listTypeEntryLocalService = listTypeEntryLocalService;
 		_modelSearchRegistrarHelper = modelSearchRegistrarHelper;
 		_objectDefinitionLocalService = objectDefinitionLocalService;
 		_objectEntryLocalService = objectEntryLocalService;
+		_objectEntryManagerRegistry = objectEntryManagerRegistry;
+		_objectEntryService = objectEntryService;
 		_objectFieldLocalService = objectFieldLocalService;
+		_objectLayoutLocalService = objectLayoutLocalService;
 		_objectRelationshipLocalService = objectRelationshipLocalService;
 		_objectScopeProviderRegistry = objectScopeProviderRegistry;
 		_objectViewLocalService = objectViewLocalService;
 		_persistedModelLocalServiceRegistry =
 			persistedModelLocalServiceRegistry;
+		_portletLocalService = portletLocalService;
 		_resourceActions = resourceActions;
+		_userLocalService = userLocalService;
 		_workflowStatusModelPreFilterContributor =
 			workflowStatusModelPreFilterContributor;
 	}
@@ -116,6 +148,10 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 	@Override
 	public List<ServiceRegistration<?>> deploy(
 		ObjectDefinition objectDefinition) {
+
+		if (objectDefinition.isSystem()) {
+			return Collections.emptyList();
+		}
 
 		_persistedModelLocalServiceRegistry.register(
 			objectDefinition.getClassName(), _objectEntryLocalService);
@@ -142,20 +178,23 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 
 		List<ServiceRegistration<?>> serviceRegistrations = ListUtil.fromArray(
 			_bundleContext.registerService(
-				InfoCollectionProvider.class,
-				new ObjectEntrySingleFormVariationInfoCollectionProvider(
-					_listTypeEntryLocalService, objectDefinition,
-					_objectEntryLocalService, _objectFieldLocalService,
-					_objectScopeProviderRegistry),
-				HashMapDictionaryBuilder.<String, Object>put(
-					"item.class.name", objectDefinition.getClassName()
-				).build()),
+				ArgumentsResolver.class,
+				new ObjectDefinitionTableArgumentsResolver(
+					objectDefinition.getDBTableName()),
+				null),
+			_bundleContext.registerService(
+				ArgumentsResolver.class,
+				new ObjectDefinitionTableArgumentsResolver(
+					objectDefinition.getExtensionDBTableName()),
+				null),
 			_bundleContext.registerService(
 				KeywordQueryContributor.class,
 				new ObjectEntryKeywordQueryContributor(
-					_ffObjectViewKeywordQueryConfigurationActivator,
 					_objectFieldLocalService, _objectViewLocalService),
 				HashMapDictionaryBuilder.<String, Object>put(
+					"component.name",
+					ObjectEntryKeywordQueryContributor.class.getName()
+				).put(
 					"indexer.class.name", objectDefinition.getClassName()
 				).build()),
 			_bundleContext.registerService(
@@ -191,21 +230,38 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 					"model.class.name", objectDefinition.getClassName()
 				).build()),
 			_bundleContext.registerService(
+				NotificationTermContributor.class,
+				new ObjectDefinitionNotificationTermContributor(
+					objectDefinition, _objectFieldLocalService,
+					_userLocalService),
+				HashMapDictionaryBuilder.<String, Object>put(
+					"notification.term.contributor.key",
+					NotificationTermContributorConstants.BODY_AND_SUBJECT
+				).put(
+					"notification.type.key", objectDefinition.getClassName()
+				).build()),
+			_bundleContext.registerService(
+				NotificationHandler.class,
+				new ObjectDefinitionNotificationHandler(objectDefinition),
+				HashMapDictionaryBuilder.<String, Object>put(
+					"class.name", objectDefinition.getClassName()
+				).build()),
+			_bundleContext.registerService(
 				ObjectRelatedModelsProvider.class,
 				new ObjectEntry1to1ObjectRelatedModelsProviderImpl(
-					objectDefinition, _objectEntryLocalService,
+					objectDefinition, _objectEntryService,
 					_objectFieldLocalService, _objectRelationshipLocalService),
 				null),
 			_bundleContext.registerService(
 				ObjectRelatedModelsProvider.class,
 				new ObjectEntry1toMObjectRelatedModelsProviderImpl(
-					objectDefinition, _objectEntryLocalService,
+					objectDefinition, _objectEntryService,
 					_objectFieldLocalService, _objectRelationshipLocalService),
 				null),
 			_bundleContext.registerService(
 				ObjectRelatedModelsProvider.class,
 				new ObjectEntryMtoMObjectRelatedModelsProviderImpl(
-					objectDefinition, _objectEntryLocalService,
+					objectDefinition, _objectEntryService,
 					_objectRelationshipLocalService),
 				null),
 			_bundleContext.registerService(
@@ -218,7 +274,7 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 			_bundleContext.registerService(
 				RESTContextPathResolver.class,
 				new RESTContextPathResolverImpl(
-					"/o/" + objectDefinition.getRESTContextPath(),
+					"/o" + objectDefinition.getRESTContextPath(),
 					_objectScopeProviderRegistry.getObjectScopeProvider(
 						objectDefinition.getScope()),
 					false),
@@ -241,6 +297,21 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 						objectEntryModelSummaryContributor);
 				}));
 
+		_bundleContext.registerService(
+			InfoCollectionProvider.class,
+			new ObjectEntrySingleFormVariationInfoCollectionProvider(
+				_assetCategoryLocalService, _assetTagLocalService,
+				_assetVocabularyLocalService, _groupLocalService,
+				_listTypeEntryLocalService, objectDefinition,
+				_objectEntryLocalService, _objectEntryManagerRegistry,
+				_objectFieldLocalService, _objectLayoutLocalService,
+				_objectScopeProviderRegistry),
+			HashMapDictionaryBuilder.<String, Object>put(
+				"company.id", objectDefinition.getCompanyId()
+			).put(
+				"item.class.name", objectDefinition.getClassName()
+			).build());
+
 		for (Locale locale : LanguageUtil.getAvailableLocales()) {
 			serviceRegistrations.add(
 				_bundleContext.registerService(
@@ -259,43 +330,83 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 			objectDefinition.getClassName());
 	}
 
+	private String _getPermissionsGuestUnsupported(
+		ObjectDefinition objectDefinition) {
+
+		if (objectDefinition.isEnableComments()) {
+			return "<action-key>DELETE_DISCUSSION</action-key>" +
+				"<action-key>UPDATE_DISCUSSION</action-key>";
+		}
+
+		return StringPool.BLANK;
+	}
+
+	private String _getPermissionsSupports(ObjectDefinition objectDefinition) {
+		if (objectDefinition.isEnableComments()) {
+			return StringBundler.concat(
+				"<action-key>ADD_DISCUSSION</action-key>",
+				"<action-key>DELETE_DISCUSSION</action-key>",
+				"<action-key>UPDATE_DISCUSSION</action-key>");
+		}
+
+		return StringPool.BLANK;
+	}
+
 	private void _readResourceActions(ObjectDefinition objectDefinition)
 		throws Exception {
 
-		_resourceActions.populateModelResources(
-			SAXReaderUtil.read(
-				StringUtil.replace(
-					StringUtil.read(
-						ObjectDefinitionDeployerImpl.class.getClassLoader(),
-						"resource-actions/resource-actions.xml.tpl"),
-					new String[] {
-						"[$MODEL_NAME$]", "[$PORTLET_NAME$]",
-						"[$RESOURCE_NAME$]"
-					},
-					new String[] {
-						objectDefinition.getClassName(),
-						objectDefinition.getPortletId(),
-						objectDefinition.getResourceName()
-					})));
+		ClassLoader classLoader =
+			ObjectDefinitionDeployerImpl.class.getClassLoader();
+
+		Document document = SAXReaderUtil.read(
+			StringUtil.replace(
+				StringUtil.read(
+					classLoader, "resource-actions/resource-actions.xml.tpl"),
+				new String[] {
+					"[$MODEL_NAME$]", "[$PERMISSIONS_GUEST_UNSUPPORTED$]",
+					"[$PERMISSIONS_SUPPORTS$]", "[$PORTLET_NAME$]",
+					"[$RESOURCE_NAME$]"
+				},
+				new String[] {
+					objectDefinition.getClassName(),
+					_getPermissionsGuestUnsupported(objectDefinition),
+					_getPermissionsSupports(objectDefinition),
+					objectDefinition.getPortletId(),
+					objectDefinition.getResourceName()
+				}));
+
+		_resourceActions.populateModelResources(document);
+		_resourceActions.populatePortletResource(
+			_portletLocalService.getPortletById(
+				objectDefinition.getCompanyId(),
+				objectDefinition.getPortletId()),
+			classLoader, document);
 	}
 
+	private final AssetCategoryLocalService _assetCategoryLocalService;
+	private final AssetTagLocalService _assetTagLocalService;
+	private final AssetVocabularyLocalService _assetVocabularyLocalService;
 	private final BundleContext _bundleContext;
 	private final DynamicQueryBatchIndexingActionableFactory
 		_dynamicQueryBatchIndexingActionableFactory;
-	private final FFObjectViewKeywordQueryConfigurationActivator
-		_ffObjectViewKeywordQueryConfigurationActivator;
+	private final GroupLocalService _groupLocalService;
 	private final ListTypeEntryLocalService _listTypeEntryLocalService;
 	private final ModelSearchRegistrarHelper _modelSearchRegistrarHelper;
 	private final ObjectDefinitionLocalService _objectDefinitionLocalService;
 	private final ObjectEntryLocalService _objectEntryLocalService;
+	private final ObjectEntryManagerRegistry _objectEntryManagerRegistry;
+	private final ObjectEntryService _objectEntryService;
 	private final ObjectFieldLocalService _objectFieldLocalService;
+	private final ObjectLayoutLocalService _objectLayoutLocalService;
 	private final ObjectRelationshipLocalService
 		_objectRelationshipLocalService;
 	private final ObjectScopeProviderRegistry _objectScopeProviderRegistry;
 	private final ObjectViewLocalService _objectViewLocalService;
 	private final PersistedModelLocalServiceRegistry
 		_persistedModelLocalServiceRegistry;
+	private final PortletLocalService _portletLocalService;
 	private final ResourceActions _resourceActions;
+	private final UserLocalService _userLocalService;
 	private final ModelPreFilterContributor
 		_workflowStatusModelPreFilterContributor;
 

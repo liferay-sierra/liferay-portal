@@ -17,7 +17,7 @@ import './PartialResults.scss';
 declare const PartialResults: React.FC<IProps>;
 export default PartialResults;
 interface IProps {
-	hasDescription?: boolean;
-	onShow: () => void;
+	dataEngineModule: string;
+	displayChartAsTable: boolean;
 	reportDataURL: string;
 }

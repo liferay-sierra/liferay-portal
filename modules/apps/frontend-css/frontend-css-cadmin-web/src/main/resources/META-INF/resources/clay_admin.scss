@@ -102,6 +102,10 @@ html#{$cadmin-selector} {
 			width: 1em;
 		}
 
+		&.modal-open .modal {
+			display: block;
+		}
+
 		.user-icon-color-0 {
 			color: $user-icon-color-0;
 		}
@@ -418,6 +422,11 @@ html#{$cadmin-selector} {
 				.lexicon-icon {
 					height: 12px;
 				}
+			}
+
+			.lfr-button {
+				background: no-repeat 0 50%;
+				padding: 2px 0 2px 20px;
 			}
 
 			.delete-button {
@@ -804,6 +813,11 @@ html#{$cadmin-selector} {
 				margin-left: 16px;
 				margin-right: 0;
 			}
+
+			&.dialog-footer-not-reverse {
+				flex-direction: initial;
+				justify-content: flex-end;
+			}
 		}
 
 		.dialog-body,
@@ -850,5 +864,10 @@ html#{$cadmin-selector} {
 			.portlet-configuration-body-content {
 			bottom: 0;
 		}
+	}
+
+	.overlay-content .open > .dropdown-menu.cadmin {
+		display: block;
+		position: static;
 	}
 }

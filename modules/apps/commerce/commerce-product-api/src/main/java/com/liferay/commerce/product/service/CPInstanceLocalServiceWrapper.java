@@ -14,7 +14,10 @@
 
 package com.liferay.commerce.product.service;
 
+import com.liferay.commerce.product.model.CPInstance;
+import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 
 /**
  * Provides a wrapper for {@link CPInstanceLocalService}.
@@ -47,14 +50,12 @@ public class CPInstanceLocalServiceWrapper
 	 * @return the cp instance that was added
 	 */
 	@Override
-	public com.liferay.commerce.product.model.CPInstance addCPInstance(
-		com.liferay.commerce.product.model.CPInstance cpInstance) {
-
+	public CPInstance addCPInstance(CPInstance cpInstance) {
 		return _cpInstanceLocalService.addCPInstance(cpInstance);
 	}
 
 	@Override
-	public com.liferay.commerce.product.model.CPInstance addCPInstance(
+	public CPInstance addCPInstance(
 			String externalReferenceCode, long cpDefinitionId, long groupId,
 			String sku, String gtin, String manufacturerPartNumber,
 			boolean purchasable,
@@ -102,164 +103,8 @@ public class CPInstanceLocalServiceWrapper
 			serviceContext);
 	}
 
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x)
-	 */
-	@Deprecated
 	@Override
-	public com.liferay.commerce.product.model.CPInstance addCPInstance(
-			String externalReferenceCode, long cpDefinitionId, long groupId,
-			String sku, String gtin, String manufacturerPartNumber,
-			boolean purchasable,
-			java.util.Map<Long, java.util.List<Long>>
-				cpDefinitionOptionRelIdCPDefinitionOptionValueRelIds,
-			double width, double height, double depth, double weight,
-			java.math.BigDecimal price, java.math.BigDecimal promoPrice,
-			java.math.BigDecimal cost, boolean published, int displayDateMonth,
-			int displayDateDay, int displayDateYear, int displayDateHour,
-			int displayDateMinute, int expirationDateMonth,
-			int expirationDateDay, int expirationDateYear,
-			int expirationDateHour, int expirationDateMinute,
-			boolean neverExpire, boolean overrideSubscriptionInfo,
-			boolean subscriptionEnabled, int subscriptionLength,
-			String subscriptionType,
-			com.liferay.portal.kernel.util.UnicodeProperties
-				subscriptionTypeSettingsUnicodeProperties,
-			long maxSubscriptionCycles, boolean deliverySubscriptionEnabled,
-			int deliverySubscriptionLength, String deliverySubscriptionType,
-			com.liferay.portal.kernel.util.UnicodeProperties
-				deliverySubscriptionTypeSettingsUnicodeProperties,
-			long deliveryMaxSubscriptionCycles, String unspsc,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _cpInstanceLocalService.addCPInstance(
-			externalReferenceCode, cpDefinitionId, groupId, sku, gtin,
-			manufacturerPartNumber, purchasable,
-			cpDefinitionOptionRelIdCPDefinitionOptionValueRelIds, width, height,
-			depth, weight, price, promoPrice, cost, published, displayDateMonth,
-			displayDateDay, displayDateYear, displayDateHour, displayDateMinute,
-			expirationDateMonth, expirationDateDay, expirationDateYear,
-			expirationDateHour, expirationDateMinute, neverExpire,
-			overrideSubscriptionInfo, subscriptionEnabled, subscriptionLength,
-			subscriptionType, subscriptionTypeSettingsUnicodeProperties,
-			maxSubscriptionCycles, deliverySubscriptionEnabled,
-			deliverySubscriptionLength, deliverySubscriptionType,
-			deliverySubscriptionTypeSettingsUnicodeProperties,
-			deliveryMaxSubscriptionCycles, unspsc, serviceContext);
-	}
-
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x)
-	 */
-	@Deprecated
-	@Override
-	public com.liferay.commerce.product.model.CPInstance addCPInstance(
-			String externalReferenceCode, long cpDefinitionId, long groupId,
-			String sku, String gtin, String manufacturerPartNumber,
-			boolean purchasable,
-			java.util.Map<Long, java.util.List<Long>>
-				cpDefinitionOptionRelIdCPDefinitionOptionValueRelIds,
-			double width, double height, double depth, double weight,
-			java.math.BigDecimal price, java.math.BigDecimal promoPrice,
-			java.math.BigDecimal cost, boolean published, int displayDateMonth,
-			int displayDateDay, int displayDateYear, int displayDateHour,
-			int displayDateMinute, int expirationDateMonth,
-			int expirationDateDay, int expirationDateYear,
-			int expirationDateHour, int expirationDateMinute,
-			boolean neverExpire, boolean overrideSubscriptionInfo,
-			boolean subscriptionEnabled, int subscriptionLength,
-			String subscriptionType,
-			com.liferay.portal.kernel.util.UnicodeProperties
-				subscriptionTypeSettingsUnicodeProperties,
-			long maxSubscriptionCycles,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _cpInstanceLocalService.addCPInstance(
-			externalReferenceCode, cpDefinitionId, groupId, sku, gtin,
-			manufacturerPartNumber, purchasable,
-			cpDefinitionOptionRelIdCPDefinitionOptionValueRelIds, width, height,
-			depth, weight, price, promoPrice, cost, published, displayDateMonth,
-			displayDateDay, displayDateYear, displayDateHour, displayDateMinute,
-			expirationDateMonth, expirationDateDay, expirationDateYear,
-			expirationDateHour, expirationDateMinute, neverExpire,
-			overrideSubscriptionInfo, subscriptionEnabled, subscriptionLength,
-			subscriptionType, subscriptionTypeSettingsUnicodeProperties,
-			maxSubscriptionCycles, serviceContext);
-	}
-
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x)
-	 */
-	@Deprecated
-	@Override
-	public com.liferay.commerce.product.model.CPInstance addCPInstance(
-			String externalReferenceCode, long cpDefinitionId, long groupId,
-			String sku, String gtin, String manufacturerPartNumber,
-			boolean purchasable,
-			java.util.Map<Long, java.util.List<Long>>
-				cpDefinitionOptionRelIdCPDefinitionOptionValueRelIds,
-			double width, double height, double depth, double weight,
-			java.math.BigDecimal price, java.math.BigDecimal promoPrice,
-			java.math.BigDecimal cost, boolean published, int displayDateMonth,
-			int displayDateDay, int displayDateYear, int displayDateHour,
-			int displayDateMinute, int expirationDateMonth,
-			int expirationDateDay, int expirationDateYear,
-			int expirationDateHour, int expirationDateMinute,
-			boolean neverExpire, boolean overrideSubscriptionInfo,
-			boolean subscriptionEnabled, int subscriptionLength,
-			String subscriptionType,
-			com.liferay.portal.kernel.util.UnicodeProperties
-				subscriptionTypeSettingsUnicodeProperties,
-			long maxSubscriptionCycles, String unspsc,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _cpInstanceLocalService.addCPInstance(
-			externalReferenceCode, cpDefinitionId, groupId, sku, gtin,
-			manufacturerPartNumber, purchasable,
-			cpDefinitionOptionRelIdCPDefinitionOptionValueRelIds, width, height,
-			depth, weight, price, promoPrice, cost, published, displayDateMonth,
-			displayDateDay, displayDateYear, displayDateHour, displayDateMinute,
-			expirationDateMonth, expirationDateDay, expirationDateYear,
-			expirationDateHour, expirationDateMinute, neverExpire,
-			overrideSubscriptionInfo, subscriptionEnabled, subscriptionLength,
-			subscriptionType, subscriptionTypeSettingsUnicodeProperties,
-			maxSubscriptionCycles, unspsc, serviceContext);
-	}
-
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x)
-	 */
-	@Deprecated
-	@Override
-	public com.liferay.commerce.product.model.CPInstance addOrUpdateCPInstance(
-			String externalReferenceCode, long cpDefinitionId, long groupId,
-			String sku, String gtin, String manufacturerPartNumber,
-			boolean purchasable, String json, double width, double height,
-			double depth, double weight, java.math.BigDecimal price,
-			java.math.BigDecimal promoPrice, java.math.BigDecimal cost,
-			boolean published, int displayDateMonth, int displayDateDay,
-			int displayDateYear, int displayDateHour, int displayDateMinute,
-			int expirationDateMonth, int expirationDateDay,
-			int expirationDateYear, int expirationDateHour,
-			int expirationDateMinute, boolean neverExpire,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _cpInstanceLocalService.addOrUpdateCPInstance(
-			externalReferenceCode, cpDefinitionId, groupId, sku, gtin,
-			manufacturerPartNumber, purchasable, json, width, height, depth,
-			weight, price, promoPrice, cost, published, displayDateMonth,
-			displayDateDay, displayDateYear, displayDateHour, displayDateMinute,
-			expirationDateMonth, expirationDateDay, expirationDateYear,
-			expirationDateHour, expirationDateMinute, neverExpire,
-			serviceContext);
-	}
-
-	@Override
-	public com.liferay.commerce.product.model.CPInstance addOrUpdateCPInstance(
+	public CPInstance addOrUpdateCPInstance(
 			String externalReferenceCode, long cpDefinitionId, long groupId,
 			String sku, String gtin, String manufacturerPartNumber,
 			boolean purchasable, String json, double width, double height,
@@ -288,50 +133,21 @@ public class CPInstanceLocalServiceWrapper
 			serviceContext);
 	}
 
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x)
-	 */
-	@Deprecated
 	@Override
-	public com.liferay.commerce.product.model.CPInstance addOrUpdateCPInstance(
-			String externalReferenceCode, long cpDefinitionId, long groupId,
-			String sku, String gtin, String manufacturerPartNumber,
-			boolean purchasable, String json, double width, double height,
-			double depth, double weight, java.math.BigDecimal price,
-			java.math.BigDecimal promoPrice, java.math.BigDecimal cost,
-			boolean published, int displayDateMonth, int displayDateDay,
-			int displayDateYear, int displayDateHour, int displayDateMinute,
-			int expirationDateMonth, int expirationDateDay,
-			int expirationDateYear, int expirationDateHour,
-			int expirationDateMinute, boolean neverExpire, String unspsc,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _cpInstanceLocalService.addOrUpdateCPInstance(
-			externalReferenceCode, cpDefinitionId, groupId, sku, gtin,
-			manufacturerPartNumber, purchasable, json, width, height, depth,
-			weight, price, promoPrice, cost, published, displayDateMonth,
-			displayDateDay, displayDateYear, displayDateHour, displayDateMinute,
-			expirationDateMonth, expirationDateDay, expirationDateYear,
-			expirationDateHour, expirationDateMinute, neverExpire, unspsc,
-			serviceContext);
-	}
-
-	@Override
-	public void buildCPInstances(
+	public java.util.List<CPInstance> buildCPInstances(
 			long cpDefinitionId,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		_cpInstanceLocalService.buildCPInstances(
+		return _cpInstanceLocalService.buildCPInstances(
 			cpDefinitionId, serviceContext);
 	}
 
 	@Override
-	public void checkCPInstances()
+	public void checkCPInstances(long cpDefinitionId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		_cpInstanceLocalService.checkCPInstances();
+		_cpInstanceLocalService.checkCPInstances(cpDefinitionId);
 	}
 
 	@Override
@@ -348,9 +164,7 @@ public class CPInstanceLocalServiceWrapper
 	 * @return the new cp instance
 	 */
 	@Override
-	public com.liferay.commerce.product.model.CPInstance createCPInstance(
-		long CPInstanceId) {
-
+	public CPInstance createCPInstance(long CPInstanceId) {
 		return _cpInstanceLocalService.createCPInstance(CPInstanceId);
 	}
 
@@ -377,11 +191,17 @@ public class CPInstanceLocalServiceWrapper
 	 * @throws PortalException
 	 */
 	@Override
-	public com.liferay.commerce.product.model.CPInstance deleteCPInstance(
-			com.liferay.commerce.product.model.CPInstance cpInstance)
+	public CPInstance deleteCPInstance(CPInstance cpInstance)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _cpInstanceLocalService.deleteCPInstance(cpInstance);
+	}
+
+	@Override
+	public CPInstance deleteCPInstance(CPInstance cpInstance, boolean makeCopy)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _cpInstanceLocalService.deleteCPInstance(cpInstance, makeCopy);
 	}
 
 	/**
@@ -396,8 +216,7 @@ public class CPInstanceLocalServiceWrapper
 	 * @throws PortalException if a cp instance with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.commerce.product.model.CPInstance deleteCPInstance(
-			long CPInstanceId)
+	public CPInstance deleteCPInstance(long CPInstanceId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _cpInstanceLocalService.deleteCPInstance(CPInstanceId);
@@ -524,18 +343,15 @@ public class CPInstanceLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.commerce.product.model.CPInstance
-		fetchByExternalReferenceCode(
-			String externalReferenceCode, long companyId) {
+	public CPInstance fetchByExternalReferenceCode(
+		String externalReferenceCode, long companyId) {
 
 		return _cpInstanceLocalService.fetchByExternalReferenceCode(
 			externalReferenceCode, companyId);
 	}
 
 	@Override
-	public com.liferay.commerce.product.model.CPInstance fetchCPInstance(
-		long CPInstanceId) {
-
+	public CPInstance fetchCPInstance(long CPInstanceId) {
 		return _cpInstanceLocalService.fetchCPInstance(CPInstanceId);
 	}
 
@@ -547,9 +363,8 @@ public class CPInstanceLocalServiceWrapper
 	 * @return the matching cp instance, or <code>null</code> if a matching cp instance could not be found
 	 */
 	@Override
-	public com.liferay.commerce.product.model.CPInstance
-		fetchCPInstanceByExternalReferenceCode(
-			long companyId, String externalReferenceCode) {
+	public CPInstance fetchCPInstanceByExternalReferenceCode(
+		long companyId, String externalReferenceCode) {
 
 		return _cpInstanceLocalService.fetchCPInstanceByExternalReferenceCode(
 			companyId, externalReferenceCode);
@@ -560,9 +375,8 @@ public class CPInstanceLocalServiceWrapper
 	 */
 	@Deprecated
 	@Override
-	public com.liferay.commerce.product.model.CPInstance
-		fetchCPInstanceByReferenceCode(
-			long companyId, String externalReferenceCode) {
+	public CPInstance fetchCPInstanceByReferenceCode(
+		long companyId, String externalReferenceCode) {
 
 		return _cpInstanceLocalService.fetchCPInstanceByReferenceCode(
 			companyId, externalReferenceCode);
@@ -576,15 +390,15 @@ public class CPInstanceLocalServiceWrapper
 	 * @return the matching cp instance, or <code>null</code> if a matching cp instance could not be found
 	 */
 	@Override
-	public com.liferay.commerce.product.model.CPInstance
-		fetchCPInstanceByUuidAndGroupId(String uuid, long groupId) {
+	public CPInstance fetchCPInstanceByUuidAndGroupId(
+		String uuid, long groupId) {
 
 		return _cpInstanceLocalService.fetchCPInstanceByUuidAndGroupId(
 			uuid, groupId);
 	}
 
 	@Override
-	public com.liferay.commerce.product.model.CPInstance fetchCProductInstance(
+	public CPInstance fetchCProductInstance(
 		long cProductId, String cpInstanceUuid) {
 
 		return _cpInstanceLocalService.fetchCProductInstance(
@@ -599,36 +413,18 @@ public class CPInstanceLocalServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.commerce.product.model.CPInstance>
-		getCPDefinitionApprovedCPInstances(long cpDefinitionId) {
+	public java.util.List<CPInstance> getCPDefinitionApprovedCPInstances(
+		long cpDefinitionId) {
 
 		return _cpInstanceLocalService.getCPDefinitionApprovedCPInstances(
 			cpDefinitionId);
 	}
 
-	/**
-	 * @param cpDefinitionId
-	 * @return
-	 * @deprecated As of Athanasius (7.3.x), use workflow aware method {@link
-	 #getCPDefinitionInstances(long, int, int, int,
-	 OrderByComparator)} or {@link
-	 #getCPDefinitionApprovedCPInstances(long)}
-	 */
-	@Deprecated
 	@Override
-	public java.util.List<com.liferay.commerce.product.model.CPInstance>
-		getCPDefinitionInstances(long cpDefinitionId) {
-
-		return _cpInstanceLocalService.getCPDefinitionInstances(cpDefinitionId);
-	}
-
-	@Override
-	public java.util.List<com.liferay.commerce.product.model.CPInstance>
-		getCPDefinitionInstances(
-			long cpDefinitionId, int status, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.commerce.product.model.CPInstance>
-					orderByComparator) {
+	public java.util.List<CPInstance> getCPDefinitionInstances(
+		long cpDefinitionId, int status, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<CPInstance>
+			orderByComparator) {
 
 		return _cpInstanceLocalService.getCPDefinitionInstances(
 			cpDefinitionId, status, start, end, orderByComparator);
@@ -648,16 +444,14 @@ public class CPInstanceLocalServiceWrapper
 	 * @throws PortalException if a cp instance with the primary key could not be found
 	 */
 	@Override
-	public com.liferay.commerce.product.model.CPInstance getCPInstance(
-			long CPInstanceId)
+	public CPInstance getCPInstance(long CPInstanceId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _cpInstanceLocalService.getCPInstance(CPInstanceId);
 	}
 
 	@Override
-	public com.liferay.commerce.product.model.CPInstance getCPInstance(
-			long cpDefinitionId, String sku)
+	public CPInstance getCPInstance(long cpDefinitionId, String sku)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _cpInstanceLocalService.getCPInstance(cpDefinitionId, sku);
@@ -672,9 +466,8 @@ public class CPInstanceLocalServiceWrapper
 	 * @throws PortalException if a matching cp instance could not be found
 	 */
 	@Override
-	public com.liferay.commerce.product.model.CPInstance
-			getCPInstanceByExternalReferenceCode(
-				long companyId, String externalReferenceCode)
+	public CPInstance getCPInstanceByExternalReferenceCode(
+			long companyId, String externalReferenceCode)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _cpInstanceLocalService.getCPInstanceByExternalReferenceCode(
@@ -682,9 +475,8 @@ public class CPInstanceLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.commerce.product.model.CPInstance
-			getCPInstanceByExternalReferenceCode(
-				String externalReferenceCode, long companyId)
+	public CPInstance getCPInstanceByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _cpInstanceLocalService.getCPInstanceByExternalReferenceCode(
@@ -700,8 +492,7 @@ public class CPInstanceLocalServiceWrapper
 	 * @throws PortalException if a matching cp instance could not be found
 	 */
 	@Override
-	public com.liferay.commerce.product.model.CPInstance
-			getCPInstanceByUuidAndGroupId(String uuid, long groupId)
+	public CPInstance getCPInstanceByUuidAndGroupId(String uuid, long groupId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _cpInstanceLocalService.getCPInstanceByUuidAndGroupId(
@@ -720,19 +511,15 @@ public class CPInstanceLocalServiceWrapper
 	 * @return the range of cp instances
 	 */
 	@Override
-	public java.util.List<com.liferay.commerce.product.model.CPInstance>
-		getCPInstances(int start, int end) {
-
+	public java.util.List<CPInstance> getCPInstances(int start, int end) {
 		return _cpInstanceLocalService.getCPInstances(start, end);
 	}
 
 	@Override
-	public java.util.List<com.liferay.commerce.product.model.CPInstance>
-			getCPInstances(
-				long groupId, int status, int start, int end,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<com.liferay.commerce.product.model.CPInstance>
-						orderByComparator)
+	public java.util.List<CPInstance> getCPInstances(
+			long groupId, int status, int start, int end,
+			com.liferay.portal.kernel.util.OrderByComparator<CPInstance>
+				orderByComparator)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _cpInstanceLocalService.getCPInstances(
@@ -740,8 +527,8 @@ public class CPInstanceLocalServiceWrapper
 	}
 
 	@Override
-	public java.util.List<com.liferay.commerce.product.model.CPInstance>
-		getCPInstances(long companyId, String sku) {
+	public java.util.List<CPInstance> getCPInstances(
+		long companyId, String sku) {
 
 		return _cpInstanceLocalService.getCPInstances(companyId, sku);
 	}
@@ -754,8 +541,8 @@ public class CPInstanceLocalServiceWrapper
 	 * @return the matching cp instances, or an empty list if no matches were found
 	 */
 	@Override
-	public java.util.List<com.liferay.commerce.product.model.CPInstance>
-		getCPInstancesByUuidAndCompanyId(String uuid, long companyId) {
+	public java.util.List<CPInstance> getCPInstancesByUuidAndCompanyId(
+		String uuid, long companyId) {
 
 		return _cpInstanceLocalService.getCPInstancesByUuidAndCompanyId(
 			uuid, companyId);
@@ -772,12 +559,10 @@ public class CPInstanceLocalServiceWrapper
 	 * @return the range of matching cp instances, or an empty list if no matches were found
 	 */
 	@Override
-	public java.util.List<com.liferay.commerce.product.model.CPInstance>
-		getCPInstancesByUuidAndCompanyId(
-			String uuid, long companyId, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.commerce.product.model.CPInstance>
-					orderByComparator) {
+	public java.util.List<CPInstance> getCPInstancesByUuidAndCompanyId(
+		String uuid, long companyId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<CPInstance>
+			orderByComparator) {
 
 		return _cpInstanceLocalService.getCPInstancesByUuidAndCompanyId(
 			uuid, companyId, start, end, orderByComparator);
@@ -801,7 +586,12 @@ public class CPInstanceLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.commerce.product.model.CPInstance getCProductInstance(
+	public int getCPInstancesCount(String cpInstanceUuid) {
+		return _cpInstanceLocalService.getCPInstancesCount(cpInstanceUuid);
+	}
+
+	@Override
+	public CPInstance getCProductInstance(
 			long cProductId, String cpInstanceUuid)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -887,57 +677,55 @@ public class CPInstanceLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.portal.kernel.search.BaseModelSearchResult
-		<com.liferay.commerce.product.model.CPInstance>
-				searchCPDefinitionInstances(
-					long companyId, long cpDefinitionId, String keywords,
-					int status, int start, int end,
-					com.liferay.portal.kernel.search.Sort sort)
-			throws com.liferay.portal.kernel.exception.PortalException {
+	public com.liferay.portal.kernel.search.BaseModelSearchResult<CPInstance>
+			searchCPDefinitionInstances(
+				long companyId, long cpDefinitionId, String keywords,
+				int status, int start, int end,
+				com.liferay.portal.kernel.search.Sort sort)
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _cpInstanceLocalService.searchCPDefinitionInstances(
 			companyId, cpDefinitionId, keywords, status, start, end, sort);
 	}
 
 	@Override
-	public com.liferay.portal.kernel.search.BaseModelSearchResult
-		<com.liferay.commerce.product.model.CPInstance>
-				searchCPDefinitionInstances(
-					long companyId, long cpDefinitionId, String keywords,
-					int status, com.liferay.portal.kernel.search.Sort sort)
-			throws com.liferay.portal.kernel.exception.PortalException {
+	public com.liferay.portal.kernel.search.BaseModelSearchResult<CPInstance>
+			searchCPDefinitionInstances(
+				long companyId, long cpDefinitionId, String keywords,
+				int status, com.liferay.portal.kernel.search.Sort sort)
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _cpInstanceLocalService.searchCPDefinitionInstances(
 			companyId, cpDefinitionId, keywords, status, sort);
 	}
 
 	@Override
-	public com.liferay.portal.kernel.search.BaseModelSearchResult
-		<com.liferay.commerce.product.model.CPInstance> searchCPInstances(
+	public com.liferay.portal.kernel.search.BaseModelSearchResult<CPInstance>
+			searchCPInstances(
 				long companyId, long[] groupIds, String keywords, int status,
 				int start, int end, com.liferay.portal.kernel.search.Sort sort)
-			throws com.liferay.portal.kernel.exception.PortalException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _cpInstanceLocalService.searchCPInstances(
 			companyId, groupIds, keywords, status, start, end, sort);
 	}
 
 	@Override
-	public com.liferay.portal.kernel.search.BaseModelSearchResult
-		<com.liferay.commerce.product.model.CPInstance> searchCPInstances(
+	public com.liferay.portal.kernel.search.BaseModelSearchResult<CPInstance>
+			searchCPInstances(
 				long companyId, String keywords, int status, int start, int end,
 				com.liferay.portal.kernel.search.Sort sort)
-			throws com.liferay.portal.kernel.exception.PortalException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _cpInstanceLocalService.searchCPInstances(
 			companyId, keywords, status, start, end, sort);
 	}
 
 	@Override
-	public com.liferay.portal.kernel.search.BaseModelSearchResult
-		<com.liferay.commerce.product.model.CPInstance> searchCPInstances(
+	public com.liferay.portal.kernel.search.BaseModelSearchResult<CPInstance>
+			searchCPInstances(
 				com.liferay.portal.kernel.search.SearchContext searchContext)
-			throws com.liferay.portal.kernel.exception.PortalException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _cpInstanceLocalService.searchCPInstances(searchContext);
 	}
@@ -953,93 +741,15 @@ public class CPInstanceLocalServiceWrapper
 	 * @return the cp instance that was updated
 	 */
 	@Override
-	public com.liferay.commerce.product.model.CPInstance updateCPInstance(
-		com.liferay.commerce.product.model.CPInstance cpInstance) {
-
+	public CPInstance updateCPInstance(CPInstance cpInstance) {
 		return _cpInstanceLocalService.updateCPInstance(cpInstance);
 	}
 
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x)
-	 */
-	@Deprecated
 	@Override
-	public com.liferay.commerce.product.model.CPInstance updateCPInstance(
-			long cpInstanceId, String sku, String gtin,
-			String manufacturerPartNumber, boolean purchasable,
-			boolean published, int displayDateMonth, int displayDateDay,
-			int displayDateYear, int displayDateHour, int displayDateMinute,
-			int expirationDateMonth, int expirationDateDay,
-			int expirationDateYear, int expirationDateHour,
-			int expirationDateMinute, boolean neverExpire,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _cpInstanceLocalService.updateCPInstance(
-			cpInstanceId, sku, gtin, manufacturerPartNumber, purchasable,
-			published, displayDateMonth, displayDateDay, displayDateYear,
-			displayDateHour, displayDateMinute, expirationDateMonth,
-			expirationDateDay, expirationDateYear, expirationDateHour,
-			expirationDateMinute, neverExpire, serviceContext);
-	}
-
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x)
-	 */
-	@Deprecated
-	@Override
-	public com.liferay.commerce.product.model.CPInstance updateCPInstance(
-			long cpInstanceId, String sku, String gtin,
-			String manufacturerPartNumber, boolean purchasable,
-			boolean published, int displayDateMonth, int displayDateDay,
-			int displayDateYear, int displayDateHour, int displayDateMinute,
-			int expirationDateMonth, int expirationDateDay,
-			int expirationDateYear, int expirationDateHour,
-			int expirationDateMinute, boolean neverExpire, String unspsc,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _cpInstanceLocalService.updateCPInstance(
-			cpInstanceId, sku, gtin, manufacturerPartNumber, purchasable,
-			published, displayDateMonth, displayDateDay, displayDateYear,
-			displayDateHour, displayDateMinute, expirationDateMonth,
-			expirationDateDay, expirationDateYear, expirationDateHour,
-			expirationDateMinute, neverExpire, unspsc, serviceContext);
-	}
-
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x)
-	 */
-	@Deprecated
-	@Override
-	public com.liferay.commerce.product.model.CPInstance updateCPInstance(
-			long cpInstanceId, String sku, String gtin,
-			String manufacturerPartNumber, boolean purchasable, double width,
-			double height, double depth, double weight,
-			java.math.BigDecimal price, java.math.BigDecimal promoPrice,
-			java.math.BigDecimal cost, boolean published, int displayDateMonth,
-			int displayDateDay, int displayDateYear, int displayDateHour,
-			int displayDateMinute, int expirationDateMonth,
-			int expirationDateDay, int expirationDateYear,
-			int expirationDateHour, int expirationDateMinute,
-			boolean neverExpire,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _cpInstanceLocalService.updateCPInstance(
-			cpInstanceId, sku, gtin, manufacturerPartNumber, purchasable, width,
-			height, depth, weight, price, promoPrice, cost, published,
-			displayDateMonth, displayDateDay, displayDateYear, displayDateHour,
-			displayDateMinute, expirationDateMonth, expirationDateDay,
-			expirationDateYear, expirationDateHour, expirationDateMinute,
-			neverExpire, serviceContext);
-	}
-
-	@Override
-	public com.liferay.commerce.product.model.CPInstance updateCPInstance(
-			long cpInstanceId, String sku, String gtin,
-			String manufacturerPartNumber, boolean purchasable, double width,
-			double height, double depth, double weight,
+	public CPInstance updateCPInstance(
+			String externalReferenceCode, long cpInstanceId, String sku,
+			String gtin, String manufacturerPartNumber, boolean purchasable,
+			double width, double height, double depth, double weight,
 			java.math.BigDecimal price, java.math.BigDecimal promoPrice,
 			java.math.BigDecimal cost, boolean published, int displayDateMonth,
 			int displayDateDay, int displayDateYear, int displayDateHour,
@@ -1054,46 +764,19 @@ public class CPInstanceLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _cpInstanceLocalService.updateCPInstance(
-			cpInstanceId, sku, gtin, manufacturerPartNumber, purchasable, width,
-			height, depth, weight, price, promoPrice, cost, published,
-			displayDateMonth, displayDateDay, displayDateYear, displayDateHour,
-			displayDateMinute, expirationDateMonth, expirationDateDay,
-			expirationDateYear, expirationDateHour, expirationDateMinute,
-			neverExpire, unspsc, discontinued, replacementCPInstanceUuid,
-			replacementCProductId, discontinuedDateMonth, discontinuedDateDay,
-			discontinuedDateYear, serviceContext);
-	}
-
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x)
-	 */
-	@Deprecated
-	@Override
-	public com.liferay.commerce.product.model.CPInstance updateCPInstance(
-			long cpInstanceId, String sku, String gtin,
-			String manufacturerPartNumber, boolean purchasable, double width,
-			double height, double depth, double weight,
-			java.math.BigDecimal price, java.math.BigDecimal promoPrice,
-			java.math.BigDecimal cost, boolean published, int displayDateMonth,
-			int displayDateDay, int displayDateYear, int displayDateHour,
-			int displayDateMinute, int expirationDateMonth,
-			int expirationDateDay, int expirationDateYear,
-			int expirationDateHour, int expirationDateMinute,
-			boolean neverExpire, String unspsc,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _cpInstanceLocalService.updateCPInstance(
-			cpInstanceId, sku, gtin, manufacturerPartNumber, purchasable, width,
-			height, depth, weight, price, promoPrice, cost, published,
-			displayDateMonth, displayDateDay, displayDateYear, displayDateHour,
-			displayDateMinute, expirationDateMonth, expirationDateDay,
-			expirationDateYear, expirationDateHour, expirationDateMinute,
-			neverExpire, unspsc, serviceContext);
+			externalReferenceCode, cpInstanceId, sku, gtin,
+			manufacturerPartNumber, purchasable, width, height, depth, weight,
+			price, promoPrice, cost, published, displayDateMonth,
+			displayDateDay, displayDateYear, displayDateHour, displayDateMinute,
+			expirationDateMonth, expirationDateDay, expirationDateYear,
+			expirationDateHour, expirationDateMinute, neverExpire, unspsc,
+			discontinued, replacementCPInstanceUuid, replacementCProductId,
+			discontinuedDateMonth, discontinuedDateDay, discontinuedDateYear,
+			serviceContext);
 	}
 
 	@Override
-	public com.liferay.commerce.product.model.CPInstance updatePricingInfo(
+	public CPInstance updatePricingInfo(
 			long cpInstanceId, java.math.BigDecimal price,
 			java.math.BigDecimal promoPrice, java.math.BigDecimal cost,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
@@ -1104,7 +787,7 @@ public class CPInstanceLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.commerce.product.model.CPInstance updateShippingInfo(
+	public CPInstance updateShippingInfo(
 			long cpInstanceId, double width, double height, double depth,
 			double weight,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
@@ -1115,8 +798,7 @@ public class CPInstanceLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.commerce.product.model.CPInstance updateStatus(
-			long userId, long cpInstanceId, int status)
+	public CPInstance updateStatus(long userId, long cpInstanceId, int status)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _cpInstanceLocalService.updateStatus(
@@ -1124,7 +806,7 @@ public class CPInstanceLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.commerce.product.model.CPInstance updateSubscriptionInfo(
+	public CPInstance updateSubscriptionInfo(
 			long cpInstanceId, boolean overrideSubscriptionInfo,
 			boolean subscriptionEnabled, int subscriptionLength,
 			String subscriptionType,
@@ -1145,6 +827,26 @@ public class CPInstanceLocalServiceWrapper
 			deliverySubscriptionType,
 			deliverySubscriptionTypeSettingsUnicodeProperties,
 			deliveryMaxSubscriptionCycles);
+	}
+
+	@Override
+	public CTPersistence<CPInstance> getCTPersistence() {
+		return _cpInstanceLocalService.getCTPersistence();
+	}
+
+	@Override
+	public Class<CPInstance> getModelClass() {
+		return _cpInstanceLocalService.getModelClass();
+	}
+
+	@Override
+	public <R, E extends Throwable> R updateWithUnsafeFunction(
+			UnsafeFunction<CTPersistence<CPInstance>, R, E>
+				updateUnsafeFunction)
+		throws E {
+
+		return _cpInstanceLocalService.updateWithUnsafeFunction(
+			updateUnsafeFunction);
 	}
 
 	@Override

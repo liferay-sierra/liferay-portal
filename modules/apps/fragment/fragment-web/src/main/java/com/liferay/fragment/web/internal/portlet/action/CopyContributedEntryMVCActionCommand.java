@@ -15,22 +15,22 @@
 package com.liferay.fragment.web.internal.portlet.action;
 
 import com.liferay.fragment.constants.FragmentPortletKeys;
-import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
+import com.liferay.fragment.contributor.FragmentCollectionContributorRegistry;
 import com.liferay.fragment.model.FragmentCollection;
 import com.liferay.fragment.model.FragmentComposition;
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.service.FragmentCompositionService;
 import com.liferay.fragment.service.FragmentEntryService;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Repository;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -97,11 +97,11 @@ public class CopyContributedEntryMVCActionCommand extends BaseMVCActionCommand {
 
 					for (String contributedEntryKey : contributedEntryKeys) {
 						FragmentComposition fragmentComposition =
-							_fragmentCollectionContributorTracker.
+							_fragmentCollectionContributorRegistry.
 								getFragmentComposition(contributedEntryKey);
 
 						FragmentEntry fragmentEntry =
-							_fragmentCollectionContributorTracker.
+							_fragmentCollectionContributorRegistry.
 								getFragmentEntry(contributedEntryKey);
 
 						if (fragmentComposition != null) {
@@ -144,7 +144,7 @@ public class CopyContributedEntryMVCActionCommand extends BaseMVCActionCommand {
 			StringBundler.concat(
 				fragmentComposition.getName(), StringPool.SPACE,
 				StringPool.OPEN_PARENTHESIS,
-				LanguageUtil.get(LocaleUtil.getMostRelevantLocale(), "copy"),
+				_language.get(LocaleUtil.getMostRelevantLocale(), "copy"),
 				StringPool.CLOSE_PARENTHESIS),
 			null, fragmentComposition.getData(), previewFileEntryId,
 			WorkflowConstants.STATUS_APPROVED, serviceContext);
@@ -172,13 +172,14 @@ public class CopyContributedEntryMVCActionCommand extends BaseMVCActionCommand {
 			StringBundler.concat(
 				fragmentEntry.getName(), StringPool.SPACE,
 				StringPool.OPEN_PARENTHESIS,
-				LanguageUtil.get(LocaleUtil.getMostRelevantLocale(), "copy"),
+				_language.get(LocaleUtil.getMostRelevantLocale(), "copy"),
 				StringPool.CLOSE_PARENTHESIS),
 			fragmentEntry.getCss(), fragmentEntry.getHtml(),
 			fragmentEntry.getJs(), fragmentEntry.isCacheable(),
 			fragmentEntry.getConfiguration(), fragmentEntry.getIcon(),
 			previewFileEntryId, fragmentEntry.getType(),
-			WorkflowConstants.STATUS_APPROVED, serviceContext);
+			fragmentEntry.getTypeOptions(), WorkflowConstants.STATUS_APPROVED,
+			serviceContext);
 	}
 
 	private long _getPreviewFileEntryId(
@@ -220,7 +221,7 @@ public class CopyContributedEntryMVCActionCommand extends BaseMVCActionCommand {
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
-				_log.debug("Unable to get preview entry image URL", exception);
+				_log.debug(exception);
 			}
 		}
 
@@ -231,14 +232,17 @@ public class CopyContributedEntryMVCActionCommand extends BaseMVCActionCommand {
 		CopyContributedEntryMVCActionCommand.class);
 
 	@Reference
-	private FragmentCollectionContributorTracker
-		_fragmentCollectionContributorTracker;
+	private FragmentCollectionContributorRegistry
+		_fragmentCollectionContributorRegistry;
 
 	@Reference
 	private FragmentCompositionService _fragmentCompositionService;
 
 	@Reference
 	private FragmentEntryService _fragmentEntryService;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

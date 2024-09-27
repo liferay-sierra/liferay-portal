@@ -36,13 +36,14 @@ public class PostalAddressUtil {
 		boolean acceptAllLanguages, Address address, long companyId,
 		Locale locale) {
 
-		ListType listType = address.getType();
+		ListType listType = address.getListType();
 
 		return new PostalAddress() {
 			{
 				addressLocality = address.getCity();
 				addressType = listType.getName();
 				id = address.getAddressId();
+				name = address.getName();
 				postalCode = address.getZip();
 				primary = address.isPrimary();
 				streetAddressLine1 = address.getStreet1();

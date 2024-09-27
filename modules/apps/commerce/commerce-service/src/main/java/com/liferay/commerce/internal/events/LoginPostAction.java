@@ -47,7 +47,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Luca Pellizzon
  */
 @Component(
-	enabled = false, immediate = true, property = "key=login.events.post",
+	immediate = true, property = "key=login.events.post",
 	service = LifecycleAction.class
 )
 public class LoginPostAction extends Action {
@@ -106,6 +106,10 @@ public class LoginPostAction extends Action {
 					commerceOrderUuid, commerceChannelGroupId);
 		}
 		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return;
 		}
 

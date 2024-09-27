@@ -66,7 +66,8 @@ public class ImportTask implements Serializable {
 	}
 
 	@Schema(
-		description = "The item class name for which data will be processed in batch."
+		description = "The item class name for which data will be processed in batch.",
+		example = "com.liferay.headless.delivery.dto.v1_0.BlogPosting"
 	)
 	public String getClassName() {
 		return className;
@@ -97,7 +98,7 @@ public class ImportTask implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected String className;
 
-	@Schema(description = "The file content type.")
+	@Schema(description = "The file content type.", example = "JSON")
 	public String getContentType() {
 		return contentType;
 	}
@@ -125,7 +126,10 @@ public class ImportTask implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected String contentType;
 
-	@Schema(description = "The end time of import task operation.")
+	@Schema(
+		description = "The end time of import task operation.",
+		example = "2019-27-09'T'08:33:33'Z'"
+	)
 	public Date getEndTime() {
 		return endTime;
 	}
@@ -154,7 +158,8 @@ public class ImportTask implements Serializable {
 	protected Date endTime;
 
 	@Schema(
-		description = "The error message in case of import task's failed execution."
+		description = "The error message in case of import task's failed execution.",
+		example = "File import failed"
 	)
 	public String getErrorMessage() {
 		return errorMessage;
@@ -185,7 +190,10 @@ public class ImportTask implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected String errorMessage;
 
-	@Schema(description = "The status of import task's execution.")
+	@Schema(
+		description = "The status of import task's execution.",
+		example = "INITIALIZED"
+	)
 	@Valid
 	public ExecuteStatus getExecuteStatus() {
 		return executeStatus;
@@ -223,6 +231,34 @@ public class ImportTask implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected ExecuteStatus executeStatus;
 
+	@Schema(description = "The optional external key of this account.")
+	public String getExternalReferenceCode() {
+		return externalReferenceCode;
+	}
+
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		this.externalReferenceCode = externalReferenceCode;
+	}
+
+	@JsonIgnore
+	public void setExternalReferenceCode(
+		UnsafeSupplier<String, Exception> externalReferenceCodeUnsafeSupplier) {
+
+		try {
+			externalReferenceCode = externalReferenceCodeUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField(description = "The optional external key of this account.")
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String externalReferenceCode;
+
 	@Schema
 	@Valid
 	public FailedItem[] getFailedItems() {
@@ -253,7 +289,7 @@ public class ImportTask implements Serializable {
 	protected FailedItem[] failedItems;
 
 	@DecimalMin("0")
-	@Schema(description = "The task's ID.")
+	@Schema(description = "The task's ID.", example = "30130")
 	public Long getId() {
 		return id;
 	}
@@ -322,7 +358,7 @@ public class ImportTask implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected ImportStrategy importStrategy;
 
-	@Schema(description = "The operation of import task.")
+	@Schema(description = "The operation of import task.", example = "CREATE")
 	@Valid
 	public Operation getOperation() {
 		return operation;
@@ -361,7 +397,10 @@ public class ImportTask implements Serializable {
 	protected Operation operation;
 
 	@DecimalMin("0")
-	@Schema(description = "Number of items processed by import task opeartion.")
+	@Schema(
+		description = "Number of items processed by import task opeartion.",
+		example = "100"
+	)
 	public Integer getProcessedItemsCount() {
 		return processedItemsCount;
 	}
@@ -391,7 +430,10 @@ public class ImportTask implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected Integer processedItemsCount;
 
-	@Schema(description = "The start time of import task operation.")
+	@Schema(
+		description = "The start time of import task operation.",
+		example = "2019-27-09'T'08:23:33'Z'"
+	)
 	public Date getStartTime() {
 		return startTime;
 	}
@@ -421,7 +463,8 @@ public class ImportTask implements Serializable {
 
 	@DecimalMin("0")
 	@Schema(
-		description = "Total number of items that will be processed by import task operation."
+		description = "Total number of items that will be processed by import task operation.",
+		example = "1000"
 	)
 	public Integer getTotalItemsCount() {
 		return totalItemsCount;
@@ -548,6 +591,20 @@ public class ImportTask implements Serializable {
 			sb.append("\"");
 
 			sb.append(executeStatus);
+
+			sb.append("\"");
+		}
+
+		if (externalReferenceCode != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"externalReferenceCode\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(externalReferenceCode));
 
 			sb.append("\"");
 		}

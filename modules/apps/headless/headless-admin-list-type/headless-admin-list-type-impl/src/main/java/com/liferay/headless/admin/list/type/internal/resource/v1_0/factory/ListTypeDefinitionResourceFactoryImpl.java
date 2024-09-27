@@ -14,6 +14,7 @@
 
 package com.liferay.headless.admin.list.type.internal.resource.v1_0.factory;
 
+import com.liferay.headless.admin.list.type.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.headless.admin.list.type.resource.v1_0.ListTypeDefinitionResource;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -33,14 +34,18 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -58,7 +61,10 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @author Gabriel Albuquerque
  * @generated
  */
-@Component(immediate = true, service = ListTypeDefinitionResource.Factory.class)
+@Component(
+	property = "resource.locator.key=/headless-admin-list-type/v1.0/ListTypeDefinition",
+	service = ListTypeDefinitionResource.Factory.class
+)
 @Generated("")
 public class ListTypeDefinitionResourceFactoryImpl
 	implements ListTypeDefinitionResource.Factory {
@@ -73,9 +79,7 @@ public class ListTypeDefinitionResourceFactoryImpl
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (ListTypeDefinitionResource)ProxyUtil.newProxyInstance(
-					ListTypeDefinitionResource.class.getClassLoader(),
-					new Class<?>[] {ListTypeDefinitionResource.class},
+				return _listTypeDefinitionResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -134,14 +138,32 @@ public class ListTypeDefinitionResourceFactoryImpl
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		ListTypeDefinitionResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, ListTypeDefinitionResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		ListTypeDefinitionResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			ListTypeDefinitionResource.class.getClassLoader(),
+			ListTypeDefinitionResource.class);
+
+		try {
+			Constructor<ListTypeDefinitionResource> constructor =
+				(Constructor<ListTypeDefinitionResource>)
+					proxyClass.getConstructor(InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -164,7 +186,7 @@ public class ListTypeDefinitionResourceFactoryImpl
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		ListTypeDefinitionResource listTypeDefinitionResource =
@@ -191,6 +213,7 @@ public class ListTypeDefinitionResourceFactoryImpl
 		listTypeDefinitionResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		listTypeDefinitionResource.setRoleLocalService(_roleLocalService);
+		listTypeDefinitionResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(listTypeDefinitionResource, arguments);
@@ -206,6 +229,10 @@ public class ListTypeDefinitionResourceFactoryImpl
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, ListTypeDefinitionResource>
+		_listTypeDefinitionResourceProxyProviderFunction =
+			_getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -228,9 +255,6 @@ public class ListTypeDefinitionResourceFactoryImpl
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -239,6 +263,9 @@ public class ListTypeDefinitionResourceFactoryImpl
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

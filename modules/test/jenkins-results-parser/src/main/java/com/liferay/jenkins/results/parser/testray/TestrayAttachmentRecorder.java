@@ -14,16 +14,21 @@
 
 package com.liferay.jenkins.results.parser.testray;
 
+import com.liferay.jenkins.results.parser.AxisBuild;
 import com.liferay.jenkins.results.parser.Build;
 import com.liferay.jenkins.results.parser.BuildDatabase;
 import com.liferay.jenkins.results.parser.BuildDatabaseUtil;
+import com.liferay.jenkins.results.parser.BuildReportFactory;
 import com.liferay.jenkins.results.parser.Dom4JUtil;
+import com.liferay.jenkins.results.parser.DownstreamBuild;
 import com.liferay.jenkins.results.parser.GitWorkingDirectory;
 import com.liferay.jenkins.results.parser.GitWorkingDirectoryFactory;
-import com.liferay.jenkins.results.parser.JenkinsConsoleTextLoader;
 import com.liferay.jenkins.results.parser.JenkinsResultsParserUtil;
 import com.liferay.jenkins.results.parser.PortalGitWorkingDirectory;
+import com.liferay.jenkins.results.parser.TestClassResult;
+import com.liferay.jenkins.results.parser.TestResult;
 import com.liferay.jenkins.results.parser.TopLevelBuild;
+import com.liferay.jenkins.results.parser.TopLevelBuildReport;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,12 +36,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringEscapeUtils;
 
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
 import org.dom4j.Element;
 
 import org.json.JSONObject;
@@ -57,14 +66,16 @@ public class TestrayAttachmentRecorder {
 			_recordJenkinsConsole();
 
 			if (_build instanceof TopLevelBuild) {
-				_recordBuildResult();
+				_recordBuildReport();
+				_recordJobSummary();
 				_recordJenkinsReport();
 			}
 			else {
+				_recordFailureMessages();
 				_recordLiferayLogs();
 				_recordLiferayOSGiLogs();
 				_recordPoshiReportFiles();
-				_recordPoshiWarnings();
+				_recordWarnings();
 			}
 		}
 		catch (IllegalArgumentException illegalArgumentException) {
@@ -131,10 +142,19 @@ public class TestrayAttachmentRecorder {
 
 		if (!(_build instanceof TopLevelBuild)) {
 			sb.append(_build.getJobVariant());
-			sb.append("/");
 
-			sb.append(
-				JenkinsResultsParserUtil.getAxisVariable(_build.getBuildURL()));
+			if (_build instanceof AxisBuild) {
+				AxisBuild axisBuild = (AxisBuild)_build;
+
+				sb.append("/");
+				sb.append(axisBuild.getAxisNumber());
+			}
+			else if (_build instanceof DownstreamBuild) {
+				DownstreamBuild downstreamBuild = (DownstreamBuild)_build;
+
+				sb.append("/");
+				sb.append(downstreamBuild.getAxisVariable());
+			}
 		}
 
 		return sb.toString();
@@ -212,6 +232,88 @@ public class TestrayAttachmentRecorder {
 		return _portalGitWorkingDirectory;
 	}
 
+	private List<String> _getPortalLogWarnings() {
+		List<String> portalLogWarnings = new ArrayList<>();
+
+		if (_build == null) {
+			return portalLogWarnings;
+		}
+
+		TestClassResult testClassResult = _build.getTestClassResult(
+			"com.liferay.portal.log.assertor.PortalLogAssertorTest");
+
+		if (testClassResult == null) {
+			return portalLogWarnings;
+		}
+
+		for (TestResult testResult : testClassResult.getTestResults()) {
+			String errorDetails = testResult.getErrorDetails();
+
+			if (JenkinsResultsParserUtil.isNullOrEmpty(errorDetails)) {
+				continue;
+			}
+
+			portalLogWarnings.add(errorDetails);
+		}
+
+		return portalLogWarnings;
+	}
+
+	private List<String> _getPoshiWarnings() {
+		List<String> poshiWarnings = new ArrayList<>();
+
+		PortalGitWorkingDirectory portalGitWorkingDirectory =
+			_getPortalGitWorkingDirectory();
+
+		if (portalGitWorkingDirectory == null) {
+			return poshiWarnings;
+		}
+
+		File poshiWarningsFile = new File(
+			portalGitWorkingDirectory.getWorkingDirectory(),
+			"poshi-warnings.xml");
+
+		if (!poshiWarningsFile.exists()) {
+			return poshiWarnings;
+		}
+
+		String content = null;
+
+		try {
+			content = JenkinsResultsParserUtil.read(poshiWarningsFile);
+
+			content = content.trim();
+		}
+		catch (IOException ioException) {
+		}
+
+		if (JenkinsResultsParserUtil.isNullOrEmpty(content)) {
+			return poshiWarnings;
+		}
+
+		try {
+			Document document = Dom4JUtil.parse("<html>" + content + "</html>");
+
+			Element rootElement = document.getRootElement();
+
+			for (Element valueElement : rootElement.elements()) {
+				String valueElementText = valueElement.getText();
+
+				valueElementText = valueElementText.trim();
+
+				if (JenkinsResultsParserUtil.isNullOrEmpty(valueElementText)) {
+					continue;
+				}
+
+				poshiWarnings.add(valueElementText);
+			}
+		}
+		catch (DocumentException documentException) {
+		}
+
+		return poshiWarnings;
+	}
+
 	private GitWorkingDirectory _getQAWebsitesGitWorkingDirectory() {
 		if (_qaWebsitesGitWorkingDirectory != null) {
 			return _qaWebsitesGitWorkingDirectory;
@@ -244,42 +346,158 @@ public class TestrayAttachmentRecorder {
 		return new File(getRecordedFilesBaseDir(), getRelativeBuildDirPath());
 	}
 
-	private void _recordBuildResult() {
+	private void _recordBuildReport() {
 		if (!(_build instanceof TopLevelBuild)) {
 			return;
 		}
 
 		TopLevelBuild topLevelBuild = (TopLevelBuild)_build;
 
-		JSONObject jsonObject = topLevelBuild.getBuildResultsJSONObject(
-			null, null,
-			new String[] {
-				"buildResults", "buildURL", "duration", "errorDetails", "name",
-				"stopWatchRecords", "status"
-			});
+		TopLevelBuildReport topLevelBuildReport =
+			BuildReportFactory.newTopLevelBuildReport(topLevelBuild);
 
-		File buildResultsJSONObjectFile = new File(
-			_getRecordedFilesBuildDir(), "build-result.json");
+		JSONObject buildReportJSONObject =
+			topLevelBuildReport.getBuildReportJSONObject();
+
+		File buildReportJSONObjectFile = new File(
+			_getRecordedFilesBuildDir(), "build-report.json");
 
 		try {
 			JenkinsResultsParserUtil.write(
-				buildResultsJSONObjectFile, jsonObject.toString());
+				buildReportJSONObjectFile, buildReportJSONObject.toString());
 		}
 		catch (IOException ioException) {
 			throw new RuntimeException(ioException);
 		}
 	}
 
-	private void _recordJenkinsConsole() {
-		JenkinsConsoleTextLoader jenkinsConsoleTextLoader =
-			new JenkinsConsoleTextLoader(_build.getBuildURL());
+	private void _recordFailureMessages() {
+		String batchName = null;
 
+		if (_build instanceof AxisBuild) {
+			AxisBuild axisBuild = (AxisBuild)_build;
+
+			batchName = axisBuild.getBatchName();
+		}
+		else if (_build instanceof DownstreamBuild) {
+			DownstreamBuild downstreamBuild = (DownstreamBuild)_build;
+
+			batchName = downstreamBuild.getBatchName();
+		}
+
+		if (JenkinsResultsParserUtil.isNullOrEmpty(batchName)) {
+			return;
+		}
+
+		if (!batchName.startsWith("integration-") &&
+			!batchName.startsWith("modules-integration-") &&
+			!batchName.startsWith("modules-unit-") &&
+			!batchName.startsWith("unit-")) {
+
+			return;
+		}
+
+		File testResultsFile = new File(
+			System.getenv("WORKSPACE"), "test-results/TESTS-TestSuites.xml");
+
+		if (!testResultsFile.exists()) {
+			return;
+		}
+
+		try {
+			Document document = Dom4JUtil.parse(
+				JenkinsResultsParserUtil.read(testResultsFile));
+
+			Element rootElement = document.getRootElement();
+
+			Map<String, List<Element>> testcaseElementsMap = new TreeMap<>();
+
+			for (Element testsuiteElement : rootElement.elements("testsuite")) {
+				for (Element testcaseElement :
+						testsuiteElement.elements("testcase")) {
+
+					if (testcaseElement.element("failure") == null) {
+						continue;
+					}
+
+					String testClassName = testcaseElement.attributeValue(
+						"classname");
+
+					if (testClassName.contains("$")) {
+						testClassName = testClassName.substring(
+							0, testClassName.indexOf("$"));
+					}
+
+					List<Element> testcaseElements = testcaseElementsMap.get(
+						testClassName);
+
+					if (testcaseElements == null) {
+						testcaseElements = new ArrayList<>();
+
+						testcaseElementsMap.put(
+							testClassName, testcaseElements);
+					}
+
+					testcaseElements.add(testcaseElement);
+				}
+			}
+
+			for (Map.Entry<String, List<Element>> testcaseElementsEntry :
+					testcaseElementsMap.entrySet()) {
+
+				StringBuilder sb = new StringBuilder();
+
+				List<Element> testcaseElements =
+					testcaseElementsEntry.getValue();
+
+				for (Element testcaseElement : testcaseElements) {
+					sb.append("##\n## ");
+					sb.append(testcaseElement.attributeValue("classname"));
+					sb.append(" > ");
+					sb.append(testcaseElement.attributeValue("name"));
+					sb.append("\n##\n\n");
+
+					Element failureElement = testcaseElement.element("failure");
+
+					if (failureElement == null) {
+						sb.append("\tFailed for unknown reason\n\n");
+
+						continue;
+					}
+
+					String failedElementText = failureElement.getText();
+
+					for (String line : failedElementText.split("\n")) {
+						sb.append("\t");
+						sb.append(line);
+						sb.append("\n");
+					}
+
+					sb.append("\n\n");
+				}
+
+				if (sb.length() <= 0) {
+					continue;
+				}
+
+				JenkinsResultsParserUtil.write(
+					new File(
+						_getRecordedFilesBuildDir(),
+						testcaseElementsEntry.getKey() + ".txt"),
+					sb.toString());
+			}
+		}
+		catch (DocumentException | IOException exception) {
+		}
+	}
+
+	private void _recordJenkinsConsole() {
 		File jenkinsConsoleFile = new File(
 			_getRecordedFilesBuildDir(), "jenkins-console.txt");
 
 		try {
 			JenkinsResultsParserUtil.write(
-				jenkinsConsoleFile, jenkinsConsoleTextLoader.getConsoleText());
+				jenkinsConsoleFile, _build.getConsoleText());
 		}
 		catch (IOException ioException) {
 			throw new RuntimeException(ioException);
@@ -303,6 +521,31 @@ public class TestrayAttachmentRecorder {
 				jenkinsReportFile,
 				StringEscapeUtils.unescapeXml(
 					Dom4JUtil.format(jenkinsReportElement, true)));
+		}
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
+		}
+	}
+
+	private void _recordJobSummary() {
+		if (!(_build instanceof TopLevelBuild)) {
+			return;
+		}
+
+		TopLevelBuild topLevelBuild = (TopLevelBuild)_build;
+
+		File jobSummaryFile = new File(
+			topLevelBuild.getJobSummaryDir(), "index.html");
+
+		if (!jobSummaryFile.exists()) {
+			return;
+		}
+
+		try {
+			JenkinsResultsParserUtil.copy(
+				jobSummaryFile,
+				new File(
+					_getRecordedFilesBuildDir(), "job-summary/index.html"));
 		}
 		catch (IOException ioException) {
 			throw new RuntimeException(ioException);
@@ -507,40 +750,32 @@ public class TestrayAttachmentRecorder {
 		}
 	}
 
-	private void _recordPoshiWarnings() {
-		PortalGitWorkingDirectory portalGitWorkingDirectory =
-			_getPortalGitWorkingDirectory();
+	private void _recordWarnings() {
+		List<String> warnings = new ArrayList<>();
 
-		if (portalGitWorkingDirectory == null) {
+		warnings.addAll(_getPortalLogWarnings());
+		warnings.addAll(_getPoshiWarnings());
+
+		if (warnings.isEmpty()) {
 			return;
 		}
 
-		File sourcePoshiWarningsFile = new File(
-			portalGitWorkingDirectory.getWorkingDirectory(),
-			"poshi-warnings.xml");
+		StringBuilder sb = new StringBuilder();
 
-		if (!sourcePoshiWarningsFile.exists()) {
-			return;
+		sb.append("<html>\n");
+
+		for (String warning : warnings) {
+			sb.append("<pre>");
+			sb.append(StringEscapeUtils.escapeHtml(warning));
+			sb.append("</pre>\n");
 		}
 
-		File poshiWarningsFile = new File(
-			_getRecordedFilesBuildDir(), "poshi-warnings.xml");
+		sb.append("</html>");
 
 		try {
-			JenkinsResultsParserUtil.copy(
-				sourcePoshiWarningsFile, poshiWarningsFile);
-
-			String content = JenkinsResultsParserUtil.read(poshiWarningsFile);
-
-			if (content.matches("\\s*")) {
-				return;
-			}
-
 			JenkinsResultsParserUtil.write(
-				poshiWarningsFile,
-				JenkinsResultsParserUtil.combine(
-					"<?xml version=\"1.0\"?>\n<values>\n", content,
-					"\n</values>"));
+				new File(_getRecordedFilesBuildDir(), "warnings.html"),
+				sb.toString());
 		}
 		catch (IOException ioException) {
 			throw new RuntimeException(ioException);

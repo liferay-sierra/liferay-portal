@@ -14,11 +14,10 @@
 
 package com.liferay.server.admin.web.internal.portlet.action;
 
+import com.liferay.configuration.admin.constants.ConfigurationAdminPortletKeys;
 import com.liferay.document.library.kernel.util.DLPreviewableProcessor;
 import com.liferay.mail.kernel.model.Account;
 import com.liferay.mail.kernel.service.MailService;
-import com.liferay.petra.log4j.Log4JUtil;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.convert.ConvertException;
@@ -61,7 +60,7 @@ import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiServic
 import com.liferay.portal.kernel.portlet.LiferayActionResponse;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
-import com.liferay.portal.kernel.scripting.Scripting;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.scripting.ScriptingException;
 import com.liferay.portal.kernel.scripting.ScriptingHelperUtil;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
@@ -94,7 +93,6 @@ import com.liferay.portal.kernel.util.MethodHandler;
 import com.liferay.portal.kernel.util.MethodKey;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.ProxyUtil;
@@ -103,10 +101,17 @@ import com.liferay.portal.kernel.util.ThreadUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnsyncPrintWriterPool;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.log4j.Log4JUtil;
 import com.liferay.portal.util.MaintenanceUtil;
 import com.liferay.portal.util.PrefsPropsUtil;
+import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.ShutdownUtil;
+import com.liferay.server.admin.web.internal.constants.ImageMagickResourceLimitConstants;
+import com.liferay.server.admin.web.internal.scripting.ServerScripting;
+
+import java.lang.reflect.InvocationHandler;
 
 import java.util.Collections;
 import java.util.Enumeration;
@@ -114,6 +119,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -134,6 +140,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	property = {
+		"javax.portlet.name=" + ConfigurationAdminPortletKeys.INSTANCE_SETTINGS,
 		"javax.portlet.name=" + PortletKeys.SERVER_ADMIN,
 		"mvc.command.name=/server_admin/edit_server"
 	},
@@ -150,10 +157,15 @@ public class EditServerMVCActionCommand
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
+		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
+
 		PermissionChecker permissionChecker =
 			themeDisplay.getPermissionChecker();
 
-		if (!permissionChecker.isOmniadmin()) {
+		if (!permissionChecker.isOmniadmin() &&
+			(!permissionChecker.isCompanyAdmin() ||
+			 !cmd.equals("updateMail"))) {
+
 			SessionErrors.add(
 				actionRequest,
 				PrincipalException.MustBeOmniadmin.class.getName());
@@ -163,9 +175,8 @@ public class EditServerMVCActionCommand
 			return;
 		}
 
-		PortletPreferences portletPreferences = PrefsPropsUtil.getPreferences();
-
-		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
+		PortletPreferences portletPreferences = PrefsPropsUtil.getPreferences(
+			ParamUtil.getLong(actionRequest, "preferencesCompanyId"));
 
 		String redirect = ParamUtil.getString(actionRequest, "redirect");
 
@@ -222,6 +233,9 @@ public class EditServerMVCActionCommand
 		}
 		else if (cmd.equals("updateMail")) {
 			_updateMail(actionRequest, portletPreferences);
+		}
+		else if (cmd.equals("updatePortalProperties")) {
+			_updatePortalProperties(actionRequest);
 		}
 		else if (cmd.equals("verifyMembershipPolicies")) {
 			_verifyMembershipPolicies();
@@ -377,12 +391,7 @@ public class EditServerMVCActionCommand
 					layoutStagingHandler.setLayoutRevision(layoutRevision);
 
 					if (_containsPortlet(
-							(Layout)ProxyUtil.newProxyInstance(
-								PortalClassLoaderUtil.getClassLoader(),
-								new Class<?>[] {
-									Layout.class, ModelWrapper.class
-								},
-								layoutStagingHandler),
+							_proxyProviderFunction.apply(layoutStagingHandler),
 							portletPreferences.getPortletId())) {
 
 						return;
@@ -579,7 +588,7 @@ public class EditServerMVCActionCommand
 			SessionMessages.add(actionRequest, "script", script);
 			SessionMessages.add(actionRequest, "output", output);
 
-			_scripting.exec(null, portletObjects, language, script);
+			_serverScripting.execute(portletObjects, language, script);
 
 			unsyncPrintWriter.flush();
 
@@ -646,18 +655,11 @@ public class EditServerMVCActionCommand
 		portletPreferences.setValue(
 			PropsKeys.IMAGEMAGICK_GLOBAL_SEARCH_PATH, imageMagickPath);
 
-		Enumeration<String> enumeration = actionRequest.getParameterNames();
+		for (String name : ImageMagickResourceLimitConstants.PROPERTY_NAMES) {
+			String propertyName = PropsKeys.IMAGEMAGICK_RESOURCE_LIMIT + name;
 
-		while (enumeration.hasMoreElements()) {
-			String name = enumeration.nextElement();
-
-			if (name.startsWith("imageMagickLimit")) {
-				String key = StringUtil.toLowerCase(name.substring(16));
-				String value = ParamUtil.getString(actionRequest, name);
-
-				portletPreferences.setValue(
-					PropsKeys.IMAGEMAGICK_RESOURCE_LIMIT + key, value);
-			}
+			portletPreferences.setValue(
+				propertyName, ParamUtil.getString(actionRequest, propertyName));
 		}
 
 		portletPreferences.store();
@@ -752,33 +754,53 @@ public class EditServerMVCActionCommand
 		portletPreferences.setValue(
 			PropsKeys.MAIL_SESSION_MAIL_ADVANCED_PROPERTIES,
 			advancedProperties);
-		portletPreferences.setValue(
-			PropsKeys.MAIL_SESSION_MAIL_POP3_HOST, pop3Host);
+
+		if (!Validator.isBlank(pop3Host)) {
+			portletPreferences.setValue(
+				PropsKeys.MAIL_SESSION_MAIL_POP3_HOST, pop3Host);
+		}
 
 		if (!pop3Password.equals(Portal.TEMP_OBFUSCATION_VALUE)) {
 			portletPreferences.setValue(
 				PropsKeys.MAIL_SESSION_MAIL_POP3_PASSWORD, pop3Password);
 		}
 
-		portletPreferences.setValue(
-			PropsKeys.MAIL_SESSION_MAIL_POP3_PORT, String.valueOf(pop3Port));
-		portletPreferences.setValue(
-			PropsKeys.MAIL_SESSION_MAIL_POP3_USER, pop3User);
-		portletPreferences.setValue(
-			PropsKeys.MAIL_SESSION_MAIL_SMTP_HOST, smtpHost);
+		if (pop3Port > 0) {
+			portletPreferences.setValue(
+				PropsKeys.MAIL_SESSION_MAIL_POP3_PORT,
+				String.valueOf(pop3Port));
+		}
+
+		if (!Validator.isBlank(pop3User)) {
+			portletPreferences.setValue(
+				PropsKeys.MAIL_SESSION_MAIL_POP3_USER, pop3User);
+		}
+
+		if (!Validator.isBlank(smtpHost)) {
+			portletPreferences.setValue(
+				PropsKeys.MAIL_SESSION_MAIL_SMTP_HOST, smtpHost);
+		}
 
 		if (!smtpPassword.equals(Portal.TEMP_OBFUSCATION_VALUE)) {
 			portletPreferences.setValue(
 				PropsKeys.MAIL_SESSION_MAIL_SMTP_PASSWORD, smtpPassword);
 		}
 
-		portletPreferences.setValue(
-			PropsKeys.MAIL_SESSION_MAIL_SMTP_PORT, String.valueOf(smtpPort));
+		if (smtpPort > 0) {
+			portletPreferences.setValue(
+				PropsKeys.MAIL_SESSION_MAIL_SMTP_PORT,
+				String.valueOf(smtpPort));
+		}
+
 		portletPreferences.setValue(
 			PropsKeys.MAIL_SESSION_MAIL_SMTP_STARTTLS_ENABLE,
 			String.valueOf(smtpStartTLSEnable));
-		portletPreferences.setValue(
-			PropsKeys.MAIL_SESSION_MAIL_SMTP_USER, smtpUser);
+
+		if (!Validator.isBlank(smtpUser)) {
+			portletPreferences.setValue(
+				PropsKeys.MAIL_SESSION_MAIL_SMTP_USER, smtpUser);
+		}
+
 		portletPreferences.setValue(
 			PropsKeys.MAIL_SESSION_MAIL_STORE_PROTOCOL, storeProtocol);
 		portletPreferences.setValue(
@@ -787,6 +809,30 @@ public class EditServerMVCActionCommand
 		portletPreferences.store();
 
 		_mailService.clearSession();
+	}
+
+	private void _updatePortalProperties(ActionRequest actionRequest) {
+		Enumeration<String> enumeration = actionRequest.getParameterNames();
+
+		Map<String, String> portalProperties = new HashMap<>();
+
+		while (enumeration.hasMoreElements()) {
+			String name = enumeration.nextElement();
+
+			if (name.startsWith("portalProperty")) {
+				portalProperties.put(
+					name.substring(14),
+					ParamUtil.getString(actionRequest, name, "false"));
+			}
+		}
+
+		_updatePortalProperties(portalProperties);
+	}
+
+	private void _updatePortalProperties(Map<String, String> portalProperties) {
+		for (Map.Entry<String, String> entry : portalProperties.entrySet()) {
+			PropsUtil.set(entry.getKey(), entry.getValue());
+		}
 	}
 
 	private void _verifyMembershipPolicies() throws Exception {
@@ -819,6 +865,9 @@ public class EditServerMVCActionCommand
 	private static final Log _log = LogFactoryUtil.getLog(
 		EditServerMVCActionCommand.class);
 
+	private static final Function<InvocationHandler, Layout>
+		_proxyProviderFunction = ProxyUtil.getProxyProviderFunction(
+			Layout.class, ModelWrapper.class);
 	private static final MethodKey _resetLogLevelsMethodKey = new MethodKey(
 		EditServerMVCActionCommand.class, "_resetLogLevels", Map.class,
 		Map.class);
@@ -876,7 +925,7 @@ public class EditServerMVCActionCommand
 	private RoleMembershipPolicyFactory _roleMembershipPolicyFactory;
 
 	@Reference
-	private Scripting _scripting;
+	private ServerScripting _serverScripting;
 
 	@Reference
 	private ServiceComponentLocalService _serviceComponentLocalService;

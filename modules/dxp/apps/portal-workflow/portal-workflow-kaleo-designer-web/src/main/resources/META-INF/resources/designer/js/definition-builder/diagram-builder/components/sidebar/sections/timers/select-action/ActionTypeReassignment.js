@@ -9,61 +9,135 @@
  * distribution rights of the Software.
  */
 
-import ClayButton, {ClayButtonWithIcon} from '@clayui/button';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 
-const ActionTypeReassignment = () => {
-	const [reassignmentSections, setReassignmentSections] = useState([
-		{identifier: `${Date.now()}-0`},
-	]);
+import {retrieveUsersBy} from '../../../../../../util/fetchUtil';
+import AssetCreator from '../select-reassignment/AssetCreator';
+import ResourceActions from '../select-reassignment/ResourceActions';
+import Role from '../select-reassignment/Role';
+import RoleType from '../select-reassignment/RoleType';
+import ScriptedReassignment from '../select-reassignment/ScriptedReassignment';
+import {SelectReassignment} from '../select-reassignment/SelectReassignment';
+import User from '../select-reassignment/User';
 
-	const deleteSection = (identifier) => {
-		setReassignmentSections((prevSections) => {
-			const newSections = prevSections.filter(
-				(prevSection) => prevSection.identifier !== identifier
-			);
+const assignmentSectionComponents = {
+	assetCreator: AssetCreator,
+	resourceActions: ResourceActions,
+	roleId: Role,
+	roleType: RoleType,
+	scriptedReassignment: ScriptedReassignment,
+	user: User,
+};
 
-			return newSections;
+const ActionTypeReassignment = ({
+	actionData,
+	actionSectionsIndex,
+	identifier,
+	sectionsLength,
+	setActionSections,
+	setContentName,
+	setErrors,
+}) => {
+	const reassignmentType = actionData.assignmentType;
+	const [subSections, setSubSections] = useState(
+		actionData?.users?.length &&
+			actionData.users.some(({emailAddress}) => emailAddress)
+			? actionData.users
+			: [{identifier: `${Date.now()}-0`}]
+	);
+
+	useEffect(() => {
+		if (reassignmentType === 'user') {
+			setActionSections((currentSections) => {
+				const updatedSections = [...currentSections];
+
+				updatedSections[actionSectionsIndex].assignmentType = 'user';
+				updatedSections[actionSectionsIndex].users = subSections;
+
+				return updatedSections;
+			});
+		}
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [subSections]);
+
+	useEffect(() => {
+		if (
+			actionData?.users?.length &&
+			actionData.users.some(({emailAddress}) => emailAddress)
+		) {
+			const retrievedUsers = [];
+			retrieveUsersBy(
+				'emailAddress',
+				actionData.users.map(({emailAddress}) => emailAddress)
+			)
+				.then((response) => response.json())
+				.then(({items}) => {
+					items.forEach((item, index) => {
+						retrievedUsers.push({
+							emailAddress: item.emailAddress,
+							identifier: `${Date.now()}-${index}`,
+							name: item.name,
+							screenName: item.alternateName,
+							userId: item.id,
+						});
+					});
+				})
+				.then(() => {
+					setSubSections(retrievedUsers);
+				});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	const updateReassignmentType = (value) => {
+		setActionSections((currentSections) => {
+			const updatedSections = [...currentSections];
+
+			updatedSections[actionSectionsIndex].assignmentType = value;
+
+			return updatedSections;
 		});
 	};
 
-	return reassignmentSections.map(({identifier}) => {
-		return (
-			<div key={`section-${identifier}`}>
-				<div>Reassignment Placeholder {identifier}</div>
+	const ReassignmentSectionComponent =
+		assignmentSectionComponents[reassignmentType];
 
-				<div className="section-buttons-area">
-					<ClayButton
-						className="mr-3"
-						displayType="secondary"
-						onClick={() =>
-							setReassignmentSections((prev) => {
-								return [
-									...prev,
-									{
-										identifier: `${Date.now()}-${
-											prev.length
-										}`,
-									},
-								];
-							})
-						}
-					>
-						Add Button Placeholder
-					</ClayButton>
+	return (
+		<>
+			<SelectReassignment
+				currentAssignmentType={reassignmentType}
+				setSection={updateReassignmentType}
+				setSubSections={setSubSections}
+			/>
 
-					{reassignmentSections.length > 1 && (
-						<ClayButtonWithIcon
-							className="delete-button"
-							displayType="unstyled"
-							onClick={() => deleteSection(identifier)}
-							symbol="trash"
-						/>
-					)}
-				</div>
-			</div>
-		);
-	});
+			{subSections.map(
+				({identifier: subSectionIdentifier, ...restProps}, index) => {
+					return (
+						ReassignmentSectionComponent && (
+							<ReassignmentSectionComponent
+								actionData={actionData}
+								actionSectionsIndex={actionSectionsIndex}
+								currentAssignmentType={reassignmentType}
+								identifier={identifier}
+								index={index}
+								key={`section-${subSectionIdentifier}`}
+								reassignmentType={reassignmentType}
+								restProps={restProps}
+								sectionsLength={sectionsLength}
+								setActionSections={setActionSections}
+								setContentName={setContentName}
+								setErrors={setErrors}
+								setSections={setSubSections}
+								subSectionIdentifier={subSectionIdentifier}
+								subSectionsLength={subSections.length}
+							/>
+						)
+					);
+				}
+			)}
+		</>
+	);
 };
 
 export default ActionTypeReassignment;

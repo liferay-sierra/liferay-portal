@@ -20,17 +20,17 @@ import com.liferay.dynamic.data.mapping.exception.TemplateScriptException;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
 import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalService;
 import com.liferay.info.item.provider.InfoItemFormProvider;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseTransactionalMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.template.TemplateConstants;
@@ -38,7 +38,7 @@ import com.liferay.portal.kernel.template.TemplateHandler;
 import com.liferay.portal.kernel.template.TemplateHandlerRegistryUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -83,7 +83,7 @@ public class AddTemplateEntryMVCActionCommand
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
-		Map<Locale, String> nameMap = LocalizationUtil.getLocalizationMap(
+		Map<Locale, String> nameMap = _localization.getLocalizationMap(
 			new String[] {
 				LocaleUtil.toLanguageId(themeDisplay.getSiteDefaultLocale())
 			},
@@ -143,23 +143,23 @@ public class AddTemplateEntryMVCActionCommand
 		if (portalException instanceof TemplateNameException) {
 			return JSONUtil.put(
 				"name",
-				LanguageUtil.get(
+				_language.get(
 					themeDisplay.getLocale(), "please-enter-a-valid-name"));
 		}
 		else if (portalException instanceof TemplateScriptException) {
 			return JSONUtil.put(
 				"other",
-				LanguageUtil.get(
+				_language.get(
 					themeDisplay.getLocale(), "please-enter-a-valid-script"));
 		}
 
 		if (_log.isDebugEnabled()) {
-			_log.debug(portalException.getMessage(), portalException);
+			_log.debug(portalException);
 		}
 
 		return JSONUtil.put(
 			"other",
-			LanguageUtil.get(
+			_language.get(
 				themeDisplay.getLocale(), "an-unexpected-error-occurred"));
 	}
 
@@ -181,6 +181,12 @@ public class AddTemplateEntryMVCActionCommand
 
 	@Reference
 	private DDMTemplateLocalService _ddmTemplateLocalService;
+
+	@Reference
+	private Language _language;
+
+	@Reference
+	private Localization _localization;
 
 	@Reference
 	private Portal _portal;

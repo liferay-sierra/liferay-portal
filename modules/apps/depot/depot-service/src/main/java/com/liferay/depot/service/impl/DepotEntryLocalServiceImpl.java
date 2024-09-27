@@ -23,13 +23,13 @@ import com.liferay.depot.model.DepotEntryGroupRel;
 import com.liferay.depot.service.DepotAppCustomizationLocalService;
 import com.liferay.depot.service.base.DepotEntryLocalServiceBaseImpl;
 import com.liferay.depot.service.persistence.DepotEntryGroupRelPersistence;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.GroupKeyException;
 import com.liferay.portal.kernel.exception.LocaleException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.Language;
-import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.ModelHintsUtil;
@@ -141,7 +141,6 @@ public class DepotEntryLocalServiceImpl extends DepotEntryLocalServiceBaseImpl {
 		}
 
 		depotEntry.setGroupId(group.getGroupId());
-
 		depotEntry.setCompanyId(serviceContext.getCompanyId());
 		depotEntry.setUserId(serviceContext.getUserId());
 
@@ -156,21 +155,27 @@ public class DepotEntryLocalServiceImpl extends DepotEntryLocalServiceBaseImpl {
 	}
 
 	@Override
-	public DepotEntry deleteDepotEntry(long depotEntryId)
+	public DepotEntry deleteDepotEntry(DepotEntry depotEntry)
 		throws PortalException {
-
-		DepotEntry depotEntry = depotEntryPersistence.fetchByPrimaryKey(
-			depotEntryId);
 
 		if (_isStaged(depotEntry)) {
 			throw new DepotEntryStagedException(
-				"Unstage depot entry " + depotEntryId + " before deleting it");
+				"Unstage depot entry " + depotEntry.getDepotEntryId() +
+					" before deleting it");
 		}
 
 		_resourceLocalService.deleteResource(
 			depotEntry, ResourceConstants.SCOPE_INDIVIDUAL);
 
-		return super.deleteDepotEntry(depotEntryId);
+		return super.deleteDepotEntry(depotEntry);
+	}
+
+	@Override
+	public DepotEntry deleteDepotEntry(long depotEntryId)
+		throws PortalException {
+
+		return deleteDepotEntry(
+			depotEntryPersistence.fetchByPrimaryKey(depotEntryId));
 	}
 
 	@Override
@@ -201,10 +206,9 @@ public class DepotEntryLocalServiceImpl extends DepotEntryLocalServiceBaseImpl {
 				ddmStructuresAvailable, groupId, start, end);
 
 		for (DepotEntryGroupRel depotEntryGroupRel : depotEntryGroupRels) {
-			DepotEntry depotEntry = depotEntryLocalService.getDepotEntry(
-				depotEntryGroupRel.getDepotEntryId());
-
-			depotEntries.add(depotEntry);
+			depotEntries.add(
+				depotEntryLocalService.getDepotEntry(
+					depotEntryGroupRel.getDepotEntryId()));
 		}
 
 		return depotEntries;
@@ -215,19 +219,10 @@ public class DepotEntryLocalServiceImpl extends DepotEntryLocalServiceBaseImpl {
 			long groupId, int start, int end)
 		throws PortalException {
 
-		List<DepotEntry> depotEntries = new ArrayList<>();
-
-		List<DepotEntryGroupRel> depotEntryGroupRels =
-			_depotEntryGroupRelPersistence.findByToGroupId(groupId, start, end);
-
-		for (DepotEntryGroupRel depotEntryGroupRel : depotEntryGroupRels) {
-			DepotEntry depotEntry = depotEntryLocalService.getDepotEntry(
-				depotEntryGroupRel.getDepotEntryId());
-
-			depotEntries.add(depotEntry);
-		}
-
-		return depotEntries;
+		return TransformUtil.transform(
+			_depotEntryGroupRelPersistence.findByToGroupId(groupId, start, end),
+			depotEntryGroupRel -> depotEntryLocalService.getDepotEntry(
+				depotEntryGroupRel.getDepotEntryId()));
 	}
 
 	@Override
@@ -286,8 +281,7 @@ public class DepotEntryLocalServiceImpl extends DepotEntryLocalServiceBaseImpl {
 			typeSettingsUnicodeProperties.setProperty(
 				PropsKeys.LOCALES,
 				StringUtil.merge(
-					LocaleUtil.toLanguageIds(
-						LanguageUtil.getAvailableLocales())));
+					LocaleUtil.toLanguageIds(_language.getAvailableLocales())));
 		}
 
 		currentTypeSettingsUnicodeProperties.putAll(
@@ -331,7 +325,11 @@ public class DepotEntryLocalServiceImpl extends DepotEntryLocalServiceBaseImpl {
 			return false;
 		}
 
-		Group group = depotEntry.getGroup();
+		Group group = _groupLocalService.fetchGroup(depotEntry.getGroupId());
+
+		if (group == null) {
+			return false;
+		}
 
 		if (group.isStaged()) {
 			return true;

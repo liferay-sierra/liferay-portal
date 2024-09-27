@@ -52,7 +52,7 @@ export function MultiStep({activePage, editable, pages}) {
 												containerElement.current
 											)
 										),
-										nextIndex: index + 1,
+										selectedPage: index,
 									})
 								);
 							}
@@ -65,7 +65,7 @@ export function MultiStep({activePage, editable, pages}) {
 												containerElement.current
 											)
 										),
-										previousIndex: index - 1,
+										selectedPage: index,
 									})
 								);
 							}
@@ -87,7 +87,7 @@ export function MultiStep({activePage, editable, pages}) {
 								<a
 									className="multi-step-icon"
 									data-multi-step-icon={index + 1}
-									href="javascript:;"
+									href="javascript:void(0);"
 								/>
 							) : (
 								<span

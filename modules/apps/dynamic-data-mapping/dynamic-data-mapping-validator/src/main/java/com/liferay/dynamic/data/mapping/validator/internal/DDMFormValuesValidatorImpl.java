@@ -18,7 +18,7 @@ import com.liferay.dynamic.data.mapping.expression.CreateExpressionRequest;
 import com.liferay.dynamic.data.mapping.expression.DDMExpression;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionException;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueAccessor;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueValidator;
 import com.liferay.dynamic.data.mapping.form.field.type.DefaultDDMFormFieldValueAccessor;
@@ -68,7 +68,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marcellus Tavares
  */
-@Component(immediate = true, service = DDMFormValuesValidator.class)
+@Component(service = DDMFormValuesValidator.class)
 public class DDMFormValuesValidatorImpl implements DDMFormValuesValidator {
 
 	@Override
@@ -84,7 +84,7 @@ public class DDMFormValuesValidatorImpl implements DDMFormValuesValidator {
 
 		_ddmFormFieldValueExpressionParameterAccessor =
 			new DDMFormFieldValueExpressionParameterAccessor(
-				ddmFormValues.getDefaultLocale(), timeZoneId);
+				_jsonFactory, ddmFormValues.getDefaultLocale(), timeZoneId);
 
 		DDMForm ddmForm = ddmFormValues.getDDMForm();
 
@@ -221,25 +221,6 @@ public class DDMFormValuesValidatorImpl implements DDMFormValuesValidator {
 				ddmFormFieldValue, locale));
 	}
 
-	@Reference(unbind = "-")
-	protected void setDDMExpressionFactory(
-		DDMExpressionFactory ddmExpressionFactory) {
-
-		_ddmExpressionFactory = ddmExpressionFactory;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMFormFieldTypeServicesTracker(
-		DDMFormFieldTypeServicesTracker ddmFormFieldTypeServicesTracker) {
-
-		_ddmFormFieldTypeServicesTracker = ddmFormFieldTypeServicesTracker;
-	}
-
-	@Reference(unbind = "-")
-	protected void setJSONFactory(JSONFactory jsonFactory) {
-		_jsonFactory = jsonFactory;
-	}
-
 	protected void validateDDMFormFieldValidationExpression(
 			DDMFormField ddmFormField, DDMFormFieldValue ddmFormFieldValue)
 		throws DDMFormValuesValidationException {
@@ -265,7 +246,8 @@ public class DDMFormValuesValidatorImpl implements DDMFormValuesValidator {
 		String type) {
 
 		DDMFormFieldValueAccessor<?> ddmFormFieldValueAccessor =
-			_ddmFormFieldTypeServicesTracker.getDDMFormFieldValueAccessor(type);
+			_ddmFormFieldTypeServicesRegistry.getDDMFormFieldValueAccessor(
+				type);
 
 		if (ddmFormFieldValueAccessor != null) {
 			return ddmFormFieldValueAccessor;
@@ -454,14 +436,21 @@ public class DDMFormValuesValidatorImpl implements DDMFormValuesValidator {
 	private static final Log _log = LogFactoryUtil.getLog(
 		DDMFormValuesValidatorImpl.class);
 
+	@Reference
 	private DDMExpressionFactory _ddmExpressionFactory;
-	private DDMFormFieldTypeServicesTracker _ddmFormFieldTypeServicesTracker;
+
+	@Reference
+	private DDMFormFieldTypeServicesRegistry _ddmFormFieldTypeServicesRegistry;
+
 	private DDMFormFieldValueExpressionParameterAccessor
 		_ddmFormFieldValueExpressionParameterAccessor;
 	private final DDMFormFieldValueAccessor<String>
 		_defaultDDMFormFieldValueAccessor =
 			new DefaultDDMFormFieldValueAccessor();
+
+	@Reference
 	private JSONFactory _jsonFactory;
+
 	private ServiceTrackerMap<String, DDMFormFieldValueValidator>
 		_serviceTrackerMap;
 

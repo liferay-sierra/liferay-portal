@@ -18,8 +18,6 @@ import com.liferay.osgi.util.ServiceTrackerFactory;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebServiceActionsManager;
-import com.liferay.portal.kernel.jsonwebservice.JSONWebServiceRegistrator;
-import com.liferay.portal.kernel.jsonwebservice.JSONWebServiceRegistratorFactory;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -82,33 +80,6 @@ public class JSONWebServiceTracker
 		_serviceTracker = null;
 	}
 
-	@Reference
-	protected void setJSONWebServiceActionsManager(
-		JSONWebServiceActionsManager jsonWebServiceActionsManager) {
-
-		_jsonWebServiceActionsManager = jsonWebServiceActionsManager;
-	}
-
-	@Reference
-	protected void setJSONWebServiceRegistratorFactory(
-		JSONWebServiceRegistratorFactory jsonWebServiceRegistratorFactory) {
-
-		_jsonWebServiceRegistrator = jsonWebServiceRegistratorFactory.build(
-			new ServiceJSONWebServiceScannerStrategy());
-	}
-
-	protected void unsetJSONWebServiceActionsManager(
-		JSONWebServiceActionsManager jsonWebServiceActionsManager) {
-
-		_jsonWebServiceActionsManager = null;
-	}
-
-	protected void unsetJSONWebServiceRegistratorFactory(
-		JSONWebServiceRegistratorFactory jsonWebServiceRegistratorFactory) {
-
-		_jsonWebServiceRegistrator = null;
-	}
-
 	private ClassLoader _getBundleClassLoader(Bundle bundle) {
 		BundleWiring bundleWiring = bundle.adapt(BundleWiring.class);
 
@@ -139,7 +110,7 @@ public class JSONWebServiceTracker
 
 		try {
 			_jsonWebServiceActionsManager.registerService(
-				contextName, contextPath, service, _jsonWebServiceRegistrator);
+				contextName, contextPath, service);
 		}
 		finally {
 			currentThread.setContextClassLoader(contextClassLoader);
@@ -153,8 +124,10 @@ public class JSONWebServiceTracker
 	}
 
 	private ComponentContext _componentContext;
+
+	@Reference
 	private JSONWebServiceActionsManager _jsonWebServiceActionsManager;
-	private JSONWebServiceRegistrator _jsonWebServiceRegistrator;
+
 	private ServiceTracker<Object, Object> _serviceTracker;
 
 }

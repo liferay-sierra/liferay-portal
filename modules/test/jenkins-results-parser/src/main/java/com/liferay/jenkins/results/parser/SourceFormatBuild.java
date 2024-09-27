@@ -15,11 +15,13 @@
 package com.liferay.jenkins.results.parser;
 
 import com.liferay.jenkins.results.parser.failure.message.generator.FailureMessageGenerator;
+import com.liferay.jenkins.results.parser.failure.message.generator.FormatFailureMessageGenerator;
 import com.liferay.jenkins.results.parser.failure.message.generator.GenericFailureMessageGenerator;
 import com.liferay.jenkins.results.parser.failure.message.generator.PoshiValidationFailureMessageGenerator;
 import com.liferay.jenkins.results.parser.failure.message.generator.RebaseFailureMessageGenerator;
 import com.liferay.jenkins.results.parser.failure.message.generator.SourceFormatFailureMessageGenerator;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -152,7 +154,7 @@ public class SourceFormatBuild
 		String result = getResult();
 		int successCount = 0;
 
-		if (result.equals("SUCCESS")) {
+		if (Objects.equals(result, "SUCCESS")) {
 			successCount++;
 		}
 
@@ -161,7 +163,7 @@ public class SourceFormatBuild
 			String.valueOf(getDownstreamBuildCountByResult(null) + 1),
 			"jobs PASSED");
 
-		if (result.equals("SUCCESS")) {
+		if (Objects.equals(result, "SUCCESS")) {
 			Dom4JUtil.addToElement(
 				detailsElement, getSuccessfulJobSummaryElement());
 		}
@@ -172,7 +174,7 @@ public class SourceFormatBuild
 
 		Dom4JUtil.addToElement(detailsElement, getMoreDetailsElement());
 
-		if (!result.equals("SUCCESS")) {
+		if (!Objects.equals(result, "SUCCESS")) {
 			Dom4JUtil.addToElement(
 				detailsElement, (Object[])getBuildFailureElements());
 		}
@@ -221,6 +223,7 @@ public class SourceFormatBuild
 	@Override
 	protected FailureMessageGenerator[] getFailureMessageGenerators() {
 		return new FailureMessageGenerator[] {
+			new FormatFailureMessageGenerator(),
 			new PoshiValidationFailureMessageGenerator(),
 			new RebaseFailureMessageGenerator(),
 			new SourceFormatFailureMessageGenerator(),

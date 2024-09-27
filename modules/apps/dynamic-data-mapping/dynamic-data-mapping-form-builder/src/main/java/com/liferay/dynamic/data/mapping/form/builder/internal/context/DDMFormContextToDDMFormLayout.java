@@ -41,7 +41,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marcellus Tavares
  */
 @Component(
-	immediate = true,
 	property = "dynamic.data.mapping.form.builder.context.deserializer.type=formLayout",
 	service = DDMFormContextDeserializer.class
 )
@@ -138,10 +137,8 @@ public class DDMFormContextToDDMFormLayout
 		List<DDMFormLayoutColumn> ddmFormLayoutColumns = new ArrayList<>();
 
 		for (int i = 0; i < jsonArray.length(); i++) {
-			DDMFormLayoutColumn ddmFormLayoutColumn = _getDDMFormLayoutColumn(
-				jsonArray.getJSONObject(i));
-
-			ddmFormLayoutColumns.add(ddmFormLayoutColumn);
+			ddmFormLayoutColumns.add(
+				_getDDMFormLayoutColumn(jsonArray.getJSONObject(i)));
 		}
 
 		return ddmFormLayoutColumns;
@@ -172,10 +169,10 @@ public class DDMFormContextToDDMFormLayout
 		List<DDMFormLayoutPage> ddmFormLayoutPages = new ArrayList<>();
 
 		for (int i = 0; i < jsonArray.length(); i++) {
-			DDMFormLayoutPage ddmFormLayoutPage = _getDDMFormLayoutPage(
-				jsonArray.getJSONObject(i), availableLocales, defaultLocale);
-
-			ddmFormLayoutPages.add(ddmFormLayoutPage);
+			ddmFormLayoutPages.add(
+				_getDDMFormLayoutPage(
+					jsonArray.getJSONObject(i), availableLocales,
+					defaultLocale));
 		}
 
 		return ddmFormLayoutPages;
@@ -194,10 +191,8 @@ public class DDMFormContextToDDMFormLayout
 		List<DDMFormLayoutRow> ddmFormLayoutRows = new ArrayList<>();
 
 		for (int i = 0; i < jsonArray.length(); i++) {
-			DDMFormLayoutRow ddmFormLayoutRow = _getDDMFormLayoutRow(
-				jsonArray.getJSONObject(i));
-
-			ddmFormLayoutRows.add(ddmFormLayoutRow);
+			ddmFormLayoutRows.add(
+				_getDDMFormLayoutRow(jsonArray.getJSONObject(i)));
 		}
 
 		return ddmFormLayoutRows;
@@ -234,10 +229,8 @@ public class DDMFormContextToDDMFormLayout
 		JSONObject jsonObject, Set<Locale> availableLocales,
 		Locale defaultLocale, DDMFormLayoutPage ddmFormLayoutPage) {
 
-		LocalizedValue description = getLocalizedValue(
-			jsonObject, availableLocales, defaultLocale);
-
-		ddmFormLayoutPage.setDescription(description);
+		ddmFormLayoutPage.setDescription(
+			getLocalizedValue(jsonObject, availableLocales, defaultLocale));
 	}
 
 	private void _setDDMFormLayoutPageRows(
@@ -261,10 +254,8 @@ public class DDMFormContextToDDMFormLayout
 		JSONObject jsonObject, Set<Locale> availableLocales,
 		Locale defaultLocale, DDMFormLayoutPage ddmFormLayoutPage) {
 
-		LocalizedValue title = getLocalizedValue(
-			jsonObject, availableLocales, defaultLocale);
-
-		ddmFormLayoutPage.setTitle(title);
+		ddmFormLayoutPage.setTitle(
+			getLocalizedValue(jsonObject, availableLocales, defaultLocale));
 	}
 
 	private void _setDDMFormLayoutPaginationMode(

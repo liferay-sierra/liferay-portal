@@ -114,7 +114,7 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 		MBCategoryDisplay categoryDisplay = new MBCategoryDisplay(scopeGroupId, categoryId);
 		%>
 
-		<div class="main-content-body">
+		<div class="main-content-body mt-4">
 			<h3><liferay-ui:message key="my-subscriptions" /></h3>
 
 			<liferay-ui:search-container
@@ -169,7 +169,7 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 	<c:when test='<%= mbListDisplayContext.isShowSearch() || mvcRenderCommandName.equals("/message_boards/view") || mvcRenderCommandName.equals("/message_boards/view_category") || mbListDisplayContext.isShowMyPosts() || mbListDisplayContext.isShowRecentPosts() %>'>
 		<c:choose>
 			<c:when test='<%= mvcRenderCommandName.equals("/message_boards/search") || mvcRenderCommandName.equals("/message_boards/view") || mvcRenderCommandName.equals("/message_boards/view_category") %>'>
-				<div class="main-content-body">
+				<div class="main-content-body mt-4">
 					<c:if test="<%= mbListDisplayContext.isShowSearch() %>">
 						<liferay-ui:header
 							backURL="<%= redirect %>"
@@ -193,11 +193,8 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 						MBBreadcrumbUtil.addPortletBreadcrumbEntries(categoryId, request, renderResponse);
 						%>
 
-						<liferay-ui:breadcrumb
-							showCurrentGroup="<%= false %>"
-							showGuestGroup="<%= false %>"
-							showLayout="<%= false %>"
-							showParentGroups="<%= false %>"
+						<liferay-site-navigation:breadcrumb
+							breadcrumbEntries="<%= BreadcrumbEntriesUtil.getBreadcrumbEntries(request, false, false, false, false, true) %>"
 						/>
 					</c:if>
 
@@ -217,11 +214,8 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 									MBBreadcrumbUtil.addPortletBreadcrumbEntries(categoryId, request, renderResponse);
 									%>
 
-									<liferay-ui:breadcrumb
-										showCurrentGroup="<%= false %>"
-										showGuestGroup="<%= false %>"
-										showLayout="<%= false %>"
-										showParentGroups="<%= false %>"
+									<liferay-site-navigation:breadcrumb
+										breadcrumbEntries="<%= BreadcrumbEntriesUtil.getBreadcrumbEntries(request, false, false, false, false, true) %>"
 									/>
 								</c:otherwise>
 							</c:choose>
@@ -442,7 +436,7 @@ request.setAttribute("view.jsp-viewCategory", Boolean.TRUE.toString());
 				</div>
 			</c:when>
 			<c:when test="<%= mbListDisplayContext.isShowMyPosts() || mbListDisplayContext.isShowRecentPosts() %>">
-				<div class="main-content-body">
+				<div class="main-content-body mt-4">
 					<c:choose>
 						<c:when test="<%= mbListDisplayContext.isShowRecentPosts() %>">
 							<clay:content-row

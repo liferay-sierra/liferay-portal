@@ -439,7 +439,7 @@ public class ResourceActionsImpl implements ResourceActions {
 			ClassLoader classLoader, String... sources)
 		throws ResourceActionsException {
 
-		if (sources == null) {
+		if (ArrayUtil.isEmpty(sources)) {
 			return;
 		}
 
@@ -486,6 +486,25 @@ public class ResourceActionsImpl implements ResourceActions {
 
 	@Override
 	public void populatePortletResource(
+			Portlet portlet, ClassLoader classLoader, Document document)
+		throws ResourceActionsException {
+
+		if (portlet == null) {
+			throw new IllegalArgumentException("Portlet must not be null");
+		}
+
+		_readPortletResource(document.getRootElement(), portlet);
+
+		String portletResourceName = PortletIdCodec.decodePortletName(
+			portlet.getPortletId());
+
+		resourceActionLocalService.checkResourceActions(
+			portletResourceName,
+			_getPortletResourceActions(portletResourceName, portlet));
+	}
+
+	@Override
+	public void populatePortletResource(
 			Portlet portlet, ClassLoader classLoader, String... sources)
 		throws ResourceActionsException {
 
@@ -493,7 +512,7 @@ public class ResourceActionsImpl implements ResourceActions {
 			throw new IllegalArgumentException("Portlet must not be null");
 		}
 
-		if ((sources != null) &&
+		if (ArrayUtil.isNotEmpty(sources) &&
 			PropsValues.RESOURCE_ACTIONS_READ_PORTLET_RESOURCES) {
 
 			for (String source : sources) {
@@ -516,7 +535,7 @@ public class ResourceActionsImpl implements ResourceActions {
 			ClassLoader classLoader, String... sources)
 		throws ResourceActionsException {
 
-		if ((sources == null) ||
+		if (ArrayUtil.isEmpty(sources) ||
 			!PropsValues.RESOURCE_ACTIONS_READ_PORTLET_RESOURCES) {
 
 			return;

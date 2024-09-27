@@ -58,7 +58,8 @@ import org.osgi.service.component.annotations.Reference;
 		"javax.portlet.portlet-info.short-title=Microblogs",
 		"javax.portlet.portlet-info.title=Microblogs",
 		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=administrator,guest,power-user,user"
+		"javax.portlet.security-role-ref=administrator,guest,power-user,user",
+		"javax.portlet.version=3.0"
 	},
 	service = Portlet.class
 )
@@ -127,37 +128,19 @@ public class MicroblogsPortlet extends MVCPortlet {
 			microblogsEntryId, 1);
 	}
 
-	@Reference(unbind = "-")
-	protected void setAssetEntryLocalService(
-		AssetEntryLocalService assetEntryLocalService) {
+	@Reference
+	protected AssetEntryLocalService assetEntryLocalService;
 
-		this.assetEntryLocalService = assetEntryLocalService;
-	}
+	@Reference
+	protected MicroblogsEntryLocalService microblogsEntryLocalService;
 
-	@Reference(unbind = "-")
-	protected void setMicroblogsEntryLocalService(
-		MicroblogsEntryLocalService microblogsEntryLocalService) {
-
-		this.microblogsEntryLocalService = microblogsEntryLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setMicroblogsEntryService(
-		MicroblogsEntryService microblogsEntryService) {
-
-		this.microblogsEntryService = microblogsEntryService;
-	}
+	@Reference
+	protected MicroblogsEntryService microblogsEntryService;
 
 	@Reference(
-		target = "(&(release.bundle.symbolic.name=com.liferay.microblogs.web)(&(release.schema.version>=1.0.0)(!(release.schema.version>=2.0.0))))",
-		unbind = "-"
+		target = "(&(release.bundle.symbolic.name=com.liferay.microblogs.web)(&(release.schema.version>=1.0.0)(!(release.schema.version>=2.0.0))))"
 	)
-	protected void setRelease(Release release) {
-	}
-
-	protected AssetEntryLocalService assetEntryLocalService;
-	protected MicroblogsEntryLocalService microblogsEntryLocalService;
-	protected MicroblogsEntryService microblogsEntryService;
+	protected Release release;
 
 	private String[] _getAssetTagNames(String content) {
 		List<String> assetTagNames = new ArrayList<>();

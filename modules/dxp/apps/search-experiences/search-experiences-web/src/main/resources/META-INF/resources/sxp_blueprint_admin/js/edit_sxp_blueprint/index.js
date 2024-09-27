@@ -11,16 +11,20 @@
 
 import React, {useEffect, useState} from 'react';
 
+import useClipboardJS from '../hooks/useClipboardJS';
 import ErrorBoundary from '../shared/ErrorBoundary';
 import ThemeContext from '../shared/ThemeContext';
 import {COPY_BUTTON_CSS_CLASS} from '../utils/constants';
 import {fetchData} from '../utils/fetch';
-import useClipboardJS from '../utils/useClipboardJS';
+import {renameKeys, transformLocale} from '../utils/language';
+import {openInitialSuccessToast} from '../utils/toasts';
 import EditSXPBlueprintForm from './EditSXPBlueprintForm';
 
 export default function ({
 	contextPath,
 	defaultLocale,
+	featureFlagLps153813,
+	isCompanyAdmin,
 	learnMessages,
 	locale,
 	namespace,
@@ -32,12 +36,14 @@ export default function ({
 	useClipboardJS('.' + COPY_BUTTON_CSS_CLASS);
 
 	useEffect(() => {
+		openInitialSuccessToast();
+
 		fetchData(
 			`/o/search-experiences-rest/v1.0/sxp-blueprints/${sxpBlueprintId}`,
-			{method: 'GET'},
-			(responseContent) => setResource(responseContent),
-			() => setResource({})
-		);
+			{headers: {'X-Liferay-Accept-All-Languages': true}}
+		)
+			.then((responseContent) => setResource(responseContent))
+			.catch(() => setResource({}));
 	}, []); //eslint-disable-line
 
 	if (!resource) {
@@ -50,6 +56,8 @@ export default function ({
 				availableLanguages: Liferay.Language.available,
 				contextPath,
 				defaultLocale,
+				featureFlagLps153813,
+				isCompanyAdmin,
 				learnMessages,
 				locale,
 				namespace,
@@ -61,17 +69,15 @@ export default function ({
 					<EditSXPBlueprintForm
 						entityJSON={resource.entityJSON}
 						initialConfiguration={resource.configuration}
-						initialDescription={
-							resource.description_i18n || {
-								[defaultLocale]: resource.description,
-							}
-						}
+						initialDescription={renameKeys(
+							resource.description_i18n,
+							transformLocale
+						)}
 						initialSXPElementInstances={resource.elementInstances}
-						initialTitle={
-							resource.title_i18n || {
-								[defaultLocale]: resource.title,
-							}
-						}
+						initialTitle={renameKeys(
+							resource.title_i18n,
+							transformLocale
+						)}
 						sxpBlueprintId={sxpBlueprintId}
 					/>
 				</ErrorBoundary>

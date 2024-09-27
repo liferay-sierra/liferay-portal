@@ -17,7 +17,7 @@
 <%@ include file="/init.jsp" %>
 
 <%
-SegmentsSimulationDisplayContext segmentsSimulationDisplayContext = new SegmentsSimulationDisplayContext(request, renderResponse);
+SegmentsSimulationDisplayContext segmentsSimulationDisplayContext = (SegmentsSimulationDisplayContext)request.getAttribute(WebKeys.PORTLET_DISPLAY_CONTEXT);
 %>
 
 <clay:container-fluid
@@ -33,6 +33,27 @@ SegmentsSimulationDisplayContext segmentsSimulationDisplayContext = new Segments
 		<c:otherwise>
 			<aui:form method="post" name="segmentsSimulationFm">
 				<ul class="list-unstyled">
+					<c:if test="<%= !segmentsSimulationDisplayContext.isSegmentationEnabled() %>">
+						<clay:alert
+							defaultTitleDisabled="<%= true %>"
+							dismissible="<%= true %>"
+							displayType="warning"
+						>
+							<strong><liferay-ui:message key="experiences-cannot-be-displayed-because-segmentation-is-disabled" /></strong>
+
+							<c:choose>
+								<c:when test="<%= segmentsSimulationDisplayContext.getSegmentsCompanyConfigurationURL() != null %>">
+									<clay:link
+										href="<%= segmentsSimulationDisplayContext.getSegmentsCompanyConfigurationURL() %>"
+										label='<%= LanguageUtil.get(request, "to-enable,-go-to-instance-settings") %>'
+									/>
+								</c:when>
+								<c:otherwise>
+									<span><liferay-ui:message key="contact-your-system-administrator-to-enable-it" /></span>
+								</c:otherwise>
+							</c:choose>
+						</clay:alert>
+					</c:if>
 
 					<%
 					for (SegmentsEntry segmentsEntry : segmentsSimulationDisplayContext.getSegmentsEntries()) {
@@ -42,7 +63,7 @@ SegmentsSimulationDisplayContext segmentsSimulationDisplayContext = new Segments
 							<span>
 								<div class="custom-checkbox">
 									<label class="position-relative">
-										<input class="custom-control-input simulated-segment" name="<%= segmentsSimulationDisplayContext.getPortletNamespace() + "segmentsEntryId" %>" type="checkbox" value="<%= String.valueOf(segmentsEntry.getSegmentsEntryId()) %>" />
+										<input class="custom-control-input simulated-segment" name="<%= segmentsSimulationDisplayContext.getPortletNamespace() %>segmentsEntryId" type="checkbox" value="<%= String.valueOf(segmentsEntry.getSegmentsEntryId()) %>" />
 
 										<span class="custom-control-label">
 											<span class="custom-control-label-text">

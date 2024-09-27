@@ -98,58 +98,73 @@ DLPortletInstanceSettingsHelper dlPortletInstanceSettingsHelper = new DLPortletI
 
 				<liferay-ui:search-container-column-text>
 					<div class="image-link preview" <%= (hasAudio || hasVideo) ? "data-options=\"height=" + playerHeight + "&thumbnailURL=" + HtmlUtil.escapeURL(DLURLHelperUtil.getPreviewURL(fileEntry, fileVersion, themeDisplay, "&videoThumbnail=1")) + "&width=640" + dataOptions + "\"" : StringPool.BLANK %> href="<%= imageURL %>" tabindex="0" thumbnailId="<%= thumbnailId %>" title="<%= title %>">
-						<c:choose>
-							<c:when test="<%= Validator.isNull(thumbnailSrc) %>">
-								<liferay-frontend:icon-vertical-card
-									actionJsp='<%= dlPortletInstanceSettingsHelper.isShowActions() ? "/image_gallery_display/image_action.jsp" : StringPool.BLANK %>'
-									actionJspServletContext="<%= application %>"
-									cardCssClass="card-interactive card-interactive-secondary"
-									cssClass="entry-display-style"
-									icon="documents-and-media"
-									resultRow="<%= row %>"
-									title="<%= dlPortletInstanceSettingsHelper.isShowActions() ? fileEntry.getTitle() : StringPool.BLANK %>"
-								/>
-							</c:when>
-							<c:otherwise>
-								<liferay-frontend:vertical-card
-									actionJsp='<%= dlPortletInstanceSettingsHelper.isShowActions() ? "/image_gallery_display/image_action.jsp" : StringPool.BLANK %>'
-									actionJspServletContext="<%= application %>"
-									cardCssClass="card-interactive card-interactive-secondary"
-									cssClass="entry-display-style"
-									imageUrl="<%= thumbnailSrc %>"
-									resultRow="<%= row %>"
-									title="<%= dlPortletInstanceSettingsHelper.isShowActions() ? fileEntry.getTitle() : StringPool.BLANK %>"
-								/>
-							</c:otherwise>
-						</c:choose>
+						<div class="card-type-asset entry-display-style">
+							<div class="card card-interactive card-interactive-secondary">
+								<div class="aspect-ratio card-item-first">
+									<c:choose>
+										<c:when test="<%= Validator.isNull(thumbnailSrc) %>">
+											<aui:icon cssClass="aspect-ratio-item-center-middle aspect-ratio-item-fluid card-type-asset-icon" image="documents-and-media" markupView="lexicon" />
+										</c:when>
+										<c:otherwise>
+											<img alt="" class="aspect-ratio-item-center-middle aspect-ratio-item-fluid" src="<%= thumbnailSrc %>" />
+										</c:otherwise>
+									</c:choose>
+								</div>
+
+								<c:if test="<%= dlPortletInstanceSettingsHelper.isShowActions() %>">
+									<div class="card-body">
+										<div class="card-row">
+											<div class="autofit-col autofit-col-expand">
+												<aui:a cssClass="card-title text-truncate" href="" title="<%= HtmlUtil.escapeAttribute(title) %>">
+													<%= HtmlUtil.escape(title) %>
+												</aui:a>
+											</div>
+
+											<div class="autofit-col">
+
+												<%
+												IGViewFileVersionDisplayContext igViewFileVersionDisplayContext = null;
+
+												if (fileShortcut == null) {
+													igViewFileVersionDisplayContext = igDisplayContextProvider.getIGViewFileVersionActionsDisplayContext(request, response, fileEntry.getFileVersion());
+												}
+												else {
+													igViewFileVersionDisplayContext = igDisplayContextProvider.getIGViewFileVersionActionsDisplayContext(request, response, fileShortcut);
+												}
+												%>
+
+												<clay:dropdown-actions
+													dropdownItems="<%= igViewFileVersionDisplayContext.getActionDropdownItems() %>"
+													propsTransformer="document_library/js/DLFileEntryDropdownPropsTransformer"
+												/>
+											</div>
+										</div>
+									</div>
+								</c:if>
+							</div>
+						</div>
 					</div>
 				</liferay-ui:search-container-column-text>
 			</c:when>
 			<c:otherwise>
+
+				<%
+				row.setCssClass("card-page-item card-page-item-directory");
+
+				request.setAttribute(WebKeys.SEARCH_CONTAINER_RESULT_ROW, row);
+				%>
+
 				<portlet:renderURL var="viewFolderURL">
 					<portlet:param name="mvcRenderCommandName" value="/image_gallery_display/view" />
 					<portlet:param name="redirect" value="<%= currentURL %>" />
 					<portlet:param name="folderId" value="<%= String.valueOf(curFolder.getFolderId()) %>" />
 				</portlet:renderURL>
 
-				<%
-				row.setCssClass("card-page-item card-page-item-directory");
-				%>
-
 				<liferay-ui:search-container-column-text>
-					<liferay-frontend:horizontal-card
-						actionJsp='<%= dlPortletInstanceSettingsHelper.isShowActions() ? "/document_library/folder_action.jsp" : StringPool.BLANK %>'
-						actionJspServletContext="<%= application %>"
-						resultRow="<%= row %>"
-						text="<%= curFolder.getName() %>"
-						url="<%= viewFolderURL %>"
-					>
-						<liferay-frontend:horizontal-card-col>
-							<liferay-frontend:horizontal-card-icon
-								icon='<%= curFolder.isMountPoint() ? "repository" : "folder" %>'
-							/>
-						</liferay-frontend:horizontal-card-col>
-					</liferay-frontend:horizontal-card>
+					<clay:horizontal-card
+						horizontalCard="<%= new FolderHorizontalCard(dlPortletInstanceSettingsHelper, dlTrashHelper, curFolder, request, renderResponse, null, viewFolderURL) %>"
+						propsTransformer="document_library/js/DLFolderDropdownPropsTransformer"
+					/>
 				</liferay-ui:search-container-column-text>
 			</c:otherwise>
 		</c:choose>

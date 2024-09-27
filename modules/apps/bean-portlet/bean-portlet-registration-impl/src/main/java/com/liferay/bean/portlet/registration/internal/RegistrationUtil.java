@@ -39,8 +39,10 @@ import javax.portlet.filter.PortletFilter;
 
 import javax.servlet.ServletContext;
 
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
+import org.osgi.framework.wiring.BundleWiring;
 
 /**
  * @author Neil Griffin
@@ -57,13 +59,13 @@ public class RegistrationUtil {
 
 		if (Objects.equals(portletName, "*")) {
 			for (String curPortletName : allPortletNames) {
-				String portletId = _getPortletId(
-					curPortletName, servletContext.getServletContextName());
-
 				serviceRegistrations.add(
 					_registerBeanFilter(
 						beanFilter, beanFilterMethodFactory,
-						beanFilterMethodInvoker, bundleContext, portletId));
+						beanFilterMethodInvoker, bundleContext,
+						_getPortletId(
+							curPortletName,
+							servletContext.getServletContextName())));
 			}
 		}
 		else {
@@ -75,13 +77,13 @@ public class RegistrationUtil {
 						portletName));
 			}
 			else {
-				String portletId = _getPortletId(
-					portletName, servletContext.getServletContextName());
-
 				serviceRegistrations.add(
 					_registerBeanFilter(
 						beanFilter, beanFilterMethodFactory,
-						beanFilterMethodInvoker, bundleContext, portletId));
+						beanFilterMethodInvoker, bundleContext,
+						_getPortletId(
+							portletName,
+							servletContext.getServletContextName())));
 			}
 		}
 
@@ -119,11 +121,16 @@ public class RegistrationUtil {
 
 			dictionary.put("javax.portlet.name", portletId);
 
+			Bundle bundle = bundleContext.getBundle();
+
+			BundleWiring bundleWiring = bundle.adapt(BundleWiring.class);
+
 			ServiceRegistration<Portlet> portletServiceRegistration =
 				bundleContext.registerService(
 					Portlet.class,
 					new BeanPortletInvokerPortlet(
-						beanPortlet.getBeanMethods(), beanPortletMethodInvoker),
+						beanPortlet.getBeanMethods(), beanPortletMethodInvoker,
+						bundleWiring.getClassLoader()),
 					dictionary);
 
 			beanPortletIds.add(portletId);

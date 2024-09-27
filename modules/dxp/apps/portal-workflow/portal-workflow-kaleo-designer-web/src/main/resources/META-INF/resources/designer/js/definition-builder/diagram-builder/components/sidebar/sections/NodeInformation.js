@@ -81,7 +81,9 @@ export default function NodeInformation({errors, setErrors}) {
 
 			<ClayForm.Group
 				className={
-					errors.id.duplicated || errors.id.empty ? 'has-error' : ''
+					errors?.id?.duplicated || errors?.id?.empty
+						? 'has-error'
+						: ''
 				}
 			>
 				<label htmlFor="nodeId">
@@ -108,7 +110,18 @@ export default function NodeInformation({errors, setErrors}) {
 				<ClayInput
 					id="nodeId"
 					onChange={({target}) => {
-						setErrors(checkIdErrors(elements, errors, target));
+						const filteredElements = elements.slice();
+
+						filteredElements.splice(
+							elements.findIndex(
+								(element) => element.id === selectedItem.id
+							),
+							1
+						);
+
+						setErrors(
+							checkIdErrors(filteredElements, errors, target)
+						);
 						setSelectedItemNewId(target.value);
 					}}
 					type="text"
@@ -116,7 +129,7 @@ export default function NodeInformation({errors, setErrors}) {
 				/>
 
 				<ClayForm.FeedbackItem>
-					{(errors.id.duplicated || errors.id.empty) && (
+					{(errors?.id?.duplicated || errors?.id?.empty) && (
 						<>
 							<ClayForm.FeedbackIndicator symbol="exclamation-full" />
 

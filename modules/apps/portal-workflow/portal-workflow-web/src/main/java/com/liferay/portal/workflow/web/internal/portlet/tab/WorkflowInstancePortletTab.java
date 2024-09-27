@@ -58,7 +58,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.portal.workflow.web.internal.configuration.WorkflowInstanceWebConfiguration",
-	configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true,
+	configurationPolicy = ConfigurationPolicy.OPTIONAL,
 	property = "portal.workflow.tabs.name=" + WorkflowWebKeys.WORKFLOW_TAB_INSTANCE,
 	service = WorkflowPortletTab.class
 )
@@ -72,6 +72,11 @@ public class WorkflowInstancePortletTab extends BaseWorkflowPortletTab {
 	@Override
 	public String getSearchJspPath() {
 		return "/instance/workflow_instance_search.jsp";
+	}
+
+	@Override
+	public ServletContext getServletContext() {
+		return servletContext;
 	}
 
 	@Override
@@ -136,17 +141,13 @@ public class WorkflowInstancePortletTab extends BaseWorkflowPortletTab {
 		return "/instance/view.jsp";
 	}
 
-	@Override
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.portal.workflow.web)",
-		unbind = "-"
-	)
-	protected void setServletContext(ServletContext servletContext) {
-		super.setServletContext(servletContext);
-	}
-
 	@Reference
 	protected Portal portal;
+
+	@Reference(
+		target = "(osgi.web.symbolicname=com.liferay.portal.workflow.web)"
+	)
+	protected ServletContext servletContext;
 
 	protected volatile WorkflowInstanceWebConfiguration
 		workflowInstanceWebConfiguration;

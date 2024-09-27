@@ -14,26 +14,26 @@
 
 package com.liferay.layout.content.page.editor.web.internal.display.context;
 
-import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
-import com.liferay.fragment.renderer.FragmentRendererController;
-import com.liferay.fragment.renderer.FragmentRendererTracker;
-import com.liferay.fragment.util.configuration.FragmentEntryConfigurationParser;
 import com.liferay.frontend.token.definition.FrontendTokenDefinitionRegistry;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
+import com.liferay.info.search.InfoSearchClassMapperRegistry;
 import com.liferay.item.selector.ItemSelector;
 import com.liferay.layout.content.page.editor.constants.ContentPageEditorWebKeys;
 import com.liferay.layout.content.page.editor.sidebar.panel.ContentPageEditorSidebarPanel;
-import com.liferay.layout.content.page.editor.web.internal.configuration.FFLayoutContentPageEditorConfiguration;
 import com.liferay.layout.content.page.editor.web.internal.configuration.PageEditorConfiguration;
+import com.liferay.layout.content.page.editor.web.internal.util.FragmentCollectionManager;
+import com.liferay.layout.content.page.editor.web.internal.util.FragmentEntryLinkManager;
 import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
 import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerList;
 import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerListFactory;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
-import com.liferay.portal.kernel.comment.CommentManager;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.segments.configuration.provider.SegmentsConfigurationProvider;
+import com.liferay.segments.manager.SegmentsExperienceManager;
+import com.liferay.segments.service.SegmentsExperienceLocalService;
 import com.liferay.staging.StagingGroupHelper;
 
 import java.util.ArrayList;
@@ -57,11 +57,8 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pavel Savinov
  */
 @Component(
-	configurationPid = {
-		"com.liferay.layout.content.page.editor.web.internal.configuration.FFLayoutContentPageEditorConfiguration",
-		"com.liferay.layout.content.page.editor.web.internal.configuration.PageEditorConfiguration"
-	},
-	immediate = true, service = ContentPageEditorDisplayContextProvider.class
+	configurationPid = "com.liferay.layout.content.page.editor.web.internal.configuration.PageEditorConfiguration",
+	service = ContentPageEditorDisplayContextProvider.class
 )
 public class ContentPageEditorDisplayContextProvider {
 
@@ -74,13 +71,13 @@ public class ContentPageEditorDisplayContextProvider {
 
 		if (Objects.equals(className, Layout.class.getName())) {
 			return new ContentPageLayoutEditorDisplayContext(
-				_commentManager, _getContentPageEditorSidebarPanels(),
-				_ffLayoutContentPageEditorConfiguration,
-				_fragmentCollectionContributorTracker,
-				_fragmentEntryConfigurationParser, _fragmentRendererController,
-				_fragmentRendererTracker, _frontendTokenDefinitionRegistry,
-				httpServletRequest, _infoItemServiceTracker, _itemSelector,
-				_pageEditorConfiguration, portletRequest, renderResponse,
+				_getContentPageEditorSidebarPanels(),
+				_fragmentCollectionManager, _fragmentEntryLinkManager,
+				_frontendTokenDefinitionRegistry, httpServletRequest,
+				_infoItemServiceRegistry, _infoSearchClassMapperRegistry,
+				_itemSelector, _pageEditorConfiguration, portletRequest,
+				renderResponse, _segmentsConfigurationProvider,
+				new SegmentsExperienceManager(_segmentsExperienceLocalService),
 				_stagingGroupHelper);
 		}
 
@@ -101,14 +98,14 @@ public class ContentPageEditorDisplayContextProvider {
 		}
 
 		return new ContentPageEditorLayoutPageTemplateDisplayContext(
-			_commentManager, _getContentPageEditorSidebarPanels(),
-			_ffLayoutContentPageEditorConfiguration,
-			_fragmentCollectionContributorTracker,
-			_fragmentEntryConfigurationParser, _fragmentRendererController,
-			_fragmentRendererTracker, _frontendTokenDefinitionRegistry,
-			httpServletRequest, _infoItemServiceTracker, _itemSelector,
+			_getContentPageEditorSidebarPanels(), _fragmentCollectionManager,
+			_fragmentEntryLinkManager, _frontendTokenDefinitionRegistry,
+			httpServletRequest, _infoItemServiceRegistry,
+			_infoSearchClassMapperRegistry, _itemSelector,
 			_pageEditorConfiguration, pageIsDisplayPage, portletRequest,
-			renderResponse, _stagingGroupHelper);
+			renderResponse, _segmentsConfigurationProvider,
+			new SegmentsExperienceManager(_segmentsExperienceLocalService),
+			_stagingGroupHelper);
 	}
 
 	@Activate
@@ -116,9 +113,6 @@ public class ContentPageEditorDisplayContextProvider {
 	protected void activate(
 		BundleContext bundleContext, Map<String, Object> properties) {
 
-		_ffLayoutContentPageEditorConfiguration =
-			ConfigurableUtil.createConfigurable(
-				FFLayoutContentPageEditorConfiguration.class, properties);
 		_pageEditorConfiguration = ConfigurableUtil.createConfigurable(
 			PageEditorConfiguration.class, properties);
 		_serviceTrackerList = ServiceTrackerListFactory.open(
@@ -146,29 +140,19 @@ public class ContentPageEditorDisplayContextProvider {
 	}
 
 	@Reference
-	private CommentManager _commentManager;
-
-	private volatile FFLayoutContentPageEditorConfiguration
-		_ffLayoutContentPageEditorConfiguration;
+	private FragmentCollectionManager _fragmentCollectionManager;
 
 	@Reference
-	private FragmentCollectionContributorTracker
-		_fragmentCollectionContributorTracker;
-
-	@Reference
-	private FragmentEntryConfigurationParser _fragmentEntryConfigurationParser;
-
-	@Reference
-	private FragmentRendererController _fragmentRendererController;
-
-	@Reference
-	private FragmentRendererTracker _fragmentRendererTracker;
+	private FragmentEntryLinkManager _fragmentEntryLinkManager;
 
 	@Reference
 	private FrontendTokenDefinitionRegistry _frontendTokenDefinitionRegistry;
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
+
+	@Reference
+	private InfoSearchClassMapperRegistry _infoSearchClassMapperRegistry;
 
 	@Reference
 	private ItemSelector _itemSelector;
@@ -178,6 +162,13 @@ public class ContentPageEditorDisplayContextProvider {
 		_layoutPageTemplateEntryLocalService;
 
 	private volatile PageEditorConfiguration _pageEditorConfiguration;
+
+	@Reference
+	private SegmentsConfigurationProvider _segmentsConfigurationProvider;
+
+	@Reference
+	private SegmentsExperienceLocalService _segmentsExperienceLocalService;
+
 	private volatile ServiceTrackerList<ContentPageEditorSidebarPanel>
 		_serviceTrackerList;
 

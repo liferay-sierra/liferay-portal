@@ -13,17 +13,19 @@
  */
 
 import ClayButton from '@clayui/button';
-import {useResource} from '@clayui/data-provider';
 import ClayForm, {ClayInput} from '@clayui/form';
 import ClayIcon from '@clayui/icon';
 import ClayMultiSelect, {itemLabelFilter} from '@clayui/multi-select';
 import {usePrevious} from '@liferay/frontend-js-react-web';
 import classNames from 'classnames';
-import {openSelectionModal} from 'frontend-js-web';
+import {
+	createPortletURL,
+	fetch,
+	openSelectionModal,
+	sub,
+} from 'frontend-js-web';
 import PropTypes from 'prop-types';
-import React, {useEffect, useState} from 'react';
-
-import Lang from '../utils/lang.es';
+import React, {useEffect, useRef, useState} from 'react';
 
 function AssetVocabulariesCategoriesSelector({
 	eventName,
@@ -43,37 +45,38 @@ function AssetVocabulariesCategoriesSelector({
 	const [inputValue, setInputValue] = useState('');
 
 	const [invalidItems, setInvalidItems] = useState([]);
-
-	const {refetch, resource} = useResource({
-		fetchOptions: {
-			'body': new URLSearchParams({
-				cmd: JSON.stringify({
-					'/assetcategory/search': {
-						'-obc': null,
-						'end': 20,
-						groupIds,
-						'name': `%${inputValue.toLowerCase()}%`,
-						'start': 0,
-						'vocabularyIds': sourceItemsVocabularyIds,
-					},
-				}),
-				p_auth: Liferay.authToken,
-			}),
-			'credentials': 'include',
-			'method': 'POST',
-			'x-csrf-token': Liferay.authToken,
-		},
-		link: `${window.location.origin}${themeDisplay.getPathContext()}
-				/api/jsonws/invoke`,
-	});
+	const [resource, setResource] = useState([]);
+	const selectButtonRef = useRef();
 
 	const previousInputValue = usePrevious(inputValue);
 
 	useEffect(() => {
 		if (inputValue && inputValue !== previousInputValue) {
-			refetch();
+			fetch(
+				`${
+					window.location.origin
+				}${themeDisplay.getPathContext()}/api/jsonws/invoke`,
+				{
+					body: new URLSearchParams({
+						cmd: JSON.stringify({
+							'/assetcategory/search': {
+								'-obc': null,
+								'end': 20,
+								groupIds,
+								'name': `%${inputValue.toLowerCase()}%`,
+								'start': 0,
+								'vocabularyIds': sourceItemsVocabularyIds,
+							},
+						}),
+						p_auth: Liferay.authToken,
+					}),
+					method: 'POST',
+				}
+			)
+				.then((response) => response.json())
+				.then((response) => setResource(response));
 		}
-	}, [inputValue, previousInputValue, refetch]);
+	}, [groupIds, inputValue, previousInputValue, sourceItemsVocabularyIds]);
 
 	const getUnique = (array, property) => {
 		return array
@@ -132,10 +135,7 @@ function AssetVocabulariesCategoriesSelector({
 	};
 
 	const handleSelectButtonClick = () => {
-		const sub = (str, object) =>
-			str.replace(/\{([^}]+)\}/g, (_, m) => object[m]);
-
-		const url = sub(decodeURIComponent(portletURL), {
+		const url = createPortletURL(portletURL, {
 			selectedCategories: selectedItems.map((item) => item.value).join(),
 			singleSelect,
 			vocabularyIds: sourceItemsVocabularyIds.concat(),
@@ -143,8 +143,12 @@ function AssetVocabulariesCategoriesSelector({
 
 		openSelectionModal({
 			buttonAddLabel: Liferay.Language.get('done'),
+			height: '70vh',
 			iframeBodyCssClass: '',
 			multiple: true,
+			onClose: () => {
+				selectButtonRef.current?.focus();
+			},
 			onSelect: (selectedItems) => {
 				if (selectedItems) {
 					const newValues = Object.keys(selectedItems).reduce(
@@ -166,10 +170,11 @@ function AssetVocabulariesCategoriesSelector({
 				}
 			},
 			selectEventName: eventName,
+			size: 'md',
 			title: label
-				? Liferay.Util.sub(Liferay.Language.get('select-x'), label)
+				? sub(Liferay.Language.get('select-x'), label)
 				: Liferay.Language.get('select-categories'),
-			url,
+			url: url.toString(),
 		});
 	};
 
@@ -178,7 +183,7 @@ function AssetVocabulariesCategoriesSelector({
 			<ClayForm.Group
 				className={classNames({
 					'has-error':
-						(invalidItems && invalidItems.length > 0) || !isValid,
+						(invalidItems && !!invalidItems.length) || !isValid,
 				})}
 				id={id}
 			>
@@ -191,14 +196,14 @@ function AssetVocabulariesCategoriesSelector({
 				)}
 
 				{label && (
-					<label>
+					<label htmlFor={inputName + '_MultiSelect'}>
 						{label}
 
 						{required && (
 							<span className="inline-item inline-item-after reference-mark">
 								<ClayIcon symbol="asterisk" />
 
-								<span className="hide-accessible">
+								<span className="hide-accessible sr-only">
 									{Liferay.Language.get('required')}
 								</span>
 							</span>
@@ -209,8 +214,8 @@ function AssetVocabulariesCategoriesSelector({
 				<ClayInput.Group>
 					<ClayInput.GroupItem>
 						<ClayMultiSelect
+							id={inputName + '_MultiSelect'}
 							inputName={inputName}
-							inputValue={inputValue}
 							items={selectedItems}
 							onChange={setInputValue}
 							onItemsChange={handleItemsChange}
@@ -228,22 +233,22 @@ function AssetVocabulariesCategoriesSelector({
 									  )
 									: []
 							}
+							value={inputValue}
 						/>
 
-						{invalidItems && invalidItems.length > 0 && (
+						{invalidItems && !!invalidItems.length && (
 							<ClayForm.FeedbackGroup>
-								<ClayForm.FeedbackItem>
+								<ClayForm.FeedbackItem aria-live="polite">
 									<ClayForm.FeedbackIndicator symbol="info-circle" />
 
-									{Lang.sub(
+									{sub(
 										Liferay.Language.get(
 											`category-x-does-not-exist`
 										),
-										[
-											invalidItems
-												.map((item) => item.label)
-												.join(','),
-										]
+
+										invalidItems
+											.map((item) => item.label)
+											.join(',')
 									)}
 								</ClayForm.FeedbackItem>
 							</ClayForm.FeedbackGroup>
@@ -266,8 +271,14 @@ function AssetVocabulariesCategoriesSelector({
 
 					<ClayInput.GroupItem shrink>
 						<ClayButton
+							aria-haspopup="dialog"
+							aria-label={sub(
+								Liferay.Language.get('select-x'),
+								label
+							)}
 							displayType="secondary"
 							onClick={handleSelectButtonClick}
+							ref={selectButtonRef}
 						>
 							{Liferay.Language.get('select')}
 						</ClayButton>

@@ -695,6 +695,34 @@ public class StructuredContent implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
 	protected Integer numberOfComments;
 
+	@Schema(description = "The structured content's priority.")
+	public Double getPriority() {
+		return priority;
+	}
+
+	public void setPriority(Double priority) {
+		this.priority = priority;
+	}
+
+	@JsonIgnore
+	public void setPriority(
+		UnsafeSupplier<Double, Exception> priorityUnsafeSupplier) {
+
+		try {
+			priority = priorityUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField(description = "The structured content's priority.")
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected Double priority;
+
 	@Schema(
 		description = "A list of related contents to this structured content."
 	)
@@ -794,6 +822,40 @@ public class StructuredContent implements Serializable {
 	)
 	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
 	protected Long siteId;
+
+	@Schema(
+		description = "The ID of the folder where structured content is stored."
+	)
+	public Long getStructuredContentFolderId() {
+		return structuredContentFolderId;
+	}
+
+	public void setStructuredContentFolderId(Long structuredContentFolderId) {
+		this.structuredContentFolderId = structuredContentFolderId;
+	}
+
+	@JsonIgnore
+	public void setStructuredContentFolderId(
+		UnsafeSupplier<Long, Exception>
+			structuredContentFolderIdUnsafeSupplier) {
+
+		try {
+			structuredContentFolderId =
+				structuredContentFolderIdUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField(
+		description = "The ID of the folder where structured content is stored."
+	)
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected Long structuredContentFolderId;
 
 	@Schema(
 		description = "A flag that indicates whether the user making the requests is subscribed to this structured content."
@@ -1338,6 +1400,16 @@ public class StructuredContent implements Serializable {
 			sb.append(numberOfComments);
 		}
 
+		if (priority != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"priority\": ");
+
+			sb.append(priority);
+		}
+
 		if (relatedContents != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -1386,6 +1458,16 @@ public class StructuredContent implements Serializable {
 			sb.append("\"siteId\": ");
 
 			sb.append(siteId);
+		}
+
+		if (structuredContentFolderId != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"structuredContentFolderId\": ");
+
+			sb.append(structuredContentFolderId);
 		}
 
 		if (subscribed != null) {

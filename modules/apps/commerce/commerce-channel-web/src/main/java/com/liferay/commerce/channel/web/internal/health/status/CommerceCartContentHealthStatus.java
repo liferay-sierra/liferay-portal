@@ -22,7 +22,7 @@ import com.liferay.commerce.product.model.CommerceChannel;
 import com.liferay.commerce.product.service.CommerceChannelService;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.LayoutTypePortlet;
@@ -44,7 +44,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = {
 		"commerce.channel.health.status.display.order:Integer=20",
 		"commerce.channel.health.status.key=" + CommerceHealthStatusConstants.COMMERCE_CART_CONTENT_COMMERCE_HEALTH_STATUS_KEY
@@ -102,7 +102,7 @@ public class CommerceCartContentHealthStatus
 		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
 			"content.Language", locale, getClass());
 
-		return LanguageUtil.get(
+		return _language.get(
 			resourceBundle,
 			CommerceHealthStatusConstants.
 				COMMERCE_CART_CONTENT_COMMERCE_HEALTH_STATUS_DESCRIPTION);
@@ -119,7 +119,7 @@ public class CommerceCartContentHealthStatus
 		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
 			"content.Language", locale, getClass());
 
-		return LanguageUtil.get(
+		return _language.get(
 			resourceBundle,
 			CommerceHealthStatusConstants.
 				COMMERCE_CART_CONTENT_COMMERCE_HEALTH_STATUS_KEY);
@@ -153,6 +153,9 @@ public class CommerceCartContentHealthStatus
 
 	@Reference
 	private CommerceChannelService _commerceChannelService;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private LayoutService _layoutService;

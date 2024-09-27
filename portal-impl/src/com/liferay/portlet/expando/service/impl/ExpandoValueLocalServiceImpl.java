@@ -14,6 +14,7 @@
 
 package com.liferay.portlet.expando.service.impl;
 
+import com.liferay.expando.kernel.exception.ValueDataException;
 import com.liferay.expando.kernel.model.ExpandoColumn;
 import com.liferay.expando.kernel.model.ExpandoColumnConstants;
 import com.liferay.expando.kernel.model.ExpandoRow;
@@ -30,6 +31,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.typeconverter.DateArrayConverter;
 import com.liferay.portal.typeconverter.NumberArrayConverter;
 import com.liferay.portal.typeconverter.NumberConverter;
@@ -745,6 +747,8 @@ public class ExpandoValueLocalServiceImpl
 			Map<String, Serializable> attributes)
 		throws PortalException {
 
+		Map<String, String> data = new HashMap<>();
+
 		ExpandoTable table = expandoTableLocalService.getTable(
 			companyId, classNameId, tableName);
 
@@ -819,18 +823,32 @@ public class ExpandoValueLocalServiceImpl
 				value.setStringArray((String[])attributeValue);
 			}
 			else if (type == ExpandoColumnConstants.STRING_LOCALIZED) {
+				Map<Locale, String> defaultValuesMap =
+					(Map<Locale, String>)attributeValue;
+
+				Locale defaultLocale = LocaleUtil.getDefault();
+
+				if (Validator.isNull(defaultValuesMap.get(defaultLocale))) {
+					for (String defaultValue : defaultValuesMap.values()) {
+						if (Validator.isNotNull(defaultValue)) {
+							throw new ValueDataException.
+								MustInformDefaultLocale(defaultLocale);
+						}
+					}
+				}
+
 				value.setStringMap(
-					(Map<Locale, String>)attributeValue,
-					LocaleUtil.getDefault());
+					(Map<Locale, String>)attributeValue, defaultLocale);
 			}
 			else {
 				value.setString((String)attributeValue);
 			}
 
-			doAddValue(
-				companyId, classNameId, table.getTableId(),
-				column.getColumnId(), classPK, value.getData());
+			data.put(column.getName(), value.getData());
 		}
+
+		addValues(
+			table.getClassNameId(), table.getTableId(), columns, classPK, data);
 	}
 
 	@Override
@@ -1698,31 +1716,26 @@ public class ExpandoValueLocalServiceImpl
 		long companyId, long classNameId, long tableId, long columnId,
 		long classPK, String data) {
 
-		ExpandoRow row = expandoRowPersistence.fetchByT_C(tableId, classPK);
-
-		ExpandoValue value = null;
-
-		if (row == null) {
-			long rowId = counterLocalService.increment();
-
-			row = expandoRowPersistence.create(rowId);
-
-			row.setCompanyId(companyId);
-			row.setModifiedDate(new Date());
-			row.setTableId(tableId);
-			row.setClassPK(classPK);
-
-			row = expandoRowPersistence.update(row);
-		}
-		else {
-			value = expandoValuePersistence.fetchByC_R(
-				columnId, row.getRowId());
-		}
+		ExpandoValue value = expandoValuePersistence.fetchByT_C_C(
+			tableId, columnId, classPK);
 
 		if (value == null) {
-			long valueId = counterLocalService.increment();
+			ExpandoRow row = expandoRowPersistence.fetchByT_C(tableId, classPK);
 
-			value = expandoValuePersistence.create(valueId);
+			if (row == null) {
+				row = expandoRowPersistence.create(
+					counterLocalService.increment());
+
+				row.setCompanyId(companyId);
+				row.setModifiedDate(new Date());
+				row.setTableId(tableId);
+				row.setClassPK(classPK);
+
+				row = expandoRowPersistence.update(row);
+			}
+
+			value = expandoValuePersistence.create(
+				counterLocalService.increment());
 
 			value.setCompanyId(companyId);
 			value.setTableId(tableId);
@@ -1739,6 +1752,8 @@ public class ExpandoValueLocalServiceImpl
 			value.setData(data);
 
 			value = expandoValuePersistence.update(value);
+
+			ExpandoRow row = expandoRowPersistence.fetchByT_C(tableId, classPK);
 
 			row.setModifiedDate(new Date());
 

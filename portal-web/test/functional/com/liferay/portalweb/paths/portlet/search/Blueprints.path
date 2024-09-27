@@ -41,6 +41,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>BLUEPRINTS_ADDED_ELEMENT_ENABLE_DISABLE_TOGGLE</td>
+	<td>//div[contains(@id,'querySXPElement')][./ul[contains(.,'${elementName}')]]//input[contains(@class,"toggle-switch-check")]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>BLUEPRINTS_ADDED_ELEMENT_FIELD_LABEL</td>
 	<td>//div[contains(@id,'querySXPElement')][./ul[contains(.,'${elementName}')]]//label[contains(.,'${fieldName}')]</td>
 	<td></td>
@@ -52,7 +57,7 @@
 </tr>
 <tr>
 	<td>BLUEPRINTS_ADDED_ELEMENT_FIELD_MAPPING_DELETE_BUTTON</td>
-	<td>//li[contains(@class,'fieldMappingList')]//button[@aria-label='Delete']</td>
+	<td>//li[contains(@class,'fieldMappingList')]//div[contains(@class,'input-group-sm')][.//input[@value='${field}']]//button[@aria-label='Delete']</td>
 	<td></td>
 </tr>
 <tr>
@@ -86,6 +91,16 @@
 	<td></td>
 </tr>
 <tr>
+	<td>BLUEPRINTS_ADDED_ELEMENT_INPUT_FIELD_CLEAR_ALL_BUTTON</td>
+	<td>//div[contains(@id,'querySXPElement')][./ul[contains(.,'${elementName}')]]//li[contains(@class,'list-group-item')][.//label[contains(.,'${fieldLabel}')]]//button[@title="Clear All"]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>BLUEPRINTS_ADDED_ELEMENT_NTH_ELEMENT</td>
+	<td>xpath=(//div[contains(@id,'querySXPElement')])[${index}]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>BLUEPRINTS_ADDED_ELEMENT_VERTICAL_ELLIPSIS</td>
 	<td>//div[contains(@id,'querySXPElement')][.//*[contains(.,'${element}')]]//*[contains(@class,'icon-ellipsis')]</td>
 	<td></td>
@@ -101,8 +116,13 @@
 	<td></td>
 </tr>
 <tr>
+	<td>BLUEPRINTS_ADMIN_ENTRY_CHECKBOX</td>
+	<td>//div[contains(@class,'dnd-tr')][.//*[normalize-space(text())='${entryTitle}']]//input[@type='checkbox']</td>
+	<td></td>
+</tr>
+<tr>
 	<td>BLUEPRINTS_ADMIN_ENTRY_DESCRIPTION</td>
-	<td>//div[contains(@class,'dnd-tr')][.//*[normalize-space(text())='${entryTitle}']]//div[contains(@class,'dnd-td')][2]</td>
+	<td>//div[contains(@class,'dnd-tr')][.//*[normalize-space(text())='${entryTitle}']]//div[contains(@class,'dnd-td')][3]</td>
 	<td></td>
 </tr>
 <tr>
@@ -111,13 +131,18 @@
 	<td></td>
 </tr>
 <tr>
+	<td>BLUEPRINTS_ADMIN_ENTRY_ROW_NUMBER</td>
+	<td>//div[contains(@class,'dnd-tbody')]//div[contains(@class,'dnd-tr')][${rowNumber}]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>BLUEPRINTS_ADMIN_ENTRY_TITLE</td>
-	<td>//div[contains(@class,'table-list-title')]//*[normalize-space(text())='${title}']</td>
+	<td>//div[contains(@class,'table-list-title')]//*[normalize-space(text())='${entryTitle}']</td>
 	<td></td>
 </tr>
 <tr>
 	<td>BLUEPRINTS_ADMIN_ENTRY_VERTICAL_ELLIPSIS</td>
-	<td>//*[contains(@class,'dnd-tr') and contains(.,'${title}')]//*[*[name()='svg'][contains(@class,'icon-ellipsis')]]</td>
+	<td>//*[contains(@class,'dnd-tr') and contains(.,'${entryTitle}')]//*[*[name()='svg'][contains(@class,'icon-ellipsis')]]</td>
 	<td></td>
 </tr>
 <tr>
@@ -127,7 +152,7 @@
 </tr>
 <tr>
 	<td>BLUEPRINTS_ADMIN_FIELDS_MENU</td>
-	<td>//button[contains(@class,'dropdown-toggle') and contains(.,'Open Fields Menu')]</td>
+	<td>//button[contains(@class,'dropdown-toggle') and contains(@aria-label,'Open Fields Menu')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -141,6 +166,41 @@
 	<td></td>
 </tr>
 <tr>
+	<td>BLUEPRINTS_ASSET_CATEGORY_FIELD_AUTOCOMPLETE_DROPDOWN_ITEM</td>
+	<td>//div[contains(@class,'autocomplete-dropdown-menu')]//button[contains(.,'${assetCategory}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>BLUEPRINTS_ASSET_CATEGORY_TREE_VIEW_ITEM</td>
+	<td>//span[contains(@class,'text-truncate')][normalize-space(text())='${treeItem}']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>BLUEPRINTS_ASSET_CATEGORY_TREE_VIEW_ITEM_CHECKBOX</td>
+	<td>//div[@role='treeitem' and contains(.,'${treeItem}')]//input[@type='checkbox']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>BLUEPRINTS_ASSET_CATEGORY_TREE_VIEW_ITEM_SELECT</td>
+	<td>//div[contains(@class,'autofit-row')][.//span[contains(@class,'text-truncate')][normalize-space(text())='${treeItem}']]//button[contains(.,'Select')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>BLUEPRINTS_CLAUSE_CONTRIBUTOR_CLEAR_FILTER_BUTTON</td>
+	<td>//span[contains(@class,'label-dismissible') and contains(.,'${filter}')]//button[contains(@class,'close')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>BLUEPRINTS_CLAUSE_CONTRIBUTOR_ITEM</td>
+	<td>//div[contains(@class,'clause-contributors-sidebar')]//li[contains(@class,'list-group-item') and contains(.,"${contributorClass}")]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>BLUEPRINTS_CLAUSE_CONTRIBUTOR_NTH_ITEM</td>
+	<td>xpath=(//div[contains(@class,'clause-contributors-sidebar')]//li[contains(@class,'list-group-item')])[${index}]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>BLUEPRINTS_CLAUSE_CONTRIBUTOR_ON_OFF_TOGGLE</td>
 	<td>//div[contains(@class,'clause-contributors-sidebar')]//li[contains(.,"${contributorClass}")]//input[contains(@class,"toggle-switch-check")]</td>
 	<td></td>
@@ -148,6 +208,16 @@
 <tr>
 	<td>BLUEPRINTS_CLAUSE_CONTRIBUTOR_OPEN_SIDEBAR</td>
 	<td>//div[contains(@class,'clause-contributors-sidebar') and contains(@class,'open')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>BLUEPRINTS_CLAUSE_CONTRIBUTOR_SEARCH_BAR</td>
+	<td>//div[contains(@class,'clause-contributors-sidebar')]//input[contains(@aria-label,'Search')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>BLUEPRINTS_CLAUSE_CONTRIBUTOR_SORT_BUTTON</td>
+	<td>//button[@title='Reverse Sort Direction']</td>
 	<td></td>
 </tr>
 <tr>
@@ -186,6 +256,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>BLUEPRINTS_EDIT_PAGE_VIEW_ELEMENT_JSON_NUMBER</td>
+	<td>//span[contains(@class,'cm-number') and contains(.,'${key_jsonNumber}')]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>BLUEPRINTS_EDIT_PAGE_VIEW_ELEMENT_JSON_TEXT</td>
 	<td>//span[contains(@class,'cm-string') and contains(.,'${key_jsonText}')]</td>
 	<td></td>
@@ -193,6 +268,11 @@
 <tr>
 	<td>BLUEPRINTS_OPTION_WIDGET_SELECT_BLUEPRINT</td>
 	<td>//tr[contains(.,'${blueprintTitle}')]//button[contains(.,'Select')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>BLUEPRINTS_OPTION_WIDGET_TITLE</td>
+	<td>//tr[contains(.,'${blueprintTitle}')]/..//following-sibling::td</td>
 	<td></td>
 </tr>
 <tr>
@@ -256,6 +336,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>BLUEPRINTS_SEARCH_FRAMEWORK_INDEXER_CLAUSES_INFO_BUTTON</td>
+	<td>//button[contains(.,'Search Framework Indexer Clauses')]//span[*[name()='svg'][contains(@class,'lexicon-icon-question-circle')]]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>BLUEPRINTS_SEARCH_FRAMEWORK_INDEXER_CLAUSES_ON_OFF_TOGGLE</td>
 	<td>//div[contains(@class,'panel-unstyled')][.//*[contains(.,'Search Framework Indexer Clauses')]]//input[contains(@class,"toggle-switch-check")]</td>
 	<td></td>
@@ -282,12 +367,12 @@
 </tr>
 <tr>
 	<td>BLUEPRINTS_SEARCHABLE_ASSET_TYPE_SELECT_ALL_CHECKBOX</td>
-	<td>//div[contains(@class,'searchable-types-modal')]//ul[.//*[contains(.,'Select All')]]//input[@type='checkbox']</td>
+	<td>//div[contains(@class,'searchable-types-modal')]//ul[.//*[contains(.,'Select')]]//input[@type='checkbox']</td>
 	<td></td>
 </tr>
 <tr>
 	<td>BLUEPRINTS_SEARCHABLE_ASSET_TYPE_SELECT_REMAINING</td>
-	<td>//div[contains(@class,'searchable-types-modal')]//a[contains(.,'Select All')]</td>
+	<td>//div[contains(@class,'searchable-types-modal')]//button[contains(.,'Select All')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -301,8 +386,38 @@
 	<td></td>
 </tr>
 <tr>
+	<td>DOC_LINK_GENERIC</td>
+	<td>//div[contains(@class,'${linkContext}')]//a[contains(.,'${linkText}')] | //div[span[contains(.,'${linkContext}')]]//a[contains(.,'${linkText}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>ELEMENTS_EDIT_PAGE_PREDEFINED_VARIABLES_SHOW_HIDE_BUTTON</td>
+	<td>//button[@title='Predefined Variables']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>ELEMENTS_EDIT_PAGE_PREDEFINED_VARIABLES_SIDEBAR</td>
+	<td>//div[contains(@class,'sidebar') and contains(.,'Predefined Variables')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>ELEMENTS_EDIT_PAGE_PREDEFINED_VARIABLES_SIDEBAR_ITEM</td>
+	<td>//dl[contains(@class,'sidebar-dl')]//button[contains(.,'${item}')]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>ELEMENTS_EDIT_PAGE_READ_ONLY_INDICATOR</td>
 	<td>//div[contains(@class,'alert') and contains(.,'Read Only')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>INFO_BUTTON</td>
+	<td>//button[*[name()='svg'][contains(@class,'lexicon-icon-info-circle')]]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>LANGUAGE_TRANSLATED_LABEL</td>
+	<td>//button[contains(.,'${key_locale}')]//span[text()='Translated']</td>
 	<td></td>
 </tr>
 </tbody>

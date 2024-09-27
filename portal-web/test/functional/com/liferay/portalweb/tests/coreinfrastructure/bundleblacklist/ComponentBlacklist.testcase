@@ -144,11 +144,14 @@ definition {
 
 		OSGiConfig.deployOSGiConfigFile(
 			osgiConfigFileName = "com.liferay.portal.component.blacklist.internal.configuration.ComponentBlacklistConfiguration.config",
-			osgiConfigs = "blacklistComponentNames=[&quot;com.liferay.portal.security.ldap.internal.authenticator.LDAPAuth&quot; ]");
+			osgiConfigs = "blacklistComponentNames=[\"com.liferay.portal.security.ldap.internal.authenticator.LDAPAuth\" ]");
 
-		Pause(locator1 = "10000");
+		WaitForConsoleTextPresent(value1 = "Disabling com.liferay.portal.security.ldap.internal.authenticator.LDAPAuth");
 
-		GogoShell.openGogoShellAdmin();
+		ApplicationsMenu.gotoPortlet(
+			category = "System",
+			panel = "Control Panel",
+			portlet = "Gogo Shell");
 
 		GogoShell.executeCommand(commandName = "scr:info authenticator.LDAPAuth");
 
@@ -175,9 +178,9 @@ definition {
 
 		OSGiConfig.deployOSGiConfigFile(
 			osgiConfigFileName = "com.liferay.portal.component.blacklist.internal.configuration.ComponentBlacklistConfiguration.config",
-			osgiConfigs = "blacklistComponentNames=[&quot;com.liferay.portal.security.ldap.internal.authenticator.LDAPAuth&quot; ]");
+			osgiConfigs = "blacklistComponentNames=[\"com.liferay.portal.security.ldap.internal.authenticator.LDAPAuth\" ]");
 
-		Pause(locator1 = "10000");
+		WaitForConsoleTextPresent(value1 = "Disabling com.liferay.portal.security.ldap.internal.authenticator.LDAPAuth");
 
 		ApplicationsMenu.gotoPortlet(
 			category = "System",

@@ -17,9 +17,8 @@ package com.liferay.portal.kernel.servlet;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.KeyValuePair;
-import com.liferay.portal.kernel.util.PropertiesUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.SystemProperties;
 import com.liferay.portal.kernel.util.Validator;
@@ -29,7 +28,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Properties;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -55,28 +54,30 @@ public class SanitizedServletResponse extends HttpServletResponseWrapper {
 	@Override
 	public void addHeader(String name, String value) {
 		super.addHeader(
-			HttpUtil.sanitizeHeader(name), HttpUtil.sanitizeHeader(value));
+			HttpComponentsUtil.sanitizeHeader(name),
+			HttpComponentsUtil.sanitizeHeader(value));
 	}
 
 	@Override
 	public void sendRedirect(String location) throws IOException {
-		super.sendRedirect(HttpUtil.sanitizeHeader(location));
+		super.sendRedirect(HttpComponentsUtil.sanitizeHeader(location));
 	}
 
 	@Override
 	public void setCharacterEncoding(String charset) {
-		super.setCharacterEncoding(HttpUtil.sanitizeHeader(charset));
+		super.setCharacterEncoding(HttpComponentsUtil.sanitizeHeader(charset));
 	}
 
 	@Override
 	public void setContentType(String contentType) {
-		super.setContentType(HttpUtil.sanitizeHeader(contentType));
+		super.setContentType(HttpComponentsUtil.sanitizeHeader(contentType));
 	}
 
 	@Override
 	public void setHeader(String name, String value) {
 		super.setHeader(
-			HttpUtil.sanitizeHeader(name), HttpUtil.sanitizeHeader(value));
+			HttpComponentsUtil.sanitizeHeader(name),
+			HttpComponentsUtil.sanitizeHeader(value));
 	}
 
 	protected static void setXContentOptions(
@@ -140,9 +141,8 @@ public class SanitizedServletResponse extends HttpServletResponseWrapper {
 			true);
 
 	private static final String[] _X_CONTENT_TYPE_OPTIONS_URLS_EXCLUDES =
-		StringUtil.split(
-			SystemProperties.get(
-				"http.header.secure.x.content.type.options.urls.excludes"));
+		SystemProperties.getArray(
+			"http.header.secure.x.content.type.options.urls.excludes");
 
 	private static final boolean _X_FRAME_OPTIONS;
 
@@ -152,21 +152,19 @@ public class SanitizedServletResponse extends HttpServletResponseWrapper {
 		String httpHeaderSecureXFrameOptionsKey =
 			"http.header.secure.x.frame.options";
 
-		Properties properties = PropertiesUtil.getProperties(
-			SystemProperties.getProperties(),
+		Map<String, String> properties = SystemProperties.getProperties(
 			httpHeaderSecureXFrameOptionsKey.concat(StringPool.PERIOD), true);
 
 		List<KeyValuePair> xFrameOptionKVPs = new ArrayList<>(
 			properties.size());
 
-		List<String> propertyNames = new ArrayList<>(
-			properties.stringPropertyNames());
+		List<String> propertyNames = new ArrayList<>(properties.keySet());
 
 		propertyNames.sort(
 			Comparator.comparingInt(GetterUtil::getIntegerStrict));
 
 		for (String propertyName : propertyNames) {
-			String propertyValue = properties.getProperty(propertyName);
+			String propertyValue = properties.get(propertyName);
 
 			String[] propertyValueParts = StringUtil.split(
 				propertyValue, CharPool.PIPE);

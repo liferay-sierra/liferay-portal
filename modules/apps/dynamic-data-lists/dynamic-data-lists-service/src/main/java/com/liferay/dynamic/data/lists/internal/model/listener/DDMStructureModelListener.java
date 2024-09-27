@@ -39,7 +39,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marcellus Tavares
  */
-@Component(immediate = true, service = ModelListener.class)
+@Component(service = ModelListener.class)
 public class DDMStructureModelListener extends BaseModelListener<DDMStructure> {
 
 	@Override
@@ -97,13 +97,10 @@ public class DDMStructureModelListener extends BaseModelListener<DDMStructure> {
 
 				serviceContext.setAddGroupPermissions(true);
 				serviceContext.setAddGuestPermissions(true);
-
 				serviceContext.setScopeGroupId(recordSet.getGroupId());
-
-				long defaultUserId = _userLocalService.getDefaultUserId(
-					recordSet.getCompanyId());
-
-				serviceContext.setUserId(defaultUserId);
+				serviceContext.setUserId(
+					_userLocalService.getDefaultUserId(
+						recordSet.getCompanyId()));
 
 				try {
 					_ddlRecordSetLocalService.updateRecordSet(

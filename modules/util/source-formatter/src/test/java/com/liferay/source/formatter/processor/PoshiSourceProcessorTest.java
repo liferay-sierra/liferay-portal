@@ -26,4 +26,21 @@ public class PoshiSourceProcessorTest extends BaseSourceProcessorTestCase {
 		test("IncorrectComments.testmacro");
 	}
 
+	@Test
+	public void testMultipleSpacesInTaskDefinitions() throws Exception {
+		test("MultipleSpacesInTaskDefinitions.testmacro");
+	}
+
+	@Test
+	public void testPoshiPauseUsage() throws Exception {
+		test(
+			"PoshiPauseUsage.testmacro",
+			new String[] {
+				"Missing a comment before using 'Pause'",
+				"Missing a required JIRA project in comment before using " +
+					"'Pause'"
+			},
+			new Integer[] {6, 10});
+	}
+
 }

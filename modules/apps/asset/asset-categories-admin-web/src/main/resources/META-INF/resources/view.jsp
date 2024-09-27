@@ -16,14 +16,16 @@
 
 <%@ include file="/init.jsp" %>
 
+<liferay-ui:error exception="<%= DuplicateCategoryException.class %>" message="there-is-another-category-with-the-same-name-and-the-same-parent" />
+
 <liferay-ui:success key="categoryAdded" message='<%= GetterUtil.getString(MultiSessionMessages.get(renderRequest, "categoryAdded")) %>' />
 <liferay-ui:success key="categoryUpdated" message='<%= GetterUtil.getString(MultiSessionMessages.get(renderRequest, "categoryUpdated")) %>' />
 
 <clay:container-fluid
 	cssClass="container-view"
 >
-	<liferay-ui:breadcrumb
-		showLayout="<%= false %>"
+	<liferay-site-navigation:breadcrumb
+		breadcrumbEntries="<%= BreadcrumbEntriesUtil.getBreadcrumbEntries(request, true, false, false, true, true) %>"
 	/>
 
 	<clay:row>
@@ -66,12 +68,12 @@
 												</c:if>
 											</li>
 											<li>
-												<liferay-portlet:actionURL copyCurrentRenderParameters="<%= false %>" name="deleteVocabulary" var="deleteVocabulariesURL">
+												<liferay-portlet:actionURL copyCurrentRenderParameters="<%= false %>" name="/asset_categories_admin/delete_asset_vocabulary" var="deleteVocabulariesURL">
 													<portlet:param name="redirect" value="<%= assetCategoriesDisplayContext.getDefaultRedirect() %>" />
 												</liferay-portlet:actionURL>
 
 												<portlet:renderURL var="viewVocabulariesURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
-													<portlet:param name="mvcPath" value="/view_vocabularies.jsp" />
+													<portlet:param name="mvcPath" value="/view_asset_vocabularies.jsp" />
 												</portlet:renderURL>
 
 												<clay:dropdown-actions
@@ -82,6 +84,7 @@
 															"viewVocabulariesURL", viewVocabulariesURL.toString()
 														).build()
 													%>'
+													aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 													dropdownItems="<%= assetCategoriesDisplayContext.getVocabulariesDropdownItems() %>"
 													propsTransformer="js/ActionsComponentPropsTransformer"
 												/>
@@ -239,6 +242,7 @@
 								%>
 
 								<clay:dropdown-actions
+									aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 									cssClass="component-action"
 									dropdownItems="<%= assetVocabularyActionDropdownItemsProvider.getActionDropdownItems(vocabulary) %>"
 									propsTransformer="js/VocabularyActionDropdownPropsTransformer"
@@ -260,7 +264,7 @@
 						<c:if test="<%= Validator.isNotNull(description) %>">
 							<div class="mb-2">
 								<span class="mr-1"><liferay-ui:message key="description" />:</span>
-								<span class="text-secondary"><%= description %></span>
+								<span class="text-break text-secondary"><%= description %></span>
 							</div>
 						</c:if>
 					</div>
@@ -270,22 +274,10 @@
 							<liferay-ui:message arguments="<%= assetCategoriesDisplayContext.getMaximumNumberOfCategoriesPerVocabulary() %>" key="the-maximum-number-of-categories-per-vocabulary-is-x" />
 						</span>
 
-						<%
-						String linkURL = assetCategoriesDisplayContext.getLinkURL();
-						%>
-
-						<c:if test="<%= Validator.isNotNull(linkURL) %>">
-
-							<%
-							StringBundler sb = new StringBundler(3);
-
-							sb.append("<a href=\"");
-							sb.append(linkURL);
-							sb.append("\" target=\"_blank\">");
-							%>
-
-							<liferay-ui:message arguments='<%= new String[] {sb.toString(), "</a>"} %>' key="x-learn-how-x-to-tailor-categories-to-your-needs" />
-						</c:if>
+						<liferay-learn:message
+							key="general"
+							resource="asset-taglib"
+						/>
 					</p>
 
 					<c:if test="<%= assetCategoriesDisplayContext.isAssetCategoriesLimitExceeded() %>">
@@ -299,7 +291,7 @@
 					</c:if>
 
 					<clay:sheet-section>
-						<liferay-util:include page="/view_categories.jsp" servletContext="<%= application %>" />
+						<liferay-util:include page="/view_asset_categories.jsp" servletContext="<%= application %>" />
 					</clay:sheet-section>
 				</clay:sheet>
 			</c:if>

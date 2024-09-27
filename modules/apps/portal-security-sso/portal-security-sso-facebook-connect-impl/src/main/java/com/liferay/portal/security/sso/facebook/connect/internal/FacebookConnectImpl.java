@@ -17,7 +17,7 @@ package com.liferay.portal.security.sso.facebook.connect.internal;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.facebook.FacebookConnect;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.sso.facebook.connect.configuration.FacebookConnectConfiguration;
@@ -64,12 +65,12 @@ public class FacebookConnectImpl implements FacebookConnect {
 
 		String url = facebookConnectConfiguration.oauthTokenURL();
 
-		url = _http.addParameter(
+		url = HttpComponentsUtil.addParameter(
 			url, "client_id", facebookConnectConfiguration.appId());
-		url = _http.addParameter(
+		url = HttpComponentsUtil.addParameter(
 			url, "client_secret", facebookConnectConfiguration.appSecret());
-		url = _http.addParameter(url, "code", code);
-		url = _http.addParameter(
+		url = HttpComponentsUtil.addParameter(url, "code", code);
+		url = HttpComponentsUtil.addParameter(
 			url, "redirect_uri",
 			facebookConnectConfiguration.oauthRedirectURL());
 
@@ -80,7 +81,7 @@ public class FacebookConnectImpl implements FacebookConnect {
 		try {
 			String content = _http.URLtoString(options);
 
-			JSONObject contentJSONObject = JSONFactoryUtil.createJSONObject(
+			JSONObject contentJSONObject = _jsonFactory.createJSONObject(
 				content);
 
 			String accessToken = contentJSONObject.getString("access_token");
@@ -93,7 +94,7 @@ public class FacebookConnectImpl implements FacebookConnect {
 				String appSecret = facebookConnectConfiguration.appSecret();
 
 				if (!appSecret.isEmpty()) {
-					url = _http.setParameter(
+					url = HttpComponentsUtil.setParameter(
 						url, "client_secret",
 						StringBundler.concat(
 							appSecret.charAt(0), "...redacted...",
@@ -153,11 +154,11 @@ public class FacebookConnectImpl implements FacebookConnect {
 		try {
 			String graphURL = getGraphURL(companyId);
 
-			String url = _http.addParameter(
+			String url = HttpComponentsUtil.addParameter(
 				graphURL.concat(path), "access_token", accessToken);
 
 			if (Validator.isNotNull(fields)) {
-				url = _http.addParameter(url, "fields", fields);
+				url = HttpComponentsUtil.addParameter(url, "fields", fields);
 			}
 
 			Http.Options options = new Http.Options();
@@ -166,7 +167,7 @@ public class FacebookConnectImpl implements FacebookConnect {
 
 			String json = _http.URLtoString(options);
 
-			return JSONFactoryUtil.createJSONObject(json);
+			return _jsonFactory.createJSONObject(json);
 		}
 		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
@@ -237,13 +238,6 @@ public class FacebookConnectImpl implements FacebookConnect {
 		return facebookConnectConfiguration.verifiedAccountRequired();
 	}
 
-	@Reference(unbind = "-")
-	protected void setConfigurationProvider(
-		ConfigurationProvider configurationProvider) {
-
-		_configurationProvider = configurationProvider;
-	}
-
 	private FacebookConnectConfiguration _getFacebookConnectConfiguration(
 		long companyId) {
 
@@ -265,10 +259,14 @@ public class FacebookConnectImpl implements FacebookConnect {
 	private static final Log _log = LogFactoryUtil.getLog(
 		FacebookConnectImpl.class);
 
+	@Reference
 	private ConfigurationProvider _configurationProvider;
 
 	@Reference
 	private Http _http;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Portal _portal;

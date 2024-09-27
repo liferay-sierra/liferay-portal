@@ -66,7 +66,7 @@
 </c:if>
 
 <c:if test="<%= Validator.isNotNull(value) %>">
-	<span class="lfr-btn-label"><%= LanguageUtil.get(resourceBundle, value) %></span>
+	<span class="lfr-btn-label"><liferay-ui:message key="<%= value %>" /></span>
 </c:if>
 
 <c:if test='<%= Validator.isNotNull(icon) && iconAlign.equals("right") %>'>
@@ -102,13 +102,12 @@
 		Liferay.delegateClick(
 			'<%= namespace + name %>',
 			function(event) {
-				Liferay.Util.openInDialog(
-					event,
-					{
-						dialogIframe: {
-							bodyCssClass: 'dialog-with-footer'
-						}
-					}
+				event.preventDefault();
+
+				Liferay.Util.openWindow({
+					dialogIframe: {
+						bodyCssClass: 'dialog-with-footer'
+					}}
 				);
 			}
 		);

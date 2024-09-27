@@ -37,7 +37,9 @@ definition {
 	@description = "The guest cannot view private content and page."
 	@priority = "3"
 	test CannotViewPrivateContentAndPageAsGuest {
-		property custom.properties = "auth.login.prompt.enabled=true";
+		property osgi.module.configuration.file.names = "com.liferay.login.web.internal.configuration.AuthLoginConfiguration.config";
+		property osgi.module.configurations = "promptEnabled=\"true\"";
+		property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
 		property testray.component.names = "Message Boards";
 
 		task ("Add a private page") {
@@ -81,13 +83,11 @@ definition {
 
 		task ("Get blogs and message boards URL") {
 			var portalURL = PropsUtil.get("portal.url");
-
 			var blogEntryId = JSONBlog.getBlogEntryId(
 				entryTitle = "Blogs Entry Title",
 				groupName = "Test Site Name");
 
 			var blogEntryURL = "${portalURL}/web/test-site-name/test-page-name/-/blogs/${blogEntryId}";
-
 			var messageId = JSONMBMessage.getMessageIdByName(
 				groupName = "Test Site Name",
 				threadSubject = "MB Thread Message Subject");
@@ -136,6 +136,7 @@ definition {
 	@priority = "5"
 	test CannotViewPrivateContentAndPageAsUserWithoutPermissions {
 		property custom.properties = "jsonws.web.service.paths.excludes=${line.separator}mail.send.blacklist=";
+		property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
 		property testray.component.names = "Message Boards,Training";
 
 		task ("Add a new user") {
@@ -192,13 +193,11 @@ definition {
 
 		task ("Get blogs and message boards URL") {
 			var portalURL = PropsUtil.get("portal.url");
-
 			var blogEntryId = JSONBlog.getBlogEntryId(
 				entryTitle = "Blogs Entry Title",
 				groupName = "Test Site Name");
 
 			var blogEntryURL = "${portalURL}/web/test-site-name/test-page-name/-/blogs/${blogEntryId}";
-
 			var messageId = JSONMBMessage.getMessageIdByName(
 				groupName = "Test Site Name",
 				threadSubject = "MB Thread Message Subject");
@@ -246,6 +245,7 @@ definition {
 	test CannotViewPrivatePageAsUserWithoutPermissions {
 		property custom.properties = "jsonws.web.service.paths.excludes=";
 		property portal.acceptance = "true";
+		property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
 		property testray.component.names = "Permissions,Roles,Training";
 
 		task ("Add a site template") {
@@ -428,6 +428,7 @@ definition {
 	@priority = "3"
 	test ViewPrivateContentAndPageAsSiteMember {
 		property custom.properties = "jsonws.web.service.paths.excludes=${line.separator}mail.send.blacklist=";
+		property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
 		property testray.component.names = "Message Boards";
 
 		task ("Add a new user") {
@@ -490,13 +491,11 @@ definition {
 
 		task ("Get blogs and message boards URL") {
 			var portalURL = PropsUtil.get("portal.url");
-
 			var blogEntryId = JSONBlog.getBlogEntryId(
 				entryTitle = "Blogs Entry Title",
 				groupName = "Test Site Name");
 
 			var blogEntryURL = "${portalURL}/web/test-site-name/test-page-name/-/blogs/${blogEntryId}";
-
 			var messageId = JSONMBMessage.getMessageIdByName(
 				groupName = "Test Site Name",
 				threadSubject = "MB Thread Message Subject");

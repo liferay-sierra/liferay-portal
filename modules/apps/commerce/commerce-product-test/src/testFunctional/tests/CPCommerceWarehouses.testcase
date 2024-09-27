@@ -1,28 +1,18 @@
 @component-name = "portal-commerce"
 definition {
 
+	property custom.properties = "jsonws.web.service.paths.excludes=${line.separator}company.security.strangers.verify=false";
 	property portal.release = "true";
 	property portal.upstream = "true";
+	property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
 	property testray.main.component.name = "Order Management";
 
 	setUp {
-		TestCase.setUpPortalInstance();
-
-		User.firstLoginPG();
+		CommerceConfiguration.commerceSetUp();
 	}
 
 	tearDown {
-		Navigator.openURL();
-
-		if (IsElementPresent(locator1 = "UserBar#USER_AVATAR_IMAGE")) {
-			User.logoutPG();
-		}
-
-		User.firstLoginPG();
-
-		CommerceConfiguration.commerceAdminTearDown();
-
-		CommerceConfiguration.commerceInitializersTearDown();
+		CommerceConfiguration.commerceTearDown();
 	}
 
 	@description = "This is a test for COMMERCE-6207. UI inventory items lifecycle"
@@ -38,24 +28,11 @@ definition {
 
 		Click(locator1 = "Button#PLUS");
 
-		Type(
-			key_fieldLabel = "Name",
-			locator1 = "TextInput#GENERIC_TEXT_INPUT",
-			value1 = "TestWH");
+		CommerceEntry.addNewWarehousesEntry(warehouseName = "TestWH");
 
 		Check.checkToggleSwitch(
 			key_toggleSwitchLabel = "Active",
 			locator1 = "ToggleSwitch#ANY_TOGGLE_SWITCH");
-
-		if (IsElementPresent(key_accordionTitle = "geolocation", locator1 = "CommerceEntry#ACCORDION_COLLAPSED")) {
-			Click(
-				key_accordionTitle = "geolocation",
-				locator1 = "CommerceEntry#ACCORDION_COLLAPSED");
-		}
-
-		WaitForElementPresent(
-			key_specifiedCollapse = "Geolocation",
-			locator1 = "CommerceEntry#CHECK_WAREHOUSE_COLLAPSE_OPEN");
 
 		Type(
 			key_fieldLabel = "Latitude",
@@ -75,7 +52,7 @@ definition {
 
 		Click(locator1 = "Button#PLUS");
 
-		SelectFrame(locator1 = "IFrame#MODAL_BODY");
+		SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_BODY");
 
 		Type(
 			key_fieldLabel = "SKU",
@@ -93,6 +70,8 @@ definition {
 			value1 = "50");
 
 		Button.click(button = "Submit");
+
+		SelectFrameTop();
 
 		AppBuilderAdmin.searchByItem(itemName = "TestSKU");
 
@@ -246,6 +225,147 @@ definition {
 			locator1 = "CommerceNavigation#ENTRY_NAME");
 	}
 
+	@description = "COMMERCE-5979. As a user of the storefront, I should be able to see the stock quantity value of the Warehouses based on the View permission of my role"
+	@priority = "4"
+	test CanSFUsersSeeStockQuantityBasedOnViewPermissionForWarehouse {
+		property portal.acceptance = "false";
+
+		task ("Given a Minium site with a buyer user") {
+			CommerceAccelerators.initializeNewSiteViaAccelerator(siteName = "Minium");
+
+			CommerceEntry.addAccountEntryUser(
+				accountName = "Commerce Account",
+				accountType = "Business",
+				agreeToTermsAndAnswerReminderQuery = "true",
+				createNewAccount = "true",
+				requireReset = "false",
+				userEmailAddress = "buyer@liferay.com",
+				userFirstName = "Buyer",
+				userLastName = "User",
+				userRole = "Buyer",
+				userScreenName = "buyeruser",
+				userSiteMembership = "Minium");
+		}
+
+		task ("And Power User role is given to the buyer user") {
+			JSONRole.assignRoleToUser(
+				roleTitle = "Power User",
+				userEmailAddress = "buyer@liferay.com");
+		}
+
+		task ("And on Italy Warehouse, View permission is removed for User and Guest, given to Power User") {
+			CommerceNavigator.gotoPortlet(
+				category = "Inventory Management",
+				portlet = "Warehouses");
+
+			Click(
+				key_value = "Italy",
+				locator1 = "CommerceEntry#BODY_VERTICAL_ELLIPSIS");
+
+			DropdownMenuItem.click(menuItem = "Permissions");
+
+			CommercePermissions.removePermissionsPG(
+				permissionDefinitionKey = "INLINE_PERMISSIONS_VIEW_CHECKBOX",
+				roleTitles = "Guest,User");
+
+			CommercePermissions.definePermissionsPG(
+				permissionDefinitionKey = "INLINE_PERMISSIONS_VIEW_CHECKBOX",
+				roleTitles = "Power User");
+
+			IFrame.closeFrame();
+		}
+
+		task ("When the buyer clicks U-Joint product on the catalog") {
+			User.logoutPG();
+
+			CommerceLogin.miniumLogin(
+				password = "test",
+				urlAppend = "web/minium",
+				userEmailAddress = "buyer@liferay.com");
+
+			Click(
+				key_productName = "u-joint",
+				locator1 = "CommerceFrontStore#PRODUCT_CARD_IMAGE");
+		}
+
+		task ("Then sees the exact number of the stock quantity value (120)") {
+			AssertElementPresent(
+				locator1 = "CommerceFrontStore#FS_PRODUCT_STOCK_QUANTITY",
+				value1 = "120");
+		}
+	}
+
+	@description = "COMMERCE-5979. As a user of the storefront, I should be able to see a decreased stock quantity value of the Warehouses when my role does not have permission to View Warehouses"
+	@priority = "4"
+	test CanSFUsersWithoutWarehouseViewPermissionSeeDecreasedStockQuantity {
+		property portal.acceptance = "false";
+
+		task ("Given a Minium site with a buyer user") {
+			CommerceAccelerators.initializeNewSiteViaAccelerator(siteName = "Minium");
+
+			CommerceEntry.addAccountEntryUser(
+				accountName = "Commerce Account",
+				accountType = "Business",
+				agreeToTermsAndAnswerReminderQuery = "true",
+				createNewAccount = "true",
+				requireReset = "false",
+				userEmailAddress = "buyer@liferay.com",
+				userFirstName = "Buyer",
+				userLastName = "User",
+				userRole = "Buyer",
+				userScreenName = "buyeruser",
+				userSiteMembership = "Minium");
+		}
+
+		task ("And Power User role is given to the buyer user") {
+			JSONRole.assignRoleToUser(
+				roleTitle = "Power User",
+				userEmailAddress = "buyer@liferay.com");
+		}
+
+		task ("And on Italy Warehouse, View permission is removed for User and Guest, and verify Power User does not have it") {
+			CommerceNavigator.gotoPortlet(
+				category = "Inventory Management",
+				portlet = "Warehouses");
+
+			Click(
+				key_value = "Italy",
+				locator1 = "CommerceEntry#BODY_VERTICAL_ELLIPSIS");
+
+			DropdownMenuItem.click(menuItem = "Permissions");
+
+			CommercePermissions.removePermissionsPG(
+				permissionDefinitionKey = "INLINE_PERMISSIONS_VIEW_CHECKBOX",
+				roleTitles = "Guest,User");
+
+			Role.viewPermissionPG(
+				permissionDefinitionKey = "INLINE_PERMISSIONS_VIEW_CHECKBOX",
+				permissionFlagged = "false",
+				roleTitle = "Power User");
+
+			IFrame.closeFrame();
+		}
+
+		task ("When the buyer clicks U-Joint product on the catalog") {
+			User.logoutPG();
+
+			CommerceLogin.miniumLogin(
+				password = "test",
+				urlAppend = "web/minium",
+				userEmailAddress = "buyer@liferay.com");
+
+			Click(
+				key_productName = "u-joint",
+				locator1 = "CommerceFrontStore#PRODUCT_CARD_IMAGE");
+		}
+
+		task ("Then sees a decreased number of the stock quantity value (80)") {
+			AssertElementPresent(
+				locator1 = "CommerceFrontStore#FS_PRODUCT_STOCK_QUANTITY",
+				value1 = "80");
+		}
+	}
+
 	@description = "This is a test for COMMERCE-6200. Consume booked quantities of one item in multiple warehouses"
 	@priority = "3"
 	test ConsumeBookedQuantitiesFromMultipleWarehouses {
@@ -286,6 +406,7 @@ definition {
 			WaitForElementPresent(locator1 = "CommerceEntry#WAREHOUSE_INVENTORY_ITEM_QUANTITY");
 
 			var aux = selenium.getElementValue("CommerceEntry#WAREHOUSE_INVENTORY_ITEM_QUANTITY");
+
 			var previousTotal = ${previousTotal} + ${aux};
 		}
 
@@ -320,8 +441,8 @@ definition {
 		User.logoutPG();
 
 		CommerceLogin.miniumLogin(
+			newPassword = "test",
 			password = "ttest",
-			resetPassword = "test",
 			urlAppend = "web/minium",
 			userEmailAddress = "buyer@liferay.com");
 
@@ -331,11 +452,7 @@ definition {
 			productName = "ABS Sensor",
 			productQuantity = "1");
 
-		CommerceNavigator.gotoMiniCart();
-
-		Button.click(button = "View Details");
-
-		Button.click(button = "Checkout");
+		CommerceCheckout.gotoCheckout();
 
 		CommerceCheckout.initializersCheckout(
 			newAddressAddress = "Test Address",
@@ -412,6 +529,7 @@ definition {
 			WaitForElementPresent(locator1 = "CommerceEntry#WAREHOUSE_INVENTORY_ITEM_QUANTITY");
 
 			var aux = selenium.getElementValue("CommerceEntry#WAREHOUSE_INVENTORY_ITEM_QUANTITY");
+
 			var newTotal = ${newTotal} + ${aux};
 		}
 
@@ -478,8 +596,8 @@ definition {
 		User.logoutPG();
 
 		CommerceLogin.miniumLogin(
+			newPassword = "test",
 			password = "ttest",
-			resetPassword = "test",
 			urlAppend = "web/minium",
 			userEmailAddress = "buyer@liferay.com");
 
@@ -487,11 +605,7 @@ definition {
 			productName = "U-Joint",
 			productQuantity = "2");
 
-		CommerceNavigator.gotoMiniCart();
-
-		Button.click(button = "View Details");
-
-		Button.click(button = "Checkout");
+		CommerceCheckout.gotoCheckout();
 
 		CommerceCheckout.initializersCheckout(
 			newAddressAddress = "Test Address",
@@ -563,7 +677,7 @@ definition {
 
 	@description = "This is a test for COMMERCE-5706. As a system admin i want to be able to create / update and delete a new warehouse"
 	@priority = "3"
-	test CreateAndUpdateNewWarehouse {
+	test CreateEditAndDeleteWarehouseEntry {
 		property portal.acceptance = "false";
 
 		// TODO Review
@@ -588,26 +702,16 @@ definition {
 
 		Click(locator1 = "AnalyticsCloudConnection#ADD_NEW_PROPERTY_BUTTON");
 
-		Type(
-			key_fieldLabel = "Name",
-			locator1 = "TextInput#GENERIC_TEXT_INPUT",
-			value1 = "${fieldName}");
+		CommerceEntry.addNewWarehousesEntry(warehouseName = "Test Warehouse");
 
 		Type(
-			key_fieldLabel = "Description",
-			locator1 = "TextInput#GENERIC_TEXT_INPUT",
+			locator1 = "TextArea#DESCRIPTION",
 			value1 = "${fieldDescription}");
 
 		Check.checkToggleSwitch(
 			key_toggleSwitchLabel = "Active",
 			locator1 = "ToggleSwitch#ANY_TOGGLE_SWITCH");
 
-		if (IsElementPresent(key_accordionTitle = "geolocation", locator1 = "CommerceEntry#ACCORDION_COLLAPSED")) {
-			Click(
-				key_accordionTitle = "geolocation",
-				locator1 = "CommerceEntry#ACCORDION_COLLAPSED");
-		}
-
 		Type(
 			key_fieldLabel = "Latitude",
 			locator1 = "TextInput#GENERIC_TEXT_INPUT",
@@ -620,13 +724,9 @@ definition {
 
 		Button.clickSave();
 
-		CommerceNavigator.gotoEntry(entryName = "Test Warehouse");
+		Click(locator1 = "Icon#BACK");
 
-		if (IsElementPresent(key_accordionTitle = "address", locator1 = "CommerceEntry#ACCORDION_COLLAPSED")) {
-			Click(
-				key_accordionTitle = "address",
-				locator1 = "CommerceEntry#ACCORDION_COLLAPSED");
-		}
+		CommerceNavigator.gotoEntry(entryName = "Test Warehouse");
 
 		Type(
 			key_fieldLabel = "Street 1",
@@ -664,6 +764,8 @@ definition {
 			value1 = "${fieldCity}");
 
 		Button.clickSave();
+
+		Click(locator1 = "Icon#BACK");
 
 		CommerceNavigator.gotoEntry(entryName = "Test Warehouse");
 
@@ -673,19 +775,12 @@ definition {
 			value1 = "${fieldName}");
 
 		AssertTextEquals(
-			key_fieldLabel = "Description",
-			locator1 = "TextInput#GENERIC_TEXT_INPUT",
+			locator1 = "TextArea#DESCRIPTION",
 			value1 = "${fieldDescription}");
 
 		AssertChecked.assertCheckedNotVisible(
 			key_toggleSwitchLabel = "Active",
 			locator1 = "ToggleSwitch#ANY_TOGGLE_SWITCH");
-
-		if (IsElementPresent(key_accordionTitle = "address", locator1 = "CommerceEntry#ACCORDION_COLLAPSED")) {
-			Click(
-				key_accordionTitle = "address",
-				locator1 = "CommerceEntry#ACCORDION_COLLAPSED");
-		}
 
 		AssertTextEquals(
 			key_fieldLabel = "Street 1",
@@ -733,6 +828,8 @@ definition {
 			value1 = "${fieldLongitudeNumber}");
 
 		Button.clickSave();
+
+		Click(locator1 = "Icon#BACK");
 
 		Click(
 			key_text = "Test Warehouse",
@@ -740,7 +837,9 @@ definition {
 
 		MenuItem.clickNoError(menuItem = "Delete");
 
-		AssertConfirm(value1 = "Are you sure you want to delete this? It will be deleted immediately.");
+		AssertElementNotPresent(
+			key_entryName = "Test Warehouse",
+			locator1 = "CommerceNavigation#ENTRY_NAME");
 	}
 
 	@description = "This is a test for COMMERCE-5707. As a product specialist i want to be able to deactivate a warehouse"
@@ -783,6 +882,7 @@ definition {
 		for (var warehouse : list "Italy,United States - Northeast,United States - Southwest") {
 			var key_inventoryName = "${warehouse}";
 			var inventoryValue = selenium.getElementValue("CommerceEntry#INVENTORY_INPUT");
+
 			var quantity = ${quantity} + ${inventoryValue};
 		}
 
@@ -855,37 +955,33 @@ definition {
 			category = "Inventory Management",
 			portlet = "Warehouses");
 
-		Click(
-			key_metadataSetName = "Italy",
-			locator1 = "DocumentsAndMediaMetadataSets#METADATA_SETS_NAME");
+		CommerceNavigator.gotoEntry(entryName = "Italy");
 
-		if (IsElementPresent(key_accordionTitle = "channels", locator1 = "CommerceEntry#ACCORDION_COLLAPSED")) {
-			Click(
-				key_accordionTitle = "channels",
-				locator1 = "CommerceEntry#ACCORDION_COLLAPSED");
-		}
-
-		Uncheck.uncheckToggleSwitch(
-			key_toggleSwitchLabel = "Minium2 Portal",
-			locator1 = "ToggleSwitch#ANY_TOGGLE_SWITCH");
-
-		Button.clickSave();
+		Navigator.gotoNavTab(navTab = "Eligibility");
 
 		Click(
-			key_metadataSetName = "United States - Northeast",
-			locator1 = "DocumentsAndMediaMetadataSets#METADATA_SETS_NAME");
+			key_value = "Minium2 Portal",
+			locator1 = "CommerceEntry#BODY_VERTICAL_ELLIPSIS");
 
-		if (IsElementPresent(key_accordionTitle = "channels", locator1 = "CommerceEntry#ACCORDION_COLLAPSED")) {
-			Click(
-				key_accordionTitle = "channels",
-				locator1 = "CommerceEntry#ACCORDION_COLLAPSED");
-		}
+		MenuItem.click(menuItem = "Remove");
 
-		Uncheck.uncheckToggleSwitch(
-			key_toggleSwitchLabel = "Minium Portal",
-			locator1 = "ToggleSwitch#ANY_TOGGLE_SWITCH");
+		CommerceUtilities.checkSuccessAlertAppearsAndDisappears();
 
-		Button.clickSave();
+		Navigator.gotoBack();
+
+		CommerceNavigator.gotoEntry(entryName = "United States - Northeast");
+
+		Navigator.gotoNavTab(navTab = "Eligibility");
+
+		Click(
+			key_value = "Minium Portal",
+			locator1 = "CommerceEntry#BODY_VERTICAL_ELLIPSIS");
+
+		MenuItem.click(menuItem = "Remove");
+
+		Button.click(button = "Save");
+
+		CommerceUtilities.checkSuccessAlertAppearsAndDisappears();
 
 		ApplicationsMenu.gotoSite(site = "Minium");
 
@@ -946,6 +1042,7 @@ definition {
 
 		while (IsElementPresent(key_value1 = "${count1}", locator1 = "CommerceEntry#WAREHOUSE_INVENTORY_ITEM_QUANTITY")) {
 			var temp1 = selenium.getAttribute("//input[contains(@id,'_com_liferay_commerce_product_definitions_web_internal_portlet_CPDefinitionsPortlet_commerceInventoryWarehouseItemQuantity${count1}')]@value");
+
 			var amount = ${temp1} + ${amount};
 			var count1 = ${count1} + 1;
 		}
@@ -976,10 +1073,7 @@ definition {
 
 		Click(locator1 = "Button#PLUS");
 
-		Type(
-			key_fieldLabel = "Name",
-			locator1 = "TextInput#GENERIC_TEXT_INPUT",
-			value1 = "TestWH");
+		CommerceEntry.addNewWarehousesEntry(warehouseName = "TestWH");
 
 		Button.clickSave();
 
@@ -1044,25 +1138,13 @@ definition {
 			category = "Inventory Management",
 			portlet = "Warehouses");
 
-		Click(
-			key_itemName = "Italy",
-			locator1 = "AppBuilder#ITEM_ON_THE_TABLE_CLICK");
+		CommerceNavigator.gotoEntry(entryName = "Italy");
 
-		if (IsElementPresent(key_accordionTitle = "channels", locator1 = "CommerceEntry#ACCORDION_COLLAPSED")) {
-			Click(
-				key_accordionTitle = "channels",
-				locator1 = "CommerceEntry#ACCORDION_COLLAPSED");
-		}
+		Navigator.gotoNavTab(navTab = "Eligibility");
 
-		Button.clickSave();
+		CommerceEntry.setEntryEligibility(channelsEligibility = "Minium Portal");
 
-		Click(
-			key_itemName = "Italy",
-			locator1 = "AppBuilder#ITEM_ON_THE_TABLE_CLICK");
-
-		AssertChecked(
-			checkboxName = "Minium Portal",
-			locator1 = "Checkbox#ANY_CHECKBOX_CHECKED");
+		CommerceEntry.viewEntryEligibility(channelsEligibility = "Minium Portal");
 	}
 
 	@description = "This is a test for COMMERCE-6208. Concurrency management for inventory entities"
@@ -1080,23 +1162,15 @@ definition {
 			category = "Inventory Management",
 			portlet = "Warehouses");
 
-		Click(
-			key_metadataSetName = "Italy",
-			locator1 = "DocumentsAndMediaMetadataSets#METADATA_SETS_NAME");
+		CommerceNavigator.gotoEntry(entryName = "Italy");
 
 		Open.openInTheNewTab(locator1 = "${portalURL}");
-
-		var siteName = TestCase.getSiteName(siteName = "${siteName}");
-
-		SelectWindow(locator1 = "title=Home - ${siteName}");
 
 		CommerceNavigator.gotoPortlet(
 			category = "Inventory Management",
 			portlet = "Warehouses");
 
-		Click(
-			key_metadataSetName = "Italy",
-			locator1 = "DocumentsAndMediaMetadataSets#METADATA_SETS_NAME");
+		CommerceNavigator.gotoEntry(entryName = "Italy");
 
 		Type(
 			key_fieldLabel = "Name",
@@ -1133,17 +1207,11 @@ definition {
 
 		Click(locator1 = "Button#PLUS");
 
-		CommerceEntry.addNewAccountGroupsEntry(entryName = "test new warehouse");
+		CommerceEntry.addNewWarehousesEntry(warehouseName = "test new warehouse");
 
 		Check.checkToggleSwitch(
 			key_toggleSwitchLabel = "Active",
 			locator1 = "ToggleSwitch#ANY_TOGGLE_SWITCH");
-
-		if (IsElementPresent(key_accordionTitle = "geolocation", locator1 = "CommerceEntry#ACCORDION_COLLAPSED")) {
-			Click(
-				key_accordionTitle = "geolocation",
-				locator1 = "CommerceEntry#ACCORDION_COLLAPSED");
-		}
 
 		Type(
 			key_fieldLabel = "Latitude",
@@ -1156,20 +1224,6 @@ definition {
 			value1 = "50");
 
 		Button.clickSave();
-
-		CommerceNavigator.gotoPortlet(
-			category = "Product Management",
-			panel = "Commerce",
-			portlet = "Catalogs");
-
-		Click(locator1 = "Button#PLUS");
-
-		CommerceEntry.addNewCatalogsEntry(
-			catalogCurrency = "US Dollar",
-			catalogLanguage = "English (United States)",
-			catalogName = "Master");
-
-		Button.click(button = "Submit");
 
 		ApplicationsMenu.gotoPortlet(
 			category = "Product Management",
@@ -1208,9 +1262,15 @@ definition {
 
 		Search.searchCP(searchTerm = "default");
 
-		AssertVisible(
-			key_productQuantity = "50",
-			locator1 = "CommerceOrders#ORDER_DETAILS_PRODUCT_QUANTITY");
+		AssertElementPresent(
+			key_quantity = "50",
+			key_sku = "default",
+			locator1 = "CommerceInventory#INVENTORY_SKU_ON_HAND_QUANTITY");
+
+		AssertElementPresent(
+			key_quantity = "50",
+			key_sku = "default",
+			locator1 = "CommerceInventory#INVENTORY_SKU_AVAILABLE_QUANTITY");
 	}
 
 }

@@ -40,8 +40,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.commerce.product.definitions.web.internal.configuration.CPInstanceConfiguration",
-	enabled = false, immediate = true,
-	service = CheckCPInstanceMessageListener.class
+	immediate = true, service = CheckCPInstanceMessageListener.class
 )
 public class CheckCPInstanceMessageListener extends BaseMessageListener {
 
@@ -73,16 +72,14 @@ public class CheckCPInstanceMessageListener extends BaseMessageListener {
 
 	@Override
 	protected void doReceive(Message message) throws Exception {
-		_cpInstanceLocalService.checkCPInstances();
-	}
-
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
-	protected void setModuleServiceLifecycle(
-		ModuleServiceLifecycle moduleServiceLifecycle) {
+		_cpInstanceLocalService.checkCPInstances(0);
 	}
 
 	@Reference
 	private CPInstanceLocalService _cpInstanceLocalService;
+
+	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
+	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
 	@Reference
 	private SchedulerEngineHelper _schedulerEngineHelper;

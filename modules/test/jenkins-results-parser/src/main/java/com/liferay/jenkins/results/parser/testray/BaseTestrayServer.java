@@ -14,6 +14,7 @@
 
 package com.liferay.jenkins.results.parser.testray;
 
+import com.liferay.jenkins.results.parser.Dom4JUtil;
 import com.liferay.jenkins.results.parser.JenkinsMaster;
 import com.liferay.jenkins.results.parser.JenkinsResultsParserUtil;
 import com.liferay.jenkins.results.parser.TestrayResultsParserUtil;
@@ -26,11 +27,14 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -39,6 +43,40 @@ import org.json.JSONObject;
  * @author Michael Hashimoto
  */
 public abstract class BaseTestrayServer implements TestrayServer {
+
+	@Override
+	public JenkinsResultsParserUtil.HTTPAuthorization getHTTPAuthorization() {
+		return _httpAuthorization;
+	}
+
+	@Override
+	public TestrayCaseType getTestrayCaseType(String testrayCaseTypeName) {
+		if (_testrayCaseTypes != null) {
+			return _testrayCaseTypes.get(testrayCaseTypeName);
+		}
+
+		_testrayCaseTypes = new HashMap<>();
+
+		try {
+			JSONObject jsonObject = JenkinsResultsParserUtil.toJSONObject(
+				getURL() + "/home/-/testray/case_types.json");
+
+			JSONArray dataJSONArray = jsonObject.getJSONArray("data");
+
+			for (int i = 0; i < dataJSONArray.length(); i++) {
+				JSONObject dataJSONObject = dataJSONArray.getJSONObject(i);
+
+				_testrayCaseTypes.put(
+					dataJSONObject.getString("name"),
+					new TestrayCaseType(this, dataJSONObject));
+			}
+		}
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
+		}
+
+		return _testrayCaseTypes.get(testrayCaseTypeName);
+	}
 
 	@Override
 	public TestrayProject getTestrayProjectByID(int projectID) {
@@ -74,9 +112,16 @@ public abstract class BaseTestrayServer implements TestrayServer {
 			_importCaseResultsFromCI(topLevelBuild);
 		}
 
-		if (TestrayS3Bucket.googleCredentialsAvailable()) {
+		if (TestrayS3Bucket.hasGoogleApplicationCredentials()) {
 			_importCaseResultsToGCP(topLevelBuild);
 		}
+	}
+
+	@Override
+	public void setHTTPAuthorization(
+		JenkinsResultsParserUtil.HTTPAuthorization httpAuthorization) {
+
+		_httpAuthorization = httpAuthorization;
 	}
 
 	@Override
@@ -117,6 +162,10 @@ public abstract class BaseTestrayServer implements TestrayServer {
 	}
 
 	private void _importCaseResultsFromCI(TopLevelBuild topLevelBuild) {
+		if (!JenkinsResultsParserUtil.isCINode()) {
+			return;
+		}
+
 		JenkinsMaster jenkinsMaster = topLevelBuild.getJenkinsMaster();
 
 		String command = JenkinsResultsParserUtil.combine(
@@ -144,39 +193,95 @@ public abstract class BaseTestrayServer implements TestrayServer {
 	}
 
 	private void _importCaseResultsToGCP(TopLevelBuild topLevelBuild) {
-		File resultsDir = getResultsDir();
-
-		File resultsTarGzFile = new File(
-			resultsDir.getParentFile(), "results.tar.gz");
-
-		JenkinsResultsParserUtil.tarGzip(resultsDir, resultsTarGzFile);
+		if (!TestrayS3Bucket.hasGoogleApplicationCredentials()) {
+			return;
+		}
 
 		StringBuilder sb = new StringBuilder();
-
-		Date date = new Date(topLevelBuild.getStartTime());
-
-		sb.append(
-			JenkinsResultsParserUtil.toDateString(
-				date, "yyyy-MM", "America/Los_Angeles"));
-
-		sb.append("/");
 
 		JenkinsMaster jenkinsMaster = topLevelBuild.getJenkinsMaster();
 
 		sb.append(jenkinsMaster.getName());
 
-		sb.append("/");
-		sb.append(topLevelBuild.getJobName());
-		sb.append("/");
+		sb.append("-");
+
+		String jobName = topLevelBuild.getJobName();
+
+		sb.append(jobName.replaceAll("[\\(\\)]", "_"));
+
+		sb.append("-");
 		sb.append(topLevelBuild.getBuildNumber());
+		sb.append("-results.tar.gz");
+
+		File resultsDir = getResultsDir();
+
+		File gcpResultsDir = new File(
+			resultsDir.getParentFile(), "gcp-results");
+
+		try {
+			JenkinsResultsParserUtil.copy(resultsDir, gcpResultsDir);
+		}
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
+		}
+
+		for (File gcpResultFile :
+				JenkinsResultsParserUtil.findFiles(gcpResultsDir, ".*.xml")) {
+
+			try {
+				Document document = Dom4JUtil.parse(
+					JenkinsResultsParserUtil.read(gcpResultFile));
+
+				Element rootElement = document.getRootElement();
+
+				for (Element testcaseElement :
+						rootElement.elements("testcase")) {
+
+					Element propertiesElement = testcaseElement.element(
+						"properties");
+
+					for (Element propertyElement :
+							propertiesElement.elements("property")) {
+
+						String propertyName = propertyElement.attributeValue(
+							"name");
+
+						if ((propertyName == null) ||
+							!propertyName.equals("testray.testcase.warnings")) {
+
+							continue;
+						}
+
+						for (Element element : propertyElement.elements()) {
+							propertyElement.remove(element);
+						}
+					}
+				}
+
+				String gcpResultFileContent = Dom4JUtil.format(
+					rootElement, false);
+
+				gcpResultFileContent = gcpResultFileContent.replaceAll(
+					"(<property name=\"testray.testcase.warnings\" " +
+						"value=\"\\d+\")>\\s+<\\/property>",
+					"$1/>");
+
+				JenkinsResultsParserUtil.write(
+					gcpResultFile, gcpResultFileContent);
+			}
+			catch (DocumentException | IOException exception) {
+			}
+		}
+
+		File resultsTarGzFile = new File(
+			gcpResultsDir.getParentFile(), sb.toString());
+
+		JenkinsResultsParserUtil.tarGzip(gcpResultsDir, resultsTarGzFile);
 
 		TestrayS3Bucket testrayS3Bucket = TestrayS3Bucket.getInstance();
 
 		testrayS3Bucket.createTestrayS3Object(
-			sb + "/results.tar.gz", resultsTarGzFile);
-
-		testrayS3Bucket.createTestrayS3Object(
-			sb + "/.lfr-testray-completed", "");
+			"inbox/" + resultsTarGzFile.getName(), resultsTarGzFile);
 	}
 
 	private synchronized void _initTestrayProjects() {
@@ -200,7 +305,7 @@ public abstract class BaseTestrayServer implements TestrayServer {
 					"&orderByCol=testrayProjectId");
 
 				JSONObject jsonObject = JenkinsResultsParserUtil.toJSONObject(
-					projectAPIURL, true);
+					projectAPIURL, true, getHTTPAuthorization());
 
 				JSONArray dataJSONArray = jsonObject.getJSONArray("data");
 
@@ -231,6 +336,8 @@ public abstract class BaseTestrayServer implements TestrayServer {
 
 	private static final int _DELTA = 50;
 
+	private JenkinsResultsParserUtil.HTTPAuthorization _httpAuthorization;
+	private Map<String, TestrayCaseType> _testrayCaseTypes;
 	private Map<Integer, TestrayProject> _testrayProjectsByID;
 	private Map<String, TestrayProject> _testrayProjectsByName;
 	private final URL _url;

@@ -17,14 +17,13 @@ package com.liferay.dynamic.data.mapping.uad.display;
 import com.liferay.dynamic.data.mapping.constants.DDMPortletKeys;
 import com.liferay.dynamic.data.mapping.model.DDMFormInstance;
 import com.liferay.dynamic.data.mapping.model.DDMFormInstanceRecord;
-import com.liferay.dynamic.data.mapping.service.DDMFormInstanceLocalService;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.dynamic.data.mapping.uad.util.DDMUADUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
@@ -58,10 +57,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Brian Wing Shun Chan
  */
-@Component(
-	immediate = true,
-	service = {DDMFormInstanceRecordUADDisplay.class, UADDisplay.class}
-)
+@Component(service = {DDMFormInstanceRecordUADDisplay.class, UADDisplay.class})
 public class DDMFormInstanceRecordUADDisplay
 	extends BaseDDMFormInstanceRecordUADDisplay {
 
@@ -113,7 +109,7 @@ public class DDMFormInstanceRecordUADDisplay
 				new String[] {
 					StringBundler.concat(
 						ddmFormInstanceRecord.getUserName(), " - ",
-						LanguageUtil.get(
+						_language.get(
 							httpServletRequest, "personal-data-erasure"))
 				}
 			).build());
@@ -145,7 +141,7 @@ public class DDMFormInstanceRecordUADDisplay
 			sb.append(DDMUADUtil.getFormattedName(ddmFormInstance));
 
 			sb.append(StringPool.SPACE);
-			sb.append(LanguageUtil.get(locale, "record"));
+			sb.append(_language.get(locale, "record"));
 			sb.append(StringPool.SPACE);
 			sb.append(StringPool.POUND);
 			sb.append(_getIndex(ddmFormInstanceRecord) + 1);
@@ -264,14 +260,14 @@ public class DDMFormInstanceRecordUADDisplay
 	private static final Log _log = LogFactoryUtil.getLog(
 		DDMFormInstanceRecordUADDisplay.class);
 
-	@Reference
-	private DDMFormInstanceLocalService _ddmFormInstanceLocalService;
-
 	private final Map<Long, DDMFormInstanceRecordUADUserCache>
 		_ddmFormInstanceRecordUADUserCacheMap = new HashMap<>();
 
 	@Reference
 	private DDMFormInstanceUADDisplay _ddmFormInstanceUADDisplay;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

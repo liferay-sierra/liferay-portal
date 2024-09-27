@@ -12,6 +12,7 @@
  * details.
  */
 
+import ClayEmptyState from '@clayui/empty-state';
 import ClayLabel from '@clayui/label';
 import ClayList from '@clayui/list';
 import ClayLoadingIndicator from '@clayui/loading-indicator';
@@ -20,21 +21,20 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React, {useContext} from 'react';
 
-import EmptyResultMessage from '../../EmptyResultMessage';
-import ActionsDropdownRenderer from '../../data_renderers/ActionsDropdownRenderer';
+import Actions from '../../actions/Actions';
 
 function Email({
 	actionDropdownItems,
 	author,
 	borderBottom,
-	dataSetContext,
 	date,
+	frontendDataSetContext,
 	href,
 	status,
 	subject,
 	summary,
 }) {
-	const {openSidePanel} = useContext(dataSetContext);
+	const {openSidePanel} = useContext(frontendDataSetContext);
 
 	function handleClickOnSubject(event) {
 		event.preventDefault();
@@ -113,9 +113,7 @@ function Email({
 
 				{actionDropdownItems.length ? (
 					<div className="col-auto d-flex flex-column justify-content-center">
-						<ActionsDropdownRenderer
-							actions={actionDropdownItems}
-						/>
+						<Actions actions={actionDropdownItems} />
 					</div>
 				) : null}
 			</div>
@@ -145,15 +143,23 @@ Email.defaultProps = {
 	actionItems: [],
 };
 
-function EmailsList({dataLoading, dataSetContext, items}) {
-	const {style} = useContext(dataSetContext);
+function EmailsList({dataLoading, frontendDataSetContext, items}) {
+	const {style} = useContext(frontendDataSetContext);
 
 	if (dataLoading) {
 		return <ClayLoadingIndicator className="mt-7" />;
 	}
 
 	if (!items?.length) {
-		return <EmptyResultMessage />;
+		return (
+			<ClayEmptyState
+				description={Liferay.Language.get(
+					'sorry,-no-results-were-found'
+				)}
+				imgSrc={`${themeDisplay.getPathThemeImages()}/states/search_state.gif`}
+				title={Liferay.Language.get('no-results-found')}
+			/>
+		);
 	}
 
 	return (
@@ -168,7 +174,7 @@ function EmailsList({dataLoading, dataSetContext, items}) {
 					key={i}
 					{...item}
 					borderBottom={i !== items.length - 1}
-					dataSetContext={dataSetContext}
+					frontendDataSetContext={frontendDataSetContext}
 				/>
 			))}
 		</ClayList>
@@ -177,7 +183,7 @@ function EmailsList({dataLoading, dataSetContext, items}) {
 
 EmailsList.propTypes = {
 	dataRenderers: PropTypes.object,
-	dataSetContext: PropTypes.any,
+	frontendDataSetContext: PropTypes.any,
 	items: PropTypes.array,
 };
 

@@ -47,7 +47,6 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
  * @author Marcellus Tavares
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + DDLPortletKeys.DYNAMIC_DATA_LISTS,
 		"javax.portlet.name=" + DDLPortletKeys.DYNAMIC_DATA_LISTS_DISPLAY,
@@ -99,27 +98,16 @@ public class ExportRecordSetMVCResourceCommand extends BaseMVCResourceCommand {
 			MimeTypesUtil.getContentType(fileName));
 	}
 
-	@Reference(unbind = "-")
-	protected void setDDLExporterFactory(
-		DDLExporterFactory ddlExporterFactory) {
-
-		_ddlExporterFactory = ddlExporterFactory;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDLRecordSetService(
-		DDLRecordSetService ddlRecordSetService) {
-
-		_ddlRecordSetService = ddlRecordSetService;
-	}
-
 	protected void unsetDDLWebConfigurationActivator(
 		DDLWebConfigurationActivator ddlWebConfigurationActivator) {
 
 		_ddlWebConfigurationActivator = null;
 	}
 
+	@Reference
 	private DDLExporterFactory _ddlExporterFactory;
+
+	@Reference
 	private DDLRecordSetService _ddlRecordSetService;
 
 	@Reference(

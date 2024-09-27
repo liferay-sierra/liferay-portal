@@ -62,7 +62,7 @@ public class MessageBoardMessageSerDes {
 		sb.append("{");
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+			"yyyy-MM-dd'T'HH:mm:ssXX");
 
 		if (messageBoardMessage.getActions() != null) {
 			if (sb.length() > 1) {
@@ -224,6 +224,16 @@ public class MessageBoardMessageSerDes {
 			sb.append(_escape(messageBoardMessage.getFriendlyUrlPath()));
 
 			sb.append("\"");
+		}
+
+		if (messageBoardMessage.getHasCompanyMx() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"hasCompanyMx\": ");
+
+			sb.append(messageBoardMessage.getHasCompanyMx());
 		}
 
 		if (messageBoardMessage.getHeadline() != null) {
@@ -428,7 +438,7 @@ public class MessageBoardMessageSerDes {
 		Map<String, String> map = new TreeMap<>();
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+			"yyyy-MM-dd'T'HH:mm:ssXX");
 
 		if (messageBoardMessage.getActions() == null) {
 			map.put("actions", null);
@@ -536,6 +546,15 @@ public class MessageBoardMessageSerDes {
 			map.put(
 				"friendlyUrlPath",
 				String.valueOf(messageBoardMessage.getFriendlyUrlPath()));
+		}
+
+		if (messageBoardMessage.getHasCompanyMx() == null) {
+			map.put("hasCompanyMx", null);
+		}
+		else {
+			map.put(
+				"hasCompanyMx",
+				String.valueOf(messageBoardMessage.getHasCompanyMx()));
 		}
 
 		if (messageBoardMessage.getHeadline() == null) {
@@ -761,6 +780,12 @@ public class MessageBoardMessageSerDes {
 				if (jsonParserFieldValue != null) {
 					messageBoardMessage.setFriendlyUrlPath(
 						(String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "hasCompanyMx")) {
+				if (jsonParserFieldValue != null) {
+					messageBoardMessage.setHasCompanyMx(
+						(Boolean)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "headline")) {

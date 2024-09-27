@@ -20,22 +20,27 @@ import com.liferay.exportimport.test.util.lar.BaseStagedModelDataHandlerTestCase
 import com.liferay.knowledge.base.constants.KBArticleConstants;
 import com.liferay.knowledge.base.constants.KBFolderConstants;
 import com.liferay.knowledge.base.model.KBArticle;
-import com.liferay.knowledge.base.service.KBArticleLocalServiceUtil;
+import com.liferay.knowledge.base.service.KBArticleLocalService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.StagedModel;
 import com.liferay.portal.kernel.service.ClassNameLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.test.rule.Inject;
+import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -45,6 +50,11 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 public class KBArticleStagedModelDataHandlerTest
 	extends BaseStagedModelDataHandlerTestCase {
+
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new LiferayIntegrationTestRule();
 
 	@Test
 	public void testExportedKBArticleClassNameIdEqualsZero() throws Exception {
@@ -88,7 +98,7 @@ public class KBArticleStagedModelDataHandlerTest
 
 		KBArticle kbArticle = (KBArticle)stagedModel;
 
-		KBArticleLocalServiceUtil.moveKBArticle(
+		_kbArticleLocalService.moveKBArticle(
 			TestPropsValues.getUserId(), kbArticle.getResourcePrimKey(),
 			ClassNameLocalServiceUtil.getClassNameId(
 				KBFolderConstants.getClassName()),
@@ -154,7 +164,7 @@ public class KBArticleStagedModelDataHandlerTest
 	protected StagedModel getStagedModel(String uuid, Group group)
 		throws PortalException {
 
-		return KBArticleLocalServiceUtil.getKBArticleByUuidAndGroupId(
+		return _kbArticleLocalService.getKBArticleByUuidAndGroupId(
 			uuid, group.getGroupId());
 	}
 
@@ -168,15 +178,19 @@ public class KBArticleStagedModelDataHandlerTest
 			ServiceContext serviceContext)
 		throws Exception {
 
-		return KBArticleLocalServiceUtil.addKBArticle(
+		return _kbArticleLocalService.addKBArticle(
 			null, serviceContext.getUserId(), parentResourceClassNameId,
 			parentResourcePrimKey, StringUtil.randomString(),
 			StringUtil.randomString(), StringUtil.randomString(),
-			StringUtil.randomString(), null, null, null, serviceContext);
+			StringUtil.randomString(), null, null, null, null, null,
+			serviceContext);
 	}
 
 	private ServiceContext _createServiceContext(Group group) throws Exception {
 		return ServiceContextTestUtil.getServiceContext(group.getGroupId());
 	}
+
+	@Inject
+	private KBArticleLocalService _kbArticleLocalService;
 
 }

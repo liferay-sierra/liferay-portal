@@ -153,14 +153,11 @@ public class DLFileEntryTypeRelatedInfoCollectionProvider
 			ServiceContext serviceContext =
 				ServiceContextThreadLocal.getServiceContext();
 
-			long[] currentAndAncestorSiteAndDepotGroupIds =
-				SiteConnectedGroupGroupProviderUtil.
-					getCurrentAndAncestorSiteAndDepotGroupIds(
-						serviceContext.getScopeGroupId(), true);
-
 			if ((_dlFileEntryType.getGroupId() == 0) ||
 				ArrayUtil.contains(
-					currentAndAncestorSiteAndDepotGroupIds,
+					SiteConnectedGroupGroupProviderUtil.
+						getCurrentAndAncestorSiteAndDepotGroupIds(
+							serviceContext.getScopeGroupId(), true),
 					_dlFileEntryType.getGroupId())) {
 
 				return true;
@@ -208,7 +205,6 @@ public class DLFileEntryTypeRelatedInfoCollectionProvider
 
 		searchContext.setEntryClassNames(
 			new String[] {DLFileEntryConstants.getClassName()});
-
 		searchContext.setGroupIds(
 			new long[] {serviceContext.getScopeGroupId()});
 

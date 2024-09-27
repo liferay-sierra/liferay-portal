@@ -37,7 +37,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pavel Savinov
  */
 @Component(
-	immediate = true,
 	property = "layout.type=" + LayoutConstants.TYPE_LINK_TO_LAYOUT,
 	service = LayoutTypeController.class
 )
@@ -108,26 +107,28 @@ public class LinkToPageLayoutTypeController
 	}
 
 	@Override
-	protected String getViewPage() {
-		return StringPool.BLANK;
+	protected ServletContext getServletContext() {
+		return _servletContext;
 	}
 
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.layout.type.controller.link.to.page)",
-		unbind = "-"
-	)
-	protected void setServletContext(ServletContext servletContext) {
-		this.servletContext = servletContext;
+	@Override
+	protected String getViewPage() {
+		return StringPool.BLANK;
 	}
 
 	private static final String _EDIT_PAGE = "/layout/edit/link_to_layout.jsp";
 
 	private static final String _URL =
-		"${liferay:mainPath}/portal/layout?p_v_l_s_g_id=${liferay:pvlsgid}&" +
-			"groupId=${liferay:groupId}&privateLayout=${privateLayout}&" +
-				"layoutId=${linkToLayoutId}";
+		"${liferay:mainPath}/portal/layout?p_l_id=0&p_v_l_s_g_id=" +
+			"${liferay:pvlsgid}&groupId=${liferay:groupId}&privateLayout=" +
+				"${privateLayout}&layoutId=${linkToLayoutId}";
 
 	@Reference
 	private ItemSelector _itemSelector;
+
+	@Reference(
+		target = "(osgi.web.symbolicname=com.liferay.layout.type.controller.link.to.page)"
+	)
+	private ServletContext _servletContext;
 
 }

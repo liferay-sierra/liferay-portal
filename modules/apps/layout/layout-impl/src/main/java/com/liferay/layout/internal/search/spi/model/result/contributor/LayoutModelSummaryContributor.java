@@ -20,7 +20,7 @@ import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Summary;
 import com.liferay.portal.kernel.search.highlight.HighlightUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.Html;
+import com.liferay.portal.kernel.util.HtmlParser;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -37,7 +37,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Vagner B.C
  */
 @Component(
-	immediate = true,
 	property = "indexer.class.name=com.liferay.portal.kernel.model.Layout",
 	service = ModelSummaryContributor.class
 )
@@ -63,7 +62,7 @@ public class LayoutModelSummaryContributor implements ModelSummaryContributor {
 		content = StringUtil.replace(
 			content, _HIGHLIGHT_TAGS, _ESCAPE_SAFE_HIGHLIGHTS);
 
-		content = _html.extractText(content);
+		content = _htmlParser.extractText(content);
 
 		content = StringUtil.replace(
 			content, _ESCAPE_SAFE_HIGHLIGHTS, _HIGHLIGHT_TAGS);
@@ -80,7 +79,14 @@ public class LayoutModelSummaryContributor implements ModelSummaryContributor {
 			HighlightUtil.HIGHLIGHT_TAG_OPEN,
 			HighlightUtil.HIGHLIGHT_TAG_CLOSE);
 
-		Summary summary = new Summary(locale, name, content);
+		Summary summary = null;
+
+		if (Validator.isBlank(snippet)) {
+			summary = new Summary(locale, name, content);
+		}
+		else {
+			summary = new Summary(locale, name, snippet);
+		}
 
 		summary.setMaxContentLength(200);
 
@@ -96,6 +102,6 @@ public class LayoutModelSummaryContributor implements ModelSummaryContributor {
 	};
 
 	@Reference
-	private Html _html;
+	private HtmlParser _htmlParser;
 
 }

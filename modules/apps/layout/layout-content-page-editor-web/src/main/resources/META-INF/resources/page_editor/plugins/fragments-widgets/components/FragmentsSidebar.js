@@ -13,23 +13,32 @@
  */
 
 import {ClayButtonWithIcon} from '@clayui/button';
-import React, {useMemo, useState} from 'react';
+import {sub} from 'frontend-js-web';
+import React, {useEffect, useMemo, useState} from 'react';
 
+import {ReorderSetsModal} from '../../../app/components/ReorderSetsModal';
 import {FRAGMENTS_DISPLAY_STYLES} from '../../../app/config/constants/fragmentsDisplayStyles';
+import {HIGHLIGHTED_COLLECTION_ID} from '../../../app/config/constants/highlightedCollectionId';
 import {LAYOUT_DATA_ITEM_TYPES} from '../../../app/config/constants/layoutDataItemTypes';
-import {useSelector} from '../../../app/contexts/StoreContext';
-import {useWidgets} from '../../../app/contexts/WidgetsContext';
+import {config} from '../../../app/config/index';
+import {
+	useDispatch,
+	useSelector,
+	useSelectorRef,
+} from '../../../app/contexts/StoreContext';
+import selectWidgetFragmentEntryLinks from '../../../app/selectors/selectWidgetFragmentEntryLinks';
+import loadWidgets from '../../../app/thunks/loadWidgets';
+import isNullOrUndefined from '../../../app/utils/isNullOrUndefined';
 import SearchForm from '../../../common/components/SearchForm';
-import SidebarPanelContent from '../../../common/components/SidebarPanelContent';
+import SearchResultsMessage from '../../../common/components/SearchResultsMessage';
 import SidebarPanelHeader from '../../../common/components/SidebarPanelHeader';
+import {useSessionState} from '../../../core/hooks/useSessionState';
 import SearchResultsPanel from './SearchResultsPanel';
 import TabsPanel from './TabsPanel';
 
-const FRAGMENTS_DISPLAY_STYLE_KEY = 'FRAGMENTS_DISPLAY_STYLE_KEY';
-
 export const COLLECTION_IDS = {
-	fragments: 'fragments',
-	widgets: 'widgets',
+	fragments: 0,
+	widgets: 1,
 };
 
 const collectionFilter = (collections, searchValue) => {
@@ -48,6 +57,10 @@ const collectionFilter = (collections, searchValue) => {
 
 	return collections
 		.reduce((acc, collection) => {
+			if (collection.collectionId === HIGHLIGHTED_COLLECTION_ID) {
+				return acc;
+			}
+
 			if (itemFilter(collection)) {
 				return [...acc, collection];
 			}
@@ -82,6 +95,7 @@ const normalizeWidget = (widget) => {
 			used: widget.used,
 		},
 		disabled: !widget.instanceable && widget.used,
+		highlighted: widget.highlighted,
 		icon: widget.instanceable ? 'square-hole-multi' : 'square-hole',
 		itemId: widget.portletId,
 		label: widget.title,
@@ -93,7 +107,7 @@ const normalizeWidget = (widget) => {
 	};
 };
 
-const normalizeCollections = (collection) => {
+const normalizeCollection = (collection) => {
 	const normalizedElement = {
 		children: collection.portlets.map(normalizeWidget),
 		collectionId: collection.path,
@@ -102,43 +116,49 @@ const normalizeCollections = (collection) => {
 
 	if (collection.categories?.length) {
 		normalizedElement.collections = collection.categories.map(
-			normalizeCollections
+			normalizeCollection
 		);
 	}
 
 	return normalizedElement;
 };
 
-const normalizeFragmentEntry = (fragmentEntry) => {
-	if (!fragmentEntry.fragmentEntryKey) {
-		return fragmentEntry;
-	}
-
-	return {
-		data: {
-			fragmentEntryKey: fragmentEntry.fragmentEntryKey,
-			groupId: fragmentEntry.groupId,
-			type: fragmentEntry.type,
-		},
-		icon: fragmentEntry.icon,
-		itemId: fragmentEntry.fragmentEntryKey,
-		label: fragmentEntry.name,
-		preview: fragmentEntry.imagePreviewURL,
-		type: LAYOUT_DATA_ITEM_TYPES.fragment,
-	};
-};
+const normalizeFragmentEntry = (fragmentEntry) => ({
+	data: {
+		fragmentEntryKey: fragmentEntry.fragmentEntryKey,
+		groupId: fragmentEntry.groupId,
+		type: fragmentEntry.type,
+	},
+	highlighted: fragmentEntry.highlighted,
+	icon: fragmentEntry.icon,
+	itemId: fragmentEntry.fragmentEntryKey,
+	label: fragmentEntry.name,
+	preview: fragmentEntry.imagePreviewURL,
+	type: fragmentEntry.itemType || LAYOUT_DATA_ITEM_TYPES.fragment,
+});
 
 export default function FragmentsSidebar() {
 	const fragments = useSelector((state) => state.fragments);
-	const widgets = useWidgets();
+	const widgets = useSelector((state) => state.widgets);
 
-	const [activeTabId, setActiveTabId] = useState(COLLECTION_IDS.fragments);
-	const [displayStyle, setDisplayStyle] = useState(
-		window.sessionStorage.getItem(FRAGMENTS_DISPLAY_STYLE_KEY) ||
-			FRAGMENTS_DISPLAY_STYLES.LIST
+	const dispatch = useDispatch();
+	const widgetFragmentEntryLinksRef = useSelectorRef(
+		selectWidgetFragmentEntryLinks
+	);
+	const [loadingWidgets, setLoadingWidgets] = useState(false);
+
+	const [activeTabId, setActiveTabId] = useSessionState(
+		`${config.portletNamespace}_fragments-sidebar_active-tab-id`,
+		0
 	);
 
-	const [searchValue, setSearchValue] = useState('');
+	const [displayStyle, setDisplayStyle] = useSessionState(
+		'FRAGMENTS_DISPLAY_STYLE_KEY',
+		FRAGMENTS_DISPLAY_STYLES.LIST
+	);
+
+	const [searchValue, setSearchValue] = useState(null);
+	const [showReorderModal, setShowReorderModal] = useState(false);
 
 	const tabs = useMemo(
 		() => [
@@ -154,9 +174,11 @@ export default function FragmentsSidebar() {
 				label: Liferay.Language.get('fragments'),
 			},
 			{
-				collections: widgets.map((collection) =>
-					normalizeCollections(collection)
-				),
+				collections: widgets
+					? widgets.map((collection) =>
+							normalizeCollection(collection)
+					  )
+					: [],
 				id: COLLECTION_IDS.widgets,
 				label: Liferay.Language.get('widgets'),
 			},
@@ -183,17 +205,54 @@ export default function FragmentsSidebar() {
 	const displayStyleButtonDisabled =
 		searchValue || activeTabId === COLLECTION_IDS.widgets;
 
+	const numberOfResults = useMemo(
+		() =>
+			isNullOrUndefined(searchValue)
+				? null
+				: filteredTabs.flatMap((tab) => tab.collections).length,
+
+		[filteredTabs, searchValue]
+	);
+
+	useEffect(() => {
+		if (searchValue && !widgets) {
+			setLoadingWidgets(true);
+
+			dispatch(
+				loadWidgets({
+					fragmentEntryLinks: widgetFragmentEntryLinksRef.current,
+				})
+			).then(() => setLoadingWidgets(false));
+		}
+	}, [dispatch, searchValue, widgetFragmentEntryLinksRef, widgets]);
+
 	return (
 		<>
 			<SidebarPanelHeader>
 				{Liferay.Language.get('fragments-and-widgets')}
 			</SidebarPanelHeader>
 
-			<SidebarPanelContent className="page-editor__sidebar__fragments-widgets-panel">
-				<div className="align-items-center d-flex justify-content-between mb-3">
+			<SearchResultsMessage numberOfResults={numberOfResults} />
+
+			<div className="d-flex flex-column page-editor__sidebar__fragments-widgets-panel">
+				<div className="align-items-center d-flex flex-shrink-0 justify-content-between mb-3 px-3">
 					<SearchForm
 						className="flex-grow-1 mb-0"
+						label={Liferay.Language.get(
+							'search-fragments-and-widgets'
+						)}
 						onChange={setSearchValue}
+					/>
+
+					<ClayButtonWithIcon
+						borderless
+						className="lfr-portal-tooltip ml-2 mt-0"
+						data-tooltip-align="bottom-right"
+						displayType="secondary"
+						onClick={() => setShowReorderModal(true)}
+						small
+						symbol="order-arrow"
+						title={Liferay.Language.get('reorder-sets')}
 					/>
 
 					<ClayButtonWithIcon
@@ -203,16 +262,10 @@ export default function FragmentsSidebar() {
 						disabled={displayStyleButtonDisabled}
 						displayType="secondary"
 						onClick={() => {
-							const nextDisplayStyle =
+							setDisplayStyle(
 								displayStyle === FRAGMENTS_DISPLAY_STYLES.LIST
 									? FRAGMENTS_DISPLAY_STYLES.CARDS
-									: FRAGMENTS_DISPLAY_STYLES.LIST;
-
-							setDisplayStyle(nextDisplayStyle);
-
-							window.sessionStorage.setItem(
-								FRAGMENTS_DISPLAY_STYLE_KEY,
-								nextDisplayStyle
+									: FRAGMENTS_DISPLAY_STYLES.LIST
 							);
 						}}
 						small
@@ -222,7 +275,7 @@ export default function FragmentsSidebar() {
 								? 'cards2'
 								: 'list'
 						}
-						title={Liferay.Util.sub(
+						title={sub(
 							Liferay.Language.get('switch-to-x-view'),
 							displayStyle === FRAGMENTS_DISPLAY_STYLES.LIST
 								? Liferay.Language.get('card')
@@ -232,7 +285,10 @@ export default function FragmentsSidebar() {
 				</div>
 
 				{searchValue ? (
-					<SearchResultsPanel filteredTabs={filteredTabs} />
+					<SearchResultsPanel
+						filteredTabs={filteredTabs}
+						loading={loadingWidgets}
+					/>
 				) : (
 					<TabsPanel
 						activeTabId={activeTabId}
@@ -241,7 +297,13 @@ export default function FragmentsSidebar() {
 						tabs={tabs}
 					/>
 				)}
-			</SidebarPanelContent>
+			</div>
+
+			{showReorderModal && (
+				<ReorderSetsModal
+					onCloseModal={() => setShowReorderModal(false)}
+				/>
+			)}
 		</>
 	);
 }

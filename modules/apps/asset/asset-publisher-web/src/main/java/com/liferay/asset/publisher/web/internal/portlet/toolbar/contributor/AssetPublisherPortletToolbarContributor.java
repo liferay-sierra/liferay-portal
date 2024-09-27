@@ -20,14 +20,14 @@ import com.liferay.asset.publisher.web.internal.display.context.AssetPublisherDi
 import com.liferay.asset.publisher.web.internal.helper.AssetPublisherWebHelper;
 import com.liferay.asset.util.AssetHelper;
 import com.liferay.asset.util.AssetPublisherAddItemHolder;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.toolbar.contributor.BasePortletToolbarContributor;
 import com.liferay.portal.kernel.portlet.toolbar.contributor.PortletToolbarContributor;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.servlet.taglib.ui.MenuItem;
 import com.liferay.portal.kernel.servlet.taglib.ui.URLMenuItem;
@@ -149,7 +149,7 @@ public class AssetPublisherPortletToolbarContributor
 		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
 			"content.Language", themeDisplay.getLocale(), getClass());
 
-		String title = LanguageUtil.get(
+		String title = _language.get(
 			resourceBundle, "add-content-select-scope-and-type");
 
 		urlMenuItem.setData(
@@ -196,10 +196,9 @@ public class AssetPublisherPortletToolbarContributor
 				HtmlUtil.escape(portletDisplay.getNamespace()) + "editAsset"
 			).put(
 				"title",
-				LanguageUtil.format(
+				_language.format(
 					themeDisplay.getLocale(), "new-x", message, false)
 			).build());
-
 		urlMenuItem.setLabel(message);
 
 		long curGroupId = groupId;
@@ -224,11 +223,10 @@ public class AssetPublisherPortletToolbarContributor
 				themeDisplay.getLayout(), portletDisplay.getId(),
 				assetPublisherDisplayContext.getPortletResource());
 
-		String url = _assetHelper.getAddURLPopUp(
-			curGroupId, themeDisplay.getPlid(), portletURL,
-			addDisplayPageParameter, themeDisplay.getLayout());
-
-		urlMenuItem.setURL(url);
+		urlMenuItem.setURL(
+			_assetHelper.getAddURLPopUp(
+				curGroupId, themeDisplay.getPlid(), portletURL,
+				addDisplayPageParameter, themeDisplay.getLayout()));
 
 		return urlMenuItem;
 	}
@@ -287,6 +285,9 @@ public class AssetPublisherPortletToolbarContributor
 
 	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

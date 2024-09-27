@@ -62,6 +62,7 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.UnicodeProperties;
@@ -140,7 +141,7 @@ public class LayoutSetPrototypePropagationTest
 	public void testLayoutDeleteAndReadWithSameFriendlyURL() throws Exception {
 		setLinkEnabled(true);
 
-		Layout layout = LayoutTestUtil.addLayout(
+		Layout layout = LayoutTestUtil.addTypePortletLayout(
 			_layoutSetPrototypeGroup.getGroupId(), "test", true);
 
 		String friendlyURL = layout.getFriendlyURL();
@@ -156,7 +157,7 @@ public class LayoutSetPrototypePropagationTest
 		LayoutLocalServiceUtil.deleteLayout(
 			layout, ServiceContextTestUtil.getServiceContext());
 
-		Layout newLayout = LayoutTestUtil.addLayout(
+		Layout newLayout = LayoutTestUtil.addTypePortletLayout(
 			_layoutSetPrototypeGroup.getGroupId(), "test", true);
 
 		Assert.assertEquals(friendlyURL, newLayout.getFriendlyURL());
@@ -219,7 +220,7 @@ public class LayoutSetPrototypePropagationTest
 
 		setLinkEnabled(true);
 
-		LayoutTestUtil.addLayout(_layoutSetPrototypeGroup, true);
+		LayoutTestUtil.addTypePortletLayout(_layoutSetPrototypeGroup, true);
 
 		Assert.assertEquals(
 			_initialPrototypeLayoutsCount, getGroupLayoutCount());
@@ -245,17 +246,16 @@ public class LayoutSetPrototypePropagationTest
 
 		setLinkEnabled(true);
 
-		LayoutTestUtil.addLayout(group.getGroupId(), "test", false);
-		LayoutTestUtil.addLayout(
+		LayoutTestUtil.addTypePortletLayout(group.getGroupId(), "test", false);
+		LayoutTestUtil.addTypePortletLayout(
 			_layoutSetPrototypeGroup.getGroupId(), "test", true);
 
 		propagateChanges(group);
 
-		layoutSet = LayoutSetLocalServiceUtil.getLayoutSet(
-			layoutSet.getLayoutSetId());
-
 		List<Layout> mergeFailFriendlyURLLayouts =
-			SitesUtil.getMergeFailFriendlyURLLayouts(layoutSet);
+			SitesUtil.getMergeFailFriendlyURLLayouts(
+				LayoutSetLocalServiceUtil.getLayoutSet(
+					layoutSet.getLayoutSetId()));
 
 		Assert.assertEquals(
 			mergeFailFriendlyURLLayouts.toString(),
@@ -274,10 +274,10 @@ public class LayoutSetPrototypePropagationTest
 
 		setLinkEnabled(true);
 
-		Layout layout = LayoutTestUtil.addLayout(
+		Layout layout = LayoutTestUtil.addTypePortletLayout(
 			group.getGroupId(), "test", false);
 
-		LayoutTestUtil.addLayout(
+		LayoutTestUtil.addTypePortletLayout(
 			_layoutSetPrototypeGroup.getGroupId(), "test", true);
 
 		propagateChanges(group);
@@ -286,11 +286,10 @@ public class LayoutSetPrototypePropagationTest
 
 		propagateChanges(group);
 
-		layoutSet = LayoutSetLocalServiceUtil.getLayoutSet(
-			layoutSet.getLayoutSetId());
-
 		List<Layout> mergeFailFriendlyURLLayouts =
-			SitesUtil.getMergeFailFriendlyURLLayouts(layoutSet);
+			SitesUtil.getMergeFailFriendlyURLLayouts(
+				LayoutSetLocalServiceUtil.getLayoutSet(
+					layoutSet.getLayoutSetId()));
 
 		Assert.assertEquals(
 			mergeFailFriendlyURLLayouts.toString(),
@@ -320,6 +319,38 @@ public class LayoutSetPrototypePropagationTest
 	@Test
 	public void testLayoutPropagationWithLinkEnabled() throws Exception {
 		doTestLayoutPropagation(true);
+	}
+
+	@Test
+	public void testLayoutPropagationWithMasterLayout() throws Exception {
+		Layout siteTemplateMasterLayout = LayoutTestUtil.addTypeContentLayout(
+			_layoutSetPrototypeGroup, true, false);
+
+		LayoutTestUtil.addTypeContentLayout(
+			_layoutSetPrototypeGroup, true, false,
+			siteTemplateMasterLayout.getPlid());
+
+		propagateChanges(group);
+
+		LayoutTestUtil.addTypeContentLayout(
+			_layoutSetPrototypeGroup, true, false,
+			siteTemplateMasterLayout.getPlid());
+
+		propagateChanges(group);
+
+		Assert.assertEquals(
+			0,
+			LayoutLocalServiceUtil.getMasterLayoutsCount(
+				group.getGroupId(), siteTemplateMasterLayout.getPlid()));
+
+		Layout siteMasterLayout = LayoutLocalServiceUtil.getFriendlyURLLayout(
+			group.getGroupId(), false,
+			siteTemplateMasterLayout.getFriendlyURL());
+
+		Assert.assertEquals(
+			4,
+			LayoutLocalServiceUtil.getMasterLayoutsCount(
+				group.getGroupId(), siteMasterLayout.getPlid()));
 	}
 
 	@Test
@@ -360,7 +391,7 @@ public class LayoutSetPrototypePropagationTest
 		try {
 			portlet.setPreferencesUniquePerLayout(false);
 
-			_layoutSetPrototypeLayout = LayoutTestUtil.addLayout(
+			_layoutSetPrototypeLayout = LayoutTestUtil.addTypePortletLayout(
 				_layoutSetPrototypeGroup, true, layoutPrototype, true);
 
 			Map<String, String[]> preferenceMap = HashMapBuilder.put(
@@ -549,10 +580,9 @@ public class LayoutSetPrototypePropagationTest
 		Group userGroup = GroupLocalServiceUtil.getUserGroup(
 			_user2.getCompanyId(), _user2.getUserId());
 
-		LayoutSet layoutSet = LayoutSetLocalServiceUtil.getLayoutSet(
-			userGroup.getGroupId(), true);
-
-		SitesUtil.resetPrototype(layoutSet);
+		SitesUtil.resetPrototype(
+			LayoutSetLocalServiceUtil.getLayoutSet(
+				userGroup.getGroupId(), true));
 	}
 
 	@Test
@@ -563,10 +593,9 @@ public class LayoutSetPrototypePropagationTest
 		Group userGroup = GroupLocalServiceUtil.getUserGroup(
 			_user1.getCompanyId(), _user1.getUserId());
 
-		LayoutSet layoutSet = LayoutSetLocalServiceUtil.getLayoutSet(
-			userGroup.getGroupId(), true);
-
-		SitesUtil.resetPrototype(layoutSet);
+		SitesUtil.resetPrototype(
+			LayoutSetLocalServiceUtil.getLayoutSet(
+				userGroup.getGroupId(), true));
 	}
 
 	@Test
@@ -641,7 +670,7 @@ public class LayoutSetPrototypePropagationTest
 
 		_layoutSetPrototypeGroup = _layoutSetPrototype.getGroup();
 
-		prototypeLayout = LayoutTestUtil.addLayout(
+		prototypeLayout = LayoutTestUtil.addTypePortletLayout(
 			_layoutSetPrototypeGroup, true);
 
 		LayoutTestUtil.updateLayoutTemplateId(
@@ -655,7 +684,7 @@ public class LayoutSetPrototypePropagationTest
 			TestPropsValues.getUserId(), prototypeLayout,
 			_layoutSetPrototypeJournalArticle, "column-1");
 
-		_prototypeLayout = LayoutTestUtil.addLayout(
+		_prototypeLayout = LayoutTestUtil.addTypePortletLayout(
 			_layoutSetPrototypeGroup, true);
 
 		LayoutTestUtil.updateLayoutTemplateId(
@@ -718,7 +747,7 @@ public class LayoutSetPrototypePropagationTest
 
 		setLinkEnabled(linkEnabled);
 
-		Layout layout = LayoutTestUtil.addLayout(
+		Layout layout = LayoutTestUtil.addTypePortletLayout(
 			_layoutSetPrototypeGroup, true);
 
 		Assert.assertEquals(
@@ -759,7 +788,7 @@ public class LayoutSetPrototypePropagationTest
 
 		MergeLayoutPrototypesThreadLocal.clearMergeComplete();
 
-		_layoutSetPrototypeLayout = LayoutTestUtil.addLayout(
+		_layoutSetPrototypeLayout = LayoutTestUtil.addTypePortletLayout(
 			_layoutSetPrototypeGroup, true, layoutPrototype,
 			layoutSetLayoutLinkEnabled);
 
@@ -858,6 +887,24 @@ public class LayoutSetPrototypePropagationTest
 		SitesUtil.mergeLayoutSetPrototypeLayouts(group, layoutSet);
 
 		Thread.sleep(2000);
+
+		LayoutSetPrototype layoutSetPrototype =
+			LayoutSetPrototypeLocalServiceUtil.
+				getLayoutSetPrototypeByUuidAndCompanyId(
+					layoutSet.getLayoutSetPrototypeUuid(),
+					layoutSet.getCompanyId());
+
+		LayoutSet layoutSetPrototypeLayoutSet =
+			layoutSetPrototype.getLayoutSet();
+
+		UnicodeProperties layoutSetPrototypeSettingsUnicodeProperties =
+			layoutSetPrototypeLayoutSet.getSettingsProperties();
+
+		int mergeFailCount = GetterUtil.getInteger(
+			layoutSetPrototypeSettingsUnicodeProperties.getProperty(
+				Sites.MERGE_FAIL_COUNT));
+
+		Assert.assertEquals(0, mergeFailCount);
 	}
 
 	protected void setLayoutsUpdateable(boolean layoutsUpdateable)
@@ -918,7 +965,7 @@ public class LayoutSetPrototypePropagationTest
 		setLinkEnabled(layoutSetPrototypeLinkEnabled);
 
 		try {
-			LayoutTestUtil.addLayout(group, layout.getPlid());
+			LayoutTestUtil.addTypePortletLayout(group, layout.getPlid());
 
 			Assert.assertFalse(
 				"Able to add a child page to a page associated to a site " +

@@ -48,7 +48,7 @@ definition {
 	@description = "This is a test for LPS-76817. Can namespace the CSS of a Web Fragment to avoid affecting the rest of the page."
 	@priority = "3"
 	test CanCheckTheNamespaceOfCSSInFragments {
-		task ("Edit this  fragment with the following codes") {
+		task ("Edit this fragment with the following codes") {
 			FragmentsAdminNavigator.gotoCollection(collectionName = "Collection Name");
 
 			FragmentsAdminNavigator.gotoEntryEllipsisItem(
@@ -63,7 +63,6 @@ CSS
 NO CSS
 </div>
 		''';
-
 			var cssSnippet = '''
 .test
 { font-size: 40px; }
@@ -187,19 +186,10 @@ NO CSS
 		}
 
 		task ("Add an Asset Publisher below Image inside the Container") {
-			PageEditor.gotoTab(tabName = "Widgets");
-
-			Type.sendKeysApplicationSearch(
-				locator1 = "PageEditor#FRAGMENTS_AND_WIDGETS_SEARCH_FIELD",
-				value1 = "Asset Publisher");
-
-			DragAndDrop.javaScriptDragAndDropObjectBelowTallNestedObject(
-				key_indexItem = "1",
-				key_portletName = "Asset Publisher",
-				key_position = "1",
-				locator1 = "PageEditor#FRAGMENTS_AND_WIDGETS_TAB_WIDGET",
-				locator2 = "//div[@aria-label='Image']//div[contains(@class,'page-editor__topper__content')]",
-				value1 = "Asset Publisher");
+			PageEditor.addElementToContainer(
+				navTab = "Widgets",
+				portletName = "Asset Publisher",
+				targetElementName = "Image");
 
 			AssertElementPresent(
 				key_elementHeader = "//div[@aria-label='Asset Publisher']",

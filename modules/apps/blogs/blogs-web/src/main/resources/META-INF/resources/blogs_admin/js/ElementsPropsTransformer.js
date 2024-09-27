@@ -12,19 +12,29 @@
  * details.
  */
 
+import {openConfirmModal, openWindow} from 'frontend-js-web';
+
 const ACTIONS = {
 	delete(itemData, trashEnabled) {
-		const message = Liferay.Language.get(
-			'are-you-sure-you-want-to-delete-this'
-		);
-
-		if (trashEnabled || confirm(message)) {
+		if (trashEnabled) {
 			this.send(itemData.deleteURL);
+		}
+		else {
+			openConfirmModal({
+				message: Liferay.Language.get(
+					'are-you-sure-you-want-to-delete-this'
+				),
+				onConfirm: (isConfirmed) => {
+					if (isConfirmed) {
+						this.send(itemData.deleteURL);
+					}
+				},
+			});
 		}
 	},
 
 	permissions(itemData) {
-		Liferay.Util.openWindow({
+		openWindow({
 			dialog: {
 				destroyOnHide: true,
 				modal: true,
@@ -38,13 +48,16 @@ const ACTIONS = {
 	},
 
 	publishToLive(itemData) {
-		if (
-			confirm(
-				Liferay.Language.get('are-you-sure-you-want-to-publish-to-live')
-			)
-		) {
-			this.send(itemData.publishEntryURL);
-		}
+		openConfirmModal({
+			message: Liferay.Language.get(
+				'are-you-sure-you-want-to-publish-to-live'
+			),
+			onConfirm: (isConfirmed) => {
+				if (isConfirmed) {
+					this.send(itemData.publishEntryURL);
+				}
+			},
+		});
 	},
 
 	send(url) {

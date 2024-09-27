@@ -16,6 +16,7 @@ package com.liferay.document.library.web.exportimport.data.handler.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.data.engine.rest.dto.v2_0.DataDefinition;
+import com.liferay.data.engine.rest.resource.v2_0.DataDefinitionResource;
 import com.liferay.data.engine.rest.test.util.DataDefinitionTestUtil;
 import com.liferay.document.library.constants.DLPortletKeys;
 import com.liferay.document.library.exportimport.data.handler.DLExportableRepositoryPublisher;
@@ -212,10 +213,11 @@ public class DLPortletDataHandlerTest extends BasePortletDataHandlerTestCase {
 
 		GroupLocalServiceUtil.deleteGroup(group);
 
-		int foldersCount = DLFolderLocalServiceUtil.getFoldersCount(
-			group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID);
-
-		Assert.assertEquals(0, foldersCount);
+		Assert.assertEquals(
+			0,
+			DLFolderLocalServiceUtil.getFoldersCount(
+				group.getGroupId(),
+				DLFolderConstants.DEFAULT_PARENT_FOLDER_ID));
 	}
 
 	@Test
@@ -230,8 +232,8 @@ public class DLPortletDataHandlerTest extends BasePortletDataHandlerTestCase {
 
 		DataDefinition dataDefinition =
 			DataDefinitionTestUtil.addDataDefinition(
-				"document-library", group.getGroupId(), json,
-				TestPropsValues.getUser());
+				"document-library", _dataDefinitionResourceFactory,
+				group.getGroupId(), json, TestPropsValues.getUser());
 
 		Assert.assertNotNull(
 			_ddmStructureLocalService.fetchDDMStructure(
@@ -301,7 +303,7 @@ public class DLPortletDataHandlerTest extends BasePortletDataHandlerTestCase {
 			null, folder.getGroupId(), folder.getFolderId(),
 			RandomTestUtil.randomString(), ContentTypes.TEXT_PLAIN,
 			RandomTestUtil.randomString(), StringPool.BLANK, StringPool.BLANK,
-			BaseDLAppTestCase.CONTENT.getBytes(), null, null,
+			StringPool.BLANK, BaseDLAppTestCase.CONTENT.getBytes(), null, null,
 			new ServiceContext());
 
 		FileVersion fileVersion = fileEntry.getFileVersion();
@@ -357,7 +359,7 @@ public class DLPortletDataHandlerTest extends BasePortletDataHandlerTestCase {
 			null, folder.getGroupId(), folder.getFolderId(),
 			RandomTestUtil.randomString(), ContentTypes.TEXT_PLAIN,
 			RandomTestUtil.randomString(), StringPool.BLANK, StringPool.BLANK,
-			BaseDLAppTestCase.CONTENT.getBytes(), null, null,
+			StringPool.BLANK, BaseDLAppTestCase.CONTENT.getBytes(), null, null,
 			new ServiceContext());
 
 		FileVersion fileVersion = fileEntry.getFileVersion();
@@ -466,11 +468,9 @@ public class DLPortletDataHandlerTest extends BasePortletDataHandlerTestCase {
 	}
 
 	protected long addRepositoryEntries() throws Exception {
-		long classNameId = PortalUtil.getClassNameId(
-			LiferayRepository.class.getName());
-
 		Repository repository = RepositoryLocalServiceUtil.addRepository(
-			TestPropsValues.getUserId(), stagingGroup.getGroupId(), classNameId,
+			TestPropsValues.getUserId(), stagingGroup.getGroupId(),
+			PortalUtil.getClassNameId(LiferayRepository.class.getName()),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			PortletKeys.BACKGROUND_TASK, StringPool.BLANK,
 			PortletKeys.BACKGROUND_TASK, new UnicodeProperties(), true,
@@ -684,6 +684,9 @@ public class DLPortletDataHandlerTest extends BasePortletDataHandlerTestCase {
 
 	@Inject
 	private static GroupLocalService _groupLocalService;
+
+	@Inject
+	private DataDefinitionResource.Factory _dataDefinitionResourceFactory;
 
 	@Inject
 	private DLAppHelperLocalService _dlAppHelperLocalService;

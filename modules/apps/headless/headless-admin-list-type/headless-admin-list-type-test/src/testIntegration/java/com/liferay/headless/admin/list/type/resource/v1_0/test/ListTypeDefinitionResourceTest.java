@@ -18,9 +18,14 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.headless.admin.list.type.client.dto.v1_0.ListTypeDefinition;
 import com.liferay.headless.admin.list.type.client.dto.v1_0.ListTypeEntry;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
+import com.liferay.portal.odata.entity.EntityField;
+import com.liferay.portal.util.PropsUtil;
 
 import java.util.Collections;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,6 +36,50 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 public class ListTypeDefinitionResourceTest
 	extends BaseListTypeDefinitionResourceTestCase {
+
+	@Before
+	public void setUp() throws Exception {
+		PropsUtil.addProperties(
+			UnicodePropertiesBuilder.setProperty(
+				"feature.flag.LPS-164278", "true"
+			).build());
+
+		super.setUp();
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		PropsUtil.addProperties(
+			UnicodePropertiesBuilder.setProperty(
+				"feature.flag.LPS-164278", "false"
+			).build());
+
+		super.tearDown();
+	}
+
+	@Override
+	@Test
+	public void testGetListTypeDefinitionsPageWithSortInteger()
+		throws Exception {
+
+		testGetListTypeDefinitionsPageWithSort(
+			EntityField.Type.INTEGER,
+			(entityField, listTypeDefinition1, listTypeDefinition2) -> {
+				if (BeanTestUtil.hasProperty(
+						listTypeDefinition1, entityField.getName())) {
+
+					BeanTestUtil.setProperty(
+						listTypeDefinition1, entityField.getName(), 0);
+				}
+
+				if (BeanTestUtil.hasProperty(
+						listTypeDefinition2, entityField.getName())) {
+
+					BeanTestUtil.setProperty(
+						listTypeDefinition2, entityField.getName(), 1);
+				}
+			});
+	}
 
 	@Ignore
 	@Override
@@ -98,6 +147,14 @@ public class ListTypeDefinitionResourceTest
 	@Override
 	protected ListTypeDefinition
 			testGraphQLListTypeDefinition_addListTypeDefinition()
+		throws Exception {
+
+		return _addListTypeDefinition(randomListTypeDefinition());
+	}
+
+	@Override
+	protected ListTypeDefinition
+			testPatchListTypeDefinition_addListTypeDefinition()
 		throws Exception {
 
 		return _addListTypeDefinition(randomListTypeDefinition());

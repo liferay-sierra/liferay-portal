@@ -41,6 +41,8 @@ if (portletTitleBasedNavigation) {
 }
 %>
 
+<liferay-ui:success key='<%= portletDisplay.getId() + "requestProcessed" %>' message="your-request-completed-successfully" />
+
 <div class="<%= portletTitleBasedNavigation ? StringPool.BLANK : "closed sidenav-container sidenav-right" %>" id="<%= liferayPortletResponse.getNamespace() + (portletTitleBasedNavigation ? "FileEntry" : ("infoPanelId_" + fileEntry.getFileEntryId())) %>">
 	<c:if test="<%= portletTitleBasedNavigation %>">
 		<liferay-util:include page="/document_library/file_entry_upper_tbar.jsp" servletContext="<%= application %>" />
@@ -98,7 +100,7 @@ if (portletTitleBasedNavigation) {
 
 			<c:if test="<%= !portletTitleBasedNavigation %>">
 				<div class="file-entry-actions">
-					<liferay-frontend:management-bar-sidenav-toggler-button
+					<liferay-frontend:sidebar-toggler-button
 						label="info"
 						sidenavId='<%= liferayPortletResponse.getNamespace() + "infoPanelId_" + fileEntry.getFileEntryId() %>'
 					/>
@@ -247,3 +249,5 @@ PortletURL selectFolderURL = itemSelector.getItemSelectorURL(RequestBackedPortle
 </c:if>
 
 <liferay-util:dynamic-include key="com.liferay.document.library.web#/document_library/view_file_entry.jsp#post" />
+
+<%@ include file="/document_library/friendly_url_changed_message.jspf" %>

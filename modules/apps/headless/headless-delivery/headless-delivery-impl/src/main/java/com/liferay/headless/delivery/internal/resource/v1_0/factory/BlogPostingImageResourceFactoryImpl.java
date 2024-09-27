@@ -14,6 +14,7 @@
 
 package com.liferay.headless.delivery.internal.resource.v1_0.factory;
 
+import com.liferay.headless.delivery.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.headless.delivery.resource.v1_0.BlogPostingImageResource;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -33,14 +34,18 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -58,7 +61,10 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @author Javier Gamarra
  * @generated
  */
-@Component(immediate = true, service = BlogPostingImageResource.Factory.class)
+@Component(
+	property = "resource.locator.key=/headless-delivery/v1.0/BlogPostingImage",
+	service = BlogPostingImageResource.Factory.class
+)
 @Generated("")
 public class BlogPostingImageResourceFactoryImpl
 	implements BlogPostingImageResource.Factory {
@@ -73,9 +79,7 @@ public class BlogPostingImageResourceFactoryImpl
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (BlogPostingImageResource)ProxyUtil.newProxyInstance(
-					BlogPostingImageResource.class.getClassLoader(),
-					new Class<?>[] {BlogPostingImageResource.class},
+				return _blogPostingImageResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -134,14 +138,32 @@ public class BlogPostingImageResourceFactoryImpl
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		BlogPostingImageResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, BlogPostingImageResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		BlogPostingImageResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			BlogPostingImageResource.class.getClassLoader(),
+			BlogPostingImageResource.class);
+
+		try {
+			Constructor<BlogPostingImageResource> constructor =
+				(Constructor<BlogPostingImageResource>)
+					proxyClass.getConstructor(InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -164,7 +186,7 @@ public class BlogPostingImageResourceFactoryImpl
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		BlogPostingImageResource blogPostingImageResource =
@@ -190,6 +212,7 @@ public class BlogPostingImageResourceFactoryImpl
 		blogPostingImageResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		blogPostingImageResource.setRoleLocalService(_roleLocalService);
+		blogPostingImageResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(blogPostingImageResource, arguments);
@@ -205,6 +228,10 @@ public class BlogPostingImageResourceFactoryImpl
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, BlogPostingImageResource>
+		_blogPostingImageResourceProxyProviderFunction =
+			_getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -227,9 +254,6 @@ public class BlogPostingImageResourceFactoryImpl
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -238,6 +262,9 @@ public class BlogPostingImageResourceFactoryImpl
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

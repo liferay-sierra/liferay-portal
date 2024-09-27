@@ -38,6 +38,8 @@ definition {
 	@description = "This is a test for LPS-140820. The user could decrease the Number of Slides in Banner Slider."
 	@priority = "5"
 	test DecreaseNumberOfSlides {
+		property portal.acceptance = "true";
+
 		task ("Add a Banner Slider fragment to a display page template for Web Content Article and Basic Web Content") {
 			JSONLayoutpagetemplate.addDisplayPageTemplateEntry(
 				contentType = "Web Content Article",
@@ -95,7 +97,7 @@ definition {
 				ariaLabel = "Focus slide 3",
 				locator1 = "Button#ANY_WITH_ARIA_LABEL");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Add a web content and associate it to the display page template") {
@@ -120,7 +122,7 @@ definition {
 				entry = "Web Content Title",
 				menuItem = "View Content");
 
-			ControlMenu.viewHeaderTitle(headerTitle = "Display Page Name");
+			ControlMenu.viewHeaderTitle(headerTitle = "Web Content Title");
 
 			var baseURL = PropsUtil.get("portal.url");
 
@@ -159,6 +161,8 @@ definition {
 	@description = "This is a test for LPS-140820. The user could increase the Number of Slides in Banner Slider."
 	@priority = "5"
 	test IncreaseNumberOfSlides {
+		property portal.acceptance = "true";
+
 		task ("Add a Banner Slider fragment to page") {
 			ContentPagesNavigator.openEditContentPage(
 				pageName = "Test Page Name",
@@ -258,7 +262,7 @@ definition {
 				id = "04-03-subtitle",
 				text = "Eternals");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("View inline texts of slides at view mode") {

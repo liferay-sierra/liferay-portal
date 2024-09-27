@@ -37,8 +37,14 @@
 					<liferay-ui:message key="enable-social-activity-for" />:
 				</h4>
 
-				<aui:row cssClass="social-activity social-activity-settings" id="settings">
-					<aui:col cssClass="social-activity-items" width="<%= 20 %>">
+				<clay:row
+					cssClass="social-activity social-activity-settings"
+					id="settings"
+				>
+					<clay:col
+						cssClass="social-activity-items"
+						size="3"
+					>
 
 						<%
 						for (Map.Entry<String, Boolean> entry : activitySettingsMap.entrySet()) {
@@ -51,7 +57,7 @@
 								<div class="social-activity-item-content">
 									<aui:input disabled="<%= !SocialActivityPermissionUtil.contains(permissionChecker, themeDisplay.getSiteGroupId(), ActionKeys.CONFIGURATION) %>" inlineField="<%= true %>" label="" name='<%= className + ".enabled" %>' title="enabled" type="checkbox" value="<%= entry.getValue() %>" />
 
-									<a class="settings-label" href="javascript:;"><%= localizedClassName %></a>
+									<a class="settings-label" href="javascript:void(0);"><%= localizedClassName %></a>
 								</div>
 							</h4>
 
@@ -59,10 +65,13 @@
 						}
 						%>
 
-					</aui:col>
+					</clay:col>
 
-					<aui:col cssClass="social-activity-details" width="<%= 80 %>" />
-				</aui:row>
+					<clay:col
+						cssClass="social-activity-details"
+						size="9"
+					/>
+				</clay:row>
 
 				<%
 				List<String> activityDefinitionLanguageKeys = new ArrayList<String>();

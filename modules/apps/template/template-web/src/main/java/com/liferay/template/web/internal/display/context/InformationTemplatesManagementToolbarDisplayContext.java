@@ -22,9 +22,8 @@ import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
 import com.liferay.info.item.InfoItemClassDetails;
 import com.liferay.info.item.InfoItemFormVariation;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFormVariationsProvider;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
@@ -35,6 +34,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.permission.PortletPermissionUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -75,9 +75,9 @@ public class InformationTemplatesManagementToolbarDisplayContext
 		_informationTemplatesTemplateDisplayContext =
 			informationTemplatesTemplateDisplayContext;
 
-		_infoItemServiceTracker =
-			(InfoItemServiceTracker)liferayPortletRequest.getAttribute(
-				InfoItemServiceTracker.class.getName());
+		_infoItemServiceRegistry =
+			(InfoItemServiceRegistry)liferayPortletRequest.getAttribute(
+				InfoItemServiceRegistry.class.getName());
 
 		_themeDisplay = (ThemeDisplay)httpServletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
@@ -88,7 +88,7 @@ public class InformationTemplatesManagementToolbarDisplayContext
 		return DropdownItemListBuilder.add(
 			dropdownItem -> {
 				dropdownItem.putData("action", "deleteSelectedTemplateEntries");
-				dropdownItem.setIcon("times-circle");
+				dropdownItem.setIcon("trash");
 				dropdownItem.setLabel(
 					LanguageUtil.get(httpServletRequest, "delete"));
 				dropdownItem.setQuickAction(true);
@@ -185,11 +185,13 @@ public class InformationTemplatesManagementToolbarDisplayContext
 		}
 
 		for (InfoItemClassDetails infoItemClassDetails :
-				_infoItemServiceTracker.getInfoItemClassDetails(
-					TemplateInfoItemCapability.KEY)) {
+				_infoItemServiceRegistry.getInfoItemClassDetails(
+					_themeDisplay.getScopeGroupId(),
+					TemplateInfoItemCapability.KEY,
+					_themeDisplay.getPermissionChecker())) {
 
 			InfoItemFormVariationsProvider<?> infoItemFormVariationsProvider =
-				_infoItemServiceTracker.getFirstInfoItemService(
+				_infoItemServiceRegistry.getFirstInfoItemService(
 					InfoItemFormVariationsProvider.class,
 					infoItemClassDetails.getClassName());
 
@@ -251,7 +253,7 @@ public class InformationTemplatesManagementToolbarDisplayContext
 	private static final Log _log = LogFactoryUtil.getLog(
 		InformationTemplatesManagementToolbarDisplayContext.class);
 
-	private final InfoItemServiceTracker _infoItemServiceTracker;
+	private final InfoItemServiceRegistry _infoItemServiceRegistry;
 	private final InformationTemplatesTemplateDisplayContext
 		_informationTemplatesTemplateDisplayContext;
 	private final ThemeDisplay _themeDisplay;

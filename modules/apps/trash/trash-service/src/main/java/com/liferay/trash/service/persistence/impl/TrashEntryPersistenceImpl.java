@@ -200,7 +200,7 @@ public class TrashEntryPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<TrashEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (TrashEntry trashEntry : list) {
@@ -565,7 +565,7 @@ public class TrashEntryPersistenceImpl
 
 			finderArgs = new Object[] {groupId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -709,7 +709,7 @@ public class TrashEntryPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<TrashEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (TrashEntry trashEntry : list) {
@@ -1076,7 +1076,7 @@ public class TrashEntryPersistenceImpl
 
 			finderArgs = new Object[] {companyId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1214,7 +1214,7 @@ public class TrashEntryPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<TrashEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (TrashEntry trashEntry : list) {
@@ -1634,7 +1634,7 @@ public class TrashEntryPersistenceImpl
 
 			finderArgs = new Object[] {groupId, _getTime(createDate)};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1804,7 +1804,7 @@ public class TrashEntryPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<TrashEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (TrashEntry trashEntry : list) {
@@ -2201,7 +2201,7 @@ public class TrashEntryPersistenceImpl
 
 			finderArgs = new Object[] {groupId, classNameId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2327,7 +2327,8 @@ public class TrashEntryPersistenceImpl
 		Object result = null;
 
 		if (useFinderCache && productionMode) {
-			result = finderCache.getResult(_finderPathFetchByC_C, finderArgs);
+			result = finderCache.getResult(
+				_finderPathFetchByC_C, finderArgs, this);
 		}
 
 		if (result instanceof TrashEntry) {
@@ -2434,7 +2435,7 @@ public class TrashEntryPersistenceImpl
 
 			finderArgs = new Object[] {classNameId, classPK};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2831,7 +2832,9 @@ public class TrashEntryPersistenceImpl
 	 */
 	@Override
 	public TrashEntry fetchByPrimaryKey(Serializable primaryKey) {
-		if (ctPersistenceHelper.isProductionMode(TrashEntry.class)) {
+		if (ctPersistenceHelper.isProductionMode(
+				TrashEntry.class, primaryKey)) {
+
 			return super.fetchByPrimaryKey(primaryKey);
 		}
 
@@ -3047,7 +3050,7 @@ public class TrashEntryPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<TrashEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -3123,7 +3126,7 @@ public class TrashEntryPersistenceImpl
 
 		if (productionMode) {
 			count = (Long)finderCache.getResult(
-				_finderPathCountAll, FINDER_ARGS_EMPTY);
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 		}
 
 		if (count == null) {
@@ -3424,8 +3427,5 @@ public class TrashEntryPersistenceImpl
 	protected FinderCache getFinderCache() {
 		return finderCache;
 	}
-
-	@Reference
-	private TrashEntryModelArgumentsResolver _trashEntryModelArgumentsResolver;
 
 }

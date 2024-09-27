@@ -17,9 +17,13 @@ package com.liferay.asset.browser.web.internal.portlet;
 import com.liferay.asset.browser.web.internal.constants.AssetBrowserPortletKeys;
 import com.liferay.asset.browser.web.internal.display.context.AssetBrowserDisplayContext;
 import com.liferay.asset.constants.AssetWebKeys;
+import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.asset.util.AssetHelper;
+import com.liferay.depot.service.DepotEntryService;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Release;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
+import com.liferay.portal.kernel.service.GroupService;
 import com.liferay.portal.kernel.util.Portal;
 
 import java.io.IOException;
@@ -50,7 +54,8 @@ import org.osgi.service.component.annotations.Reference;
 		"javax.portlet.init-param.view-template=/view.jsp",
 		"javax.portlet.name=" + AssetBrowserPortletKeys.ASSET_BROWSER,
 		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=guest,power-user,user"
+		"javax.portlet.security-role-ref=guest,power-user,user",
+		"javax.portlet.version=3.0"
 	},
 	service = Portlet.class
 )
@@ -64,17 +69,29 @@ public class AssetBrowserPortlet extends MVCPortlet {
 		renderRequest.setAttribute(
 			AssetBrowserDisplayContext.class.getName(),
 			new AssetBrowserDisplayContext(
-				_assetHelper, _portal.getHttpServletRequest(renderRequest),
-				renderResponse.createRenderURL(), renderRequest,
-				renderResponse));
-
+				_assetEntryLocalService, _assetHelper, _depotEntryService,
+				_groupService, _portal.getHttpServletRequest(renderRequest),
+				_language, _portal, renderResponse.createRenderURL(),
+				renderRequest, renderResponse));
 		renderRequest.setAttribute(AssetWebKeys.ASSET_HELPER, _assetHelper);
 
 		super.doDispatch(renderRequest, renderResponse);
 	}
 
 	@Reference
+	private AssetEntryLocalService _assetEntryLocalService;
+
+	@Reference
 	private AssetHelper _assetHelper;
+
+	@Reference
+	private DepotEntryService _depotEntryService;
+
+	@Reference
+	private GroupService _groupService;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

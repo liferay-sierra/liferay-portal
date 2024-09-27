@@ -41,7 +41,6 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 
 import java.sql.Blob;
@@ -98,6 +97,7 @@ public class LayoutModelImpl
 		{"iconImageId", Types.BIGINT}, {"themeId", Types.VARCHAR},
 		{"colorSchemeId", Types.VARCHAR}, {"styleBookEntryId", Types.BIGINT},
 		{"css", Types.CLOB}, {"priority", Types.INTEGER},
+		{"faviconFileEntryId", Types.BIGINT},
 		{"masterLayoutPlid", Types.BIGINT},
 		{"layoutPrototypeUuid", Types.VARCHAR},
 		{"layoutPrototypeLinkEnabled", Types.BOOLEAN},
@@ -143,6 +143,7 @@ public class LayoutModelImpl
 		TABLE_COLUMNS_MAP.put("styleBookEntryId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("css", Types.CLOB);
 		TABLE_COLUMNS_MAP.put("priority", Types.INTEGER);
+		TABLE_COLUMNS_MAP.put("faviconFileEntryId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("masterLayoutPlid", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("layoutPrototypeUuid", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("layoutPrototypeLinkEnabled", Types.BOOLEAN);
@@ -156,7 +157,7 @@ public class LayoutModelImpl
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table Layout (mvccVersion LONG default 0 not null,ctCollectionId LONG default 0 not null,uuid_ VARCHAR(75) null,plid LONG not null,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,parentPlid LONG,privateLayout BOOLEAN,layoutId LONG,parentLayoutId LONG,classNameId LONG,classPK LONG,name STRING null,title TEXT null,description TEXT null,keywords STRING null,robots STRING null,type_ VARCHAR(75) null,typeSettings TEXT null,hidden_ BOOLEAN,system_ BOOLEAN,friendlyURL VARCHAR(255) null,iconImageId LONG,themeId VARCHAR(75) null,colorSchemeId VARCHAR(75) null,styleBookEntryId LONG,css TEXT null,priority INTEGER,masterLayoutPlid LONG,layoutPrototypeUuid VARCHAR(75) null,layoutPrototypeLinkEnabled BOOLEAN,sourcePrototypeLayoutUuid VARCHAR(75) null,publishDate DATE null,lastPublishDate DATE null,status INTEGER,statusByUserId LONG,statusByUserName VARCHAR(75) null,statusDate DATE null,primary key (plid, ctCollectionId))";
+		"create table Layout (mvccVersion LONG default 0 not null,ctCollectionId LONG default 0 not null,uuid_ VARCHAR(75) null,plid LONG not null,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,parentPlid LONG,privateLayout BOOLEAN,layoutId LONG,parentLayoutId LONG,classNameId LONG,classPK LONG,name STRING null,title TEXT null,description TEXT null,keywords STRING null,robots STRING null,type_ VARCHAR(75) null,typeSettings TEXT null,hidden_ BOOLEAN,system_ BOOLEAN,friendlyURL VARCHAR(255) null,iconImageId LONG,themeId VARCHAR(75) null,colorSchemeId VARCHAR(75) null,styleBookEntryId LONG,css TEXT null,priority INTEGER,faviconFileEntryId LONG,masterLayoutPlid LONG,layoutPrototypeUuid VARCHAR(75) null,layoutPrototypeLinkEnabled BOOLEAN,sourcePrototypeLayoutUuid VARCHAR(75) null,publishDate DATE null,lastPublishDate DATE null,status INTEGER,statusByUserId LONG,statusByUserName VARCHAR(75) null,statusDate DATE null,primary key (plid, ctCollectionId))";
 
 	public static final String TABLE_SQL_DROP = "drop table Layout";
 
@@ -389,33 +390,6 @@ public class LayoutModelImpl
 		return _attributeSetterBiConsumers;
 	}
 
-	private static Function<InvocationHandler, Layout>
-		_getProxyProviderFunction() {
-
-		Class<?> proxyClass = ProxyUtil.getProxyClass(
-			Layout.class.getClassLoader(), Layout.class, ModelWrapper.class);
-
-		try {
-			Constructor<Layout> constructor =
-				(Constructor<Layout>)proxyClass.getConstructor(
-					InvocationHandler.class);
-
-			return invocationHandler -> {
-				try {
-					return constructor.newInstance(invocationHandler);
-				}
-				catch (ReflectiveOperationException
-							reflectiveOperationException) {
-
-					throw new InternalError(reflectiveOperationException);
-				}
-			};
-		}
-		catch (NoSuchMethodException noSuchMethodException) {
-			throw new InternalError(noSuchMethodException);
-		}
-	}
-
 	private static final Map<String, Function<Layout, Object>>
 		_attributeGetterFunctions;
 	private static final Map<String, BiConsumer<Layout, Object>>
@@ -532,6 +506,11 @@ public class LayoutModelImpl
 		attributeGetterFunctions.put("priority", Layout::getPriority);
 		attributeSetterBiConsumers.put(
 			"priority", (BiConsumer<Layout, Integer>)Layout::setPriority);
+		attributeGetterFunctions.put(
+			"faviconFileEntryId", Layout::getFaviconFileEntryId);
+		attributeSetterBiConsumers.put(
+			"faviconFileEntryId",
+			(BiConsumer<Layout, Long>)Layout::setFaviconFileEntryId);
 		attributeGetterFunctions.put(
 			"masterLayoutPlid", Layout::getMasterLayoutPlid);
 		attributeSetterBiConsumers.put(
@@ -1786,6 +1765,21 @@ public class LayoutModelImpl
 
 	@JSON
 	@Override
+	public long getFaviconFileEntryId() {
+		return _faviconFileEntryId;
+	}
+
+	@Override
+	public void setFaviconFileEntryId(long faviconFileEntryId) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_faviconFileEntryId = faviconFileEntryId;
+	}
+
+	@JSON
+	@Override
 	public long getMasterLayoutPlid() {
 		return _masterLayoutPlid;
 	}
@@ -2335,6 +2329,7 @@ public class LayoutModelImpl
 		layoutImpl.setStyleBookEntryId(getStyleBookEntryId());
 		layoutImpl.setCss(getCss());
 		layoutImpl.setPriority(getPriority());
+		layoutImpl.setFaviconFileEntryId(getFaviconFileEntryId());
 		layoutImpl.setMasterLayoutPlid(getMasterLayoutPlid());
 		layoutImpl.setLayoutPrototypeUuid(getLayoutPrototypeUuid());
 		layoutImpl.setLayoutPrototypeLinkEnabled(
@@ -2403,6 +2398,8 @@ public class LayoutModelImpl
 		layoutImpl.setCss(this.<String>getColumnOriginalValue("css"));
 		layoutImpl.setPriority(
 			this.<Integer>getColumnOriginalValue("priority"));
+		layoutImpl.setFaviconFileEntryId(
+			this.<Long>getColumnOriginalValue("faviconFileEntryId"));
 		layoutImpl.setMasterLayoutPlid(
 			this.<Long>getColumnOriginalValue("masterLayoutPlid"));
 		layoutImpl.setLayoutPrototypeUuid(
@@ -2675,6 +2672,8 @@ public class LayoutModelImpl
 
 		layoutCacheModel.priority = getPriority();
 
+		layoutCacheModel.faviconFileEntryId = getFaviconFileEntryId();
+
 		layoutCacheModel.masterLayoutPlid = getMasterLayoutPlid();
 
 		layoutCacheModel.layoutPrototypeUuid = getLayoutPrototypeUuid();
@@ -2792,40 +2791,12 @@ public class LayoutModelImpl
 		return sb.toString();
 	}
 
-	@Override
-	public String toXmlString() {
-		Map<String, Function<Layout, Object>> attributeGetterFunctions =
-			getAttributeGetterFunctions();
-
-		StringBundler sb = new StringBundler(
-			(5 * attributeGetterFunctions.size()) + 4);
-
-		sb.append("<model><model-name>");
-		sb.append(getModelClassName());
-		sb.append("</model-name>");
-
-		for (Map.Entry<String, Function<Layout, Object>> entry :
-				attributeGetterFunctions.entrySet()) {
-
-			String attributeName = entry.getKey();
-			Function<Layout, Object> attributeGetterFunction = entry.getValue();
-
-			sb.append("<column><column-name>");
-			sb.append(attributeName);
-			sb.append("</column-name><column-value><![CDATA[");
-			sb.append(attributeGetterFunction.apply((Layout)this));
-			sb.append("]]></column-value></column>");
-		}
-
-		sb.append("</model>");
-
-		return sb.toString();
-	}
-
 	private static class EscapedModelProxyProviderFunctionHolder {
 
 		private static final Function<InvocationHandler, Layout>
-			_escapedModelProxyProviderFunction = _getProxyProviderFunction();
+			_escapedModelProxyProviderFunction =
+				ProxyUtil.getProxyProviderFunction(
+					Layout.class, ModelWrapper.class);
 
 	}
 
@@ -2867,6 +2838,7 @@ public class LayoutModelImpl
 	private long _styleBookEntryId;
 	private String _css;
 	private int _priority;
+	private long _faviconFileEntryId;
 	private long _masterLayoutPlid;
 	private String _layoutPrototypeUuid;
 	private boolean _layoutPrototypeLinkEnabled;
@@ -2939,6 +2911,7 @@ public class LayoutModelImpl
 		_columnOriginalValues.put("styleBookEntryId", _styleBookEntryId);
 		_columnOriginalValues.put("css", _css);
 		_columnOriginalValues.put("priority", _priority);
+		_columnOriginalValues.put("faviconFileEntryId", _faviconFileEntryId);
 		_columnOriginalValues.put("masterLayoutPlid", _masterLayoutPlid);
 		_columnOriginalValues.put("layoutPrototypeUuid", _layoutPrototypeUuid);
 		_columnOriginalValues.put(
@@ -3041,25 +3014,27 @@ public class LayoutModelImpl
 
 		columnBitmasks.put("priority", 2147483648L);
 
-		columnBitmasks.put("masterLayoutPlid", 4294967296L);
+		columnBitmasks.put("faviconFileEntryId", 4294967296L);
 
-		columnBitmasks.put("layoutPrototypeUuid", 8589934592L);
+		columnBitmasks.put("masterLayoutPlid", 8589934592L);
 
-		columnBitmasks.put("layoutPrototypeLinkEnabled", 17179869184L);
+		columnBitmasks.put("layoutPrototypeUuid", 17179869184L);
 
-		columnBitmasks.put("sourcePrototypeLayoutUuid", 34359738368L);
+		columnBitmasks.put("layoutPrototypeLinkEnabled", 34359738368L);
 
-		columnBitmasks.put("publishDate", 68719476736L);
+		columnBitmasks.put("sourcePrototypeLayoutUuid", 68719476736L);
 
-		columnBitmasks.put("lastPublishDate", 137438953472L);
+		columnBitmasks.put("publishDate", 137438953472L);
 
-		columnBitmasks.put("status", 274877906944L);
+		columnBitmasks.put("lastPublishDate", 274877906944L);
 
-		columnBitmasks.put("statusByUserId", 549755813888L);
+		columnBitmasks.put("status", 549755813888L);
 
-		columnBitmasks.put("statusByUserName", 1099511627776L);
+		columnBitmasks.put("statusByUserId", 1099511627776L);
 
-		columnBitmasks.put("statusDate", 2199023255552L);
+		columnBitmasks.put("statusByUserName", 2199023255552L);
+
+		columnBitmasks.put("statusDate", 4398046511104L);
 
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}

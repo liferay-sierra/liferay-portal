@@ -32,15 +32,20 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
+import com.liferay.search.experiences.rest.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.search.experiences.rest.resource.v1_0.SXPBlueprintResource;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -58,7 +61,10 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @author Brian Wing Shun Chan
  * @generated
  */
-@Component(immediate = true, service = SXPBlueprintResource.Factory.class)
+@Component(
+	property = "resource.locator.key=/search-experiences-rest/v1.0/SXPBlueprint",
+	service = SXPBlueprintResource.Factory.class
+)
 @Generated("")
 public class SXPBlueprintResourceFactoryImpl
 	implements SXPBlueprintResource.Factory {
@@ -73,9 +79,7 @@ public class SXPBlueprintResourceFactoryImpl
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (SXPBlueprintResource)ProxyUtil.newProxyInstance(
-					SXPBlueprintResource.class.getClassLoader(),
-					new Class<?>[] {SXPBlueprintResource.class},
+				return _sxpBlueprintResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -134,14 +138,32 @@ public class SXPBlueprintResourceFactoryImpl
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		SXPBlueprintResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, SXPBlueprintResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		SXPBlueprintResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			SXPBlueprintResource.class.getClassLoader(),
+			SXPBlueprintResource.class);
+
+		try {
+			Constructor<SXPBlueprintResource> constructor =
+				(Constructor<SXPBlueprintResource>)proxyClass.getConstructor(
+					InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -164,7 +186,7 @@ public class SXPBlueprintResourceFactoryImpl
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		SXPBlueprintResource sxpBlueprintResource =
@@ -188,6 +210,7 @@ public class SXPBlueprintResourceFactoryImpl
 		sxpBlueprintResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		sxpBlueprintResource.setRoleLocalService(_roleLocalService);
+		sxpBlueprintResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(sxpBlueprintResource, arguments);
@@ -203,6 +226,10 @@ public class SXPBlueprintResourceFactoryImpl
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, SXPBlueprintResource>
+		_sxpBlueprintResourceProxyProviderFunction =
+			_getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -225,9 +252,6 @@ public class SXPBlueprintResourceFactoryImpl
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -236,6 +260,9 @@ public class SXPBlueprintResourceFactoryImpl
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

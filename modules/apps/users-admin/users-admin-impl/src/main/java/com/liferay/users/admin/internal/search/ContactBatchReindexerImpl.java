@@ -29,7 +29,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Luan Maoski
  */
-@Component(immediate = true, service = ContactBatchReindexer.class)
+@Component(service = ContactBatchReindexer.class)
 public class ContactBatchReindexerImpl implements ContactBatchReindexer {
 
 	@Override
@@ -42,10 +42,9 @@ public class ContactBatchReindexerImpl implements ContactBatchReindexer {
 				Property classNameIdProperty = PropertyFactoryUtil.forName(
 					"classNameId");
 
-				long classNameId = _classNameLocalService.getClassNameId(
-					User.class);
-
-				dynamicQuery.add(classNameIdProperty.eq(classNameId));
+				dynamicQuery.add(
+					classNameIdProperty.eq(
+						_classNameLocalService.getClassNameId(User.class)));
 
 				Property classPKProperty = PropertyFactoryUtil.forName(
 					"classPK");

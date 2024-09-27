@@ -19,7 +19,6 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.language.Language;
-import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
@@ -36,7 +35,7 @@ import com.liferay.portal.kernel.settings.LocalizedValuesMap;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.workflow.WorkflowDefinition;
 import com.liferay.portal.kernel.workflow.WorkflowDefinitionManager;
@@ -58,7 +57,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Michael C. Han
  */
-@Component(immediate = true, service = PortalKaleoManager.class)
+@Component(service = PortalKaleoManager.class)
 public class DefaultPortalKaleoManager
 	extends BaseKaleoBean implements PortalKaleoManager {
 
@@ -303,14 +302,14 @@ public class DefaultPortalKaleoManager
 	@Reference
 	protected UserLocalService userLocalService;
 
-	@Reference(target = "(proxy.bean=false)")
+	@Reference
 	protected WorkflowComparatorFactory workflowComparatorFactory;
 
 	private String _getLocalizedTitle(long companyId, String definitionName)
 		throws Exception {
 
 		if (!Objects.equals(_DEFINITION_NAME, definitionName)) {
-			return LocalizationUtil.updateLocalization(
+			return _localization.updateLocalization(
 				StringPool.BLANK, "title", definitionName,
 				LocaleUtil.toLanguageId(LocaleUtil.getDefault()));
 		}
@@ -320,7 +319,7 @@ public class DefaultPortalKaleoManager
 		Group companyGroup = groupLocalService.getCompanyGroup(companyId);
 
 		for (Locale availableLocale :
-				LanguageUtil.getAvailableLocales(companyGroup.getGroupId())) {
+				_language.getAvailableLocales(companyGroup.getGroupId())) {
 
 			localizedValuesMap.put(
 				availableLocale,
@@ -330,7 +329,7 @@ public class DefaultPortalKaleoManager
 					"single-approver"));
 		}
 
-		return LocalizationUtil.getXml(localizedValuesMap, "title");
+		return _localization.getXml(localizedValuesMap, "title");
 	}
 
 	private static final String _DEFINITION_NAME = "Single Approver";
@@ -348,7 +347,10 @@ public class DefaultPortalKaleoManager
 	@Reference
 	private Language _language;
 
-	@Reference(target = "(proxy.bean=false)")
+	@Reference
+	private Localization _localization;
+
+	@Reference
 	private WorkflowDefinitionManager _workflowDefinitionManager;
 
 }

@@ -27,7 +27,7 @@ import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.NoSuchLayoutSetException;
 import com.liferay.portal.kernel.exception.NoSuchUserException;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -43,7 +43,7 @@ import com.liferay.portal.kernel.poller.PollerResponse;
 import com.liferay.portal.kernel.service.LayoutSetLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.HtmlUtil;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Time;
@@ -83,7 +83,7 @@ public class ChatPollerProcessor extends BasePollerProcessor {
 	protected PollerResponse doReceive(PollerRequest pollerRequest)
 		throws Exception {
 
-		PollerResponse pollerResponse = pollerRequest.createPollerResponse();
+		PollerResponse pollerResponse = new PollerResponse();
 
 		_getBuddies(pollerRequest, pollerResponse);
 		_getEntries(pollerRequest, pollerResponse);
@@ -120,7 +120,7 @@ public class ChatPollerProcessor extends BasePollerProcessor {
 		List<Object[]> buddies = _buddyFinder.getBuddies(
 			pollerRequest.getCompanyId(), pollerRequest.getUserId());
 
-		JSONArray buddiesJSONArray = JSONFactoryUtil.createJSONArray();
+		JSONArray buddiesJSONArray = _jsonFactory.createJSONArray();
 
 		for (Object[] buddy : buddies) {
 			long userId = (Long)buddy[8];
@@ -141,7 +141,7 @@ public class ChatPollerProcessor extends BasePollerProcessor {
 					displayURL = _portal.getLayoutSetDisplayURL(
 						layoutSet, false);
 
-					displayURL = _http.removeDomain(displayURL);
+					displayURL = HttpComponentsUtil.removeDomain(displayURL);
 				}
 			}
 			catch (NoSuchLayoutSetException noSuchLayoutSetException) {
@@ -199,7 +199,7 @@ public class ChatPollerProcessor extends BasePollerProcessor {
 			PollerRequest pollerRequest, PollerResponse pollerResponse)
 		throws Exception {
 
-		JSONArray entriesJSONArray = JSONFactoryUtil.createJSONArray();
+		JSONArray entriesJSONArray = _jsonFactory.createJSONArray();
 
 		boolean hasProcessedEntry = false;
 
@@ -324,7 +324,7 @@ public class ChatPollerProcessor extends BasePollerProcessor {
 		_chatGroupServiceConfiguration;
 
 	@Reference
-	private Http _http;
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private LayoutSetLocalService _layoutSetLocalService;

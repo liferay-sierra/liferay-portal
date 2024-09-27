@@ -56,7 +56,7 @@ definition {
 				collectionName = "Content Display",
 				fragmentName = "Display Page Content");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Mark the first display page template as default") {
@@ -80,7 +80,7 @@ definition {
 				collectionName = "Content Display",
 				fragmentName = "Display Page Content");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Mark the second display page template as default") {
@@ -105,7 +105,7 @@ definition {
 				collectionName = "Content Display",
 				fragmentName = "Display Page Content");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Mark the third display page template as default") {
@@ -129,7 +129,7 @@ definition {
 				collectionName = "Content Display",
 				fragmentName = "Display Page Content");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Mark the fourth display page template as default") {
@@ -205,7 +205,7 @@ definition {
 				item = "Document");
 
 			NavigationMenusAdmin.addItem(
-				assetTitle = "Category Name",
+				assetTitleList = "Category Name",
 				item = "Category");
 		}
 
@@ -249,7 +249,7 @@ definition {
 				key_pageName = "Web Content Title",
 				locator1 = "Home#PAGE");
 
-			ControlMenu.viewHeaderTitle(headerTitle = "Web Content DPT");
+			ControlMenu.viewHeaderTitle(headerTitle = "Web Content Title");
 
 			AssertTextEquals(
 				index = "1",
@@ -260,7 +260,7 @@ definition {
 				key_pageName = "Blogs Entry Title",
 				locator1 = "Home#PAGE");
 
-			ControlMenu.viewHeaderTitle(headerTitle = "Blogs Entry DPT");
+			ControlMenu.viewHeaderTitle(headerTitle = "Blogs Entry Title");
 
 			AssertVisible(
 				key_entryContent = "Blogs Entry Content",
@@ -270,7 +270,7 @@ definition {
 				key_pageName = "Document Title",
 				locator1 = "Home#PAGE");
 
-			ControlMenu.viewHeaderTitle(headerTitle = "Document DPT");
+			ControlMenu.viewHeaderTitle(headerTitle = "Document Title");
 
 			ContentPages.viewFragmentBackgroundImage(image = "Document_1.jpg");
 
@@ -278,7 +278,7 @@ definition {
 				key_pageName = "Category Name",
 				locator1 = "Home#PAGE");
 
-			ControlMenu.viewHeaderTitle(headerTitle = "Category DPT");
+			ControlMenu.viewHeaderTitle(headerTitle = "Category Name");
 
 			ContentPages.viewFragmentText(
 				fragmentName = "Content Display",
@@ -302,7 +302,7 @@ definition {
 				key_pageName = "Web Content Title",
 				locator1 = "Home#PAGE");
 
-			ControlMenu.viewHeaderTitle(headerTitle = "Web Content DPT");
+			ControlMenu.viewHeaderTitle(headerTitle = "Web Content Title");
 
 			AssertVisible(
 				key_tab = "Live",
@@ -317,7 +317,7 @@ definition {
 				key_pageName = "Blogs Entry Title",
 				locator1 = "Home#PAGE");
 
-			ControlMenu.viewHeaderTitle(headerTitle = "Blogs Entry DPT");
+			ControlMenu.viewHeaderTitle(headerTitle = "Blogs Entry Title");
 
 			AssertVisible(
 				key_tab = "Live",
@@ -331,7 +331,7 @@ definition {
 				key_pageName = "Document Title",
 				locator1 = "Home#PAGE");
 
-			ControlMenu.viewHeaderTitle(headerTitle = "Document DPT");
+			ControlMenu.viewHeaderTitle(headerTitle = "Document Title");
 
 			AssertVisible(
 				key_tab = "Live",
@@ -343,7 +343,7 @@ definition {
 				key_pageName = "Category Name",
 				locator1 = "Home#PAGE");
 
-			ControlMenu.viewHeaderTitle(headerTitle = "Category DPT");
+			ControlMenu.viewHeaderTitle(headerTitle = "Category Name");
 
 			AssertVisible(
 				key_tab = "Live",
@@ -466,9 +466,7 @@ definition {
 		}
 
 		task ("Delete the navigation menu") {
-			LexiconEntry.delete(
-				menuItem = "Delete",
-				rowEntry = "Navigation Menu Name");
+			NavigationMenusAdmin.deleteCP(navigationMenuName = "Navigation Menu Name");
 		}
 
 		task ("Publish to live") {
@@ -609,7 +607,9 @@ definition {
 
 			LexiconEntry.gotoAdd();
 
-			Check(locator1 = "StagingPublishToLive#DELETIONS_REPLICATE_INDIVIDUAL_DELETIONS_CHECKBOX");
+			Check.checkNotVisible(
+				inputFieldId = "StagingProcessesPortlet_DELETIONS",
+				locator1 = "TextInput#INPUT_ID");
 
 			AssertClickNoError(
 				locator1 = "Staging#STAGING_PUBLISH_TO_LIVE_BUTTON",
@@ -782,7 +782,9 @@ definition {
 
 			LexiconEntry.gotoAdd();
 
-			Check(locator1 = "StagingPublishToLive#DELETIONS_REPLICATE_INDIVIDUAL_DELETIONS_CHECKBOX");
+			Check.checkNotVisible(
+				inputFieldId = "StagingProcessesPortlet_DELETIONS",
+				locator1 = "TextInput#INPUT_ID");
 
 			AssertClickNoError(
 				locator1 = "Staging#STAGING_PUBLISH_TO_LIVE_BUTTON",
@@ -1341,7 +1343,9 @@ definition {
 
 			NavigationMenusAdmin.editMenu(navigationMenuName = "Navigation Menu Name");
 
-			NavigationMenusAdmin.addCategoryItem(assetTitleList = "Global Category Name,Global Subcategory Name,Global SubSubcategory Name,Site Category Name,Site Subcategory Name,Site SubSubcategory Name");
+			NavigationMenusAdmin.addItem(
+				assetTitleList = "Global Category Name,Global Subcategory Name,Global SubSubcategory Name,Site Category Name,Site Subcategory Name,Site SubSubcategory Name",
+				item = "Category");
 		}
 
 		task ("View categories are shown in hiearchy order") {
@@ -1400,13 +1404,17 @@ definition {
 		task ("Select Public Pages Hierarchy and Bar minimally styled") {
 			NavigationMenusWidget.gotoNavigationMenuWidgetConfig();
 
-			NavigationMenusWidget.selectNavigation(menuType = "Public Pages Hierarchy");
+			NavigationMenusWidget.selectNavigation(menuType = "Pages Hierarchy");
 
-			Pause(locator1 = "1000");
+			AssertSelectedLabel(
+				locator1 = "NavigationMenusWidget#SELECT_NAVIGATION",
+				value1 = "Pages Hierarchy");
 
 			NavigationMenusWidget.selectDisplayTemplate(templateName = "Bar minimally styled");
 
-			Pause(locator1 = "1000");
+			AssertSelectedLabel(
+				locator1 = "Select#DISPLAY_TEMPLATE",
+				value1 = "Bar minimally styled");
 
 			Portlet.saveAndCloseConfig();
 		}
@@ -1439,6 +1447,52 @@ definition {
 				type = "Drop Down");
 
 			AssertLocation.assertPartialLocation(value1 = "web/test-site-name/child-child-page");
+		}
+	}
+
+	@description = "This is a test for LPS-164269. The navigation menu creator could view a tooltip with the page URL on selection modal on staging site."
+	@priority = "4"
+	test ViewPageURLOnTooltipWhenSelectPageItem {
+		task ("Given a navigation menu opens the select pages modal in staging site") {
+			task ("Add a Navigation menu") {
+				JSONSitenavigation.addSiteNavigationMenu(
+					groupName = "Test Site Name (Staging)",
+					site = "false",
+					siteNavigationMenuName = "Navigation Menu Name");
+			}
+
+			task ("Add a widget page") {
+				JSONLayout.addPublicLayout(
+					groupName = "Test Site Name (Staging)",
+					layoutName = "Test Page Name",
+					site = "false");
+			}
+
+			task ("Navigate to select pages modal of Navigation menu") {
+				NavigationMenusAdmin.openNavigationMenusAdmin(siteURLKey = "test-site-name-staging");
+
+				NavigationMenusAdmin.editMenu(navigationMenuName = "Navigation Menu Name");
+
+				Click(locator1 = "Button#PLUS");
+
+				MenuItem.click(menuItem = "Page");
+
+				SelectFrame(locator1 = "IFrame#MODAL_BODY");
+
+				Portlet.expandTree();
+			}
+		}
+
+		task ("When the navigation menu creator hovers on the content page item") {
+			MouseOver(
+				key_nodeName = "Test Page Name",
+				locator1 = "Treeview#NODE_ITEM");
+		}
+
+		task ("Then the navigation menu creator could view a tooltip with the page url") {
+			AssertVisible(
+				key_content = "/web/test-site-name-staging/test-page-name",
+				locator1 = "Tooltip#FLOATING_TOOLTIP_CONTENT");
 		}
 	}
 

@@ -18,7 +18,7 @@ import com.liferay.commerce.product.model.CPInstance;
 import com.liferay.commerce.product.service.CPInstanceLocalService;
 import com.liferay.commerce.stock.activity.CommerceLowStockActivity;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 
 import java.util.Locale;
 
@@ -30,7 +30,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Luca Pellizzon
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = {
 		"commerce.low.stock.activity.key=" + CommerceLowStockActivityImpl.KEY,
 		"commerce.low.stock.activity.priority:Integer=10"
@@ -57,10 +57,13 @@ public class CommerceLowStockActivityImpl implements CommerceLowStockActivity {
 
 	@Override
 	public String getLabel(Locale locale) {
-		return LanguageUtil.get(locale, "set-as-unpublished");
+		return _language.get(locale, "set-as-unpublished");
 	}
 
 	@Reference
 	private CPInstanceLocalService _cpInstanceLocalService;
+
+	@Reference
+	private Language _language;
 
 }

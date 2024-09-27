@@ -77,7 +77,7 @@ definition {
 
 		PageEditor.addWidget(portletName = "Asset Publisher");
 
-		PageEditor.clickPublish();
+		PageEditor.publish();
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "web/test-site-name/test-content-page-name");
 
@@ -718,23 +718,19 @@ definition {
 			userGroupDescription = "UG UserGroup Name Description",
 			userGroupName = "UG UserGroup Name");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		UserNavigator.gotoUser(userScreenName = "usersn");
 
 		User.assignUserGroupCP(userGroupName = "UG UserGroup Name");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		UserNavigator.gotoUser(userScreenName = "usersn");
 
-		User.viewUserInfomationUserGroupsCP(userGroupName = "UG UserGroup Name");
+		User.viewMemberships(
+			assetType = "User Groups",
+			assigneeName = "UG UserGroup Name");
 	}
 
 	@priority = "4"
@@ -836,6 +832,30 @@ definition {
 			userComment = "test");
 
 		AssertConsoleTextNotPresent(value1 = "java.lang.NullPointerException");
+	}
+
+	@description = "This is a use case for LPS-159181. Assert user can add widget to its private site page."
+	@priority = "4"
+	test CanAddWidgettoMyDashbaordPage {
+		UserBar.gotoDropdownItem(dropdownItem = "My Dashboard");
+
+		Portlet.addPG(portletName = "Calendar");
+
+		UserBar.gotoDropdownItem(dropdownItem = "My Dashboard");
+
+		Portlet.viewDefaultTitle(portletName = "Calendar");
+	}
+
+	@description = "This is a use case for LPS-159181. Assert user can add widget to its public site page."
+	@priority = "4"
+	test CanAddWidgettoMyProfilePage {
+		Navigator.gotoPersonalSite();
+
+		Portlet.addPG(portletName = "Asset Publisher");
+
+		Navigator.gotoPersonalSite();
+
+		Portlet.viewDefaultTitle(portletName = "Asset Publisher");
 	}
 
 	@priority = "3"
@@ -955,21 +975,13 @@ definition {
 	test ChangeUserPassword {
 		property portal.acceptance = "true";
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
-
-		User.addCP(
+		JSONUser.addUser(
 			userEmailAddress = "userea@liferay.com",
 			userFirstName = "userfn",
 			userLastName = "userln",
 			userScreenName = "usersn");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.editPasswordCP(
 			userEmailAddress = "userea@liferay.com",
@@ -1019,6 +1031,80 @@ definition {
 		User.changePasswordCP(
 			userEmailAddress = "userea@liferay.com",
 			userPassword = "Invalid");
+	}
+
+	@description = "This test changes password through the API Explorer GUI."
+	@priority = "3"
+	test ChangeUserPasswordViaAPIExplorerGUI {
+		property custom.properties = "jsonws.web.service.paths.excludes=";
+
+		task ("Given a user logs in") {
+			JSONUser.addUser(
+				userEmailAddress = "userea1@liferay.com",
+				userFirstName = "userfn1",
+				userLastName = "userln1",
+				userScreenName = "usersn1");
+
+			JSONUser.setFirstPassword(
+				agreeToTermsAndAnswerReminderQuery = "true",
+				requireReset = "false",
+				userEmailAddress = "userea1@liferay.com");
+
+			User.logoutAndLoginPG(
+				userLoginEmailAddress = "userea1@liferay.com",
+				userLoginFullName = "userfn1 userln1");
+		}
+
+		task ("When update the user's own password via the API Explorer GUI and back to Portal and refresh") {
+			APIExplorer.navigateToOpenAPI(
+				api = "headless-admin-user",
+				version = "v1.0");
+
+			var requestBody = '''
+				{
+					"currentPassword": "test",
+					"password": "test2"
+				}
+			''';
+			var value = JSONUserAPI._getUserIdByEmailAddress(userEmailAddress = "userea1@liferay.com");
+
+			APIExplorer.executeAPIMethodWithParameters(
+				method = "patchUserAccount",
+				parameter = "userAccountId",
+				requestBody = "${requestBody}",
+				service = "UserAccount",
+				value = "${value}");
+
+			AssertTextEquals(
+				locator1 = "OpenAPI#RESPONSE_CODE",
+				method = "patchUserAccount",
+				value1 = "200");
+
+			Masterclass.goBackUsingBrowserButton();
+
+			Refresh();
+		}
+
+		task ("Then user is not logged out and assert no NPE message") {
+			UserBar.gotoDropdown();
+
+			UserBar.viewFullName(userName = "USERFN1 USERLN1");
+
+			AssertConsoleTextNotPresent(value1 = "java.lang.NullPointerException: null");
+		}
+
+		task ("When user logs out and logs in with new password") {
+			User.logoutAndLoginPG(
+				password = "test2",
+				userLoginEmailAddress = "userea1@liferay.com",
+				userLoginFullName = "userfn1 userln1");
+		}
+
+		task ("Then the user logs in successfully") {
+			UserBar.gotoDropdown();
+
+			UserBar.viewFullName(userName = "userfn1 userln1");
+		}
 	}
 
 	@description = "This test changes password through the Password Reset link sent in email."
@@ -1084,37 +1170,25 @@ definition {
 			userLastName = "userln",
 			userScreenName = "usersn");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.deactivateCP(
 			deactivateType = "Actions",
 			userFirstName = "userfn");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.searchCP(searchTerm = "usersn");
 
 		User.viewNoUsersFoundCP();
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.deleteCP(
 			deactivateType = "Actions",
 			userFirstName = "userfn");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		Click(locator1 = "Dropdown#FILTER_AND_ORDER");
 
@@ -1136,10 +1210,7 @@ definition {
 			userLastName = "userln",
 			userScreenName = "usersn");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		UserNavigator.gotoUser(userScreenName = "usersn");
 
@@ -1147,10 +1218,7 @@ definition {
 			checkbox = "Enable",
 			deliveryOptions = "General,Test");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		UserNavigator.gotoUser(userScreenName = "usersn");
 
@@ -1171,16 +1239,15 @@ definition {
 
 	@priority = "4"
 	test EditUserAdditionalEmailAddresses {
+		property portal.acceptance = "true";
+
 		JSONUser.addUser(
 			userEmailAddress = "userea@liferay.com",
 			userFirstName = "userfn",
 			userLastName = "userln",
 			userScreenName = "usersn");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		UserNavigator.gotoUser(userScreenName = "usersn");
 
@@ -1266,6 +1333,7 @@ definition {
 
 	@priority = "4"
 	test EditUserAddresses {
+		property portal.acceptance = "true";
 		property testray.component.names = "Address";
 
 		JSONUser.addUser(
@@ -1274,10 +1342,7 @@ definition {
 			userLastName = "userln",
 			userScreenName = "usersn");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		UserNavigator.gotoUser(userScreenName = "usersn");
 
@@ -1348,21 +1413,15 @@ definition {
 
 	@priority = "3"
 	test EditUserDisplaySettings {
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		property portal.acceptance = "true";
 
-		User.addCP(
+		JSONUser.addUser(
 			userEmailAddress = "userea@liferay.com",
 			userFirstName = "userfn",
 			userLastName = "userln",
 			userScreenName = "usersn");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.editUserDisplaySettingsCP(
 			displaySettingsGreeting = "Welcome Selenium01!",
@@ -1371,16 +1430,15 @@ definition {
 
 	@priority = "4"
 	test EditUserPhoneNumbers {
+		property portal.acceptance = "true";
+
 		JSONUser.addUser(
 			userEmailAddress = "userea@liferay.com",
 			userFirstName = "userfn",
 			userLastName = "userln",
 			userScreenName = "usersn");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		UserNavigator.gotoUser(userScreenName = "usersn");
 
@@ -1473,55 +1531,40 @@ definition {
 		property environment.acceptance = "true";
 		property portal.acceptance = "true";
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
-
-		User.addCP(
-			userEmailAddress = "userea@liferay.com",
-			userFirstName = "userfn",
-			userLastName = "userln",
-			userScreenName = "usersn");
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Sites",
-			panel = "Control Panel",
-			portlet = "Sites");
-
-		Site.addBlankCP(siteName = "Site Name");
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
-
-		User.editUserSiteCP(
-			siteName = "Site Name",
-			userScreenName = "usersn");
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
-
-		User.gotoEditCP(userScreenName = "usersn");
-
-		User.viewUserInfomationSitesCP(siteName = "Site Name");
-	}
-
-	@priority = "4"
-	test EditUserWebsites {
 		JSONUser.addUser(
 			userEmailAddress = "userea@liferay.com",
 			userFirstName = "userfn",
 			userLastName = "userln",
 			userScreenName = "usersn");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		JSONGroup.addGroup(groupName = "Site Name");
+
+		User.openUsersAdmin();
+
+		User.editUserSiteCP(
+			siteName = "Site Name",
+			userScreenName = "usersn");
+
+		User.openUsersAdmin();
+
+		UserNavigator.gotoUser(userScreenName = "usersn");
+
+		User.viewMemberships(
+			assetType = "Sites",
+			assigneeName = "Site Name");
+	}
+
+	@priority = "4"
+	test EditUserWebsites {
+		property portal.acceptance = "true";
+
+		JSONUser.addUser(
+			userEmailAddress = "userea@liferay.com",
+			userFirstName = "userfn",
+			userLastName = "userln",
+			userScreenName = "usersn");
+
+		User.openUsersAdmin();
 
 		UserNavigator.gotoUser(userScreenName = "usersn");
 
@@ -1807,8 +1850,6 @@ definition {
 			User.logoutPG();
 
 			User.forgotPasswordSendResetLink(userEmailAddress = "userea@liferay.com");
-
-			Pause(locator1 = "30000");
 		}
 
 		task ("And open link to reset password in email") {
@@ -2066,21 +2107,13 @@ definition {
 	test SearchUser {
 		property portal.acceptance = "true";
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
-
-		User.addCP(
+		JSONUser.addUser(
 			userEmailAddress = "userea@liferay.com",
 			userFirstName = "userfn",
 			userLastName = "userln",
 			userScreenName = "usersn");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.basicSearchCP(
 			userBasicSearch = "Basic",
@@ -2287,7 +2320,6 @@ definition {
 			script = "${script}");
 
 		var companyId = JSONCompany.getCompanyId();
-
 		var userId = JSONUserSetter.setUserId(userEmailAddress = "test@liferay.com");
 
 		AssertTextEquals.assertPartialText(
@@ -2304,6 +2336,10 @@ definition {
 			portlet = "Users and Organizations");
 
 		UserNavigator.gotoUser(userScreenName = "test");
+
+		AssertTextEquals.assertPartialText(
+			locator1 = "Portlet#HEADER",
+			value1 = "Edit User");
 
 		User.editUserInformation(
 			userEmailAddressEdit = "testadmin@liferay.com",
@@ -2476,10 +2512,15 @@ definition {
 
 		User.openUsersAdmin();
 
-		User.editCategorizationCP(
-			categoryName = "Category Name 1",
-			userScreenName = "usersn",
-			vocabularyName = "Vocabulary Name 1");
+		UserNavigator.gotoUser(userScreenName = "usersn");
+
+		Click(
+			key_vocabularyName = "Vocabulary Name 1",
+			locator1 = "AssetCategorization#CATEGORY_SELECT");
+
+		AssetCategorization.selectCategories(categoryNameList = "Category Name 1");
+
+		PortletEntry.save();
 
 		User.openUsersAdmin();
 
@@ -2528,7 +2569,7 @@ definition {
 
 		MockMock.viewMail(
 			asset = "${portalURL}: Your New Account",
-			content = "Your can setup your password here: ${portalURL}/c/portal/update_password?",
+			content = "You can setup your password here: ${portalURL}/c/portal/update_password?",
 			recipient = "userfn userln",
 			sender = "Joe Bloggs",
 			subject = "${portalURL}: Your New Account");
@@ -2579,30 +2620,19 @@ definition {
 		property portal.acceptance = "true";
 		property testray.component.names = "Training";
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
-
-		User.addCP(
+		JSONUser.addUser(
 			userEmailAddress = "userea@liferay.com",
 			userFirstName = "userfn",
 			userLastName = "userln",
 			userScreenName = "usersn");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.editPasswordCP(
 			userEmailAddress = "userea@liferay.com",
 			userScreenName = "usersn");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.deactivateCP(
 			deactivateType = "Actions",
@@ -2744,16 +2774,15 @@ definition {
 
 	@priority = "4"
 	test ViewUserFormPersistence {
+		property portal.acceptance = "true";
+
 		JSONUser.addUser(
 			userEmailAddress = "userea@liferay.com",
 			userFirstName = "userfn",
 			userLastName = "userln",
 			userScreenName = "usersn");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		UserNavigator.gotoUser(userScreenName = "usersn");
 
@@ -2804,8 +2833,8 @@ definition {
 		Site.openSiteSettingsAdmin(siteURLKey = "my-site");
 
 		Site.addVirtualHostsURLCP(
-			publicPageVirtualHostURL = "www.able.com",
-			publicVirtualHosts = "true");
+			pageVirtualHosts = "true",
+			publicPageVirtualHostURL = "www.able.com");
 
 		Navigator.gotoBack();
 

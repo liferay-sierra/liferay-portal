@@ -37,7 +37,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Dylan Rebelak
  */
 @Component(
-	immediate = true,
 	property = "ddm.form.field.type.name=" + DDMFormFieldTypeConstants.CHECKBOX_MULTIPLE,
 	service = DDMFormFieldValueRequestParameterRetriever.class
 )
@@ -49,12 +48,11 @@ public class CheckboxMultipleDDMFormFieldValueRequestParameterRetriever
 		HttpServletRequest httpServletRequest, String ddmFormFieldParameterName,
 		String defaultDDMFormFieldParameterValue) {
 
-		String[] parameterValues = _getParameterValues(
-			httpServletRequest, ddmFormFieldParameterName,
-			_getDefaultDDMFormFieldParameterValues(
-				defaultDDMFormFieldParameterValue));
-
-		return jsonFactory.serialize(parameterValues);
+		return jsonFactory.serialize(
+			_getParameterValues(
+				httpServletRequest, ddmFormFieldParameterName,
+				_getDefaultDDMFormFieldParameterValues(
+					defaultDDMFormFieldParameterValue)));
 	}
 
 	@Reference

@@ -147,14 +147,20 @@ public class ObjectEntryAssetRenderer
 		throws Exception {
 
 		httpServletRequest.setAttribute(
+			ObjectWebKeys.EXTERNAL_REFERENCE_CODE,
+			_objectEntry.getExternalReferenceCode());
+		httpServletRequest.setAttribute(
 			ObjectWebKeys.OBJECT_DEFINITION, _objectDefinition);
 		httpServletRequest.setAttribute(
 			WebKeys.PORTLET_DISPLAY_CONTEXT,
 			_objectEntryDisplayContextFactory.create(httpServletRequest, true));
-		httpServletRequest.setAttribute(
-			"objectEntryId", _objectEntry.getObjectEntryId());
 
 		return super.include(httpServletRequest, httpServletResponse, template);
+	}
+
+	@Override
+	public boolean isCommentable() {
+		return _objectDefinition.isEnableComments();
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

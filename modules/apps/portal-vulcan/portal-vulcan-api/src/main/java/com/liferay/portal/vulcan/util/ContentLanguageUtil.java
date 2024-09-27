@@ -32,6 +32,10 @@ public class ContentLanguageUtil {
 		String[] availableLocaleIds, String defaultLocaleId,
 		HttpServletResponse httpServletResponse, Locale requestedLocale) {
 
+		if (httpServletResponse == null) {
+			return;
+		}
+
 		Locale contentLocale = Stream.of(
 			availableLocaleIds
 		).map(

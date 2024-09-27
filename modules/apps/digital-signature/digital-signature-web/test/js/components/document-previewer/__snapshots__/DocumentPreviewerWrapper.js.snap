@@ -129,6 +129,7 @@ exports[`DocumentPreviewerWrapper renders with a document 1`] = `
       >
         <button
           class="page-link"
+          disabled=""
           type="button"
         >
           1
@@ -154,7 +155,9 @@ exports[`DocumentPreviewerWrapper renders with a document 1`] = `
         </button>
       </li>
     </ul>
-    <span />
+    <span>
+      document-x-of-x
+    </span>
   </div>
 </DocumentFragment>
 `;
@@ -184,7 +187,7 @@ exports[`DocumentPreviewerWrapper renders with a document without preview 1`] = 
           <p
             class="empty-message-color taglib-empty-result-message-description"
           >
-            the-envelope-does-not-have-a-document-to-preview
+            the-document-x-does-not-have-a-preview
           </p>
         </div>
       </div>
@@ -254,6 +257,7 @@ exports[`DocumentPreviewerWrapper renders with a document without preview 1`] = 
       >
         <button
           class="page-link"
+          disabled=""
           type="button"
         >
           1
@@ -279,7 +283,9 @@ exports[`DocumentPreviewerWrapper renders with a document without preview 1`] = 
         </button>
       </li>
     </ul>
-    <span />
+    <span>
+      document-x-of-x
+    </span>
   </div>
 </DocumentFragment>
 `;
@@ -399,6 +405,7 @@ exports[`DocumentPreviewerWrapper renders with an image 1`] = `
       >
         <button
           class="page-link"
+          disabled=""
           type="button"
         >
           1
@@ -424,7 +431,9 @@ exports[`DocumentPreviewerWrapper renders with an image 1`] = `
         </button>
       </li>
     </ul>
-    <span />
+    <span>
+      document-x-of-x
+    </span>
   </div>
 </DocumentFragment>
 `;

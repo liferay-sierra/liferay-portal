@@ -77,12 +77,14 @@ public class ObjectFieldCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(43);
+		StringBundler sb = new StringBundler(51);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
 		sb.append(", uuid=");
 		sb.append(uuid);
+		sb.append(", externalReferenceCode=");
+		sb.append(externalReferenceCode);
 		sb.append(", objectFieldId=");
 		sb.append(objectFieldId);
 		sb.append(", companyId=");
@@ -107,6 +109,8 @@ public class ObjectFieldCacheModel
 		sb.append(dbTableName);
 		sb.append(", dbType=");
 		sb.append(dbType);
+		sb.append(", defaultValue=");
+		sb.append(defaultValue);
 		sb.append(", indexed=");
 		sb.append(indexed);
 		sb.append(", indexedAsKeyword=");
@@ -121,6 +125,10 @@ public class ObjectFieldCacheModel
 		sb.append(relationshipType);
 		sb.append(", required=");
 		sb.append(required);
+		sb.append(", state=");
+		sb.append(state);
+		sb.append(", system=");
+		sb.append(system);
 		sb.append("}");
 
 		return sb.toString();
@@ -137,6 +145,13 @@ public class ObjectFieldCacheModel
 		}
 		else {
 			objectFieldImpl.setUuid(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			objectFieldImpl.setExternalReferenceCode("");
+		}
+		else {
+			objectFieldImpl.setExternalReferenceCode(externalReferenceCode);
 		}
 
 		objectFieldImpl.setObjectFieldId(objectFieldId);
@@ -195,6 +210,13 @@ public class ObjectFieldCacheModel
 			objectFieldImpl.setDBType(dbType);
 		}
 
+		if (defaultValue == null) {
+			objectFieldImpl.setDefaultValue("");
+		}
+		else {
+			objectFieldImpl.setDefaultValue(defaultValue);
+		}
+
 		objectFieldImpl.setIndexed(indexed);
 		objectFieldImpl.setIndexedAsKeyword(indexedAsKeyword);
 
@@ -227,6 +249,8 @@ public class ObjectFieldCacheModel
 		}
 
 		objectFieldImpl.setRequired(required);
+		objectFieldImpl.setState(state);
+		objectFieldImpl.setSystem(system);
 
 		objectFieldImpl.resetOriginalValues();
 
@@ -237,6 +261,7 @@ public class ObjectFieldCacheModel
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
 		uuid = objectInput.readUTF();
+		externalReferenceCode = objectInput.readUTF();
 
 		objectFieldId = objectInput.readLong();
 
@@ -254,6 +279,7 @@ public class ObjectFieldCacheModel
 		dbColumnName = objectInput.readUTF();
 		dbTableName = objectInput.readUTF();
 		dbType = objectInput.readUTF();
+		defaultValue = objectInput.readUTF();
 
 		indexed = objectInput.readBoolean();
 
@@ -264,6 +290,10 @@ public class ObjectFieldCacheModel
 		relationshipType = objectInput.readUTF();
 
 		required = objectInput.readBoolean();
+
+		state = objectInput.readBoolean();
+
+		system = objectInput.readBoolean();
 	}
 
 	@Override
@@ -275,6 +305,13 @@ public class ObjectFieldCacheModel
 		}
 		else {
 			objectOutput.writeUTF(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(externalReferenceCode);
 		}
 
 		objectOutput.writeLong(objectFieldId);
@@ -325,6 +362,13 @@ public class ObjectFieldCacheModel
 			objectOutput.writeUTF(dbType);
 		}
 
+		if (defaultValue == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(defaultValue);
+		}
+
 		objectOutput.writeBoolean(indexed);
 
 		objectOutput.writeBoolean(indexedAsKeyword);
@@ -358,10 +402,15 @@ public class ObjectFieldCacheModel
 		}
 
 		objectOutput.writeBoolean(required);
+
+		objectOutput.writeBoolean(state);
+
+		objectOutput.writeBoolean(system);
 	}
 
 	public long mvccVersion;
 	public String uuid;
+	public String externalReferenceCode;
 	public long objectFieldId;
 	public long companyId;
 	public long userId;
@@ -374,6 +423,7 @@ public class ObjectFieldCacheModel
 	public String dbColumnName;
 	public String dbTableName;
 	public String dbType;
+	public String defaultValue;
 	public boolean indexed;
 	public boolean indexedAsKeyword;
 	public String indexedLanguageId;
@@ -381,5 +431,7 @@ public class ObjectFieldCacheModel
 	public String name;
 	public String relationshipType;
 	public boolean required;
+	public boolean state;
+	public boolean system;
 
 }

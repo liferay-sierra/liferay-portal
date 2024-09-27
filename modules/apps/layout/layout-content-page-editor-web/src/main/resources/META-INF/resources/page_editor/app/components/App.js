@@ -12,101 +12,85 @@
  * details.
  */
 
-import {ReactPortal} from '@liferay/frontend-js-react-web';
 import PropTypes from 'prop-types';
-import React, {useEffect, useMemo} from 'react';
+import React from 'react';
 
+import ConvertToPageTemplateModal from '../../plugins/convert-to-page-template-modal/components/ConvertToPageTemplateModal';
 import {StyleBookContextProvider} from '../../plugins/page-design-options/hooks/useStyleBook';
 import {INIT} from '../actions/types';
-import {LAYOUT_TYPES} from '../config/constants/layoutTypes';
-import {config} from '../config/index';
 import {CollectionActiveItemContextProvider} from '../contexts/CollectionActiveItemContext';
 import {ControlsProvider} from '../contexts/ControlsContext';
 import {DisplayPagePreviewItemContextProvider} from '../contexts/DisplayPagePreviewItemContext';
 import {EditableProcessorContextProvider} from '../contexts/EditableProcessorContext';
+import {FormValidationContextProvider} from '../contexts/FormValidationContext';
 import {GlobalContextProvider} from '../contexts/GlobalContext';
-import {StoreContextProvider, useSelector} from '../contexts/StoreContext';
-import {StyleErrorsContextProvider} from '../contexts/StyleErrorsContext';
-import {WidgetsContextProvider} from '../contexts/WidgetsContext';
+import {
+	KeyboardMovementContextProvider,
+	useMovementSource,
+} from '../contexts/KeyboardMovementContext';
+import {StoreContextProvider} from '../contexts/StoreContext';
 import {reducer} from '../reducers/index';
-import selectLanguageId from '../selectors/selectLanguageId';
-import selectSegmentsExperienceId from '../selectors/selectSegmentsExperienceId';
 import {DragAndDropContextProvider} from '../utils/drag-and-drop/useDragAndDrop';
+import CommonStylesManager from './CommonStylesManager';
 import {DisplayPagePreviewItemSelector} from './DisplayPagePreviewItemSelector';
 import DragPreview from './DragPreview';
+import ItemConfigurationSidebar from './ItemConfigurationSidebar';
+import KeyboardMovementManager from './KeyboardMovementManager';
+import KeyboardMovementPreview from './KeyboardMovementPreview';
+import KeyboardMovementText from './KeyboardMovementText';
+import {LayoutBreadcrumbs} from './LayoutBreadcrumbs';
 import LayoutViewport from './LayoutViewport';
 import ShortcutManager from './ShortcutManager';
 import Sidebar from './Sidebar';
 import Toolbar from './Toolbar';
-import URLParser from './URLParser';
-
-const DEFAULT_SESSION_LENGTH = 60 * 1000;
+import WidgetsManager from './WidgetsManager';
+import AppHooks from './app-hooks/index';
 
 export default function App({state}) {
-	const displayPagePreviewItemSelectorWrapper = useMemo(
-		() =>
-			config.layoutType === LAYOUT_TYPES.display &&
-			document.getElementById('infoItemSelectorContainer'),
-		[]
-	);
-
 	const initialState = reducer(state, {type: INIT});
-
-	useEffect(() => {
-		if (Liferay.Session && config.autoExtendSessionEnabled) {
-			const sessionLength =
-				Liferay.Session.get('sessionLength') || DEFAULT_SESSION_LENGTH;
-
-			const interval = setInterval(() => {
-				Liferay.Session.extend();
-			}, sessionLength / 2);
-
-			return () => clearInterval(interval);
-		}
-	}, []);
 
 	return (
 		<StoreContextProvider initialState={initialState} reducer={reducer}>
-			<BackURL />
-
-			<LanguageDirection />
-
-			<URLParser />
+			<ConvertToPageTemplateModal />
 
 			<ControlsProvider>
 				<CollectionActiveItemContextProvider>
 					<DragAndDropContextProvider>
 						<EditableProcessorContextProvider>
 							<DisplayPagePreviewItemContextProvider>
-								<WidgetsContextProvider>
-									{displayPagePreviewItemSelectorWrapper ? (
-										<ReactPortal
-											container={
-												displayPagePreviewItemSelectorWrapper
-											}
-										>
-											<DisplayPagePreviewItemSelector
-												dark
-											/>
-										</ReactPortal>
-									) : null}
+								<AppHooks />
 
-									<DragPreview />
+								<DisplayPagePreviewItemSelector dark />
 
-									<StyleErrorsContextProvider>
-										<Toolbar />
+								<DragPreview />
 
-										<ShortcutManager />
+								<WidgetsManager />
+
+								<FormValidationContextProvider>
+									<Toolbar />
+
+									<KeyboardMovementContextProvider>
+										<KeyboardManager />
+
+										<KeyboardMovementPreview />
+
+										<KeyboardMovementText />
 
 										<GlobalContextProvider>
+											<CommonStylesManager />
+
 											<LayoutViewport />
+
+											<LayoutBreadcrumbs />
 
 											<StyleBookContextProvider>
 												<Sidebar />
+
+												<ItemConfigurationSidebar />
 											</StyleBookContextProvider>
 										</GlobalContextProvider>
-									</StyleErrorsContextProvider>
-								</WidgetsContextProvider>
+									</KeyboardMovementContextProvider>
+								</FormValidationContextProvider>
 							</DisplayPagePreviewItemContextProvider>
 						</EditableProcessorContextProvider>
 					</DragAndDropContextProvider>
@@ -120,60 +104,8 @@ App.propTypes = {
 	state: PropTypes.object.isRequired,
 };
 
-const BackURL = () => {
-	const [backLinkElement, backLinkURL] = useMemo(() => {
-		const backLinkElement = document.querySelector('.lfr-back-link');
+function KeyboardManager() {
+	const movementSource = useMovementSource();
 
-		try {
-			return [backLinkElement, new URL(backLinkElement?.href)];
-		}
-		catch (error) {
-			return [];
-		}
-	}, []);
-
-	const segmentsExperienceId = useSelector(selectSegmentsExperienceId);
-
-	useEffect(() => {
-		if (backLinkElement && backLinkURL && segmentsExperienceId) {
-			backLinkURL.searchParams.set(
-				'segmentsExperienceId',
-				segmentsExperienceId
-			);
-			backLinkElement.href = backLinkURL.toString();
-
-			const currentURL = new URL(window.location.href);
-
-			if (currentURL.searchParams.has('p_l_back_url')) {
-				currentURL.searchParams.set(
-					'p_l_back_url',
-					backLinkURL.toString()
-				);
-
-				window.history.replaceState(
-					null,
-					document.title,
-					currentURL.toString()
-				);
-			}
-		}
-	}, [backLinkElement, backLinkURL, segmentsExperienceId]);
-
-	return null;
-};
-
-const LanguageDirection = () => {
-	const languageId = useSelector(selectLanguageId);
-
-	useEffect(() => {
-		const currentLanguageDirection = Liferay.Language.direction[languageId];
-		const wrapper = document.getElementById('wrapper');
-
-		if (wrapper) {
-			wrapper.dir = currentLanguageDirection;
-			wrapper.lang = languageId;
-		}
-	}, [languageId]);
-
-	return null;
-};
+	return movementSource ? <KeyboardMovementManager /> : <ShortcutManager />;
+}

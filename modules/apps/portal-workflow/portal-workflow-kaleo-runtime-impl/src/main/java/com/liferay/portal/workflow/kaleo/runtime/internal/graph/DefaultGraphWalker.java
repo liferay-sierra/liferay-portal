@@ -15,6 +15,7 @@
 package com.liferay.portal.workflow.kaleo.runtime.internal.graph;
 
 import com.liferay.portal.aop.AopService;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.transaction.Isolation;
 import com.liferay.portal.kernel.transaction.Propagation;
@@ -24,7 +25,7 @@ import com.liferay.portal.workflow.kaleo.runtime.ExecutionContext;
 import com.liferay.portal.workflow.kaleo.runtime.graph.GraphWalker;
 import com.liferay.portal.workflow.kaleo.runtime.graph.PathElement;
 import com.liferay.portal.workflow.kaleo.runtime.internal.BaseKaleoBean;
-import com.liferay.portal.workflow.kaleo.runtime.internal.node.NodeExecutorFactory;
+import com.liferay.portal.workflow.kaleo.runtime.internal.node.NodeExecutorRegistry;
 import com.liferay.portal.workflow.kaleo.runtime.node.NodeExecutor;
 import com.liferay.portal.workflow.kaleo.runtime.util.ExecutionContextHelper;
 
@@ -36,7 +37,8 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Michael C. Han
  */
-@Component(immediate = true, service = AopService.class)
+@Component(service = AopService.class)
+@CTAware
 @Transactional(
 	isolation = Isolation.PORTAL, propagation = Propagation.REQUIRES_NEW,
 	rollbackFor = Exception.class
@@ -52,7 +54,7 @@ public class DefaultGraphWalker
 		throws PortalException {
 
 		if (sourceKaleoNode != null) {
-			NodeExecutor nodeExecutor = _nodeExecutorFactory.getNodeExecutor(
+			NodeExecutor nodeExecutor = _nodeExecutorRegistry.getNodeExecutor(
 				sourceKaleoNode.getType());
 
 			nodeExecutor.exit(
@@ -64,7 +66,7 @@ public class DefaultGraphWalker
 				executionContext.getKaleoInstanceToken(), sourceKaleoNode,
 				targetKaleoNode, executionContext.getServiceContext());
 
-			NodeExecutor nodeExecutor = _nodeExecutorFactory.getNodeExecutor(
+			NodeExecutor nodeExecutor = _nodeExecutorRegistry.getNodeExecutor(
 				targetKaleoNode.getType());
 
 			boolean performExecute = nodeExecutor.enter(
@@ -83,6 +85,6 @@ public class DefaultGraphWalker
 	private ExecutionContextHelper _executionContextHelper;
 
 	@Reference
-	private NodeExecutorFactory _nodeExecutorFactory;
+	private NodeExecutorRegistry _nodeExecutorRegistry;
 
 }

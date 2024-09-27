@@ -14,6 +14,7 @@
 
 package com.liferay.headless.commerce.admin.pricing.internal.resource.v2_0.factory;
 
+import com.liferay.headless.commerce.admin.pricing.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.headless.commerce.admin.pricing.resource.v2_0.ChannelResource;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -33,14 +34,18 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -59,7 +62,8 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @generated
  */
 @Component(
-	enabled = false, immediate = true, service = ChannelResource.Factory.class
+	property = "resource.locator.key=/headless-commerce-admin-pricing/v2.0/Channel",
+	service = ChannelResource.Factory.class
 )
 @Generated("")
 public class ChannelResourceFactoryImpl implements ChannelResource.Factory {
@@ -74,9 +78,7 @@ public class ChannelResourceFactoryImpl implements ChannelResource.Factory {
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (ChannelResource)ProxyUtil.newProxyInstance(
-					ChannelResource.class.getClassLoader(),
-					new Class<?>[] {ChannelResource.class},
+				return _channelResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -135,14 +137,31 @@ public class ChannelResourceFactoryImpl implements ChannelResource.Factory {
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		ChannelResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, ChannelResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		ChannelResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			ChannelResource.class.getClassLoader(), ChannelResource.class);
+
+		try {
+			Constructor<ChannelResource> constructor =
+				(Constructor<ChannelResource>)proxyClass.getConstructor(
+					InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -165,7 +184,7 @@ public class ChannelResourceFactoryImpl implements ChannelResource.Factory {
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		ChannelResource channelResource = _componentServiceObjects.getService();
@@ -188,6 +207,7 @@ public class ChannelResourceFactoryImpl implements ChannelResource.Factory {
 		channelResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		channelResource.setRoleLocalService(_roleLocalService);
+		channelResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(channelResource, arguments);
@@ -203,6 +223,9 @@ public class ChannelResourceFactoryImpl implements ChannelResource.Factory {
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, ChannelResource>
+		_channelResourceProxyProviderFunction = _getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -224,9 +247,6 @@ public class ChannelResourceFactoryImpl implements ChannelResource.Factory {
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -235,6 +255,9 @@ public class ChannelResourceFactoryImpl implements ChannelResource.Factory {
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

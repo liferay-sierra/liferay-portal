@@ -62,8 +62,9 @@ export default function SidebarHeader({
 	const handleKeyDown = (event) => {
 		if (
 			(event.key === 'Backspace' || event.key === 'Delete') &&
-			document.querySelectorAll('.form-control:focus').length === 0 &&
-			document.querySelectorAll('.CodeMirror-focused').length === 0
+			contentName !== 'assignments' &&
+			!document.querySelectorAll('.form-control:focus').length &&
+			!document.querySelectorAll('.CodeMirror-focused').length
 		) {
 			setShowDeleteConfirmationModal(true);
 		}
@@ -99,6 +100,7 @@ export default function SidebarHeader({
 				{showDeleteButton && (
 					<ClayButtonWithIcon
 						className="text-secondary trash-button"
+						disabled={contentName === 'assignments'}
 						displayType="unstyled"
 						onClick={() => setShowDeleteConfirmationModal(true)}
 						symbol="trash"

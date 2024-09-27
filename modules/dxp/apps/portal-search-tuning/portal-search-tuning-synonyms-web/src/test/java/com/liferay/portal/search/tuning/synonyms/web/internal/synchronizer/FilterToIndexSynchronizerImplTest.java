@@ -37,10 +37,7 @@ public class FilterToIndexSynchronizerImplTest extends BaseSynonymsWebTestCase {
 		LiferayUnitTestRule.INSTANCE;
 
 	@Before
-	@Override
 	public void setUp() throws Exception {
-		super.setUp();
-
 		_filterToIndexSynchronizerImpl = new FilterToIndexSynchronizerImpl();
 
 		ReflectionTestUtil.setFieldValue(
@@ -49,9 +46,6 @@ public class FilterToIndexSynchronizerImplTest extends BaseSynonymsWebTestCase {
 		ReflectionTestUtil.setFieldValue(
 			_filterToIndexSynchronizerImpl, "_synonymSetFilterReader",
 			synonymSetFilterReader);
-		ReflectionTestUtil.setFieldValue(
-			_filterToIndexSynchronizerImpl, "_synonymSetIndexNameBuilder",
-			synonymSetIndexNameBuilder);
 		ReflectionTestUtil.setFieldValue(
 			_filterToIndexSynchronizerImpl, "_synonymSetStorageAdapter",
 			synonymSetStorageAdapter);
@@ -67,7 +61,7 @@ public class FilterToIndexSynchronizerImplTest extends BaseSynonymsWebTestCase {
 		Mockito.verify(
 			synonymSetStorageAdapter, Mockito.times(1)
 		).create(
-			Mockito.anyObject(), Mockito.anyObject()
+			Mockito.any(), Mockito.any()
 		);
 	}
 

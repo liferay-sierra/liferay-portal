@@ -168,7 +168,7 @@ public class RatingsStatsPersistenceImpl
 	 * </p>
 	 *
 	 * @param classNameId the class name ID
-	 * @param classPK the class pk
+	 * @param classPKs the class pks
 	 * @param start the lower bound of the range of ratings statses
 	 * @param end the upper bound of the range of ratings statses (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
@@ -224,7 +224,7 @@ public class RatingsStatsPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<RatingsStats>)FinderCacheUtil.getResult(
-				_finderPathWithPaginationFindByC_C, finderArgs);
+				_finderPathWithPaginationFindByC_C, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (RatingsStats ratingsStats : list) {
@@ -418,7 +418,7 @@ public class RatingsStatsPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = FinderCacheUtil.getResult(
-				_finderPathFetchByC_C, finderArgs);
+				_finderPathFetchByC_C, finderArgs, this);
 		}
 
 		if (result instanceof RatingsStats) {
@@ -525,7 +525,8 @@ public class RatingsStatsPersistenceImpl
 
 			finderArgs = new Object[] {classNameId, classPK};
 
-			count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs);
+			count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -596,7 +597,7 @@ public class RatingsStatsPersistenceImpl
 			finderArgs = new Object[] {classNameId, StringUtil.merge(classPKs)};
 
 			count = (Long)FinderCacheUtil.getResult(
-				_finderPathWithPaginationCountByC_C, finderArgs);
+				_finderPathWithPaginationCountByC_C, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1052,7 +1053,9 @@ public class RatingsStatsPersistenceImpl
 	 */
 	@Override
 	public RatingsStats fetchByPrimaryKey(Serializable primaryKey) {
-		if (CTPersistenceHelperUtil.isProductionMode(RatingsStats.class)) {
+		if (CTPersistenceHelperUtil.isProductionMode(
+				RatingsStats.class, primaryKey)) {
+
 			return super.fetchByPrimaryKey(primaryKey);
 		}
 
@@ -1268,7 +1271,7 @@ public class RatingsStatsPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<RatingsStats>)FinderCacheUtil.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -1344,7 +1347,7 @@ public class RatingsStatsPersistenceImpl
 
 		if (productionMode) {
 			count = (Long)FinderCacheUtil.getResult(
-				_finderPathCountAll, FINDER_ARGS_EMPTY);
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 		}
 
 		if (count == null) {

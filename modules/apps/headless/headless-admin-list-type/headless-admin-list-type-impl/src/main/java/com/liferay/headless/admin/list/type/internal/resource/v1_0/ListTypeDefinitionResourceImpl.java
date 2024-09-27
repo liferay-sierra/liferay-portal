@@ -31,13 +31,16 @@ import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.vulcan.aggregation.Aggregation;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
-import com.liferay.portal.vulcan.resource.EntityModelResource;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 import com.liferay.portal.vulcan.util.SearchUtil;
+
+import java.util.Locale;
 
 import javax.ws.rs.core.MultivaluedMap;
 
@@ -53,7 +56,7 @@ import org.osgi.service.component.annotations.ServiceScope;
 	scope = ServiceScope.PROTOTYPE, service = ListTypeDefinitionResource.class
 )
 public class ListTypeDefinitionResourceImpl
-	extends BaseListTypeDefinitionResourceImpl implements EntityModelResource {
+	extends BaseListTypeDefinitionResourceImpl {
 
 	@Override
 	public void deleteListTypeDefinition(Long listTypeDefinitionId)
@@ -121,6 +124,7 @@ public class ListTypeDefinitionResourceImpl
 
 		return _toListTypeDefinition(
 			_listTypeDefinitionService.addListTypeDefinition(
+				listTypeDefinition.getExternalReferenceCode(),
 				LocalizedMapUtil.getLocalizedMap(
 					listTypeDefinition.getName_i18n())));
 	}
@@ -130,16 +134,34 @@ public class ListTypeDefinitionResourceImpl
 			Long listTypeDefinitionId, ListTypeDefinition listTypeDefinition)
 		throws Exception {
 
+		if (!GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-164278")) &&
+			Validator.isNotNull(
+				listTypeDefinition.getExternalReferenceCode())) {
+
+			throw new UnsupportedOperationException();
+		}
+
 		return _toListTypeDefinition(
 			_listTypeDefinitionService.updateListTypeDefinition(
+				listTypeDefinition.getExternalReferenceCode(),
 				listTypeDefinitionId,
 				LocalizedMapUtil.getLocalizedMap(
 					listTypeDefinition.getName_i18n())));
 	}
 
+	private Locale _getLocale() {
+		if (contextUser != null) {
+			return contextUser.getLocale();
+		}
+
+		return contextAcceptLanguage.getPreferredLocale();
+	}
+
 	private ListTypeDefinition _toListTypeDefinition(
 		com.liferay.list.type.model.ListTypeDefinition
 			serviceBuilderListTypeDefinition) {
+
+		Locale locale = _getLocale();
 
 		return new ListTypeDefinition() {
 			{
@@ -172,6 +194,14 @@ public class ListTypeDefinitionResourceImpl
 						serviceBuilderListTypeDefinition.
 							getListTypeDefinitionId())
 				).put(
+					"permissions",
+					addAction(
+						ActionKeys.PERMISSIONS, "patchListTypeDefinition",
+						com.liferay.list.type.model.ListTypeDefinition.class.
+							getName(),
+						serviceBuilderListTypeDefinition.
+							getListTypeDefinitionId())
+				).put(
 					"update",
 					addAction(
 						ActionKeys.UPDATE, "putListTypeDefinition",
@@ -183,6 +213,15 @@ public class ListTypeDefinitionResourceImpl
 				dateCreated = serviceBuilderListTypeDefinition.getCreateDate();
 				dateModified =
 					serviceBuilderListTypeDefinition.getModifiedDate();
+
+				if (GetterUtil.getBoolean(
+						PropsUtil.get("feature.flag.LPS-164278"))) {
+
+					externalReferenceCode =
+						serviceBuilderListTypeDefinition.
+							getExternalReferenceCode();
+				}
+
 				id = serviceBuilderListTypeDefinition.getListTypeDefinitionId();
 				listTypeEntries = transformToArray(
 					_listTypeEntryLocalService.getListTypeEntries(
@@ -190,11 +229,9 @@ public class ListTypeDefinitionResourceImpl
 							getListTypeDefinitionId(),
 						QueryUtil.ALL_POS, QueryUtil.ALL_POS),
 					listTypeEntry -> ListTypeEntryUtil.toListTypeEntry(
-						null, contextAcceptLanguage.getPreferredLocale(),
-						listTypeEntry),
+						null, locale, listTypeEntry),
 					ListTypeEntry.class);
-				name = serviceBuilderListTypeDefinition.getName(
-					contextAcceptLanguage.getPreferredLocale());
+				name = serviceBuilderListTypeDefinition.getName(locale);
 				name_i18n = LocalizedMapUtil.getI18nMap(
 					serviceBuilderListTypeDefinition.getNameMap());
 			}

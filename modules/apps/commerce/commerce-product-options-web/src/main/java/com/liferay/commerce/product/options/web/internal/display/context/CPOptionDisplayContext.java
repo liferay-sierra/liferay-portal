@@ -22,17 +22,17 @@ import com.liferay.commerce.product.model.CPOption;
 import com.liferay.commerce.product.servlet.taglib.ui.CPDefinitionScreenNavigationConstants;
 import com.liferay.commerce.product.util.DDMFormFieldTypeUtil;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldType;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
-import com.liferay.frontend.taglib.clay.data.set.servlet.taglib.util.ClayDataSetActionDropdownItem;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
+import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenuBuilder;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
 import com.liferay.portal.kernel.settings.SystemSettingsLocator;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -62,14 +62,14 @@ public class CPOptionDisplayContext {
 
 	public CPOptionDisplayContext(
 			ConfigurationProvider configurationProvider, CPOption cpOption,
-			DDMFormFieldTypeServicesTracker ddmFormFieldTypeServicesTracker,
+			DDMFormFieldTypeServicesRegistry ddmFormFieldTypeServicesRegistry,
 			PortletResourcePermission portletResourcePermission,
 			HttpServletRequest httpServletRequest)
 		throws PortalException {
 
 		_configurationProvider = configurationProvider;
 		_cpOption = cpOption;
-		_ddmFormFieldTypeServicesTracker = ddmFormFieldTypeServicesTracker;
+		_ddmFormFieldTypeServicesRegistry = ddmFormFieldTypeServicesRegistry;
 		_portletResourcePermission = portletResourcePermission;
 
 		cpRequestHelper = new CPRequestHelper(httpServletRequest);
@@ -109,12 +109,10 @@ public class CPOptionDisplayContext {
 	public String getDDMFormFieldTypeLabel(
 		DDMFormFieldType ddmFormFieldType, Locale locale) {
 
-		Map<String, Object> ddmFormFieldTypeProperties =
-			_ddmFormFieldTypeServicesTracker.getDDMFormFieldTypeProperties(
-				ddmFormFieldType.getName());
-
 		String label = MapUtil.getString(
-			ddmFormFieldTypeProperties, "ddm.form.field.type.label");
+			_ddmFormFieldTypeServicesRegistry.getDDMFormFieldTypeProperties(
+				ddmFormFieldType.getName()),
+			"ddm.form.field.type.label");
 
 		try {
 			if (Validator.isNotNull(label)) {
@@ -137,7 +135,7 @@ public class CPOptionDisplayContext {
 		throws PortalException {
 
 		List<DDMFormFieldType> ddmFormFieldTypes =
-			_ddmFormFieldTypeServicesTracker.getDDMFormFieldTypes();
+			_ddmFormFieldTypeServicesRegistry.getDDMFormFieldTypes();
 
 		CPOptionConfiguration cpOptionConfiguration =
 			_configurationProvider.getConfiguration(
@@ -165,11 +163,10 @@ public class CPOptionDisplayContext {
 		return headerActionModels;
 	}
 
-	public List<ClayDataSetActionDropdownItem>
-			getOptionClayDataSetActionDropdownItems()
+	public List<FDSActionDropdownItem> getOptionFDSActionDropdownItems()
 		throws PortalException {
 
-		return _getClayDataSetActionDropdownItems(
+		return _getFDSActionDropdownItems(
 			PortletURLBuilder.createRenderURL(
 				cpRequestHelper.getRenderResponse()
 			).setMVCRenderCommandName(
@@ -183,33 +180,6 @@ public class CPOptionDisplayContext {
 				CPDefinitionScreenNavigationConstants.CATEGORY_KEY_DETAILS
 			).buildString(),
 			false);
-	}
-
-	public List<ClayDataSetActionDropdownItem>
-			getOptionValueClayDataSetActionDropdownItems()
-		throws PortalException {
-
-		PortletURL portletURL = PortletURLBuilder.createRenderURL(
-			cpRequestHelper.getRenderResponse()
-		).setMVCRenderCommandName(
-			"/cp_options/edit_cp_option_value"
-		).setRedirect(
-			cpRequestHelper.getCurrentURL()
-		).setParameter(
-			"cpOptionValueId", "{id}"
-		).setParameter(
-			"screenNavigationCategoryKey",
-			CPDefinitionScreenNavigationConstants.CATEGORY_KEY_DETAILS
-		).buildPortletURL();
-
-		try {
-			portletURL.setWindowState(LiferayWindowState.POP_UP);
-		}
-		catch (WindowStateException windowStateException) {
-			throw new PortalException(windowStateException);
-		}
-
-		return _getClayDataSetActionDropdownItems(portletURL.toString(), true);
 	}
 
 	public CreationMenu getOptionValueCreationMenu(long cpOptionId)
@@ -235,6 +205,32 @@ public class CPOptionDisplayContext {
 		).build();
 	}
 
+	public List<FDSActionDropdownItem> getOptionValueFDSActionDropdownItems()
+		throws PortalException {
+
+		PortletURL portletURL = PortletURLBuilder.createRenderURL(
+			cpRequestHelper.getRenderResponse()
+		).setMVCRenderCommandName(
+			"/cp_options/edit_cp_option_value"
+		).setRedirect(
+			cpRequestHelper.getCurrentURL()
+		).setParameter(
+			"cpOptionValueId", "{id}"
+		).setParameter(
+			"screenNavigationCategoryKey",
+			CPDefinitionScreenNavigationConstants.CATEGORY_KEY_DETAILS
+		).buildPortletURL();
+
+		try {
+			portletURL.setWindowState(LiferayWindowState.POP_UP);
+		}
+		catch (WindowStateException windowStateException) {
+			throw new PortalException(windowStateException);
+		}
+
+		return _getFDSActionDropdownItems(portletURL.toString(), true);
+	}
+
 	public boolean hasPermission(String actionId) throws PortalException {
 		RenderRequest renderRequest = cpRequestHelper.getRenderRequest();
 
@@ -258,39 +254,36 @@ public class CPOptionDisplayContext {
 
 	protected final CPRequestHelper cpRequestHelper;
 
-	private List<ClayDataSetActionDropdownItem>
-		_getClayDataSetActionDropdownItems(
-			String portletURL, boolean sidePanel) {
+	private List<FDSActionDropdownItem> _getFDSActionDropdownItems(
+		String portletURL, boolean sidePanel) {
 
-		List<ClayDataSetActionDropdownItem> clayDataSetActionDropdownItems =
-			new ArrayList<>();
+		List<FDSActionDropdownItem> fdsActionDropdownItems = new ArrayList<>();
 
-		ClayDataSetActionDropdownItem clayDataSetActionDropdownItem =
-			new ClayDataSetActionDropdownItem(
-				portletURL, "pencil", "edit",
-				LanguageUtil.get(cpRequestHelper.getRequest(), "edit"), "get",
-				null, null);
+		FDSActionDropdownItem fdsActionDropdownItem = new FDSActionDropdownItem(
+			portletURL, "pencil", "edit",
+			LanguageUtil.get(cpRequestHelper.getRequest(), "edit"), "get", null,
+			null);
 
 		if (sidePanel) {
-			clayDataSetActionDropdownItem.setTarget("sidePanel");
+			fdsActionDropdownItem.setTarget("sidePanel");
 		}
 
-		clayDataSetActionDropdownItems.add(clayDataSetActionDropdownItem);
+		fdsActionDropdownItems.add(fdsActionDropdownItem);
 
-		clayDataSetActionDropdownItems.add(
-			new ClayDataSetActionDropdownItem(
+		fdsActionDropdownItems.add(
+			new FDSActionDropdownItem(
 				null, "trash", "delete",
 				LanguageUtil.get(cpRequestHelper.getRequest(), "delete"),
 				"delete", "delete", "headless"));
 
-		return clayDataSetActionDropdownItems;
+		return fdsActionDropdownItems;
 	}
 
 	private boolean _hasDDMFormFieldTypeProperties(
 		String ddmFormFieldTypeName) {
 
 		Map<String, Object> ddmFormFieldTypeProperties =
-			_ddmFormFieldTypeServicesTracker.getDDMFormFieldTypeProperties(
+			_ddmFormFieldTypeServicesRegistry.getDDMFormFieldTypeProperties(
 				ddmFormFieldTypeName);
 
 		if (ddmFormFieldTypeProperties == null) {
@@ -302,7 +295,7 @@ public class CPOptionDisplayContext {
 
 	private boolean _isListFieldTypeDataDomain(String ddmFormFieldTypeName) {
 		Map<String, Object> properties =
-			_ddmFormFieldTypeServicesTracker.getDDMFormFieldTypeProperties(
+			_ddmFormFieldTypeServicesRegistry.getDDMFormFieldTypeProperties(
 				ddmFormFieldTypeName);
 
 		String fieldTypeDataDomain = MapUtil.getString(
@@ -322,8 +315,8 @@ public class CPOptionDisplayContext {
 
 	private final ConfigurationProvider _configurationProvider;
 	private CPOption _cpOption;
-	private final DDMFormFieldTypeServicesTracker
-		_ddmFormFieldTypeServicesTracker;
+	private final DDMFormFieldTypeServicesRegistry
+		_ddmFormFieldTypeServicesRegistry;
 	private final PortletResourcePermission _portletResourcePermission;
 
 }

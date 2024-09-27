@@ -116,8 +116,6 @@ import com.liferay.portal.kernel.workflow.comparator.WorkflowComparatorFactoryUt
 import com.liferay.portal.kernel.workflow.search.WorkflowModelSearchResult;
 import com.liferay.portal.search.test.util.SearchTestRule;
 import com.liferay.portal.security.permission.SimplePermissionChecker;
-import com.liferay.portal.test.log.LogCapture;
-import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.util.PortalInstances;
 
@@ -901,11 +899,10 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 		FileEntry fileEntry = _dlTrashService.moveFileEntryToTrash(
 			fileVersion.getFileEntryId());
 
-		WorkflowInstanceLink workflowInstanceLink = _fetchWorkflowInstanceLink(
-			DLFileEntryConstants.getClassName(),
-			fileVersion.getFileVersionId());
-
-		Assert.assertNull(workflowInstanceLink);
+		Assert.assertNull(
+			_fetchWorkflowInstanceLink(
+				DLFileEntryConstants.getClassName(),
+				fileVersion.getFileVersionId()));
 
 		_dlTrashService.restoreFileEntryFromTrash(fileVersion.getFileEntryId());
 
@@ -1335,7 +1332,8 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 			null, _adminUser.getUserId(), _group.getGroupId(), folderId,
 			RandomTestUtil.randomString(), ContentTypes.TEXT_PLAIN,
 			RandomTestUtil.randomString(), StringPool.BLANK, StringPool.BLANK,
-			TestDataConstants.TEST_BYTE_ARRAY, null, null, serviceContext);
+			StringPool.BLANK, TestDataConstants.TEST_BYTE_ARRAY, null, null,
+			serviceContext);
 
 		return fileEntry.getLatestFileVersion();
 	}
@@ -1379,7 +1377,7 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 
 	private JournalFolder _addJournalFolder() throws Exception {
 		return _journalFolderLocalService.addFolder(
-			_adminUser.getUserId(), _group.getGroupId(),
+			null, _adminUser.getUserId(), _group.getGroupId(),
 			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			_serviceContext);
@@ -1528,9 +1526,7 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 	}
 
 	private void _createJoinXorWorkflow() throws Exception {
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				_CLASS_NAME_PROXY_MESSAGE_LISTENER, LoggerTestUtil.OFF)) {
-
+		try {
 			_workflowDefinitionManager.getWorkflowDefinition(
 				_adminUser.getCompanyId(), _JOIN_XOR, 1);
 		}
@@ -1562,9 +1558,7 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 	}
 
 	private void _createScriptedAssignmentWorkflow() throws Exception {
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				_CLASS_NAME_PROXY_MESSAGE_LISTENER, LoggerTestUtil.OFF)) {
-
+		try {
 			_workflowDefinitionManager.getWorkflowDefinition(
 				_adminUser.getCompanyId(), _SCRIPTED_SINGLE_APPROVER, 1);
 		}
@@ -1584,9 +1578,7 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 	}
 
 	private void _createSiteMemberWorkflow() throws Exception {
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				_CLASS_NAME_PROXY_MESSAGE_LISTENER, LoggerTestUtil.OFF)) {
-
+		try {
 			_workflowDefinitionManager.getWorkflowDefinition(
 				_adminUser.getCompanyId(), _SITE_MEMBER_SINGLE_APPROVER, 1);
 		}
@@ -1769,7 +1761,7 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 			user, null, false, null, 0);
 
 		return _workflowTaskManager.hasAssignableUsers(
-			user.getCompanyId(), workflowTask.getWorkflowTaskId());
+			workflowTask.getWorkflowTaskId());
 	}
 
 	private String _read(String fileName) throws Exception {
@@ -1852,9 +1844,9 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 	private FileVersion _updateFileVersion(long fileEntryId) throws Exception {
 		FileEntry fileEntry = _dlAppService.updateFileEntry(
 			fileEntryId, StringPool.BLANK, ContentTypes.TEXT_PLAIN,
-			RandomTestUtil.randomString(), StringPool.BLANK, null,
-			DLVersionNumberIncrease.AUTOMATIC, null, 0, null, null,
-			_serviceContext);
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			StringPool.BLANK, null, DLVersionNumberIncrease.AUTOMATIC, null, 0,
+			null, null, _serviceContext);
 
 		return fileEntry.getLatestFileVersion();
 	}
@@ -1902,9 +1894,6 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 
 		return _updateFolder(folder, restrictionType, -1, dlFileEntryTypeMap);
 	}
-
-	private static final String _CLASS_NAME_PROXY_MESSAGE_LISTENER =
-		"com.liferay.portal.kernel.messaging.proxy.ProxyMessageListener";
 
 	private static final String _JOIN_XOR = "Join Xor";
 

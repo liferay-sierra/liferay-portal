@@ -12,6 +12,7 @@
  * details.
  */
 
+import ClayLink from '@clayui/link';
 import PropTypes from 'prop-types';
 import React, {useState} from 'react';
 
@@ -47,7 +48,7 @@ AssetCategoriesSelectorTag.propTypes = {
 	id: PropTypes.string,
 	initialVocabularies: PropTypes.array,
 	inputName: PropTypes.string,
-	learnHowURL: PropTypes.string,
+	learnHowLink: PropTypes.object,
 	portletURL: PropTypes.string,
 };
 
@@ -65,22 +66,13 @@ export default function (props) {
 
 	return (
 		<>
-			{props.learnHowURL && (
-				<p
-					className="small text-secondary"
-					dangerouslySetInnerHTML={{
-						__html: Liferay.Util.sub(
-							Liferay.Language.get(
-								'x-learn-how-x-to-tailor-categories-to-your-needs'
-							),
-							`<a href=${props.learnHowURL} target="_blank">`,
-							'</a>'
-						),
-					}}
-				/>
+			{props.learnHowLink && (
+				<ClayLink href={props.learnHowLink.url} target="_blank">
+					{props.learnHowLink.message}
+				</ClayLink>
 			)}
 
-			{initialPublicVocabularies && initialPublicVocabularies.length > 0 && (
+			{initialPublicVocabularies && !!initialPublicVocabularies.length && (
 				<>
 					<div className="border-0 mb-0 sheet-subtitle text-uppercase">
 						{Liferay.Language.get('public-categories')}
@@ -100,7 +92,7 @@ export default function (props) {
 			)}
 
 			{initialInternalVocabularies &&
-				initialInternalVocabularies.length > 0 && (
+				!!initialInternalVocabularies.length && (
 					<>
 						<div className="border-0 mb-0 sheet-subtitle text-uppercase">
 							{Liferay.Language.get('internal-categories')}

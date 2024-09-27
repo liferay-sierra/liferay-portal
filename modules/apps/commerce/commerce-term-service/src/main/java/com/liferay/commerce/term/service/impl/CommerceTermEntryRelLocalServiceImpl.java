@@ -37,6 +37,8 @@ import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Validator;
@@ -51,7 +53,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	property = "model.class.name=com.liferay.commerce.term.model.CommerceTermEntryRel",
 	service = AopService.class
 )
@@ -64,7 +65,7 @@ public class CommerceTermEntryRelLocalServiceImpl
 			long commerceTermEntryId)
 		throws PortalException {
 
-		long classNameId = classNameLocalService.getClassNameId(className);
+		long classNameId = _classNameLocalService.getClassNameId(className);
 
 		_validate(classNameId, classPK, commerceTermEntryId);
 
@@ -72,7 +73,7 @@ public class CommerceTermEntryRelLocalServiceImpl
 			commerceTermEntryRelPersistence.create(
 				counterLocalService.increment());
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		commerceTermEntryRel.setCompanyId(user.getCompanyId());
 		commerceTermEntryRel.setUserId(user.getUserId());
@@ -85,7 +86,7 @@ public class CommerceTermEntryRelLocalServiceImpl
 		commerceTermEntryRel = commerceTermEntryRelPersistence.update(
 			commerceTermEntryRel);
 
-		reindexCommerceTermEntry(commerceTermEntryId);
+		_reindexCommerceTermEntry(commerceTermEntryId);
 
 		return commerceTermEntryRel;
 	}
@@ -98,7 +99,8 @@ public class CommerceTermEntryRelLocalServiceImpl
 
 		commerceTermEntryRelPersistence.remove(commerceTermEntryRel);
 
-		reindexCommerceTermEntry(commerceTermEntryRel.getCommerceTermEntryId());
+		_reindexCommerceTermEntry(
+			commerceTermEntryRel.getCommerceTermEntryId());
 
 		return commerceTermEntryRel;
 	}
@@ -139,7 +141,7 @@ public class CommerceTermEntryRelLocalServiceImpl
 
 		List<CommerceTermEntryRel> commerceTermEntryRels =
 			commerceTermEntryRelPersistence.findByC_C(
-				classNameLocalService.getClassNameId(className),
+				_classNameLocalService.getClassNameId(className),
 				commerceTermEntryId);
 
 		for (CommerceTermEntryRel commerceTermEntryRel :
@@ -155,7 +157,7 @@ public class CommerceTermEntryRelLocalServiceImpl
 		String className, long classPK, long commerceTermEntryId) {
 
 		return commerceTermEntryRelPersistence.fetchByC_C_C(
-			classNameLocalService.getClassNameId(className), classPK,
+			_classNameLocalService.getClassNameId(className), classPK,
 			commerceTermEntryId);
 	}
 
@@ -215,15 +217,6 @@ public class CommerceTermEntryRelLocalServiceImpl
 			commerceTermEntryId);
 	}
 
-	protected void reindexCommerceTermEntry(long commerceTermEntryId)
-		throws PortalException {
-
-		Indexer<CommerceTermEntry> indexer =
-			IndexerRegistryUtil.nullSafeGetIndexer(CommerceTermEntry.class);
-
-		indexer.reindex(CommerceTermEntry.class.getName(), commerceTermEntryId);
-	}
-
 	private GroupByStep _getGroupByStep(
 		FromStep fromStep, Table innerJoinTable, Predicate innerJoinPredicate,
 		Long commerceTermEntryId, String className, String keywords,
@@ -244,7 +237,7 @@ public class CommerceTermEntryRelLocalServiceImpl
 				commerceTermEntryId
 			).and(
 				CommerceTermEntryRelTable.INSTANCE.classNameId.eq(
-					classNameLocalService.getClassNameId(className))
+					_classNameLocalService.getClassNameId(className))
 			).and(
 				() -> {
 					if (Validator.isNotNull(keywords)) {
@@ -258,6 +251,15 @@ public class CommerceTermEntryRelLocalServiceImpl
 					return null;
 				}
 			));
+	}
+
+	private void _reindexCommerceTermEntry(long commerceTermEntryId)
+		throws PortalException {
+
+		Indexer<CommerceTermEntry> indexer =
+			IndexerRegistryUtil.nullSafeGetIndexer(CommerceTermEntry.class);
+
+		indexer.reindex(CommerceTermEntry.class.getName(), commerceTermEntryId);
 	}
 
 	private void _validate(
@@ -274,6 +276,12 @@ public class CommerceTermEntryRelLocalServiceImpl
 	}
 
 	@Reference
+	private ClassNameLocalService _classNameLocalService;
+
+	@Reference
 	private CustomSQL _customSQL;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

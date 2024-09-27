@@ -23,7 +23,7 @@ import com.liferay.frontend.data.set.provider.search.FDSKeywords;
 import com.liferay.frontend.data.set.provider.search.FDSPagination;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
@@ -47,7 +47,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "fds.data.provider.key=" + CommercePricingFDSNames.PRICE_MODIFIERS,
 	service = FDSDataProvider.class
 )
@@ -87,14 +86,14 @@ public class CommercePriceModifierFDSDataProvider
 			priceModifiers.add(
 				new PriceModifier(
 					_getEndDate(commercePriceModifier, dateTimeFormat),
-					LanguageUtil.get(
+					_language.get(
 						resourceBundle,
 						commercePriceModifier.getModifierType()),
 					commercePriceModifier.getTitle(),
 					commercePriceModifier.getCommercePriceModifierId(),
 					dateTimeFormat.format(
 						commercePriceModifier.getDisplayDate()),
-					LanguageUtil.get(
+					_language.get(
 						resourceBundle, commercePriceModifier.getTarget())));
 		}
 
@@ -125,5 +124,8 @@ public class CommercePriceModifierFDSDataProvider
 
 	@Reference
 	private CommercePriceModifierService _commercePriceModifierService;
+
+	@Reference
+	private Language _language;
 
 }

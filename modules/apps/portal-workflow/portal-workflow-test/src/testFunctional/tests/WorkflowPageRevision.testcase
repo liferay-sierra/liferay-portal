@@ -31,7 +31,7 @@ definition {
 			panel = "Site Administration",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "Site Page Name");
+		PagesAdmin.addPage(pageName = "Site Page Name");
 
 		ProductMenu.gotoPortlet(
 			category = "Publishing",
@@ -72,6 +72,8 @@ definition {
 	@description = "Verify that the Submit for Publication button is not available after the Page is submitted for publication"
 	@priority = "3"
 	test ButtonNotAvailableAfterSubmitForPublication {
+		property portal.upstream = "quarantine";
+
 		Navigator.gotoStagedSitePage(
 			pageName = "Site Page Name",
 			siteName = "Site Name");
@@ -92,6 +94,9 @@ definition {
 	@description = "Verify that, after approval, the Page status is Ready for Publish"
 	@priority = "4"
 	test PageIsReadyForPublishAfterApproval {
+		property portal.upstream = "quarantine";
+		property test.name.skip.portal.instance = "WorkflowPageRevision#PageIsReadyForPublishAfterApproval";
+
 		Navigator.gotoStagedSitePage(
 			pageName = "Site Page Name",
 			siteName = "Site Name");
@@ -123,6 +128,8 @@ definition {
 
 	@priority = "4"
 	test RejectPageRevisionPG {
+		property test.name.skip.portal.instance = "WorkflowPageRevision#RejectPageRevisionPG";
+
 		var pageName = "Page Revision Page";
 
 		Navigator.gotoStagedSitePage(
@@ -134,7 +141,7 @@ definition {
 			panel = "Site Administration",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "${pageName}");
+		PagesAdmin.addPage(pageName = "${pageName}");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "${pageName}",
@@ -210,6 +217,9 @@ definition {
 	@description = "Verify that when the Approved page is edited it's status comes to Draft"
 	@priority = "3"
 	test StatusComesToDraftWhenPageIsEdited {
+		property portal.upstream = "quarantine";
+		property test.name.skip.portal.instance = "WorkflowPageRevision#StatusComesToDraftWhenPageIsEdited";
+
 		Navigator.gotoStagedSitePage(
 			pageName = "Site Page Name",
 			siteName = "Site Name");
@@ -268,6 +278,9 @@ definition {
 	@description = "Verify that when the Approved page is edited the button Submit for Publication is displayed"
 	@priority = "3"
 	test SubmitForPublicationButtonIsDisplayedWhenPageIsEdited {
+		property portal.upstream = "quarantine";
+		property test.name.skip.portal.instance = "WorkflowPageRevision#SubmitForPublicationButtonIsDisplayedWhenPageIsEdited";
+
 		Navigator.gotoStagedSitePage(
 			pageName = "${pageName}",
 			siteName = "${siteName}");
@@ -307,6 +320,7 @@ definition {
 	@priority = "5"
 	test ViewApprovedPageAfterStagingDeactivated {
 		property portal.acceptance = "true";
+		property test.name.skip.portal.instance = "WorkflowPageRevision#ViewApprovedPageAfterStagingDeactivated";
 
 		var pageName = "New Site Page Name";
 
@@ -319,7 +333,7 @@ definition {
 			panel = "Site Administration",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "${pageName}");
+		PagesAdmin.addPage(pageName = "${pageName}");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "${pageName}",
@@ -393,6 +407,8 @@ definition {
 	@description = "This is a use case for LPS-58754"
 	@priority = "3"
 	test WithdrawWorkflowSubmissionFromRemovedUser {
+		property portal.upstream = "quarantine";
+
 		ApplicationsMenu.gotoPortlet(
 			category = "Users",
 			panel = "Control Panel",

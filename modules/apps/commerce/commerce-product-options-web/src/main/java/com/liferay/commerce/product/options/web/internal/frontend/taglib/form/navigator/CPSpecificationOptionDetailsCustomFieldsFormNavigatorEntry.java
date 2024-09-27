@@ -18,7 +18,7 @@ import com.liferay.commerce.product.model.CPSpecificationOption;
 import com.liferay.commerce.product.options.web.internal.servlet.taglib.ui.constants.CPSpecificationOptionFormNavigatorConstants;
 import com.liferay.frontend.taglib.form.navigator.BaseJSPFormNavigatorEntry;
 import com.liferay.frontend.taglib.form.navigator.FormNavigatorEntry;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
@@ -26,13 +26,16 @@ import com.liferay.taglib.util.CustomAttributesUtil;
 
 import java.util.Locale;
 
+import javax.servlet.ServletContext;
+
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Andrea Di Giorgi
  */
 @Component(
-	enabled = false, property = "form.navigator.entry.order:Integer=10",
+	property = "form.navigator.entry.order:Integer=10",
 	service = FormNavigatorEntry.class
 )
 public class CPSpecificationOptionDetailsCustomFieldsFormNavigatorEntry
@@ -57,7 +60,12 @@ public class CPSpecificationOptionDetailsCustomFieldsFormNavigatorEntry
 
 	@Override
 	public String getLabel(Locale locale) {
-		return LanguageUtil.get(locale, "custom-fields");
+		return _language.get(locale, "custom-fields");
+	}
+
+	@Override
+	public ServletContext getServletContext() {
+		return null;
 	}
 
 	@Override
@@ -94,5 +102,8 @@ public class CPSpecificationOptionDetailsCustomFieldsFormNavigatorEntry
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		CPSpecificationOptionDetailsCustomFieldsFormNavigatorEntry.class);
+
+	@Reference
+	private Language _language;
 
 }

@@ -14,6 +14,7 @@
 
 package com.liferay.headless.commerce.machine.learning.internal.resource.v1_0.factory;
 
+import com.liferay.headless.commerce.machine.learning.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.headless.commerce.machine.learning.resource.v1_0.AccountForecastResource;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -33,14 +34,18 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -59,7 +62,7 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @generated
  */
 @Component(
-	enabled = false, immediate = true,
+	property = "resource.locator.key=/headless-commerce-machine-learning/v1.0/AccountForecast",
 	service = AccountForecastResource.Factory.class
 )
 @Generated("")
@@ -76,9 +79,7 @@ public class AccountForecastResourceFactoryImpl
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (AccountForecastResource)ProxyUtil.newProxyInstance(
-					AccountForecastResource.class.getClassLoader(),
-					new Class<?>[] {AccountForecastResource.class},
+				return _accountForecastResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -137,14 +138,32 @@ public class AccountForecastResourceFactoryImpl
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		AccountForecastResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, AccountForecastResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		AccountForecastResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			AccountForecastResource.class.getClassLoader(),
+			AccountForecastResource.class);
+
+		try {
+			Constructor<AccountForecastResource> constructor =
+				(Constructor<AccountForecastResource>)proxyClass.getConstructor(
+					InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -167,7 +186,7 @@ public class AccountForecastResourceFactoryImpl
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		AccountForecastResource accountForecastResource =
@@ -193,6 +212,7 @@ public class AccountForecastResourceFactoryImpl
 		accountForecastResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		accountForecastResource.setRoleLocalService(_roleLocalService);
+		accountForecastResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(accountForecastResource, arguments);
@@ -208,6 +228,10 @@ public class AccountForecastResourceFactoryImpl
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, AccountForecastResource>
+		_accountForecastResourceProxyProviderFunction =
+			_getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -230,9 +254,6 @@ public class AccountForecastResourceFactoryImpl
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -241,6 +262,9 @@ public class AccountForecastResourceFactoryImpl
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

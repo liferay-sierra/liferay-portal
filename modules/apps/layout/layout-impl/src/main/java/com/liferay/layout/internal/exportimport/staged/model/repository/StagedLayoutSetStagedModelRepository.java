@@ -48,7 +48,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Máté Thurzó
  */
 @Component(
-	immediate = true,
 	property = "model.class.name=com.liferay.layout.set.model.adapter.StagedLayoutSet",
 	service = {
 		StagedLayoutSetStagedModelRepository.class, StagedModelRepository.class
@@ -117,11 +116,9 @@ public class StagedLayoutSetStagedModelRepository
 		StagedLayoutSet stagedLayoutSet = null;
 
 		try {
-			LayoutSet layoutSet = _layoutSetLocalService.getLayoutSet(
-				groupId, privateLayout);
-
 			stagedLayoutSet = ModelAdapterUtil.adapt(
-				layoutSet, LayoutSet.class, StagedLayoutSet.class);
+				_layoutSetLocalService.getLayoutSet(groupId, privateLayout),
+				LayoutSet.class, StagedLayoutSet.class);
 		}
 		catch (PortalException portalException) {
 
@@ -142,11 +139,9 @@ public class StagedLayoutSetStagedModelRepository
 		boolean privateLayout = GetterUtil.getBoolean(uuid);
 
 		try {
-			LayoutSet layoutSet = _layoutSetLocalService.getLayoutSet(
-				groupId, privateLayout);
-
 			return ModelAdapterUtil.adapt(
-				layoutSet, LayoutSet.class, StagedLayoutSet.class);
+				_layoutSetLocalService.getLayoutSet(groupId, privateLayout),
+				LayoutSet.class, StagedLayoutSet.class);
 		}
 		catch (PortalException portalException) {
 
@@ -235,13 +230,10 @@ public class StagedLayoutSetStagedModelRepository
 
 			existingLayoutSet.setLayoutSetPrototypeUuid(
 				layoutSet.getLayoutSetPrototypeUuid());
-
-			boolean layoutSetPrototypeLinkEnabled = MapUtil.getBoolean(
-				portletDataContext.getParameterMap(),
-				PortletDataHandlerKeys.LAYOUT_SET_PROTOTYPE_LINK_ENABLED);
-
 			existingLayoutSet.setLayoutSetPrototypeLinkEnabled(
-				layoutSetPrototypeLinkEnabled);
+				MapUtil.getBoolean(
+					portletDataContext.getParameterMap(),
+					PortletDataHandlerKeys.LAYOUT_SET_PROTOTYPE_LINK_ENABLED));
 
 			existingLayoutSet = _layoutSetLocalService.updateLayoutSet(
 				existingLayoutSet);

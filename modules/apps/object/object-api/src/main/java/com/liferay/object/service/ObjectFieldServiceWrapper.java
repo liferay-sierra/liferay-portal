@@ -36,19 +36,21 @@ public class ObjectFieldServiceWrapper
 
 	@Override
 	public com.liferay.object.model.ObjectField addCustomObjectField(
-			long listTypeDefinitionId, long objectDefinitionId,
-			String businessType, String dbType, boolean indexed,
-			boolean indexedAsKeyword, String indexedLanguageId,
+			String externalReferenceCode, long listTypeDefinitionId,
+			long objectDefinitionId, String businessType, String dbType,
+			String defaultValue, boolean indexed, boolean indexedAsKeyword,
+			String indexedLanguageId,
 			java.util.Map<java.util.Locale, String> labelMap, String name,
-			boolean required,
+			boolean required, boolean state,
 			java.util.List<com.liferay.object.model.ObjectFieldSetting>
 				objectFieldSettings)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectFieldService.addCustomObjectField(
-			listTypeDefinitionId, objectDefinitionId, businessType, dbType,
-			indexed, indexedAsKeyword, indexedLanguageId, labelMap, name,
-			required, objectFieldSettings);
+			externalReferenceCode, listTypeDefinitionId, objectDefinitionId,
+			businessType, dbType, defaultValue, indexed, indexedAsKeyword,
+			indexedLanguageId, labelMap, name, required, state,
+			objectFieldSettings);
 	}
 
 	@Override
@@ -78,19 +80,21 @@ public class ObjectFieldServiceWrapper
 	}
 
 	@Override
-	public com.liferay.object.model.ObjectField updateCustomObjectField(
-			long objectFieldId, long listTypeDefinitionId, String businessType,
-			String dbType, boolean indexed, boolean indexedAsKeyword,
+	public com.liferay.object.model.ObjectField updateObjectField(
+			String externalReferenceCode, long objectFieldId,
+			long listTypeDefinitionId, String businessType, String dbType,
+			String defaultValue, boolean indexed, boolean indexedAsKeyword,
 			String indexedLanguageId,
 			java.util.Map<java.util.Locale, String> labelMap, String name,
-			boolean required,
+			boolean required, boolean state,
 			java.util.List<com.liferay.object.model.ObjectFieldSetting>
 				objectFieldSettings)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		return _objectFieldService.updateCustomObjectField(
-			objectFieldId, listTypeDefinitionId, businessType, dbType, indexed,
-			indexedAsKeyword, indexedLanguageId, labelMap, name, required,
+		return _objectFieldService.updateObjectField(
+			externalReferenceCode, objectFieldId, listTypeDefinitionId,
+			businessType, dbType, defaultValue, indexed, indexedAsKeyword,
+			indexedLanguageId, labelMap, name, required, state,
 			objectFieldSettings);
 	}
 

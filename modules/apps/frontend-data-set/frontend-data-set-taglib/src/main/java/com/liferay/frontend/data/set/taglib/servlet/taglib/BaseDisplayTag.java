@@ -14,19 +14,34 @@
 
 package com.liferay.frontend.data.set.taglib.servlet.taglib;
 
+import com.liferay.frontend.data.set.model.FDSPaginationEntry;
 import com.liferay.frontend.data.set.taglib.internal.js.loader.modules.extender.npm.NPMResolverProvider;
+import com.liferay.frontend.data.set.taglib.internal.servlet.ServletContextUtil;
 import com.liferay.frontend.data.set.taglib.internal.util.ServicesProvider;
 import com.liferay.frontend.js.loader.modules.extender.npm.NPMResolvedPackageNameUtil;
 import com.liferay.frontend.js.loader.modules.extender.npm.NPMResolver;
 import com.liferay.frontend.js.module.launcher.JSModuleResolver;
+import com.liferay.portal.kernel.dao.search.SearchContainer;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.portlet.PortalPreferences;
+import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.template.react.renderer.ComponentDescriptor;
 import com.liferay.portal.template.react.renderer.ReactRenderer;
+import com.liferay.portal.util.PropsValues;
 import com.liferay.taglib.util.AttributesTagSupport;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+
+import javax.portlet.PortletResponse;
+import javax.portlet.PortletURL;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -51,12 +66,61 @@ public class BaseDisplayTag extends AttributesTagSupport {
 		}
 	}
 
+	@Override
+	public int doStartTag() throws JspException {
+		try {
+			_fdsPaginationEntries = new ArrayList<>();
+
+			for (int curDelta :
+					PropsValues.SEARCH_CONTAINER_PAGE_DELTA_VALUES) {
+
+				if (curDelta > SearchContainer.MAX_DELTA) {
+					continue;
+				}
+
+				_fdsPaginationEntries.add(
+					new FDSPaginationEntry(null, curDelta));
+			}
+		}
+		catch (Exception exception) {
+			_log.error(exception);
+		}
+
+		return super.doStartTag();
+	}
+
 	public Map<String, Object> getAdditionalProps() {
 		return _additionalProps;
 	}
 
 	public String getId() {
 		return _id;
+	}
+
+	public int getItemsPerPage() {
+		return _itemsPerPage;
+	}
+
+	public String getNamespace() {
+		if (_namespace != null) {
+			return _namespace;
+		}
+
+		HttpServletRequest httpServletRequest = getRequest();
+
+		PortletResponse portletResponse =
+			(PortletResponse)httpServletRequest.getAttribute(
+				JavaConstants.JAVAX_PORTLET_RESPONSE);
+
+		if (portletResponse != null) {
+			_namespace = portletResponse.getNamespace();
+		}
+
+		return _namespace;
+	}
+
+	public int getPageNumber() {
+		return _pageNumber;
 	}
 
 	public String getPropsTransformer() {
@@ -67,12 +131,36 @@ public class BaseDisplayTag extends AttributesTagSupport {
 		return _randomNamespace;
 	}
 
+	public List<Object> getSelectedItems() {
+		return _selectedItems;
+	}
+
 	public void setAdditionalProps(Map<String, Object> additionalProps) {
 		_additionalProps = additionalProps;
 	}
 
 	public void setId(String id) {
 		_id = id;
+	}
+
+	public void setItemsPerPage(int itemsPerPage) {
+		_itemsPerPage = itemsPerPage;
+	}
+
+	public void setNamespace(String namespace) {
+		_namespace = namespace;
+	}
+
+	public void setPageNumber(int pageNumber) {
+		_pageNumber = pageNumber;
+	}
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), with no direct replacement
+	 */
+	@Deprecated
+	public void setPortletURL(PortletURL portletURL) {
+		_portletURL = portletURL;
 	}
 
 	public void setPropsTransformer(String propsTransformer) {
@@ -89,12 +177,22 @@ public class BaseDisplayTag extends AttributesTagSupport {
 		_randomNamespace = randomNamespace;
 	}
 
+	public void setSelectedItems(List<Object> selectedItems) {
+		_selectedItems = selectedItems;
+	}
+
 	protected void cleanUp() {
 		_additionalProps = null;
+		_fdsPaginationEntries = null;
 		_id = null;
+		_itemsPerPage = 0;
+		_namespace = null;
+		_pageNumber = 0;
+		_portletURL = null;
 		_propsTransformer = null;
 		_propsTransformerServletContext = null;
 		_randomNamespace = null;
+		_selectedItems = null;
 	}
 
 	protected void doClearTag() {
@@ -114,11 +212,33 @@ public class BaseDisplayTag extends AttributesTagSupport {
 	}
 
 	protected Map<String, Object> prepareProps(Map<String, Object> props) {
-		if (_additionalProps != null) {
-			props.put("additionalProps", _additionalProps);
-		}
+		return HashMapBuilder.<String, Object>putAll(
+			props
+		).put(
+			"additionalProps",
+			() -> {
+				if (_additionalProps != null) {
+					return _additionalProps;
+				}
 
-		return props;
+				return null;
+			}
+		).put(
+			"customViews", _getCustomViews()
+		).put(
+			"namespace", getNamespace()
+		).put(
+			"pagination",
+			HashMapBuilder.<String, Object>put(
+				"deltas", _fdsPaginationEntries
+			).put(
+				"initialDelta", _itemsPerPage
+			).put(
+				"initialPageNumber", _pageNumber
+			).build()
+		).put(
+			"selectedItems", _selectedItems
+		).build();
 	}
 
 	protected int processEndTag() throws Exception {
@@ -145,6 +265,10 @@ public class BaseDisplayTag extends AttributesTagSupport {
 			}
 			catch (UnsupportedOperationException
 						unsupportedOperationException) {
+
+				if (_log.isDebugEnabled()) {
+					_log.debug(unsupportedOperationException);
+				}
 
 				JSModuleResolver jsModuleResolver =
 					ServicesProvider.getJSModuleResolver();
@@ -174,10 +298,30 @@ public class BaseDisplayTag extends AttributesTagSupport {
 	protected void setAttributes(HttpServletRequest httpServletRequest) {
 	}
 
+	private String _getCustomViews() {
+		HttpServletRequest httpServletRequest = getRequest();
+
+		PortalPreferences portalPreferences =
+			PortletPreferencesFactoryUtil.getPortalPreferences(
+				httpServletRequest);
+
+		return portalPreferences.getValue(
+			ServletContextUtil.getFDSSettingsNamespace(httpServletRequest, _id),
+			"customViews", "{}");
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(BaseDisplayTag.class);
+
 	private Map<String, Object> _additionalProps;
+	private List<FDSPaginationEntry> _fdsPaginationEntries;
 	private String _id;
+	private int _itemsPerPage;
+	private String _namespace;
+	private int _pageNumber;
+	private PortletURL _portletURL;
 	private String _propsTransformer;
 	private ServletContext _propsTransformerServletContext;
 	private String _randomNamespace;
+	private List<Object> _selectedItems;
 
 }

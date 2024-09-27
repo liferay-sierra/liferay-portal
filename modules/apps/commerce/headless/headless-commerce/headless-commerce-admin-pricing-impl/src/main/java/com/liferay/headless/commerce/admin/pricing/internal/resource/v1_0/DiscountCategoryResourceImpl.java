@@ -43,7 +43,6 @@ import org.osgi.service.component.annotations.ServiceScope;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	properties = "OSGI-INF/liferay/rest/v1_0/discount-category.properties",
 	scope = ServiceScope.PROTOTYPE, service = DiscountCategoryResource.class
 )
@@ -128,8 +127,8 @@ public class DiscountCategoryResourceImpl
 
 		CommerceDiscountRel commerceDiscountRel =
 			DiscountCategoryUtil.addCommerceDiscountRel(
-				_assetCategoryLocalService, _commerceDiscountRelService,
-				discountCategory, commerceDiscount,
+				contextCompany.getGroupId(), _assetCategoryLocalService,
+				_commerceDiscountRelService, discountCategory, commerceDiscount,
 				_serviceContextHelper.getServiceContext());
 
 		return _toDiscountCategory(
@@ -143,8 +142,8 @@ public class DiscountCategoryResourceImpl
 
 		CommerceDiscountRel commerceDiscountRel =
 			DiscountCategoryUtil.addCommerceDiscountRel(
-				_assetCategoryLocalService, _commerceDiscountRelService,
-				discountCategory,
+				contextCompany.getGroupId(), _assetCategoryLocalService,
+				_commerceDiscountRelService, discountCategory,
 				_commerceDiscountService.getCommerceDiscount(id),
 				_serviceContextHelper.getServiceContext());
 

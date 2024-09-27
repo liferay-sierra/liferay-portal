@@ -20,8 +20,8 @@ import com.liferay.fragment.renderer.FragmentRendererContext;
 import com.liferay.fragment.util.configuration.FragmentEntryConfigurationParser;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -59,9 +59,13 @@ public class FragmentCollectionFilterDate implements FragmentCollectionFilter {
 					"/configuration.json");
 
 			return _fragmentEntryConfigurationParser.translateConfiguration(
-				JSONFactoryUtil.createJSONObject(json), resourceBundle);
+				_jsonFactory.createJSONObject(json), resourceBundle);
 		}
 		catch (JSONException jsonException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(jsonException);
+			}
+
 			return StringPool.BLANK;
 		}
 	}
@@ -73,7 +77,7 @@ public class FragmentCollectionFilterDate implements FragmentCollectionFilter {
 
 	@Override
 	public String getLabel(Locale locale) {
-		return LanguageUtil.get(locale, "date");
+		return _language.get(locale, "date");
 	}
 
 	@Override
@@ -105,6 +109,12 @@ public class FragmentCollectionFilterDate implements FragmentCollectionFilter {
 
 	@Reference
 	private FragmentEntryConfigurationParser _fragmentEntryConfigurationParser;
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference(
 		target = "(osgi.web.symbolicname=com.liferay.fragment.collection.filter.date)"

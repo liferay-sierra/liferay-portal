@@ -18,11 +18,16 @@ definition {
 			var siteURLKey = "guest";
 		}
 
-		Navigator.openWithAppendToBaseURL(urlAppend = "web/${siteURLKey}/search");
+		if (isSet(locale)) {
+			Navigator.openWithAppendToBaseURL(urlAppend = "${locale}/web/${siteURLKey}/search");
+		}
+		else {
+			Navigator.openWithAppendToBaseURL(urlAppend = "web/${siteURLKey}/search");
+		}
 	}
 
 	macro searchCP {
-		AssertElementPresent(locator1 = "TextInput#SEARCH");
+		WaitForElementPresent(locator1 = "TextInput#SEARCH");
 
 		AssertElementPresent(locator1 = "Icon#BASIC_SEARCH");
 

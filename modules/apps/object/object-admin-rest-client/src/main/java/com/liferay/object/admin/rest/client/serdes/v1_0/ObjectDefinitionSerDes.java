@@ -65,7 +65,36 @@ public class ObjectDefinitionSerDes {
 		sb.append("{");
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+			"yyyy-MM-dd'T'HH:mm:ssXX");
+
+		if (objectDefinition.getAccountEntryRestricted() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"accountEntryRestricted\": ");
+
+			sb.append(objectDefinition.getAccountEntryRestricted());
+		}
+
+		if (objectDefinition.getAccountEntryRestrictedObjectFieldName() !=
+				null) {
+
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"accountEntryRestrictedObjectFieldName\": ");
+
+			sb.append("\"");
+
+			sb.append(
+				_escape(
+					objectDefinition.
+						getAccountEntryRestrictedObjectFieldName()));
+
+			sb.append("\"");
+		}
 
 		if (objectDefinition.getActions() != null) {
 			if (sb.length() > 1) {
@@ -115,6 +144,50 @@ public class ObjectDefinitionSerDes {
 			sb.append(
 				liferayToJSONDateFormat.format(
 					objectDefinition.getDateModified()));
+
+			sb.append("\"");
+		}
+
+		if (objectDefinition.getEnableCategorization() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"enableCategorization\": ");
+
+			sb.append(objectDefinition.getEnableCategorization());
+		}
+
+		if (objectDefinition.getEnableComments() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"enableComments\": ");
+
+			sb.append(objectDefinition.getEnableComments());
+		}
+
+		if (objectDefinition.getEnableObjectEntryHistory() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"enableObjectEntryHistory\": ");
+
+			sb.append(objectDefinition.getEnableObjectEntryHistory());
+		}
+
+		if (objectDefinition.getExternalReferenceCode() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"externalReferenceCode\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(objectDefinition.getExternalReferenceCode()));
 
 			sb.append("\"");
 		}
@@ -296,6 +369,16 @@ public class ObjectDefinitionSerDes {
 			sb.append("\"");
 		}
 
+		if (objectDefinition.getParameterRequired() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"parameterRequired\": ");
+
+			sb.append(objectDefinition.getParameterRequired());
+		}
+
 		if (objectDefinition.getPluralLabel() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -314,6 +397,20 @@ public class ObjectDefinitionSerDes {
 			sb.append("\"portlet\": ");
 
 			sb.append(objectDefinition.getPortlet());
+		}
+
+		if (objectDefinition.getRestContextPath() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"restContextPath\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(objectDefinition.getRestContextPath()));
+
+			sb.append("\"");
 		}
 
 		if (objectDefinition.getScope() != null) {
@@ -340,6 +437,20 @@ public class ObjectDefinitionSerDes {
 			sb.append(String.valueOf(objectDefinition.getStatus()));
 		}
 
+		if (objectDefinition.getStorageType() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"storageType\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(objectDefinition.getStorageType()));
+
+			sb.append("\"");
+		}
+
 		if (objectDefinition.getSystem() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -350,14 +461,18 @@ public class ObjectDefinitionSerDes {
 			sb.append(objectDefinition.getSystem());
 		}
 
-		if (objectDefinition.getTitleObjectFieldId() != null) {
+		if (objectDefinition.getTitleObjectFieldName() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"titleObjectFieldId\": ");
+			sb.append("\"titleObjectFieldName\": ");
 
-			sb.append(objectDefinition.getTitleObjectFieldId());
+			sb.append("\"");
+
+			sb.append(_escape(objectDefinition.getTitleObjectFieldName()));
+
+			sb.append("\"");
 		}
 
 		sb.append("}");
@@ -380,7 +495,29 @@ public class ObjectDefinitionSerDes {
 		Map<String, String> map = new TreeMap<>();
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+			"yyyy-MM-dd'T'HH:mm:ssXX");
+
+		if (objectDefinition.getAccountEntryRestricted() == null) {
+			map.put("accountEntryRestricted", null);
+		}
+		else {
+			map.put(
+				"accountEntryRestricted",
+				String.valueOf(objectDefinition.getAccountEntryRestricted()));
+		}
+
+		if (objectDefinition.getAccountEntryRestrictedObjectFieldName() ==
+				null) {
+
+			map.put("accountEntryRestrictedObjectFieldName", null);
+		}
+		else {
+			map.put(
+				"accountEntryRestrictedObjectFieldName",
+				String.valueOf(
+					objectDefinition.
+						getAccountEntryRestrictedObjectFieldName()));
+		}
 
 		if (objectDefinition.getActions() == null) {
 			map.put("actions", null);
@@ -414,6 +551,42 @@ public class ObjectDefinitionSerDes {
 				"dateModified",
 				liferayToJSONDateFormat.format(
 					objectDefinition.getDateModified()));
+		}
+
+		if (objectDefinition.getEnableCategorization() == null) {
+			map.put("enableCategorization", null);
+		}
+		else {
+			map.put(
+				"enableCategorization",
+				String.valueOf(objectDefinition.getEnableCategorization()));
+		}
+
+		if (objectDefinition.getEnableComments() == null) {
+			map.put("enableComments", null);
+		}
+		else {
+			map.put(
+				"enableComments",
+				String.valueOf(objectDefinition.getEnableComments()));
+		}
+
+		if (objectDefinition.getEnableObjectEntryHistory() == null) {
+			map.put("enableObjectEntryHistory", null);
+		}
+		else {
+			map.put(
+				"enableObjectEntryHistory",
+				String.valueOf(objectDefinition.getEnableObjectEntryHistory()));
+		}
+
+		if (objectDefinition.getExternalReferenceCode() == null) {
+			map.put("externalReferenceCode", null);
+		}
+		else {
+			map.put(
+				"externalReferenceCode",
+				String.valueOf(objectDefinition.getExternalReferenceCode()));
 		}
 
 		if (objectDefinition.getId() == null) {
@@ -500,6 +673,15 @@ public class ObjectDefinitionSerDes {
 				String.valueOf(objectDefinition.getPanelCategoryKey()));
 		}
 
+		if (objectDefinition.getParameterRequired() == null) {
+			map.put("parameterRequired", null);
+		}
+		else {
+			map.put(
+				"parameterRequired",
+				String.valueOf(objectDefinition.getParameterRequired()));
+		}
+
 		if (objectDefinition.getPluralLabel() == null) {
 			map.put("pluralLabel", null);
 		}
@@ -516,6 +698,15 @@ public class ObjectDefinitionSerDes {
 			map.put("portlet", String.valueOf(objectDefinition.getPortlet()));
 		}
 
+		if (objectDefinition.getRestContextPath() == null) {
+			map.put("restContextPath", null);
+		}
+		else {
+			map.put(
+				"restContextPath",
+				String.valueOf(objectDefinition.getRestContextPath()));
+		}
+
 		if (objectDefinition.getScope() == null) {
 			map.put("scope", null);
 		}
@@ -530,6 +721,15 @@ public class ObjectDefinitionSerDes {
 			map.put("status", String.valueOf(objectDefinition.getStatus()));
 		}
 
+		if (objectDefinition.getStorageType() == null) {
+			map.put("storageType", null);
+		}
+		else {
+			map.put(
+				"storageType",
+				String.valueOf(objectDefinition.getStorageType()));
+		}
+
 		if (objectDefinition.getSystem() == null) {
 			map.put("system", null);
 		}
@@ -537,13 +737,13 @@ public class ObjectDefinitionSerDes {
 			map.put("system", String.valueOf(objectDefinition.getSystem()));
 		}
 
-		if (objectDefinition.getTitleObjectFieldId() == null) {
-			map.put("titleObjectFieldId", null);
+		if (objectDefinition.getTitleObjectFieldName() == null) {
+			map.put("titleObjectFieldName", null);
 		}
 		else {
 			map.put(
-				"titleObjectFieldId",
-				String.valueOf(objectDefinition.getTitleObjectFieldId()));
+				"titleObjectFieldName",
+				String.valueOf(objectDefinition.getTitleObjectFieldName()));
 		}
 
 		return map;
@@ -567,7 +767,22 @@ public class ObjectDefinitionSerDes {
 			ObjectDefinition objectDefinition, String jsonParserFieldName,
 			Object jsonParserFieldValue) {
 
-			if (Objects.equals(jsonParserFieldName, "actions")) {
+			if (Objects.equals(jsonParserFieldName, "accountEntryRestricted")) {
+				if (jsonParserFieldValue != null) {
+					objectDefinition.setAccountEntryRestricted(
+						(Boolean)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(
+						jsonParserFieldName,
+						"accountEntryRestrictedObjectFieldName")) {
+
+				if (jsonParserFieldValue != null) {
+					objectDefinition.setAccountEntryRestrictedObjectFieldName(
+						(String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "actions")) {
 				if (jsonParserFieldValue != null) {
 					objectDefinition.setActions(
 						(Map)ObjectDefinitionSerDes.toMap(
@@ -589,6 +804,36 @@ public class ObjectDefinitionSerDes {
 				if (jsonParserFieldValue != null) {
 					objectDefinition.setDateModified(
 						toDate((String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "enableCategorization")) {
+
+				if (jsonParserFieldValue != null) {
+					objectDefinition.setEnableCategorization(
+						(Boolean)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "enableComments")) {
+				if (jsonParserFieldValue != null) {
+					objectDefinition.setEnableComments(
+						(Boolean)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "enableObjectEntryHistory")) {
+
+				if (jsonParserFieldValue != null) {
+					objectDefinition.setEnableObjectEntryHistory(
+						(Boolean)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "externalReferenceCode")) {
+
+				if (jsonParserFieldValue != null) {
+					objectDefinition.setExternalReferenceCode(
+						(String)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "id")) {
@@ -684,6 +929,12 @@ public class ObjectDefinitionSerDes {
 						(String)jsonParserFieldValue);
 				}
 			}
+			else if (Objects.equals(jsonParserFieldName, "parameterRequired")) {
+				if (jsonParserFieldValue != null) {
+					objectDefinition.setParameterRequired(
+						(Boolean)jsonParserFieldValue);
+				}
+			}
 			else if (Objects.equals(jsonParserFieldName, "pluralLabel")) {
 				if (jsonParserFieldValue != null) {
 					objectDefinition.setPluralLabel(
@@ -694,6 +945,12 @@ public class ObjectDefinitionSerDes {
 			else if (Objects.equals(jsonParserFieldName, "portlet")) {
 				if (jsonParserFieldValue != null) {
 					objectDefinition.setPortlet((Boolean)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "restContextPath")) {
+				if (jsonParserFieldValue != null) {
+					objectDefinition.setRestContextPath(
+						(String)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "scope")) {
@@ -707,17 +964,23 @@ public class ObjectDefinitionSerDes {
 						StatusSerDes.toDTO((String)jsonParserFieldValue));
 				}
 			}
+			else if (Objects.equals(jsonParserFieldName, "storageType")) {
+				if (jsonParserFieldValue != null) {
+					objectDefinition.setStorageType(
+						(String)jsonParserFieldValue);
+				}
+			}
 			else if (Objects.equals(jsonParserFieldName, "system")) {
 				if (jsonParserFieldValue != null) {
 					objectDefinition.setSystem((Boolean)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(
-						jsonParserFieldName, "titleObjectFieldId")) {
+						jsonParserFieldName, "titleObjectFieldName")) {
 
 				if (jsonParserFieldValue != null) {
-					objectDefinition.setTitleObjectFieldId(
-						Long.valueOf((String)jsonParserFieldValue));
+					objectDefinition.setTitleObjectFieldName(
+						(String)jsonParserFieldValue);
 				}
 			}
 		}

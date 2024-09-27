@@ -47,6 +47,7 @@ SearchContainer<Object> searchContainer = itemSelectorViewDescriptorRendererDisp
 	>
 		<liferay-ui:search-container-row
 			className="Object"
+			keyProperty="<%= itemSelectorViewDescriptor.getKeyProperty() %>"
 			modelVar="entry"
 		>
 
@@ -66,11 +67,17 @@ SearchContainer<Object> searchContainer = itemSelectorViewDescriptorRendererDisp
 
 							<%
 							row.setCssClass("card-page-item card-page-item-directory entry " + row.getCssClass());
+
+							HorizontalCard horizontalCard = itemDescriptor.getHorizontalCard(renderRequest, searchContainer.getRowChecker());
+
+							if (horizontalCard == null) {
+								horizontalCard = new ItemDescriptorHorizontalCard(itemDescriptor, renderRequest, searchContainer.getRowChecker());
+							}
 							%>
 
 							<liferay-ui:search-container-column-text>
 								<clay:horizontal-card
-									horizontalCard="<%= new ItemDescriptorHorizontalCard(itemDescriptor, renderRequest, searchContainer.getRowChecker()) %>"
+									horizontalCard="<%= horizontalCard %>"
 								/>
 							</liferay-ui:search-container-column-text>
 						</c:when>
@@ -78,11 +85,17 @@ SearchContainer<Object> searchContainer = itemSelectorViewDescriptorRendererDisp
 
 							<%
 							row.setCssClass("card-page-item card-page-item-asset entry " + row.getCssClass());
+
+							VerticalCard verticalCard = itemDescriptor.getVerticalCard(renderRequest, searchContainer.getRowChecker());
+
+							if (verticalCard == null) {
+								verticalCard = new ItemDescriptorVerticalCard(itemDescriptor, renderRequest, searchContainer.getRowChecker());
+							}
 							%>
 
 							<liferay-ui:search-container-column-text>
 								<clay:vertical-card
-									verticalCard="<%= new ItemDescriptorVerticalCard(itemDescriptor, renderRequest, searchContainer.getRowChecker()) %>"
+									verticalCard="<%= verticalCard %>"
 								/>
 							</liferay-ui:search-container-column-text>
 						</c:otherwise>
@@ -140,6 +153,12 @@ SearchContainer<Object> searchContainer = itemSelectorViewDescriptorRendererDisp
 						<p class="h6 text-default">
 							<%= itemDescriptor.getSubtitle(locale) %>
 						</p>
+
+						<c:if test="<%= itemDescriptor.getStatus() != null %>">
+							<span class="text-default">
+								<aui:workflow-status markupView="lexicon" showIcon="<%= false %>" showLabel="<%= false %>" status="<%= itemDescriptor.getStatus() %>" />
+							</span>
+						</c:if>
 					</liferay-ui:search-container-column-text>
 				</c:when>
 				<c:otherwise>
@@ -159,7 +178,7 @@ SearchContainer<Object> searchContainer = itemSelectorViewDescriptorRendererDisp
 					/>
 
 					<liferay-ui:search-container-column-text
-						cssClass="table-cell-expand-smaller table-cell-minw-150"
+						cssClass="table-cell-expand-smallest table-cell-ws-nowrap"
 						name="modified-date"
 					>
 						<c:if test="<%= Objects.nonNull(itemDescriptor.getModifiedDate()) %>">
@@ -169,10 +188,18 @@ SearchContainer<Object> searchContainer = itemSelectorViewDescriptorRendererDisp
 							%>
 
 							<span class="text-default">
-								<liferay-ui:message arguments="<%= LanguageUtil.getTimeDescription(request, System.currentTimeMillis() - modifiedDate.getTime(), true) %>" key="modified-x-ago" />
+								<liferay-ui:message arguments="<%= LanguageUtil.getTimeDescription(request, System.currentTimeMillis() - modifiedDate.getTime(), true) %>" key="x-ago" />
 							</span>
 						</c:if>
 					</liferay-ui:search-container-column-text>
+
+					<c:if test="<%= itemDescriptor.getStatus() != null %>">
+						<liferay-ui:search-container-column-status
+							cssClass="text-nowrap"
+							name="status"
+							status="<%= itemDescriptor.getStatus() %>"
+						/>
+					</c:if>
 				</c:otherwise>
 			</c:choose>
 		</liferay-ui:search-container-row>
@@ -229,8 +256,8 @@ SearchContainer<Object> searchContainer = itemSelectorViewDescriptorRendererDisp
 		</aui:script>
 	</c:when>
 	<c:otherwise>
-		<aui:script require="frontend-js-web/liferay/delegate/delegate.es as delegateModule">
-			var delegate = delegateModule.default;
+		<aui:script require="frontend-js-web/index as frontendJsWeb">
+			var {delegate} = frontendJsWeb;
 
 			var selectItemHandler = delegate(
 				document.querySelector('#<portlet:namespace />entriesContainer'),

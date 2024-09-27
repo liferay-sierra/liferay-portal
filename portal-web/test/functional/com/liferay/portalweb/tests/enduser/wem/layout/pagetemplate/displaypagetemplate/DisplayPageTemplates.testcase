@@ -42,7 +42,7 @@ definition {
 	@uitest
 	test CannotDeleteDisplayPageTemplateWithUsage {
 		task ("Publish the display page template") {
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Add a web content") {
@@ -83,7 +83,7 @@ definition {
 		task ("Add a Documents and Media widget to the display page template") {
 			PageEditor.addWidget(portletName = "Documents and Media");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Mark the display page template as default") {
@@ -130,6 +130,32 @@ definition {
 		}
 	}
 
+	@description = "This is a test for LPS-153367. The page creator could configure the display page template in a new tab."
+	@priority = "4"
+	test ConfigureDisplayPageTemplateInANewTab {
+		task ("When the page creator accesses to the page editor of display page template") {
+			AssertVisible(locator1 = "PageEditor#NO_FRAGMENTS_MESSAGE");
+		}
+
+		task ("Then the page creator could configure display page template in a new tab") {
+			LexiconEntry.gotoHeaderMenuItem(menuItem = "Configure");
+
+			SelectWindow.selectPopUp(locator1 = "null");
+
+			AssertElementPresent(
+				key_title = "SEO",
+				locator1 = "Header#H2_TITLE");
+
+			AssertElementPresent(
+				key_title = "General Settings",
+				locator1 = "Header#H4_TITLE");
+
+			AssertElementPresent(
+				key_title = "Sitemap",
+				locator1 = "Header#H4_TITLE");
+		}
+	}
+
 	@description = "This is for LPS-106813. Can set permissions for widgets in display page template."
 	@priority = "5"
 	test ConfigurePermissionsOfAssetPublisher {
@@ -146,11 +172,11 @@ definition {
 
 			IFrame.selectPermissionsFrame();
 
-			AssertChecked(
+			AssertChecked.assertCheckedNotVisible(
 				key_roleTitle = "guest",
 				locator1 = "Permissions#CONFIGURATION_PERMISSIONS_VIEW_CHECKBOX");
 
-			Uncheck(
+			Uncheck.uncheckNotVisible(
 				key_roleTitle = "guest",
 				locator1 = "Permissions#CONFIGURATION_PERMISSIONS_VIEW_CHECKBOX");
 
@@ -162,7 +188,7 @@ definition {
 
 			PageEditor.waitForAutoSave();
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("View the permissions of Asset Publisher is saved") {
@@ -176,7 +202,7 @@ definition {
 
 			IFrame.selectPermissionsFrame();
 
-			AssertNotChecked(
+			AssertNotChecked.assertNotCheckedNotVisible(
 				key_roleTitle = "guest",
 				locator1 = "Permissions#CONFIGURATION_PERMISSIONS_VIEW_CHECKBOX");
 		}
@@ -189,7 +215,7 @@ definition {
 		property test.name.skip.portal.instance = "DisplayPageTemplates#ConfigureTheme";
 
 		task ("Publish the display page template") {
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Import a theme") {
@@ -249,7 +275,7 @@ definition {
 
 			PageEditor.assertFragmentSidebarLoaded();
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("View the Fjord theme is shown") {
@@ -266,7 +292,7 @@ definition {
 		property portal.acceptance = "true";
 
 		task ("Publish the display page template") {
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Mark the display page template as default") {
@@ -293,17 +319,15 @@ definition {
 		task ("Delete the default display page template") {
 			DisplayPageTemplatesAdmin.openDisplayPagesAdmin(siteURLKey = "test-site-name");
 
-			DisplayPageTemplatesAdmin.gotoDisplayPageEllipsisItem(
-				displayPageName = "Display Page Name",
-				item = "Delete");
-
-			AssertConfirm(value1 = "Are you sure you want to delete the default display page template? All related display pages will be deleted.");
+			DisplayPageTemplatesAdmin.deleteDisplayPage(
+				defaultDisplayPageTemplate = "true",
+				displayPageName = "Display Page Name");
 
 			Alert.viewSuccessMessageText(successMessage = "You successfully deleted 1 display page template(s).");
 		}
 
 		task ("View the default display page template not shown") {
-			DisplayPageTemplatesAdmin.viewDisplayPageNotPresent(displayPageName = "DisplayPage Name");
+			DisplayPageTemplatesAdmin.viewDisplayPageNotPresent(displayPageName = "Display Page Name");
 		}
 	}
 
@@ -329,7 +353,7 @@ definition {
 	@uitest
 	test DisableShowHeaderAndFooter {
 		task ("Publish the display page template") {
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Add two widget pages") {
@@ -402,7 +426,7 @@ definition {
 
 			PageEditor.assertFragmentSidebarLoaded();
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Navigate to the display page template at view mode") {
@@ -451,7 +475,7 @@ definition {
 		}
 
 		task ("Publish the display page template") {
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Edit the display page template") {
@@ -533,7 +557,7 @@ definition {
 		task ("Publish the display page template") {
 			DisplayPageTemplatesAdmin.gotoDisplayPage(displayPageName = "Display Page Name");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("View the display page") {
@@ -550,6 +574,56 @@ definition {
 		}
 	}
 
+	@description = "This is a test for LPS-162302. The page creator can navigate through fragment structure via breadcrumb on display page template."
+	@priority = "4"
+	test ViewBreadcrumbOnDisplayPageTemplate {
+		task ("Given the display page template creator has a DPT with an Asset Publisher inside Container fragment") {
+			task ("Add a Container fragment to display page template") {
+				PageEditor.addFragment(
+					collectionName = "Layout Elements",
+					fragmentName = "Container");
+			}
+
+			task ("Add an Asset Publisher inside Container") {
+				PageEditor.addElementToContainer(
+					navTab = "Widgets",
+					portletName = "Asset Publisher");
+			}
+
+			task ("Close the sidebar") {
+				Click(
+					key_text = "times",
+					locator1 = "Icon#ANY");
+			}
+		}
+
+		task ("When the display page template creator selects the Asset Publisher") {
+			PageEditor.clickConfigurableField(fragmentName = "Asset Publisher");
+		}
+
+		task ("Then the display page template creator should see the Breadcrumb and Assset Publisher as active") {
+			Breadcrumb.viewBreadcrumbPath(breadcrumbNameList = "Container,Asset Publisher");
+
+			Breadcrumb.viewActiveEntry(breadcrumbName = "Asset Publisher");
+		}
+
+		task ("When the display page template creator selects the Container on Breadcrumb") {
+			Click(
+				key_breadcrumbName = "Container",
+				locator1 = "Breadcrumb#BREADCRUMB_ENTRY");
+		}
+
+		task ("Then the display page template creator should see the sidebar still closed and the General panel") {
+			AssertElementNotPresent(locator1 = "Sidebar#PANEL_OPEN");
+
+			AssertVisible(
+				key_panel = "Container Options",
+				locator1 = "Panel#PANEL");
+
+			Breadcrumb.viewActiveEntry(breadcrumbName = "Container");
+		}
+	}
+
 	@description = "This is a test for LPS-133350. View master page after renaming display page template within custom master page."
 	@priority = "4"
 	test ViewMasterPageAfterRenamingDisplayPageTemplateWithinCustomMasterPage {
@@ -562,9 +636,7 @@ definition {
 
 			MastersPageTemplatesAdmin.gotoMasters(masterLayoutName = "TestMaster");
 
-			Button.click(button = "Publish Master");
-
-			Alert.viewSuccessMessage();
+			MastersPageTemplates.publishMaster();
 		}
 
 		task ("Add a display page template with created master page") {
@@ -664,7 +736,7 @@ definition {
 				collectionName = "Content Display",
 				fragmentName = "Display Page Content");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Mark the display page template as default") {

@@ -50,12 +50,12 @@
 			<rtexprvalue>true</rtexprvalue>
 		</attribute>
 		<attribute>
-			<name>options</name>
+			<name>size</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
 		</attribute>
 		<attribute>
-			<name>size</name>
+			<name>skuOptions</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
 		</attribute>
@@ -272,11 +272,6 @@
 			<rtexprvalue>true</rtexprvalue>
 		</attribute>
 		<attribute>
-			<name>spritemap</name>
-			<required>false</required>
-			<rtexprvalue>true</rtexprvalue>
-		</attribute>
-		<attribute>
 			<name>toggleable</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
@@ -335,6 +330,11 @@
 		</attribute>
 		<attribute>
 			<name>modalId</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<name>redirect</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
 		</attribute>

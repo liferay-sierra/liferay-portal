@@ -59,7 +59,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marco Leo
  */
-@Component(enabled = false, immediate = true, service = Indexer.class)
+@Component(immediate = true, service = Indexer.class)
 public class CPAttachmentFileEntryIndexer
 	extends BaseIndexer<CPAttachmentFileEntry> {
 
@@ -214,24 +214,24 @@ public class CPAttachmentFileEntryIndexer
 		document.addNumber(Field.TYPE, cpAttachmentFileEntry.getType());
 
 		Map<CPDefinitionOptionRel, List<CPDefinitionOptionValueRel>>
-			cpDefinitionOptionRelListMap =
-				_cpInstanceHelper.getCPDefinitionOptionRelsMap(
+			cpDefinitionOptionValueRelListMap =
+				_cpInstanceHelper.getCPDefinitionOptionValueRelsMap(
 					cpAttachmentFileEntry.getClassPK(),
 					cpAttachmentFileEntry.getJson());
 
 		for (Map.Entry<CPDefinitionOptionRel, List<CPDefinitionOptionValueRel>>
-				cpDefinitionOptionRelListMapEntry :
-					cpDefinitionOptionRelListMap.entrySet()) {
+				cpDefinitionOptionValueRelListMapEntry :
+					cpDefinitionOptionValueRelListMap.entrySet()) {
 
 			CPDefinitionOptionRel cpDefinitionOptionRel =
-				cpDefinitionOptionRelListMapEntry.getKey();
+				cpDefinitionOptionValueRelListMapEntry.getKey();
 
 			CPOption cpOption = cpDefinitionOptionRel.getCPOption();
 
 			List<String> optionValueIds = new ArrayList<>();
 
 			for (CPDefinitionOptionValueRel cpDefinitionOptionValueRel :
-					cpDefinitionOptionRelListMapEntry.getValue()) {
+					cpDefinitionOptionValueRelListMapEntry.getValue()) {
 
 				optionValueIds.add(cpDefinitionOptionValueRel.getKey());
 			}
@@ -268,8 +268,8 @@ public class CPAttachmentFileEntryIndexer
 		throws Exception {
 
 		_indexWriterHelper.updateDocument(
-			getSearchEngineId(), cpAttachmentFileEntry.getCompanyId(),
-			getDocument(cpAttachmentFileEntry), isCommitImmediately());
+			cpAttachmentFileEntry.getCompanyId(),
+			getDocument(cpAttachmentFileEntry));
 	}
 
 	@Override
@@ -312,7 +312,6 @@ public class CPAttachmentFileEntryIndexer
 					}
 				}
 			});
-		indexableActionableDynamicQuery.setSearchEngineId(getSearchEngineId());
 
 		indexableActionableDynamicQuery.performActions();
 	}

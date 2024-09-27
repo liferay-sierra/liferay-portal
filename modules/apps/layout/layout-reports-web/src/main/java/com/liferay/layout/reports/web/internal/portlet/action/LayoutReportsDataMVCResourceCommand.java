@@ -17,7 +17,7 @@ package com.liferay.layout.reports.web.internal.portlet.action;
 import com.liferay.configuration.admin.constants.ConfigurationAdminPortletKeys;
 import com.liferay.info.constants.InfoDisplayWebKeys;
 import com.liferay.info.item.InfoItemDetails;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFieldValuesProvider;
 import com.liferay.layout.reports.web.internal.configuration.LayoutReportsGooglePageSpeedGroupConfiguration;
 import com.liferay.layout.reports.web.internal.configuration.provider.LayoutReportsGooglePageSpeedConfigurationProvider;
@@ -26,7 +26,6 @@ import com.liferay.layout.reports.web.internal.data.provider.LayoutReportsDataPr
 import com.liferay.layout.seo.canonical.url.LayoutSEOCanonicalURLProvider;
 import com.liferay.layout.seo.kernel.LayoutSEOLink;
 import com.liferay.layout.seo.kernel.LayoutSEOLinkManager;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -41,6 +40,7 @@ import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCResourceCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCResourceCommand;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.GroupLocalService;
@@ -56,7 +56,6 @@ import com.liferay.portal.kernel.util.WebKeys;
 
 import java.util.Collections;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -73,7 +72,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alejandro Tardín
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + LayoutReportsPortletKeys.LAYOUT_REPORTS,
 		"mvc.command.name=/layout_reports/data"
@@ -125,28 +123,14 @@ public class LayoutReportsDataMVCResourceCommand
 			));
 	}
 
-	private Map<Locale, String> _getAlternateURLs(
-		Layout layout, ThemeDisplay themeDisplay) {
-
-		try {
-			return _layoutSEOCanonicalURLProvider.getCanonicalURLMap(
-				layout, themeDisplay);
-		}
-		catch (PortalException portalException) {
-			_log.error(portalException);
-		}
-
-		return Collections.emptyMap();
-	}
-
 	private String _getCanonicalURL(
-		Map<Locale, String> alternateURLs, String canonicalURL, Layout layout,
-		Locale locale) {
+		String canonicalURL, Layout layout, Locale locale,
+		ThemeDisplay themeDisplay) {
 
 		try {
 			LayoutSEOLink layoutSEOLink =
 				_layoutSEOLinkManager.getCanonicalLayoutSEOLink(
-					layout, locale, canonicalURL, alternateURLs);
+					layout, locale, canonicalURL, themeDisplay);
 
 			return layoutSEOLink.getHref();
 		}
@@ -226,15 +210,22 @@ public class LayoutReportsDataMVCResourceCommand
 	}
 
 	private String _getLocaleURL(
-		Map<Locale, String> alternateURLs, String canonicalURL,
-		Locale defaultLocale, Layout layout, Locale locale) {
+		String canonicalURL, Locale defaultLocale, Layout layout, Locale locale,
+		ThemeDisplay themeDisplay) {
 
 		if (defaultLocale.equals(locale)) {
-			return _getCanonicalURL(
-				alternateURLs, canonicalURL, layout, locale);
+			return _getCanonicalURL(canonicalURL, layout, locale, themeDisplay);
 		}
 
-		return alternateURLs.get(locale);
+		try {
+			return _layoutSEOCanonicalURLProvider.getCanonicalURL(
+				layout, locale, canonicalURL, themeDisplay);
+		}
+		catch (PortalException portalException) {
+			_log.error(portalException);
+
+			return canonicalURL;
+		}
 	}
 
 	private JSONArray _getPageURLsJSONArray(
@@ -248,9 +239,6 @@ public class LayoutReportsDataMVCResourceCommand
 
 		String canonicalURL = _getCanonicalURL(
 			_getCompleteURL(portletRequest), layout, themeDisplay);
-
-		Map<Locale, String> alternateURLs = _getAlternateURLs(
-			layout, themeDisplay);
 
 		return JSONUtil.putAll(
 			Optional.ofNullable(
@@ -290,8 +278,8 @@ public class LayoutReportsDataMVCResourceCommand
 			).map(
 				locale -> {
 					String url = _getLocaleURL(
-						alternateURLs, canonicalURL, defaultLocale, layout,
-						locale);
+						canonicalURL, defaultLocale, layout, locale,
+						themeDisplay);
 
 					return HashMapBuilder.<String, Object>put(
 						"languageId", LocaleUtil.toW3cLanguageId(locale)
@@ -339,7 +327,7 @@ public class LayoutReportsDataMVCResourceCommand
 					InfoDisplayWebKeys.INFO_ITEM_DETAILS)
 			).map(
 				infoItemDetails ->
-					_infoItemServiceTracker.getFirstInfoItemService(
+					_infoItemServiceRegistry.getFirstInfoItemService(
 						InfoItemFieldValuesProvider.class,
 						infoItemDetails.getClassName())
 			).map(
@@ -381,7 +369,7 @@ public class LayoutReportsDataMVCResourceCommand
 	private GroupLocalService _groupLocalService;
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
 	private Language _language;

@@ -3,7 +3,7 @@ definition {
 
 	property custom.properties = "minifier.enabled=true";
 	property osgi.module.configuration.file.names = "com.liferay.frontend.js.loader.modules.extender.internal.configuration.Details.config";
-	property osgi.module.configurations = "waitTimeout=&quot;15&quot;";
+	property osgi.module.configurations = "waitTimeout=\"15\"";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Forms";
@@ -130,7 +130,7 @@ definition {
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(
+		PagesAdmin.addPage(
 			pageName = "Form Page",
 			sitePageType = "Widget Page");
 
@@ -240,13 +240,13 @@ definition {
 
 		Form.closeSidebar();
 
-		Form.save();
+		Form.publishForm();
 
 		ProductMenu.gotoPortlet(
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "Form Page");
+		PagesAdmin.addPage(pageName = "Form Page");
 
 		Navigator.gotoPage(pageName = "Form Page");
 
@@ -361,13 +361,13 @@ definition {
 
 		Form.closeSidebar();
 
-		Form.save();
+		Form.publishForm();
 
 		ProductMenu.gotoPortlet(
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "Form Page");
+		PagesAdmin.addPage(pageName = "Form Page");
 
 		Navigator.gotoPage(pageName = "Form Page");
 
@@ -394,6 +394,186 @@ definition {
 		FormPortlet.submitWithValidationError();
 	}
 
+	@description = "Verify that Forms cannot navigate through pages when there is a empty required field"
+	@priority = "5"
+	test CannotNavigateThroughThePagesWithEmptyRequiredField {
+		property portal.acceptance = "true";
+
+		FormsAdmin.addForm();
+
+		Form.editName();
+
+		Form.editPageTitle(
+			formPageName = "Page 1",
+			formTitleNumber = "1");
+
+		Form.addTextField(formPageNumber = "0");
+
+		FormFields.enableSwitch(fieldName = "Required");
+
+		Form.editFieldLabelMetal(fieldValue = "Text Field 1");
+
+		Form.closeSidebar();
+
+		Form.addPage(formAddNewPageNumber = "1");
+
+		Form.editPageTitle(
+			formPageName = "Page 2",
+			formTitleNumber = "2");
+
+		Form.addTextField(formPageNumber = "1");
+
+		Form.editFieldLabelMetal(fieldValue = "Text Field 2");
+
+		Form.closeSidebar();
+
+		Form.addPage(formAddNewPageNumber = "2");
+
+		Form.editPageTitle(
+			formPageName = "Page 3",
+			formTitleNumber = "3");
+
+		Form.addTextField(formPageNumber = "2");
+
+		Form.editFieldLabelMetal(fieldValue = "Text Field 3");
+
+		Form.closeSidebar();
+
+		Form.publishForm();
+
+		FormsAdminNavigator.gotoPublishedForm();
+
+		AssertClick(
+			locator1 = "Button#NEXT",
+			value1 = "Next");
+
+		FormPortlet.viewValidationErrorMessage(validationErrorMessage = "This field is required.");
+
+		FormFields.editText(
+			fieldName = "Text Field 1",
+			fieldValue = "Test Text");
+
+		Form.navigateFormPagesTopList(
+			formPageName = "Page 2",
+			formPageNumber = "2");
+
+		AssertTextEquals(
+			key_formPageName = "Page 2",
+			locator1 = "FormPortlet#FORM_PAGE",
+			value1 = "Page 2");
+
+		Form.navigateFormPagesTopList(
+			formPageName = "Page 3",
+			formPageNumber = "3");
+
+		AssertTextEquals(
+			key_formPageName = "Page 3",
+			locator1 = "FormPortlet#FORM_PAGE",
+			value1 = "Page 3");
+	}
+
+	@description = "Verify that Forms cannot navigate through pages when there is a validation error"
+	@priority = "5"
+	test CannotNavigateThroughThePagesWithValidationError {
+		property portal.acceptance = "true";
+
+		FormsAdmin.addForm();
+
+		Form.editName();
+
+		Form.editPageTitle(
+			formPageName = "Page 1",
+			formTitleNumber = "1");
+
+		Form.addTextField(formPageNumber = "0");
+
+		Form.editFieldLabelMetal(fieldValue = "Text Field 1");
+
+		Form.closeSidebar();
+
+		Form.addPage(formAddNewPageNumber = "1");
+
+		Form.editPageTitle(
+			formPageName = "Page 2",
+			formTitleNumber = "2");
+
+		Form.addTextField(formPageNumber = "1");
+
+		Form.editFieldLabelMetal(fieldValue = "Text Field 2");
+
+		Form.closeSidebar();
+
+		Form.addPage(formAddNewPageNumber = "2");
+
+		Form.editPageTitle(
+			formPageName = "Page 3",
+			formTitleNumber = "3");
+
+		Form.addTextField(formPageNumber = "2");
+
+		Form.editFieldLabelMetal(fieldValue = "Text Field 3");
+
+		Form.closeSidebar();
+
+		Click(
+			key_fieldFieldLabel = "Text Field 1",
+			locator1 = "DDMEditStructure#FORM_FIELD_CONTAINER_LABEL");
+
+		Form.gotoAdvancedTab();
+
+		FormFields.enableCheckbox(fieldName = "Validation");
+
+		ScrollBy(value1 = "0, 2000");
+
+		FormFields.selectSelectOption(
+			fieldName = "If Input",
+			selectOption = "Contains");
+
+		FormFields.editText(
+			fieldName = "parameter",
+			fieldValue = "Test");
+
+		FormFields.editText(
+			fieldName = "errorMessage",
+			fieldValue = "Test Error");
+
+		Form.publishForm();
+
+		FormsAdminNavigator.gotoPublishedForm();
+
+		FormFields.editText(
+			fieldName = "Text Field 1",
+			fieldValue = "Text");
+
+		AssertClick(
+			locator1 = "Button#NEXT",
+			value1 = "Next");
+
+		FormPortlet.viewValidationErrorMessage(validationErrorMessage = "Test Error");
+
+		FormFields.editText(
+			fieldName = "Text Field 1",
+			fieldValue = "Test Text");
+
+		Form.navigateFormPagesTopList(
+			formPageName = "Page 2",
+			formPageNumber = "2");
+
+		AssertTextEquals(
+			key_formPageName = "Page 2",
+			locator1 = "FormPortlet#FORM_PAGE",
+			value1 = "Page 2");
+
+		Form.navigateFormPagesTopList(
+			formPageName = "Page 3",
+			formPageNumber = "3");
+
+		AssertTextEquals(
+			key_formPageName = "Page 3",
+			locator1 = "FormPortlet#FORM_PAGE",
+			value1 = "Page 3");
+	}
+
 	@description = "Verify that a Form can redirect a user after being submitted"
 	@priority = "5"
 	test CanRedirectUserAfterFormSubmission {
@@ -403,7 +583,7 @@ definition {
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(
+		PagesAdmin.addPage(
 			pageName = "Form Page 1",
 			sitePageType = "Widget Page");
 
@@ -463,7 +643,7 @@ definition {
 	test CanRequireCAPTCHA {
 		property captcha.enabled = "true";
 		property portal.acceptance = "true";
-		property portal.upstream = "true";
+		property portal.upstream = "quarantine";
 		property test.name.skip.portal.instance = "FormsSubmissions#CanRequireCAPTCHA";
 
 		FormsAdmin.addForm();
@@ -504,7 +684,7 @@ definition {
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "Form Page");
+		PagesAdmin.addPage(pageName = "Form Page");
 
 		Navigator.gotoPage(pageName = "Form Page");
 
@@ -600,6 +780,50 @@ definition {
 			successPageTitle = "Thank you.");
 	}
 
+	@description = "Verify that with the option Limit to one submission per user activated, the user cannot send more than one submission."
+	@priority = "4"
+	test CheckCantSendMoreThanOneSubmitPerUser {
+		property portal.acceptance = "true";
+		property portal.upstream = "true";
+
+		Navigator.openURL();
+
+		ProductMenu.gotoPortlet(
+			category = "Content & Data",
+			portlet = "Forms");
+
+		FormsAdmin.addForm();
+
+		Form.addTextField();
+
+		FormsAdminNavigator.gotoSettings();
+
+		Form.configureOneSubmissionPerUser();
+
+		Form.publishForm();
+
+		FormsAdminNavigator.gotoPublishCopyURLLink();
+
+		var publishedFormPublicURL = Form.getPublishedFormPublicURL(publishedFormPublicURL = "${publishedFormPublicURL}");
+
+		Form.save();
+
+		FormsAdminNavigator.gotoPublishedForm();
+
+		FormFields.editText(
+			fieldLabel = "Text",
+			fieldName = "Text",
+			fieldValue = "Test text");
+
+		FormPortlet.submitSuccessfully();
+
+		Refresh();
+
+		FormPortlet.viewSuccessPage(
+			successPageDescription = "You can fill out this form only once. Contact the owner of the form if you think this is a mistake.",
+			successPageTitle = "You have already responded.");
+	}
+
 	@description = "Verify that a Form's Success Page can be restored"
 	@priority = "5"
 	test DefaultSuccessPageCanBeRestored {
@@ -642,13 +866,13 @@ definition {
 			subject = "Form Subject",
 			toAddress = "formreviewer@liferay.com");
 
-		Form.save();
+		Form.publishForm();
 
 		ProductMenu.gotoPortlet(
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "Form Page");
+		PagesAdmin.addPage(pageName = "Form Page");
 
 		Navigator.gotoPage(pageName = "Form Page");
 
@@ -901,13 +1125,13 @@ definition {
 			successPageDescription = "Edited: Your information was successfully received. Thank you for filling out the form.",
 			successPageTitle = "Edited: Thank You");
 
-		Form.save();
+		Form.publishForm();
 
 		ProductMenu.gotoPortlet(
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "Form Page");
+		PagesAdmin.addPage(pageName = "Form Page");
 
 		Navigator.gotoPage(pageName = "Form Page");
 

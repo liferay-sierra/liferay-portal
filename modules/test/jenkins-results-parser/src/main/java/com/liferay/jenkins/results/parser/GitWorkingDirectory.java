@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -417,29 +419,48 @@ public class GitWorkingDirectory {
 	}
 
 	public String createPullRequest(
-			String body, String pullRequestBranchName, String receiverUserName,
-			String senderUserName, String title)
+			final String body, final String pullRequestBranchName,
+			final String receiverUserName, final String senderUserName,
+			final String title)
 		throws IOException {
 
-		JSONObject requestJSONObject = new JSONObject();
+		Retryable<String> retryable = new Retryable<String>(true, 5, 0, true) {
 
-		requestJSONObject.put("base", _upstreamBranchName);
-		requestJSONObject.put("body", body);
-		requestJSONObject.put(
-			"head", senderUserName + ":" + pullRequestBranchName);
-		requestJSONObject.put("title", title);
+			@Override
+			public String execute() {
+				JSONObject requestJSONObject = new JSONObject();
 
-		String url = JenkinsResultsParserUtil.getGitHubApiUrl(
-			_gitRepositoryName, receiverUserName, "pulls");
+				requestJSONObject.put("base", _upstreamBranchName);
+				requestJSONObject.put("body", body);
+				requestJSONObject.put(
+					"head", senderUserName + ":" + pullRequestBranchName);
+				requestJSONObject.put("title", title);
 
-		JSONObject responseJSONObject = JenkinsResultsParserUtil.toJSONObject(
-			url, requestJSONObject.toString());
+				String url = JenkinsResultsParserUtil.getGitHubApiUrl(
+					_gitRepositoryName, receiverUserName, "pulls");
 
-		String pullRequestURL = responseJSONObject.getString("html_url");
+				JSONObject responseJSONObject;
 
-		System.out.println("Created a pull request at " + pullRequestURL);
+				try {
+					responseJSONObject = JenkinsResultsParserUtil.toJSONObject(
+						url, requestJSONObject.toString());
+				}
+				catch (IOException ioException) {
+					throw new RuntimeException(ioException);
+				}
 
-		return pullRequestURL;
+				String pullRequestURL = responseJSONObject.getString(
+					"html_url");
+
+				System.out.println(
+					"Created a pull request at " + pullRequestURL);
+
+				return pullRequestURL;
+			}
+
+		};
+
+		return retryable.executeWithRetries();
 	}
 
 	public void deleteLocalGitBranch(LocalGitBranch localGitBranch) {
@@ -474,6 +495,29 @@ public class GitWorkingDirectory {
 		}
 	}
 
+	public void deleteLockFiles() {
+		File gitDirectory = getGitDirectory();
+
+		String[] lockFileNames = gitDirectory.list(
+			JenkinsResultsParserUtil.newFilenameFilter(".*\\.lock"));
+
+		for (String lockFileName : lockFileNames) {
+			boolean deleted = false;
+
+			File lockFile = new File(gitDirectory, lockFileName);
+
+			if (lockFile.exists() && lockFile.canWrite()) {
+				System.out.println("Deleting lock file " + lockFile.getPath());
+
+				deleted = lockFile.delete();
+			}
+
+			if (!deleted) {
+				System.out.println("Unable to delete " + lockFile.getPath());
+			}
+		}
+	}
+
 	public void deleteRemoteGitBranch(RemoteGitBranch remoteGitBranch) {
 		deleteRemoteGitBranches(Arrays.asList(remoteGitBranch));
 	}
@@ -495,6 +539,10 @@ public class GitWorkingDirectory {
 	public void deleteRemoteGitBranches(
 		List<RemoteGitBranch> remoteGitBranches) {
 
+		if (remoteGitBranches.isEmpty()) {
+			return;
+		}
+
 		Map<String, Set<String>> remoteURLGitBranchNameMap = new HashMap<>();
 
 		for (RemoteGitBranch remoteGitBranch : remoteGitBranches) {
@@ -515,21 +563,48 @@ public class GitWorkingDirectory {
 			remoteURLGitBranchNameMap.put(remoteURL, remoteGitBranchNames);
 		}
 
-		for (Map.Entry<String, Set<String>> remoteURLBranchNamesEntry :
+		List<Callable<Boolean>> callables = new ArrayList<>(
+			remoteURLGitBranchNameMap.size());
+
+		for (final Map.Entry<String, Set<String>> remoteURLBranchNamesEntry :
 				remoteURLGitBranchNameMap.entrySet()) {
 
-			String remoteURL = remoteURLBranchNamesEntry.getKey();
+			Callable<Boolean> callable = new Callable<Boolean>() {
 
-			for (List<String> branchNames :
-					Lists.partition(
-						new ArrayList<String>(
-							remoteURLBranchNamesEntry.getValue()),
-						_BRANCHES_DELETE_BATCH_SIZE)) {
+				@Override
+				public Boolean call() throws Exception {
+					Set<String> allBranchNames =
+						remoteURLBranchNamesEntry.getValue();
 
-				_deleteRemoteGitBranches(
-					remoteURL, branchNames.toArray(new String[0]));
-			}
+					if (allBranchNames.isEmpty()) {
+						return true;
+					}
+
+					String remoteURL = remoteURLBranchNamesEntry.getKey();
+
+					for (List<String> branchNames :
+							Lists.partition(
+								new ArrayList<String>(allBranchNames),
+								_BRANCHES_DELETE_BATCH_SIZE)) {
+
+						_deleteRemoteGitBranches(
+							remoteURL, branchNames.toArray(new String[0]));
+					}
+
+					return true;
+				}
+
+			};
+
+			callables.add(callable);
 		}
+
+		ParallelExecutor<Boolean> parallelExecutor = new ParallelExecutor<>(
+			callables, true,
+			JenkinsResultsParserUtil.getNewThreadPoolExecutor(
+				callables.size(), true));
+
+		parallelExecutor.execute();
 	}
 
 	public void displayLog() {
@@ -998,6 +1073,75 @@ public class GitWorkingDirectory {
 		return getLocalGitBranch(currentBranchName);
 	}
 
+	public List<File> getDeletedFilesList() {
+		return getDeletedFilesList(false, null, null);
+	}
+
+	public List<File> getDeletedFilesList(
+		boolean checkUnstagedFiles, List<PathMatcher> excludesPathMatchers,
+		List<PathMatcher> includesPathMatchers) {
+
+		LocalGitBranch currentLocalGitBranch = getCurrentLocalGitBranch();
+
+		if (currentLocalGitBranch == null) {
+			throw new RuntimeException(
+				"Unable to determine the current branch");
+		}
+
+		StringBuilder sb = new StringBuilder();
+
+		sb.append("git diff --diff-filter=ADMR --name-only ");
+
+		sb.append(
+			getMergeBaseCommitSHA(
+				currentLocalGitBranch,
+				getLocalGitBranch(getUpstreamBranchName(), true)));
+
+		if (!checkUnstagedFiles) {
+			sb.append(" ");
+			sb.append(currentLocalGitBranch.getSHA());
+		}
+
+		String gitDiffCommandString = sb.toString();
+
+		List<File> deletedFiles = _deletedFilesMap.get(gitDiffCommandString);
+
+		if (deletedFiles == null) {
+			GitUtil.ExecutionResult executionResult = executeBashCommands(
+				GitUtil.RETRIES_SIZE_MAX, GitUtil.MILLIS_RETRY_DELAY,
+				GitUtil.MILLIS_TIMEOUT, gitDiffCommandString);
+
+			if (executionResult.getExitValue() == 1) {
+				return Collections.emptyList();
+			}
+
+			if (executionResult.getExitValue() != 0) {
+				throw new RuntimeException(
+					"Unable to get current branch modified files\n" +
+						executionResult.getStandardError());
+			}
+
+			deletedFiles = new ArrayList<>();
+
+			String gitDiffOutput = executionResult.getStandardOut();
+
+			for (String line : gitDiffOutput.split("\n")) {
+				File deletedFile = new File(_workingDirectory, line);
+
+				if (deletedFile.exists()) {
+					continue;
+				}
+
+				deletedFiles.add(deletedFile);
+			}
+
+			_deletedFilesMap.put(gitDiffCommandString, deletedFiles);
+		}
+
+		return JenkinsResultsParserUtil.getIncludedFiles(
+			excludesPathMatchers, includesPathMatchers, deletedFiles);
+	}
+
 	public String getGitConfigProperty(String gitConfigPropertyName) {
 		GitUtil.ExecutionResult executionResult = executeBashCommands(
 			GitUtil.RETRIES_SIZE_MAX, GitUtil.MILLIS_RETRY_DELAY,
@@ -1170,7 +1314,7 @@ public class GitWorkingDirectory {
 			List<File> javaFiles = JenkinsResultsParserUtil.findFiles(
 				getWorkingDirectory(), ".*\\.java");
 
-			_javaDirPaths = new HashSet<>();
+			_javaDirPaths = ConcurrentHashMap.newKeySet();
 
 			for (File javaFile : javaFiles) {
 				File parentFile = javaFile.getParentFile();
@@ -1235,7 +1379,8 @@ public class GitWorkingDirectory {
 
 		LocalGitRepository localGitRepository =
 			GitRepositoryFactory.getLocalGitRepository(
-				getGitRepositoryName(), upstreamBranchName);
+				getGitRepositoryName(), upstreamBranchName,
+				getWorkingDirectory());
 
 		if (branchName != null) {
 			try {
@@ -2244,11 +2389,9 @@ public class GitWorkingDirectory {
 	protected List<File> getSubdirectoriesContainingFiles(
 		int depth, List<File> files, File rootDirectory) {
 
-		List<File> subdirectories = JenkinsResultsParserUtil.getSubdirectories(
-			depth, rootDirectory);
-
 		return JenkinsResultsParserUtil.getDirectoriesContainingFiles(
-			subdirectories, files);
+			JenkinsResultsParserUtil.getSubdirectories(depth, rootDirectory),
+			files);
 	}
 
 	protected boolean isOnlyMatchingFilesModified(MultiPattern multiPattern) {
@@ -2687,26 +2830,31 @@ public class GitWorkingDirectory {
 
 	private static final Pattern _badRefPattern = Pattern.compile(
 		"fatal: bad object (?<badRef>.+/HEAD)");
+	private static final Map<String, List<File>> _deletedFilesMap =
+		new ConcurrentHashMap<>();
 	private static final Pattern _gitDirectoryPathPattern = Pattern.compile(
 		"gitdir\\: (.*)\\s*");
 	private static final Pattern _gitLogEntityPattern = Pattern.compile(
-		"(?<sha>[0-9a-f]{40}) (?<commitTime>\\d+) (?<email>[^\\s]+) " +
+		"(?<sha>[0-9a-f]{40}) (?<commitTime>\\d+) (?<email>[^\\s]*) " +
 			"(?<message>.*)");
 	private static final Map<String, List<File>> _modifiedFilesMap =
-		new HashMap<>();
+		new ConcurrentHashMap<>();
 	private static final MultiPattern _poshiFileNamesMultiPattern =
 		new MultiPattern(
 			".*\\.function", ".*\\.macro", ".*\\.path", ".*\\.prose",
 			".*\\.testcase");
 	private static final List<String> _privateOnlyGitRepositoryNames =
-		_getBuildPropertyAsList(
-			"git.working.directory.private.only.repository.names");
+		Collections.synchronizedList(
+			_getBuildPropertyAsList(
+				"git.working.directory.private.only.repository.names"));
 	private static final List<String> _publicOnlyGitRepositoryNames =
-		_getBuildPropertyAsList(
-			"git.working.directory.public.only.repository.names");
+		Collections.synchronizedList(
+			_getBuildPropertyAsList(
+				"git.working.directory.public.only.repository.names"));
 
 	private File _gitDirectory;
-	private final Map<String, GitRemote> _gitRemotes = new HashMap<>();
+	private final Map<String, GitRemote> _gitRemotes =
+		new ConcurrentHashMap<>();
 	private final String _gitRepositoryName;
 	private final String _gitRepositoryUsername;
 	private Set<String> _javaDirPaths;

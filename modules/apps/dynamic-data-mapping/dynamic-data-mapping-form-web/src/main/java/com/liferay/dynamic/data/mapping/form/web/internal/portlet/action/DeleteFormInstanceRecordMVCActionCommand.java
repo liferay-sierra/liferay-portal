@@ -31,7 +31,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Leonardo Barros
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM_ADMIN,
 		"mvc.command.name=/dynamic_data_mapping_form/delete_form_instance_record"
@@ -67,13 +66,7 @@ public class DeleteFormInstanceRecordMVCActionCommand
 		}
 	}
 
-	@Reference(unbind = "-")
-	protected void setDDMFormInstanceRecordService(
-		DDMFormInstanceRecordService ddmFormInstanceRecordService) {
-
-		_ddmFormInstanceRecordService = ddmFormInstanceRecordService;
-	}
-
+	@Reference
 	private DDMFormInstanceRecordService _ddmFormInstanceRecordService;
 
 }

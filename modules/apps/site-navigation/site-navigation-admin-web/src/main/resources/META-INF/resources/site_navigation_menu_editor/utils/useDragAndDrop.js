@@ -61,6 +61,8 @@ export function useDragItem(item, onDragEnd) {
 	const items = useItems();
 	const itemPath = getItemPath(siteNavigationMenuItemId, items);
 
+	const {portletNamespace: namespace} = useConstants();
+
 	const {
 		parentId,
 		setHorizontalOffset,
@@ -87,6 +89,7 @@ export function useDragItem(item, onDragEnd) {
 		},
 		item: {
 			id: siteNavigationMenuItemId,
+			namespace,
 			type: ACCEPTING_ITEM_TYPE,
 		},
 	});
@@ -255,7 +258,11 @@ function computeHoverItself({initialOffset, items, monitor, rtl, source}) {
 		}
 	}
 
-	if (!newParentId || newParentId === sourceItem.siteNavigationMenuItemId) {
+	if (
+		!newParentId ||
+		newParentId === sourceItem.siteNavigationMenuItemId ||
+		itemIsDynamic(newParentId, items)
+	) {
 		return;
 	}
 
@@ -305,10 +312,22 @@ function computeHoverAnotherItem({
 			: targetItem.parentSiteNavigationMenuItemId;
 	}
 
+	if (itemIsDynamic(newParentId, items)) {
+		return;
+	}
+
 	return {
 		currentOffset,
 		direction,
 		newIndex,
 		newParentId,
 	};
+}
+
+function itemIsDynamic(siteNavigationMenuItemId, items) {
+	const item = items.find(
+		(item) => item.siteNavigationMenuItemId === siteNavigationMenuItemId
+	);
+
+	return item?.dynamic;
 }

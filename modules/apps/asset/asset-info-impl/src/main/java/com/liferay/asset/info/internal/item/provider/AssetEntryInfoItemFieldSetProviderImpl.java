@@ -32,8 +32,9 @@ import com.liferay.info.field.type.CategoriesInfoFieldType;
 import com.liferay.info.field.type.TagsInfoFieldType;
 import com.liferay.info.item.field.reader.InfoItemFieldReaderFieldSetProvider;
 import com.liferay.info.localized.InfoLocalizedValue;
-import com.liferay.info.type.categorization.Category;
+import com.liferay.info.type.KeyLocalizedLabelPair;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -91,6 +92,10 @@ public class AssetEntryInfoItemFieldSetProviderImpl
 					InfoField.builder(
 					).infoFieldType(
 						CategoriesInfoFieldType.INSTANCE
+					).uniqueId(
+						AssetVocabulary.class.getSimpleName() +
+							StringPool.UNDERLINE +
+								assetVocabulary.getVocabularyId()
 					).name(
 						assetVocabulary.getName()
 					).labelInfoLocalizedValue(
@@ -99,7 +104,7 @@ public class AssetEntryInfoItemFieldSetProviderImpl
 							assetVocabulary.getTitleMap()
 						).build()
 					).build(),
-					() -> _getCategories(
+					() -> _getKeyLocalizedLabelPairs(
 						_filterByVocabularyId(
 							assetEntry.getCategories(),
 							assetVocabulary.getVocabularyId()))));
@@ -108,7 +113,7 @@ public class AssetEntryInfoItemFieldSetProviderImpl
 		infoFieldValues.add(
 			new InfoFieldValue<>(
 				_categoriesInfoField,
-				() -> _getCategories(
+				() -> _getKeyLocalizedLabelPairs(
 					_filterByVisibilityType(assetEntry.getCategories()))));
 		infoFieldValues.add(
 			new InfoFieldValue<>(
@@ -130,10 +135,8 @@ public class AssetEntryInfoItemFieldSetProviderImpl
 				itemClassName);
 
 		try {
-			AssetEntry assetEntry = assetRendererFactory.getAssetEntry(
-				itemClassName, itemClassPK);
-
-			return getInfoFieldValues(assetEntry);
+			return getInfoFieldValues(
+				assetRendererFactory.getAssetEntry(itemClassName, itemClassPK));
 		}
 		catch (NoSuchEntryException noSuchEntryException) {
 			throw new NoSuchInfoItemException(
@@ -170,24 +173,6 @@ public class AssetEntryInfoItemFieldSetProviderImpl
 			assetCategory -> assetCategory.getVocabularyId() == vocabularyId);
 	}
 
-	private List<Category> _getCategories(List<AssetCategory> assetCategories) {
-		List<Category> categories = new SortedArrayList<>(
-			Comparator.comparing(Category::getKey));
-
-		for (AssetCategory assetCategory : assetCategories) {
-			categories.add(_getCategory(assetCategory));
-		}
-
-		return categories;
-	}
-
-	private Category _getCategory(AssetCategory assetCategory) {
-		return new Category(
-			assetCategory.getName(),
-			(InfoLocalizedValue<String>)InfoLocalizedValue.function(
-				assetCategory::getTitle));
-	}
-
 	private InfoFieldSet _getInfoFieldSet(
 		Collection<AssetVocabulary> assetVocabularies) {
 
@@ -200,6 +185,10 @@ public class AssetEntryInfoItemFieldSetProviderImpl
 					InfoField.builder(
 					).infoFieldType(
 						CategoriesInfoFieldType.INSTANCE
+					).uniqueId(
+						AssetVocabulary.class.getSimpleName() +
+							StringPool.UNDERLINE +
+								assetVocabulary.getVocabularyId()
 					).name(
 						assetVocabulary.getName()
 					).labelInfoLocalizedValue(
@@ -218,6 +207,30 @@ public class AssetEntryInfoItemFieldSetProviderImpl
 		).name(
 			"categorization"
 		).build();
+	}
+
+	private KeyLocalizedLabelPair _getKeyLocalizedLabelPair(
+		AssetCategory assetCategory) {
+
+		return new KeyLocalizedLabelPair(
+			assetCategory.getName(),
+			(InfoLocalizedValue<String>)InfoLocalizedValue.function(
+				assetCategory::getTitle));
+	}
+
+	private List<KeyLocalizedLabelPair> _getKeyLocalizedLabelPairs(
+		List<AssetCategory> assetCategories) {
+
+		List<KeyLocalizedLabelPair> keyLocalizedLabelPairs =
+			new SortedArrayList<>(
+				Comparator.comparing(KeyLocalizedLabelPair::getKey));
+
+		for (AssetCategory assetCategory : assetCategories) {
+			keyLocalizedLabelPairs.add(
+				_getKeyLocalizedLabelPair(assetCategory));
+		}
+
+		return keyLocalizedLabelPairs;
 	}
 
 	private Set<AssetVocabulary> _getNoninternalAssetVocabularies(
@@ -293,6 +306,8 @@ public class AssetEntryInfoItemFieldSetProviderImpl
 		InfoField.builder(
 		).infoFieldType(
 			CategoriesInfoFieldType.INSTANCE
+		).namespace(
+			AssetCategory.class.getSimpleName()
 		).name(
 			"categories"
 		).labelInfoLocalizedValue(
@@ -312,6 +327,8 @@ public class AssetEntryInfoItemFieldSetProviderImpl
 		InfoField.builder(
 		).infoFieldType(
 			TagsInfoFieldType.INSTANCE
+		).namespace(
+			AssetTag.class.getSimpleName()
 		).name(
 			"tagNames"
 		).labelInfoLocalizedValue(

@@ -28,6 +28,7 @@ import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.CalendarFactory;
 import com.liferay.portal.kernel.util.DateFormatFactory;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -41,7 +42,6 @@ import com.liferay.portal.search.web.internal.modified.facet.display.context.bui
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.portal.util.CalendarFactoryImpl;
 import com.liferay.portal.util.DateFormatFactoryImpl;
-import com.liferay.portal.util.HttpImpl;
 
 import java.util.List;
 
@@ -53,10 +53,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import org.mockito.Matchers;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 
 /**
  * @author Adam Brandizzi
@@ -70,15 +67,12 @@ public class ModifiedFacetDisplayContextBuilderTest {
 
 	@Before
 	public void setUp() throws Exception {
-		MockitoAnnotations.initMocks(this);
-
 		_calendarFactory = new CalendarFactoryImpl();
 
 		_dateFormatFactory = new DateFormatFactoryImpl();
 
 		_dateRangeFactory = new DateRangeFactory(_dateFormatFactory);
 
-		_httpImpl = new HttpImpl();
 		_jsonFactoryImpl = new JSONFactoryImpl();
 
 		_setUpPortalUtil();
@@ -333,14 +327,13 @@ public class ModifiedFacetDisplayContextBuilderTest {
 		).when(
 			portletDisplay
 		).getPortletInstanceConfiguration(
-			Matchers.any()
+			Mockito.any()
 		);
 
 		return portletDisplay;
 	}
 
-	@Mock
-	protected Portal portal;
+	protected Portal portal = Mockito.mock(Portal.class);
 
 	private void _addRangeJSONObject(
 		JSONArray jsonArray, String label, String range) {
@@ -358,12 +351,14 @@ public class ModifiedFacetDisplayContextBuilderTest {
 
 	private void _assertDoesNotHasParameter(String url, String name) {
 		Assert.assertTrue(
-			Validator.isNull(_httpImpl.getParameter(url, name, false)));
+			Validator.isNull(
+				HttpComponentsUtil.getParameter(url, name, false)));
 	}
 
 	private void _assertHasParameter(String url, String name) {
 		Assert.assertTrue(
-			Validator.isNotNull(_httpImpl.getParameter(url, name, false)));
+			Validator.isNotNull(
+				HttpComponentsUtil.getParameter(url, name, false)));
 	}
 
 	private void _assertTermDisplayContextsDoNotHaveFromAndToParameters(
@@ -399,8 +394,7 @@ public class ModifiedFacetDisplayContextBuilderTest {
 
 		try {
 			return new ModifiedFacetDisplayContextBuilder(
-				_calendarFactory, _dateFormatFactory, _httpImpl,
-				_getRenderRequest());
+				_calendarFactory, _dateFormatFactory, _getRenderRequest());
 		}
 		catch (ConfigurationException configurationException) {
 			throw new RuntimeException(configurationException);
@@ -495,7 +489,7 @@ public class ModifiedFacetDisplayContextBuilderTest {
 	private void _setUpPortalUtil() {
 		Mockito.doAnswer(
 			invocation -> new String[] {
-				invocation.getArgumentAt(0, String.class), StringPool.BLANK
+				invocation.getArgument(0, String.class), StringPool.BLANK
 			}
 		).when(
 			portal
@@ -511,14 +505,9 @@ public class ModifiedFacetDisplayContextBuilderTest {
 	private CalendarFactory _calendarFactory;
 	private DateFormatFactory _dateFormatFactory;
 	private DateRangeFactory _dateRangeFactory;
-
-	@Mock
-	private Facet _facet;
-
-	@Mock
-	private FacetCollector _facetCollector;
-
-	private HttpImpl _httpImpl;
+	private final Facet _facet = Mockito.mock(Facet.class);
+	private final FacetCollector _facetCollector = Mockito.mock(
+		FacetCollector.class);
 	private JSONFactoryImpl _jsonFactoryImpl;
 
 }

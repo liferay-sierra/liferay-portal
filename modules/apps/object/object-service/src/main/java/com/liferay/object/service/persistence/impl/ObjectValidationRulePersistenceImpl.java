@@ -46,7 +46,7 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 
 import java.io.Serializable;
 
@@ -198,7 +198,7 @@ public class ObjectValidationRulePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<ObjectValidationRule>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (ObjectValidationRule objectValidationRule : list) {
@@ -588,7 +588,7 @@ public class ObjectValidationRulePersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -749,7 +749,7 @@ public class ObjectValidationRulePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<ObjectValidationRule>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (ObjectValidationRule objectValidationRule : list) {
@@ -1167,7 +1167,7 @@ public class ObjectValidationRulePersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid, companyId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -1330,7 +1330,7 @@ public class ObjectValidationRulePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<ObjectValidationRule>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (ObjectValidationRule objectValidationRule : list) {
@@ -1703,7 +1703,7 @@ public class ObjectValidationRulePersistenceImpl
 
 		Object[] finderArgs = new Object[] {objectDefinitionId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -1850,7 +1850,7 @@ public class ObjectValidationRulePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<ObjectValidationRule>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (ObjectValidationRule objectValidationRule : list) {
@@ -2244,7 +2244,7 @@ public class ObjectValidationRulePersistenceImpl
 
 		Object[] finderArgs = new Object[] {objectDefinitionId, active};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -2409,7 +2409,7 @@ public class ObjectValidationRulePersistenceImpl
 		objectValidationRule.setNew(true);
 		objectValidationRule.setPrimaryKey(objectValidationRuleId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		objectValidationRule.setUuid(uuid);
 
@@ -2534,7 +2534,7 @@ public class ObjectValidationRulePersistenceImpl
 			(ObjectValidationRuleModelImpl)objectValidationRule;
 
 		if (Validator.isNull(objectValidationRule.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			objectValidationRule.setUuid(uuid);
 		}
@@ -2733,7 +2733,7 @@ public class ObjectValidationRulePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<ObjectValidationRule>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -2803,7 +2803,7 @@ public class ObjectValidationRulePersistenceImpl
 	@Override
 	public int countAll() {
 		Long count = (Long)finderCache.getResult(
-			_finderPathCountAll, FINDER_ARGS_EMPTY);
+			_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -3040,7 +3040,6 @@ public class ObjectValidationRulePersistenceImpl
 	}
 
 	@Reference
-	private ObjectValidationRuleModelArgumentsResolver
-		_objectValidationRuleModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

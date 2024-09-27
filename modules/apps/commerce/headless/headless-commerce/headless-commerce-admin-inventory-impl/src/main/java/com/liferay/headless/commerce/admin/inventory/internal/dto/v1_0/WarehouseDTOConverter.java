@@ -17,6 +17,7 @@ package com.liferay.headless.commerce.admin.inventory.internal.dto.v1_0;
 import com.liferay.commerce.inventory.model.CommerceInventoryWarehouse;
 import com.liferay.commerce.inventory.service.CommerceInventoryWarehouseService;
 import com.liferay.headless.commerce.admin.inventory.dto.v1_0.Warehouse;
+import com.liferay.headless.commerce.core.util.LanguageUtils;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
 
@@ -27,7 +28,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	property = "dto.class.name=com.liferay.commerce.inventory.model.CommerceInventoryWarehouse",
 	service = {DTOConverter.class, WarehouseDTOConverter.class}
 )
@@ -49,11 +49,13 @@ public class WarehouseDTOConverter
 
 		return new Warehouse() {
 			{
+				actions = dtoConverterContext.getActions();
 				active = commerceInventoryWarehouse.isActive();
 				city = commerceInventoryWarehouse.getCity();
 				countryISOCode =
 					commerceInventoryWarehouse.getCountryTwoLettersISOCode();
-				description = commerceInventoryWarehouse.getDescription();
+				description = LanguageUtils.getLanguageIdMap(
+					commerceInventoryWarehouse.getDescriptionMap());
 				externalReferenceCode =
 					commerceInventoryWarehouse.getExternalReferenceCode();
 				id =
@@ -61,8 +63,8 @@ public class WarehouseDTOConverter
 						getCommerceInventoryWarehouseId();
 				latitude = commerceInventoryWarehouse.getLatitude();
 				longitude = commerceInventoryWarehouse.getLongitude();
-				mvccVersion = commerceInventoryWarehouse.getMvccVersion();
-				name = commerceInventoryWarehouse.getName();
+				name = LanguageUtils.getLanguageIdMap(
+					commerceInventoryWarehouse.getNameMap());
 				regionISOCode =
 					commerceInventoryWarehouse.getCommerceRegionCode();
 				street1 = commerceInventoryWarehouse.getStreet1();

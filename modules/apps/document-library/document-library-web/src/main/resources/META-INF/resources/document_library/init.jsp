@@ -15,13 +15,16 @@
 --%>
 
 <%@ include file="/init.jsp" %>
-<%@ taglib uri="http://liferay.com/tld/react" prefix="react" %>
+<%@ taglib uri="http://liferay.com/tld/learn" prefix="liferay-learn" %><%@
+taglib uri="http://liferay.com/tld/react" prefix="react" %>
 
 <%@ page import="com.liferay.bulk.selection.BulkSelectionRunner" %><%@
 page import="com.liferay.digital.signature.constants.DigitalSignaturePortletKeys" %><%@
 page import="com.liferay.document.library.configuration.DLConfiguration" %><%@
 page import="com.liferay.document.library.exception.DLStorageQuotaExceededException" %><%@
+page import="com.liferay.document.library.kernel.antivirus.AntivirusVirusFoundException" %><%@
 page import="com.liferay.document.library.kernel.model.DLVersionNumberIncrease" %><%@
+page import="com.liferay.document.library.kernel.util.DLValidatorUtil" %><%@
 page import="com.liferay.document.library.web.internal.bulk.selection.BulkSelectionRunnerUtil" %><%@
 page import="com.liferay.document.library.web.internal.display.context.DLAccessFromDesktopDisplayContext" %><%@
 page import="com.liferay.document.library.web.internal.display.context.DLAdminDisplayContextProvider" %><%@
@@ -31,8 +34,10 @@ page import="com.liferay.document.library.web.internal.display.context.DLEditFol
 page import="com.liferay.document.library.web.internal.display.context.DLFileEntryAdditionalMetadataSetsDisplayContext" %><%@
 page import="com.liferay.document.library.web.internal.display.context.DLFileEntryTypeDetailsDisplayContext" %><%@
 page import="com.liferay.document.library.web.internal.display.context.DLInfoPanelDisplayContext" %><%@
+page import="com.liferay.document.library.web.internal.display.context.DLSizeLimitConfigurationDisplayContext" %><%@
 page import="com.liferay.document.library.web.internal.display.context.DLViewDisplayContext" %><%@
 page import="com.liferay.document.library.web.internal.display.context.DLViewEntriesDisplayContext" %><%@
+page import="com.liferay.document.library.web.internal.display.context.DLViewEntryHistoryDisplayContext" %><%@
 page import="com.liferay.document.library.web.internal.display.context.DLViewFileEntryDisplayContext" %><%@
 page import="com.liferay.document.library.web.internal.display.context.FolderActionDisplayContext" %><%@
 page import="com.liferay.document.library.web.internal.exception.FileEntryExpirationDateException" %><%@
@@ -44,14 +49,17 @@ page import="com.liferay.document.library.web.internal.util.DataRecordValuesUtil
 page import="com.liferay.document.library.web.internal.util.RepositoryClassDefinitionUtil" %><%@
 page import="com.liferay.dynamic.data.mapping.exception.RequiredStructureException" %><%@
 page import="com.liferay.dynamic.data.mapping.util.DDMFormValuesToMapConverter" %><%@
+page import="com.liferay.expando.kernel.exception.ValueDataException" %><%@
 page import="com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemList" %><%@
 page import="com.liferay.item.selector.ItemSelector" %><%@
 page import="com.liferay.item.selector.criteria.FolderItemSelectorReturnType" %><%@
 page import="com.liferay.item.selector.criteria.folder.criterion.FolderItemSelectorCriterion" %><%@
+page import="com.liferay.portal.kernel.dao.search.RowChecker" %><%@
 page import="com.liferay.portal.kernel.lock.Lock" %><%@
 page import="com.liferay.portal.kernel.module.configuration.ConfigurationProviderUtil" %><%@
 page import="com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil" %><%@
 page import="com.liferay.portal.kernel.repository.model.RepositoryEntry" %><%@
+page import="com.liferay.portal.kernel.servlet.MultiSessionMessages" %><%@
 page import="com.liferay.portal.kernel.util.LocaleUtil" %><%@
 page import="com.liferay.portal.kernel.util.SetUtil" %><%@
 page import="com.liferay.portal.kernel.view.count.ViewCountManagerUtil" %><%@

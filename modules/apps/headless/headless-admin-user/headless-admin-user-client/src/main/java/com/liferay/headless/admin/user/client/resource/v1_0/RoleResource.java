@@ -40,11 +40,12 @@ public interface RoleResource {
 		return new Builder();
 	}
 
-	public Page<Role> getRolesPage(Integer[] types, Pagination pagination)
+	public Page<Role> getRolesPage(
+			Integer[] types, String search, Pagination pagination)
 		throws Exception;
 
 	public HttpInvoker.HttpResponse getRolesPageHttpResponse(
-			Integer[] types, Pagination pagination)
+			Integer[] types, String search, Pagination pagination)
 		throws Exception;
 
 	public Role getRole(Long roleId) throws Exception;
@@ -117,6 +118,12 @@ public interface RoleResource {
 			return new RoleResourceImpl(this);
 		}
 
+		public Builder contextPath(String contextPath) {
+			_contextPath = contextPath;
+
+			return this;
+		}
+
 		public Builder endpoint(String host, int port, String scheme) {
 			_host = host;
 			_port = port;
@@ -162,6 +169,7 @@ public interface RoleResource {
 		private Builder() {
 		}
 
+		private String _contextPath = "";
 		private Map<String, String> _headers = new LinkedHashMap<>();
 		private String _host = "localhost";
 		private Locale _locale;
@@ -175,11 +183,12 @@ public interface RoleResource {
 
 	public static class RoleResourceImpl implements RoleResource {
 
-		public Page<Role> getRolesPage(Integer[] types, Pagination pagination)
+		public Page<Role> getRolesPage(
+				Integer[] types, String search, Pagination pagination)
 			throws Exception {
 
 			HttpInvoker.HttpResponse httpResponse = getRolesPageHttpResponse(
-				types, pagination);
+				types, search, pagination);
 
 			String content = httpResponse.getContent();
 
@@ -219,7 +228,7 @@ public interface RoleResource {
 		}
 
 		public HttpInvoker.HttpResponse getRolesPageHttpResponse(
-				Integer[] types, Pagination pagination)
+				Integer[] types, String search, Pagination pagination)
 			throws Exception {
 
 			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
@@ -249,6 +258,10 @@ public interface RoleResource {
 				}
 			}
 
+			if (search != null) {
+				httpInvoker.parameter("search", String.valueOf(search));
+			}
+
 			if (pagination != null) {
 				httpInvoker.parameter(
 					"page", String.valueOf(pagination.getPage()));
@@ -258,7 +271,8 @@ public interface RoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port + "/o/headless-admin-user/v1.0/roles");
+					_builder._port + _builder._contextPath +
+						"/o/headless-admin-user/v1.0/roles");
 
 			httpInvoker.userNameAndPassword(
 				_builder._login + ":" + _builder._password);
@@ -332,7 +346,7 @@ public interface RoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-admin-user/v1.0/roles/{roleId}");
 
 			httpInvoker.path("roleId", roleId);
@@ -416,7 +430,7 @@ public interface RoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-admin-user/v1.0/roles/{roleId}/association/user-account/{userAccountId}");
 
 			httpInvoker.path("roleId", roleId);
@@ -501,7 +515,7 @@ public interface RoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-admin-user/v1.0/roles/{roleId}/association/user-account/{userAccountId}");
 
 			httpInvoker.path("roleId", roleId);
@@ -586,7 +600,7 @@ public interface RoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-admin-user/v1.0/roles/{roleId}/association/user-account/{userAccountId}/organization/{organizationId}");
 
 			httpInvoker.path("roleId", roleId);
@@ -672,7 +686,7 @@ public interface RoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-admin-user/v1.0/roles/{roleId}/association/user-account/{userAccountId}/organization/{organizationId}");
 
 			httpInvoker.path("roleId", roleId);
@@ -758,7 +772,7 @@ public interface RoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-admin-user/v1.0/roles/{roleId}/association/user-account/{userAccountId}/site/{siteId}");
 
 			httpInvoker.path("roleId", roleId);
@@ -844,7 +858,7 @@ public interface RoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-admin-user/v1.0/roles/{roleId}/association/user-account/{userAccountId}/site/{siteId}");
 
 			httpInvoker.path("roleId", roleId);

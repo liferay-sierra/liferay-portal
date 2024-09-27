@@ -16,6 +16,7 @@ package com.liferay.jenkins.results.parser.job.property;
 
 import com.liferay.jenkins.results.parser.JenkinsResultsParserUtil;
 import com.liferay.jenkins.results.parser.Job;
+import com.liferay.jenkins.results.parser.TestSuiteJob;
 
 import java.io.File;
 
@@ -27,9 +28,17 @@ import java.util.Map;
  */
 public class JobPropertyFactory {
 
-	public static JobProperty newJobProperty(Job job, String basePropertyName) {
+	public static JobProperty newJobProperty(String basePropertyName, Job job) {
 		return newJobProperty(
 			basePropertyName, null, null, job, null, null, true);
+	}
+
+	public static JobProperty newJobProperty(
+		String basePropertyName, Job job, File testBaseDir,
+		JobProperty.Type type) {
+
+		return newJobProperty(
+			basePropertyName, null, null, job, testBaseDir, type, true);
 	}
 
 	public static JobProperty newJobProperty(
@@ -41,6 +50,15 @@ public class JobPropertyFactory {
 
 		sb.append(basePropertyName);
 		sb.append("_");
+
+		if (JenkinsResultsParserUtil.isNullOrEmpty(testSuiteName) &&
+			(job instanceof TestSuiteJob)) {
+
+			TestSuiteJob testSuiteJob = (TestSuiteJob)job;
+
+			testSuiteName = testSuiteJob.getTestSuiteName();
+		}
+
 		sb.append(testSuiteName);
 		sb.append("_");
 		sb.append(testBatchName);

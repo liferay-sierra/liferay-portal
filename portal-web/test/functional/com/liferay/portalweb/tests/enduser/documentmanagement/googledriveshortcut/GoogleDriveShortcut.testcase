@@ -1,8 +1,8 @@
 @component-name = "portal-document-management"
 definition {
 
-	property custom.properties = "default.layout.template.id=1_column";
-	property portal.release = "false";
+	property custom.properties = "default.layout.template.id=1_column${line.separator}dl.actions.visible=true";
+	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Document Management";
 
@@ -36,8 +36,6 @@ definition {
 			widgetName = "Documents and Media");
 
 		Navigator.gotoPage(pageName = "Documents and Media Page");
-
-		DMDocument.enableActionsMenuOnPortlet();
 
 		LexiconEntry.changeDisplayStyle(displayStyle = "list");
 	}
@@ -163,9 +161,7 @@ definition {
 
 		PageEditor.addWidget(portletName = "Documents and Media");
 
-		DMDocument.enableActionsMenuOnPortlet();
-
-		PageEditor.clickPublish();
+		PageEditor.publish();
 
 		ContentPagesNavigator.openViewContentPage(
 			pageName = "Test Content Page Name",

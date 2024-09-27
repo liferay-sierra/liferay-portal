@@ -19,8 +19,8 @@ import {useDragLayer} from 'react-dnd';
 
 import {ITEM_ACTIVATION_ORIGINS} from '../config/constants/itemActivationOrigins';
 import {LAYOUT_DATA_ITEM_TYPES} from '../config/constants/layoutDataItemTypes';
+import {config} from '../config/index';
 import {useSelector} from '../contexts/StoreContext';
-import {useWidgets} from '../contexts/WidgetsContext';
 import selectLanguageId from '../selectors/selectLanguageId';
 import getWidget from '../utils/getWidget';
 
@@ -42,7 +42,7 @@ function getItemIcon(item, fragmentEntryLinks, fragments, widgets) {
 		return fragmentEntries.find(
 			(fragment) =>
 				fragment.fragmentEntryKey === fragmentEntryLink.fragmentEntryKey
-		).icon;
+		)?.icon;
 	}
 
 	return fragmentEntries.find((fragment) => fragment.type === item.type)
@@ -65,7 +65,6 @@ const getItemStyles = (currentOffset, ref, rtl) => {
 	const transform = `translate(${x}px, ${y}px)`;
 
 	return {
-		WebkitTransform: transform,
 		transform,
 	};
 };
@@ -77,7 +76,7 @@ export default function DragPreview() {
 	const fragments = useSelector((state) => state.fragments);
 	const languageId = useSelector(selectLanguageId);
 	const layoutData = useSelector((state) => state.layoutData);
-	const widgets = useWidgets();
+	const widgets = useSelector((state) => state.widgets);
 
 	const {currentOffset, isDragging, item} = useDragLayer((monitor) => ({
 		currentOffset: monitor.getClientOffset(),
@@ -85,7 +84,11 @@ export default function DragPreview() {
 		item: monitor.getItem(),
 	}));
 
-	if (!isDragging || !item?.id) {
+	if (
+		!isDragging ||
+		!item?.id ||
+		item.namespace !== config.portletNamespace
+	) {
 		return null;
 	}
 
@@ -104,34 +107,45 @@ export default function DragPreview() {
 			widgets
 		);
 	}
-	else if (process.env.NODE_ENV === 'development') {
-		console.error('There is no icon for item ', item);
-	}
 
 	return (
-		<div className="page-editor__drag-preview">
-			<div
-				className={classNames('page-editor__drag-preview__content', {
-					'page-editor__drag-preview__content__treeview':
-						item?.origin === ITEM_ACTIVATION_ORIGINS.sidebar,
-				})}
-				dir={Liferay.Language.direction[themeDisplay?.getLanguageId()]}
-				ref={ref}
-				style={getItemStyles(
-					currentOffset,
-					ref,
-					Liferay.Language.direction[languageId] === 'rtl'
-				)}
-			>
-				{icon && (
-					<div className="align-items-center d-flex h-100">
-						<ClayIcon className="mt-0" symbol={icon} />
-					</div>
-				)}
+		<div className="cadmin">
+			<div className="page-editor__drag-preview">
+				<div
+					className={classNames(
+						'page-editor__drag-preview__content',
+						{
+							'page-editor__drag-preview__content__treeview':
+								item?.origin ===
+								ITEM_ACTIVATION_ORIGINS.sidebar,
+						}
+					)}
+					dir={
+						Liferay.Language.direction[
+							themeDisplay?.getLanguageId()
+						]
+					}
+					ref={ref}
+					style={getItemStyles(
+						currentOffset,
+						ref,
+						Liferay.Language.direction[languageId] === 'rtl'
+					)}
+				>
+					{icon && (
+						<div className="align-items-center d-flex h-100">
+							<ClayIcon className="mt-0" symbol={icon} />
+						</div>
+					)}
 
-				<span className="ml-3 text-truncate">
-					{item?.name ? item.name : Liferay.Language.get('element')}
-				</span>
+					<span
+						className={classNames('text-truncate', {'ml-3': icon})}
+					>
+						{item?.name
+							? item.name
+							: Liferay.Language.get('element')}
+					</span>
+				</div>
 			</div>
 		</div>
 	);

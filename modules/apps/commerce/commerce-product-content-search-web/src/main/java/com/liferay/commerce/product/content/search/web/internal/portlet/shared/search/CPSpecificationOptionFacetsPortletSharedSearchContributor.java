@@ -61,7 +61,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Shuyang Zhou
  */
 @Component(
-	enabled = false,
 	property = "javax.portlet.name=" + CPPortletKeys.CP_SPECIFICATION_OPTION_FACETS,
 	service = PortletSharedSearchContributor.class
 )
@@ -177,12 +176,10 @@ public class CPSpecificationOptionFacetsPortletSharedSearchContributor
 					_portal.getHttpServletRequest(renderRequest));
 
 			if (commerceAccount != null) {
-				long[] commerceAccountGroupIds =
-					_commerceAccountHelper.getCommerceAccountGroupIds(
-						commerceAccount.getCommerceAccountId());
-
 				searchContext.setAttribute(
-					"commerceAccountGroupIds", commerceAccountGroupIds);
+					"commerceAccountGroupIds",
+					_commerceAccountHelper.getCommerceAccountGroupIds(
+						commerceAccount.getCommerceAccountId()));
 			}
 		}
 

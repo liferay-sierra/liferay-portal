@@ -90,6 +90,7 @@ definition {
 
 			KBArticle.editCP(
 				kbArticleTitle = "Test AntiSamy",
+				kbArticleTitleEdit = "Test AntiSamy Edit",
 				saveAsDraft = "true");
 		}
 
@@ -123,7 +124,7 @@ definition {
 
 			Navigator.gotoPage(pageName = "Web Content Display Page");
 
-			WebContent.addPGViaWCD(
+			WebContentDisplayPortlet.add(
 				webContentContent = "${webContentContent}",
 				webContentTitle = "WC WebContent Title");
 		}

@@ -95,11 +95,35 @@ CommerceOrder commerceOrder = commerceOrderEditDisplayContext.getCommerceOrder()
 	url="<%= editPrintedNoteURL %>"
 />
 
+<liferay-portlet:renderURL var="editPaymentTermsURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
+	<portlet:param name="mvcRenderCommandName" value="/commerce_order/edit_commerce_order_payment_terms" />
+	<portlet:param name="commerceOrderId" value="<%= String.valueOf(commerceOrderEditDisplayContext.getCommerceOrderId()) %>" />
+</liferay-portlet:renderURL>
+
+<commerce-ui:modal
+	id="payment-terms-modal"
+	refreshPageOnClose="<%= true %>"
+	size="xl"
+	url="<%= editPaymentTermsURL %>"
+/>
+
+<liferay-portlet:renderURL var="editDeliveryTermsURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
+	<portlet:param name="mvcRenderCommandName" value="/commerce_order/edit_commerce_order_delivery_terms" />
+	<portlet:param name="commerceOrderId" value="<%= String.valueOf(commerceOrderEditDisplayContext.getCommerceOrderId()) %>" />
+</liferay-portlet:renderURL>
+
+<commerce-ui:modal
+	id="delivery-terms-modal"
+	refreshPageOnClose="<%= true %>"
+	size="xl"
+	url="<%= editDeliveryTermsURL %>"
+/>
+
 <div class="row">
 	<c:if test="<%= !commerceOrder.isOpen() %>">
 		<div class="col-12 mb-4">
 			<commerce-ui:step-tracker
-				spritemap='<%= themeDisplay.getPathThemeImages() + "/clay/icons.svg" %>'
+				spritemap="<%= FrontendIconsUtil.getSpritemap(themeDisplay) %>"
 				steps="<%= commerceOrderEditDisplayContext.getOrderSteps() %>"
 			/>
 		</div>
@@ -241,6 +265,48 @@ CommerceOrder commerceOrder = commerceOrderEditDisplayContext.getCommerceOrder()
 							</c:otherwise>
 						</c:choose>
 					</commerce-ui:info-box>
+
+					<commerce-ui:info-box
+						actionLabel='<%= commerceOrderEditDisplayContext.hasManageCommerceOrderPaymentTermsPermission() ? LanguageUtil.get(request, (commerceOrder.getPaymentCommerceTermEntryId() == 0) ? "add" : "edit") : null %>'
+						actionTargetId="payment-terms-modal"
+						actionUrl="<%= commerceOrderEditDisplayContext.hasManageCommerceOrderPaymentTermsPermission() ? editPaymentTermsURL : null %>"
+						elementClasses="py-3"
+						title='<%= LanguageUtil.get(request, "payment-terms") %>'
+					>
+						<c:choose>
+							<c:when test="<%= commerceOrder.getPaymentCommerceTermEntryId() == 0 %>">
+								<span class="text-muted">
+									<liferay-ui:message key="click-add-to-insert" />
+								</span>
+							</c:when>
+							<c:otherwise>
+								<p class="mb-0">
+									<%= commerceOrder.getPaymentCommerceTermEntryName() %>
+								</p>
+							</c:otherwise>
+						</c:choose>
+					</commerce-ui:info-box>
+
+					<commerce-ui:info-box
+						actionLabel='<%= commerceOrderEditDisplayContext.hasManageCommerceOrderDeliveryTermsPermission() ? LanguageUtil.get(request, (commerceOrder.getDeliveryCommerceTermEntryId() == 0) ? "add" : "edit") : null %>'
+						actionTargetId="delivery-terms-modal"
+						actionUrl="<%= commerceOrderEditDisplayContext.hasManageCommerceOrderDeliveryTermsPermission() ? editDeliveryTermsURL : null %>"
+						elementClasses="py-3"
+						title='<%= LanguageUtil.get(request, "delivery-terms") %>'
+					>
+						<c:choose>
+							<c:when test="<%= commerceOrder.getDeliveryCommerceTermEntryId() == 0 %>">
+								<span class="text-muted">
+									<liferay-ui:message key="click-add-to-insert" />
+								</span>
+							</c:when>
+							<c:otherwise>
+								<p class="mb-0">
+									<%= commerceOrder.getDeliveryCommerceTermEntryName() %>
+								</p>
+							</c:otherwise>
+						</c:choose>
+					</commerce-ui:info-box>
 				</div>
 
 				<%
@@ -324,20 +390,17 @@ CommerceOrder commerceOrder = commerceOrderEditDisplayContext.getCommerceOrder()
 			bodyClasses="p-0"
 			title='<%= LanguageUtil.get(request, "items") %>'
 		>
-			<clay:data-set-display
+			<frontend-data-set:classic-display
 				contextParams='<%=
 					HashMapBuilder.<String, String>put(
 						"commerceOrderId", String.valueOf(commerceOrder.getCommerceOrderId())
 					).build()
 				%>'
-				dataProviderKey="<%= CommerceOrderDataSetConstants.COMMERCE_DATA_SET_KEY_ORDER_ITEMS %>"
-				id="<%= CommerceOrderDataSetConstants.COMMERCE_DATA_SET_KEY_ORDER_ITEMS %>"
+				dataProviderKey="<%= CommerceOrderFDSNames.ORDER_ITEMS %>"
+				id="<%= CommerceOrderFDSNames.ORDER_ITEMS %>"
 				itemsPerPage="<%= 10 %>"
-				namespace="<%= liferayPortletResponse.getNamespace() %>"
 				nestedItemsKey="orderItemId"
 				nestedItemsReferenceKey="orderItems"
-				pageNumber="<%= 1 %>"
-				portletURL="<%= commerceOrderEditDisplayContext.getCommerceOrderItemsPortletURL() %>"
 			/>
 		</commerce-ui:panel>
 	</div>
@@ -368,8 +431,7 @@ CommerceOrder commerceOrder = commerceOrderEditDisplayContext.getCommerceOrder()
 				summary.default('summary', 'summary-root', {
 					apiUrl:
 						'/o/headless-commerce-admin-order/v1.0/orders/<%= commerceOrderEditDisplayContext.getCommerceOrderId() %>',
-					datasetDisplayId:
-						'<%= CommerceOrderDataSetConstants.COMMERCE_DATA_SET_KEY_ORDER_ITEMS %>',
+					datasetDisplayId: '<%= CommerceOrderFDSNames.ORDER_ITEMS %>',
 					portletId: '<%= portletDisplay.getRootPortletId() %>',
 				});
 			</aui:script>

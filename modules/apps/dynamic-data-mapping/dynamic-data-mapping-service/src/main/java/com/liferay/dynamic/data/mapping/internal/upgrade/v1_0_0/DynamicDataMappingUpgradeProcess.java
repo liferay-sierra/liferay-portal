@@ -1225,10 +1225,28 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 
 			String resourceName = _getStructureModelResourceName(classNameId);
 
-			resourcePermission.setName(resourceName);
+			// A permission with the correct resource name may already exist.
+			// This means that Documents and Media has already migrated the
+			// structures for all its file entry types. In this case, we simply
+			// need to remove the old permission and continue with the upgrade
+			// process for the remaining resource permissions.
 
-			_resourcePermissionLocalService.updateResourcePermission(
-				resourcePermission);
+			ResourcePermission existingResourcePermission =
+				_resourcePermissionLocalService.fetchResourcePermission(
+					companyId, resourceName, ResourceConstants.SCOPE_INDIVIDUAL,
+					String.valueOf(structureId),
+					resourcePermission.getRoleId());
+
+			if (existingResourcePermission != null) {
+				_resourcePermissionLocalService.deleteResourcePermission(
+					resourcePermission.getResourcePermissionId());
+			}
+			else {
+				resourcePermission.setName(resourceName);
+
+				_resourcePermissionLocalService.updateResourcePermission(
+					resourcePermission);
+			}
 		}
 	}
 
@@ -1448,7 +1466,6 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 				String script = resultSet.getString("script");
 
 				preparedStatement2.setLong(1, resourceClassNameId);
-
 				preparedStatement2.setLong(2, templateId);
 
 				preparedStatement2.addBatch();
@@ -1580,10 +1597,8 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 								String xml = renameInvalidDDMFormFieldNames(
 									structureId, resultSet2.getString("data_"));
 
-								DDMFormValues ddmFormValues = getDDMFormValues(
-									companyId, ddmForm, xml);
-
-								String content = toJSON(ddmFormValues);
+								String content = toJSON(
+									getDDMFormValues(companyId, ddmForm, xml));
 
 								preparedStatement3.setString(1, content);
 
@@ -2158,28 +2173,23 @@ public class DynamicDataMappingUpgradeProcess extends UpgradeProcess {
 
 			String name = ddmFormFieldValue.getName();
 
-			String instanceId = getDDMFieldInstanceId(
-				rootElement, name, ddmFieldsCounter.get(name));
-
-			ddmFormFieldValue.setInstanceId(instanceId);
+			ddmFormFieldValue.setInstanceId(
+				getDDMFieldInstanceId(
+					rootElement, name, ddmFieldsCounter.get(name)));
 		}
 
 		protected void setDDMFormValuesAvailableLocales(
 			DDMFormValues ddmFormValues, Element rootElement) {
 
-			Set<Locale> availableLocales = getAvailableLocales(
-				rootElement.elements("dynamic-element"));
-
-			ddmFormValues.setAvailableLocales(availableLocales);
+			ddmFormValues.setAvailableLocales(
+				getAvailableLocales(rootElement.elements("dynamic-element")));
 		}
 
 		protected void setDDMFormValuesDefaultLocale(
 			DDMFormValues ddmFormValues, Element rootElement) {
 
-			Locale defaultLocale = getDefaultLocale(
-				rootElement.elements("dynamic-element"));
-
-			ddmFormValues.setDefaultLocale(defaultLocale);
+			ddmFormValues.setDefaultLocale(
+				getDefaultLocale(rootElement.elements("dynamic-element")));
 		}
 
 		protected void setNestedDDMFormFieldValues(

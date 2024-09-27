@@ -35,23 +35,39 @@ renderResponse.setTitle(objectDefinition.getLabel(locale, true));
 	fdsActionDropdownItems="<%= objectDefinitionsFieldsDisplayContext.getFDSActionDropdownItems() %>"
 	formName="fm"
 	id="<%= ObjectDefinitionsFDSNames.OBJECT_FIELDS %>"
-	itemsPerPage="<%= 20 %>"
-	namespace="<%= liferayPortletResponse.getNamespace() %>"
-	pageNumber="<%= 1 %>"
-	portletURL="<%= liferayPortletResponse.createRenderURL() %>"
+	propsTransformer="js/components/FDSPropsTransformer/ObjectFieldsFDSPropsTransformer"
 	style="fluid"
 />
 
 <div id="<portlet:namespace />AddObjectField">
 	<react:component
-		module="js/components/ModalAddObjectField"
+		module="js/components/ObjectField/AddObjectField"
 		props='<%=
 			HashMapBuilder.<String, Object>put(
 				"apiURL", objectDefinitionsFieldsDisplayContext.getAPIURL()
 			).put(
-				"ffObjectFieldBusinessTypeConfigurationEnabled", objectDefinitionsFieldsDisplayContext.isFFObjectFieldBusinessTypeConfigurationEnabled()
+				"forbiddenChars", PropsUtil.getArray(PropsKeys.DL_CHAR_BLACKLIST)
 			).put(
-				"objectFieldBusinessTypes", objectDefinitionsFieldsDisplayContext.getObjectFieldBusinessTypeMaps(locale)
+				"forbiddenLastChars", objectDefinitionsFieldsDisplayContext.getForbiddenLastCharacters()
+			).put(
+				"forbiddenNames", PropsUtil.getArray(PropsKeys.DL_NAME_BLACKLIST)
+			).put(
+				"objectDefinitionId", objectDefinition.getObjectDefinitionId()
+			).put(
+				"objectFieldTypes", objectDefinitionsFieldsDisplayContext.getObjectFieldBusinessTypeMaps(false, locale)
+			).put(
+				"objectName", objectDefinition.getShortName()
+			).build()
+		%>'
+	/>
+</div>
+
+<div>
+	<react:component
+		module="js/components/ExpressionBuilderModal"
+		props='<%=
+			HashMapBuilder.<String, Object>put(
+				"sidebarElements", objectDefinitionsFieldsDisplayContext.getObjectFieldCodeEditorElements()
 			).build()
 		%>'
 	/>

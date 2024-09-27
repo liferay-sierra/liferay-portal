@@ -27,10 +27,12 @@
 						}
 					},
 					"fragmentStyle": {
+						"borderRadius": "",
 						"borderWidth": "0",
-						"opacity": "100",
+						"shadow": "",
 						"textAlign": ""
 					},
+					"indexed": true,
 					"layout": {
 						"borderWidth": 0,
 						"marginBottom": 0,

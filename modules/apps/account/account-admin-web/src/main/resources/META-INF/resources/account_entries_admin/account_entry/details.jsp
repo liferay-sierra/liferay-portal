@@ -37,14 +37,14 @@ renderResponse.setTitle((accountEntryDisplay.getAccountEntryId() == 0) ? Languag
 
 	<liferay-frontend:edit-form-body>
 		<h2 class="sheet-title">
-			<%= LanguageUtil.get(request, "information") %>
+			<liferay-ui:message key="information" />
 		</h2>
 
 		<liferay-frontend:fieldset-group>
 			<liferay-util:include page="/account_entries_admin/account_entry/display_data.jsp" servletContext="<%= application %>" />
 
 			<c:choose>
-				<c:when test="<%= Objects.equals(AccountConstants.ACCOUNT_ENTRY_TYPE_BUSINESS, accountEntryDisplay.getType()) && accountEntryDisplay.isEmailDomainValidationEnabled(themeDisplay.getCompanyId()) %>">
+				<c:when test="<%= Objects.equals(AccountConstants.ACCOUNT_ENTRY_TYPE_BUSINESS, accountEntryDisplay.getType()) && accountEntryDisplay.isEmailAddressDomainValidationEnabled() %>">
 					<div class="business-account-only">
 						<liferay-util:include page="/account_entries_admin/account_entry/domains.jsp" servletContext="<%= application %>" />
 					</div>
@@ -60,10 +60,6 @@ renderResponse.setTitle((accountEntryDisplay.getAccountEntryId() == 0) ? Languag
 				<liferay-util:include page="/account_entries_admin/account_entry/default_addresses.jsp" servletContext="<%= application %>" />
 			</c:if>
 
-			<c:if test="<%= accountEntryDisplay.getAccountEntryId() > 0 %>">
-				<liferay-util:dynamic-include key="com.liferay.account.admin.web#/account_entries_admin/account_entry/details.jsp" />
-			</c:if>
-
 			<liferay-util:include page="/account_entries_admin/account_entry/categorization.jsp" servletContext="<%= application %>" />
 
 			<liferay-util:include page="/account_entries_admin/account_entry/custom_fields.jsp" servletContext="<%= application %>" />
@@ -71,9 +67,9 @@ renderResponse.setTitle((accountEntryDisplay.getAccountEntryId() == 0) ? Languag
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button type="submit" />
-
-		<aui:button href="<%= backURL %>" type="cancel" />
+		<liferay-frontend:edit-form-buttons
+			redirect="<%= backURL %>"
+		/>
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>
 

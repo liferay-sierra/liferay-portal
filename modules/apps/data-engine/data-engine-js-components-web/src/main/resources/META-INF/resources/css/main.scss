@@ -441,10 +441,12 @@ body .ddm-user-view-content {
 		display: flex;
 		flex-flow: row;
 		flex-wrap: wrap;
+		justify-content: flex-start;
 		list-style: none;
 		margin: 0;
 		padding-right: 20px;
 		width: auto;
+		word-break: break-all;
 
 		li {
 			overflow: hidden;

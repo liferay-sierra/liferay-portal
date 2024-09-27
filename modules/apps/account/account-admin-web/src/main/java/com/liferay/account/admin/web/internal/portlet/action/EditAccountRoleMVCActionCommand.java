@@ -25,8 +25,8 @@ import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.Constants;
-import com.liferay.portal.kernel.util.Http;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -43,7 +43,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pei-Jung Lan
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + AccountPortletKeys.ACCOUNT_ENTRIES_ADMIN,
 		"javax.portlet.name=" + AccountPortletKeys.ACCOUNT_ENTRIES_MANAGEMENT,
@@ -66,7 +65,7 @@ public class EditAccountRoleMVCActionCommand extends BaseMVCActionCommand {
 			if (cmd.equals(Constants.ADD)) {
 				AccountRole accountRole = _addAccountRole(actionRequest);
 
-				redirect = _http.setParameter(
+				redirect = HttpComponentsUtil.setParameter(
 					redirect, actionResponse.getNamespace() + "accountRoleId",
 					accountRole.getAccountRoleId());
 			}
@@ -100,10 +99,10 @@ public class EditAccountRoleMVCActionCommand extends BaseMVCActionCommand {
 		long accountEntryId = ParamUtil.getLong(
 			actionRequest, "accountEntryId");
 		String name = ParamUtil.getString(actionRequest, "name");
-		Map<Locale, String> titleMap = LocalizationUtil.getLocalizationMap(
+		Map<Locale, String> titleMap = _localization.getLocalizationMap(
 			actionRequest, "title");
-		Map<Locale, String> descriptionMap =
-			LocalizationUtil.getLocalizationMap(actionRequest, "description");
+		Map<Locale, String> descriptionMap = _localization.getLocalizationMap(
+			actionRequest, "description");
 
 		_roleLocalService.validateName(name);
 
@@ -123,10 +122,10 @@ public class EditAccountRoleMVCActionCommand extends BaseMVCActionCommand {
 
 		_roleLocalService.validateName(name);
 
-		Map<Locale, String> titleMap = LocalizationUtil.getLocalizationMap(
+		Map<Locale, String> titleMap = _localization.getLocalizationMap(
 			actionRequest, "title");
-		Map<Locale, String> descriptionMap =
-			LocalizationUtil.getLocalizationMap(actionRequest, "description");
+		Map<Locale, String> descriptionMap = _localization.getLocalizationMap(
+			actionRequest, "description");
 
 		_roleLocalService.updateRole(
 			accountRole.getRoleId(), name, titleMap, descriptionMap, null,
@@ -140,7 +139,7 @@ public class EditAccountRoleMVCActionCommand extends BaseMVCActionCommand {
 	private AccountRoleService _accountRoleService;
 
 	@Reference
-	private Http _http;
+	private Localization _localization;
 
 	@Reference
 	private RoleLocalService _roleLocalService;

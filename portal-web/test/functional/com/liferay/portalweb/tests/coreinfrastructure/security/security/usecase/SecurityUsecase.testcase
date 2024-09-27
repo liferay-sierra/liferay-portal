@@ -41,11 +41,9 @@ definition {
 		}
 
 		task ("Assert message present in HTML source") {
-			Pause(locator1 = "3000");
-
-			User.viewWelcomeMEssageHTML(
-				userfn = "${userfn}",
-				userln = "${userln}");
+			while (IsElementPresent(locator1 = "JSONWS#SECURITY_RESULT", value1 = "Welcome ${userfn} ${userln}!")) {
+				Pause(locator1 = "500");
+			}
 		}
 
 		task ("Assert user created in users page") {
@@ -124,12 +122,12 @@ out.println(PortalUtil.escapeRedirect("/"));
 			WaitForSPARefresh();
 
 			var authToken = Page.getAuthTokenFromHtmlSource();
-
 			var plid = Page.getPlidFromHtmlSource();
-
 			var portalURL = PropsUtil.get("portal.url");
 
 			Navigator.openSpecificURL(url = '''${portalURL}/c/portal/update_layout?cmd=add&p_p_col_id=column-1&p_p_col_pos=0&p_p_id=com_liferay_marketplace_store_web_portlet_MarketplacePurchasedPortlet&p_auth=${authToken}&p_l_id=${plid}''');
+
+			Navigator.openURL();
 
 			UserBar.gotoDropdownItem(dropdownItem = "My Profile");
 
@@ -147,7 +145,7 @@ out.println(PortalUtil.escapeRedirect("/"));
 		task ("Define user permissions view control panel menu") {
 			Role.openRolesAdmin();
 
-			Role.definePermissionsCP(
+			Role.definePermissionCmdCP(
 				permissionDefinitionKeys = "CONTROL_PANEL_GENERAL_PERMISSIONS_GO_TO_CONTROL_PANEL_CHECKBOX",
 				permissionDefinitionValue = "View Control Panel Menu",
 				roleTitle = "User");
@@ -156,7 +154,7 @@ out.println(PortalUtil.escapeRedirect("/"));
 		task ("Define user permissions") {
 			Role.openRolesAdmin();
 
-			Role.definePermissionsCP(
+			Role.definePermissionCmdCP(
 				permissionDefinitionKeys = "CONTROL_PANEL_SITES_SITES_GENERAL_PERMISSIONS_ACCESS_IN_CONTROL_PANEL_CHECKBOX,CONTROL_PANEL_SITES_SITES_GENERAL_PERMISSIONS_VIEW_CHECKBOX",
 				roleTitle = "User");
 		}
@@ -211,6 +209,7 @@ out.println(PortalUtil.escapeRedirect("/"));
 		property portal.acceptance = "true";
 
 		var portalURL = PropsUtil.get("portal.url");
+
 		var url = "${portalURL}/c/portal/json_service?serviceClassName=com.liferay.portal.kernel.service.AccountServiceUtil&serviceMethodName=getOSGiServiceIdentifier&p_auth=";
 
 		task ("Assert JSONWS empty page") {
@@ -226,7 +225,6 @@ out.println(PortalUtil.escapeRedirect("/"));
 		property test.name.skip.portal.instance = "SecurityUsecase#ValidateCannotStealAdminAccount";
 
 		var pAuth = Api.getPAuth();
-
 		var portalURL = PropsUtil.get("portal.url");
 
 		task ("Add new user") {
@@ -252,27 +250,6 @@ out.println(PortalUtil.escapeRedirect("/"));
 			Navigator.openSpecificURL(url = "${portalURL}/api/jsonws/group/get-group/group-id/20126?p_auth=${pAuth}");
 
 			ServerAdministration.viewForbiddenErrorMessageAlert();
-		}
-	}
-
-	@description = "This is a use case for LPS-114470. Validate crafted or corrupted files cannot cause out of memory errors."
-	@priority = "5"
-	test ValidateCraftedOrCorruptedFilesCannotCauseOutOfMemoryErrors {
-		task ("Add new document") {
-			JSONDocument.addFileWithUploadedFile(
-				dmDocumentDescription = "DM Document Description",
-				dmDocumentTitle = "DM Document Title",
-				groupName = "Guest",
-				mimeType = "audio/x-mpeg",
-				sourceFileName = "tika.mp3");
-		}
-
-		task ("Assert out of memory error message") {
-			AssertConsoleTextPresent(value1 = "java.io.IOException: Record size");
-
-			AssertConsoleTextPresent(value1 = "is larger than the allowed record size");
-
-			AssertConsoleTextNotPresent(value1 = "java.lang.OutOfMemoryError");
 		}
 	}
 
@@ -310,6 +287,8 @@ out.println(PortalUtil.escapeRedirect("/"));
 	@description = "This is a use case for LPS-57776. Validate no LAR remote code execution."
 	@priority = "5"
 	test ValidateNoLARRemoteCodeExecution {
+		property test.name.skip.portal.instance = "SecurityUsecase#ValidateNoLARRemoteCodeExecution";
+
 		task ("Assert remote-code-execution.lar dependency is forbidden") {
 			BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
 
@@ -369,24 +348,6 @@ out.println(PortalUtil.escapeRedirect("/"));
 		}
 	}
 
-	@description = "This is a use case for LPS-73595. View JS loader modules URL no wiki."
-	@priority = "5"
-	test ViewJSLoaderModulesURLNoWiki {
-		task ("View JS loader modules") {
-			var portalURL = PropsUtil.get("portal.url");
-
-			Open.openNoError(locator1 = "${portalURL}/o/js_loader_modules");
-
-			AssertConsoleTextPresent(value1 = "com.liferay.wiki.engine.html");
-
-			AssertConsoleTextPresent(value1 = "com.liferay.wiki.engine.text");
-
-			AssertTextNotPresent(value1 = "com.liferay.wiki.engine.html");
-
-			AssertTextNotPresent(value1 = "com.liferay.wiki.engine.text");
-		}
-	}
-
 	@description = "This is a use case for LPS-55622. View no invoked portlet via URL."
 	@priority = "5"
 	test ViewNoInvokedPortletViaURL {
@@ -403,7 +364,6 @@ out.println(PortalUtil.escapeRedirect("/"));
 			PagesAdmin.configurePage(
 				columnName = "1 Column",
 				pageName = "Test Widget Page",
-				privacy = "Public Pages",
 				sitePageType = "Widget Page");
 		}
 

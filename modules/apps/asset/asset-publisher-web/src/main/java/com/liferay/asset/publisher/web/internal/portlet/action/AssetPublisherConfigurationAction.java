@@ -26,6 +26,7 @@ import com.liferay.asset.publisher.util.AssetPublisherHelper;
 import com.liferay.asset.publisher.util.AssetQueryRule;
 import com.liferay.asset.publisher.web.internal.action.AssetEntryActionRegistry;
 import com.liferay.asset.publisher.web.internal.configuration.AssetPublisherPortletInstanceConfiguration;
+import com.liferay.asset.publisher.web.internal.configuration.AssetPublisherSelectionStyleConfigurationUtil;
 import com.liferay.asset.publisher.web.internal.configuration.AssetPublisherWebConfiguration;
 import com.liferay.asset.publisher.web.internal.constants.AssetPublisherSelectionStyleConstants;
 import com.liferay.asset.publisher.web.internal.display.context.AssetPublisherDisplayContext;
@@ -35,7 +36,7 @@ import com.liferay.asset.publisher.web.internal.util.AssetPublisherCustomizerReg
 import com.liferay.asset.util.AssetHelper;
 import com.liferay.exportimport.kernel.staging.LayoutStagingUtil;
 import com.liferay.exportimport.kernel.staging.Staging;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.item.selector.ItemSelector;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
@@ -151,7 +152,7 @@ public class AssetPublisherConfigurationAction
 				assetEntryActionRegistry, assetHelper,
 				assetListAssetEntryProvider, assetPublisherCustomizer,
 				assetPublisherHelper, assetPublisherWebConfiguration,
-				assetPublisherWebHelper, infoItemServiceTracker, itemSelector,
+				assetPublisherWebHelper, infoItemServiceRegistry, itemSelector,
 				renderRequest, renderResponse, renderRequest.getPreferences(),
 				requestContextMapper, segmentsEntryRetriever);
 
@@ -161,11 +162,9 @@ public class AssetPublisherConfigurationAction
 
 		httpServletRequest.setAttribute(
 			AssetPublisherWebKeys.ASSET_PUBLISHER_HELPER, assetPublisherHelper);
-
 		httpServletRequest.setAttribute(
 			AssetPublisherWebKeys.ASSET_PUBLISHER_WEB_HELPER,
 			assetPublisherWebHelper);
-
 		httpServletRequest.setAttribute(
 			AssetPublisherWebKeys.ITEM_SELECTOR, itemSelector);
 
@@ -242,8 +241,7 @@ public class AssetPublisherConfigurationAction
 					actionRequest, "selectionStyle");
 
 				if (Validator.isNull(selectionStyle)) {
-					selectionStyle =
-						AssetPublisherSelectionStyleConstants.TYPE_DYNAMIC;
+					selectionStyle = getDefaultSelectionStyle();
 				}
 
 				if (selectionStyle.equals(
@@ -338,6 +336,11 @@ public class AssetPublisherConfigurationAction
 			AssetPublisherWebConfiguration.class, properties);
 	}
 
+	protected String getDefaultSelectionStyle() {
+		return AssetPublisherSelectionStyleConfigurationUtil.
+			defaultSelectionStyle();
+	}
+
 	@Reference
 	protected AssetEntryActionRegistry assetEntryActionRegistry;
 
@@ -366,7 +369,7 @@ public class AssetPublisherConfigurationAction
 	protected GroupLocalService groupLocalService;
 
 	@Reference
-	protected InfoItemServiceTracker infoItemServiceTracker;
+	protected InfoItemServiceRegistry infoItemServiceRegistry;
 
 	@Reference
 	protected ItemSelector itemSelector;
@@ -868,8 +871,7 @@ public class AssetPublisherConfigurationAction
 
 		if (Validator.isNull(selectionStyle)) {
 			setPreference(
-				actionRequest, "selectionStyle",
-				AssetPublisherSelectionStyleConstants.TYPE_DYNAMIC);
+				actionRequest, "selectionStyle", getDefaultSelectionStyle());
 		}
 	}
 

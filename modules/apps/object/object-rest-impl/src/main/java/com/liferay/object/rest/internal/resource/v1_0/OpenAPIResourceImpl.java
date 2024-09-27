@@ -14,13 +14,11 @@
 
 package com.liferay.object.rest.internal.resource.v1_0;
 
-import com.liferay.portal.vulcan.openapi.OpenAPISchemaFilter;
-import com.liferay.portal.vulcan.resource.OpenAPIResource;
+import com.liferay.object.model.ObjectDefinition;
+import com.liferay.object.rest.openapi.v1_0.ObjectEntryOpenAPIResource;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
-
-import java.util.Set;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -38,13 +36,9 @@ import javax.ws.rs.core.UriInfo;
 public class OpenAPIResourceImpl {
 
 	public OpenAPIResourceImpl(
-		OpenAPIResource openAPIResource,
-		OpenAPISchemaFilter openAPISchemaFilter,
-		Set<Class<?>> resourceClasses) {
+		ObjectEntryOpenAPIResource objectEntryOpenAPIResource) {
 
-		_openAPIResource = openAPIResource;
-		_openAPISchemaFilter = openAPISchemaFilter;
-		_resourceClasses = resourceClasses;
+		_objectEntryOpenAPIResource = objectEntryOpenAPIResource;
 	}
 
 	@GET
@@ -53,13 +47,14 @@ public class OpenAPIResourceImpl {
 	public Response getOpenAPI(@PathParam("type") String type)
 		throws Exception {
 
-		return _openAPIResource.getOpenAPI(
-			_openAPISchemaFilter, _resourceClasses, type, _uriInfo);
+		return _objectEntryOpenAPIResource.getOpenAPI(
+			_objectDefinition, type, _uriInfo);
 	}
 
-	private final OpenAPIResource _openAPIResource;
-	private final OpenAPISchemaFilter _openAPISchemaFilter;
-	private final Set<Class<?>> _resourceClasses;
+	@Context
+	private ObjectDefinition _objectDefinition;
+
+	private final ObjectEntryOpenAPIResource _objectEntryOpenAPIResource;
 
 	@Context
 	private UriInfo _uriInfo;

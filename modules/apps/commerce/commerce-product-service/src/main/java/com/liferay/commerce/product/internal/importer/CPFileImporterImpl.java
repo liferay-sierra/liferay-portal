@@ -19,7 +19,7 @@ import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.commerce.product.importer.CPFileImporter;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
-import com.liferay.document.library.kernel.util.DLUtil;
+import com.liferay.document.library.util.DLURLHelperUtil;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializer;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializerDeserializeRequest;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializerDeserializeResponse;
@@ -41,9 +41,8 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.GroupConstants;
@@ -51,14 +50,13 @@ import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.model.LayoutTypePortlet;
-import com.liferay.portal.kernel.model.PortletPreferencesIds;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.Theme;
 import com.liferay.portal.kernel.model.ThemeSetting;
 import com.liferay.portal.kernel.model.UserConstants;
-import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryConstants;
 import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
+import com.liferay.portal.kernel.portlet.constants.PortletPreferencesFactoryConstants;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepository;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.resource.bundle.AggregateResourceBundleLoader;
@@ -109,7 +107,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marco Leo
  */
-@Component(enabled = false, immediate = true, service = CPFileImporter.class)
+@Component(immediate = true, service = CPFileImporter.class)
 public class CPFileImporterImpl implements CPFileImporter {
 
 	public static final String GROUP_ID_PLACEHOLDER = "[$GROUP_ID$]";
@@ -617,8 +615,8 @@ public class CPFileImporterImpl implements CPFileImporter {
 		return _dlAppLocalService.addFileEntry(
 			null, serviceContext.getUserId(), serviceContext.getScopeGroupId(),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, fileName, mimeType,
-			fileName, StringPool.BLANK, StringPool.BLANK, byteArray, null, null,
-			serviceContext);
+			fileName, StringPool.BLANK, StringPool.BLANK, StringPool.BLANK,
+			byteArray, null, null, serviceContext);
 	}
 
 	private long _getAssetEntryId(
@@ -672,7 +670,7 @@ public class CPFileImporterImpl implements CPFileImporter {
 		content = _replaceJournalArticleImages(
 			content, _journalArticleHTMLImagePattern,
 			fileEntry -> {
-				String previewURL = DLUtil.getDownloadURL(
+				String previewURL = DLURLHelperUtil.getDownloadURL(
 					fileEntry, fileEntry.getLatestFileVersion(), null,
 					StringPool.BLANK, false, false);
 
@@ -706,7 +704,7 @@ public class CPFileImporterImpl implements CPFileImporter {
 					"uuid", fileEntry.getUuid()
 				);
 
-				return jsonObject.toJSONString();
+				return jsonObject.toString();
 			},
 			classLoader, dependenciesFilePath, serviceContext);
 
@@ -733,7 +731,8 @@ public class CPFileImporterImpl implements CPFileImporter {
 
 	private String _replaceJournalArticleImages(
 			String content, Pattern pattern,
-			UnsafeFunction<FileEntry, String, Exception> replacementFunction,
+			UnsafeFunction<FileEntry, String, Exception>
+				replacementUnsafeFunction,
 			ClassLoader classLoader, String dependenciesFilePath,
 			ServiceContext serviceContext)
 		throws Exception {
@@ -748,7 +747,7 @@ public class CPFileImporterImpl implements CPFileImporter {
 			FileEntry fileEntry = _fetchOrAddFileEntry(
 				classLoader, dependenciesFilePath, fileName, serviceContext);
 
-			String replacement = replacementFunction.apply(fileEntry);
+			String replacement = replacementUnsafeFunction.apply(fileEntry);
 
 			matcher.appendReplacement(sb, replacement);
 		}
@@ -764,13 +763,13 @@ public class CPFileImporterImpl implements CPFileImporter {
 			String value)
 		throws Exception {
 
-		for (Locale locale : LanguageUtil.getAvailableLocales(groupId)) {
+		for (Locale locale : _language.getAvailableLocales(groupId)) {
 			ResourceBundle resourceBundle =
 				resourceBundleLoader.loadResourceBundle(locale);
 
 			portletPreferences.setValue(
-				key + StringPool.UNDERLINE + LanguageUtil.getLanguageId(locale),
-				LanguageUtil.get(resourceBundle, value));
+				key + StringPool.UNDERLINE + _language.getLanguageId(locale),
+				_language.get(resourceBundle, value));
 		}
 	}
 
@@ -783,16 +782,13 @@ public class CPFileImporterImpl implements CPFileImporter {
 			return;
 		}
 
-		PortletPreferencesIds portletPreferencesIds =
-			PortletPreferencesFactoryUtil.getPortletPreferencesIds(
-				layout.getCompanyId(), layout.getGroupId(), layout.getPlid(),
-				portletId,
-				PortletPreferencesFactoryConstants.
-					SETTINGS_SCOPE_PORTLET_INSTANCE);
-
 		PortletPreferences portletPreferences =
 			_portletPreferencesLocalService.getPreferences(
-				portletPreferencesIds);
+				PortletPreferencesFactoryUtil.getPortletPreferencesIds(
+					layout.getCompanyId(), layout.getGroupId(),
+					layout.getPlid(), portletId,
+					PortletPreferencesFactoryConstants.
+						SETTINGS_SCOPE_PORTLET_INSTANCE));
 
 		ResourceBundleLoader resourceBundleLoader =
 			new AggregateResourceBundleLoader(
@@ -828,13 +824,10 @@ public class CPFileImporterImpl implements CPFileImporter {
 			return;
 		}
 
-		PortletPreferencesIds portletPreferencesIds =
-			PortletPreferencesFactoryUtil.getPortletPreferencesIds(
-				layout.getGroupId(), 0, layout, portletId, false);
-
 		PortletPreferences portletPreferences =
 			_portletPreferencesLocalService.getPreferences(
-				portletPreferencesIds);
+				PortletPreferencesFactoryUtil.getPortletPreferencesIds(
+					layout.getGroupId(), 0, layout, portletId, false));
 
 		Iterator<String> iterator = jsonObject.keys();
 
@@ -976,7 +969,7 @@ public class CPFileImporterImpl implements CPFileImporter {
 		throws Exception {
 
 		if (jsonArray == null) {
-			jsonArray = JSONFactoryUtil.createJSONArray(
+			jsonArray = _jsonFactory.createJSONArray(
 				"[{\"actionIds\": [\"VIEW\"], \"roleName\": \"Site Member\"," +
 					"\"scope\": 4}]");
 		}
@@ -1040,6 +1033,9 @@ public class CPFileImporterImpl implements CPFileImporter {
 
 	@Reference
 	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;

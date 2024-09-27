@@ -22,29 +22,27 @@ import com.liferay.asset.kernel.model.ClassTypeReader;
 import com.liferay.asset.list.constants.AssetListEntryTypeConstants;
 import com.liferay.asset.list.model.AssetListEntry;
 import com.liferay.asset.list.service.AssetListEntryLocalServiceUtil;
-import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
-import com.liferay.fragment.renderer.FragmentRendererController;
-import com.liferay.fragment.renderer.FragmentRendererTracker;
-import com.liferay.fragment.util.configuration.FragmentEntryConfigurationParser;
 import com.liferay.frontend.token.definition.FrontendTokenDefinitionRegistry;
 import com.liferay.info.collection.provider.InfoCollectionProvider;
 import com.liferay.info.collection.provider.SingleFormVariationInfoCollectionProvider;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.list.provider.item.selector.criterion.InfoListProviderItemSelectorReturnType;
+import com.liferay.info.search.InfoSearchClassMapperRegistry;
 import com.liferay.item.selector.ItemSelector;
 import com.liferay.item.selector.criteria.InfoListItemSelectorReturnType;
 import com.liferay.layout.content.page.editor.sidebar.panel.ContentPageEditorSidebarPanel;
-import com.liferay.layout.content.page.editor.web.internal.configuration.FFLayoutContentPageEditorConfiguration;
 import com.liferay.layout.content.page.editor.web.internal.configuration.PageEditorConfiguration;
 import com.liferay.layout.content.page.editor.web.internal.constants.ContentPageEditorActionKeys;
 import com.liferay.layout.content.page.editor.web.internal.segments.SegmentsExperienceUtil;
+import com.liferay.layout.content.page.editor.web.internal.util.FragmentCollectionManager;
+import com.liferay.layout.content.page.editor.web.internal.util.FragmentEntryLinkManager;
 import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
 import com.liferay.layout.page.template.model.LayoutPageTemplateStructureRel;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalServiceUtil;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureRelLocalServiceUtil;
-import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
+import com.liferay.learn.LearnMessage;
+import com.liferay.learn.LearnMessageUtil;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.comment.CommentManager;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
@@ -61,17 +59,18 @@ import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.segments.configuration.provider.SegmentsConfigurationProvider;
 import com.liferay.segments.constants.SegmentsEntryConstants;
-import com.liferay.segments.constants.SegmentsExperienceConstants;
 import com.liferay.segments.constants.SegmentsPortletKeys;
+import com.liferay.segments.manager.SegmentsExperienceManager;
 import com.liferay.segments.model.SegmentsEntry;
 import com.liferay.segments.model.SegmentsExperience;
 import com.liferay.segments.model.SegmentsExperimentRel;
-import com.liferay.segments.model.SegmentsExperimentRelTable;
 import com.liferay.segments.service.SegmentsEntryServiceUtil;
 import com.liferay.segments.service.SegmentsExperienceLocalServiceUtil;
 import com.liferay.segments.service.SegmentsExperimentRelLocalServiceUtil;
@@ -99,31 +98,27 @@ public class ContentPageLayoutEditorDisplayContext
 	extends ContentPageEditorDisplayContext {
 
 	public ContentPageLayoutEditorDisplayContext(
-		CommentManager commentManager,
 		List<ContentPageEditorSidebarPanel> contentPageEditorSidebarPanels,
-		FFLayoutContentPageEditorConfiguration
-			ffLayoutContentPageEditorConfiguration,
-		FragmentCollectionContributorTracker
-			fragmentCollectionContributorTracker,
-		FragmentEntryConfigurationParser fragmentEntryConfigurationParser,
-		FragmentRendererController fragmentRendererController,
-		FragmentRendererTracker fragmentRendererTracker,
+		FragmentCollectionManager fragmentCollectionManager,
+		FragmentEntryLinkManager fragmentEntryLinkManager,
 		FrontendTokenDefinitionRegistry frontendTokenDefinitionRegistry,
 		HttpServletRequest httpServletRequest,
-		InfoItemServiceTracker infoItemServiceTracker,
+		InfoItemServiceRegistry infoItemServiceRegistry,
+		InfoSearchClassMapperRegistry infoSearchClassMapperRegistry,
 		ItemSelector itemSelector,
 		PageEditorConfiguration pageEditorConfiguration,
 		PortletRequest portletRequest, RenderResponse renderResponse,
+		SegmentsConfigurationProvider segmentsConfigurationProvider,
+		SegmentsExperienceManager segmentsExperienceManager,
 		StagingGroupHelper stagingGroupHelper) {
 
 		super(
-			commentManager, contentPageEditorSidebarPanels,
-			ffLayoutContentPageEditorConfiguration,
-			fragmentCollectionContributorTracker,
-			fragmentEntryConfigurationParser, fragmentRendererController,
-			fragmentRendererTracker, frontendTokenDefinitionRegistry,
-			httpServletRequest, infoItemServiceTracker, itemSelector,
+			contentPageEditorSidebarPanels, fragmentCollectionManager,
+			fragmentEntryLinkManager, frontendTokenDefinitionRegistry,
+			httpServletRequest, infoItemServiceRegistry,
+			infoSearchClassMapperRegistry, itemSelector,
 			pageEditorConfiguration, portletRequest, renderResponse,
+			segmentsConfigurationProvider, segmentsExperienceManager,
 			stagingGroupHelper);
 	}
 
@@ -143,15 +138,26 @@ public class ContentPageLayoutEditorDisplayContext
 
 		configContext.put(
 			"addSegmentsExperienceURL",
-			getFragmentEntryActionURL(
-				"/layout_content_page_editor/add_segments_experience"));
+			HttpComponentsUtil.addParameter(
+				HttpComponentsUtil.addParameter(
+					getFragmentEntryActionURL(
+						"/layout_content_page_editor/add_segments_experience"),
+					getPortletNamespace() + "plid", themeDisplay.getPlid()),
+				getPortletNamespace() + "groupId",
+				themeDisplay.getScopeGroupId()));
 		configContext.put(
 			"availableSegmentsEntries", _getAvailableSegmentsEntries());
+
+		LearnMessage learnMessage = LearnMessageUtil.getLearnMessage(
+			"content-page-personalization",
+			LanguageUtil.getLanguageId(httpServletRequest),
+			"layout-content-page-editor-web");
+
+		configContext.put(
+			"contentPagePersonalizationLearnURL", learnMessage.getURL());
+
 		configContext.put(
 			"defaultSegmentsEntryId", SegmentsEntryConstants.ID_DEFAULT);
-		configContext.put(
-			"defaultSegmentsExperienceId",
-			String.valueOf(SegmentsExperienceConstants.ID_DEFAULT));
 		configContext.put(
 			"deleteSegmentsExperienceURL",
 			getFragmentEntryActionURL(
@@ -180,8 +186,6 @@ public class ContentPageLayoutEditorDisplayContext
 				httpServletRequest));
 		stateContext.put("layoutDataList", _getLayoutDataList());
 		stateContext.put(
-			"segmentsExperienceId", String.valueOf(getSegmentsExperienceId()));
-		stateContext.put(
 			"segmentsExperimentStatus",
 			SegmentsExperienceUtil.getSegmentsExperimentStatus(
 				themeDisplay, getSegmentsExperienceId()));
@@ -209,9 +213,7 @@ public class ContentPageLayoutEditorDisplayContext
 			PortalUtil.getOriginalServletRequest(httpServletRequest),
 			"segmentsExperienceId", -1);
 
-		if ((_segmentsExperienceId != -1) &&
-			(_segmentsExperienceId != SegmentsExperienceConstants.ID_DEFAULT)) {
-
+		if (_segmentsExperienceId != -1) {
 			_segmentsExperienceId = Optional.ofNullable(
 				SegmentsExperienceLocalServiceUtil.fetchSegmentsExperience(
 					_segmentsExperienceId)
@@ -376,7 +378,7 @@ public class ContentPageLayoutEditorDisplayContext
 
 		List<InfoCollectionProvider<?>> infoCollectionProviders =
 			(List<InfoCollectionProvider<?>>)
-				(List<?>)infoItemServiceTracker.getAllInfoItemServices(
+				(List<?>)infoItemServiceRegistry.getAllInfoItemServices(
 					InfoCollectionProvider.class);
 
 		Stream<InfoCollectionProvider<?>> stream =
@@ -631,20 +633,11 @@ public class ContentPageLayoutEditorDisplayContext
 			return _lockedSegmentsExperience;
 		}
 
-		if (SegmentsExperienceConstants.ID_DEFAULT == segmentsExperienceId) {
-			_lockedSegmentsExperience =
-				SegmentsExperienceUtil.
-					hasDefaultSegmentsExperienceLockedSegmentsExperiment(
-						themeDisplay);
-		}
-		else {
-			SegmentsExperience segmentsExperience =
-				SegmentsExperienceLocalServiceUtil.getSegmentsExperience(
-					segmentsExperienceId);
+		SegmentsExperience segmentsExperience =
+			SegmentsExperienceLocalServiceUtil.getSegmentsExperience(
+				segmentsExperienceId);
 
-			_lockedSegmentsExperience =
-				segmentsExperience.hasSegmentsExperiment();
-		}
+		_lockedSegmentsExperience = segmentsExperience.hasSegmentsExperiment();
 
 		return _lockedSegmentsExperience;
 	}
@@ -681,16 +674,9 @@ public class ContentPageLayoutEditorDisplayContext
 
 		if (segmentsExperience != null) {
 			List<SegmentsExperimentRel> segmentsExperimentRels =
-				SegmentsExperimentRelLocalServiceUtil.dslQuery(
-					DSLQueryFactoryUtil.select(
-						SegmentsExperimentRelTable.INSTANCE
-					).from(
-						SegmentsExperimentRelTable.INSTANCE
-					).where(
-						SegmentsExperimentRelTable.INSTANCE.
-							segmentsExperienceId.eq(
-								segmentsExperience.getSegmentsExperienceId())
-					));
+				SegmentsExperimentRelLocalServiceUtil.
+					getSegmentsExperimentRelsBySegmentsExperienceId(
+						segmentsExperience.getSegmentsExperienceId());
 
 			if (segmentsExperimentRels.isEmpty()) {
 				return false;

@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.messaging.MessageListener;
 
 import java.util.Dictionary;
+import java.util.Set;
 
 import org.osgi.framework.Constants;
 import org.osgi.service.cm.Configuration;
@@ -42,32 +43,11 @@ import org.osgi.service.component.annotations.Reference;
 )
 public class ConfigurationMessageListener extends BaseMessageListener {
 
-	@Reference(unbind = "-")
-	public void setReloadablePersistenceManager(
-		ReloadablePersistenceManager reloadablePersistenceManager) {
-
-		_reloadablePersistenceManager = reloadablePersistenceManager;
-	}
-
 	@Override
 	protected void doReceive(Message message) throws Exception {
 		_reloadConfiguration(
 			message.getString(Constants.SERVICE_PID),
 			message.getInteger("configuration.event.type"));
-	}
-
-	@Reference(unbind = "-")
-	protected void setConfigurationAdmin(
-		ConfigurationAdmin configurationAdmin) {
-
-		_configurationAdmin = configurationAdmin;
-	}
-
-	@Reference(
-		target = "(destination.name=" + ConfigurationClusterDestinationNames.CONFIGURATION + ")",
-		unbind = "-"
-	)
-	protected void setDestination(Destination destination) {
 	}
 
 	private void _reloadConfiguration(String pid, int type) throws Exception {
@@ -89,6 +69,18 @@ public class ConfigurationMessageListener extends BaseMessageListener {
 			}
 
 			for (Configuration configuration : configurations) {
+				Set<Configuration.ConfigurationAttribute>
+					configurationAttributes = configuration.getAttributes();
+				boolean readOnly = false;
+
+				if (configurationAttributes.contains(
+						Configuration.ConfigurationAttribute.READ_ONLY)) {
+
+					configuration.removeAttributes(
+						Configuration.ConfigurationAttribute.READ_ONLY);
+					readOnly = true;
+				}
+
 				if (type == ConfigurationEvent.CM_DELETED) {
 					configuration.delete();
 				}
@@ -99,6 +91,11 @@ public class ConfigurationMessageListener extends BaseMessageListener {
 					else {
 						configuration.update(dictionary);
 					}
+
+					if (readOnly) {
+						configuration.addAttributes(
+							Configuration.ConfigurationAttribute.READ_ONLY);
+					}
 				}
 			}
 		}
@@ -107,7 +104,15 @@ public class ConfigurationMessageListener extends BaseMessageListener {
 		}
 	}
 
+	@Reference
 	private ConfigurationAdmin _configurationAdmin;
+
+	@Reference(
+		target = "(destination.name=" + ConfigurationClusterDestinationNames.CONFIGURATION + ")"
+	)
+	private Destination _destination;
+
+	@Reference
 	private ReloadablePersistenceManager _reloadablePersistenceManager;
 
 }

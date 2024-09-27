@@ -79,12 +79,12 @@ public class UpgradeProcessTest {
 	}
 
 	@Test
-	public void testAddTempIndex() throws Exception {
+	public void testAddTemporaryIndex() throws Exception {
 		UpgradeProcess upgradeProcess = new UpgradeProcess() {
 
 			@Override
 			protected void doUpgrade() throws Exception {
-				try (SafeCloseable safeCloseable = addTempIndex(
+				try (SafeCloseable safeCloseable = addTemporaryIndex(
 						TABLE_NAME, false, "typeVarchar")) {
 
 					Assert.assertTrue(hasIndex(TABLE_NAME, "IX_TEMP"));
@@ -96,81 +96,6 @@ public class UpgradeProcessTest {
 		};
 
 		upgradeProcess.upgrade();
-	}
-
-	@Test
-	public void testAlterColumnName() throws Exception {
-		UpgradeProcess upgradeProcess = new UpgradeProcess() {
-
-			@Override
-			protected void doUpgrade() throws Exception {
-				alter(
-					UpgradeProcessTest.class,
-					new UpgradeProcess.AlterColumnName(
-						"typeVarchar", "typeVarcharTest VARCHAR(75) not null"));
-			}
-
-		};
-
-		upgradeProcess.upgrade();
-
-		Assert.assertTrue(
-			_dbInspector.hasColumn(TABLE_NAME, "typeVarcharTest"));
-	}
-
-	@Test
-	public void testAlterColumnType() throws Exception {
-		UpgradeProcess upgradeProcess = new UpgradeProcess() {
-
-			@Override
-			protected void doUpgrade() throws Exception {
-				alter(
-					UpgradeProcessTest.class,
-					new AlterColumnType("typeVarchar", "LONG null"));
-			}
-
-		};
-
-		upgradeProcess.upgrade();
-
-		Assert.assertTrue(
-			_dbInspector.hasColumnType(TABLE_NAME, "typeVarchar", "LONG null"));
-	}
-
-	@Test
-	public void testAlterTableAddColumn() throws Exception {
-		UpgradeProcess upgradeProcess = new UpgradeProcess() {
-
-			@Override
-			protected void doUpgrade() throws Exception {
-				alter(
-					UpgradeProcessTest.class,
-					new AlterTableAddColumn("testColumn", "STRING null"));
-			}
-
-		};
-
-		upgradeProcess.upgrade();
-
-		Assert.assertTrue(_dbInspector.hasColumn(TABLE_NAME, "testColumn"));
-	}
-
-	@Test
-	public void testAlterTableDropColumn() throws Exception {
-		UpgradeProcess upgradeProcess = new UpgradeProcess() {
-
-			@Override
-			protected void doUpgrade() throws Exception {
-				alter(
-					UpgradeProcessTest.class,
-					new AlterTableDropColumn("typeVarchar"));
-			}
-
-		};
-
-		upgradeProcess.upgrade();
-
-		Assert.assertFalse(_dbInspector.hasColumn(TABLE_NAME, "typeVarchar"));
 	}
 
 	private static Connection _connection;

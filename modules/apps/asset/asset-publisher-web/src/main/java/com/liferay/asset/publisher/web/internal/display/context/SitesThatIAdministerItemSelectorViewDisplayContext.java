@@ -15,7 +15,6 @@
 package com.liferay.asset.publisher.web.internal.display.context;
 
 import com.liferay.asset.publisher.util.AssetPublisherHelper;
-import com.liferay.item.selector.criteria.group.criterion.GroupItemSelectorCriterion;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Organization;
@@ -46,13 +45,9 @@ public class SitesThatIAdministerItemSelectorViewDisplayContext
 
 	public SitesThatIAdministerItemSelectorViewDisplayContext(
 		HttpServletRequest httpServletRequest,
-		AssetPublisherHelper assetPublisherHelper,
-		GroupItemSelectorCriterion groupItemSelectorCriterion,
-		String itemSelectedEventName, PortletURL portletURL) {
+		AssetPublisherHelper assetPublisherHelper, PortletURL portletURL) {
 
-		super(
-			httpServletRequest, assetPublisherHelper,
-			groupItemSelectorCriterion, itemSelectedEventName, portletURL);
+		super(httpServletRequest, assetPublisherHelper, portletURL);
 	}
 
 	@Override
@@ -62,21 +57,17 @@ public class SitesThatIAdministerItemSelectorViewDisplayContext
 				WebKeys.THEME_DISPLAY);
 
 		GroupSearch groupSearch = new GroupSearch(
-			getPortletRequest(), getPortletURL());
+			getPortletRequest(), portletURL);
 
 		GroupSearchTerms groupSearchTerms =
 			(GroupSearchTerms)groupSearch.getSearchTerms();
 
-		List<Group> groups = GroupLocalServiceUtil.search(
-			themeDisplay.getCompanyId(), _CLASS_NAME_IDS,
-			groupSearchTerms.getKeywords(), _getGroupParams(),
-			QueryUtil.ALL_POS, QueryUtil.ALL_POS,
-			groupSearch.getOrderByComparator());
-
 		groupSearch.setResultsAndTotal(
-			() -> groups.subList(
-				groupSearch.getStart(), groupSearch.getResultEnd()),
-			groups.size());
+			GroupLocalServiceUtil.search(
+				themeDisplay.getCompanyId(), _CLASS_NAME_IDS,
+				groupSearchTerms.getKeywords(), _getGroupParams(),
+				QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+				groupSearch.getOrderByComparator()));
 
 		return groupSearch;
 	}

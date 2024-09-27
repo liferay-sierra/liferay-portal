@@ -22,6 +22,7 @@
 taglib uri="http://liferay.com/tld/clay" prefix="clay" %><%@
 taglib uri="http://liferay.com/tld/frontend" prefix="liferay-frontend" %><%@
 taglib uri="http://liferay.com/tld/react" prefix="react" %><%@
+taglib uri="http://liferay.com/tld/site-navigation" prefix="liferay-site-navigation" %><%@
 taglib uri="http://liferay.com/tld/staging" prefix="liferay-staging" %><%@
 taglib uri="http://liferay.com/tld/theme" prefix="liferay-theme" %><%@
 taglib uri="http://liferay.com/tld/ui" prefix="liferay-ui" %><%@
@@ -41,6 +42,7 @@ page import="com.liferay.depot.web.internal.constants.DepotEntryConstants" %><%@
 page import="com.liferay.depot.web.internal.constants.DepotPortletKeys" %><%@
 page import="com.liferay.depot.web.internal.constants.DepotScreenNavigationEntryConstants" %><%@
 page import="com.liferay.depot.web.internal.constants.SharingWebKeys" %><%@
+page import="com.liferay.depot.web.internal.display.context.DepotAdminDLDisplayContext" %><%@
 page import="com.liferay.depot.web.internal.display.context.DepotAdminDetailsDisplayContext" %><%@
 page import="com.liferay.depot.web.internal.display.context.DepotAdminDisplayContext" %><%@
 page import="com.liferay.depot.web.internal.display.context.DepotAdminManagementToolbarDisplayContext" %><%@
@@ -54,9 +56,11 @@ page import="com.liferay.depot.web.internal.display.context.DepotApplicationDisp
 page import="com.liferay.depot.web.internal.util.DepotLanguageUtil" %><%@
 page import="com.liferay.document.library.kernel.exception.RequiredFileEntryTypeException" %><%@
 page import="com.liferay.petra.string.StringPool" %><%@
+page import="com.liferay.portal.configuration.persistence.listener.ConfigurationModelListenerException" %><%@
 page import="com.liferay.portal.kernel.exception.DuplicateGroupException" %><%@
 page import="com.liferay.portal.kernel.exception.GroupKeyException" %><%@
 page import="com.liferay.portal.kernel.exception.LocaleException" %><%@
+page import="com.liferay.portal.kernel.frontend.icons.FrontendIconsUtil" %><%@
 page import="com.liferay.portal.kernel.language.LanguageUtil" %><%@
 page import="com.liferay.portal.kernel.model.Group" %><%@
 page import="com.liferay.portal.kernel.model.GroupConstants" %><%@
@@ -77,7 +81,8 @@ page import="com.liferay.portal.kernel.util.Validator" %><%@
 page import="com.liferay.portal.kernel.util.WebKeys" %><%@
 page import="com.liferay.portal.util.PropsValues" %><%@
 page import="com.liferay.roles.admin.kernel.util.RolesAdminUtil" %><%@
-page import="com.liferay.sharing.configuration.SharingConfiguration" %>
+page import="com.liferay.sharing.configuration.SharingConfiguration" %><%@
+page import="com.liferay.site.navigation.taglib.servlet.taglib.util.BreadcrumbEntriesUtil" %>
 
 <%@ page import="java.util.Collection" %><%@
 page import="java.util.Collections" %><%@

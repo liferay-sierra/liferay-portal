@@ -69,22 +69,25 @@ const mockProps = {
 		'_com_liferay_item_selector_web_portlet_ItemSelectorPortlet_',
 };
 
-describe('SelectTypeAndSubtype', () => {
-	beforeEach(() => {
-		window.Liferay.Util.getOpener = jest.fn().mockReturnValue({
-			Liferay: {
-				fire: jest.fn(),
-			},
-		});
-	});
+jest.mock('frontend-js-web', () => ({
+	...jest.requireActual('frontend-js-web'),
+	getOpener: jest.fn(() => ({
+		Liferay: {
+			fire: jest.fn(),
+		},
+	})),
+}));
 
+describe('SelectTypeAndSubtype', () => {
 	it('renders a TreeFilter with parent nodes indicating the number of children', () => {
 		const {getByRole, getByText, queryByText} = render(
 			<SelectTypeAndSubtype {...mockProps} />
 		);
 
 		const {className} = getByRole('tree');
-		expect(className).toContain('lfr-treeview-node-list');
+		expect(className).toContain(
+			'treeview show-quick-actions-on-hover treeview-light'
+		);
 
 		expect(
 			getByText('Document (3 items)', {exact: false})

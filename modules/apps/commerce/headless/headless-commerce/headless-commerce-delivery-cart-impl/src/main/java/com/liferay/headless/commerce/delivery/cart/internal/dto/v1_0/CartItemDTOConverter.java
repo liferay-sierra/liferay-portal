@@ -34,7 +34,7 @@ import com.liferay.headless.commerce.core.util.LanguageUtils;
 import com.liferay.headless.commerce.delivery.cart.dto.v1_0.CartItem;
 import com.liferay.headless.commerce.delivery.cart.dto.v1_0.Price;
 import com.liferay.headless.commerce.delivery.cart.dto.v1_0.Settings;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.language.LanguageResources;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
@@ -53,7 +53,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	property = "dto.class.name=com.liferay.headless.commerce.delivery.cart.dto.v1_0.CartItem",
 	service = {CartItemDTOConverter.class, DTOConverter.class}
 )
@@ -91,7 +90,7 @@ public class CartItemDTOConverter
 				errorMessages = _getErrorMessages(commerceOrderItem, locale);
 				id = commerceOrderItem.getCommerceOrderItemId();
 				name = commerceOrderItem.getName(
-					LanguageUtil.getLanguageId(locale));
+					_language.getLanguageId(locale));
 				options = commerceOrderItem.getJson();
 				parentCartItemId =
 					commerceOrderItem.getParentCommerceOrderItemId();
@@ -122,7 +121,7 @@ public class CartItemDTOConverter
 				locale);
 
 			return new String[] {
-				LanguageUtil.get(
+				_language.get(
 					resourceBundle, "the-product-is-no-longer-available")
 			};
 		}
@@ -282,5 +281,8 @@ public class CartItemDTOConverter
 
 	@Reference
 	private CPInstanceLocalService _cpInstanceLocalService;
+
+	@Reference
+	private Language _language;
 
 }

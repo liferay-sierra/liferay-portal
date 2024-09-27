@@ -26,11 +26,13 @@ import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
 import com.liferay.document.library.kernel.service.DLFileEntryTypeLocalService;
 import com.liferay.dynamic.data.mapping.kernel.DDMFormValues;
 import com.liferay.dynamic.data.mapping.kernel.DDMStructure;
+import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.service.DDMStructureService;
 import com.liferay.dynamic.data.mapping.util.DDMBeanTranslator;
 import com.liferay.dynamic.data.mapping.util.DDMIndexer;
 import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
 import com.liferay.expando.kernel.service.ExpandoTableLocalService;
+import com.liferay.headless.common.spi.odata.entity.EntityFieldsUtil;
 import com.liferay.headless.common.spi.resource.SPIRatingResource;
 import com.liferay.headless.common.spi.service.context.ServiceContextRequestUtil;
 import com.liferay.headless.delivery.dto.v1_0.ContentField;
@@ -42,19 +44,20 @@ import com.liferay.headless.delivery.dto.v1_0.util.CustomFieldsUtil;
 import com.liferay.headless.delivery.dto.v1_0.util.DDMFormValuesUtil;
 import com.liferay.headless.delivery.internal.dto.v1_0.converter.DocumentDTOConverter;
 import com.liferay.headless.delivery.internal.dto.v1_0.util.DisplayPageRendererUtil;
-import com.liferay.headless.delivery.internal.dto.v1_0.util.EntityFieldsUtil;
 import com.liferay.headless.delivery.internal.dto.v1_0.util.RatingUtil;
 import com.liferay.headless.delivery.internal.odata.entity.v1_0.DocumentEntityModel;
 import com.liferay.headless.delivery.resource.v1_0.DocumentResource;
 import com.liferay.headless.delivery.search.aggregation.AggregationUtil;
 import com.liferay.headless.delivery.search.filter.FilterUtil;
 import com.liferay.headless.delivery.search.sort.SortUtil;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.journal.service.JournalArticleService;
-import com.liferay.layout.display.page.LayoutDisplayPageProviderTracker;
+import com.liferay.layout.display.page.LayoutDisplayPageProviderRegistry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryService;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.events.ServicePreAction;
+import com.liferay.portal.events.ThemeServicePreAction;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
@@ -62,6 +65,7 @@ import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
 import com.liferay.portal.kernel.search.BooleanQuery;
 import com.liferay.portal.kernel.search.Field;
+import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.BooleanFilter;
 import com.liferay.portal.kernel.search.filter.Filter;
@@ -70,12 +74,16 @@ import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.search.aggregation.Aggregations;
+import com.liferay.portal.search.expando.ExpandoBridgeIndexer;
 import com.liferay.portal.search.legacy.searcher.SearchRequestBuilderFactory;
 import com.liferay.portal.search.query.Queries;
 import com.liferay.portal.search.searcher.SearchRequestBuilder;
@@ -87,7 +95,6 @@ import com.liferay.portal.vulcan.multipart.BinaryFile;
 import com.liferay.portal.vulcan.multipart.MultipartBody;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
-import com.liferay.portal.vulcan.resource.EntityModelResource;
 import com.liferay.portal.vulcan.util.SearchUtil;
 import com.liferay.portlet.documentlibrary.constants.DLConstants;
 import com.liferay.ratings.kernel.service.RatingsEntryLocalService;
@@ -98,6 +105,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.MultivaluedMap;
@@ -113,8 +123,18 @@ import org.osgi.service.component.annotations.ServiceScope;
 	properties = "OSGI-INF/liferay/rest/v1_0/document.properties",
 	scope = ServiceScope.PROTOTYPE, service = DocumentResource.class
 )
-public class DocumentResourceImpl
-	extends BaseDocumentResourceImpl implements EntityModelResource {
+public class DocumentResourceImpl extends BaseDocumentResourceImpl {
+
+	@Override
+	public void deleteAssetLibraryDocumentByExternalReferenceCode(
+			Long assetLibraryId, String externalReferenceCode)
+		throws Exception {
+
+		FileEntry fileEntry = _dlAppService.getFileEntryByExternalReferenceCode(
+			assetLibraryId, externalReferenceCode);
+
+		_dlAppService.deleteFileEntry(fileEntry.getFileEntryId());
+	}
 
 	@Override
 	public void deleteDocument(Long documentId) throws Exception {
@@ -140,6 +160,16 @@ public class DocumentResourceImpl
 	}
 
 	@Override
+	public Document getAssetLibraryDocumentByExternalReferenceCode(
+			Long assetLibraryId, String externalReferenceCode)
+		throws Exception {
+
+		return _toDocument(
+			_dlAppService.getFileEntryByExternalReferenceCode(
+				assetLibraryId, externalReferenceCode));
+	}
+
+	@Override
 	public Page<Document> getAssetLibraryDocumentsPage(
 			Long assetLibraryId, Boolean flatten, String search,
 			Aggregation aggregation, Filter filter, Pagination pagination,
@@ -153,10 +183,25 @@ public class DocumentResourceImpl
 					ActionKeys.ADD_DOCUMENT, "postAssetLibraryDocument",
 					DLConstants.RESOURCE_NAME, assetLibraryId)
 			).put(
+				"createBatch",
+				addAction(
+					ActionKeys.ADD_DOCUMENT, "postAssetLibraryDocumentBatch",
+					DLConstants.RESOURCE_NAME, assetLibraryId)
+			).put(
+				"deleteBatch",
+				addAction(
+					ActionKeys.DELETE, "deleteDocumentBatch",
+					DLConstants.RESOURCE_NAME, null)
+			).put(
 				"get",
 				addAction(
 					ActionKeys.VIEW, "getAssetLibraryDocumentsPage",
 					DLConstants.RESOURCE_NAME, assetLibraryId)
+			).put(
+				"updateBatch",
+				addAction(
+					ActionKeys.UPDATE, "putDocumentBatch",
+					DLConstants.RESOURCE_NAME, null)
 			).build(),
 			_createDocumentsPageBooleanQueryUnsafeConsumer(
 				assetLibraryId, flatten),
@@ -225,8 +270,8 @@ public class DocumentResourceImpl
 		return DisplayPageRendererUtil.toHTML(
 			FileEntry.class.getName(), _getDDMStructureId(fileEntry),
 			displayPageKey, fileEntry.getGroupId(), contextHttpServletRequest,
-			contextHttpServletResponse, fileEntry, _infoItemServiceTracker,
-			_layoutDisplayPageProviderTracker, _layoutLocalService,
+			contextHttpServletResponse, fileEntry, _infoItemServiceRegistry,
+			_layoutDisplayPageProviderRegistry, _layoutLocalService,
 			_layoutPageTemplateEntryService);
 	}
 
@@ -235,8 +280,8 @@ public class DocumentResourceImpl
 		return new DocumentEntityModel(
 			EntityFieldsUtil.getEntityFields(
 				_portal.getClassNameId(DLFileEntry.class.getName()),
-				contextCompany.getCompanyId(), _expandoColumnLocalService,
-				_expandoTableLocalService));
+				contextCompany.getCompanyId(), _expandoBridgeIndexer,
+				_expandoColumnLocalService, _expandoTableLocalService));
 	}
 
 	@Override
@@ -263,10 +308,25 @@ public class DocumentResourceImpl
 					ActionKeys.ADD_DOCUMENT, "postSiteDocument",
 					DLConstants.RESOURCE_NAME, siteId)
 			).put(
+				"createBatch",
+				addAction(
+					ActionKeys.ADD_DOCUMENT, "postSiteDocumentBatch",
+					DLConstants.RESOURCE_NAME, siteId)
+			).put(
+				"deleteBatch",
+				addAction(
+					ActionKeys.DELETE, "deleteDocumentBatch",
+					DLConstants.RESOURCE_NAME, null)
+			).put(
 				"get",
 				addAction(
 					ActionKeys.VIEW, "getSiteDocumentsPage",
 					DLConstants.RESOURCE_NAME, siteId)
+			).put(
+				"updateBatch",
+				addAction(
+					ActionKeys.UPDATE, "putDocumentBatch",
+					DLConstants.RESOURCE_NAME, null)
 			).build(),
 			_createDocumentsPageBooleanQueryUnsafeConsumer(siteId, flatten),
 			search, aggregation, filter, pagination, sorts);
@@ -304,6 +364,7 @@ public class DocumentResourceImpl
 				).orElse(
 					existingFileEntry.getTitle()
 				),
+				null,
 				documentOptional.map(
 					Document::getDescription
 				).orElse(
@@ -314,6 +375,7 @@ public class DocumentResourceImpl
 				existingFileEntry.getExpirationDate(),
 				existingFileEntry.getReviewDate(),
 				_createServiceContext(
+					Constants.UPDATE,
 					() -> ArrayUtil.toArray(
 						_assetCategoryLocalService.getCategoryIds(
 							DLFileEntry.class.getName(), documentId)),
@@ -358,6 +420,25 @@ public class DocumentResourceImpl
 		throws Exception {
 
 		return _addDocument(null, siteId, siteId, null, multipartBody);
+	}
+
+	@Override
+	public Document putAssetLibraryDocumentByExternalReferenceCode(
+			Long assetLibraryId, String externalReferenceCode,
+			MultipartBody multipartBody)
+		throws Exception {
+
+		FileEntry fileEntry =
+			_dlAppLocalService.fetchFileEntryByExternalReferenceCode(
+				assetLibraryId, externalReferenceCode);
+
+		if (fileEntry != null) {
+			return _updateDocument(fileEntry, multipartBody);
+		}
+
+		return _addDocument(
+			externalReferenceCode, assetLibraryId, assetLibraryId, null,
+			multipartBody);
 	}
 
 	@Override
@@ -449,6 +530,7 @@ public class DocumentResourceImpl
 				).orElse(
 					binaryFile.getFileName()
 				),
+				null,
 				documentOptional.map(
 					Document::getDescription
 				).orElse(
@@ -457,8 +539,8 @@ public class DocumentResourceImpl
 				null, binaryFile.getInputStream(), binaryFile.getSize(), null,
 				null,
 				_createServiceContext(
-					() -> new Long[0], () -> new String[0], documentFolderId,
-					documentOptional, groupId)));
+					Constants.ADD, () -> new Long[0], () -> new String[0],
+					documentFolderId, documentOptional, groupId)));
 	}
 
 	private UnsafeConsumer<BooleanQuery, Exception>
@@ -486,7 +568,7 @@ public class DocumentResourceImpl
 	}
 
 	private ServiceContext _createServiceContext(
-			Supplier<Long[]> defaultCategoriesSupplier,
+			String command, Supplier<Long[]> defaultCategoriesSupplier,
 			Supplier<String[]> defaultKeywordsSupplier, Long documentFolderId,
 			Optional<Document> documentOptional, Long groupId)
 		throws Exception {
@@ -511,7 +593,17 @@ public class DocumentResourceImpl
 					Document.ViewableBy.OWNER.getValue()
 				));
 
+		serviceContext.setCommand(command);
+		serviceContext.setCompanyId(contextCompany.getCompanyId());
+		serviceContext.setPlid(
+			_portal.getControlPanelPlid(contextCompany.getCompanyId()));
+		serviceContext.setRequest(contextHttpServletRequest);
 		serviceContext.setUserId(contextUser.getUserId());
+
+		if (contextHttpServletRequest != null) {
+			_initThemeDisplay(
+				groupId, contextHttpServletRequest, contextHttpServletResponse);
+		}
 
 		Optional<DLFileEntryType> dlFileEntryTypeOptional =
 			_getDLFileEntryTypeOptional(
@@ -537,9 +629,11 @@ public class DocumentResourceImpl
 					modelDDMStructure = _ddmStructureService.getStructure(
 						ddmStructure.getStructureId());
 
+				DDMForm ddmForm = modelDDMStructure.getDDMForm();
+
 				com.liferay.dynamic.data.mapping.storage.DDMFormValues
 					ddmFormValues = DDMFormValuesUtil.toDDMFormValues(
-						contentFields, modelDDMStructure.getDDMForm(),
+						ddmForm.getAvailableLocales(), contentFields, ddmForm,
 						_dlAppService, groupId, _journalArticleService,
 						_layoutLocalService,
 						contextAcceptLanguage.getPreferredLocale(),
@@ -627,8 +721,8 @@ public class DocumentResourceImpl
 
 		return SearchUtil.search(
 			actions, booleanQueryUnsafeConsumer,
-			FilterUtil.processFilter(_ddmIndexer, filter),
-			DLFileEntry.class.getName(), keywords, pagination,
+			FilterUtil.processFilter(_ddmIndexer, filter), _indexer, keywords,
+			pagination,
 			queryConfig -> queryConfig.setSelectedFieldNames(
 				Field.ENTRY_CLASS_PK),
 			searchContext -> {
@@ -707,6 +801,29 @@ public class DocumentResourceImpl
 					_portal, ratingsEntry, _userLocalService);
 			},
 			contextUser);
+	}
+
+	private void _initThemeDisplay(
+			long groupId, HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse)
+		throws Exception {
+
+		ServicePreAction servicePreAction = new ServicePreAction();
+
+		servicePreAction.servicePre(
+			httpServletRequest, httpServletResponse, false);
+
+		ThemeServicePreAction themeServicePreAction =
+			new ThemeServicePreAction();
+
+		themeServicePreAction.run(httpServletRequest, httpServletResponse);
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
+		themeDisplay.setScopeGroupId(groupId);
+		themeDisplay.setSiteGroupId(groupId);
 	}
 
 	private FileEntry _moveDocument(
@@ -802,6 +919,7 @@ public class DocumentResourceImpl
 				).orElse(
 					fileEntry.getTitle()
 				),
+				null,
 				documentOptional.map(
 					Document::getDescription
 				).orElse(
@@ -811,7 +929,7 @@ public class DocumentResourceImpl
 				binaryFile.getInputStream(), binaryFile.getSize(),
 				fileEntry.getExpirationDate(), fileEntry.getReviewDate(),
 				_createServiceContext(
-					() -> new Long[0], () -> new String[0],
+					Constants.UPDATE, () -> new Long[0], () -> new String[0],
 					fileEntry.getFolderId(), documentOptional,
 					fileEntry.getGroupId())));
 	}
@@ -856,19 +974,28 @@ public class DocumentResourceImpl
 	private DTOConverterRegistry _dtoConverterRegistry;
 
 	@Reference
+	private ExpandoBridgeIndexer _expandoBridgeIndexer;
+
+	@Reference
 	private ExpandoColumnLocalService _expandoColumnLocalService;
 
 	@Reference
 	private ExpandoTableLocalService _expandoTableLocalService;
 
+	@Reference(
+		target = "(indexer.class.name=com.liferay.document.library.kernel.model.DLFileEntry)"
+	)
+	private Indexer<?> _indexer;
+
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
 	private JournalArticleService _journalArticleService;
 
 	@Reference
-	private LayoutDisplayPageProviderTracker _layoutDisplayPageProviderTracker;
+	private LayoutDisplayPageProviderRegistry
+		_layoutDisplayPageProviderRegistry;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;

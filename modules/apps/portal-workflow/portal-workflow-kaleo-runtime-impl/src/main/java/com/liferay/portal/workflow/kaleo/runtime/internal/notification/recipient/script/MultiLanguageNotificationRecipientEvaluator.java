@@ -37,7 +37,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 /**
  * @author Michael C. Han
  */
-@Component(immediate = true, service = NotificationRecipientEvaluator.class)
+@Component(service = NotificationRecipientEvaluator.class)
 public class MultiLanguageNotificationRecipientEvaluator
 	implements NotificationRecipientEvaluator {
 
@@ -81,13 +81,10 @@ public class MultiLanguageNotificationRecipientEvaluator
 			notificationRecipientEvaluator, properties);
 
 		for (String scriptingLanguage : scriptingLanguages) {
-			String notificationRecipientEvaluatorKey =
+			_notificationRecipientEvaluators.put(
 				_getNotificationRecipientEvaluatorKey(
 					scriptingLanguage,
-					ClassUtil.getClassName(notificationRecipientEvaluator));
-
-			_notificationRecipientEvaluators.put(
-				notificationRecipientEvaluatorKey,
+					ClassUtil.getClassName(notificationRecipientEvaluator)),
 				notificationRecipientEvaluator);
 		}
 	}
@@ -101,13 +98,10 @@ public class MultiLanguageNotificationRecipientEvaluator
 			notificationRecipientEvaluator, properties);
 
 		for (String scriptingLanguage : scriptingLanguages) {
-			String notificationRecipientEvaluatorKey =
+			_notificationRecipientEvaluators.remove(
 				_getNotificationRecipientEvaluatorKey(
 					scriptingLanguage,
-					ClassUtil.getClassName(notificationRecipientEvaluator));
-
-			_notificationRecipientEvaluators.remove(
-				notificationRecipientEvaluatorKey);
+					ClassUtil.getClassName(notificationRecipientEvaluator)));
 		}
 	}
 

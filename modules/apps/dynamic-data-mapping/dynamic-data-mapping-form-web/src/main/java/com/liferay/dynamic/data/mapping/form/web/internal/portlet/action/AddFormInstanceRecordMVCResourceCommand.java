@@ -30,7 +30,7 @@ import com.liferay.dynamic.data.mapping.service.DDMFormInstanceRecordVersionLoca
 import com.liferay.dynamic.data.mapping.service.DDMFormInstanceService;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
@@ -58,7 +58,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Harlan Bruno
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM,
 		"mvc.command.name=/dynamic_data_mapping_form/add_form_instance_record"
@@ -84,7 +83,7 @@ public class AddFormInstanceRecordMVCResourceCommand
 				getDDMForm(ddmFormInstance), serializedDDMFormValues);
 
 		Locale currentLocale = LocaleUtil.fromLanguageId(
-			LanguageUtil.getLanguageId(resourceRequest));
+			_language.getLanguageId(resourceRequest));
 
 		ddmFormContextDeserializerRequest.addProperty(
 			"currentLocale", currentLocale);
@@ -212,5 +211,8 @@ public class AddFormInstanceRecordMVCResourceCommand
 
 	@Reference
 	private DDMFormInstanceService _ddmFormInstanceService;
+
+	@Reference
+	private Language _language;
 
 }

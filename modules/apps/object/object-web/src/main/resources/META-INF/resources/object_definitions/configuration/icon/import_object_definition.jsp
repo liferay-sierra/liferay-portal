@@ -16,19 +16,7 @@
 
 <%@ include file="/init.jsp" %>
 
-<liferay-ui:icon
-	id="importObjectDefinitionIcon"
-	message="import-object"
-	onClick='<%= liferayPortletResponse.getNamespace() + "openImportObjectDefinitionModal();" %>'
-	url="javascript:;"
-/>
-
 <div>
-	<liferay-ui:error embed="<%= false %>" exception="<%= ObjectDefinitionNameException.MustBeginWithUpperCaseLetter.class %>" message="the-first-character-of-a-name-must-be-an-upper-case-letter" />
-	<liferay-ui:error embed="<%= false %>" exception="<%= ObjectDefinitionNameException.MustNotBeDuplicate.class %>" message="this-name-is-already-in-use-try-another-one" />
-	<liferay-ui:error embed="<%= false %>" exception="<%= ObjectDefinitionNameException.MustOnlyContainLettersAndDigits.class %>" message="name-must-only-contain-letters-and-digits" />
-	<liferay-ui:error embed="<%= false %>" key="importObjectDefinitionErrorMessage" message="the-structure-was-not-successfully-imported" />
-
 	<react:component
 		module="js/components/ModalImportObjectDefinition"
 		props='<%=
@@ -49,11 +37,16 @@
 </div>
 
 <aui:script>
-	function <portlet:namespace />openImportObjectDefinitionModal() {
-		Liferay.componentReady(
-			'<portlet:namespace />importObjectDefinitionModal'
-		).then((importObjectDefinitionModal) => {
-			importObjectDefinitionModal.open();
-		});
-	}
+	function <portlet:namespace />openImportObjectDefinitionModal() {}
+
+	Liferay.Util.setPortletConfigurationIconAction(
+		'<portlet:namespace />importObjectDefinition',
+		() => {
+			Liferay.componentReady(
+				'<portlet:namespace />importObjectDefinitionModal'
+			).then((importObjectDefinitionModal) => {
+				importObjectDefinitionModal.open();
+			});
+		}
+	);
 </aui:script>

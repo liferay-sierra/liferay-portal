@@ -37,10 +37,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alec Sloan
  */
-@Component(
-	enabled = false, immediate = true,
-	service = CommerceCatalogDefaultImage.class
-)
+@Component(immediate = true, service = CommerceCatalogDefaultImage.class)
 public class CommerceCatalogDefaultImageImpl
 	implements CommerceCatalogDefaultImage {
 
@@ -71,7 +68,7 @@ public class CommerceCatalogDefaultImageImpl
 
 			FileEntry newFileEntry =
 				PortletFileRepositoryUtil.addPortletFileEntry(
-					groupId, PrincipalThreadLocal.getUserId(),
+					null, groupId, PrincipalThreadLocal.getUserId(),
 					CommerceCatalogDefaultImageImpl.class.getName(), 0,
 					CPConstants.SERVICE_NAME_PRODUCT,
 					DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,

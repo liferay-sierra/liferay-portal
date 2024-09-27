@@ -40,6 +40,7 @@ import com.liferay.portal.kernel.service.persistence.LayoutPersistence;
 import com.liferay.portal.kernel.service.persistence.LayoutSetBranchPersistence;
 import com.liferay.portal.kernel.service.persistence.VirtualHostPersistence;
 import com.liferay.portal.kernel.transaction.TransactionCommitCallbackUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ColorSchemeFactoryUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -61,7 +62,9 @@ import java.io.InputStream;
 import java.net.IDN;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -234,6 +237,20 @@ public class LayoutSetLocalServiceImpl extends LayoutSetLocalServiceBaseImpl {
 	@Override
 	public int getPageCount(long groupId, boolean privateLayout) {
 		return _layoutPersistence.countByG_P(groupId, privateLayout);
+	}
+
+	@Override
+	public LayoutSet updateFaviconFileEntryId(
+			long groupId, boolean privateLayout, long faviconFileEntryId)
+		throws PortalException {
+
+		LayoutSet layoutSet = layoutSetPersistence.findByG_P(
+			groupId, privateLayout);
+
+		layoutSet.setModifiedDate(new Date());
+		layoutSet.setFaviconFileEntryId(faviconFileEntryId);
+
+		return layoutSetPersistence.update(layoutSet);
 	}
 
 	/**
@@ -477,10 +494,18 @@ public class LayoutSetLocalServiceImpl extends LayoutSetLocalServiceBaseImpl {
 			TreeMap<String, String> virtualHostnames)
 		throws PortalException {
 
-		for (String curVirtualHostname : virtualHostnames.keySet()) {
+		Set<String> keySet = new HashSet<>(virtualHostnames.keySet());
+
+		for (String curVirtualHostname : keySet) {
 			if (!Validator.isDomain(curVirtualHostname)) {
 				throw new LayoutSetVirtualHostException(
 					"Invalid host name {" + curVirtualHostname + "}");
+			}
+
+			if (!StringUtil.isLowerCase(curVirtualHostname)) {
+				virtualHostnames.putIfAbsent(
+					StringUtil.toLowerCase(curVirtualHostname),
+					virtualHostnames.remove(curVirtualHostname));
 			}
 		}
 
@@ -488,6 +513,15 @@ public class LayoutSetLocalServiceImpl extends LayoutSetLocalServiceBaseImpl {
 			groupId, privateLayout);
 
 		if (!virtualHostnames.isEmpty()) {
+			long virtualHostsCount =
+				_virtualHostLocalService.getVirtualHostsCount(
+					layoutSet.getLayoutSetId(),
+					ArrayUtil.toStringArray(virtualHostnames.keySet()));
+
+			if (virtualHostsCount > 0) {
+				throw new LayoutSetVirtualHostException();
+			}
+
 			_virtualHostLocalService.updateVirtualHosts(
 				layoutSet.getCompanyId(), layoutSet.getLayoutSetId(),
 				virtualHostnames);

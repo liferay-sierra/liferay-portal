@@ -18,6 +18,7 @@ import com.liferay.account.model.AccountEntry;
 import com.liferay.account.model.AccountEntryModel;
 import com.liferay.expando.kernel.model.ExpandoBridge;
 import com.liferay.expando.kernel.util.ExpandoBridgeFactoryUtil;
+import com.liferay.exportimport.kernel.lar.StagedModelType;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -29,12 +30,13 @@ import com.liferay.portal.kernel.model.impl.BaseModelImpl;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 
 import java.sql.Blob;
@@ -72,19 +74,22 @@ public class AccountEntryModelImpl
 	public static final String TABLE_NAME = "AccountEntry";
 
 	public static final Object[][] TABLE_COLUMNS = {
-		{"mvccVersion", Types.BIGINT}, {"externalReferenceCode", Types.VARCHAR},
+		{"mvccVersion", Types.BIGINT}, {"uuid_", Types.VARCHAR},
+		{"externalReferenceCode", Types.VARCHAR},
 		{"accountEntryId", Types.BIGINT}, {"companyId", Types.BIGINT},
 		{"userId", Types.BIGINT}, {"userName", Types.VARCHAR},
 		{"createDate", Types.TIMESTAMP}, {"modifiedDate", Types.TIMESTAMP},
 		{"defaultBillingAddressId", Types.BIGINT},
-		{"defaultDeliveryCTermEntryId", Types.BIGINT},
-		{"defaultPaymentCTermEntryId", Types.BIGINT},
+		{"defaultCPaymentMethodKey", Types.VARCHAR},
 		{"defaultShippingAddressId", Types.BIGINT},
 		{"parentAccountEntryId", Types.BIGINT}, {"description", Types.VARCHAR},
 		{"domains", Types.VARCHAR}, {"emailAddress", Types.VARCHAR},
 		{"logoId", Types.BIGINT}, {"name", Types.VARCHAR},
+		{"restrictMembership", Types.BOOLEAN},
 		{"taxExemptionCode", Types.VARCHAR}, {"taxIdNumber", Types.VARCHAR},
-		{"type_", Types.VARCHAR}, {"status", Types.INTEGER}
+		{"type_", Types.VARCHAR}, {"status", Types.INTEGER},
+		{"statusByUserId", Types.BIGINT}, {"statusByUserName", Types.VARCHAR},
+		{"statusDate", Types.TIMESTAMP}
 	};
 
 	public static final Map<String, Integer> TABLE_COLUMNS_MAP =
@@ -92,6 +97,7 @@ public class AccountEntryModelImpl
 
 	static {
 		TABLE_COLUMNS_MAP.put("mvccVersion", Types.BIGINT);
+		TABLE_COLUMNS_MAP.put("uuid_", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("externalReferenceCode", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("accountEntryId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("companyId", Types.BIGINT);
@@ -100,8 +106,7 @@ public class AccountEntryModelImpl
 		TABLE_COLUMNS_MAP.put("createDate", Types.TIMESTAMP);
 		TABLE_COLUMNS_MAP.put("modifiedDate", Types.TIMESTAMP);
 		TABLE_COLUMNS_MAP.put("defaultBillingAddressId", Types.BIGINT);
-		TABLE_COLUMNS_MAP.put("defaultDeliveryCTermEntryId", Types.BIGINT);
-		TABLE_COLUMNS_MAP.put("defaultPaymentCTermEntryId", Types.BIGINT);
+		TABLE_COLUMNS_MAP.put("defaultCPaymentMethodKey", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("defaultShippingAddressId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("parentAccountEntryId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("description", Types.VARCHAR);
@@ -109,14 +114,18 @@ public class AccountEntryModelImpl
 		TABLE_COLUMNS_MAP.put("emailAddress", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("logoId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("name", Types.VARCHAR);
+		TABLE_COLUMNS_MAP.put("restrictMembership", Types.BOOLEAN);
 		TABLE_COLUMNS_MAP.put("taxExemptionCode", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("taxIdNumber", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("type_", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("status", Types.INTEGER);
+		TABLE_COLUMNS_MAP.put("statusByUserId", Types.BIGINT);
+		TABLE_COLUMNS_MAP.put("statusByUserName", Types.VARCHAR);
+		TABLE_COLUMNS_MAP.put("statusDate", Types.TIMESTAMP);
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table AccountEntry (mvccVersion LONG default 0 not null,externalReferenceCode VARCHAR(75) null,accountEntryId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,defaultBillingAddressId LONG,defaultDeliveryCTermEntryId LONG,defaultPaymentCTermEntryId LONG,defaultShippingAddressId LONG,parentAccountEntryId LONG,description STRING null,domains STRING null,emailAddress VARCHAR(254) null,logoId LONG,name VARCHAR(100) null,taxExemptionCode VARCHAR(75) null,taxIdNumber VARCHAR(75) null,type_ VARCHAR(75) null,status INTEGER)";
+		"create table AccountEntry (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,externalReferenceCode VARCHAR(75) null,accountEntryId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,defaultBillingAddressId LONG,defaultCPaymentMethodKey VARCHAR(75) null,defaultShippingAddressId LONG,parentAccountEntryId LONG,description STRING null,domains STRING null,emailAddress VARCHAR(254) null,logoId LONG,name VARCHAR(100) null,restrictMembership BOOLEAN,taxExemptionCode VARCHAR(75) null,taxIdNumber VARCHAR(75) null,type_ VARCHAR(75) null,status INTEGER,statusByUserId LONG,statusByUserName VARCHAR(75) null,statusDate DATE null)";
 
 	public static final String TABLE_SQL_DROP = "drop table AccountEntry";
 
@@ -162,11 +171,17 @@ public class AccountEntryModelImpl
 	public static final long USERID_COLUMN_BITMASK = 16L;
 
 	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
+	 */
+	@Deprecated
+	public static final long UUID_COLUMN_BITMASK = 32L;
+
+	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
 	 *		#getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long NAME_COLUMN_BITMASK = 32L;
+	public static final long NAME_COLUMN_BITMASK = 64L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
@@ -267,34 +282,6 @@ public class AccountEntryModelImpl
 		return _attributeSetterBiConsumers;
 	}
 
-	private static Function<InvocationHandler, AccountEntry>
-		_getProxyProviderFunction() {
-
-		Class<?> proxyClass = ProxyUtil.getProxyClass(
-			AccountEntry.class.getClassLoader(), AccountEntry.class,
-			ModelWrapper.class);
-
-		try {
-			Constructor<AccountEntry> constructor =
-				(Constructor<AccountEntry>)proxyClass.getConstructor(
-					InvocationHandler.class);
-
-			return invocationHandler -> {
-				try {
-					return constructor.newInstance(invocationHandler);
-				}
-				catch (ReflectiveOperationException
-							reflectiveOperationException) {
-
-					throw new InternalError(reflectiveOperationException);
-				}
-			};
-		}
-		catch (NoSuchMethodException noSuchMethodException) {
-			throw new InternalError(noSuchMethodException);
-		}
-	}
-
 	private static final Map<String, Function<AccountEntry, Object>>
 		_attributeGetterFunctions;
 	private static final Map<String, BiConsumer<AccountEntry, Object>>
@@ -311,6 +298,9 @@ public class AccountEntryModelImpl
 		attributeSetterBiConsumers.put(
 			"mvccVersion",
 			(BiConsumer<AccountEntry, Long>)AccountEntry::setMvccVersion);
+		attributeGetterFunctions.put("uuid", AccountEntry::getUuid);
+		attributeSetterBiConsumers.put(
+			"uuid", (BiConsumer<AccountEntry, String>)AccountEntry::setUuid);
 		attributeGetterFunctions.put(
 			"externalReferenceCode", AccountEntry::getExternalReferenceCode);
 		attributeSetterBiConsumers.put(
@@ -350,19 +340,12 @@ public class AccountEntryModelImpl
 			(BiConsumer<AccountEntry, Long>)
 				AccountEntry::setDefaultBillingAddressId);
 		attributeGetterFunctions.put(
-			"defaultDeliveryCTermEntryId",
-			AccountEntry::getDefaultDeliveryCTermEntryId);
+			"defaultCPaymentMethodKey",
+			AccountEntry::getDefaultCPaymentMethodKey);
 		attributeSetterBiConsumers.put(
-			"defaultDeliveryCTermEntryId",
-			(BiConsumer<AccountEntry, Long>)
-				AccountEntry::setDefaultDeliveryCTermEntryId);
-		attributeGetterFunctions.put(
-			"defaultPaymentCTermEntryId",
-			AccountEntry::getDefaultPaymentCTermEntryId);
-		attributeSetterBiConsumers.put(
-			"defaultPaymentCTermEntryId",
-			(BiConsumer<AccountEntry, Long>)
-				AccountEntry::setDefaultPaymentCTermEntryId);
+			"defaultCPaymentMethodKey",
+			(BiConsumer<AccountEntry, String>)
+				AccountEntry::setDefaultCPaymentMethodKey);
 		attributeGetterFunctions.put(
 			"defaultShippingAddressId",
 			AccountEntry::getDefaultShippingAddressId);
@@ -397,6 +380,12 @@ public class AccountEntryModelImpl
 		attributeSetterBiConsumers.put(
 			"name", (BiConsumer<AccountEntry, String>)AccountEntry::setName);
 		attributeGetterFunctions.put(
+			"restrictMembership", AccountEntry::getRestrictMembership);
+		attributeSetterBiConsumers.put(
+			"restrictMembership",
+			(BiConsumer<AccountEntry, Boolean>)
+				AccountEntry::setRestrictMembership);
+		attributeGetterFunctions.put(
 			"taxExemptionCode", AccountEntry::getTaxExemptionCode);
 		attributeSetterBiConsumers.put(
 			"taxExemptionCode",
@@ -414,6 +403,21 @@ public class AccountEntryModelImpl
 		attributeSetterBiConsumers.put(
 			"status",
 			(BiConsumer<AccountEntry, Integer>)AccountEntry::setStatus);
+		attributeGetterFunctions.put(
+			"statusByUserId", AccountEntry::getStatusByUserId);
+		attributeSetterBiConsumers.put(
+			"statusByUserId",
+			(BiConsumer<AccountEntry, Long>)AccountEntry::setStatusByUserId);
+		attributeGetterFunctions.put(
+			"statusByUserName", AccountEntry::getStatusByUserName);
+		attributeSetterBiConsumers.put(
+			"statusByUserName",
+			(BiConsumer<AccountEntry, String>)
+				AccountEntry::setStatusByUserName);
+		attributeGetterFunctions.put("statusDate", AccountEntry::getStatusDate);
+		attributeSetterBiConsumers.put(
+			"statusDate",
+			(BiConsumer<AccountEntry, Date>)AccountEntry::setStatusDate);
 
 		_attributeGetterFunctions = Collections.unmodifiableMap(
 			attributeGetterFunctions);
@@ -434,6 +438,35 @@ public class AccountEntryModelImpl
 		}
 
 		_mvccVersion = mvccVersion;
+	}
+
+	@JSON
+	@Override
+	public String getUuid() {
+		if (_uuid == null) {
+			return "";
+		}
+		else {
+			return _uuid;
+		}
+	}
+
+	@Override
+	public void setUuid(String uuid) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_uuid = uuid;
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getColumnOriginalValue(String)}
+	 */
+	@Deprecated
+	public String getOriginalUuid() {
+		return getColumnOriginalValue("uuid_");
 	}
 
 	@JSON
@@ -618,34 +651,22 @@ public class AccountEntryModelImpl
 
 	@JSON
 	@Override
-	public long getDefaultDeliveryCTermEntryId() {
-		return _defaultDeliveryCTermEntryId;
+	public String getDefaultCPaymentMethodKey() {
+		if (_defaultCPaymentMethodKey == null) {
+			return "";
+		}
+		else {
+			return _defaultCPaymentMethodKey;
+		}
 	}
 
 	@Override
-	public void setDefaultDeliveryCTermEntryId(
-		long defaultDeliveryCTermEntryId) {
-
+	public void setDefaultCPaymentMethodKey(String defaultCPaymentMethodKey) {
 		if (_columnOriginalValues == Collections.EMPTY_MAP) {
 			_setColumnOriginalValues();
 		}
 
-		_defaultDeliveryCTermEntryId = defaultDeliveryCTermEntryId;
-	}
-
-	@JSON
-	@Override
-	public long getDefaultPaymentCTermEntryId() {
-		return _defaultPaymentCTermEntryId;
-	}
-
-	@Override
-	public void setDefaultPaymentCTermEntryId(long defaultPaymentCTermEntryId) {
-		if (_columnOriginalValues == Collections.EMPTY_MAP) {
-			_setColumnOriginalValues();
-		}
-
-		_defaultPaymentCTermEntryId = defaultPaymentCTermEntryId;
+		_defaultCPaymentMethodKey = defaultCPaymentMethodKey;
 	}
 
 	@JSON
@@ -775,6 +796,27 @@ public class AccountEntryModelImpl
 
 	@JSON
 	@Override
+	public boolean getRestrictMembership() {
+		return _restrictMembership;
+	}
+
+	@JSON
+	@Override
+	public boolean isRestrictMembership() {
+		return _restrictMembership;
+	}
+
+	@Override
+	public void setRestrictMembership(boolean restrictMembership) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_restrictMembership = restrictMembership;
+	}
+
+	@JSON
+	@Override
 	public String getTaxExemptionCode() {
 		if (_taxExemptionCode == null) {
 			return "";
@@ -867,6 +909,158 @@ public class AccountEntryModelImpl
 			this.<Integer>getColumnOriginalValue("status"));
 	}
 
+	@JSON
+	@Override
+	public long getStatusByUserId() {
+		return _statusByUserId;
+	}
+
+	@Override
+	public void setStatusByUserId(long statusByUserId) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_statusByUserId = statusByUserId;
+	}
+
+	@Override
+	public String getStatusByUserUuid() {
+		try {
+			User user = UserLocalServiceUtil.getUserById(getStatusByUserId());
+
+			return user.getUuid();
+		}
+		catch (PortalException portalException) {
+			return "";
+		}
+	}
+
+	@Override
+	public void setStatusByUserUuid(String statusByUserUuid) {
+	}
+
+	@JSON
+	@Override
+	public String getStatusByUserName() {
+		if (_statusByUserName == null) {
+			return "";
+		}
+		else {
+			return _statusByUserName;
+		}
+	}
+
+	@Override
+	public void setStatusByUserName(String statusByUserName) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_statusByUserName = statusByUserName;
+	}
+
+	@JSON
+	@Override
+	public Date getStatusDate() {
+		return _statusDate;
+	}
+
+	@Override
+	public void setStatusDate(Date statusDate) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_statusDate = statusDate;
+	}
+
+	@Override
+	public StagedModelType getStagedModelType() {
+		return new StagedModelType(
+			PortalUtil.getClassNameId(AccountEntry.class.getName()));
+	}
+
+	@Override
+	public boolean isApproved() {
+		if (getStatus() == WorkflowConstants.STATUS_APPROVED) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	@Override
+	public boolean isDenied() {
+		if (getStatus() == WorkflowConstants.STATUS_DENIED) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	@Override
+	public boolean isDraft() {
+		if (getStatus() == WorkflowConstants.STATUS_DRAFT) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	@Override
+	public boolean isExpired() {
+		if (getStatus() == WorkflowConstants.STATUS_EXPIRED) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	@Override
+	public boolean isInactive() {
+		if (getStatus() == WorkflowConstants.STATUS_INACTIVE) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	@Override
+	public boolean isIncomplete() {
+		if (getStatus() == WorkflowConstants.STATUS_INCOMPLETE) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	@Override
+	public boolean isPending() {
+		if (getStatus() == WorkflowConstants.STATUS_PENDING) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	@Override
+	public boolean isScheduled() {
+		if (getStatus() == WorkflowConstants.STATUS_SCHEDULED) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
 	public long getColumnBitmask() {
 		if (_columnBitmask > 0) {
 			return _columnBitmask;
@@ -924,6 +1118,7 @@ public class AccountEntryModelImpl
 		AccountEntryImpl accountEntryImpl = new AccountEntryImpl();
 
 		accountEntryImpl.setMvccVersion(getMvccVersion());
+		accountEntryImpl.setUuid(getUuid());
 		accountEntryImpl.setExternalReferenceCode(getExternalReferenceCode());
 		accountEntryImpl.setAccountEntryId(getAccountEntryId());
 		accountEntryImpl.setCompanyId(getCompanyId());
@@ -933,10 +1128,8 @@ public class AccountEntryModelImpl
 		accountEntryImpl.setModifiedDate(getModifiedDate());
 		accountEntryImpl.setDefaultBillingAddressId(
 			getDefaultBillingAddressId());
-		accountEntryImpl.setDefaultDeliveryCTermEntryId(
-			getDefaultDeliveryCTermEntryId());
-		accountEntryImpl.setDefaultPaymentCTermEntryId(
-			getDefaultPaymentCTermEntryId());
+		accountEntryImpl.setDefaultCPaymentMethodKey(
+			getDefaultCPaymentMethodKey());
 		accountEntryImpl.setDefaultShippingAddressId(
 			getDefaultShippingAddressId());
 		accountEntryImpl.setParentAccountEntryId(getParentAccountEntryId());
@@ -945,10 +1138,14 @@ public class AccountEntryModelImpl
 		accountEntryImpl.setEmailAddress(getEmailAddress());
 		accountEntryImpl.setLogoId(getLogoId());
 		accountEntryImpl.setName(getName());
+		accountEntryImpl.setRestrictMembership(isRestrictMembership());
 		accountEntryImpl.setTaxExemptionCode(getTaxExemptionCode());
 		accountEntryImpl.setTaxIdNumber(getTaxIdNumber());
 		accountEntryImpl.setType(getType());
 		accountEntryImpl.setStatus(getStatus());
+		accountEntryImpl.setStatusByUserId(getStatusByUserId());
+		accountEntryImpl.setStatusByUserName(getStatusByUserName());
+		accountEntryImpl.setStatusDate(getStatusDate());
 
 		accountEntryImpl.resetOriginalValues();
 
@@ -961,6 +1158,7 @@ public class AccountEntryModelImpl
 
 		accountEntryImpl.setMvccVersion(
 			this.<Long>getColumnOriginalValue("mvccVersion"));
+		accountEntryImpl.setUuid(this.<String>getColumnOriginalValue("uuid_"));
 		accountEntryImpl.setExternalReferenceCode(
 			this.<String>getColumnOriginalValue("externalReferenceCode"));
 		accountEntryImpl.setAccountEntryId(
@@ -976,10 +1174,8 @@ public class AccountEntryModelImpl
 			this.<Date>getColumnOriginalValue("modifiedDate"));
 		accountEntryImpl.setDefaultBillingAddressId(
 			this.<Long>getColumnOriginalValue("defaultBillingAddressId"));
-		accountEntryImpl.setDefaultDeliveryCTermEntryId(
-			this.<Long>getColumnOriginalValue("defaultDeliveryCTermEntryId"));
-		accountEntryImpl.setDefaultPaymentCTermEntryId(
-			this.<Long>getColumnOriginalValue("defaultPaymentCTermEntryId"));
+		accountEntryImpl.setDefaultCPaymentMethodKey(
+			this.<String>getColumnOriginalValue("defaultCPaymentMethodKey"));
 		accountEntryImpl.setDefaultShippingAddressId(
 			this.<Long>getColumnOriginalValue("defaultShippingAddressId"));
 		accountEntryImpl.setParentAccountEntryId(
@@ -992,6 +1188,8 @@ public class AccountEntryModelImpl
 			this.<String>getColumnOriginalValue("emailAddress"));
 		accountEntryImpl.setLogoId(this.<Long>getColumnOriginalValue("logoId"));
 		accountEntryImpl.setName(this.<String>getColumnOriginalValue("name"));
+		accountEntryImpl.setRestrictMembership(
+			this.<Boolean>getColumnOriginalValue("restrictMembership"));
 		accountEntryImpl.setTaxExemptionCode(
 			this.<String>getColumnOriginalValue("taxExemptionCode"));
 		accountEntryImpl.setTaxIdNumber(
@@ -999,6 +1197,12 @@ public class AccountEntryModelImpl
 		accountEntryImpl.setType(this.<String>getColumnOriginalValue("type_"));
 		accountEntryImpl.setStatus(
 			this.<Integer>getColumnOriginalValue("status"));
+		accountEntryImpl.setStatusByUserId(
+			this.<Long>getColumnOriginalValue("statusByUserId"));
+		accountEntryImpl.setStatusByUserName(
+			this.<String>getColumnOriginalValue("statusByUserName"));
+		accountEntryImpl.setStatusDate(
+			this.<Date>getColumnOriginalValue("statusDate"));
 
 		return accountEntryImpl;
 	}
@@ -1077,6 +1281,14 @@ public class AccountEntryModelImpl
 
 		accountEntryCacheModel.mvccVersion = getMvccVersion();
 
+		accountEntryCacheModel.uuid = getUuid();
+
+		String uuid = accountEntryCacheModel.uuid;
+
+		if ((uuid != null) && (uuid.length() == 0)) {
+			accountEntryCacheModel.uuid = null;
+		}
+
 		accountEntryCacheModel.externalReferenceCode =
 			getExternalReferenceCode();
 
@@ -1124,11 +1336,17 @@ public class AccountEntryModelImpl
 		accountEntryCacheModel.defaultBillingAddressId =
 			getDefaultBillingAddressId();
 
-		accountEntryCacheModel.defaultDeliveryCTermEntryId =
-			getDefaultDeliveryCTermEntryId();
+		accountEntryCacheModel.defaultCPaymentMethodKey =
+			getDefaultCPaymentMethodKey();
 
-		accountEntryCacheModel.defaultPaymentCTermEntryId =
-			getDefaultPaymentCTermEntryId();
+		String defaultCPaymentMethodKey =
+			accountEntryCacheModel.defaultCPaymentMethodKey;
+
+		if ((defaultCPaymentMethodKey != null) &&
+			(defaultCPaymentMethodKey.length() == 0)) {
+
+			accountEntryCacheModel.defaultCPaymentMethodKey = null;
+		}
 
 		accountEntryCacheModel.defaultShippingAddressId =
 			getDefaultShippingAddressId();
@@ -1169,6 +1387,8 @@ public class AccountEntryModelImpl
 			accountEntryCacheModel.name = null;
 		}
 
+		accountEntryCacheModel.restrictMembership = isRestrictMembership();
+
 		accountEntryCacheModel.taxExemptionCode = getTaxExemptionCode();
 
 		String taxExemptionCode = accountEntryCacheModel.taxExemptionCode;
@@ -1194,6 +1414,25 @@ public class AccountEntryModelImpl
 		}
 
 		accountEntryCacheModel.status = getStatus();
+
+		accountEntryCacheModel.statusByUserId = getStatusByUserId();
+
+		accountEntryCacheModel.statusByUserName = getStatusByUserName();
+
+		String statusByUserName = accountEntryCacheModel.statusByUserName;
+
+		if ((statusByUserName != null) && (statusByUserName.length() == 0)) {
+			accountEntryCacheModel.statusByUserName = null;
+		}
+
+		Date statusDate = getStatusDate();
+
+		if (statusDate != null) {
+			accountEntryCacheModel.statusDate = statusDate.getTime();
+		}
+		else {
+			accountEntryCacheModel.statusDate = Long.MIN_VALUE;
+		}
 
 		return accountEntryCacheModel;
 	}
@@ -1247,45 +1486,17 @@ public class AccountEntryModelImpl
 		return sb.toString();
 	}
 
-	@Override
-	public String toXmlString() {
-		Map<String, Function<AccountEntry, Object>> attributeGetterFunctions =
-			getAttributeGetterFunctions();
-
-		StringBundler sb = new StringBundler(
-			(5 * attributeGetterFunctions.size()) + 4);
-
-		sb.append("<model><model-name>");
-		sb.append(getModelClassName());
-		sb.append("</model-name>");
-
-		for (Map.Entry<String, Function<AccountEntry, Object>> entry :
-				attributeGetterFunctions.entrySet()) {
-
-			String attributeName = entry.getKey();
-			Function<AccountEntry, Object> attributeGetterFunction =
-				entry.getValue();
-
-			sb.append("<column><column-name>");
-			sb.append(attributeName);
-			sb.append("</column-name><column-value><![CDATA[");
-			sb.append(attributeGetterFunction.apply((AccountEntry)this));
-			sb.append("]]></column-value></column>");
-		}
-
-		sb.append("</model>");
-
-		return sb.toString();
-	}
-
 	private static class EscapedModelProxyProviderFunctionHolder {
 
 		private static final Function<InvocationHandler, AccountEntry>
-			_escapedModelProxyProviderFunction = _getProxyProviderFunction();
+			_escapedModelProxyProviderFunction =
+				ProxyUtil.getProxyProviderFunction(
+					AccountEntry.class, ModelWrapper.class);
 
 	}
 
 	private long _mvccVersion;
+	private String _uuid;
 	private String _externalReferenceCode;
 	private long _accountEntryId;
 	private long _companyId;
@@ -1295,8 +1506,7 @@ public class AccountEntryModelImpl
 	private Date _modifiedDate;
 	private boolean _setModifiedDate;
 	private long _defaultBillingAddressId;
-	private long _defaultDeliveryCTermEntryId;
-	private long _defaultPaymentCTermEntryId;
+	private String _defaultCPaymentMethodKey;
 	private long _defaultShippingAddressId;
 	private long _parentAccountEntryId;
 	private String _description;
@@ -1304,10 +1514,14 @@ public class AccountEntryModelImpl
 	private String _emailAddress;
 	private long _logoId;
 	private String _name;
+	private boolean _restrictMembership;
 	private String _taxExemptionCode;
 	private String _taxIdNumber;
 	private String _type;
 	private int _status;
+	private long _statusByUserId;
+	private String _statusByUserName;
+	private Date _statusDate;
 
 	public <T> T getColumnValue(String columnName) {
 		columnName = _attributeNames.getOrDefault(columnName, columnName);
@@ -1339,6 +1553,7 @@ public class AccountEntryModelImpl
 		_columnOriginalValues = new HashMap<String, Object>();
 
 		_columnOriginalValues.put("mvccVersion", _mvccVersion);
+		_columnOriginalValues.put("uuid_", _uuid);
 		_columnOriginalValues.put(
 			"externalReferenceCode", _externalReferenceCode);
 		_columnOriginalValues.put("accountEntryId", _accountEntryId);
@@ -1350,9 +1565,7 @@ public class AccountEntryModelImpl
 		_columnOriginalValues.put(
 			"defaultBillingAddressId", _defaultBillingAddressId);
 		_columnOriginalValues.put(
-			"defaultDeliveryCTermEntryId", _defaultDeliveryCTermEntryId);
-		_columnOriginalValues.put(
-			"defaultPaymentCTermEntryId", _defaultPaymentCTermEntryId);
+			"defaultCPaymentMethodKey", _defaultCPaymentMethodKey);
 		_columnOriginalValues.put(
 			"defaultShippingAddressId", _defaultShippingAddressId);
 		_columnOriginalValues.put(
@@ -1362,10 +1575,14 @@ public class AccountEntryModelImpl
 		_columnOriginalValues.put("emailAddress", _emailAddress);
 		_columnOriginalValues.put("logoId", _logoId);
 		_columnOriginalValues.put("name", _name);
+		_columnOriginalValues.put("restrictMembership", _restrictMembership);
 		_columnOriginalValues.put("taxExemptionCode", _taxExemptionCode);
 		_columnOriginalValues.put("taxIdNumber", _taxIdNumber);
 		_columnOriginalValues.put("type_", _type);
 		_columnOriginalValues.put("status", _status);
+		_columnOriginalValues.put("statusByUserId", _statusByUserId);
+		_columnOriginalValues.put("statusByUserName", _statusByUserName);
+		_columnOriginalValues.put("statusDate", _statusDate);
 	}
 
 	private static final Map<String, String> _attributeNames;
@@ -1373,6 +1590,7 @@ public class AccountEntryModelImpl
 	static {
 		Map<String, String> attributeNames = new HashMap<>();
 
+		attributeNames.put("uuid_", "uuid");
 		attributeNames.put("type_", "type");
 
 		_attributeNames = Collections.unmodifiableMap(attributeNames);
@@ -1391,25 +1609,25 @@ public class AccountEntryModelImpl
 
 		columnBitmasks.put("mvccVersion", 1L);
 
-		columnBitmasks.put("externalReferenceCode", 2L);
+		columnBitmasks.put("uuid_", 2L);
 
-		columnBitmasks.put("accountEntryId", 4L);
+		columnBitmasks.put("externalReferenceCode", 4L);
 
-		columnBitmasks.put("companyId", 8L);
+		columnBitmasks.put("accountEntryId", 8L);
 
-		columnBitmasks.put("userId", 16L);
+		columnBitmasks.put("companyId", 16L);
 
-		columnBitmasks.put("userName", 32L);
+		columnBitmasks.put("userId", 32L);
 
-		columnBitmasks.put("createDate", 64L);
+		columnBitmasks.put("userName", 64L);
 
-		columnBitmasks.put("modifiedDate", 128L);
+		columnBitmasks.put("createDate", 128L);
 
-		columnBitmasks.put("defaultBillingAddressId", 256L);
+		columnBitmasks.put("modifiedDate", 256L);
 
-		columnBitmasks.put("defaultDeliveryCTermEntryId", 512L);
+		columnBitmasks.put("defaultBillingAddressId", 512L);
 
-		columnBitmasks.put("defaultPaymentCTermEntryId", 1024L);
+		columnBitmasks.put("defaultCPaymentMethodKey", 1024L);
 
 		columnBitmasks.put("defaultShippingAddressId", 2048L);
 
@@ -1425,13 +1643,21 @@ public class AccountEntryModelImpl
 
 		columnBitmasks.put("name", 131072L);
 
-		columnBitmasks.put("taxExemptionCode", 262144L);
+		columnBitmasks.put("restrictMembership", 262144L);
 
-		columnBitmasks.put("taxIdNumber", 524288L);
+		columnBitmasks.put("taxExemptionCode", 524288L);
 
-		columnBitmasks.put("type_", 1048576L);
+		columnBitmasks.put("taxIdNumber", 1048576L);
 
-		columnBitmasks.put("status", 2097152L);
+		columnBitmasks.put("type_", 2097152L);
+
+		columnBitmasks.put("status", 4194304L);
+
+		columnBitmasks.put("statusByUserId", 8388608L);
+
+		columnBitmasks.put("statusByUserName", 16777216L);
+
+		columnBitmasks.put("statusDate", 33554432L);
 
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}

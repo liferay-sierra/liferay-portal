@@ -34,16 +34,12 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Inácio Nery
  */
-@Component(immediate = true, service = NodeWorkflowMetricsIndexer.class)
+@Component(service = NodeWorkflowMetricsIndexer.class)
 public class NodeWorkflowMetricsIndexerImpl
 	extends BaseWorkflowMetricsIndexer implements NodeWorkflowMetricsIndexer {
 
 	@Override
 	public Document addNode(AddNodeRequest addNodeRequest) {
-		if (searchEngineAdapter == null) {
-			return null;
-		}
-
 		DocumentBuilder documentBuilder = documentBuilderFactory.builder();
 
 		Document document = documentBuilder.setLong(

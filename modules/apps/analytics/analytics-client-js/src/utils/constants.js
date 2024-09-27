@@ -14,7 +14,19 @@
 
 // AC Version
 
-export const ANALYTICS_CLIENT_VERSION = '1.0.3';
+export const ANALYTICS_CLIENT_VERSION = '1.1.1';
+
+// Application ID
+
+export const BLOG = 'Blog';
+export const CUSTOM = 'Custom';
+export const CUSTOM_EVENT = 'CustomEvent';
+export const DOCUMENT = 'Document';
+export const FORM = 'Form';
+export const PAGE = 'Page';
+export const WEB_CONTENT = 'WebContent';
+
+export const DXP_APPLICATION_IDS = [BLOG, CUSTOM, DOCUMENT, FORM, WEB_CONTENT];
 
 // Default Config
 
@@ -37,6 +49,8 @@ export const QUEUE_PRIORITY_DEFAULT = 1;
 export const QUEUE_PRIORITY_IDENTITY = 10;
 
 // Local Storage keys
+
+export const STORAGE_KEY_CHANNEL_ID = 'ac_client_channel_id';
 
 export const STORAGE_KEY_CONTEXTS = 'ac_client_context';
 
@@ -97,7 +111,7 @@ export const READ_WORDS_PER_MIN = 265;
 // Track method
 
 export const TRACK_DEFAULT_OPTIONS = {
-	applicationId: 'CustomEvent',
+	applicationId: CUSTOM_EVENT,
 };
 
 // Validation

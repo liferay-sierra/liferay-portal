@@ -12,8 +12,8 @@
  * details.
  */
 
-import {updateActiveView} from '../actions/updateActiveView';
 import {saveViewSettings} from '../utils/saveViewSettings';
+import {VIEWS_ACTION_TYPES} from '../views/viewsReducer';
 
 export default function persistActiveView({
 	activeViewName,
@@ -21,8 +21,11 @@ export default function persistActiveView({
 	id,
 	portletId,
 }) {
-	return (dispatch) => {
-		dispatch(updateActiveView(activeViewName));
+	return (viewsDispatch) => {
+		viewsDispatch({
+			type: VIEWS_ACTION_TYPES.UPDATE_ACTIVE_VIEW,
+			value: activeViewName,
+		});
 
 		return saveViewSettings({
 			appURL,

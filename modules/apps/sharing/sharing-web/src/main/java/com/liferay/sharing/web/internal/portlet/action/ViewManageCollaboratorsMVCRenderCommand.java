@@ -14,15 +14,15 @@
 
 package com.liferay.sharing.web.internal.portlet.action;
 
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCRenderCommand;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
@@ -112,14 +112,13 @@ public class ViewManageCollaboratorsMVCRenderCommand
 					classNameId, classPK);
 
 			if (sharingEntriesCount == 0) {
-				return JSONFactoryUtil.createJSONArray();
+				return _jsonFactory.createJSONArray();
 			}
 
 			ThemeDisplay themeDisplay =
 				(ThemeDisplay)renderRequest.getAttribute(WebKeys.THEME_DISPLAY);
 
-			JSONArray collaboratorsJSONArray =
-				JSONFactoryUtil.createJSONArray();
+			JSONArray collaboratorsJSONArray = _jsonFactory.createJSONArray();
 
 			List<SharingEntry> sharingEntries =
 				_sharingEntryLocalService.getSharingEntries(
@@ -152,7 +151,7 @@ public class ViewManageCollaboratorsMVCRenderCommand
 					Format expirationDateTooltipDateFormat =
 						DateFormatFactoryUtil.getDate(themeDisplay.getLocale());
 
-					expirationDateTooltip = LanguageUtil.format(
+					expirationDateTooltip = _language.format(
 						themeDisplay.getLocale(), "until-x",
 						expirationDateTooltipDateFormat.format(expirationDate));
 				}
@@ -211,7 +210,7 @@ public class ViewManageCollaboratorsMVCRenderCommand
 				themeDisplay.getScopeGroupId(), themeDisplay.getLocale());
 
 		JSONArray sharingEntryPermissionDisplaySelectOptionsJSONArray =
-			JSONFactoryUtil.createJSONArray();
+			_jsonFactory.createJSONArray();
 
 		for (SharingEntryPermissionDisplay sharingEntryPermissionDisplay :
 				sharingEntryPermissionDisplays) {
@@ -228,6 +227,12 @@ public class ViewManageCollaboratorsMVCRenderCommand
 
 		return sharingEntryPermissionDisplaySelectOptionsJSONArray;
 	}
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private SharingEntryLocalService _sharingEntryLocalService;

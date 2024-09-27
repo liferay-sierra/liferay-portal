@@ -23,7 +23,7 @@ AccountEntryDisplay accountEntryDisplay = (AccountEntryDisplay)request.getAttrib
 <liferay-util:buffer
 	var="removeUserIcon"
 >
-	<a class="float-right remove-user-link" href="javascript:;">
+	<a class="float-right remove-user-link" href="javascript:void(0);">
 		<liferay-ui:icon
 			icon="times-circle"
 			markupView="lexicon"
@@ -55,28 +55,17 @@ AccountEntryDisplay accountEntryDisplay = (AccountEntryDisplay)request.getAttrib
 					label="<%= true %>"
 					linkCssClass="btn btn-secondary btn-sm"
 					message="select"
-					url="javascript:;"
+					url="javascript:void(0);"
 				/>
 			</span>
 		</clay:content-col>
 	</clay:content-row>
 
 	<%
-	Optional<User> personAccountEntryUserOptional = accountEntryDisplay.getPersonAccountEntryUserOptional();
+	User personAccountEntryUser = accountEntryDisplay.getPersonAccountEntryUser();
 	%>
 
-	<aui:input
-		name="personAccountEntryUserId"
-		type="hidden"
-		value="<%=
-			String.valueOf(
-				personAccountEntryUserOptional.map(
-					User::getUserId
-				).orElse(
-					0L
-				))
-		%>"
-	/>
+	<aui:input name="personAccountEntryUserId" type="hidden" value="<%= String.valueOf(personAccountEntryUser != null ? personAccountEntryUser.getUserId() : 0) %>" />
 
 	<liferay-ui:search-container
 		compactEmptyResultsMessage="<%= true %>"
@@ -86,13 +75,7 @@ AccountEntryDisplay accountEntryDisplay = (AccountEntryDisplay)request.getAttrib
 		total="<%= 1 %>"
 	>
 		<liferay-ui:search-container-results
-			results="<%=
-				personAccountEntryUserOptional.map(
-					Collections::singletonList
-				).orElse(
-					Collections.emptyList()
-				)
-			%>"
+			results="<%= ListUtil.filter(Collections.singletonList(personAccountEntryUser), Objects::nonNull) %>"
 		/>
 
 		<liferay-ui:search-container-row

@@ -43,7 +43,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Rafael Praxedes
  */
 @Component(
-	immediate = true,
 	property = {
 		"dynamic.data.mapping.form.builder.servlet=true",
 		"osgi.http.whiteboard.context.path=/dynamic-data-mapping-form-builder-roles",
@@ -65,8 +64,7 @@ public class RolesServlet extends BaseDDMFormBuilderServlet {
 		httpServletResponse.setContentType(ContentTypes.APPLICATION_JSON);
 		httpServletResponse.setStatus(HttpServletResponse.SC_OK);
 
-		ServletResponseUtil.write(
-			httpServletResponse, jsonArray.toJSONString());
+		ServletResponseUtil.write(httpServletResponse, jsonArray.toString());
 	}
 
 	protected JSONObject toJSONObject(Role role) {

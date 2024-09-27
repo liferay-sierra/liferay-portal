@@ -278,6 +278,13 @@ public class FragmentCollectionWrapper
 	}
 
 	@Override
+	public com.liferay.portal.kernel.repository.model.FileEntry getResource(
+		String path) {
+
+		return model.getResource(path);
+	}
+
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.FileEntry>
 			getResources()
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -297,6 +304,14 @@ public class FragmentCollectionWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.getResourcesFolderId(createIfAbsent);
+	}
+
+	@Override
+	public Map<String, com.liferay.portal.kernel.repository.model.FileEntry>
+			getResourcesMap()
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getResourcesMap();
 	}
 
 	/**

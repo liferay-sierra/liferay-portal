@@ -21,24 +21,40 @@ import getAllPortals from '../../../../../app/components/layout-data-items/getAl
 import hasDropZoneChild from '../../../../../app/components/layout-data-items/hasDropZoneChild';
 import {EDITABLE_FRAGMENT_ENTRY_PROCESSOR} from '../../../../../app/config/constants/editableFragmentEntryProcessor';
 import {EDITABLE_TYPES} from '../../../../../app/config/constants/editableTypes';
+import {FRAGMENT_ENTRY_TYPES} from '../../../../../app/config/constants/fragmentEntryTypes';
+import {FREEMARKER_FRAGMENT_ENTRY_PROCESSOR} from '../../../../../app/config/constants/freemarkerFragmentEntryProcessor';
 import {ITEM_TYPES} from '../../../../../app/config/constants/itemTypes';
 import {LAYOUT_DATA_ITEM_TYPES} from '../../../../../app/config/constants/layoutDataItemTypes';
 import {LAYOUT_TYPES} from '../../../../../app/config/constants/layoutTypes';
 import {config} from '../../../../../app/config/index';
-import {useActiveItemId} from '../../../../../app/contexts/ControlsContext';
+import {
+	useActiveItemId,
+	useHoverItem,
+} from '../../../../../app/contexts/ControlsContext';
+import {useMovementTarget} from '../../../../../app/contexts/KeyboardMovementContext';
 import {useSelector} from '../../../../../app/contexts/StoreContext';
 import selectCanUpdateEditables from '../../../../../app/selectors/selectCanUpdateEditables';
 import selectCanUpdateItemConfiguration from '../../../../../app/selectors/selectCanUpdateItemConfiguration';
+import selectLayoutDataItemLabel from '../../../../../app/selectors/selectLayoutDataItemLabel';
 import {selectPageContents} from '../../../../../app/selectors/selectPageContents';
 import canActivateEditable from '../../../../../app/utils/canActivateEditable';
 import {DragAndDropContextProvider} from '../../../../../app/utils/drag-and-drop/useDragAndDrop';
 import isMapped from '../../../../../app/utils/editable-value/isMapped';
 import isMappedToCollection from '../../../../../app/utils/editable-value/isMappedToCollection';
-import getLayoutDataItemLabel from '../../../../../app/utils/getLayoutDataItemLabel';
+import {formIsMapped} from '../../../../../app/utils/formIsMapped';
 import getMappingFieldsKey from '../../../../../app/utils/getMappingFieldsKey';
 import {getResponsiveConfig} from '../../../../../app/utils/getResponsiveConfig';
-import PageStructureSidebarSection from './PageStructureSidebarSection';
+import getSelectedField from '../../../../../app/utils/getSelectedField';
 import StructureTreeNode from './StructureTreeNode';
+
+const EDITABLE_LABEL = {
+	[EDITABLE_TYPES.backgroundImage]: Liferay.Language.get('background-image'),
+	[EDITABLE_TYPES.html]: Liferay.Language.get('html'),
+	[EDITABLE_TYPES.image]: Liferay.Language.get('image'),
+	[EDITABLE_TYPES.link]: Liferay.Language.get('link'),
+	[EDITABLE_TYPES['rich-text']]: Liferay.Language.get('rich-text'),
+	[EDITABLE_TYPES.text]: Liferay.Language.get('text'),
+};
 
 const EDITABLE_TYPE_ICONS = {
 	[EDITABLE_TYPES.backgroundImage]: 'picture',
@@ -53,6 +69,7 @@ const LAYOUT_DATA_ITEM_TYPE_ICONS = {
 	[LAYOUT_DATA_ITEM_TYPES.collection]: 'list',
 	[LAYOUT_DATA_ITEM_TYPES.collectionItem]: 'document',
 	[LAYOUT_DATA_ITEM_TYPES.container]: 'container',
+	[LAYOUT_DATA_ITEM_TYPES.form]: 'container',
 	[LAYOUT_DATA_ITEM_TYPES.dropZone]: 'box-container',
 	[LAYOUT_DATA_ITEM_TYPES.fragment]: 'code',
 	[LAYOUT_DATA_ITEM_TYPES.fragmentDropZone]: 'box-container',
@@ -69,6 +86,7 @@ export default function PageStructureSidebar() {
 	const fragmentEntryLinks = useSelector((state) => state.fragmentEntryLinks);
 	const layoutData = useSelector((state) => state.layoutData);
 	const pageContents = useSelector(selectPageContents);
+	const hoverItem = useHoverItem();
 
 	const mappingFields = useSelector((state) => state.mappingFields);
 	const masterLayoutData = useSelector(
@@ -91,6 +109,8 @@ export default function PageStructureSidebar() {
 		setDragAndDropHoveredItemId(itemId);
 	}, []);
 
+	const {itemId: keyboardMovementTargetId} = useMovementTarget();
+
 	const nodes = useMemo(
 		() =>
 			visit(data.items[data.rootItems.main], data.items, {
@@ -100,6 +120,7 @@ export default function PageStructureSidebar() {
 				dragAndDropHoveredItemId,
 				fragmentEntryLinks,
 				isMasterPage,
+				keyboardMovementTargetId,
 				layoutData,
 				mappingFields,
 				masterLayoutData,
@@ -116,6 +137,7 @@ export default function PageStructureSidebar() {
 			dragAndDropHoveredItemId,
 			fragmentEntryLinks,
 			isMasterPage,
+			keyboardMovementTargetId,
 			layoutData,
 			mappingFields,
 			masterLayoutData,
@@ -125,29 +147,39 @@ export default function PageStructureSidebar() {
 		]
 	);
 
-	return (
-		<PageStructureSidebarSection>
-			<div className="page-editor__page-structure__structure-tree">
-				{!nodes.length && (
-					<ClayAlert
-						displayType="info"
-						title={Liferay.Language.get('info')}
-					>
-						{Liferay.Language.get(
-							'there-is-no-content-on-this-page'
-						)}
-					</ClayAlert>
-				)}
+	const handleNodeFocus = () => {
+		const focusedItem = document.activeElement?.querySelector(
+			'[data-item-id]'
+		);
 
-				<DragAndDropContextProvider>
-					<Treeview
-						NodeComponent={StructureTreeNode}
-						nodes={nodes}
-						selectedNodeIds={[activeItemId]}
-					/>
-				</DragAndDropContextProvider>
-			</div>
-		</PageStructureSidebarSection>
+		if (focusedItem) {
+			hoverItem(focusedItem.dataset.itemId);
+		}
+	};
+
+	return (
+		<div
+			className="overflow-auto page-editor__page-structure__structure-tree pt-4"
+			onFocus={handleNodeFocus}
+		>
+			{!nodes.length && (
+				<ClayAlert
+					aria-live="polite"
+					displayType="info"
+					title={Liferay.Language.get('info')}
+				>
+					{Liferay.Language.get('there-is-no-content-on-this-page')}
+				</ClayAlert>
+			)}
+
+			<DragAndDropContextProvider>
+				<Treeview
+					NodeComponent={StructureTreeNode}
+					nodes={nodes}
+					selectedNodeIds={[activeItemId]}
+				/>
+			</DragAndDropContextProvider>
+		</div>
 	);
 }
 
@@ -213,17 +245,18 @@ function getMappedFieldLabel(
 	const {selectedMappingTypes} = config;
 
 	if (!infoItem && !selectedMappingTypes && !collectionConfig) {
-		for (const [key, value] of Object.entries(mappingFields)) {
-			if (key.startsWith(editable.classNameId)) {
-				const field = value
-					.flatMap((fieldSet) => fieldSet.fields)
-					.find(
-						(field) =>
-							field.key ===
-							(editable.mappedField ||
-								editable.fieldId ||
-								editable.collectionFieldId)
-					);
+		for (const [mappingFieldsKey, fields] of Object.entries(
+			mappingFields
+		)) {
+			if (mappingFieldsKey.startsWith(editable.classNameId)) {
+				const field = getSelectedField({
+					fields,
+					mappingFieldsKey,
+					value:
+						editable.mappedField ||
+						editable.fieldId ||
+						editable.collectionFieldId,
+				});
 
 				return field?.label;
 			}
@@ -241,20 +274,50 @@ function getMappedFieldLabel(
 	const fields = mappingFields[key];
 
 	if (fields) {
-		const field = fields
-			.flatMap((fieldSet) => fieldSet.fields)
-			.find(
-				(field) =>
-					field.key ===
-					(editable.mappedField ||
-						editable.fieldId ||
-						editable.collectionFieldId)
-			);
+		const field = getSelectedField({
+			fields,
+			mappingFieldsKey: key,
+			value:
+				editable.mappedField ||
+				editable.fieldId ||
+				editable.collectionFieldId,
+		});
 
 		return field?.label;
 	}
 
 	return null;
+}
+
+function getNameInfo(item) {
+	if (
+		item.type === LAYOUT_DATA_ITEM_TYPES.container &&
+		item.config.htmlTag !== 'div'
+	) {
+		return item.config.htmlTag;
+	}
+
+	return null;
+}
+
+function fragmentIsMapped(item, fragmentEntryLinks) {
+	if (item.type === LAYOUT_DATA_ITEM_TYPES.form) {
+		return formIsMapped(item);
+	}
+	else if (item.type === LAYOUT_DATA_ITEM_TYPES.fragment) {
+		const {editableValues, fragmentEntryType} = fragmentEntryLinks[
+			item.config.fragmentEntryLinkId
+		];
+
+		return fragmentEntryType === FRAGMENT_ENTRY_TYPES.input
+			? Boolean(
+					editableValues[FREEMARKER_FRAGMENT_ENTRY_PROCESSOR]
+						?.inputFieldId
+			  )
+			: false;
+	}
+
+	return false;
 }
 
 function isItemHidden(item, selectedViewportSize) {
@@ -264,6 +327,21 @@ function isItemHidden(item, selectedViewportSize) {
 	);
 
 	return responsiveConfig.styles.display === 'none';
+}
+
+function isHidable(item, fragmentEntryLinks, layoutData) {
+	if (!isRemovable(item, layoutData)) {
+		return false;
+	}
+
+	if (item.type !== LAYOUT_DATA_ITEM_TYPES.fragment) {
+		return true;
+	}
+
+	const fragmentEntryLink =
+		fragmentEntryLinks[item.config.fragmentEntryLinkId];
+
+	return fragmentEntryLink.fragmentEntryType !== FRAGMENT_ENTRY_TYPES.input;
 }
 
 function isRemovable(item, layoutData) {
@@ -289,6 +367,7 @@ function visit(
 		fragmentEntryLinks,
 		hasHiddenAncestor,
 		isMasterPage,
+		keyboardMovementTargetId,
 		layoutData,
 		mappingFields,
 		masterLayoutData,
@@ -331,7 +410,7 @@ function visit(
 				const editable =
 					fragmentEntryLink.editableValues[
 						EDITABLE_FRAGMENT_ENTRY_PROCESSOR
-					][editableId];
+					]?.[editableId];
 
 				const childId = `${item.config.fragmentEntryLinkId}-${editableId}`;
 				const type =
@@ -367,6 +446,7 @@ function visit(
 					dragAndDropHoveredItemId,
 					draggable: false,
 					expanded: childId === activeItemId,
+					hidable: false,
 					hidden: false,
 					hiddenAncestor: hasHiddenAncestor || hidden,
 					icon: EDITABLE_TYPE_ICONS[type],
@@ -378,6 +458,7 @@ function visit(
 					onHoverNode,
 					parentId: item.parentId,
 					removable: false,
+					tooltipTitle: EDITABLE_LABEL[type],
 				});
 			}
 			else {
@@ -408,14 +489,16 @@ function visit(
 	}
 	else {
 		item.children.forEach((childId) => {
-			const childItem = items[childId];
-
 			if (
-				item.type === LAYOUT_DATA_ITEM_TYPES.collection &&
-				!item.config.collection
+				(item.type === LAYOUT_DATA_ITEM_TYPES.collection &&
+					!item.config.collection) ||
+				(item.type === LAYOUT_DATA_ITEM_TYPES.form &&
+					!formIsMapped(item))
 			) {
 				return;
 			}
+
+			const childItem = items[childId];
 
 			if (
 				!isMasterPage &&
@@ -432,6 +515,7 @@ function visit(
 						fragmentEntryLinks,
 						hasHiddenAncestor: hasHiddenAncestor || hidden,
 						isMasterPage,
+						keyboardMovementTargetId,
 						layoutData,
 						mappingFields,
 						masterLayoutData,
@@ -452,6 +536,7 @@ function visit(
 					fragmentEntryLinks,
 					hasHiddenAncestor: hasHiddenAncestor || hidden,
 					isMasterPage,
+					keyboardMovementTargetId,
 					layoutData,
 					mappingFields,
 					masterLayoutData,
@@ -475,17 +560,26 @@ function visit(
 		draggable: true,
 		expanded:
 			item.itemId === activeItemId ||
-			dragAndDropHoveredItemId === item.itemId,
+			item.itemId === dragAndDropHoveredItemId ||
+			item.itemId === keyboardMovementTargetId,
+		hidable:
+			!itemInMasterLayout &&
+			isHidable(item, fragmentEntryLinks, layoutData),
 		hidden,
 		hiddenAncestor: hasHiddenAncestor,
 		icon,
 		id: item.itemId,
 		isMasterItem: !isMasterPage && itemInMasterLayout,
 		itemType: ITEM_TYPES.layoutDataItem,
-		name: getLayoutDataItemLabel(item, fragmentEntryLinks),
+		mapped: fragmentIsMapped(item, fragmentEntryLinks),
+		name: selectLayoutDataItemLabel({fragmentEntryLinks}, item),
+		nameInfo: getNameInfo(item),
 		onHoverNode,
 		parentItemId: item.parentId,
 		removable: !itemInMasterLayout && isRemovable(item, layoutData),
+		tooltipTitle: selectLayoutDataItemLabel({fragmentEntryLinks}, item, {
+			useCustomName: false,
+		}),
 		type: item.type,
 	};
 }

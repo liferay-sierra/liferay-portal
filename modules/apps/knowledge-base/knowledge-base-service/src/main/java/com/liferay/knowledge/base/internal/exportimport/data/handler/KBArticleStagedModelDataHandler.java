@@ -330,8 +330,9 @@ public class KBArticleStagedModelDataHandler
 			kbArticle.getExternalReferenceCode(), userId,
 			parentResourceClassNameId, parentResourcePrimKey,
 			kbArticle.getTitle(), kbArticle.getUrlTitle(),
-			kbArticle.getContent(), kbArticle.getDescription(),
-			kbArticle.getSourceURL(), sections, null, serviceContext);
+			kbArticle.getContent(), kbArticle.getDescription(), sections,
+			kbArticle.getSourceURL(), kbArticle.getExpirationDate(),
+			kbArticle.getReviewDate(), null, serviceContext);
 
 		ServiceContextThreadLocal.pushServiceContext(serviceContext);
 
@@ -460,7 +461,7 @@ public class KBArticleStagedModelDataHandler
 				}
 
 				_portletFileRepository.addPortletFileEntry(
-					portletDataContext.getScopeGroupId(),
+					null, portletDataContext.getScopeGroupId(),
 					portletDataContext.getUserId(
 						importedKBArticle.getUserUuid()),
 					KBArticle.class.getName(), importedKBArticle.getClassPK(),
@@ -487,8 +488,9 @@ public class KBArticleStagedModelDataHandler
 
 		_kbArticleLocalService.updateKBArticle(
 			userId, resourcePrimKey, kbArticle.getTitle(),
-			kbArticle.getContent(), kbArticle.getDescription(),
-			kbArticle.getSourceURL(), sections, null, null, serviceContext);
+			kbArticle.getContent(), kbArticle.getDescription(), sections,
+			kbArticle.getSourceURL(), kbArticle.getExpirationDate(),
+			kbArticle.getReviewDate(), null, null, serviceContext);
 
 		ServiceContextThreadLocal.pushServiceContext(serviceContext);
 

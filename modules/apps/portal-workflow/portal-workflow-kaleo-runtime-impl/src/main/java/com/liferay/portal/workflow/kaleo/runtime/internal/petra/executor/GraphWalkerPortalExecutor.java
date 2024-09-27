@@ -21,6 +21,7 @@ import com.liferay.petra.executor.PortalExecutorConfig;
 import com.liferay.petra.executor.PortalExecutorManager;
 import com.liferay.petra.lang.CentralizedThreadLocal;
 import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
@@ -51,7 +52,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Rafael Praxedes
  */
-@Component(immediate = true, service = GraphWalkerPortalExecutor.class)
+@Component(service = GraphWalkerPortalExecutor.class)
 public class GraphWalkerPortalExecutor {
 
 	public void execute(PathElement pathElement, boolean waitForCompletion) {
@@ -61,9 +62,25 @@ public class GraphWalkerPortalExecutor {
 			return;
 		}
 
+		ExecutionContext executionContext = pathElement.getExecutionContext();
+
+		ServiceContext serviceContext = executionContext.getServiceContext();
+
+		long companyId = serviceContext.getCompanyId();
+
+		long ctCollectionId = CTCollectionThreadLocal.getCTCollectionId();
+
 		if (waitForCompletion) {
 			NoticeableFuture<?> noticeableFuture =
-				_noticeableExecutorService.submit(() -> _walk(pathElement));
+				_noticeableExecutorService.submit(
+					() -> {
+						try (SafeCloseable safeCloseable =
+								CompanyThreadLocal.setWithSafeCloseable(
+									companyId, ctCollectionId)) {
+
+							_walk(pathElement);
+						}
+					});
 
 			try {
 				noticeableFuture.get();
@@ -76,7 +93,15 @@ public class GraphWalkerPortalExecutor {
 			}
 		}
 		else {
-			_noticeableExecutorService.submit(() -> _walk(pathElement));
+			_noticeableExecutorService.submit(
+				() -> {
+					try (SafeCloseable safeCloseable =
+							CompanyThreadLocal.setWithSafeCloseable(
+								companyId, ctCollectionId)) {
+
+						_walk(pathElement);
+					}
+				});
 		}
 	}
 
@@ -119,14 +144,7 @@ public class GraphWalkerPortalExecutor {
 	}
 
 	private void _walk(PathElement pathElement) {
-		ExecutionContext executionException = pathElement.getExecutionContext();
-
-		ServiceContext serviceContext = executionException.getServiceContext();
-
-		try (SafeCloseable safeCloseable =
-				CompanyThreadLocal.setWithSafeCloseable(
-					serviceContext.getCompanyId())) {
-
+		try {
 			Queue<List<PathElement>> queue = new LinkedList<>();
 
 			queue.add(Collections.singletonList(pathElement));

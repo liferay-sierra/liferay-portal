@@ -40,24 +40,6 @@ public class AssetVocabularySettingsHelper {
 		AssetCategoryConstants.ALL_CLASS_TYPE_PK
 	};
 
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 *             #DEFAULT_SELECTED_CLASS_NAME_IDS}
-	 */
-	@Deprecated
-	public static final long[] DEFAULT_SELECTED_CLASSNAME_IDS = {
-		AssetCategoryConstants.ALL_CLASS_NAME_ID
-	};
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 *             #DEFAULT_SELECTED_CLASS_TYPE_PKS}
-	 */
-	@Deprecated
-	public static final long[] DEFAULT_SELECTED_CLASSTYPE_PKS = {
-		AssetCategoryConstants.ALL_CLASS_TYPE_PK
-	};
-
 	public AssetVocabularySettingsHelper() {
 		_unicodeProperties = new UnicodeProperties(true);
 	}
@@ -259,16 +241,10 @@ public class AssetVocabularySettingsHelper {
 		}
 
 		if (classNameIdsAndClassTypePKs[0].equals(
-				AssetCategoryConstants.ALL_CLASS_NAME_IDS_AND_CLASS_TYPE_PKS)) {
-
-			return true;
-		}
-
-		String classNameIdAndClassTypePK = getClassNameIdAndClassTypePK(
-			classNameId, classTypePK);
-
-		if (ArrayUtil.contains(
-				classNameIdsAndClassTypePKs, classNameIdAndClassTypePK)) {
+				AssetCategoryConstants.ALL_CLASS_NAME_IDS_AND_CLASS_TYPE_PKS) ||
+			ArrayUtil.contains(
+				classNameIdsAndClassTypePKs,
+				getClassNameIdAndClassTypePK(classNameId, classTypePK))) {
 
 			return true;
 		}

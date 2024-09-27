@@ -30,15 +30,15 @@ import com.liferay.commerce.service.CommerceOrderService;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.URLCodec;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 
 import com.worldline.sips.model.CaptureMode;
 import com.worldline.sips.model.Currency;
@@ -66,7 +66,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Luca Pellizzon
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "commerce.payment.engine.method.key=" + MercanetCommercePaymentMethod.KEY,
 	service = CommercePaymentMethod.class
 )
@@ -106,7 +105,7 @@ public class MercanetCommercePaymentMethod implements CommercePaymentMethod {
 
 	@Override
 	public String getDescription(Locale locale) {
-		return LanguageUtil.get(
+		return _language.get(
 			_getResourceBundle(locale), "mercanet-description");
 	}
 
@@ -117,7 +116,7 @@ public class MercanetCommercePaymentMethod implements CommercePaymentMethod {
 
 	@Override
 	public String getName(Locale locale) {
-		return LanguageUtil.get(_getResourceBundle(locale), KEY);
+		return _language.get(_getResourceBundle(locale), KEY);
 	}
 
 	@Override
@@ -177,7 +176,7 @@ public class MercanetCommercePaymentMethod implements CommercePaymentMethod {
 
 		URL returnURL = new URL(mercanetCommercePaymentRequest.getReturnUrl());
 
-		Map<String, String[]> parameters = _http.getParameterMap(
+		Map<String, String[]> parameters = HttpComponentsUtil.getParameterMap(
 			returnURL.getQuery());
 
 		URL baseURL = new URL(
@@ -214,7 +213,7 @@ public class MercanetCommercePaymentMethod implements CommercePaymentMethod {
 		paymentRequest.setOrderId(
 			String.valueOf(commerceOrder.getCommerceOrderId()));
 
-		String transactionUuid = PortalUUIDUtil.generate();
+		String transactionUuid = _portalUUID.generate();
 
 		String transactionId = StringUtil.replace(
 			transactionUuid, CharPool.DASH, StringPool.BLANK);
@@ -299,9 +298,12 @@ public class MercanetCommercePaymentMethod implements CommercePaymentMethod {
 	private ConfigurationProvider _configurationProvider;
 
 	@Reference
-	private Http _http;
+	private Language _language;
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private PortalUUID _portalUUID;
 
 }

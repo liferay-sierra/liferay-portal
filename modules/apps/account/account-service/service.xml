@@ -3,7 +3,7 @@
 
 <service-builder auto-import-default-references="false" auto-namespace-tables="false" mvcc-enabled="true" package-path="com.liferay.account">
 	<namespace>Account</namespace>
-	<entity external-reference-code="true" local-service="true" name="AccountEntry" remote-service="true">
+	<entity external-reference-code="company" local-service="true" name="AccountEntry" remote-service="true" uuid="true">
 
 		<!-- PK fields -->
 
@@ -20,8 +20,7 @@
 		<!-- Other fields -->
 
 		<column name="defaultBillingAddressId" type="long" />
-		<column name="defaultDeliveryCTermEntryId" type="long" />
-		<column name="defaultPaymentCTermEntryId" type="long" />
+		<column name="defaultCPaymentMethodKey" type="String" />
 		<column name="defaultShippingAddressId" type="long" />
 		<column name="parentAccountEntryId" type="long" />
 		<column name="description" type="String" />
@@ -29,10 +28,14 @@
 		<column name="emailAddress" type="String" />
 		<column name="logoId" type="long" />
 		<column name="name" type="String" />
+		<column name="restrictMembership" type="boolean" />
 		<column name="taxExemptionCode" type="String" />
 		<column name="taxIdNumber" type="String" />
 		<column name="type" type="String" />
 		<column name="status" type="int" />
+		<column name="statusByUserId" type="long" />
+		<column name="statusByUserName" type="String" />
+		<column name="statusDate" type="Date" />
 
 		<!-- Order -->
 
@@ -110,7 +113,7 @@
 			<finder-column name="accountUserId" />
 		</finder>
 	</entity>
-	<entity external-reference-code="true" local-service="true" name="AccountGroup" remote-service="true">
+	<entity external-reference-code="company" local-service="true" name="AccountGroup" remote-service="true" uuid="true">
 
 		<!-- PK fields -->
 
@@ -173,6 +176,10 @@
 		<finder name="AccountGroupId" return-type="Collection">
 			<finder-column name="accountGroupId" />
 		</finder>
+		<finder name="A_C" return-type="Collection">
+			<finder-column name="accountGroupId" />
+			<finder-column name="classNameId" />
+		</finder>
 		<finder name="C_C" return-type="Collection">
 			<finder-column name="classNameId" />
 			<finder-column name="classPK" />
@@ -209,6 +216,10 @@
 		<finder name="RoleId" return-type="AccountRole">
 			<finder-column name="roleId" />
 		</finder>
+		<finder name="C_A" return-type="Collection">
+			<finder-column name="companyId" />
+			<finder-column arrayable-operator="OR" name="accountEntryId" />
+		</finder>
 	</entity>
 	<exceptions>
 		<exception>AccountEntryDomains</exception>
@@ -216,11 +227,13 @@
 		<exception>AccountEntryName</exception>
 		<exception>AccountEntryType</exception>
 		<exception>AccountEntryUserRelEmailAddress</exception>
+		<exception>AccountGroupName</exception>
 		<exception>DefaultAccountGroup</exception>
 		<exception>DuplicateAccountEntryExternalReferenceCode</exception>
 		<exception>DuplicateAccountEntryId</exception>
 		<exception>DuplicateAccountEntryOrganizationRel</exception>
 		<exception>DuplicateAccountEntryUserRel</exception>
+		<exception>DuplicateAccountGroupExternalReferenceCode</exception>
 		<exception>DuplicateAccountGroupRel</exception>
 	</exceptions>
 </service-builder>

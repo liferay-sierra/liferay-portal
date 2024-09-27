@@ -110,6 +110,11 @@ public class JenkinsSlave implements JenkinsNode<JenkinsSlave> {
 	}
 
 	@Override
+	public JenkinsCohort getJenkinsCohort() {
+		return _jenkinsMaster.getJenkinsCohort();
+	}
+
+	@Override
 	public JenkinsMaster getJenkinsMaster() {
 		return _jenkinsMaster;
 	}
@@ -135,7 +140,7 @@ public class JenkinsSlave implements JenkinsNode<JenkinsSlave> {
 	}
 
 	public boolean isReachable() {
-		return JenkinsResultsParserUtil.isReachable(getName());
+		return JenkinsResultsParserUtil.isServerPortReachable(getName(), 22);
 	}
 
 	public void takeSlavesOffline(String offlineReason) {

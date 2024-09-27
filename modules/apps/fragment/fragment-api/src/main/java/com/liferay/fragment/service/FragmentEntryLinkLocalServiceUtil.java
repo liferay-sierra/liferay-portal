@@ -66,14 +66,15 @@ public class FragmentEntryLinkLocalServiceUtil {
 			long fragmentEntryId, long segmentsExperienceId, long plid,
 			String css, String html, String js, String configuration,
 			String editableValues, String namespace, int position,
-			String rendererKey,
+			String rendererKey, int type,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws PortalException {
 
 		return getService().addFragmentEntryLink(
 			userId, groupId, originalFragmentEntryLinkId, fragmentEntryId,
 			segmentsExperienceId, plid, css, html, js, configuration,
-			editableValues, namespace, position, rendererKey, serviceContext);
+			editableValues, namespace, position, rendererKey, type,
+			serviceContext);
 	}
 
 	/**
@@ -134,6 +135,12 @@ public class FragmentEntryLinkLocalServiceUtil {
 
 	public static void deleteFragmentEntryLinks(long groupId) {
 		getService().deleteFragmentEntryLinks(groupId);
+	}
+
+	public static void deleteFragmentEntryLinks(
+		long groupId, long plid, boolean deleted) {
+
+		getService().deleteFragmentEntryLinks(groupId, plid, deleted);
 	}
 
 	public static void deleteFragmentEntryLinks(long[] fragmentEntryLinkIds)
@@ -566,6 +573,13 @@ public class FragmentEntryLinkLocalServiceUtil {
 		getService().updateClassedModel(plid);
 	}
 
+	public static FragmentEntryLink updateDeleted(
+			long fragmentEntryLinkId, boolean deleted)
+		throws PortalException {
+
+		return getService().updateDeleted(fragmentEntryLinkId, deleted);
+	}
+
 	/**
 	 * Updates the fragment entry link in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
@@ -594,14 +608,14 @@ public class FragmentEntryLinkLocalServiceUtil {
 			long userId, long fragmentEntryLinkId,
 			long originalFragmentEntryLinkId, long fragmentEntryId, long plid,
 			String css, String html, String js, String configuration,
-			String editableValues, String namespace, int position,
+			String editableValues, String namespace, int position, int type,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws PortalException {
 
 		return getService().updateFragmentEntryLink(
 			userId, fragmentEntryLinkId, originalFragmentEntryLinkId,
 			fragmentEntryId, plid, css, html, js, configuration, editableValues,
-			namespace, position, serviceContext);
+			namespace, position, type, serviceContext);
 	}
 
 	public static FragmentEntryLink updateFragmentEntryLink(

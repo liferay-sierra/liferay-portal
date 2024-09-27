@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.exception.ContactNameException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.auth.FullNameValidatorFactory;
@@ -32,6 +33,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Brian Wing Shun Chan
@@ -47,10 +49,10 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 			long userId, String fullName, String emailAddress, String comments)
 		throws PortalException {
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 		Date date = new Date();
 
-		validate(user.getCompanyId(), 0, userId, fullName, emailAddress);
+		_validate(user.getCompanyId(), 0, userId, fullName, emailAddress);
 
 		long contactId = counterLocalService.increment();
 
@@ -112,7 +114,7 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 
 		Entry entry = entryPersistence.findByPrimaryKey(entryId);
 
-		validate(
+		_validate(
 			entry.getCompanyId(), entryId, entry.getUserId(), fullName,
 			emailAddress);
 
@@ -124,7 +126,7 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 		return entryPersistence.update(entry);
 	}
 
-	protected void validate(
+	private void _validate(
 			long companyId, long entryId, long userId, String fullName,
 			String emailAddress)
 		throws PortalException {
@@ -148,15 +150,15 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 			if (!StringUtil.equalsIgnoreCase(
 					emailAddress, entry.getEmailAddress())) {
 
-				validateEmailAddress(companyId, userId, emailAddress);
+				_validateEmailAddress(companyId, userId, emailAddress);
 			}
 		}
 		else {
-			validateEmailAddress(companyId, userId, emailAddress);
+			_validateEmailAddress(companyId, userId, emailAddress);
 		}
 	}
 
-	protected void validateEmailAddress(
+	private void _validateEmailAddress(
 			long companyId, long userId, String emailAddress)
 		throws PortalException {
 
@@ -166,12 +168,15 @@ public class EntryLocalServiceImpl extends EntryLocalServiceBaseImpl {
 			throw new DuplicateEntryEmailAddressException();
 		}
 
-		User user = userLocalService.fetchUserByEmailAddress(
+		User user = _userLocalService.fetchUserByEmailAddress(
 			companyId, emailAddress);
 
 		if (user != null) {
 			throw new DuplicateEntryEmailAddressException();
 		}
 	}
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

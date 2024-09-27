@@ -14,7 +14,6 @@
 
 package com.liferay.portlet.configuration.web.internal.display.context;
 
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
@@ -36,6 +35,7 @@ import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
@@ -66,8 +66,10 @@ import com.liferay.sites.kernel.util.SitesUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -112,6 +114,33 @@ public class PortletConfigurationPermissionsDisplayContext {
 		_selLayout = selLayout;
 		_group = group;
 		_groupId = groupId;
+	}
+
+	public Map<String, List<String>> getActionIdResourcePrimKeysMap(Role role)
+		throws PortalException {
+
+		Map<String, List<String>> actionIdResourcePrimKeysMap = new HashMap<>();
+
+		for (Resource resource : getResources()) {
+			List<String> availableResourcePermissionActionIds =
+				ResourcePermissionLocalServiceUtil.
+					getAvailableResourcePermissionActionIds(
+						resource.getCompanyId(), resource.getName(),
+						resource.getScope(), resource.getPrimKey(),
+						role.getRoleId(), getActions());
+
+			for (String actionId : availableResourcePermissionActionIds) {
+				List<String> resourcePrimKeys =
+					actionIdResourcePrimKeysMap.getOrDefault(
+						actionId, new ArrayList<>());
+
+				resourcePrimKeys.add(resource.getPrimKey());
+
+				actionIdResourcePrimKeysMap.put(actionId, resourcePrimKeys);
+			}
+		}
+
+		return actionIdResourcePrimKeysMap;
 	}
 
 	public List<String> getActions() throws PortalException {
@@ -249,7 +278,8 @@ public class PortletConfigurationPermissionsDisplayContext {
 		).setParameter(
 			"resourceGroupId", _getResourceGroupId()
 		).setParameter(
-			"resourcePrimKey", getResourcePrimKey()
+			"resourcePrimKey",
+			StringUtil.merge(getResourcePrimKeys(), StringPool.COMMA)
 		).setParameter(
 			"returnToFullPageURL", _getReturnToFullPageURL()
 		).setParameter(
@@ -281,48 +311,58 @@ public class PortletConfigurationPermissionsDisplayContext {
 		return _modelResourceDescription;
 	}
 
-	public Resource getResource() throws PortalException {
-		if (_resource != null) {
-			return _resource;
+	public String getResourcePrimKey() throws ResourcePrimKeyException {
+		String[] resourcePrimKeys = getResourcePrimKeys();
+
+		return resourcePrimKeys[0];
+	}
+
+	public String[] getResourcePrimKeys() throws ResourcePrimKeyException {
+		if (_resourcePrimKeys != null) {
+			return _resourcePrimKeys;
+		}
+
+		_resourcePrimKeys = ParamUtil.getStringValues(
+			_httpServletRequest, "resourcePrimKey");
+
+		if (ArrayUtil.isEmpty(_resourcePrimKeys)) {
+			throw new ResourcePrimKeyException();
+		}
+
+		return _resourcePrimKeys;
+	}
+
+	public List<Resource> getResources() throws PortalException {
+		if (ListUtil.isNotEmpty(_resources)) {
+			return _resources;
 		}
 
 		ThemeDisplay themeDisplay =
 			(ThemeDisplay)_httpServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
 
-		int count =
-			ResourcePermissionLocalServiceUtil.getResourcePermissionsCount(
-				themeDisplay.getCompanyId(), getSelResource(),
-				ResourceConstants.SCOPE_INDIVIDUAL, getResourcePrimKey());
+		for (String resourcePrimKey : getResourcePrimKeys()) {
+			int count =
+				ResourcePermissionLocalServiceUtil.getResourcePermissionsCount(
+					themeDisplay.getCompanyId(), getSelResource(),
+					ResourceConstants.SCOPE_INDIVIDUAL, resourcePrimKey);
 
-		if (count == 0) {
-			boolean portletActions = Validator.isNull(getModelResource());
+			if (count == 0) {
+				boolean portletActions = Validator.isNull(getModelResource());
 
-			ResourceLocalServiceUtil.addResources(
-				themeDisplay.getCompanyId(), getGroupId(), 0, getSelResource(),
-				getResourcePrimKey(), portletActions, true, true);
+				ResourceLocalServiceUtil.addResources(
+					themeDisplay.getCompanyId(), getGroupId(), 0,
+					getSelResource(), resourcePrimKey, portletActions, true,
+					true);
+			}
+
+			_resources.add(
+				ResourceLocalServiceUtil.getResource(
+					themeDisplay.getCompanyId(), getSelResource(),
+					ResourceConstants.SCOPE_INDIVIDUAL, resourcePrimKey));
 		}
 
-		_resource = ResourceLocalServiceUtil.getResource(
-			themeDisplay.getCompanyId(), getSelResource(),
-			ResourceConstants.SCOPE_INDIVIDUAL, getResourcePrimKey());
-
-		return _resource;
-	}
-
-	public String getResourcePrimKey() throws ResourcePrimKeyException {
-		if (_resourcePrimKey != null) {
-			return _resourcePrimKey;
-		}
-
-		_resourcePrimKey = ParamUtil.getString(
-			_httpServletRequest, "resourcePrimKey");
-
-		if (Validator.isNull(_resourcePrimKey)) {
-			throw new ResourcePrimKeyException();
-		}
-
-		return _resourcePrimKey;
+		return _resources;
 	}
 
 	public SearchContainer<Role> getRoleSearchContainer() throws Exception {
@@ -488,25 +528,20 @@ public class PortletConfigurationPermissionsDisplayContext {
 					teamGroupId, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
 			}
 
-			List<Role> filteredRoles = ListUtil.filter(
-				roles,
-				role -> {
-					String roleName = StringUtil.toLowerCase(
-						role.getTitle(themeDisplay.getLocale()),
-						themeDisplay.getLocale());
-
-					return (roleName != null) &&
-						   roleName.contains(
-							   StringUtil.toLowerCase(
-								   searchTerms.getKeywords(),
-								   themeDisplay.getLocale()));
-				});
-
 			roleSearchContainer.setResultsAndTotal(
-				() -> ListUtil.subList(
-					filteredRoles, roleSearchContainer.getStart(),
-					roleSearchContainer.getEnd()),
-				filteredRoles.size());
+				ListUtil.filter(
+					roles,
+					role -> {
+						String roleName = StringUtil.toLowerCase(
+							role.getTitle(themeDisplay.getLocale()),
+							themeDisplay.getLocale());
+
+						return (roleName != null) &&
+							   roleName.contains(
+								   StringUtil.toLowerCase(
+									   searchTerms.getKeywords(),
+									   themeDisplay.getLocale()));
+					}));
 		}
 
 		_roleSearchContainer = roleSearchContainer;
@@ -531,7 +566,7 @@ public class PortletConfigurationPermissionsDisplayContext {
 
 		_roleTypes = RoleConstants.TYPES_REGULAR_AND_SITE;
 
-		if (_group.isDepot()) {
+		if ((_group != null) && _group.isDepot()) {
 			_roleTypes = _TYPES_DEPOT_AND_REGULAR;
 		}
 
@@ -647,7 +682,8 @@ public class PortletConfigurationPermissionsDisplayContext {
 		).setParameter(
 			"resourceGroupId", _getResourceGroupId()
 		).setParameter(
-			"resourcePrimKey", getResourcePrimKey()
+			"resourcePrimKey",
+			StringUtil.merge(getResourcePrimKeys(), StringPool.COMMA)
 		).setParameter(
 			"returnToFullPageURL", _getReturnToFullPageURL()
 		).setParameter(
@@ -729,7 +765,7 @@ public class PortletConfigurationPermissionsDisplayContext {
 	};
 
 	private List<String> _actions;
-	private Group _group;
+	private final Group _group;
 	private final long _groupId;
 	private List<String> _guestUnsupportedActions;
 	private final HttpServletRequest _httpServletRequest;
@@ -737,9 +773,9 @@ public class PortletConfigurationPermissionsDisplayContext {
 	private String _modelResourceDescription;
 	private String _portletResource;
 	private final RenderRequest _renderRequest;
-	private Resource _resource;
 	private Long _resourceGroupId;
-	private String _resourcePrimKey;
+	private String[] _resourcePrimKeys;
+	private final List<Resource> _resources = new ArrayList<>();
 	private String _returnToFullPageURL;
 	private SearchContainer<Role> _roleSearchContainer;
 	private final RoleTypeContributorProvider _roleTypeContributorProvider;

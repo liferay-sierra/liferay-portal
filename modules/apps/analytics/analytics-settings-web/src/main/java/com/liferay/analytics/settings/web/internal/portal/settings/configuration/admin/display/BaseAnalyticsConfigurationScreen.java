@@ -22,6 +22,8 @@ import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Release;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 
 import java.io.IOException;
@@ -57,6 +59,15 @@ public abstract class BaseAnalyticsConfigurationScreen
 	}
 
 	@Override
+	public boolean isVisible() {
+		if (GetterUtil.getBoolean(PropsUtil.get("feature.flag.LRAC-10757"))) {
+			return false;
+		}
+
+		return true;
+	}
+
+	@Override
 	public void render(
 			HttpServletRequest httpServletRequest,
 			HttpServletResponse httpServletResponse)
@@ -82,18 +93,16 @@ public abstract class BaseAnalyticsConfigurationScreen
 
 	protected abstract ServletContext getServletContext();
 
-	@Reference(
-		target = "(&(release.bundle.symbolic.name=com.liferay.analytics.settings.web)(release.schema.version>=1.0.1))",
-		unbind = "-"
-	)
-	protected void setRelease(Release release) {
-	}
-
 	@Reference
 	protected AnalyticsUsersManager analyticsUsersManager;
 
 	@Reference
 	protected ConfigurationProvider configurationProvider;
+
+	@Reference(
+		target = "(&(release.bundle.symbolic.name=com.liferay.analytics.settings.web)(release.schema.version>=1.0.1))"
+	)
+	protected Release release;
 
 	private void _setHttpServletRequestAttributes(
 			HttpServletRequest httpServletRequest)

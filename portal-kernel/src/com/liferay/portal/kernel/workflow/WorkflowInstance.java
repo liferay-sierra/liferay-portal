@@ -34,7 +34,7 @@ public interface WorkflowInstance extends WorkflowModel {
 
 	public List<WorkflowInstance> getChildrenWorkflowInstances();
 
-	public List<String> getCurrentNodeNames();
+	public List<WorkflowNode> getCurrentWorkflowNodes();
 
 	public Date getEndDate();
 
@@ -43,13 +43,6 @@ public interface WorkflowInstance extends WorkflowModel {
 	public long getParentWorkflowInstanceId();
 
 	public Date getStartDate();
-
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
-	 * #getCurrentNodeNames()}
-	 */
-	@Deprecated
-	public String getState();
 
 	public Map<String, Serializable> getWorkflowContext();
 

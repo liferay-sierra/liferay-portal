@@ -28,6 +28,8 @@ import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayOutputStream;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -106,6 +108,10 @@ public class ConfigurationPersistenceManager
 		}
 
 		_visitConfigurationModelListeners(
+			"*",
+			configurationModelListener ->
+				configurationModelListener.onBeforeDelete(pid));
+		_visitConfigurationModelListeners(
 			pidKey,
 			configurationModelListener ->
 				configurationModelListener.onBeforeDelete(pid));
@@ -125,6 +131,10 @@ public class ConfigurationPersistenceManager
 			lock.unlock();
 		}
 
+		_visitConfigurationModelListeners(
+			"*",
+			configurationModelListener ->
+				configurationModelListener.onAfterDelete(pid));
 		_visitConfigurationModelListeners(
 			pidKey,
 			configurationModelListener ->
@@ -200,6 +210,10 @@ public class ConfigurationPersistenceManager
 			_populateDictionaries();
 		}
 		catch (IOException | SQLException exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			_createConfigurationTable();
 
 			for (Bundle bundle : _bundleContext.getBundles()) {
@@ -253,6 +267,10 @@ public class ConfigurationPersistenceManager
 		}
 
 		_visitConfigurationModelListeners(
+			"*",
+			configurationModelListener ->
+				configurationModelListener.onBeforeSave(pid, dictionary));
+		_visitConfigurationModelListeners(
 			pidKey,
 			configurationModelListener ->
 				configurationModelListener.onBeforeSave(pid, dictionary));
@@ -288,6 +306,10 @@ public class ConfigurationPersistenceManager
 			lock.unlock();
 		}
 
+		_visitConfigurationModelListeners(
+			"*",
+			configurationModelListener ->
+				configurationModelListener.onAfterSave(pid, dictionary));
 		_visitConfigurationModelListeners(
 			pidKey,
 			configurationModelListener ->
@@ -415,6 +437,31 @@ public class ConfigurationPersistenceManager
 		}
 	}
 
+	private boolean _insertConfiguration(
+			Connection connection, String pid, String configuration)
+		throws IOException {
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				_db.buildSQL(
+					"insert into Configuration_ (configurationId, dictionary" +
+						") values (?, ?)"))) {
+
+			preparedStatement.setString(1, pid);
+			preparedStatement.setString(2, configuration);
+
+			preparedStatement.executeUpdate();
+		}
+		catch (SQLException sqlException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(sqlException);
+			}
+
+			return false;
+		}
+
+		return true;
+	}
+
 	private Dictionary<Object, Object> _overrideDictionary(
 		String pid, Dictionary<Object, Object> dictionary) {
 
@@ -475,40 +522,42 @@ public class ConfigurationPersistenceManager
 
 		ConfigurationHandler.write(unsyncByteArrayOutputStream, dictionary);
 
+		String configuration = unsyncByteArrayOutputStream.toString();
+
 		try (Connection connection = _dataSource.getConnection()) {
-			connection.setAutoCommit(false);
-
-			try (PreparedStatement preparedStatement1 =
-					connection.prepareStatement(
-						_db.buildSQL(
-							"update Configuration_ set dictionary = ? where " +
-								"configurationId = ?"))) {
-
-				preparedStatement1.setString(
-					1, unsyncByteArrayOutputStream.toString());
-				preparedStatement1.setString(2, pid);
-
-				if (preparedStatement1.executeUpdate() == 0) {
-					try (PreparedStatement preparedStatement2 =
-							connection.prepareStatement(
-								_db.buildSQL(
-									"insert into Configuration_ (" +
-										"configurationId, dictionary) values " +
-											"(?, ?)"))) {
-
-						preparedStatement2.setString(1, pid);
-						preparedStatement2.setString(
-							2, unsyncByteArrayOutputStream.toString());
-
-						preparedStatement2.executeUpdate();
-					}
+			if (_dictionaries.containsKey(pid)) {
+				if (!_updateConfiguration(connection, pid, configuration)) {
+					_insertConfiguration(connection, pid, configuration);
 				}
 			}
-
-			connection.commit();
+			else {
+				if (!_insertConfiguration(connection, pid, configuration)) {
+					_updateConfiguration(connection, pid, configuration);
+				}
+			}
 		}
 		catch (SQLException sqlException) {
 			ReflectionUtil.throwException(sqlException);
+		}
+	}
+
+	private boolean _updateConfiguration(
+			Connection connection, String pid, String configuration)
+		throws IOException, SQLException {
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				_db.buildSQL(
+					"update Configuration_ set dictionary = ? where " +
+						"configurationId = ?"))) {
+
+			preparedStatement.setString(1, configuration);
+			preparedStatement.setString(2, pid);
+
+			if (preparedStatement.executeUpdate() == 0) {
+				return false;
+			}
+
+			return true;
 		}
 	}
 
@@ -546,6 +595,10 @@ public class ConfigurationPersistenceManager
 				configFile = new File(URI.create(felixFileInstallFileName));
 			}
 			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
+
 				configFile = new File(felixFileInstallFileName);
 			}
 
@@ -614,6 +667,9 @@ public class ConfigurationPersistenceManager
 
 	private static final String _SERVIE_BUNDLE_LOCATION =
 		"service.bundleLocation";
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		ConfigurationPersistenceManager.class);
 
 	private final BundleContext _bundleContext;
 	private final DataSource _dataSource;

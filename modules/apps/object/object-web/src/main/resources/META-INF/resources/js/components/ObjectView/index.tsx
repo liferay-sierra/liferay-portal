@@ -12,15 +12,22 @@
  * details.
  */
 
-import ClayButton from '@clayui/button';
 import ClayTabs from '@clayui/tabs';
-import React, {useContext, useEffect, useState} from 'react';
+import {
+	API,
+	SidePanelContent,
+	invalidateRequired,
+	openToast,
+	saveAndReload,
+} from '@liferay/object-js-components-web';
+import React, {useEffect, useState} from 'react';
 
-import SidePanelContent from '../SidePanelContent';
-import BasicInfoScreen from './BasicInfoScreen';
-import ViewBuilderScreen from './ViewBuilderScreen';
-import ViewContext, {TYPES, ViewContextProvider} from './context';
-import {TObjectField, TObjectView} from './types';
+import BasicInfoScreen from './BasicInfoScreen/BasicInfoScreen';
+import {DefaultSortScreen} from './DefaultSortScreen/DefaultSortScreen';
+import {FilterScreen} from './FilterScreen/FilterScreen';
+import ViewBuilderScreen from './ViewBuilderScreen/ViewBuilderScreen';
+import {TYPES, ViewContextProvider, useViewContext} from './objectViewContext';
+import {TObjectView, TWorkflowStatus} from './types';
 
 const TABS = [
 	{
@@ -31,76 +38,52 @@ const TABS = [
 		Component: ViewBuilderScreen,
 		label: Liferay.Language.get('view-builder'),
 	},
+	{
+		Component: DefaultSortScreen,
+		label: Liferay.Language.get('default-sort'),
+	},
+	{
+		Component: FilterScreen,
+		label: Liferay.Language.get('filters'),
+	},
 ];
 
-const HEADERS = new Headers({
-	'Accept': 'application/json',
-	'Content-Type': 'application/json',
-});
-
 const CustomView: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
-	const [{isViewOnly, objectView, objectViewId}, dispatch] = useContext(
-		ViewContext
-	);
+	const [{isViewOnly, objectView, objectViewId}, dispatch] = useViewContext();
 
 	const [activeIndex, setActiveIndex] = useState<number>(0);
 	const [loading, setLoading] = useState<boolean>(true);
 
-	const onCloseSidePanel = () => {
-		const parentWindow = Liferay.Util.getOpener();
-
-		parentWindow.Liferay.fire('close-side-panel');
-	};
-
 	useEffect(() => {
 		const makeFetch = async () => {
-			const objectViewResponse = await Liferay.Util.fetch(
-				`/o/object-admin/v1.0/object-views/${objectViewId}`,
-				{
-					header: HEADERS,
-					method: 'GET',
-				}
-			);
-
 			const {
 				defaultObjectView,
 				name,
 				objectDefinitionId,
 				objectViewColumns,
-			} = await objectViewResponse.json();
-
-			const objectFieldsResponse = await Liferay.Util.fetch(
-				`/o/object-admin/v1.0/object-definitions/${objectDefinitionId}/object-fields`,
-				{
-					headers: HEADERS,
-					method: 'GET',
-				}
+				objectViewFilterColumns,
+				objectViewSortColumns,
+			} = await API.fetchJSON<TObjectView>(
+				`/o/object-admin/v1.0/object-views/${objectViewId}`
 			);
+
+			const objectFields = await API.getObjectFields(objectDefinitionId);
 
 			const objectView = {
 				defaultObjectView,
 				name,
 				objectDefinitionId,
 				objectViewColumns,
+				objectViewFilterColumns,
+				objectViewSortColumns,
 			};
-
-			dispatch({
-				payload: {
-					objectView,
-				},
-				type: TYPES.ADD_OBJECT_VIEW,
-			});
-
-			const {
-				items: objectFields,
-			}: {items: TObjectField[]} = await objectFieldsResponse.json();
 
 			dispatch({
 				payload: {
 					objectFields,
 					objectView,
 				},
-				type: TYPES.ADD_OBJECT_FIELDS,
+				type: TYPES.ADD_OBJECT_VIEW,
 			});
 
 			setLoading(false);
@@ -109,66 +92,110 @@ const CustomView: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
 		makeFetch();
 	}, [objectViewId, dispatch]);
 
-	const removeLabelFromObjectView = (objectView: TObjectView) => {
-		const {objectViewColumns} = objectView;
+	const removeUnnecessaryPropertiesFromObjectView = (
+		objectView: TObjectView
+	) => {
+		const {
+			objectViewColumns,
+			objectViewFilterColumns,
+			objectViewSortColumns,
+		} = objectView;
 
 		const newObjectViewColumns = objectViewColumns.map((viewColumn) => {
 			return {
+				label: viewColumn.label,
 				objectFieldName: viewColumn.objectFieldName,
 				priority: viewColumn.priority,
 			};
 		});
 
+		const newObjectViewFilterColumns = objectViewFilterColumns.map(
+			(filterColumn) => {
+				return {
+					filterType: filterColumn.filterType,
+					json: JSON.stringify(filterColumn.definition),
+					objectFieldName: filterColumn.objectFieldName,
+				};
+			}
+		);
+
+		const newObjectViewSortColumns = objectViewSortColumns.map(
+			(sortColumn) => {
+				return {
+					objectFieldName: sortColumn.objectFieldName,
+					priority: sortColumn.priority,
+					sortOrder: sortColumn.sortOrder,
+				};
+			}
+		);
+
 		const newObjectView = {
 			...objectView,
 			objectViewColumns: newObjectViewColumns,
+			objectViewFilterColumns: newObjectViewFilterColumns,
+			objectViewSortColumns: newObjectViewSortColumns,
 		};
 
 		return newObjectView;
 	};
 
 	const handleSaveObjectView = async () => {
-		const newObjectView = removeLabelFromObjectView(objectView);
-
-		const response = await Liferay.Util.fetch(
-			`/o/object-admin/v1.0/object-views/${objectViewId}`,
-			{
-				body: JSON.stringify(newObjectView),
-				headers: HEADERS,
-				method: 'PUT',
-			}
+		const newObjectView = removeUnnecessaryPropertiesFromObjectView(
+			objectView
 		);
 
-		if (response.status === 401) {
-			window.location.reload();
-		}
-		else if (response.ok) {
-			Liferay.Util.openToast({
-				message: Liferay.Language.get(
-					'modifications-saved-successfully'
-				),
-				type: 'success',
+		const {objectViewColumns} = newObjectView;
+
+		if (
+			invalidateRequired(
+				objectView.name[Liferay.ThemeDisplay.getDefaultLanguageId()]
+			)
+		) {
+			openToast({
+				message: Liferay.Language.get('a-name-is-required'),
+				type: 'danger',
 			});
 
-			setTimeout(() => {
-				const parentWindow = Liferay.Util.getOpener();
-				parentWindow.Liferay.fire('close-side-panel');
-			}, 1500);
+			return;
+		}
+
+		if (!objectView.defaultObjectView || objectViewColumns.length !== 0) {
+			try {
+				await API.save(
+					`/o/object-admin/v1.0/object-views/${objectViewId}`,
+					newObjectView
+				);
+				saveAndReload();
+
+				openToast({
+					message: Liferay.Language.get(
+						'modifications-saved-successfully'
+					),
+				});
+			}
+			catch (error) {
+				openToast({
+					message: (error as Error).message,
+					type: 'danger',
+				});
+			}
 		}
 		else {
-			const {
-				title = Liferay.Language.get('an-error-occurred'),
-			} = await response.json();
-
-			Liferay.Util.openToast({
-				message: title,
+			openToast({
+				message: Liferay.Language.get(
+					'default-view-must-have-at-least-one-column'
+				),
 				type: 'danger',
 			});
 		}
 	};
 
 	return (
-		<>
+		<SidePanelContent
+			onSave={handleSaveObjectView}
+			readOnly={isViewOnly || loading}
+			title={Liferay.Language.get('custom-view')}
+		>
 			<ClayTabs className="side-panel-iframe__tabs">
 				{TABS.map(({label}, index) => (
 					<ClayTabs.Item
@@ -181,51 +208,38 @@ const CustomView: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
 				))}
 			</ClayTabs>
 
-			<SidePanelContent className="side-panel-content--custom-view">
-				<SidePanelContent.Body>
-					<ClayTabs.Content activeIndex={activeIndex} fade>
-						{TABS.map(({Component}, index) => (
-							<ClayTabs.TabPane key={index}>
-								{!loading && <Component />}
-							</ClayTabs.TabPane>
-						))}
-					</ClayTabs.Content>
-				</SidePanelContent.Body>
-
-				{!loading && (
-					<SidePanelContent.Footer>
-						<ClayButton.Group spaced>
-							<ClayButton
-								displayType="secondary"
-								onClick={onCloseSidePanel}
-							>
-								{Liferay.Language.get('cancel')}
-							</ClayButton>
-
-							<ClayButton
-								disabled={isViewOnly}
-								onClick={() => handleSaveObjectView()}
-							>
-								{Liferay.Language.get('save')}
-							</ClayButton>
-						</ClayButton.Group>
-					</SidePanelContent.Footer>
-				)}
-			</SidePanelContent>
-		</>
+			<ClayTabs.Content activeIndex={activeIndex} fade>
+				{TABS.map(({Component}, index) => (
+					<ClayTabs.TabPane key={index}>
+						{!loading && <Component />}
+					</ClayTabs.TabPane>
+				))}
+			</ClayTabs.Content>
+		</SidePanelContent>
 	);
 };
-interface ICustonViewWrapperProps extends React.HTMLAttributes<HTMLElement> {
+interface ICustomViewWrapperProps extends React.HTMLAttributes<HTMLElement> {
+	filterOperators: TFilterOperators;
 	isViewOnly: boolean;
 	objectViewId: string;
+	workflowStatusJSONArray: TWorkflowStatus[];
 }
 
-const CustomViewWrapper: React.FC<ICustonViewWrapperProps> = ({
+const CustomViewWrapper: React.FC<ICustomViewWrapperProps> = ({
+	filterOperators,
 	isViewOnly,
 	objectViewId,
+	workflowStatusJSONArray,
 }) => {
 	return (
-		<ViewContextProvider value={{isViewOnly, objectViewId}}>
+		<ViewContextProvider
+			value={{
+				filterOperators,
+				isViewOnly,
+				objectViewId,
+				workflowStatusJSONArray,
+			}}
+		>
 			<CustomView />
 		</ViewContextProvider>
 	);

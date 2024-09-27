@@ -1,7 +1,5 @@
 @import 'cadmin-variables';
 
-@import '../../../../../../app/components/variables';
-
 html#{$cadmin-selector} {
 	.cadmin {
 		.page-editor__sidebar__fieldset {
@@ -10,7 +8,7 @@ html#{$cadmin-selector} {
 			justify-content: space-between;
 
 			&__field {
-				margin-bottom: $pageEditorSpacing * 1.5;
+				margin-bottom: $pageEditorSpacing * 2;
 				width: 100%;
 
 				&-small {

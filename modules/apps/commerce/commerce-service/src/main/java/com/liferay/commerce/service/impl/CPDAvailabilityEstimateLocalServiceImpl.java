@@ -20,17 +20,26 @@ import com.liferay.commerce.model.CommerceAvailabilityEstimate;
 import com.liferay.commerce.product.model.CPDefinition;
 import com.liferay.commerce.product.service.CPDefinitionLocalService;
 import com.liferay.commerce.service.base.CPDAvailabilityEstimateLocalServiceBaseImpl;
+import com.liferay.commerce.service.persistence.CommerceAvailabilityEstimatePersistence;
+import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
-import com.liferay.portal.spring.extender.service.ServiceReference;
+
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Alessio Antonio Rendina
  * @author Alec Sloan
  */
+@Component(
+	property = "model.class.name=com.liferay.commerce.model.CPDAvailabilityEstimate",
+	service = AopService.class
+)
 public class CPDAvailabilityEstimateLocalServiceImpl
 	extends CPDAvailabilityEstimateLocalServiceBaseImpl {
 
@@ -147,7 +156,7 @@ public class CPDAvailabilityEstimateLocalServiceImpl
 			long commerceAvailabilityEstimateId, ServiceContext serviceContext)
 		throws PortalException {
 
-		validate(commerceAvailabilityEstimateId);
+		_validate(commerceAvailabilityEstimateId);
 
 		if (cpdAvailabilityEstimateId > 0) {
 			CPDAvailabilityEstimate cpdAvailabilityEstimate =
@@ -172,16 +181,16 @@ public class CPDAvailabilityEstimateLocalServiceImpl
 				cpdAvailabilityEstimate);
 		}
 
-		return addCPDAvailabilityEstimateByCProductId(
+		return _addCPDAvailabilityEstimateByCProductId(
 			cProductId, commerceAvailabilityEstimateId, serviceContext);
 	}
 
-	protected CPDAvailabilityEstimate addCPDAvailabilityEstimateByCProductId(
+	private CPDAvailabilityEstimate _addCPDAvailabilityEstimateByCProductId(
 			long cProductId, long commerceAvailabilityEstimateId,
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		User user = userLocalService.getUser(serviceContext.getUserId());
+		User user = _userLocalService.getUser(serviceContext.getUserId());
 
 		long cpdAvailabilityEstimateId = counterLocalService.increment();
 
@@ -200,14 +209,13 @@ public class CPDAvailabilityEstimateLocalServiceImpl
 			cpdAvailabilityEstimate);
 	}
 
-	protected void validate(long commerceAvailabilityEstimateId)
+	private void _validate(long commerceAvailabilityEstimateId)
 		throws PortalException {
 
 		if (commerceAvailabilityEstimateId > 0) {
 			CommerceAvailabilityEstimate commerceAvailabilityEstimate =
-				commerceAvailabilityEstimateLocalService.
-					fetchCommerceAvailabilityEstimate(
-						commerceAvailabilityEstimateId);
+				_commerceAvailabilityEstimatePersistence.fetchByPrimaryKey(
+					commerceAvailabilityEstimateId);
 
 			if (commerceAvailabilityEstimate == null) {
 				throw new NoSuchAvailabilityEstimateException();
@@ -215,7 +223,14 @@ public class CPDAvailabilityEstimateLocalServiceImpl
 		}
 	}
 
-	@ServiceReference(type = CPDefinitionLocalService.class)
+	@Reference
+	private CommerceAvailabilityEstimatePersistence
+		_commerceAvailabilityEstimatePersistence;
+
+	@Reference
 	private CPDefinitionLocalService _cpDefinitionLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

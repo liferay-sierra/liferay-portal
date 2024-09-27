@@ -15,15 +15,18 @@
 package com.liferay.dynamic.data.mapping.form.builder.internal.helper;
 
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunction;
-import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunctionTracker;
+import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunctionRegistry;
 import com.liferay.dynamic.data.mapping.form.builder.internal.util.DDMExpressionFunctionMetadata;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.language.Language;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoader;
+import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoaderUtil;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
+import com.liferay.portal.language.LanguageImpl;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.HashMap;
 import java.util.List;
@@ -32,37 +35,56 @@ import java.util.Map;
 import java.util.ResourceBundle;
 
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 /**
  * @author Carolina Barbosa
  */
-@PrepareForTest(ResourceBundleUtil.class)
-@RunWith(PowerMockRunner.class)
 public class DDMExpressionFunctionMetadataHelperTest {
 
-	@Before
-	public void setUp() throws Exception {
-		_setUpLanguageUtil();
-		_setUpPortal();
-		_setUpResourceBundleUtil();
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
+	@BeforeClass
+	public static void setUpClass() {
+		Portal portal = Mockito.mock(Portal.class);
+
+		Mockito.when(
+			portal.getResourceBundle(Mockito.any(Locale.class))
+		).thenReturn(
+			_resourceBundle
+		);
+		ReflectionTestUtil.setFieldValue(
+			_ddmExpressionFunctionMetadataHelper, "_portal", portal);
+
+		ResourceBundleLoader resourceBundleLoader = Mockito.mock(
+			ResourceBundleLoader.class);
+
+		ResourceBundleLoaderUtil.setPortalResourceBundleLoader(
+			resourceBundleLoader);
+
+		Mockito.when(
+			resourceBundleLoader.loadResourceBundle(Mockito.any(Locale.class))
+		).thenReturn(
+			ResourceBundleUtil.EMPTY_RESOURCE_BUNDLE
+		);
+
+		ReflectionTestUtil.setFieldValue(
+			_ddmExpressionFunctionMetadataHelper, "_language",
+			new LanguageImpl());
 	}
 
 	@Test
-	public void testPopulateCustomDDMExpressionFunctionsMetadata()
-		throws Exception {
-
-		_mockDDMExpressionFunctionTracker();
+	public void testPopulateCustomDDMExpressionFunctionsMetadata() {
+		_mockDDMExpressionFunctionRegistry();
 
 		Map<String, List<DDMExpressionFunctionMetadata>>
 			ddmExpressionFunctionMetadatasMap = new HashMap<>();
@@ -101,7 +123,7 @@ public class DDMExpressionFunctionMetadataHelperTest {
 	}
 
 	@Test
-	public void testPopulateDDMExpressionFunctionsMetadata() throws Exception {
+	public void testPopulateDDMExpressionFunctionsMetadata() {
 		Map<String, List<DDMExpressionFunctionMetadata>>
 			ddmExpressionFunctionMetadatasMap = new HashMap<>();
 
@@ -142,12 +164,12 @@ public class DDMExpressionFunctionMetadataHelperTest {
 			ddmExpressionFunctionMetadatas.size());
 	}
 
-	private void _mockDDMExpressionFunctionTracker() throws Exception {
-		DDMExpressionFunctionTracker ddmExpressionFunctionTracker =
-			Mockito.mock(DDMExpressionFunctionTracker.class);
+	private void _mockDDMExpressionFunctionRegistry() {
+		DDMExpressionFunctionRegistry ddmExpressionFunctionRegistry =
+			Mockito.mock(DDMExpressionFunctionRegistry.class);
 
 		Mockito.when(
-			ddmExpressionFunctionTracker.getCustomDDMExpressionFunctions()
+			ddmExpressionFunctionRegistry.getCustomDDMExpressionFunctions()
 		).thenReturn(
 			HashMapBuilder.<String, DDMExpressionFunction>put(
 				"binaryFunction", new BinaryFunction()
@@ -158,54 +180,17 @@ public class DDMExpressionFunctionMetadataHelperTest {
 			).build()
 		);
 
-		PowerMockito.field(
-			DDMExpressionFunctionMetadataHelper.class,
-			"_ddmExpressionFunctionTracker"
-		).set(
-			_ddmExpressionFunctionMetadataHelper, ddmExpressionFunctionTracker
-		);
+		ReflectionTestUtil.setFieldValue(
+			_ddmExpressionFunctionMetadataHelper,
+			"_ddmExpressionFunctionRegistry", ddmExpressionFunctionRegistry);
 	}
 
-	private void _setUpLanguageUtil() {
-		LanguageUtil languageUtil = new LanguageUtil();
-
-		languageUtil.setLanguage(PowerMockito.mock(Language.class));
-	}
-
-	private void _setUpPortal() throws Exception {
-		Portal portal = Mockito.mock(Portal.class);
-
-		Mockito.when(
-			portal.getResourceBundle(Matchers.any(Locale.class))
-		).thenReturn(
-			_resourceBundle
-		);
-
-		PowerMockito.field(
-			DDMExpressionFunctionMetadataHelper.class, "_portal"
-		).set(
-			_ddmExpressionFunctionMetadataHelper, portal
-		);
-	}
-
-	private void _setUpResourceBundleUtil() {
-		PowerMockito.mockStatic(ResourceBundleUtil.class);
-
-		PowerMockito.when(
-			ResourceBundleUtil.getBundle(
-				Matchers.anyString(), Matchers.any(Locale.class),
-				Matchers.any(ClassLoader.class))
-		).thenReturn(
-			ResourceBundleUtil.EMPTY_RESOURCE_BUNDLE
-		);
-	}
-
-	private final DDMExpressionFunctionMetadataHelper
+	private static final DDMExpressionFunctionMetadataHelper
 		_ddmExpressionFunctionMetadataHelper =
 			new DDMExpressionFunctionMetadataHelper();
 
 	@Mock
-	private ResourceBundle _resourceBundle;
+	private static ResourceBundle _resourceBundle;
 
 	private static class BinaryFunction
 		implements DDMExpressionFunction.Function2<Object, Object, Boolean> {

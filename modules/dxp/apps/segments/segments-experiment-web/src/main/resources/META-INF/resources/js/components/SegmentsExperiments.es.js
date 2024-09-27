@@ -15,6 +15,7 @@ import ClayDropDown from '@clayui/drop-down';
 import ClayIcon from '@clayui/icon';
 import ClayLabel from '@clayui/label';
 import ClayTabs from '@clayui/tabs';
+import {openConfirmModal, sub} from 'frontend-js-web';
 import PropTypes from 'prop-types';
 import React, {useContext, useState} from 'react';
 
@@ -75,6 +76,7 @@ function SegmentsExperiments({
 			<ClayTabs justified={true}>
 				<ClayTabs.Item
 					active={activeTab === TABS_STATES.ACTIVE}
+					className="c-pt-1"
 					onClick={() => setActiveTab(TABS_STATES.ACTIVE)}
 				>
 					{Liferay.Language.get('active-test')}
@@ -82,9 +84,10 @@ function SegmentsExperiments({
 
 				<ClayTabs.Item
 					active={activeTab === TABS_STATES.HISTORY}
+					className="c-pt-1"
 					onClick={() => setActiveTab(TABS_STATES.HISTORY)}
 				>
-					{Liferay.Language.get('history')}
+					{Liferay.Language.get('history[record]')}
 
 					{' (' + experimentHistory.length + ')'}
 				</ClayTabs.Item>
@@ -125,6 +128,11 @@ function SegmentsExperiments({
 											<ClayDropDown.Item
 												onClick={_handleEditExperiment}
 											>
+												<ClayIcon
+													className="c-mr-3 text-4"
+													symbol="pencil"
+												/>
+
 												{Liferay.Language.get('edit')}
 											</ClayDropDown.Item>
 
@@ -133,6 +141,11 @@ function SegmentsExperiments({
 													_handleDeleteActiveExperiment
 												}
 											>
+												<ClayIcon
+													className="c-mr-3 text-4"
+													symbol="trash"
+												/>
+
 												{Liferay.Language.get('delete')}
 											</ClayDropDown.Item>
 										</ClayDropDown.ItemList>
@@ -157,7 +170,7 @@ function SegmentsExperiments({
 									<div
 										className="d-inline"
 										dangerouslySetInnerHTML={{
-											__html: Liferay.Util.sub(
+											__html: sub(
 												Liferay.Language.get(
 													'x-is-the-winner-variant'
 												),
@@ -219,12 +232,15 @@ function SegmentsExperiments({
 					)}
 
 					{!experiment && (
-						<div className="text-center">
+						<div className="segments-experiments-empty-state text-center">
 							<img
-								alt=""
-								className="my-3"
+								alt={Liferay.Language.get(
+									'create-test-help-message'
+								)}
+								className="mb-3 mt-4 segments-experiments-empty-state__image"
+								height="185"
 								src={noExperimentIllustration}
-								width="120px"
+								width="185"
 							/>
 
 							<h4 className="text-dark">
@@ -264,13 +280,18 @@ function SegmentsExperiments({
 	);
 
 	function _handleDeleteActiveExperiment() {
-		const confirmed = confirm(
-			Liferay.Language.get('are-you-sure-you-want-to-delete-this')
-		);
-
-		if (confirmed) {
-			return onDeleteSegmentsExperiment(experiment.segmentsExperimentId);
-		}
+		openConfirmModal({
+			message: Liferay.Language.get(
+				'are-you-sure-you-want-to-delete-this'
+			),
+			onConfirm: (isConfirmed) => {
+				if (isConfirmed) {
+					return onDeleteSegmentsExperiment(
+						experiment.segmentsExperimentId
+					);
+				}
+			},
+		});
 	}
 
 	function _handleEditExperiment() {
@@ -284,28 +305,29 @@ function SegmentsExperiments({
 			winnerSegmentsExperienceId: experienceId,
 		};
 
-		const confirmed = confirm(
-			Liferay.Language.get(
+		openConfirmModal({
+			message: Liferay.Language.get(
 				'are-you-sure-you-want-to-publish-this-variant'
-			)
-		);
+			),
+			onConfirm: (isConfimed) => {
+				if (isConfimed) {
+					APIService.publishExperience(body)
+						.then(({segmentsExperiment}) => {
+							openSuccessToast();
 
-		if (confirmed) {
-			APIService.publishExperience(body)
-				.then(({segmentsExperiment}) => {
-					openSuccessToast();
-
-					dispatch(
-						archiveExperiment({
-							status: segmentsExperiment.status,
+							dispatch(
+								archiveExperiment({
+									status: segmentsExperiment.status,
+								})
+							);
+							navigateToExperience(experienceId);
 						})
-					);
-					navigateToExperience(experienceId);
-				})
-				.catch((_error) => {
-					openErrorToast();
-				});
-		}
+						.catch((_error) => {
+							openErrorToast();
+						});
+				}
+			},
+		});
 	}
 }
 

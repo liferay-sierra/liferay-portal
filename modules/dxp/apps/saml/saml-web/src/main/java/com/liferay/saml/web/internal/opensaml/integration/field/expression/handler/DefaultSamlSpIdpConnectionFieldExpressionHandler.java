@@ -21,7 +21,6 @@ import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saml.opensaml.integration.field.expression.handler.SamlSpIdpConnectionFieldExpressionHandler;
-import com.liferay.saml.opensaml.integration.field.expression.handler.registry.UserFieldExpressionHandlerRegistry;
 import com.liferay.saml.opensaml.integration.processor.context.SamlSpIdpConnectionProcessorContext;
 import com.liferay.saml.persistence.model.SamlSpIdpConnection;
 import com.liferay.saml.persistence.service.SamlSpIdpConnectionLocalService;
@@ -73,24 +72,22 @@ public class DefaultSamlSpIdpConnectionFieldExpressionHandler
 		samlSpIdpConnectionBind.mapBoolean(
 			"unknownUsersAreStrangers",
 			SamlSpIdpConnection::setUnknownUsersAreStrangers);
+
 		samlSpIdpConnectionBind.mapString(
-			"metadataUrl", SamlSpIdpConnection::setMetadataUrl);
+			"metadataDelivery",
+			(samlSpIdpConnection, metadataDelivery) -> {
+				if (metadataDelivery.equals("metadataXml")) {
+					samlSpIdpConnection.setMetadataUrl(null);
 
-		samlSpIdpConnectionBind.handleFileItemArray(
-			"metadataXml",
-			(samlSpIdpConnection, fileItems) -> {
-				if (ArrayUtil.isEmpty(fileItems)) {
-
-					// Dereference metadataUrl
-
+					samlSpIdpConnectionBind.handleFileItemArray(
+						"metadataXml", this::_setMetadataXml);
+				}
+				else {
 					samlSpIdpConnection.setMetadataXml(null);
 
-					return;
+					samlSpIdpConnectionBind.mapString(
+						"metadataUrl", SamlSpIdpConnection::setMetadataUrl);
 				}
-
-				FileItem fileItem = fileItems[0];
-
-				samlSpIdpConnection.setMetadataXml(fileItem.getString());
 			});
 
 		samlSpIdpConnectionBind.mapString("name", SamlSpIdpConnection::setName);
@@ -167,13 +164,26 @@ public class DefaultSamlSpIdpConnectionFieldExpressionHandler
 		return null;
 	}
 
+	private void _setMetadataXml(
+		SamlSpIdpConnection samlSpIdpConnection, FileItem[] fileItems) {
+
+		if (ArrayUtil.isEmpty(fileItems)) {
+
+			// Dereference metadata XML
+
+			samlSpIdpConnection.setMetadataXml(null);
+
+			return;
+		}
+
+		FileItem fileItem = fileItems[0];
+
+		samlSpIdpConnection.setMetadataXml(fileItem.getString());
+	}
+
 	private int _processingIndex;
 
 	@Reference
 	private SamlSpIdpConnectionLocalService _samlSpIdpConnectionLocalService;
-
-	@Reference
-	private UserFieldExpressionHandlerRegistry
-		_userFieldExpressionHandlerRegistry;
 
 }

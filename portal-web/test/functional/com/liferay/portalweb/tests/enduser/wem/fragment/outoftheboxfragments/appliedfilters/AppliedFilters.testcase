@@ -45,12 +45,10 @@ definition {
 				groupName = "Test Site Name",
 				title = "Large",
 				vocabularyName = "Size");
-
 			var mediumId = JSONCategory.addCategory(
 				groupName = "Test Site Name",
 				title = "Medium",
 				vocabularyName = "Size");
-
 			var smallId = JSONCategory.addCategory(
 				groupName = "Test Site Name",
 				title = "Small",
@@ -91,7 +89,7 @@ definition {
 		task ("Add the first collection page based on dynamic collection") {
 			PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
 
-			ContentPages.addPublicCollectionPage(
+			ContentPages.addCollectionPage(
 				collectionName = "Dynamic Collection",
 				pageName = "Collection Page Name",
 				tabName = "Collections");
@@ -100,8 +98,8 @@ definition {
 		task ("Select the Bordered List in Collection Display") {
 			PageEditor.editCollectionDisplay(
 				fragmentName = "Collection Display",
-				listStyle = "Bordered List",
-				selectedName = "Dynamic Collection");
+				selectedName = "Dynamic Collection",
+				styleDisplay = "Bordered List");
 		}
 
 		task ("Add an Applied Filters above the Container") {
@@ -142,9 +140,7 @@ definition {
 		}
 
 		task ("Reset applied filters at Preview mode") {
-			PageEditor.openPreviewMode();
-
-			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_BODY");
+			PageEditor.previewInANewTab();
 
 			var n = "1";
 
@@ -192,9 +188,9 @@ definition {
 				var n = ${n} + 1;
 			}
 
-			IFrame.closeFrame();
+			Close.closeWindow();
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Reset applied filters at Preview mode") {
@@ -267,12 +263,10 @@ definition {
 				groupName = "Test Site Name",
 				title = "Large",
 				vocabularyName = "Size");
-
 			var mediumId = JSONCategory.addCategory(
 				groupName = "Test Site Name",
 				title = "Medium",
 				vocabularyName = "Size");
-
 			var smallId = JSONCategory.addCategory(
 				groupName = "Test Site Name",
 				title = "Small",
@@ -313,7 +307,7 @@ definition {
 		task ("Add the first collection page based on dynamic collection") {
 			PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
 
-			ContentPages.addPublicCollectionPage(
+			ContentPages.addCollectionPage(
 				collectionName = "Dynamic Collection",
 				pageName = "Collection Page Name 1",
 				tabName = "Collections");
@@ -322,8 +316,8 @@ definition {
 		task ("Select the Bordered List in Collection Display") {
 			PageEditor.editCollectionDisplay(
 				fragmentName = "Collection Display",
-				listStyle = "Bordered List",
-				selectedName = "Dynamic Collection");
+				selectedName = "Dynamic Collection",
+				styleDisplay = "Bordered List");
 		}
 
 		task ("Add an Applied Filters above the Container") {
@@ -370,9 +364,7 @@ definition {
 		}
 
 		task ("View the Applied Filters doesn't present when no applied filter at Preview mode") {
-			PageEditor.openPreviewMode();
-
-			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_BODY");
+			PageEditor.previewInANewTab();
 
 			AssertElementNotPresent(locator1 = "PageEditor#APPLIED_FILTERS_FILTER_LIST_PLACEHOLDER");
 		}
@@ -406,9 +398,9 @@ definition {
 				key_position = "1",
 				locator1 = "PageEditor#COLLECTION_ITEM_CONTENT_IN_BORDERED_LIST_AT_VIEW_MODE");
 
-			IFrame.closeFrame();
+			Close.closeWindow();
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Navigate to page in view mode") {
@@ -460,7 +452,7 @@ definition {
 		task ("Add the second collection page based on dynamic collection") {
 			PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
 
-			ContentPages.addPublicCollectionPage(
+			ContentPages.addCollectionPage(
 				collectionName = "Dynamic Collection",
 				pageName = "Collection Page Name 2",
 				tabName = "Collections");
@@ -469,8 +461,8 @@ definition {
 		task ("Select the Bordered List in Collection Display") {
 			PageEditor.editCollectionDisplay(
 				fragmentName = "Collection Display",
-				listStyle = "Bordered List",
-				selectedName = "Dynamic Collection");
+				selectedName = "Dynamic Collection",
+				styleDisplay = "Bordered List");
 		}
 
 		task ("Add an Applied Filters above the Container") {
@@ -501,9 +493,7 @@ definition {
 		}
 
 		task ("View applied category filter at Preview mode") {
-			PageEditor.openPreviewMode();
-
-			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_BODY");
+			PageEditor.previewInANewTab();
 
 			var n = "1";
 
@@ -529,9 +519,9 @@ definition {
 				key_position = "1",
 				locator1 = "PageEditor#COLLECTION_ITEM_CONTENT_IN_BORDERED_LIST_AT_VIEW_MODE");
 
-			IFrame.closeFrame();
+			Close.closeWindow();
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Navigate to page in view mode") {
@@ -589,7 +579,6 @@ definition {
 				groupName = "Test Site Name",
 				title = "Male",
 				vocabularyName = "Gender");
-
 			var femaleId = JSONCategory.addCategory(
 				groupName = "Test Site Name",
 				title = "Female",
@@ -601,37 +590,30 @@ definition {
 				groupName = "Test Site Name",
 				title = "Red",
 				vocabularyName = "Color");
-
 			var brownId = JSONCategory.addCategory(
 				groupName = "Test Site Name",
 				title = "Brown",
 				vocabularyName = "Color");
-
 			var blackId = JSONCategory.addCategory(
 				groupName = "Test Site Name",
 				title = "Black",
 				vocabularyName = "Color");
-
 			var greyId = JSONCategory.addCategory(
 				groupName = "Test Site Name",
 				title = "Grey",
 				vocabularyName = "Color");
-
 			var blueId = JSONCategory.addCategory(
 				groupName = "Test Site Name",
 				title = "Blue",
 				vocabularyName = "Color");
-
 			var greenId = JSONCategory.addCategory(
 				groupName = "Test Site Name",
 				title = "Green",
 				vocabularyName = "Color");
-
 			var yellowId = JSONCategory.addCategory(
 				groupName = "Test Site Name",
 				title = "Yellow",
 				vocabularyName = "Color");
-
 			var whiteId = JSONCategory.addCategory(
 				groupName = "Test Site Name",
 				title = "White",
@@ -680,7 +662,7 @@ definition {
 		task ("Add a collection page based on dynamic collection") {
 			PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
 
-			ContentPages.addPublicCollectionPage(
+			ContentPages.addCollectionPage(
 				collectionName = "Dynamic Collection",
 				pageName = "Collection Page Name",
 				tabName = "Collections");
@@ -689,8 +671,8 @@ definition {
 		task ("Select the Bordered List in Collection Display") {
 			PageEditor.editCollectionDisplay(
 				fragmentName = "Collection Display",
-				listStyle = "Bordered List",
-				selectedName = "Dynamic Collection");
+				selectedName = "Dynamic Collection",
+				styleDisplay = "Bordered List");
 		}
 
 		task ("Add a Grid above the Container") {
@@ -761,9 +743,7 @@ definition {
 		}
 
 		task ("View the Show More button when the number of applied filters more than limitation at Preview mode") {
-			PageEditor.openPreviewMode();
-
-			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_BODY");
+			PageEditor.previewInANewTab();
 
 			var n = "1";
 
@@ -870,9 +850,9 @@ definition {
 					locator1 = "PageEditor#APPLIED_FILTERS_FILTER_LIST_FILTER_ITEM");
 			}
 
-			IFrame.closeFrame();
+			Close.closeWindow();
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("View the Show More button when the number of applied filters more than limitation at View mode") {

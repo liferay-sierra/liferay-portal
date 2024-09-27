@@ -35,7 +35,7 @@ import com.liferay.portal.kernel.service.permission.PortletPermission;
 import com.liferay.portal.kernel.settings.LocalizedValuesMap;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
@@ -88,7 +88,7 @@ public class DefaultMentionsNotifier implements MentionsNotifier {
 		SubscriptionSender subscriptionSender = new SubscriptionSender();
 
 		subscriptionSender.setLocalizedBodyMap(
-			LocalizationUtil.getMap(bodyLocalizedValuesMap));
+			_localization.getMap(bodyLocalizedValuesMap));
 		subscriptionSender.setClassName(className);
 		subscriptionSender.setClassPK(classPK);
 		subscriptionSender.setCompanyId(user.getCompanyId());
@@ -111,7 +111,7 @@ public class DefaultMentionsNotifier implements MentionsNotifier {
 		subscriptionSender.setScopeGroupId(groupId);
 		subscriptionSender.setServiceContext(serviceContext);
 		subscriptionSender.setLocalizedSubjectMap(
-			LocalizationUtil.getMap(subjectLocalizedValuesMap));
+			_localization.getMap(subjectLocalizedValuesMap));
 
 		for (String mentionedUserScreenName : mentionedUsersScreenNames) {
 			User mentionedUser = _userLocalService.fetchUserByScreenName(
@@ -146,25 +146,6 @@ public class DefaultMentionsNotifier implements MentionsNotifier {
 		}
 
 		subscriptionSender.flushNotificationsAsync();
-	}
-
-	@Reference(unbind = "-")
-	protected void setMentionsMatcherRegistry(
-		MentionsMatcherRegistry mentionsMatcherRegistry) {
-
-		_mentionsMatcherRegistry = mentionsMatcherRegistry;
-	}
-
-	@Reference(unbind = "-")
-	protected void setMentionsUserFinder(
-		MentionsUserFinder mentionsUserFinder) {
-
-		_mentionsUserFinder = mentionsUserFinder;
-	}
-
-	@Reference(unbind = "-")
-	protected void setUserLocalService(UserLocalService userLocalService) {
-		_userLocalService = userLocalService;
 	}
 
 	private String _getAssetEntryName(String className, Locale locale) {
@@ -215,7 +196,13 @@ public class DefaultMentionsNotifier implements MentionsNotifier {
 	@Reference
 	private LayoutPermission _layoutPermission;
 
+	@Reference
+	private Localization _localization;
+
+	@Reference
 	private MentionsMatcherRegistry _mentionsMatcherRegistry;
+
+	@Reference
 	private MentionsUserFinder _mentionsUserFinder;
 
 	@Reference
@@ -227,6 +214,7 @@ public class DefaultMentionsNotifier implements MentionsNotifier {
 	@Reference
 	private PortletPermission _portletPermission;
 
+	@Reference
 	private UserLocalService _userLocalService;
 
 }

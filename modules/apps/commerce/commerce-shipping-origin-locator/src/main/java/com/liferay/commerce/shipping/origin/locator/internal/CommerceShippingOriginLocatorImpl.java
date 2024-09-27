@@ -42,10 +42,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  * @author Ethan Bustad
  */
-@Component(
-	enabled = false, immediate = true,
-	service = CommerceShippingOriginLocator.class
-)
+@Component(immediate = true, service = CommerceShippingOriginLocator.class)
 public class CommerceShippingOriginLocatorImpl
 	implements CommerceShippingOriginLocator {
 
@@ -125,14 +122,14 @@ public class CommerceShippingOriginLocatorImpl
 					commerceAddress.getCompanyId(),
 					commerceInventoryWarehouse.getCountryTwoLettersISOCode());
 
-				Region region = _getRegion(
-					country.getCountryId(),
-					commerceInventoryWarehouse.getCommerceRegionCode());
-
 				double[] coordinates = _commerceGeocoder.getCoordinates(
 					commerceInventoryWarehouse.getStreet1(),
 					commerceInventoryWarehouse.getCity(),
-					commerceInventoryWarehouse.getZip(), region, country);
+					commerceInventoryWarehouse.getZip(),
+					_getRegion(
+						country.getCountryId(),
+						commerceInventoryWarehouse.getCommerceRegionCode()),
+					country);
 
 				commerceInventoryWarehouse =
 					_commerceInventoryWarehouseLocalService.
@@ -180,7 +177,6 @@ public class CommerceShippingOriginLocatorImpl
 		commerceAddress.setRegionId(region.getRegionId());
 
 		commerceAddress.setCountryId(country.getCountryId());
-
 		commerceAddress.setLatitude(commerceInventoryWarehouse.getLatitude());
 		commerceAddress.setLongitude(commerceInventoryWarehouse.getLongitude());
 

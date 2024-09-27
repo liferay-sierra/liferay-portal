@@ -19,9 +19,10 @@ import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.model.AssetLinkConstants;
 import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.asset.kernel.service.AssetLinkLocalService;
+import com.liferay.asset.util.LinkedAssetEntryIdsUtil;
 import com.liferay.info.collection.provider.CollectionQuery;
 import com.liferay.info.collection.provider.InfoCollectionProvider;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.pagination.InfoPage;
 import com.liferay.journal.constants.JournalFolderConstants;
 import com.liferay.journal.model.JournalArticle;
@@ -111,10 +112,10 @@ public class AssetInfoCollectionProviderTest {
 
 		_ratingsEntryLocalService.updateEntry(
 			TestPropsValues.getUserId(), JournalArticle.class.getName(),
-			article2.getResourcePrimKey(), 1, serviceContext);
+			article2.getResourcePrimKey(), 0.5, serviceContext);
 
 		InfoCollectionProvider<AssetEntry> infoCollectionProvider =
-			_infoItemServiceTracker.getInfoItemService(
+			_infoItemServiceRegistry.getInfoItemService(
 				InfoCollectionProvider.class,
 				"com.liferay.asset.internal.info.collection.provider." +
 					"HighestRatedAssetsInfoCollectionProvider");
@@ -134,10 +135,6 @@ public class AssetInfoCollectionProviderTest {
 		Assert.assertEquals(
 			Long.valueOf(article1.getResourcePrimKey()),
 			_CLASS_PK_ACCESSOR.get(assetEntries.get(1)));
-
-		_ratingsEntryLocalService.deleteEntry(
-			TestPropsValues.getUserId(), JournalArticle.class.getName(),
-			article2.getResourcePrimKey());
 
 		_ratingsEntryLocalService.updateEntry(
 			TestPropsValues.getUserId(), JournalArticle.class.getName(),
@@ -171,7 +168,7 @@ public class AssetInfoCollectionProviderTest {
 			JournalArticle.class.getName(), article2.getResourcePrimKey());
 
 		InfoCollectionProvider<AssetEntry> infoCollectionProvider =
-			_infoItemServiceTracker.getInfoItemService(
+			_infoItemServiceRegistry.getInfoItemService(
 				InfoCollectionProvider.class,
 				"com.liferay.asset.internal.info.collection.provider." +
 					"MostViewedAssetsInfoCollectionProvider");
@@ -218,7 +215,7 @@ public class AssetInfoCollectionProviderTest {
 			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID);
 
 		InfoCollectionProvider<AssetEntry> infoCollectionProvider =
-			_infoItemServiceTracker.getInfoItemService(
+			_infoItemServiceRegistry.getInfoItemService(
 				InfoCollectionProvider.class,
 				"com.liferay.asset.internal.info.collection.provider." +
 					"RecentContentInfoCollectionProvider");
@@ -280,8 +277,11 @@ public class AssetInfoCollectionProviderTest {
 		_httpServletRequest.setAttribute(
 			WebKeys.LAYOUT_ASSET_ENTRY, assetEntry1);
 
+		LinkedAssetEntryIdsUtil.addLinkedAssetEntryId(
+			_httpServletRequest, assetEntry1.getEntryId());
+
 		InfoCollectionProvider<AssetEntry> infoCollectionProvider =
-			_infoItemServiceTracker.getInfoItemService(
+			_infoItemServiceRegistry.getInfoItemService(
 				InfoCollectionProvider.class,
 				"com.liferay.asset.publisher.web.internal.info.collection." +
 					"provider.RelatedAssetsInfoCollectionProvider");
@@ -299,6 +299,9 @@ public class AssetInfoCollectionProviderTest {
 		_httpServletRequest.setAttribute(
 			WebKeys.LAYOUT_ASSET_ENTRY, assetEntry2);
 
+		LinkedAssetEntryIdsUtil.addLinkedAssetEntryId(
+			_httpServletRequest, assetEntry2.getEntryId());
+
 		assetEntriesInfoPage = infoCollectionProvider.getCollectionInfoPage(
 			new CollectionQuery());
 
@@ -315,26 +318,27 @@ public class AssetInfoCollectionProviderTest {
 	public SearchTestRule searchTestRule = new SearchTestRule();
 
 	private HttpServletRequest _getHttpServletRequest() throws Exception {
-		MockHttpServletRequest httpServletRequest =
+		MockHttpServletRequest mockHttpServletRequest =
 			new MockHttpServletRequest();
 
-		httpServletRequest.setAttribute(
+		mockHttpServletRequest.setAttribute(
 			JavaConstants.JAVAX_PORTLET_RESPONSE,
 			new MockLiferayPortletRenderResponse());
 
 		ThemeDisplay themeDisplay = new ThemeDisplay();
 
 		themeDisplay.setRealUser(TestPropsValues.getUser());
-		themeDisplay.setRequest(httpServletRequest);
+		themeDisplay.setRequest(mockHttpServletRequest);
 		themeDisplay.setResponse(new MockHttpServletResponse());
 		themeDisplay.setScopeGroupId(_group.getGroupId());
 		themeDisplay.setUser(TestPropsValues.getUser());
 
-		httpServletRequest.setAttribute(WebKeys.THEME_DISPLAY, themeDisplay);
+		mockHttpServletRequest.setAttribute(
+			WebKeys.THEME_DISPLAY, themeDisplay);
 
-		httpServletRequest.setMethod(HttpMethods.GET);
+		mockHttpServletRequest.setMethod(HttpMethods.GET);
 
-		return httpServletRequest;
+		return mockHttpServletRequest;
 	}
 
 	private static final Accessor<AssetEntry, Long> _CLASS_PK_ACCESSOR =
@@ -369,7 +373,7 @@ public class AssetInfoCollectionProviderTest {
 	private HttpServletRequest _httpServletRequest;
 
 	@Inject
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Inject
 	private RatingsEntryLocalService _ratingsEntryLocalService;

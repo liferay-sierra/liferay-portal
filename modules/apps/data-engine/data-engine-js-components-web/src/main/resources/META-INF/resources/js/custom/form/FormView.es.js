@@ -40,7 +40,10 @@ import {evaluate} from '../../utils/evaluation.es';
 import * as Fields from '../../utils/fields.es';
 import {getFormId, getFormNode} from '../../utils/formId.es';
 import {parseProps} from '../../utils/parseProps.es';
-import {paginationReducer} from './reducers/index.es';
+import {
+	objectRelationshipReducer,
+	paginationReducer,
+} from './reducers/index.es';
 
 const DDM_FORM_PORTLET_NAMESPACE =
 	'_com_liferay_dynamic_data_mapping_form_web_portlet_DDMFormPortlet_';
@@ -51,7 +54,7 @@ const DDM_FORM_PORTLET_NAMESPACE =
  * of the submit and uses Liferay.Util.submitForm.
  */
 const useFormSubmit = ({apiRef, containerRef}) => {
-	const {activePage, pages} = useFormState();
+	const {activePage, pages, title} = useFormState();
 	const {portletNamespace, submittable, validateCSRFTokenURL} = useConfig();
 	const isDDMFormPortletNamespace = portletNamespace.includes(
 		DDM_FORM_PORTLET_NAMESPACE
@@ -63,34 +66,37 @@ const useFormSubmit = ({apiRef, containerRef}) => {
 				.validate()
 				.then((validForm) => {
 					if (validForm) {
-						const liferayForm =
-							event.target.id &&
-							Liferay.Form.get(event.target.id);
+						AUI().use('liferay-form', () => {
+							const liferayForm =
+								event.target.id &&
+								Liferay.Form.get(event.target.id);
 
-						const validLiferayForm = !Object.keys(
-							liferayForm?.formValidator?.errors ?? {}
-						).length;
+							const validLiferayForm = !Object.keys(
+								liferayForm?.formValidator?.errors ?? {}
+							).length;
 
-						if (!validLiferayForm) {
-							Liferay.fire('ddmFormError', {
+							if (!validLiferayForm) {
+								Liferay.fire('ddmFormError', {
+									formWrapperId: event.target.id,
+								});
+
+								return;
+							}
+
+							if (submittable) {
+								Liferay.Util.submitForm(event.target);
+							}
+
+							Liferay.fire('ddmFormValid', {
 								formWrapperId: event.target.id,
 							});
 
-							return;
-						}
-
-						if (submittable) {
-							Liferay.Util.submitForm(event.target);
-						}
-
-						Liferay.fire('ddmFormValid', {
-							formWrapperId: event.target.id,
-						});
-
-						Liferay.fire('ddmFormSubmit', {
-							formId: getFormId(
-								getFormNode(containerRef.current)
-							),
+							Liferay.fire('ddmFormSubmit', {
+								formId: getFormId(
+									getFormNode(containerRef.current)
+								),
+								title,
+							});
 						});
 					}
 					else {
@@ -108,7 +114,7 @@ const useFormSubmit = ({apiRef, containerRef}) => {
 					});
 				});
 		},
-		[apiRef, containerRef, submittable]
+		[apiRef, containerRef, submittable, title]
 	);
 
 	const handleFormSubmitted = useCallback(
@@ -412,6 +418,7 @@ export const FormView = React.forwardRef((props, ref) => {
 					activePageReducer,
 					fieldReducer,
 					languageReducer,
+					objectRelationshipReducer,
 					pagesStructureReducer,
 					pageValidationReducer,
 					paginationReducer,

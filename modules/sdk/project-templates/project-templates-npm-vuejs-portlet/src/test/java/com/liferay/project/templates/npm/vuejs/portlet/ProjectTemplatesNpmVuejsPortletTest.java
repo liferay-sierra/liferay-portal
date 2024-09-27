@@ -44,21 +44,31 @@ public class ProjectTemplatesNpmVuejsPortletTest
 	public static final MavenExecutor mavenExecutor = new MavenExecutor();
 
 	@Parameterized.Parameters(
-		name = "Testcase-{index}: testing {0}, {1}, {2}, {3}"
+		name = "Testcase-{index}: testing {0}, {1}, {2}, {3}, {4}"
 	)
 	public static Iterable<Object[]> data() {
 		return Arrays.asList(
 			new Object[][] {
-				{"foo", "foo", "Foo", "7.0.6-2"},
-				{"foo", "foo", "Foo", "7.1.3-1"},
-				{"foo", "foo", "Foo", "7.2.1-1"},
-				{"foo", "foo", "Foo", "7.3.7"},
-				{"foo", "foo", "Foo", "7.4.1-1"},
-				{"foo-bar", "foo.bar", "FooBar", "7.0.6-2"},
-				{"foo-bar", "foo.bar", "FooBar", "7.1.3-1"},
-				{"foo-bar", "foo.bar", "FooBar", "7.2.1-1"},
-				{"foo-bar", "foo.bar", "FooBar", "7.3.7"},
-				{"foo-bar", "foo.bar", "FooBar", "7.4.1-1"}
+				{"foo", "foo", "Foo", "7.0.6-2", "yarn", "dxp"},
+				{"foo", "foo", "Foo", "7.1.3-1", "yarn", "dxp"},
+				{"foo", "foo", "Foo", "7.2.1-1", "yarn", "dxp"},
+				{"foo", "foo", "Foo", "7.3.7", "yarn", "portal"},
+				{"foo", "foo", "Foo", "7.4.3.36", "yarn", "portal"},
+				{"foo-bar", "foo.bar", "FooBar", "7.0.6-2", "yarn", "dxp"},
+				{"foo-bar", "foo.bar", "FooBar", "7.1.3-1", "yarn", "dxp"},
+				{"foo-bar", "foo.bar", "FooBar", "7.2.1-1", "yarn", "dxp"},
+				{"foo-bar", "foo.bar", "FooBar", "7.3.7", "yarn", "portal"},
+				{"foo-bar", "foo.bar", "FooBar", "7.4.3.36", "yarn", "portal"},
+				{"foo", "foo", "Foo", "7.0.6-2", "npm", "dxp"},
+				{"foo", "foo", "Foo", "7.1.3-1", "npm", "dxp"},
+				{"foo", "foo", "Foo", "7.2.1-1", "npm", "dxp"},
+				{"foo", "foo", "Foo", "7.3.7", "npm", "portal"},
+				{"foo", "foo", "Foo", "7.4.3.36", "npm", "portal"},
+				{"foo-bar", "foo.bar", "FooBar", "7.0.6-2", "npm", "dxp"},
+				{"foo-bar", "foo.bar", "FooBar", "7.1.3-1", "npm", "dxp"},
+				{"foo-bar", "foo.bar", "FooBar", "7.2.1-1", "npm", "dxp"},
+				{"foo-bar", "foo.bar", "FooBar", "7.3.7", "npm", "portal"},
+				{"foo-bar", "foo.bar", "FooBar", "7.4.3.36", "npm", "portal"}
 			});
 	}
 
@@ -80,12 +90,14 @@ public class ProjectTemplatesNpmVuejsPortletTest
 
 	public ProjectTemplatesNpmVuejsPortletTest(
 		String name, String packageName, String className,
-		String liferayVersion) {
+		String liferayVersion, String nodePackageManager, String product) {
 
 		_name = name;
 		_packageName = packageName;
 		_className = className;
 		_liferayVersion = liferayVersion;
+		_nodePackageManager = nodePackageManager;
+		_product = product;
 	}
 
 	@Test
@@ -94,7 +106,8 @@ public class ProjectTemplatesNpmVuejsPortletTest
 
 		testBuildTemplateNpm(
 			temporaryFolder, mavenExecutor, template, _name, _packageName,
-			_className, _liferayVersion, _gradleDistribution);
+			_className, _liferayVersion, _nodePackageManager, _product,
+			_gradleDistribution);
 	}
 
 	@Rule
@@ -105,6 +118,8 @@ public class ProjectTemplatesNpmVuejsPortletTest
 	private final String _className;
 	private final String _liferayVersion;
 	private final String _name;
+	private final String _nodePackageManager;
 	private final String _packageName;
+	private final String _product;
 
 }

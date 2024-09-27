@@ -36,8 +36,8 @@ export interface Config {
 
 	availableSegmentsEntries: {
 		[key: string]: {
-			segmentsEntryId: string;
 			name: string;
+			segmentsEntryId: string;
 		};
 	};
 
@@ -53,7 +53,7 @@ export interface Config {
 
 	changeMasterLayoutURL: string;
 	changeStyleBookEntryURL: string;
-	createLayoutPageTemplateEntryURL: string;
+	contentPagePersonalizationLearnURL: string;
 	collectionSelectorURL: string;
 
 	commonStyles: Array<{
@@ -76,6 +76,15 @@ export interface Config {
 		}>;
 	}>;
 
+	commonStylesFields: {
+		[key: string]: {
+			cssTemplate: string;
+			defaultValue: string;
+		};
+	};
+
+	createLayoutPageTemplateEntryURL: string;
+
 	defaultEditorConfigurations: Record<
 		'comment' | 'rich-text' | 'text',
 		{
@@ -85,10 +94,10 @@ export interface Config {
 	>;
 
 	defaultLanguageId: string;
-	defaultStyleBookEntryName: string;
-	defaultStyleBookEntryImagePreviewURL: string;
 	defaultSegmentsEntryId: string;
 	defaultSegmentsExperienceId: string;
+	defaultStyleBookEntryImagePreviewURL: string;
+	defaultStyleBookEntryName: string;
 	deleteFragmentEntryLinkCommentURL: string;
 	deleteSegmentsExperienceURL: string;
 	discardDraftURL: string;
@@ -99,17 +108,17 @@ export interface Config {
 	editFragmentEntryLinkURL: string;
 	editSegmentsEntryURL: string;
 	frontendTokens: {
+		getAvailableImageConfigurationsURL: string;
+		getAvailableListItemRenderersURL: string;
+		getAvailableListRenderersURL: string;
 		[key: string]: {
 			cssVariable: string;
 			editorType: string;
 			label: string;
 			name: string;
 			value: string;
-		};
+		} | string;
 	};
-	getAvailableImageConfigurationsURL: string;
-	getAvailableListRenderersURL: string;
-	getAvailableListItemRenderersURL: string;
 	getAvailableTemplatesURL: string;
 	getCollectionConfigurationURL: string;
 	getCollectionFieldURL: string;
@@ -117,7 +126,7 @@ export interface Config {
 	getCollectionItemCountURL: string;
 	getCollectionMappingFieldsURL: string;
 	getCollectionSupportedFiltersURL: string;
-	getExperienceUsedPortletsURL: string;
+	getExperienceDataURL: string;
 	getIframeContentCssURL: string;
 	getIframeContentURL: string;
 	getInfoItemFieldValueURL: string;
@@ -125,10 +134,11 @@ export interface Config {
 	getLayoutFriendlyURL: string;
 	getLayoutPageTemplateCollectionsURL: string;
 	getPageContentsURL: string;
-	getWidgetsURL: string;
+	getPortletsURL: string;
 	imageSelectorURL: string;
 	infoItemPreviewSelectorURL: string;
 	infoItemSelectorURL: string;
+	isConversionDraft: boolean;
 	isPrivateLayoutsEnabled: boolean;
 	layoutConversionWarningMessages: string[] | null;
 	layoutItemSelectorURL: String;
@@ -158,6 +168,18 @@ export interface Config {
 	renderFragmentEntryURL: string;
 	restoreCollectionDisplayConfigURL: string;
 	searchContainerPageMaxDelta: number;
+
+	selectedMappingTypes?: {
+		type: {
+			id: string;
+			label: string;
+		};
+		subtype: {
+			id: string;
+			label: string;
+		};
+	};
+
 	selectedSegmentsEntryId: string;
 
 	sidebarPanels: {
@@ -174,12 +196,12 @@ export interface Config {
 	singleSegmentsExperienceMode: boolean;
 	siteNavigationMenuItemSelectorURL: string;
 	styleBookEnabled: boolean;
-	stylebookEntryId: string;
 	styleBooks: Array<{
 		imagePreviewURL: string;
 		name: string;
 		styleBookEntryId: string;
 	}>;
+	stylebookEntryId: string;
 	themeColorCssClasses: string[];
 	toolbarId: string;
 
@@ -189,9 +211,11 @@ export interface Config {
 		toolbarPluginId: string;
 	}>;
 
-	unmarkItemForDeletionURL: string;
-	updateConfigurationValuesURL: string;
+	unmarkItemsForDeletionURL: string;
 	updateCollectionDisplayConfigURL: string;
+	updateConfigurationValuesURL: string;
+	updateFormItemConfigURL: string;
+	updateFragmentPortletSetsSortURL: string;
 	updateItemConfigURL: string;
 	updateLayoutPageTemplateDataURL: string;
 	updateRowColumnsURL: string;

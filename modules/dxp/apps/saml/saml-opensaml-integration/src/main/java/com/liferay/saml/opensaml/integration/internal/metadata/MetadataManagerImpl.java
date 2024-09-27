@@ -18,7 +18,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -302,7 +302,7 @@ public class MetadataManagerImpl
 			requestURI = requestURI.substring(contextPath.length());
 		}
 
-		return _http.removePathParameters(requestURI);
+		return HttpComponentsUtil.removePathParameters(requestURI);
 	}
 
 	@Override
@@ -467,21 +467,6 @@ public class MetadataManagerImpl
 		return false;
 	}
 
-	@Reference(unbind = "-")
-	public void setCredentialResolver(CredentialResolver credentialResolver) {
-		_credentialResolver = credentialResolver;
-	}
-
-	@Reference(unbind = "-")
-	public void setHttp(Http http) {
-		_http = http;
-	}
-
-	@Reference(unbind = "-")
-	public void setLocalEntityManager(LocalEntityManager localEntityManager) {
-		_localEntityManager = localEntityManager;
-	}
-
 	@Reference(
 		cardinality = ReferenceCardinality.AT_LEAST_ONE,
 		policyOption = ReferencePolicyOption.GREEDY,
@@ -493,23 +478,6 @@ public class MetadataManagerImpl
 		}
 
 		_cachingChainingMetadataResolver.addMetadataResolver(metadataResolver);
-	}
-
-	@Reference(unbind = "-")
-	public void setParserPool(ParserPool parserPool) {
-		_parserPool = parserPool;
-	}
-
-	@Reference(unbind = "-")
-	public void setPortal(Portal portal) {
-		_portal = portal;
-	}
-
-	@Reference(unbind = "-")
-	public void setSamlProviderConfigurationHelper(
-		SamlProviderConfigurationHelper samlProviderConfigurationHelper) {
-
-		_samlProviderConfigurationHelper = samlProviderConfigurationHelper;
 	}
 
 	public void unsetMetadataResolver(MetadataResolver metadataResolver) {
@@ -599,12 +567,21 @@ public class MetadataManagerImpl
 		_cachingChainingMetadataResolver =
 			new CachingChainingMetadataResolver();
 	private ChainingSignatureTrustEngine _chainingSignatureTrustEngine;
+
+	@Reference
 	private CredentialResolver _credentialResolver;
-	private Http _http;
+
+	@Reference
 	private LocalEntityManager _localEntityManager;
+
 	private MetadataCredentialResolver _metadataCredentialResolver;
+
+	@Reference
 	private ParserPool _parserPool;
+
+	@Reference
 	private Portal _portal;
+
 	private final PredicateRoleDescriptorResolver
 		_predicateRoleDescriptorResolver = new PredicateRoleDescriptorResolver(
 			_cachingChainingMetadataResolver);
@@ -612,6 +589,7 @@ public class MetadataManagerImpl
 	@Reference
 	private SamlIdpSpConnectionLocalService _samlIdpSpConnectionLocalService;
 
+	@Reference
 	private SamlProviderConfigurationHelper _samlProviderConfigurationHelper;
 
 	@Reference

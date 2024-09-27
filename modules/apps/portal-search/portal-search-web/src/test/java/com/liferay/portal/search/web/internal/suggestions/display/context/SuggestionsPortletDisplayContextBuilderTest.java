@@ -19,7 +19,8 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.Html;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.search.web.internal.suggestions.display.context.builder.SuggestionsPortletDisplayContextBuilder;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
@@ -37,9 +38,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import org.mockito.AdditionalAnswers;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 
 /**
  * @author Adam Brandizzi
@@ -54,10 +53,9 @@ public class SuggestionsPortletDisplayContextBuilderTest {
 
 	@Before
 	public void setUp() {
-		MockitoAnnotations.initMocks(this);
-
 		_setUpHtml();
-		_setUpHttp();
+
+		_setUpPortalUtil();
 
 		_setUpDisplayContextBuilder();
 	}
@@ -68,7 +66,7 @@ public class SuggestionsPortletDisplayContextBuilderTest {
 			buildRelatedQueriesSuggestions(Arrays.asList("alpha"));
 
 		_assertSuggestion(
-			"[alpha] | q=X(q<<alpha)", suggestionDisplayContexts.get(0));
+			"[alpha] | q=alpha", suggestionDisplayContexts.get(0));
 	}
 
 	@Test
@@ -93,11 +91,10 @@ public class SuggestionsPortletDisplayContextBuilderTest {
 			suggestionDisplayContexts.toString(), 2,
 			suggestionDisplayContexts.size());
 
-		_assertSuggestion(
-			"a [C] | q=a b(q<<a C)", suggestionDisplayContexts.get(0));
+		_assertSuggestion("a [C] | q=a+C", suggestionDisplayContexts.get(0));
 
 		_assertSuggestion(
-			"a b [C] | q=a b(q<<a b C)", suggestionDisplayContexts.get(1));
+			"a b [C] | q=a+b+C", suggestionDisplayContexts.get(1));
 	}
 
 	@Test
@@ -122,7 +119,7 @@ public class SuggestionsPortletDisplayContextBuilderTest {
 			suggestionDisplayContexts.size());
 
 		_assertSuggestion(
-			"a b [C] | q=a b(q<<a b C)", suggestionDisplayContexts.get(0));
+			"a b [C] | q=a+b+C", suggestionDisplayContexts.get(0));
 	}
 
 	@Test
@@ -137,7 +134,7 @@ public class SuggestionsPortletDisplayContextBuilderTest {
 			suggestionDisplayContexts.size());
 
 		_assertSuggestion(
-			"a b [C] | q=a b(q<<a b C)", suggestionDisplayContexts.get(0));
+			"a b [C] | q=a+b+C", suggestionDisplayContexts.get(0));
 	}
 
 	@Test
@@ -145,7 +142,7 @@ public class SuggestionsPortletDisplayContextBuilderTest {
 		SuggestionDisplayContext suggestionDisplayContext =
 			buildSpellCheckSuggestion("alpha");
 
-		_assertSuggestion("[alpha] | q=X(q<<alpha)", suggestionDisplayContext);
+		_assertSuggestion("[alpha] | q=alpha", suggestionDisplayContext);
 	}
 
 	@Test
@@ -162,7 +159,7 @@ public class SuggestionsPortletDisplayContextBuilderTest {
 		SuggestionDisplayContext suggestionDisplayContext =
 			buildSpellCheckSuggestion("a C");
 
-		_assertSuggestion("a [C] | q=a b(q<<a C)", suggestionDisplayContext);
+		_assertSuggestion("a [C] | q=a+C", suggestionDisplayContext);
 	}
 
 	@Test
@@ -351,11 +348,8 @@ public class SuggestionsPortletDisplayContextBuilderTest {
 		return displayContext.getSpellCheckSuggestion();
 	}
 
-	@Mock
-	protected Html html;
-
-	@Mock
-	protected Http http;
+	protected Html html = Mockito.mock(Html.class);
+	protected Portal portal = Mockito.mock(Portal.class);
 
 	private void _assertSuggestion(
 		String expected, SuggestionDisplayContext suggestionDisplayContext) {
@@ -394,7 +388,7 @@ public class SuggestionsPortletDisplayContextBuilderTest {
 
 	private void _setUpDisplayContextBuilder() {
 		_displayContextBuilder = new SuggestionsPortletDisplayContextBuilder(
-			html, http);
+			html);
 
 		_setUpSearchedKeywords("q", "X");
 	}
@@ -409,19 +403,20 @@ public class SuggestionsPortletDisplayContextBuilderTest {
 		);
 	}
 
-	private void _setUpHttp() {
+	private void _setUpPortalUtil() {
 		Mockito.doAnswer(
-			invocation -> StringBundler.concat(
-				invocation.getArgumentAt(0, String.class),
-				StringPool.OPEN_PARENTHESIS,
-				invocation.getArgumentAt(1, String.class), "<<",
-				invocation.getArgumentAt(2, String.class),
-				StringPool.CLOSE_PARENTHESIS)
+			invocation -> new String[] {
+				invocation.getArgument(0, String.class), StringPool.BLANK
+			}
 		).when(
-			http
-		).setParameter(
-			Mockito.anyString(), Mockito.anyString(), Mockito.anyString()
+			portal
+		).stripURLAnchor(
+			Mockito.anyString(), Mockito.anyString()
 		);
+
+		PortalUtil portalUtil = new PortalUtil();
+
+		portalUtil.setPortal(portal);
 	}
 
 	private void _setUpSearchedKeywords(

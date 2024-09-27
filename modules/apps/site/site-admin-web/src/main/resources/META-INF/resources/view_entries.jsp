@@ -93,6 +93,7 @@ SiteAdminDisplayContext siteAdminDisplayContext = (SiteAdminDisplayContext)reque
 
 				<liferay-ui:search-container-column-text>
 					<clay:dropdown-actions
+						aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 						dropdownItems="<%= siteAdminDisplayContext.getActionDropdownItems(curGroup) %>"
 						propsTransformer="js/SiteDropdownDefaultPropsTransformer"
 					/>
@@ -101,6 +102,7 @@ SiteAdminDisplayContext siteAdminDisplayContext = (SiteAdminDisplayContext)reque
 			<c:when test='<%= Objects.equals(siteAdminDisplayContext.getDisplayStyle(), "icon") %>'>
 				<liferay-ui:search-container-column-text>
 					<clay:vertical-card
+						propsTransformer="js/SiteDropdownDefaultPropsTransformer"
 						verticalCard="<%= new SiteVerticalCard(curGroup, liferayPortletRequest, liferayPortletResponse, searchContainer.getRowChecker(), siteAdminDisplayContext) %>"
 					/>
 				</liferay-ui:search-container-column-text>
@@ -219,13 +221,14 @@ SiteAdminDisplayContext siteAdminDisplayContext = (SiteAdminDisplayContext)reque
 				</c:if>
 
 				<liferay-ui:search-container-column-text
-					cssClass="table-cell-smallest table-cell-ws-nowrap table-column-text-center"
+					cssClass="table-cell-expand-smallest table-cell-ws-nowrap table-column-text-center"
 					name="active"
 					value='<%= LanguageUtil.get(request, (curGroup.isActive() ? "yes" : "no")) %>'
 				/>
 
 				<liferay-ui:search-container-column-text>
 					<clay:dropdown-actions
+						aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 						dropdownItems="<%= siteAdminDisplayContext.getActionDropdownItems(curGroup) %>"
 						propsTransformer="js/SiteDropdownDefaultPropsTransformer"
 					/>

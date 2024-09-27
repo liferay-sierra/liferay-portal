@@ -25,7 +25,7 @@ import com.liferay.expando.kernel.model.ExpandoColumnConstants;
 import com.liferay.expando.kernel.service.ExpandoColumnService;
 import com.liferay.expando.kernel.util.ExpandoBridgeFactoryUtil;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.portal.kernel.search.Field;
@@ -33,7 +33,7 @@ import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PropertiesParamUtil;
@@ -63,7 +63,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Drew Brokke
  */
 @Component(
-	immediate = true,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.css-class-wrapper=portlet-expando",
@@ -81,7 +80,8 @@ import org.osgi.service.component.annotations.Reference;
 		"javax.portlet.init-param.template-path=/META-INF/resources/",
 		"javax.portlet.init-param.view-template=/view.jsp",
 		"javax.portlet.name=" + ExpandoPortletKeys.EXPANDO,
-		"javax.portlet.resource-bundle=content.Language"
+		"javax.portlet.resource-bundle=content.Language",
+		"javax.portlet.version=3.0"
 	},
 	service = Portlet.class
 )
@@ -120,10 +120,8 @@ public class ExpandoPortlet extends MVCPortlet {
 		ExpandoBridge expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(
 			themeDisplay.getCompanyId(), modelResource, resourcePrimKey);
 
-		expandoBridge.addAttribute(name, type);
-
-		expandoBridge.setAttributeDefault(
-			name, _getDefaultValue(actionRequest, type));
+		expandoBridge.addAttribute(
+			name, type, _getDefaultValue(actionRequest, type));
 
 		_updateProperties(actionRequest, expandoBridge, name);
 	}
@@ -163,14 +161,13 @@ public class ExpandoPortlet extends MVCPortlet {
 
 		String name = ParamUtil.getString(actionRequest, "name");
 
-		int type = ParamUtil.getInteger(actionRequest, "type");
-
-		Serializable defaultValue = _getDefaultValue(actionRequest, type);
-
 		ExpandoBridge expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(
 			themeDisplay.getCompanyId(), modelResource, resourcePrimKey);
 
-		expandoBridge.setAttributeDefault(name, defaultValue);
+		expandoBridge.setAttributeDefault(
+			name,
+			_getDefaultValue(
+				actionRequest, ParamUtil.getInteger(actionRequest, "type")));
 
 		_updateProperties(actionRequest, expandoBridge, name);
 	}
@@ -187,7 +184,14 @@ public class ExpandoPortlet extends MVCPortlet {
 			SessionErrors.contains(
 				renderRequest, DuplicateColumnNameException.class.getName()) ||
 			SessionErrors.contains(
-				renderRequest, ValueDataException.class.getName())) {
+				renderRequest,
+				ValueDataException.MismatchColumnType.class.getName()) ||
+			SessionErrors.contains(
+				renderRequest,
+				ValueDataException.MustInformDefaultLocale.class.getName()) ||
+			SessionErrors.contains(
+				renderRequest,
+				ValueDataException.UnsupportedColumnType.class.getName())) {
 
 			include("/edit/expando.jsp", renderRequest, renderResponse);
 		}
@@ -218,23 +222,16 @@ public class ExpandoPortlet extends MVCPortlet {
 		return false;
 	}
 
-	@Reference(unbind = "-")
-	protected void setExpandoColumnService(
-		ExpandoColumnService expandoColumnService) {
-
-		_expandoColumnService = expandoColumnService;
-	}
-
 	private Serializable _getDefaultValue(ActionRequest actionRequest, int type)
 		throws Exception {
 
 		if (type == ExpandoColumnConstants.GEOLOCATION) {
-			return JSONFactoryUtil.createJSONObject(
+			return _jsonFactory.createJSONObject(
 				ParamUtil.getString(actionRequest, "defaultValue"));
 		}
 
 		if (type == ExpandoColumnConstants.STRING_LOCALIZED) {
-			return (Serializable)LocalizationUtil.getLocalizationMap(
+			return (Serializable)_localization.getLocalizationMap(
 				actionRequest, "defaultValueLocalized");
 		}
 
@@ -455,7 +452,14 @@ public class ExpandoPortlet extends MVCPortlet {
 		expandoBridge.setAttributeProperties(name, unicodeProperties);
 	}
 
+	@Reference
 	private ExpandoColumnService _expandoColumnService;
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Localization _localization;
 
 	@Reference
 	private Portal _portal;

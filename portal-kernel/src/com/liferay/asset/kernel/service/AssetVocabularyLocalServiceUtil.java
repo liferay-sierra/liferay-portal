@@ -102,24 +102,6 @@ public class AssetVocabularyLocalServiceUtil {
 			userId, groupId, title, serviceContext);
 	}
 
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
-	 #addVocabulary(String, long, long, String, String, Map, Map, String, int, ServiceContext)}
-	 */
-	@Deprecated
-	public static AssetVocabulary addVocabulary(
-			long userId, long groupId, String name, String title,
-			Map<java.util.Locale, String> titleMap,
-			Map<java.util.Locale, String> descriptionMap, String settings,
-			int visibilityType,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws PortalException {
-
-		return getService().addVocabulary(
-			userId, groupId, name, title, titleMap, descriptionMap, settings,
-			visibilityType, serviceContext);
-	}
-
 	public static AssetVocabulary addVocabulary(
 			long userId, long groupId, String name, String title,
 			Map<java.util.Locale, String> titleMap,
@@ -605,21 +587,13 @@ public class AssetVocabularyLocalServiceUtil {
 
 	public static com.liferay.portal.kernel.search.BaseModelSearchResult
 		<AssetVocabulary> searchVocabularies(
-				long companyId, long groupId, String title, int start, int end)
-			throws PortalException {
-
-		return getService().searchVocabularies(
-			companyId, groupId, title, start, end);
-	}
-
-	public static com.liferay.portal.kernel.search.BaseModelSearchResult
-		<AssetVocabulary> searchVocabularies(
-				long companyId, long groupId, String title, int start, int end,
+				long companyId, long[] groupIds, String title,
+				int[] visibilityTypes, int start, int end,
 				com.liferay.portal.kernel.search.Sort sort)
 			throws PortalException {
 
 		return getService().searchVocabularies(
-			companyId, groupId, title, start, end, sort);
+			companyId, groupIds, title, visibilityTypes, start, end, sort);
 	}
 
 	/**
@@ -666,18 +640,6 @@ public class AssetVocabularyLocalServiceUtil {
 
 		return getService().updateVocabulary(
 			vocabularyId, title, titleMap, descriptionMap, settings,
-			serviceContext);
-	}
-
-	public static AssetVocabulary updateVocabulary(
-			long vocabularyId, String name, String title,
-			Map<java.util.Locale, String> titleMap,
-			Map<java.util.Locale, String> descriptionMap, String settings,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws PortalException {
-
-		return getService().updateVocabulary(
-			vocabularyId, name, title, titleMap, descriptionMap, settings,
 			serviceContext);
 	}
 

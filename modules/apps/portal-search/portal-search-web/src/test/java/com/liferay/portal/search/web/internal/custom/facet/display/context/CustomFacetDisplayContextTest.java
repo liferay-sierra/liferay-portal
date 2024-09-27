@@ -22,6 +22,7 @@ import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.search.web.internal.custom.facet.display.context.builder.CustomFacetDisplayContextBuilder;
+import com.liferay.portal.search.web.internal.facet.display.context.BucketDisplayContext;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Collections;
@@ -36,9 +37,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 
 /**
  * @author Wade Cao
@@ -52,8 +51,6 @@ public class CustomFacetDisplayContextTest {
 
 	@Before
 	public void setUp() {
-		MockitoAnnotations.initMocks(this);
-
 		Mockito.doReturn(
 			_facetCollector
 		).when(
@@ -71,12 +68,11 @@ public class CustomFacetDisplayContextTest {
 			_createDisplayContext(
 				customDisplayCaption, fieldToAggregate, parameterValue);
 
-		List<CustomFacetTermDisplayContext> customFacetTermDisplayContexts =
-			customFacetDisplayContext.getTermDisplayContexts();
+		List<BucketDisplayContext> bucketDisplayContexts =
+			customFacetDisplayContext.getBucketDisplayContexts();
 
 		Assert.assertEquals(
-			customFacetTermDisplayContexts.toString(), 0,
-			customFacetTermDisplayContexts.size());
+			bucketDisplayContexts.toString(), 0, bucketDisplayContexts.size());
 
 		Assert.assertTrue(customFacetDisplayContext.isNothingSelected());
 		Assert.assertTrue(customFacetDisplayContext.isRenderNothing());
@@ -94,21 +90,20 @@ public class CustomFacetDisplayContextTest {
 			_createDisplayContext(
 				"customDisplayCaption", "fieldToAggregate", parameterValue);
 
-		List<CustomFacetTermDisplayContext> customFacetTermDisplayContexts =
-			customFacetDisplayContext.getTermDisplayContexts();
+		List<BucketDisplayContext> bucketDisplayContexts =
+			customFacetDisplayContext.getBucketDisplayContexts();
 
 		Assert.assertEquals(
-			customFacetTermDisplayContexts.toString(), 1,
-			customFacetTermDisplayContexts.size());
+			bucketDisplayContexts.toString(), 1, bucketDisplayContexts.size());
 
-		CustomFacetTermDisplayContext customFacetTermDisplayContext =
-			customFacetTermDisplayContexts.get(0);
+		BucketDisplayContext bucketDisplayContext = bucketDisplayContexts.get(
+			0);
 
-		Assert.assertEquals(0, customFacetTermDisplayContext.getFrequency());
-		Assert.assertEquals(
-			fieldName, customFacetTermDisplayContext.getFieldName());
-		Assert.assertTrue(customFacetTermDisplayContext.isSelected());
-		Assert.assertTrue(customFacetTermDisplayContext.isFrequencyVisible());
+		Assert.assertEquals(fieldName, bucketDisplayContext.getBucketText());
+		Assert.assertEquals(fieldName, bucketDisplayContext.getFilterValue());
+		Assert.assertEquals(0, bucketDisplayContext.getFrequency());
+		Assert.assertTrue(bucketDisplayContext.isFrequencyVisible());
+		Assert.assertTrue(bucketDisplayContext.isSelected());
 
 		Assert.assertEquals(
 			parameterValue, customFacetDisplayContext.getParameterValue());
@@ -129,22 +124,20 @@ public class CustomFacetDisplayContextTest {
 			_createDisplayContext(
 				"customDisplayCaption", "fieldToAggregate", parameterValue);
 
-		List<CustomFacetTermDisplayContext> customFacetTermDisplayContexts =
-			customFacetDisplayContext.getTermDisplayContexts();
+		List<BucketDisplayContext> bucketDisplayContexts =
+			customFacetDisplayContext.getBucketDisplayContexts();
 
 		Assert.assertEquals(
-			customFacetTermDisplayContexts.toString(), 1,
-			customFacetTermDisplayContexts.size());
+			bucketDisplayContexts.toString(), 1, bucketDisplayContexts.size());
 
-		CustomFacetTermDisplayContext customFacetTermDisplayContext =
-			customFacetTermDisplayContexts.get(0);
+		BucketDisplayContext bucketDisplayContext = bucketDisplayContexts.get(
+			0);
 
-		Assert.assertEquals(
-			count, customFacetTermDisplayContext.getFrequency());
-		Assert.assertEquals(
-			fieldName, customFacetTermDisplayContext.getFieldName());
-		Assert.assertFalse(customFacetTermDisplayContext.isSelected());
-		Assert.assertTrue(customFacetTermDisplayContext.isFrequencyVisible());
+		Assert.assertEquals(fieldName, bucketDisplayContext.getBucketText());
+		Assert.assertEquals(fieldName, bucketDisplayContext.getFilterValue());
+		Assert.assertEquals(count, bucketDisplayContext.getFrequency());
+		Assert.assertTrue(bucketDisplayContext.isFrequencyVisible());
+		Assert.assertFalse(bucketDisplayContext.isSelected());
 
 		Assert.assertEquals(
 			parameterValue, customFacetDisplayContext.getParameterValue());
@@ -165,22 +158,20 @@ public class CustomFacetDisplayContextTest {
 			_createDisplayContext(
 				"customDisplayCaption", "fieldToAggregate", parameterValue);
 
-		List<CustomFacetTermDisplayContext> customFacetTermDisplayContexts =
-			customFacetDisplayContext.getTermDisplayContexts();
+		List<BucketDisplayContext> bucketDisplayContexts =
+			customFacetDisplayContext.getBucketDisplayContexts();
 
 		Assert.assertEquals(
-			customFacetTermDisplayContexts.toString(), 1,
-			customFacetTermDisplayContexts.size());
+			bucketDisplayContexts.toString(), 1, bucketDisplayContexts.size());
 
-		CustomFacetTermDisplayContext customFacetTermDisplayContext =
-			customFacetTermDisplayContexts.get(0);
+		BucketDisplayContext bucketDisplayContext = bucketDisplayContexts.get(
+			0);
 
-		Assert.assertEquals(
-			count, customFacetTermDisplayContext.getFrequency());
-		Assert.assertEquals(
-			fieldName, customFacetTermDisplayContext.getFieldName());
-		Assert.assertTrue(customFacetTermDisplayContext.isSelected());
-		Assert.assertTrue(customFacetTermDisplayContext.isFrequencyVisible());
+		Assert.assertEquals(fieldName, bucketDisplayContext.getBucketText());
+		Assert.assertEquals(fieldName, bucketDisplayContext.getFilterValue());
+		Assert.assertEquals(count, bucketDisplayContext.getFrequency());
+		Assert.assertTrue(bucketDisplayContext.isFrequencyVisible());
+		Assert.assertTrue(bucketDisplayContext.isSelected());
 
 		Assert.assertEquals(
 			parameterValue, customFacetDisplayContext.getParameterValue());
@@ -264,10 +255,8 @@ public class CustomFacetDisplayContextTest {
 		).getTermCollectors();
 	}
 
-	@Mock
-	private Facet _facet;
-
-	@Mock
-	private FacetCollector _facetCollector;
+	private final Facet _facet = Mockito.mock(Facet.class);
+	private final FacetCollector _facetCollector = Mockito.mock(
+		FacetCollector.class);
 
 }

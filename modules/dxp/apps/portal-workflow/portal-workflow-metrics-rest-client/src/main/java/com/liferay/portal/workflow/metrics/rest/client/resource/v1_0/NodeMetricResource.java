@@ -68,6 +68,12 @@ public interface NodeMetricResource {
 			return new NodeMetricResourceImpl(this);
 		}
 
+		public Builder contextPath(String contextPath) {
+			_contextPath = contextPath;
+
+			return this;
+		}
+
 		public Builder endpoint(String host, int port, String scheme) {
 			_host = host;
 			_port = port;
@@ -113,6 +119,7 @@ public interface NodeMetricResource {
 		private Builder() {
 		}
 
+		private String _contextPath = "";
 		private Map<String, String> _headers = new LinkedHashMap<>();
 		private String _host = "localhost";
 		private Locale _locale;
@@ -202,7 +209,7 @@ public interface NodeMetricResource {
 			httpInvoker.httpMethod(HttpInvoker.HttpMethod.GET);
 
 			DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-				"yyyy-MM-dd'T'HH:mm:ss'Z'");
+				"yyyy-MM-dd'T'HH:mm:ssXX");
 
 			if (completed != null) {
 				httpInvoker.parameter("completed", String.valueOf(completed));
@@ -240,7 +247,7 @@ public interface NodeMetricResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/portal-workflow-metrics/v1.0/processes/{processId}/nodes/metrics");
 
 			httpInvoker.path("processId", processId);

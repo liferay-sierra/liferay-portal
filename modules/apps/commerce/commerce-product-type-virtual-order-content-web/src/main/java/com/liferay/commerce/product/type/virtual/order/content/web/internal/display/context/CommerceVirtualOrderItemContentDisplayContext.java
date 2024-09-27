@@ -33,12 +33,12 @@ import com.liferay.commerce.util.CommerceUtil;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.model.JournalArticleDisplay;
 import com.liferay.journal.service.JournalArticleLocalServiceUtil;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.PortletRequestModel;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.KeyValuePair;
@@ -197,7 +197,6 @@ public class CommerceVirtualOrderItemContentDisplayContext {
 		resourceURL.setParameter(
 			"commerceVirtualOrderItemId",
 			String.valueOf(commerceVirtualOrderItemId));
-
 		resourceURL.setResourceID(
 			"/commerce_virtual_order_item_content" +
 				"/download_commerce_virtual_order_item");
@@ -221,12 +220,9 @@ public class CommerceVirtualOrderItemContentDisplayContext {
 					commerceVirtualOrderItem.getCommerceVirtualOrderItemId()));
 		}
 
-		LiferayPortletResponse liferayPortletResponse =
-			_commerceVirtualOrderItemContentRequestHelper.
-				getLiferayPortletResponse();
-
 		PortletURL portletURL = PortletURLBuilder.createRenderURL(
-			liferayPortletResponse
+			_commerceVirtualOrderItemContentRequestHelper.
+				getLiferayPortletResponse()
 		).setMVCRenderCommandName(
 			"/commerce_virtual_order_item_content" +
 				"/view_commerce_virtual_order_item_terms_of_use"

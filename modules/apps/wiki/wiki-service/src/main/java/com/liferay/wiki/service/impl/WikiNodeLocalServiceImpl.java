@@ -129,13 +129,9 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 
 		long groupId = serviceContext.getScopeGroupId();
 
-		validate(groupId, name);
+		_validate(groupId, name);
 
 		long nodeId = counterLocalService.increment();
-
-		if (Validator.isNull(externalReferenceCode)) {
-			externalReferenceCode = String.valueOf(nodeId);
-		}
 
 		_validateExternalReferenceCode(externalReferenceCode, groupId);
 
@@ -358,7 +354,7 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 		List<WikiNode> nodes = wikiNodePersistence.findByG_S(groupId, status);
 
 		if (nodes.isEmpty()) {
-			nodes = addDefaultNode(groupId);
+			nodes = _addDefaultNode(groupId);
 		}
 
 		return nodes;
@@ -379,7 +375,7 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 			groupId, status, start, end);
 
 		if (nodes.isEmpty()) {
-			nodes = addDefaultNode(groupId);
+			nodes = _addDefaultNode(groupId);
 		}
 
 		return nodes;
@@ -469,7 +465,7 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 
 		// Pages
 
-		moveDependentsToTrash(node.getNodeId(), trashEntry.getEntryId());
+		_moveDependentsToTrash(node.getNodeId(), trashEntry.getEntryId());
 
 		return node;
 	}
@@ -497,7 +493,7 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 
 		// Pages
 
-		restoreDependentsFromTrash(userId, node.getNodeId());
+		_restoreDependentsFromTrash(userId, node.getNodeId());
 
 		// Trash
 
@@ -528,7 +524,7 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 
 		WikiNode node = wikiNodePersistence.findByPrimaryKey(nodeId);
 
-		validate(nodeId, node.getGroupId(), name);
+		_validate(nodeId, node.getGroupId(), name);
 
 		node.setName(name);
 		node.setDescription(description);
@@ -573,7 +569,7 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 			WikiPageDisplay.class.getName());
 	}
 
-	protected List<WikiNode> addDefaultNode(long groupId)
+	private List<WikiNode> _addDefaultNode(long groupId)
 		throws PortalException {
 
 		Group group = _groupLocalService.getGroup(groupId);
@@ -593,7 +589,7 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 		return ListUtil.fromArray(node);
 	}
 
-	protected void moveDependentsToTrash(long nodeId, long trashEntryId)
+	private void _moveDependentsToTrash(long nodeId, long trashEntryId)
 		throws PortalException {
 
 		boolean clearCache = WikiCacheThreadLocal.isClearCache();
@@ -614,7 +610,7 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 		}
 	}
 
-	protected void restoreDependentsFromTrash(long userId, long nodeId)
+	private void _restoreDependentsFromTrash(long userId, long nodeId)
 		throws PortalException {
 
 		List<WikiPage> pages = _wikiPagePersistence.findByN_H(nodeId, true);
@@ -628,7 +624,7 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 		}
 	}
 
-	protected void validate(long nodeId, long groupId, String name)
+	private void _validate(long nodeId, long groupId, String name)
 		throws PortalException {
 
 		if (StringUtil.equalsIgnoreCase(name, "tag")) {
@@ -650,13 +646,17 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 		}
 	}
 
-	protected void validate(long groupId, String name) throws PortalException {
-		validate(0, groupId, name);
+	private void _validate(long groupId, String name) throws PortalException {
+		_validate(0, groupId, name);
 	}
 
 	private void _validateExternalReferenceCode(
 			String externalReferenceCode, long groupId)
 		throws PortalException {
+
+		if (Validator.isNull(externalReferenceCode)) {
+			return;
+		}
 
 		WikiNode wikiNode = wikiNodePersistence.fetchByG_ERC(
 			groupId, externalReferenceCode);

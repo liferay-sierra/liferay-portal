@@ -17,12 +17,13 @@ import ClayDropDown from '@clayui/drop-down';
 import PropTypes from 'prop-types';
 import React, {useContext, useState} from 'react';
 
-import DataSetContext from '../../DataSetContext';
+import FrontendDataSetContext from '../../FrontendDataSetContext';
 import {triggerAction} from '../../utils/actionItems/index';
 
 function CreationMenu({primaryItems}) {
+	const frontendDataSetContext = useContext(FrontendDataSetContext);
+
 	const [active, setActive] = useState(false);
-	const dataSetContext = useContext(DataSetContext);
 
 	return (
 		primaryItems?.length > 0 && (
@@ -46,7 +47,10 @@ function CreationMenu({primaryItems}) {
 										onClick={(event) => {
 											event.preventDefault();
 											setActive(false);
-											triggerAction(item, dataSetContext);
+											triggerAction(
+												item,
+												frontendDataSetContext
+											);
 										}}
 									>
 										{item.label}
@@ -59,7 +63,10 @@ function CreationMenu({primaryItems}) {
 							className="nav-btn nav-btn-monospaced"
 							data-tooltip-align="top"
 							onClick={() =>
-								triggerAction(primaryItems[0], dataSetContext)
+								triggerAction(
+									primaryItems[0],
+									frontendDataSetContext
+								)
 							}
 							symbol="plus"
 							title={primaryItems[0].label}

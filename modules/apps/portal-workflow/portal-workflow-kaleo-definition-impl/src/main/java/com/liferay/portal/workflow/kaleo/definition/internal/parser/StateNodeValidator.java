@@ -27,10 +27,7 @@ import org.osgi.service.component.annotations.Component;
  * @author Michael C. Han
  * @author Marcellus Tavares
  */
-@Component(
-	immediate = true, property = "node.type=STATE",
-	service = NodeValidator.class
-)
+@Component(property = "node.type=STATE", service = NodeValidator.class)
 public class StateNodeValidator extends BaseNodeValidator<State> {
 
 	@Override
@@ -42,7 +39,7 @@ public class StateNodeValidator extends BaseNodeValidator<State> {
 		}
 		else if (state.getIncomingTransitionsCount() == 0) {
 			throw new KaleoDefinitionValidationException.
-				MustSetIncomingTransition(state.getName());
+				MustSetIncomingTransition(state.getDefaultLabel());
 		}
 	}
 
@@ -54,17 +51,17 @@ public class StateNodeValidator extends BaseNodeValidator<State> {
 		if (!Objects.equals(initialState, state)) {
 			throw new KaleoDefinitionValidationException.
 				MultipleInitialStateNodes(
-					state.getName(), initialState.getName());
+					state.getDefaultLabel(), initialState.getDefaultLabel());
 		}
 
 		if (state.getIncomingTransitionsCount() > 0) {
 			throw new KaleoDefinitionValidationException.
-				MustNotSetIncomingTransition(state.getName());
+				MustNotSetIncomingTransition(state.getDefaultLabel());
 		}
 
 		if (state.getOutgoingTransitionsCount() == 0) {
 			throw new KaleoDefinitionValidationException.
-				MustSetOutgoingTransition(state.getName());
+				MustSetOutgoingTransition(state.getDefaultLabel());
 		}
 	}
 

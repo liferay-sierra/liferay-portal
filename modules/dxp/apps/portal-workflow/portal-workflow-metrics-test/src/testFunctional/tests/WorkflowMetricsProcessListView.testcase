@@ -64,17 +64,35 @@ definition {
 
 		Workflow.addNewDefinition(workflowDefinitionTitle = "New Workflow 1");
 
+		ProcessBuilderKaleoDesignerReact.addConnector(
+			connectorIn = "end",
+			connectorLabel = "Start-End Connector",
+			connectorOut = "start",
+			key_direction = "right");
+
 		PortletEntry.publish();
 
 		Navigator.gotoBack();
 
 		Workflow.addNewDefinition(workflowDefinitionTitle = "New Workflow 2");
 
+		ProcessBuilderKaleoDesignerReact.addConnector(
+			connectorIn = "end",
+			connectorLabel = "Start-End Connector",
+			connectorOut = "start",
+			key_direction = "right");
+
 		PortletEntry.publish();
 
 		Navigator.gotoBack();
 
 		Workflow.addNewDefinition(workflowDefinitionTitle = "New Workflow 3");
+
+		ProcessBuilderKaleoDesignerReact.addConnector(
+			connectorIn = "end",
+			connectorLabel = "Start-End Connector",
+			connectorOut = "start",
+			key_direction = "right");
 
 		PortletEntry.publish();
 
@@ -100,17 +118,35 @@ definition {
 
 		Workflow.addNewDefinition(workflowDefinitionTitle = "New Workflow 1");
 
+		ProcessBuilderKaleoDesignerReact.addConnector(
+			connectorIn = "end",
+			connectorLabel = "Start-End Connector",
+			connectorOut = "start",
+			key_direction = "right");
+
 		PortletEntry.publish();
 
 		Navigator.gotoBack();
 
 		Workflow.addNewDefinition(workflowDefinitionTitle = "New Workflow 2");
 
+		ProcessBuilderKaleoDesignerReact.addConnector(
+			connectorIn = "end",
+			connectorLabel = "Start-End Connector",
+			connectorOut = "start",
+			key_direction = "right");
+
 		PortletEntry.publish();
 
 		Navigator.gotoBack();
 
 		Workflow.addNewDefinition(workflowDefinitionTitle = "New Workflow 3");
+
+		ProcessBuilderKaleoDesignerReact.addConnector(
+			connectorIn = "end",
+			connectorLabel = "Start-End Connector",
+			connectorOut = "start",
+			key_direction = "right");
 
 		PortletEntry.publish();
 
@@ -142,11 +178,23 @@ definition {
 
 		Workflow.addNewDefinition(workflowDefinitionTitle = "New Workflow 1");
 
+		ProcessBuilderKaleoDesignerReact.addConnector(
+			connectorIn = "end",
+			connectorLabel = "Start-End Connector",
+			connectorOut = "start",
+			key_direction = "right");
+
 		PortletEntry.publish();
 
 		Navigator.gotoBack();
 
 		Workflow.addNewDefinition(workflowDefinitionTitle = "New Workflow 2");
+
+		ProcessBuilderKaleoDesignerReact.addConnector(
+			connectorIn = "end",
+			connectorLabel = "Start-End Connector",
+			connectorOut = "start",
+			key_direction = "right");
 
 		PortletEntry.publish();
 
@@ -154,17 +202,35 @@ definition {
 
 		Workflow.addNewDefinition(workflowDefinitionTitle = "New Workflow 3");
 
+		ProcessBuilderKaleoDesignerReact.addConnector(
+			connectorIn = "end",
+			connectorLabel = "Start-End Connector",
+			connectorOut = "start",
+			key_direction = "right");
+
 		PortletEntry.publish();
 
 		Navigator.gotoBack();
 
 		Workflow.addNewDefinition(workflowDefinitionTitle = "New Workflow 4");
 
+		ProcessBuilderKaleoDesignerReact.addConnector(
+			connectorIn = "end",
+			connectorLabel = "Start-End Connector",
+			connectorOut = "start",
+			key_direction = "right");
+
 		PortletEntry.publish();
 
 		Navigator.gotoBack();
 
 		Workflow.addNewDefinition(workflowDefinitionTitle = "New Workflow 5");
+
+		ProcessBuilderKaleoDesignerReact.addConnector(
+			connectorIn = "end",
+			connectorLabel = "Start-End Connector",
+			connectorOut = "start",
+			key_direction = "right");
 
 		PortletEntry.publish();
 
@@ -349,14 +415,16 @@ definition {
 			entrySubtitle = "Subtitle",
 			entryTitle = "Blogs Entry Title");
 
-		Pause(locator1 = "120000");
-
 		ApplicationsMenu.gotoPortlet(
 			category = "Workflow",
 			panel = "Applications",
 			portlet = "Metrics");
 
-		WaitForElementPresent(
+		while ((IsElementNotPresent(key_value = "down", locator1 = "WorkflowMetricsProcessListView#ANY_ARROW_ORDER")) && (maxIterations = "20")) {
+			Refresh();
+		}
+
+		AssertElementPresent(
 			key_value = "down",
 			locator1 = "WorkflowMetricsProcessListView#ANY_ARROW_ORDER");
 	}

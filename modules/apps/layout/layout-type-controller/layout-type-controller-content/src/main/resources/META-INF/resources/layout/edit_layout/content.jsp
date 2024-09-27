@@ -22,6 +22,8 @@
 
 <liferay-ui:success key="layoutPublished" message="the-page-was-published-successfully" />
 
+<liferay-ui:success key="layoutUtilityPageEntryAdded" message="the-utility-page-was-created-successfully" />
+
 <%
 String portletResource = ParamUtil.getString(request, "portletResource");
 %>
@@ -36,4 +38,4 @@ String portletResource = ParamUtil.getString(request, "portletResource");
 	/>
 </div>
 
-<liferay-ui:layout-common />
+<liferay-layout:layout-common />

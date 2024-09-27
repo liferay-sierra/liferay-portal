@@ -9,12 +9,22 @@
  * distribution rights of the Software.
  */
 
+import {PRODUCT_TYPES} from './productTypes';
+
+const productsFormatted = Object.entries(
+	PRODUCT_TYPES
+).map(([productKey, productName]) => [
+	productKey,
+	productName.replace(' ', '_').toLowerCase(),
+]);
+
 export const PAGE_TYPES = {
-	commerce: 'commerce',
-	dxp: 'dxp',
-	dxpCloud: 'dxp_cloud',
-	enterpriseSearch: 'enterprise_search',
+	dxpDeactivate: 'dxp_deactivate',
+	dxpNew: 'dxp_new',
 	home: 'home',
+	liferayExperienceCloud: 'liferay_experience_cloud',
 	overview: 'overview',
+	portalNew: 'portal_new',
 	teamMembers: 'team_members',
+	...Object.fromEntries(productsFormatted),
 };

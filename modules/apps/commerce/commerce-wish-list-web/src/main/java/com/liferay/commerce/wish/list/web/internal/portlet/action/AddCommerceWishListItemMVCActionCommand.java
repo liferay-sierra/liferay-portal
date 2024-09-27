@@ -28,7 +28,7 @@ import com.liferay.commerce.wish.list.util.CommerceWishListHttpHelper;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
@@ -54,7 +54,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Andrea Di Giorgi
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = {
 		"javax.portlet.name=" + CommerceWishListPortletKeys.COMMERCE_WISH_LIST_CONTENT,
 		"mvc.command.name=/commerce_wish_list_content/add_commerce_wish_list_item"
@@ -101,8 +101,8 @@ public class AddCommerceWishListItemMVCActionCommand
 
 			if (commerceWishList == null) {
 				commerceWishList = _commerceWishListService.addCommerceWishList(
-					LanguageUtil.get(serviceContext.getLocale(), "default"),
-					true, serviceContext);
+					_language.get(serviceContext.getLocale(), "default"), true,
+					serviceContext);
 			}
 
 			CommerceWishListItem commerceWishListItem =
@@ -113,15 +113,13 @@ public class AddCommerceWishListItemMVCActionCommand
 					commerceWishList.getCommerceWishListId(), cpDefinitionId,
 					cpInstanceUuid, ddmFormValues, serviceContext);
 
-			int commerceWishListItemsCount =
-				_commerceWishListItemService.getCommerceWishListItemsCount(
-					commerceWishList.getCommerceWishListId());
-
 			jsonObject.put(
 				"commerceWishListItemId",
 				commerceWishListItem.getCommerceWishListItemId()
 			).put(
-				"commerceWishListItemsCount", commerceWishListItemsCount
+				"commerceWishListItemsCount",
+				_commerceWishListItemService.getCommerceWishListItemsCount(
+					commerceWishList.getCommerceWishListId())
 			).put(
 				"success", true
 			);
@@ -169,6 +167,9 @@ public class AddCommerceWishListItemMVCActionCommand
 
 	@Reference
 	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

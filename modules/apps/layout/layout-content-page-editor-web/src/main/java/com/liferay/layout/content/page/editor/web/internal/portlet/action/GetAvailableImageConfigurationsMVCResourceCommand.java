@@ -32,7 +32,7 @@ import com.liferay.portal.kernel.image.ImageTool;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Image;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCResourceCommand;
@@ -59,7 +59,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pavel Savinov
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + ContentPageEditorPortletKeys.CONTENT_PAGE_EDITOR_PORTLET,
 		"mvc.command.name=/layout_content_page_editor/get_available_image_configurations"
@@ -81,7 +80,7 @@ public class GetAvailableImageConfigurationsMVCResourceCommand
 		JSONArray jsonArray = JSONUtil.put(
 			JSONUtil.put(
 				"label",
-				LanguageUtil.get(
+				_language.get(
 					_portal.getHttpServletRequest(resourceRequest), "auto")
 			).put(
 				"size", fileEntry.getSize() / 1000
@@ -185,6 +184,9 @@ public class GetAvailableImageConfigurationsMVCResourceCommand
 
 	@Reference
 	private ImageTool _imageTool;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private MediaQueryProvider _mediaQueryProvider;

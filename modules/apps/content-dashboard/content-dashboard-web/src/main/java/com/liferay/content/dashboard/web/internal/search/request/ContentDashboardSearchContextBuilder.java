@@ -44,6 +44,7 @@ import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.util.ArrayList;
@@ -122,6 +123,8 @@ public class ContentDashboardSearchContextBuilder {
 					Optional::isPresent
 				).map(
 					Optional::get
+				).filter(
+					jsonObject -> !jsonObject.isNull("classPK")
 				).mapToLong(
 					jsonObject -> jsonObject.getLong("classPK")
 				).toArray());
@@ -129,6 +132,36 @@ public class ContentDashboardSearchContextBuilder {
 
 		if (_end != null) {
 			searchContext.setEnd(_end);
+		}
+
+		if (!ArrayUtil.isEmpty(contentDashboardItemSubtypePayloads)) {
+			searchContext.setEntryClassNames(
+				Stream.of(
+					contentDashboardItemSubtypePayloads
+				).map(
+					contentDashboardItemSubtypePayload -> {
+						try {
+							return Optional.of(
+								JSONFactoryUtil.createJSONObject(
+									contentDashboardItemSubtypePayload));
+						}
+						catch (JSONException jsonException) {
+							_log.error(jsonException);
+
+							return Optional.<JSONObject>empty();
+						}
+					}
+				).filter(
+					Optional::isPresent
+				).map(
+					Optional::get
+				).map(
+					jsonObject -> jsonObject.getString(Field.ENTRY_CLASS_NAME)
+				).filter(
+					entryClassName -> Validator.isNotNull(entryClassName)
+				).toArray(
+					size -> new String[size]
+				));
 		}
 
 		long groupId = ParamUtil.getLong(_httpServletRequest, "scopeId");
@@ -143,7 +176,7 @@ public class ContentDashboardSearchContextBuilder {
 		searchContext.setIncludeInternalAssetCategories(true);
 		searchContext.setIncludeStagingGroups(Boolean.FALSE);
 
-		if (_sort != null) {
+		if (ArrayUtil.isNotEmpty(_sort)) {
 			searchContext.setSorts(_sort);
 		}
 
@@ -160,7 +193,7 @@ public class ContentDashboardSearchContextBuilder {
 		return this;
 	}
 
-	public ContentDashboardSearchContextBuilder withSort(Sort sort) {
+	public ContentDashboardSearchContextBuilder withSort(Sort... sort) {
 		_sort = sort;
 
 		return this;
@@ -332,7 +365,7 @@ public class ContentDashboardSearchContextBuilder {
 	private final AssetVocabularyLocalService _assetVocabularyLocalService;
 	private Integer _end;
 	private final HttpServletRequest _httpServletRequest;
-	private Sort _sort;
+	private Sort[] _sort;
 	private Integer _start;
 
 	private static class AssetCategoryIds {

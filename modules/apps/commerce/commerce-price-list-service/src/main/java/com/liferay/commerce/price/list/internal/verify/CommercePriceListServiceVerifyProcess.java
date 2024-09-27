@@ -30,18 +30,16 @@ import org.osgi.service.component.annotations.Reference;
  * @author Riccardo Alberti
  */
 @Component(
-	enabled = false, immediate = true,
-	property = "verify.process.name=com.liferay.commerce.price.list.service",
+	immediate = true,
+	property = {
+		"initial.deployment=true",
+		"verify.process.name=com.liferay.commerce.price.list.service"
+	},
 	service = {CommercePriceListServiceVerifyProcess.class, VerifyProcess.class}
 )
 public class CommercePriceListServiceVerifyProcess extends VerifyProcess {
 
-	@Override
-	protected void doVerify() throws Exception {
-		_verifyBasePriceLists();
-	}
-
-	private void _verifyBasePriceLists() throws Exception {
+	public void verifyBasePriceLists() throws Exception {
 		try (LoggingTimer loggingTimer = new LoggingTimer()) {
 			_companyLocalService.forEachCompanyId(
 				companyId -> {
@@ -55,6 +53,11 @@ public class CommercePriceListServiceVerifyProcess extends VerifyProcess {
 					}
 				});
 		}
+	}
+
+	@Override
+	protected void doVerify() throws Exception {
+		verifyBasePriceLists();
 	}
 
 	@Reference

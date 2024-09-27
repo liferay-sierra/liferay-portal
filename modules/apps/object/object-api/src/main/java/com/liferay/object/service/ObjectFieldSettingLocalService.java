@@ -15,6 +15,7 @@
 package com.liferay.object.service;
 
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
+import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectFieldSetting;
 import com.liferay.petra.sql.dsl.query.DSLQuery;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
@@ -64,8 +65,7 @@ public interface ObjectFieldSettingLocalService
 	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.object.service.impl.ObjectFieldSettingLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the object field setting local service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link ObjectFieldSettingLocalServiceUtil} if injection and service tracking are not available.
 	 */
 	public ObjectFieldSetting addObjectFieldSetting(
-			long userId, long objectFieldId, String name, boolean required,
-			String value)
+			long userId, long objectFieldId, String name, String value)
 		throws PortalException;
 
 	/**
@@ -96,6 +96,9 @@ public interface ObjectFieldSettingLocalService
 	 * @throws PortalException
 	 */
 	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
+		throws PortalException;
+
+	public void deleteObjectFieldObjectFieldSetting(ObjectField objectField)
 		throws PortalException;
 
 	/**
@@ -211,6 +214,10 @@ public interface ObjectFieldSettingLocalService
 	public ObjectFieldSetting fetchObjectFieldSetting(
 		long objectFieldSettingId);
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public ObjectFieldSetting fetchObjectFieldSetting(
+		long objectFieldId, String name);
+
 	/**
 	 * Returns the object field setting with the matching UUID and company.
 	 *
@@ -231,6 +238,10 @@ public interface ObjectFieldSettingLocalService
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public IndexableActionableDynamicQuery getIndexableActionableDynamicQuery();
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<ObjectFieldSetting> getObjectFieldObjectFieldSettings(
+		long objectFieldId);
 
 	/**
 	 * Returns the object field setting with the primary key.
@@ -269,9 +280,6 @@ public interface ObjectFieldSettingLocalService
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<ObjectFieldSetting> getObjectFieldSettings(int start, int end);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public List<ObjectFieldSetting> getObjectFieldSettings(long objectFieldId);
 
 	/**
 	 * Returns the number of object field settings.

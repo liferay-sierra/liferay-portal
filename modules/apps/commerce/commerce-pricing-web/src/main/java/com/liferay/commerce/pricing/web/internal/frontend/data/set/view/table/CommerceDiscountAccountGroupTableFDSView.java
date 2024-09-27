@@ -30,7 +30,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Riccardo Alberti
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "frontend.data.set.name=" + CommercePricingFDSNames.DISCOUNT_QUALIFIER_ACCOUNT_GROUPS,
 	service = FDSView.class
 )
@@ -41,10 +40,9 @@ public class CommerceDiscountAccountGroupTableFDSView extends BaseTableFDSView {
 		FDSTableSchemaBuilder fdsTableSchemaBuilder =
 			_fdsTableSchemaBuilderFactory.create();
 
-		fdsTableSchemaBuilder.addFDSTableSchemaField(
-			"accountGroup.name", "name");
-
-		return fdsTableSchemaBuilder.build();
+		return fdsTableSchemaBuilder.add(
+			"accountGroup.name", "name"
+		).build();
 	}
 
 	@Reference

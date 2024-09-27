@@ -14,6 +14,7 @@
 
 package com.liferay.headless.commerce.admin.pricing.internal.resource.v2_0.factory;
 
+import com.liferay.headless.commerce.admin.pricing.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.headless.commerce.admin.pricing.resource.v2_0.PriceListResource;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -33,14 +34,18 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -59,7 +62,8 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @generated
  */
 @Component(
-	enabled = false, immediate = true, service = PriceListResource.Factory.class
+	property = "resource.locator.key=/headless-commerce-admin-pricing/v2.0/PriceList",
+	service = PriceListResource.Factory.class
 )
 @Generated("")
 public class PriceListResourceFactoryImpl implements PriceListResource.Factory {
@@ -74,9 +78,7 @@ public class PriceListResourceFactoryImpl implements PriceListResource.Factory {
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (PriceListResource)ProxyUtil.newProxyInstance(
-					PriceListResource.class.getClassLoader(),
-					new Class<?>[] {PriceListResource.class},
+				return _priceListResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -135,14 +137,31 @@ public class PriceListResourceFactoryImpl implements PriceListResource.Factory {
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		PriceListResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, PriceListResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		PriceListResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			PriceListResource.class.getClassLoader(), PriceListResource.class);
+
+		try {
+			Constructor<PriceListResource> constructor =
+				(Constructor<PriceListResource>)proxyClass.getConstructor(
+					InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -165,7 +184,7 @@ public class PriceListResourceFactoryImpl implements PriceListResource.Factory {
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		PriceListResource priceListResource =
@@ -189,6 +208,7 @@ public class PriceListResourceFactoryImpl implements PriceListResource.Factory {
 		priceListResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		priceListResource.setRoleLocalService(_roleLocalService);
+		priceListResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(priceListResource, arguments);
@@ -204,6 +224,9 @@ public class PriceListResourceFactoryImpl implements PriceListResource.Factory {
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, PriceListResource>
+		_priceListResourceProxyProviderFunction = _getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -225,9 +248,6 @@ public class PriceListResourceFactoryImpl implements PriceListResource.Factory {
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -236,6 +256,9 @@ public class PriceListResourceFactoryImpl implements PriceListResource.Factory {
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

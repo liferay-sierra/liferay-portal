@@ -15,10 +15,51 @@
 import ClayButton from '@clayui/button';
 import {ClayDropDownWithItems} from '@clayui/drop-down';
 import ClayIcon from '@clayui/icon';
+import ClayLoadingIndicator from '@clayui/loading-indicator';
 import ClaySticker from '@clayui/sticker';
-import {fetch} from 'frontend-js-web';
+import {fetch, navigate, openSelectionModal} from 'frontend-js-web';
 import PropTypes from 'prop-types';
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
+
+function mapItemsOnClick(items) {
+	return items.map((item) => {
+		const {items: nestedItems, jsOnClickConfig, ...otherKeys} = item;
+
+		const newVal = {...otherKeys};
+
+		if (nestedItems) {
+			newVal.items = mapItemsOnClick(nestedItems);
+		}
+
+		if (jsOnClickConfig) {
+			newVal.onClick = () => {
+				const {selectEventName, title, url} = jsOnClickConfig;
+
+				openSelectionModal({
+					id: selectEventName,
+					onSelect(selectedItem) {
+						navigate(selectedItem.url);
+					},
+					selectEventName,
+					title,
+					url,
+				});
+			};
+		}
+
+		return newVal;
+	});
+}
+
+const defaultItems = [
+	{
+		'aria-label': Liferay.Language.get('loading'),
+		'aria-valuemax': 100,
+		'aria-valuemin': 0,
+		'label': <ClayLoadingIndicator />,
+		'roleItem': 'progressbar',
+	},
+];
 
 function PersonalMenu({
 	color,
@@ -28,16 +69,27 @@ function PersonalMenu({
 	size,
 	userPortraitURL,
 }) {
-	const [items, setItems] = useState([]);
+	const [items, setItems] = useState(defaultItems);
 	const preloadPromiseRef = useRef();
 
 	function preloadItems() {
 		if (!preloadPromiseRef.current) {
 			preloadPromiseRef.current = fetch(itemsURL)
 				.then((response) => response.json())
-				.then((items) => setItems(items));
+				.then((responseItems) =>
+					setItems(mapItemsOnClick(responseItems))
+				);
 		}
 	}
+
+	useEffect(() => {
+		if (preloadPromiseRef.current) {
+			const firstMenuItem = document.querySelector(
+				'.dropdown-menu-personal-menu [role=menuitem]'
+			);
+			firstMenuItem?.focus();
+		}
+	}, [items]);
 
 	return (
 		<ClayDropDownWithItems
@@ -68,6 +120,7 @@ function PersonalMenu({
 							>
 								{userPortraitURL ? (
 									<img
+										alt=""
 										className="sticker-img"
 										src={userPortraitURL}
 									/>

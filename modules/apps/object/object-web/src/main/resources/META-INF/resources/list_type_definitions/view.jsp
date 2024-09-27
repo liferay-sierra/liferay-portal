@@ -26,10 +26,6 @@ ViewListTypeDefinitionsDisplayContext viewListTypeDefinitionsDisplayContext = (V
 	fdsActionDropdownItems="<%= viewListTypeDefinitionsDisplayContext.getFDSActionDropdownItems() %>"
 	formName="fm"
 	id="<%= ListTypeFDSNames.LIST_TYPE_DEFINITIONS %>"
-	itemsPerPage="<%= 20 %>"
-	namespace="<%= liferayPortletResponse.getNamespace() %>"
-	pageNumber="<%= 1 %>"
-	portletURL="<%= liferayPortletResponse.createRenderURL() %>"
 	style="fluid"
 />
 
@@ -41,5 +37,11 @@ ViewListTypeDefinitionsDisplayContext viewListTypeDefinitionsDisplayContext = (V
 				"apiURL", viewListTypeDefinitionsDisplayContext.getAPIURL()
 			).build()
 		%>'
+	/>
+</div>
+
+<div>
+	<react:component
+		module="js/components/ListTypeDefinition/ListTypeEntriesModal"
 	/>
 </div>

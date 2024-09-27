@@ -16,6 +16,9 @@ package com.liferay.commerce.term.service.impl;
 
 import com.liferay.commerce.model.CommerceOrderType;
 import com.liferay.commerce.payment.model.CommercePaymentMethodGroupRelQualifierTable;
+import com.liferay.commerce.product.service.CommerceChannelAccountEntryRelLocalService;
+import com.liferay.commerce.shipping.engine.fixed.model.CommerceShippingFixedOptionQualifierTable;
+import com.liferay.commerce.term.constants.CommerceTermEntryConstants;
 import com.liferay.commerce.term.exception.CommerceTermEntryDisplayDateException;
 import com.liferay.commerce.term.exception.CommerceTermEntryExpirationDateException;
 import com.liferay.commerce.term.exception.CommerceTermEntryNameException;
@@ -52,7 +55,10 @@ import com.liferay.portal.kernel.search.QueryConfig;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.SearchException;
 import com.liferay.portal.kernel.search.Sort;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.WorkflowInstanceLinkLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.Constants;
@@ -61,7 +67,6 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -73,6 +78,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -86,7 +92,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	property = "model.class.name=com.liferay.commerce.term.model.CommerceTermEntry",
 	service = AopService.class
 )
@@ -117,7 +122,7 @@ public class CommerceTermEntryLocalServiceImpl
 
 		commerceTermEntry.setExternalReferenceCode(externalReferenceCode);
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		commerceTermEntry.setCompanyId(user.getCompanyId());
 		commerceTermEntry.setUserId(user.getUserId());
@@ -140,18 +145,13 @@ public class CommerceTermEntryLocalServiceImpl
 		}
 
 		commerceTermEntry.setExpirationDate(expirationDate);
-
 		commerceTermEntry.setName(name);
 		commerceTermEntry.setPriority(priority);
 		commerceTermEntry.setType(type);
-
-		UnicodeProperties typeSettingsUnicodeProperties =
+		commerceTermEntry.setTypeSettingsUnicodeProperties(
 			UnicodePropertiesBuilder.fastLoad(
 				typeSettings
-			).build();
-
-		commerceTermEntry.setTypeSettingsUnicodeProperties(
-			typeSettingsUnicodeProperties);
+			).build());
 
 		Date date = new Date();
 
@@ -176,7 +176,7 @@ public class CommerceTermEntryLocalServiceImpl
 
 		// Resource
 
-		resourceLocalService.addModelResources(
+		_resourceLocalService.addModelResources(
 			commerceTermEntry, serviceContext);
 
 		// Workflow
@@ -198,12 +198,18 @@ public class CommerceTermEntryLocalServiceImpl
 			CommerceTermEntry commerceTermEntry)
 		throws PortalException {
 
-		commerceTermEntryPersistence.remove(commerceTermEntry);
+		commerceTermEntry = commerceTermEntryPersistence.remove(
+			commerceTermEntry);
 
-		resourceLocalService.deleteResource(
+		_resourceLocalService.deleteResource(
 			commerceTermEntry.getCompanyId(), CommerceTermEntry.class.getName(),
 			ResourceConstants.SCOPE_INDIVIDUAL,
 			commerceTermEntry.getCommerceTermEntryId());
+
+		_commerceChannelAccountEntryRelLocalService.
+			deleteCommerceChannelAccountEntryRels(
+				CommerceTermEntry.class.getName(),
+				commerceTermEntry.getCommerceTermEntryId());
 
 		_commerceTermEntryRelLocalService.deleteCommerceTermEntryRels(
 			commerceTermEntry.getCommerceTermEntryId());
@@ -228,6 +234,14 @@ public class CommerceTermEntryLocalServiceImpl
 	}
 
 	@Override
+	public List<CommerceTermEntry> getCommerceTermEntries(
+		long companyId, String type) {
+
+		return commerceTermEntryPersistence.findByC_A_LikeType(
+			companyId, true, type);
+	}
+
+	@Override
 	public List<String> getCTermEntryLocalizationLanguageIds(
 		long commerceTermEntryId) {
 
@@ -247,21 +261,71 @@ public class CommerceTermEntryLocalServiceImpl
 	}
 
 	@Override
+	public List<CommerceTermEntry> getDeliveryCommerceTermEntries(
+		long companyId, long commerceOrderTypeId,
+		long commerceShippingOptionId) {
+
+		List<CommerceTermEntry> commerceTermEntries = new LinkedList<>();
+
+		commerceTermEntries.addAll(
+			dslQuery(
+				_getDeliveryTermsEntryGroupByStep(
+					companyId,
+					(commerceOrderTypeId > 0) ? commerceOrderTypeId : null,
+					commerceShippingOptionId,
+					DSLQueryFactoryUtil.selectDistinct(
+						CommerceTermEntryTable.INSTANCE)
+				).orderBy(
+					CommerceTermEntryTable.INSTANCE.priority.descending()
+				)));
+
+		if ((commerceOrderTypeId > 0) && commerceTermEntries.isEmpty()) {
+			commerceTermEntries.addAll(
+				dslQuery(
+					_getDeliveryTermsEntryGroupByStep(
+						companyId, null, commerceShippingOptionId,
+						DSLQueryFactoryUtil.selectDistinct(
+							CommerceTermEntryTable.INSTANCE)
+					).orderBy(
+						CommerceTermEntryTable.INSTANCE.priority.descending()
+					)));
+		}
+
+		return commerceTermEntries;
+	}
+
+	@Override
 	public List<CommerceTermEntry> getPaymentCommerceTermEntries(
 		long companyId, long commerceOrderTypeId,
 		long commercePaymentMethodGroupRelId) {
 
-		return dslQuery(
-			_getGroupByStep(
-				companyId,
-				(commerceOrderTypeId > 0) ? commerceOrderTypeId : null,
-				commercePaymentMethodGroupRelId,
-				DSLQueryFactoryUtil.selectDistinct(
-					CommerceTermEntryTable.INSTANCE),
-				"payment-terms"
-			).orderBy(
-				CommerceTermEntryTable.INSTANCE.priority.descending()
-			));
+		List<CommerceTermEntry> commerceTermEntries = new LinkedList<>();
+
+		commerceTermEntries.addAll(
+			dslQuery(
+				_getPaymentTermsEntryGroupByStep(
+					companyId,
+					(commerceOrderTypeId > 0) ? commerceOrderTypeId : null,
+					commercePaymentMethodGroupRelId,
+					DSLQueryFactoryUtil.selectDistinct(
+						CommerceTermEntryTable.INSTANCE)
+				).orderBy(
+					CommerceTermEntryTable.INSTANCE.priority.descending()
+				)));
+
+		if ((commerceOrderTypeId > 0) && commerceTermEntries.isEmpty()) {
+			commerceTermEntries.addAll(
+				dslQuery(
+					_getPaymentTermsEntryGroupByStep(
+						companyId, null, commercePaymentMethodGroupRelId,
+						DSLQueryFactoryUtil.selectDistinct(
+							CommerceTermEntryTable.INSTANCE)
+					).orderBy(
+						CommerceTermEntryTable.INSTANCE.priority.descending()
+					)));
+		}
+
+		return commerceTermEntries;
 	}
 
 	@Override
@@ -283,10 +347,10 @@ public class CommerceTermEntryLocalServiceImpl
 			int start, int end, Sort sort)
 		throws PortalException {
 
-		SearchContext searchContext = buildSearchContext(
+		SearchContext searchContext = _buildSearchContext(
 			companyId, accountEntryId, type, keywords, start, end, sort);
 
-		return searchCommerceTermEntries(searchContext);
+		return _searchCommerceTermEntries(searchContext);
 	}
 
 	@Indexable(type = IndexableType.REINDEX)
@@ -312,7 +376,7 @@ public class CommerceTermEntryLocalServiceImpl
 
 		commerceTermEntry.setActive(active);
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		commerceTermEntry.setDisplayDate(
 			_portal.getDate(
@@ -330,17 +394,12 @@ public class CommerceTermEntryLocalServiceImpl
 		}
 
 		commerceTermEntry.setExpirationDate(expirationDate);
-
 		commerceTermEntry.setName(name);
 		commerceTermEntry.setPriority(priority);
-
-		UnicodeProperties typeSettingsUnicodeProperties =
+		commerceTermEntry.setTypeSettingsUnicodeProperties(
 			UnicodePropertiesBuilder.fastLoad(
 				typeSettings
-			).build();
-
-		commerceTermEntry.setTypeSettingsUnicodeProperties(
-			typeSettingsUnicodeProperties);
+			).build());
 
 		Date date = new Date();
 
@@ -417,7 +476,7 @@ public class CommerceTermEntryLocalServiceImpl
 
 		commerceTermEntry.setStatus(status);
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		commerceTermEntry.setStatusByUserId(user.getUserId());
 		commerceTermEntry.setStatusByUserName(user.getFullName());
@@ -425,99 +484,6 @@ public class CommerceTermEntryLocalServiceImpl
 		commerceTermEntry.setStatusDate(serviceContext.getModifiedDate(date));
 
 		return commerceTermEntryPersistence.update(commerceTermEntry);
-	}
-
-	protected SearchContext buildSearchContext(
-		long companyId, long accountEntryId, String type, String keywords,
-		int start, int end, Sort sort) {
-
-		SearchContext searchContext = new SearchContext();
-
-		searchContext.setAttributes(
-			HashMapBuilder.<String, Serializable>put(
-				Field.NAME, keywords
-			).put(
-				Field.TYPE, type
-			).put(
-				"accountEntryId", accountEntryId
-			).build());
-
-		searchContext.setCompanyId(companyId);
-		searchContext.setEnd(end);
-
-		if (Validator.isNotNull(keywords)) {
-			searchContext.setKeywords(keywords);
-		}
-
-		if (sort != null) {
-			searchContext.setSorts(sort);
-		}
-
-		searchContext.setStart(start);
-
-		QueryConfig queryConfig = searchContext.getQueryConfig();
-
-		queryConfig.setHighlightEnabled(false);
-		queryConfig.setScoreEnabled(false);
-
-		return searchContext;
-	}
-
-	protected List<CommerceTermEntry> getCommerceTermEntries(Hits hits)
-		throws PortalException {
-
-		List<Document> documents = hits.toList();
-
-		List<CommerceTermEntry> commerceTermEntries = new ArrayList<>(
-			documents.size());
-
-		for (Document document : documents) {
-			long commerceTermEntryId = GetterUtil.getLong(
-				document.get(Field.ENTRY_CLASS_PK));
-
-			CommerceTermEntry commerceTermEntry = fetchCommerceTermEntry(
-				commerceTermEntryId);
-
-			if (commerceTermEntry == null) {
-				commerceTermEntries = null;
-
-				Indexer<CommerceTermEntry> indexer =
-					IndexerRegistryUtil.getIndexer(CommerceTermEntry.class);
-
-				long companyId = GetterUtil.getLong(
-					document.get(Field.COMPANY_ID));
-
-				indexer.delete(companyId, document.getUID());
-			}
-			else if (commerceTermEntries != null) {
-				commerceTermEntries.add(commerceTermEntry);
-			}
-		}
-
-		return commerceTermEntries;
-	}
-
-	protected BaseModelSearchResult<CommerceTermEntry>
-			searchCommerceTermEntries(SearchContext searchContext)
-		throws PortalException {
-
-		Indexer<CommerceTermEntry> indexer =
-			IndexerRegistryUtil.nullSafeGetIndexer(CommerceTermEntry.class);
-
-		for (int i = 0; i < 10; i++) {
-			Hits hits = indexer.search(searchContext, _SELECTED_FIELD_NAMES);
-
-			List<CommerceTermEntry> commerceTermEntries =
-				getCommerceTermEntries(hits);
-
-			if (commerceTermEntries != null) {
-				return new BaseModelSearchResult<>(
-					commerceTermEntries, hits.getLength());
-			}
-		}
-
-		throw new SearchException(
-			"Unable to fix the search index after 10 attempts");
 	}
 
 	private List<CTermEntryLocalization> _addCommerceTermEntryLocalizedFields(
@@ -591,6 +557,41 @@ public class CommerceTermEntryLocalServiceImpl
 		return cTermEntryLocalizationPersistence.update(cTermEntryLocalization);
 	}
 
+	private SearchContext _buildSearchContext(
+		long companyId, long accountEntryId, String type, String keywords,
+		int start, int end, Sort sort) {
+
+		SearchContext searchContext = new SearchContext();
+
+		searchContext.setAttributes(
+			HashMapBuilder.<String, Serializable>put(
+				Field.NAME, keywords
+			).put(
+				Field.TYPE, type
+			).put(
+				"accountEntryId", accountEntryId
+			).build());
+		searchContext.setCompanyId(companyId);
+		searchContext.setEnd(end);
+
+		if (Validator.isNotNull(keywords)) {
+			searchContext.setKeywords(keywords);
+		}
+
+		if (sort != null) {
+			searchContext.setSorts(sort);
+		}
+
+		searchContext.setStart(start);
+
+		QueryConfig queryConfig = searchContext.getQueryConfig();
+
+		queryConfig.setHighlightEnabled(false);
+		queryConfig.setScoreEnabled(false);
+
+		return searchContext;
+	}
+
 	private void _checkCommerceTermEntriesByDisplayDate()
 		throws PortalException {
 
@@ -641,9 +642,108 @@ public class CommerceTermEntryLocalServiceImpl
 		}
 	}
 
-	private GroupByStep _getGroupByStep(
+	private List<CommerceTermEntry> _getCommerceTermEntries(Hits hits)
+		throws PortalException {
+
+		List<Document> documents = hits.toList();
+
+		List<CommerceTermEntry> commerceTermEntries = new ArrayList<>(
+			documents.size());
+
+		for (Document document : documents) {
+			long commerceTermEntryId = GetterUtil.getLong(
+				document.get(Field.ENTRY_CLASS_PK));
+
+			CommerceTermEntry commerceTermEntry = fetchCommerceTermEntry(
+				commerceTermEntryId);
+
+			if (commerceTermEntry == null) {
+				commerceTermEntries = null;
+
+				Indexer<CommerceTermEntry> indexer =
+					IndexerRegistryUtil.getIndexer(CommerceTermEntry.class);
+
+				long companyId = GetterUtil.getLong(
+					document.get(Field.COMPANY_ID));
+
+				indexer.delete(companyId, document.getUID());
+			}
+			else if (commerceTermEntries != null) {
+				commerceTermEntries.add(commerceTermEntry);
+			}
+		}
+
+		return commerceTermEntries;
+	}
+
+	private GroupByStep _getDeliveryTermsEntryGroupByStep(
 		Long companyId, Long commerceOrderTypeId,
-		Long commercePaymentMethodGroupRelId, FromStep fromStep, String type) {
+		Long commerceShippingFixedOptionId, FromStep fromStep) {
+
+		CommerceTermEntryRelTable commerceOrderTypeCommerceTermEntryRel =
+			CommerceTermEntryRelTable.INSTANCE.as(
+				"commerceOrderTypeCommerceTermEntryRel");
+
+		Column<CommerceTermEntryRelTable, Long>
+			commerceTermEntryRelTableClassNameIdColumn =
+				commerceOrderTypeCommerceTermEntryRel.classNameId;
+
+		Column<CommerceShippingFixedOptionQualifierTable, Long>
+			commerceShippingFixedOptionQualifierTableClassNameIdColumn =
+				CommerceShippingFixedOptionQualifierTable.INSTANCE.classNameId;
+
+		JoinStep joinStep = fromStep.from(
+			CommerceTermEntryTable.INSTANCE
+		).innerJoinON(
+			CommerceShippingFixedOptionQualifierTable.INSTANCE,
+			commerceShippingFixedOptionQualifierTableClassNameIdColumn.eq(
+				_classNameLocalService.getClassNameId(
+					CommerceTermEntry.class.getName())
+			).and(
+				CommerceShippingFixedOptionQualifierTable.INSTANCE.classPK.eq(
+					CommerceTermEntryTable.INSTANCE.commerceTermEntryId)
+			)
+		).leftJoinOn(
+			commerceOrderTypeCommerceTermEntryRel,
+			commerceTermEntryRelTableClassNameIdColumn.eq(
+				_classNameLocalService.getClassNameId(
+					CommerceOrderType.class.getName())
+			).and(
+				commerceOrderTypeCommerceTermEntryRel.commerceTermEntryId.eq(
+					CommerceTermEntryTable.INSTANCE.commerceTermEntryId)
+			)
+		);
+
+		return joinStep.where(
+			CommerceShippingFixedOptionQualifierTable.INSTANCE.
+				commerceShippingFixedOptionId.eq(
+					commerceShippingFixedOptionId
+				).and(
+					() -> {
+						if (commerceOrderTypeId != null) {
+							return commerceOrderTypeCommerceTermEntryRel.
+								classPK.eq(commerceOrderTypeId);
+						}
+
+						return commerceOrderTypeCommerceTermEntryRel.
+							commerceTermEntryId.isNull();
+					}
+				).and(
+					CommerceTermEntryTable.INSTANCE.status.eq(
+						WorkflowConstants.STATUS_APPROVED)
+				).and(
+					CommerceTermEntryTable.INSTANCE.companyId.eq(companyId)
+				).and(
+					CommerceTermEntryTable.INSTANCE.active.eq(true)
+				).and(
+					CommerceTermEntryTable.INSTANCE.type.eq(
+						CommerceTermEntryConstants.TYPE_DELIVERY_TERMS)
+				));
+	}
+
+	private GroupByStep _getPaymentTermsEntryGroupByStep(
+		Long companyId, Long commerceOrderTypeId,
+		Long commercePaymentMethodGroupRelId, FromStep fromStep) {
 
 		CommerceTermEntryRelTable commerceOrderTypeCommerceTermEntryRel =
 			CommerceTermEntryRelTable.INSTANCE.as(
@@ -663,7 +763,7 @@ public class CommerceTermEntryLocalServiceImpl
 		).innerJoinON(
 			CommercePaymentMethodGroupRelQualifierTable.INSTANCE,
 			commercePaymentMethodGroupRelQualifierTableClassNameIdColumn.eq(
-				classNameLocalService.getClassNameId(
+				_classNameLocalService.getClassNameId(
 					CommerceTermEntry.class.getName())
 			).and(
 				CommercePaymentMethodGroupRelQualifierTable.INSTANCE.classPK.eq(
@@ -672,7 +772,7 @@ public class CommerceTermEntryLocalServiceImpl
 		).leftJoinOn(
 			commerceOrderTypeCommerceTermEntryRel,
 			commerceTermEntryRelTableClassNameIdColumn.eq(
-				classNameLocalService.getClassNameId(
+				_classNameLocalService.getClassNameId(
 					CommerceOrderType.class.getName())
 			).and(
 				commerceOrderTypeCommerceTermEntryRel.commerceTermEntryId.eq(
@@ -702,8 +802,32 @@ public class CommerceTermEntryLocalServiceImpl
 				).and(
 					CommerceTermEntryTable.INSTANCE.active.eq(true)
 				).and(
-					CommerceTermEntryTable.INSTANCE.type.eq(type)
+					CommerceTermEntryTable.INSTANCE.type.eq(
+						CommerceTermEntryConstants.TYPE_PAYMENT_TERMS)
 				));
+	}
+
+	private BaseModelSearchResult<CommerceTermEntry> _searchCommerceTermEntries(
+			SearchContext searchContext)
+		throws PortalException {
+
+		Indexer<CommerceTermEntry> indexer =
+			IndexerRegistryUtil.nullSafeGetIndexer(CommerceTermEntry.class);
+
+		for (int i = 0; i < 10; i++) {
+			Hits hits = indexer.search(searchContext, _SELECTED_FIELD_NAMES);
+
+			List<CommerceTermEntry> commerceTermEntries =
+				_getCommerceTermEntries(hits);
+
+			if (commerceTermEntries != null) {
+				return new BaseModelSearchResult<>(
+					commerceTermEntries, hits.getLength());
+			}
+		}
+
+		throw new SearchException(
+			"Unable to fix the search index after 10 attempts");
 	}
 
 	private CommerceTermEntry _startWorkflowInstance(
@@ -783,10 +907,23 @@ public class CommerceTermEntryLocalServiceImpl
 		CommerceTermEntryLocalServiceImpl.class);
 
 	@Reference
+	private ClassNameLocalService _classNameLocalService;
+
+	@Reference
+	private CommerceChannelAccountEntryRelLocalService
+		_commerceChannelAccountEntryRelLocalService;
+
+	@Reference
 	private CommerceTermEntryRelLocalService _commerceTermEntryRelLocalService;
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private ResourceLocalService _resourceLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 	@Reference
 	private WorkflowInstanceLinkLocalService _workflowInstanceLinkLocalService;

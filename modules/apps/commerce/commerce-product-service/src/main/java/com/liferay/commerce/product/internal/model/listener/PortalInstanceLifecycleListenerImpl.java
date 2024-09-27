@@ -32,6 +32,7 @@ import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Image;
 import com.liferay.portal.kernel.model.Repository;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.repository.RepositoryFactory;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.service.RepositoryLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -53,10 +54,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Luca Pellizzon
  */
-@Component(
-	enabled = false, immediate = true,
-	service = PortalInstanceLifecycleListener.class
-)
+@Component(immediate = true, service = PortalInstanceLifecycleListener.class)
 public class PortalInstanceLifecycleListenerImpl
 	extends BasePortalInstanceLifecycleListener {
 
@@ -143,8 +141,18 @@ public class PortalInstanceLifecycleListenerImpl
 	@Reference
 	private ImageTool _imageTool;
 
+	@Reference(
+		target = "(class.name=com.liferay.portal.repository.liferayrepository.LiferayRepository)"
+	)
+	private RepositoryFactory _liferayRepositoryFactory;
+
 	@Reference
 	private Portal _portal;
+
+	@Reference(
+		target = "(class.name=com.liferay.portal.repository.portletrepository.PortletRepository)"
+	)
+	private RepositoryFactory _portletRepositoryFactory;
 
 	@Reference
 	private RepositoryLocalService _repositoryLocalService;

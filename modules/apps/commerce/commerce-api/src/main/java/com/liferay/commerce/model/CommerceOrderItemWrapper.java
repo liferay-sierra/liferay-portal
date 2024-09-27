@@ -14,6 +14,7 @@
 
 package com.liferay.commerce.model;
 
+import com.liferay.exportimport.kernel.lar.StagedModelType;
 import com.liferay.portal.kernel.model.ModelWrapper;
 import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 
@@ -45,6 +46,7 @@ public class CommerceOrderItemWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("uuid", getUuid());
 		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("commerceOrderItemId", getCommerceOrderItemId());
 		attributes.put("groupId", getGroupId());
@@ -61,6 +63,7 @@ public class CommerceOrderItemWrapper
 		attributes.put("CProductId", getCProductId());
 		attributes.put(
 			"parentCommerceOrderItemId", getParentCommerceOrderItemId());
+		attributes.put("shippingAddressId", getShippingAddressId());
 		attributes.put("decimalQuantity", getDecimalQuantity());
 		attributes.put("deliveryGroup", getDeliveryGroup());
 		attributes.put(
@@ -75,6 +78,8 @@ public class CommerceOrderItemWrapper
 			getDeliverySubscriptionTypeSettings());
 		attributes.put("depth", getDepth());
 		attributes.put("discountAmount", getDiscountAmount());
+		attributes.put(
+			"discountManuallyAdjusted", isDiscountManuallyAdjusted());
 		attributes.put(
 			"discountPercentageLevel1", getDiscountPercentageLevel1());
 		attributes.put(
@@ -104,12 +109,12 @@ public class CommerceOrderItemWrapper
 		attributes.put("manuallyAdjusted", isManuallyAdjusted());
 		attributes.put("maxSubscriptionCycles", getMaxSubscriptionCycles());
 		attributes.put("name", getName());
+		attributes.put("priceManuallyAdjusted", isPriceManuallyAdjusted());
 		attributes.put("printedNote", getPrintedNote());
 		attributes.put("promoPrice", getPromoPrice());
 		attributes.put("promoPriceWithTaxAmount", getPromoPriceWithTaxAmount());
 		attributes.put("quantity", getQuantity());
 		attributes.put("requestedDeliveryDate", getRequestedDeliveryDate());
-		attributes.put("shippingAddressId", getShippingAddressId());
 		attributes.put("shipSeparately", isShipSeparately());
 		attributes.put("shippable", isShippable());
 		attributes.put("shippedQuantity", getShippedQuantity());
@@ -134,6 +139,12 @@ public class CommerceOrderItemWrapper
 
 		if (mvccVersion != null) {
 			setMvccVersion(mvccVersion);
+		}
+
+		String uuid = (String)attributes.get("uuid");
+
+		if (uuid != null) {
+			setUuid(uuid);
 		}
 
 		String externalReferenceCode = (String)attributes.get(
@@ -228,6 +239,12 @@ public class CommerceOrderItemWrapper
 			setParentCommerceOrderItemId(parentCommerceOrderItemId);
 		}
 
+		Long shippingAddressId = (Long)attributes.get("shippingAddressId");
+
+		if (shippingAddressId != null) {
+			setShippingAddressId(shippingAddressId);
+		}
+
 		BigDecimal decimalQuantity = (BigDecimal)attributes.get(
 			"decimalQuantity");
 
@@ -281,6 +298,13 @@ public class CommerceOrderItemWrapper
 
 		if (discountAmount != null) {
 			setDiscountAmount(discountAmount);
+		}
+
+		Boolean discountManuallyAdjusted = (Boolean)attributes.get(
+			"discountManuallyAdjusted");
+
+		if (discountManuallyAdjusted != null) {
+			setDiscountManuallyAdjusted(discountManuallyAdjusted);
 		}
 
 		BigDecimal discountPercentageLevel1 = (BigDecimal)attributes.get(
@@ -400,6 +424,13 @@ public class CommerceOrderItemWrapper
 			setName(name);
 		}
 
+		Boolean priceManuallyAdjusted = (Boolean)attributes.get(
+			"priceManuallyAdjusted");
+
+		if (priceManuallyAdjusted != null) {
+			setPriceManuallyAdjusted(priceManuallyAdjusted);
+		}
+
 		String printedNote = (String)attributes.get("printedNote");
 
 		if (printedNote != null) {
@@ -430,12 +461,6 @@ public class CommerceOrderItemWrapper
 
 		if (requestedDeliveryDate != null) {
 			setRequestedDeliveryDate(requestedDeliveryDate);
-		}
-
-		Long shippingAddressId = (Long)attributes.get("shippingAddressId");
-
-		if (shippingAddressId != null) {
-			setShippingAddressId(shippingAddressId);
 		}
 
 		Boolean shipSeparately = (Boolean)attributes.get("shipSeparately");
@@ -778,6 +803,16 @@ public class CommerceOrderItemWrapper
 	}
 
 	/**
+	 * Returns the discount manually adjusted of this commerce order item.
+	 *
+	 * @return the discount manually adjusted of this commerce order item
+	 */
+	@Override
+	public boolean getDiscountManuallyAdjusted() {
+		return model.getDiscountManuallyAdjusted();
+	}
+
+	/**
 	 * Returns the discount percentage level1 of this commerce order item.
 	 *
 	 * @return the discount percentage level1 of this commerce order item
@@ -1093,6 +1128,16 @@ public class CommerceOrderItemWrapper
 	}
 
 	/**
+	 * Returns the price manually adjusted of this commerce order item.
+	 *
+	 * @return the price manually adjusted of this commerce order item
+	 */
+	@Override
+	public boolean getPriceManuallyAdjusted() {
+		return model.getPriceManuallyAdjusted();
+	}
+
+	/**
 	 * Returns the primary key of this commerce order item.
 	 *
 	 * @return the primary key of this commerce order item
@@ -1334,6 +1379,16 @@ public class CommerceOrderItemWrapper
 	}
 
 	/**
+	 * Returns the uuid of this commerce order item.
+	 *
+	 * @return the uuid of this commerce order item
+	 */
+	@Override
+	public String getUuid() {
+		return model.getUuid();
+	}
+
+	/**
 	 * Returns the weight of this commerce order item.
 	 *
 	 * @return the weight of this commerce order item
@@ -1359,6 +1414,16 @@ public class CommerceOrderItemWrapper
 	}
 
 	/**
+	 * Returns <code>true</code> if this commerce order item is discount manually adjusted.
+	 *
+	 * @return <code>true</code> if this commerce order item is discount manually adjusted; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isDiscountManuallyAdjusted() {
+		return model.isDiscountManuallyAdjusted();
+	}
+
+	/**
 	 * Returns <code>true</code> if this commerce order item is free shipping.
 	 *
 	 * @return <code>true</code> if this commerce order item is free shipping; <code>false</code> otherwise
@@ -1376,6 +1441,16 @@ public class CommerceOrderItemWrapper
 	@Override
 	public boolean isManuallyAdjusted() {
 		return model.isManuallyAdjusted();
+	}
+
+	/**
+	 * Returns <code>true</code> if this commerce order item is price manually adjusted.
+	 *
+	 * @return <code>true</code> if this commerce order item is price manually adjusted; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isPriceManuallyAdjusted() {
+		return model.isPriceManuallyAdjusted();
 	}
 
 	/**
@@ -1601,6 +1676,16 @@ public class CommerceOrderItemWrapper
 	@Override
 	public void setDiscountAmount(BigDecimal discountAmount) {
 		model.setDiscountAmount(discountAmount);
+	}
+
+	/**
+	 * Sets whether this commerce order item is discount manually adjusted.
+	 *
+	 * @param discountManuallyAdjusted the discount manually adjusted of this commerce order item
+	 */
+	@Override
+	public void setDiscountManuallyAdjusted(boolean discountManuallyAdjusted) {
+		model.setDiscountManuallyAdjusted(discountManuallyAdjusted);
 	}
 
 	/**
@@ -1897,6 +1982,16 @@ public class CommerceOrderItemWrapper
 	}
 
 	/**
+	 * Sets whether this commerce order item is price manually adjusted.
+	 *
+	 * @param priceManuallyAdjusted the price manually adjusted of this commerce order item
+	 */
+	@Override
+	public void setPriceManuallyAdjusted(boolean priceManuallyAdjusted) {
+		model.setPriceManuallyAdjusted(priceManuallyAdjusted);
+	}
+
+	/**
 	 * Sets the primary key of this commerce order item.
 	 *
 	 * @param primaryKey the primary key of this commerce order item
@@ -2107,6 +2202,16 @@ public class CommerceOrderItemWrapper
 	}
 
 	/**
+	 * Sets the uuid of this commerce order item.
+	 *
+	 * @param uuid the uuid of this commerce order item
+	 */
+	@Override
+	public void setUuid(String uuid) {
+		model.setUuid(uuid);
+	}
+
+	/**
 	 * Sets the weight of this commerce order item.
 	 *
 	 * @param weight the weight of this commerce order item
@@ -2124,6 +2229,11 @@ public class CommerceOrderItemWrapper
 	@Override
 	public void setWidth(double width) {
 		model.setWidth(width);
+	}
+
+	@Override
+	public StagedModelType getStagedModelType() {
+		return model.getStagedModelType();
 	}
 
 	@Override

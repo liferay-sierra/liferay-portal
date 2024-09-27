@@ -35,15 +35,15 @@ import com.liferay.headless.commerce.delivery.catalog.dto.v1_0.Availability;
 import com.liferay.headless.commerce.delivery.catalog.dto.v1_0.Price;
 import com.liferay.headless.commerce.delivery.catalog.dto.v1_0.Product;
 import com.liferay.headless.commerce.delivery.catalog.dto.v1_0.Sku;
+import com.liferay.headless.commerce.delivery.catalog.dto.v1_0.SkuOption;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
 
 import java.math.BigDecimal;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -56,7 +56,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Andrea Sbarra
  */
 @Component(
-	enabled = false, property = "dto.class.name=CPSku",
+	property = "dto.class.name=CPSku",
 	service = {DTOConverter.class, SkuDTOConverter.class}
 )
 public class SkuDTOConverter implements DTOConverter<CPInstance, Sku> {
@@ -91,7 +91,6 @@ public class SkuDTOConverter implements DTOConverter<CPInstance, Sku> {
 				height = cpInstance.getHeight();
 				id = cpInstance.getCPInstanceId();
 				manufacturerPartNumber = cpInstance.getManufacturerPartNumber();
-				options = _getOptions(cpInstance);
 				price = _getPrice(
 					cpInstance, 1,
 					cpSkuDTOConverterConvertContext.getCommerceContext(),
@@ -99,6 +98,7 @@ public class SkuDTOConverter implements DTOConverter<CPInstance, Sku> {
 				published = cpInstance.isPublished();
 				purchasable = cpInstance.isPurchasable();
 				sku = cpInstance.getSku();
+				skuOptions = _getSkuOptions(cpInstance);
 				weight = cpInstance.getWeight();
 				width = cpInstance.getWidth();
 			}
@@ -113,24 +113,20 @@ public class SkuDTOConverter implements DTOConverter<CPInstance, Sku> {
 		Availability availability = new Availability();
 
 		if (_cpDefinitionInventoryEngine.isDisplayAvailability(cpInstance)) {
-			String availabilityStatus =
-				_commerceInventoryEngine.getAvailabilityStatus(
-					cpInstance.getCompanyId(), commerceChannelGroupId,
-					_cpDefinitionInventoryEngine.getMinStockQuantity(
-						cpInstance),
-					cpInstance.getSku());
-
 			if (Objects.equals(
-					availabilityStatus,
+					_commerceInventoryEngine.getAvailabilityStatus(
+						cpInstance.getCompanyId(), commerceChannelGroupId,
+						_cpDefinitionInventoryEngine.getMinStockQuantity(
+							cpInstance),
+						cpInstance.getSku()),
 					CommerceInventoryAvailabilityConstants.AVAILABLE)) {
 
-				availability.setLabel_i18n(
-					LanguageUtil.get(locale, "available"));
+				availability.setLabel_i18n(_language.get(locale, "available"));
 				availability.setLabel("available");
 			}
 			else {
 				availability.setLabel_i18n(
-					LanguageUtil.get(locale, "unavailable"));
+					_language.get(locale, "unavailable"));
 				availability.setLabel("unavailable");
 			}
 		}
@@ -156,49 +152,6 @@ public class SkuDTOConverter implements DTOConverter<CPInstance, Sku> {
 		}
 
 		return formattedDiscountPercentages.toArray(new String[0]);
-	}
-
-	private Map<String, String> _getOptions(CPInstance cpInstance)
-		throws Exception {
-
-		Map<String, String> options = new HashMap<>();
-
-		Map<String, List<String>>
-			cpDefinitionOptionRelKeysCPDefinitionOptionValueRelKeys =
-				_cpDefinitionOptionRelLocalService.
-					getCPDefinitionOptionRelKeysCPDefinitionOptionValueRelKeys(
-						cpInstance.getCPInstanceId());
-
-		JSONArray keyValuesJSONArray = _jsonHelper.toJSONArray(
-			cpDefinitionOptionRelKeysCPDefinitionOptionValueRelKeys);
-
-		Map<CPDefinitionOptionRel, List<CPDefinitionOptionValueRel>>
-			cpDefinitionOptionRelsMap =
-				_cpInstanceHelper.getCPDefinitionOptionRelsMap(
-					cpInstance.getCPDefinitionId(),
-					keyValuesJSONArray.toString());
-
-		for (Map.Entry<CPDefinitionOptionRel, List<CPDefinitionOptionValueRel>>
-				entry : cpDefinitionOptionRelsMap.entrySet()) {
-
-			CPDefinitionOptionRel cpDefinitionOptionRel = entry.getKey();
-
-			List<CPDefinitionOptionValueRel> cpDefinitionOptionValueRels =
-				entry.getValue();
-
-			for (CPDefinitionOptionValueRel cpDefinitionOptionValueRel :
-					cpDefinitionOptionValueRels) {
-
-				options.put(
-					String.valueOf(
-						cpDefinitionOptionRel.getCPDefinitionOptionRelId()),
-					String.valueOf(
-						cpDefinitionOptionValueRel.
-							getCPDefinitionOptionValueRelId()));
-			}
-		}
-
-		return options;
 	}
 
 	private Price _getPrice(
@@ -267,6 +220,48 @@ public class SkuDTOConverter implements DTOConverter<CPInstance, Sku> {
 		return price;
 	}
 
+	private SkuOption[] _getSkuOptions(CPInstance cpInstance) throws Exception {
+		List<SkuOption> skuOptions = new ArrayList<>();
+
+		JSONArray keyValuesJSONArray = _jsonHelper.toJSONArray(
+			_cpDefinitionOptionRelLocalService.
+				getCPDefinitionOptionRelKeysCPDefinitionOptionValueRelKeys(
+					cpInstance.getCPInstanceId()));
+
+		Map<CPDefinitionOptionRel, List<CPDefinitionOptionValueRel>>
+			cpDefinitionOptionRelsMap =
+				_cpInstanceHelper.getCPDefinitionOptionValueRelsMap(
+					cpInstance.getCPDefinitionId(),
+					keyValuesJSONArray.toString());
+
+		for (Map.Entry<CPDefinitionOptionRel, List<CPDefinitionOptionValueRel>>
+				entry : cpDefinitionOptionRelsMap.entrySet()) {
+
+			CPDefinitionOptionRel cpDefinitionOptionRel = entry.getKey();
+
+			List<CPDefinitionOptionValueRel> cpDefinitionOptionValueRels =
+				entry.getValue();
+
+			for (CPDefinitionOptionValueRel cpDefinitionOptionValueRel :
+					cpDefinitionOptionValueRels) {
+
+				SkuOption skuOption = new SkuOption() {
+					{
+						key =
+							cpDefinitionOptionRel.getCPDefinitionOptionRelId();
+						value =
+							cpDefinitionOptionValueRel.
+								getCPDefinitionOptionValueRelId();
+					}
+				};
+
+				skuOptions.add(skuOption);
+			}
+		}
+
+		return skuOptions.toArray(new SkuOption[0]);
+	}
+
 	@Reference
 	private CommerceInventoryEngine _commerceInventoryEngine;
 
@@ -291,5 +286,8 @@ public class SkuDTOConverter implements DTOConverter<CPInstance, Sku> {
 
 	@Reference
 	private JsonHelper _jsonHelper;
+
+	@Reference
+	private Language _language;
 
 }

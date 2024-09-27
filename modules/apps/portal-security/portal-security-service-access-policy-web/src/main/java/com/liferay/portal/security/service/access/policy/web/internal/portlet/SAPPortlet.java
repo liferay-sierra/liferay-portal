@@ -15,7 +15,7 @@
 package com.liferay.portal.security.service.access.policy.web.internal.portlet;
 
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebServiceActionMapping;
@@ -24,7 +24,7 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.portal.kernel.security.access.control.AccessControlled;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.security.service.access.policy.service.SAPEntryService;
 import com.liferay.portal.security.service.access.policy.web.internal.constants.SAPPortletKeys;
@@ -74,7 +74,8 @@ import org.osgi.service.component.annotations.Reference;
 		"javax.portlet.init-param.view-template=/view.jsp",
 		"javax.portlet.name=" + SAPPortletKeys.SERVICE_ACCESS_POLICY,
 		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=administrator"
+		"javax.portlet.security-role-ref=administrator",
+		"javax.portlet.version=3.0"
 	},
 	service = Portlet.class
 )
@@ -95,7 +96,7 @@ public class SAPPortlet extends MVCPortlet {
 
 		PrintWriter printWriter = resourceResponse.getWriter();
 
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 		String contextName = ParamUtil.getString(
 			resourceRequest, "contextName");
@@ -156,7 +157,7 @@ public class SAPPortlet extends MVCPortlet {
 			actionRequest, "defaultSAPEntry");
 		boolean enabled = ParamUtil.getBoolean(actionRequest, "enabled");
 		String name = ParamUtil.getString(actionRequest, "name");
-		Map<Locale, String> titleMap = LocalizationUtil.getLocalizationMap(
+		Map<Locale, String> titleMap = _localization.getLocalizationMap(
 			actionRequest, "title");
 
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
@@ -174,20 +175,8 @@ public class SAPPortlet extends MVCPortlet {
 		}
 	}
 
-	@Reference(unbind = "-")
-	protected void setJSONWebServiceActionsManager(
-		JSONWebServiceActionsManager jsonWebServiceActionsManager) {
-
-		_jsonWebServiceActionsManager = jsonWebServiceActionsManager;
-	}
-
-	@Reference(unbind = "-")
-	protected void setSAPEntryService(SAPEntryService sapEntryService) {
-		_sapEntryService = sapEntryService;
-	}
-
 	private JSONArray _getServiceClassNamesToContextNamesJSONArray() {
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 		Set<String> contextNames =
 			_jsonWebServiceActionsManager.getContextNames();
@@ -278,7 +267,16 @@ public class SAPPortlet extends MVCPortlet {
 		return jsonWebServiceActionMappingsMap;
 	}
 
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
 	private JSONWebServiceActionsManager _jsonWebServiceActionsManager;
+
+	@Reference
+	private Localization _localization;
+
+	@Reference
 	private SAPEntryService _sapEntryService;
 
 }

@@ -48,7 +48,7 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 
 import java.io.Serializable;
 
@@ -210,7 +210,7 @@ public class LayoutPageTemplateStructureRelPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<LayoutPageTemplateStructureRel>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (LayoutPageTemplateStructureRel
@@ -619,7 +619,7 @@ public class LayoutPageTemplateStructureRelPersistenceImpl
 
 			finderArgs = new Object[] {uuid};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -759,7 +759,7 @@ public class LayoutPageTemplateStructureRelPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = finderCache.getResult(
-				_finderPathFetchByUUID_G, finderArgs);
+				_finderPathFetchByUUID_G, finderArgs, this);
 		}
 
 		if (result instanceof LayoutPageTemplateStructureRel) {
@@ -884,7 +884,7 @@ public class LayoutPageTemplateStructureRelPersistenceImpl
 
 			finderArgs = new Object[] {uuid, groupId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1058,7 +1058,7 @@ public class LayoutPageTemplateStructureRelPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<LayoutPageTemplateStructureRel>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (LayoutPageTemplateStructureRel
@@ -1492,7 +1492,7 @@ public class LayoutPageTemplateStructureRelPersistenceImpl
 
 			finderArgs = new Object[] {uuid, companyId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1671,7 +1671,7 @@ public class LayoutPageTemplateStructureRelPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<LayoutPageTemplateStructureRel>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (LayoutPageTemplateStructureRel
@@ -2081,7 +2081,7 @@ public class LayoutPageTemplateStructureRelPersistenceImpl
 
 			finderArgs = new Object[] {layoutPageTemplateStructureId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2232,7 +2232,7 @@ public class LayoutPageTemplateStructureRelPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<LayoutPageTemplateStructureRel>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (LayoutPageTemplateStructureRel
@@ -2625,7 +2625,7 @@ public class LayoutPageTemplateStructureRelPersistenceImpl
 
 			finderArgs = new Object[] {segmentsExperienceId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2754,7 +2754,8 @@ public class LayoutPageTemplateStructureRelPersistenceImpl
 		Object result = null;
 
 		if (useFinderCache && productionMode) {
-			result = finderCache.getResult(_finderPathFetchByL_S, finderArgs);
+			result = finderCache.getResult(
+				_finderPathFetchByL_S, finderArgs, this);
 		}
 
 		if (result instanceof LayoutPageTemplateStructureRel) {
@@ -2872,7 +2873,7 @@ public class LayoutPageTemplateStructureRelPersistenceImpl
 				layoutPageTemplateStructureId, segmentsExperienceId
 			};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -3108,7 +3109,7 @@ public class LayoutPageTemplateStructureRelPersistenceImpl
 		layoutPageTemplateStructureRel.setPrimaryKey(
 			layoutPageTemplateStructureRelId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		layoutPageTemplateStructureRel.setUuid(uuid);
 
@@ -3244,7 +3245,7 @@ public class LayoutPageTemplateStructureRelPersistenceImpl
 					layoutPageTemplateStructureRel;
 
 		if (Validator.isNull(layoutPageTemplateStructureRel.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			layoutPageTemplateStructureRel.setUuid(uuid);
 		}
@@ -3379,7 +3380,7 @@ public class LayoutPageTemplateStructureRelPersistenceImpl
 		Serializable primaryKey) {
 
 		if (ctPersistenceHelper.isProductionMode(
-				LayoutPageTemplateStructureRel.class)) {
+				LayoutPageTemplateStructureRel.class, primaryKey)) {
 
 			return super.fetchByPrimaryKey(primaryKey);
 		}
@@ -3609,7 +3610,7 @@ public class LayoutPageTemplateStructureRelPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<LayoutPageTemplateStructureRel>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -3688,7 +3689,7 @@ public class LayoutPageTemplateStructureRelPersistenceImpl
 
 		if (productionMode) {
 			count = (Long)finderCache.getResult(
-				_finderPathCountAll, FINDER_ARGS_EMPTY);
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 		}
 
 		if (count == null) {
@@ -4041,7 +4042,6 @@ public class LayoutPageTemplateStructureRelPersistenceImpl
 	}
 
 	@Reference
-	private LayoutPageTemplateStructureRelModelArgumentsResolver
-		_layoutPageTemplateStructureRelModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

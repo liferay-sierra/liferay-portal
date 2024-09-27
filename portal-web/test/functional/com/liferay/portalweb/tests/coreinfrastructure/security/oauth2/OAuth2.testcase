@@ -23,20 +23,26 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-129398. User can authorize external application multiple times without any user session, when remember device is chosen."
+	@ignore = "true"
 	@priority = "4"
 	test ApplicationCanBeAuthorizedWithoutUserSession {
+		property oauth2.local.enabled = "true";
+		property portal.ssl.enabled = "true";
 		property test.name.skip.portal.instance = "OAuth2#ApplicationCanBeAuthorizedWithoutUserSession";
 
 		task ("Add and edit 2 external applications") {
+			OAuth2.openSSLPage();
+
 			for (var count : list "1,2") {
 				OAuth2.addAndEditExternalApplication(
 					applicationName = "My Application${count}",
-					callbackUri = '''http://martamedio.com/oauth2-tester/?url=${portalURL}&client_id=default${count}''',
+					baseURL = "https://localhost:8443",
+					callbackUri = '''https://localhost:8443/oauth2-tester/?url=https://localhost:8443&client_id=default${count}''',
 					checkboxCheckList = "Remember Device",
 					clientId = "default${count}",
 					clientProfile = "Web Application",
 					clientSecret = "defaultsecret${count}",
-					websiteURL = "http://www.liferay.com");
+					websiteURL = "https://localhost:8443");
 			}
 		}
 
@@ -81,19 +87,26 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-126597. User can authorize external application multiple times with remember device option. After the first authorization flow login is not needed."
+	@ignore = "true"
 	@priority = "5"
 	test ApplicationCanBeAuthorizedWithRememberDeviceEnabled {
+		property oauth2.local.enabled = "true";
 		property portal.acceptance = "true";
-		property test.name.skip.portal.instance = "OAuth2#ExternalApplicationCanBeAuthorizedAndRememberDeviceShouldBeEnabled";
+		property portal.ssl.enabled = "true";
+		property test.name.skip.portal.instance = "OAuth2#ApplicationCanBeAuthorizedWithRememberDeviceEnabled";
 
 		task ("Add and edit an external application with remember device enabled") {
+			OAuth2.openSSLPage();
+
 			OAuth2.addAndEditExternalApplication(
 				applicationName = "Third-party Application",
-				callbackUri = '''http://martamedio.com/oauth2-tester/?url=${portalURL}&client_id=abc123''',
+				baseURL = "https://localhost:8443",
+				callbackUri = '''https://localhost:8443/oauth2-tester/?url=https://localhost:8443&client_id=abc123''',
 				checkboxCheckList = "Remember Device",
 				clientId = "abc123",
 				clientProfile = "Web Application",
-				clientSecret = "abc123");
+				clientSecret = "abc123",
+				websiteURL = "https://localhost:8443");
 		}
 
 		task ("Authorize my application with remember device option checked") {
@@ -112,6 +125,160 @@ definition {
 
 		task ("Launch request") {
 			OAuth2.launchRequest();
+		}
+	}
+
+	@description = "This is a use case for LPS-145191 TC-1:Liferay will not issue an access token back to the client when configure OAuth 2 Application as Client Secret JWT without the client sending client info in JWT."
+	@ignore = "true"
+	@priority = "4"
+	test ApplicationCannotBeAuthorizedWithClientSecretJWTWithoutJWTAssertion {
+		property oauth2.local.enabled = "true";
+		property portal.ssl.enabled = "true";
+		property test.name.skip.portal.instance = "OAuth2#ApplicationCannotBeAuthorizedWithClientSecretJWTWithoutJWTAssertion";
+
+		task ("Add and edit an external application") {
+			OAuth2.openSSLPage();
+
+			OAuth2.addAndEditExternalApplication(
+				applicationName = "My Application",
+				baseURL = "https://localhost:8443",
+				callbackUri = '''https://localhost:8443/oauth2-tester/?url=https://localhost:8443&client_id=abc123''',
+				clientAuthenticationMethod = "Client Secret JWT",
+				clientId = "abc123",
+				clientProfile = "Web Application",
+				clientSecret = "abc123",
+				websiteURL = "https://localhost:8443");
+		}
+
+		task ("Authorize application") {
+			OAuth2.authorizeMyApplication(
+				clientId = "abc123",
+				clientSecret = "abc123");
+		}
+
+		task ("Verify OAuth2 access is not authorized") {
+			OAuth2.obtainOAuth2AccessNotAuthorized();
+		}
+	}
+
+	@description = "This is a use case for LPS-145190 TC-5 TC-6 TC-7 Request the liferay access token for OAuth2 application with invalid JWTs."
+	@priority = "3"
+	test ApplicationCannotBeAuthorizedWithInvalidJWT {
+		property test.name.skip.portal.instance = "OAuth2#ApplicationCannotBeAuthorizedWithInvalidJWT";
+
+		task ("Add the OSGI configuration file") {
+			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.oauth2.provider.rest.internal.configuration.OAuth2InAssertionConfiguration~instance.config");
+		}
+
+		task ("Add a new OAuth2 application") {
+			OAuth2.openOAuth2Admin();
+
+			OAuth2.addApplication(
+				applicationName = "OAuth2 Application",
+				checkboxUncheckList = "Authorization Code");
+		}
+
+		task ("Input OAuth2 valuies") {
+			OAuth2.inputApplicationValues(
+				clientId = "abc123",
+				clientSecret = "abc123");
+		}
+
+		task ("Edit OAuth2 scopes") {
+			Navigator.gotoBack();
+
+			OAuth2.editScopes(
+				applicationName = "OAuth2 Application",
+				resourceCheckList = "analytics.read,analytics.write",
+				resourcePanels = "Analytics");
+		}
+
+		task ("Authorize application with the JWT which lack the kid confirmation method value.") {
+			OAuth2.requestAccessTokenWithJWTViaCurl(
+				clientId = "abc123",
+				clientSecret = "abc123",
+				jwtFileBaseDir = "test/functional/com/liferay/portalweb/tests/coreinfrastructure/security/oauth2/dependencies",
+				jwtFileName = "jwt_lack_kid.txt",
+				noResponse = "true",
+				scopes = "");
+		}
+
+		task ("Verify that there is no granted authorization via admin ") {
+			OAuth2.viewGrantedAuthViaAdmin(
+				applicationName = "OAuth2 Application",
+				noAuthorizations = "true");
+		}
+
+		task ("Authorize application with an expired JWT.") {
+			OAuth2.requestAccessTokenWithJWTViaCurl(
+				clientId = "abc123",
+				clientSecret = "abc123",
+				jwtFileBaseDir = "test/functional/com/liferay/portalweb/tests/coreinfrastructure/security/oauth2/dependencies",
+				jwtFileName = "jwt_expired.txt",
+				noResponse = "true",
+				scopes = "");
+		}
+
+		task ("Verify that there is no granted authorization via admin ") {
+			OAuth2.viewGrantedAuthViaAdmin(
+				applicationName = "OAuth2 Application",
+				noAuthorizations = "true");
+		}
+
+		task ("Authorize application with the JWT which includes a non-existent user in liferay.") {
+			OAuth2.requestAccessTokenWithJWTViaCurl(
+				clientId = "abc123",
+				clientSecret = "abc123",
+				jwtFileBaseDir = "test/functional/com/liferay/portalweb/tests/coreinfrastructure/security/oauth2/dependencies",
+				jwtFileName = "jwt_nonexistent_user.txt",
+				noResponse = "true",
+				scopes = "");
+		}
+
+		task ("Verify that there is no granted authorization via admin ") {
+			OAuth2.viewGrantedAuthViaAdmin(
+				applicationName = "OAuth2 Application",
+				noAuthorizations = "true");
+		}
+	}
+
+	@description = "This is a use case for LPS-145191 TC-2:Liferay will not issue an access token back to the client when configure OAuth 2 Application as Private Key JWT without the client sending client info in JWT."
+	@ignore = "true"
+	@priority = "4"
+	test ApplicationCannotBeAuthorizedWithPrivateKeyJWTWithoutJWTAssertion {
+		property oauth2.local.enabled = "true";
+		property portal.ssl.enabled = "true";
+		property test.name.skip.portal.instance = "OAuth2#ApplicationCannotBeAuthorizedWithPrivateKeyJWTWithoutJWTAssertion";
+
+		task ("Add and edit an external application") {
+			OAuth2.openSSLPage();
+
+			OAuth2.addAndEditExternalApplication(
+				applicationName = "My Application",
+				baseURL = "https://localhost:8443",
+				callbackUri = '''https://localhost:8443/oauth2-tester/?url=https://localhost:8443&client_id=abc123''',
+				clientAuthenticationMethod = "Private Key JWT",
+				clientId = "abc123",
+				clientProfile = "Web Application",
+				clientSecret = "abc123",
+				websiteURL = "https://localhost:8443");
+		}
+
+		task ("Check the content of JSON Web Key Set doesn't disappear") {
+			OAuth2.viewApplication(
+				applicationName = "My Application",
+				clientAuthenticationMethod = "Private Key JWT",
+				jwks = "p2wfqbbEOf6OrbjScvOkuoVIx5MGJy6jEqN7RkfR8P82NdwuriRLoakZcs");
+		}
+
+		task ("Authorize application") {
+			OAuth2.authorizeMyApplication(
+				clientId = "abc123",
+				clientSecret = "abc123");
+		}
+
+		task ("Verify OAuth2 access is not authorized") {
+			OAuth2.obtainOAuth2AccessNotAuthorized();
 		}
 	}
 
@@ -185,24 +352,114 @@ definition {
 		}
 	}
 
+	@description = "This is a use case for LPS-145190 TC-3 Liferay will issue the access token when the token issuer matches any of configurations in system settings and instance settings."
+	@priority = "5"
+	test AuthorizationCanBeIssuedWhenTokenIssuerMatchesWithSystemLevelOrInstanceLevel {
+		property custom.properties = "jsonws.web.service.paths.excludes=";
+		property portal.acceptance = "true";
+		property test.name.skip.portal.instance = "OAuth2#AuthorizationCanBeIssuedWhenTokenIssuerMatchesWithSystemLevelOrInstanceLevel";
+
+		task ("Add the OSGI configuration file to configure System Settings") {
+			OSGiConfig.copyOSGiConfigFile(
+				osgiConfigFileBaseDir = "test/functional/com/liferay/portalweb/tests/coreinfrastructure/security/oauth2/dependencies",
+				osgiConfigFileName = "com.liferay.oauth2.provider.rest.internal.configuration.OAuth2InAssertionConfiguration~default.config");
+		}
+
+		task ("Add the OSGI configuration file to configure Instance Settings") {
+			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.oauth2.provider.rest.internal.configuration.OAuth2InAssertionConfiguration~instance~SSO.config");
+		}
+
+		task ("Add a new user") {
+			JSONUser.addUser(
+				userEmailAddress = "test1@liferay.com",
+				userFirstName = "Test",
+				userLastName = "One",
+				userScreenName = "test1");
+
+			JSONUser.setFirstPassword(
+				agreeToTermsAndAnswerReminderQuery = "true",
+				requireReset = "false",
+				userEmailAddress = "test1@liferay.com");
+		}
+
+		task ("Add a new OAuth2 application") {
+			OAuth2.openOAuth2Admin();
+
+			OAuth2.addApplication(
+				applicationName = "OAuth2 Application",
+				checkboxUncheckList = "Authorization Code");
+		}
+
+		task ("Input OAuth2 valuies") {
+			OAuth2.inputApplicationValues(
+				clientId = "abc123",
+				clientSecret = "abc123");
+		}
+
+		task ("Edit OAuth2 scopes") {
+			Navigator.gotoBack();
+
+			OAuth2.editScopes(
+				applicationName = "OAuth2 Application",
+				resourceCheckList = "analytics.read,analytics.write",
+				resourcePanels = "Analytics");
+		}
+
+		task ("Authorize application with the localhost issuer.") {
+			var scopeList = OAuth2.requestAccessTokenWithJWTViaCurl(
+				clientId = "abc123",
+				clientSecret = "abc123",
+				jwtFileBaseDir = "test/functional/com/liferay/portalweb/tests/coreinfrastructure/security/oauth2/dependencies",
+				jwtFileName = "jwt_email_test.txt",
+				scopes = "");
+		}
+
+		task ("Verify granted authorization via admin") {
+			OAuth2.viewGrantedAuthViaAdmin(
+				applicationName = "OAuth2 Application",
+				userName = "Test Test");
+		}
+
+		task ("Authorize application with the sso issuer.") {
+			var scopeList = OAuth2.requestAccessTokenWithJWTViaCurl(
+				clientId = "abc123",
+				clientSecret = "abc123",
+				jwtFileBaseDir = "test/functional/com/liferay/portalweb/tests/coreinfrastructure/security/oauth2/dependencies",
+				jwtFileName = "jwt_email_test1_sso.txt",
+				scopes = "");
+		}
+
+		task ("Verify granted authorization via admin") {
+			OAuth2.viewGrantedAuthViaAdmin(
+				applicationName = "OAuth2 Application",
+				userName = "Test One");
+		}
+	}
+
 	@description = "This is a use case for LPS-129397 TC-1: User can revoke authorization via kebab menu on	the OAuth 2 administration page."
+	@ignore = "true"
 	@priority = "5"
 	test AuthorizationCanBeRevokedViaKebabMenu {
+		property oauth2.local.enabled = "true";
 		property portal.acceptance = "true";
+		property portal.ssl.enabled = "true";
 		property test.name.skip.portal.instance = "OAuth2#AuthorizationCanBeRevokedViaKebabMenu";
 
 		task ("Add and edit an external application") {
+			OAuth2.openSSLPage();
+
 			OAuth2.addAndEditExternalApplication(
 				applicationName = "My Application",
-				callbackUri = '''http://martamedio.com/oauth2-tester/?url=${portalURL}&client_id=default''',
+				baseURL = "https://localhost:8443",
+				callbackUri = '''https://localhost:8443/oauth2-tester/?url=https://localhost:8443&client_id=default''',
 				clientId = "default",
 				clientProfile = "Web Application",
 				clientSecret = "defaultsecret",
-				websiteURL = "http://localhost:8080");
+				websiteURL = "https://localhost:8443");
 		}
 
 		task ("Verify that the created application is in the first row and the Revoke button is not present") {
-			OAuth2.openOAuth2Admin();
+			OAuth2.openOAuth2Admin(baseURL = "https://localhost:8443");
 
 			OAuth2.viewApplicationInAuthorizationsTable(
 				entryIndex = "0",
@@ -222,7 +479,7 @@ definition {
 		}
 
 		task ("Verify that the created application is in the first row in OAuth 2 admin page then revoke the application") {
-			OAuth2.openOAuth2Admin();
+			OAuth2.openOAuth2Admin(baseURL = "https://localhost:8443");
 
 			OAuth2.viewApplicationInAuthorizationsTable(
 				entryIndex = "1",
@@ -237,23 +494,29 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-129397 TC-2: User can revoke authorizations from a trusted application via kebab menu on the OAuth 2 administration page."
+	@ignore = "true"
 	@priority = "3"
 	test AuthorizationCanBeRevokedViaKebabMenuWithTrustedDevice {
+		property oauth2.local.enabled = "true";
+		property portal.ssl.enabled = "true";
 		property test.name.skip.portal.instance = "OAuth2#AuthorizationCanBeRevokedViaKebabMenuWithTrustedDevice";
 
 		task ("Add and edit an external application") {
+			OAuth2.openSSLPage();
+
 			OAuth2.addAndEditExternalApplication(
 				applicationName = "My Application",
-				callbackUri = '''http://martamedio.com/oauth2-tester/?url=${portalURL}&client_id=default''',
+				baseURL = "https://localhost:8443",
+				callbackUri = '''https://localhost:8443/oauth2-tester/?url=https://localhost:8443&client_id=default''',
 				checkboxCheckList = "Trusted Application",
 				clientId = "default",
 				clientProfile = "Web Application",
 				clientSecret = "defaultsecret",
-				websiteURL = "http://localhost:8080");
+				websiteURL = "https://localhost:8443");
 		}
 
 		task ("Verify that the application has 0 authorizations at OAuth 2 admin and the Revoke button is not present") {
-			OAuth2.openOAuth2Admin();
+			OAuth2.openOAuth2Admin(baseURL = "https://localhost:8443");
 
 			OAuth2.viewApplicationInAuthorizationsTable(
 				entryIndex = "0",
@@ -274,7 +537,7 @@ definition {
 		}
 
 		task ("Verify that the application has 1 authorization at OAuth 2 admin then Revoke it's authorization") {
-			OAuth2.openOAuth2Admin();
+			OAuth2.openOAuth2Admin(baseURL = "https://localhost:8443");
 
 			OAuth2.viewApplicationInAuthorizationsTable(
 				entryIndex = "1",
@@ -292,9 +555,12 @@ definition {
 	test AuthPromptInRequestScopeShouldNotBeVisible {
 		property custom.properties = "virtual.hosts.default.site.name=Guest";
 		property osgi.module.configuration.file.names = "com.liferay.oauth2.provider.scope.internal.configuration.BundlePrefixHandlerFactoryConfiguration~default.config";
-		property osgi.module.configurations = "include.bundle.symbolic.name=&quot;false&quot;${line.separator}osgi.jaxrs.name=&quot;Default&quot;${line.separator}separator=&quot;&quot;${line.separator}service.properties=&quot;&quot;";
-		property portal.upstream = "quarantine";
+		property osgi.module.configurations = "include.bundle.symbolic.name=\"false\"${line.separator}osgi.jaxrs.name=\"Default\"${line.separator}separator=\"\"${line.separator}service.properties=\"\"";
 		property test.name.skip.portal.instance = "OAuth2#AuthPromptInRequestScopeShouldNotBeVisible";
+
+		task ("Deploy simple OAuth2 provider app") {
+			FileInstall.deployFileOnServer(jarFile = "com.liferay.oauth2.provider.sample.jar");
+		}
 
 		task ("Go to OAuth 2 administration") {
 			OAuth2.openOAuth2Admin();
@@ -317,8 +583,6 @@ definition {
 			OAuth2.editScopes(
 				applicationName = "Analytics Cloud",
 				checkGlobalScope = "Everything");
-
-			FileInstall.deployFileOnServer(jarFile = "com.liferay.oauth2.provider.sample.jar");
 		}
 
 		task ("Verify everything.read is checked in sample-app resource panel") {
@@ -366,7 +630,7 @@ definition {
 		}
 	}
 
-	@description = "This is a use case for OAUTH2-259. Verify that client credential is in the user scope and can be added to an external application."
+	@description = "This is a use case for OAUTH2-259 and LPS-156552. Verify that client credential is in the user scope and can be added to an external application."
 	@priority = "4"
 	test ClientCredentialsShouldBeConfigurableInUserScope {
 		property custom.properties = "access.control.sanitize.security.exception=false${line.separator}json.service.serialize.throwable=true";
@@ -392,30 +656,32 @@ definition {
 				title = "delete journal articles");
 		}
 
-		task ("Add user") {
+		task ("Add user and assign the OAuth2 App Creator role to the User") {
 			JSONUser.addUser(
 				userEmailAddress = "userea@liferay.com",
 				userFirstName = "userfn",
 				userLastName = "userln",
 				userScreenName = "usersn");
+
+			OAuth2.addOAuth2AppCreatorRole();
+
+			JSONRole.assignRoleToUser(
+				roleTitle = "OAuth2 App Creator",
+				userEmailAddress = "userea@liferay.com");
 		}
 
-		task ("Add OAuth application") {
+		task ("Add OAuth application and edit OAuth scopes") {
 			OAuth2.openOAuth2Admin();
 
 			OAuth2.addApplication(
 				applicationName = "OAuth Application",
 				checkboxUncheckList = "Authorization Code");
-		}
 
-		task ("Input OAuth valuies") {
 			OAuth2.inputApplicationValues(
 				clientCredentialsUser = "usersn",
 				clientId = "abc123",
 				clientSecret = "abc123");
-		}
 
-		task ("Edit OAuth scopes") {
 			Navigator.gotoBack();
 
 			OAuth2.editScopes(
@@ -424,57 +690,31 @@ definition {
 				resourcePanels = "Portal Services");
 		}
 
-		task ("Set article Id") {
-			var portalURL = PropsUtil.get("portal.url");
-
-			var siteName = TestCase.getSiteName(siteName = "${siteName}");
-
-			var tokenCurl = '''
-				${portalURL}/o/oauth2/token \
-					--data grant_type=client_credentials&client_id=abc123&client_secret=abc123
-			''';
-
-			var accessToken = OAuth2.getAccessToken(tokenCurl = "${tokenCurl}");
-
-			var articleId = JSONWebcontentSetter.setArticleId(
-				groupName = "Guest",
-				title = "WC Title");
-		}
-
 		task ("Verify permission is required to delete article") {
-			var liferaySiteId = JSONGroupAPI._getGroupIdByName(
-				groupName = "Guest",
-				site = "true");
+			var accessToken = OAuth2.getAccessToken(
+				client_id = "abc123",
+				client_secret = "abc123",
+				grantFlow = "clientCredentials");
 
-			var deleteCurl = '''
-				${portalURL}/api/jsonws/journal.journalarticle/delete-article -H 'Authorization: Bearer ${accessToken}' \
-					-d groupId=${liferaySiteId} \
-					-d articleId=${articleId} \
-					-d articleURL='wc-title'
-			''';
-			var deleteOutput1 = JSONCurlUtil.post("${deleteCurl}");
+			var deleteOutput1 = OAuth2.getDeleteOutput(accessToken = "${accessToken}");
 
 			OAuth2.assertPermissionsDenied(
 				deleteOutput = "${deleteOutput1}",
 				msg = "must have DELETE permission for com.liferay.journal.model.JournalArticle");
 		}
 
-		task ("Define DELETE permission for the User") {
+		task ("Verify WC is deleted after granted the delete permission") {
 			Permissions.definePermissionViaJSONAPI(
 				resourceAction = "DELETE",
 				resourceName = "com.liferay.journal.model.JournalArticle",
 				roleTitle = "Guest");
-		}
 
-		task ("Verify permission required to delete article") {
-			var deleteOutput2 = JSONCurlUtil.post("${deleteCurl}");
+			var deleteOutput2 = OAuth2.getDeleteOutput(accessToken = "${accessToken}");
 
 			OAuth2.assertAbleToDeleteJournalArticle(
 				deleteOutput = "${deleteOutput2}",
 				msg = "must have DELETE permission for com.liferay.journal.model.JournalArticle");
-		}
 
-		task ("Verify WC deleted") {
 			WebContentNavigator.openWebContentAdmin(siteURLKey = "guest");
 
 			AssertTextNotPresent(value1 = "WC Title");
@@ -551,11 +791,10 @@ definition {
 		}
 	}
 
-	@description = "This is a use case for LRQA-48777. User can edit external applications to enable or disable permissions in both scopes. Blocked by LPS-142520."
+	@description = "This is a use case for LRQA-48777. User can edit external applications to enable or disable permissions in both scopes."
 	test EditApplicationScopesAndViewLanguageKeys {
 		property osgi.module.configuration.file.names = "com.liferay.oauth2.provider.scope.internal.configuration.ConfigurableScopeMapperConfiguration~default.config";
-		property osgi.module.configurations = "mapping=[&quot;example-scope-1,example-scope-2\=everything&quot;]${line.separator}osgi.jaxrs.name=&quot;liferay-oauth2-scope-sample-qa-app&quot;${line.separator}passthrough=&quot;true&quot;";
-		property portal.upstream = "quarantine";
+		property osgi.module.configurations = "mapping=[\"example-scope-1,example-scope-2\=everything\"]${line.separator}osgi.jaxrs.name=\"liferay-oauth2-scope-sample-qa-app\"${line.separator}passthrough=\"true\"";
 		property test.name.skip.portal.instance = "OAuth2#EditApplicationScopesAndViewLanguageKeys";
 
 		FileInstall.deployFileOnServer(jarFile = "com.liferay.oauth2.provider.scope.sample.qa.jar");
@@ -583,7 +822,7 @@ definition {
 
 			Navigator.gotoNavUnderline(navUnderline = "Resource scopes");
 
-			OAuth2.viewResourcePanelCollapsed(scopeList = "Analytics,Liferay.Bulk.REST,Liferay.Data.Engine.REST,Liferay.Frontend.View.State.REST,Liferay.Headless.Admin.Content");
+			OAuth2.viewResourcePanelCollapsed(scopeList = "Analytics,Liferay.Bulk.REST,Liferay.Data.Engine.REST,Liferay.Headless.Admin.Content");
 		}
 
 		task ("Edit OAuth application scopes and check the permission to read the userprofile") {
@@ -652,23 +891,25 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-105156. Authorized application should be automatically removed from the User's connect table when it is expired."
+	@ignore = "true"
 	@priority = "4"
 	test ExpiredAuthorizationShouldBeRemovedFromTable {
+		property oauth2.local.enabled = "true";
 		property osgi.module.configuration.file.names = "com.liferay.oauth2.provider.rest.internal.spi.bearer.token.provider.configuration.DefaultBearerTokenProviderConfiguration.config:com.liferay.oauth2.provider.configuration.OAuth2ProviderConfiguration.config";
-		property osgi.module.configurations = "access.token.expires.in=&quot;30&quot;${line.separator}refresh.token.expires.in=&quot;60&quot;:oauth2.expired.authorizations.afterlife.duration=&quot;30&quot;${line.separator}oauth2.expired.authorizations.check.interval=&quot;30&quot;";
+		property osgi.module.configurations = "access.token.expires.in=\"30\"${line.separator}refresh.token.expires.in=\"60\":oauth2.expired.authorizations.afterlife.duration=\"30\"${line.separator}oauth2.expired.authorizations.check.interval=\"30\"";
+		property portal.ssl.enabled = "true";
 
 		task ("Add a new OAuth 2 application") {
-			var portalURL = PropsUtil.get("portal.url");
+			OAuth2.openSSLPage();
 
-			OAuth2.openOAuth2Admin();
-
-			var clientId = "abc123";
-			var clientSecret = "abc123";
-			var portalURL = PropsUtil.get("portal.url");
+			OAuth2.openOAuth2Admin(baseURL = "https://localhost:8443");
 
 			OAuth2.addApplication(
 				applicationName = "Test Expired Application",
-				callbackUri = '''http://martamedio.com/oauth2-tester/?url=${portalURL}&client_id=${clientId}''');
+				callbackUri = '''https://localhost:8443/oauth2-tester/?url=https://localhost:8443&client_id=abc123''',
+				clientId = "abc123",
+				clientSecret = "abc123",
+				websiteURL = "https://localhost:8443");
 		}
 
 		task ("Edit scopes") {
@@ -688,20 +929,20 @@ definition {
 				rowEntry = "Test Expired Application");
 
 			OAuth2.inputApplicationValues(
-				clientId = "${clientId}",
-				clientSecret = "${clientSecret}");
+				clientId = "abc123",
+				clientSecret = "abc123");
 		}
 
 		task ("Get authorization code") {
-			var authorizationCode = OAuth2.getAuthorizationCode();
+			var authorizationCode = OAuth2.getAuthorizationCode(portalURL = "https://localhost:8443");
 		}
 
 		task ("Verify OAuth 2 access is valid") {
-			OAuth2.viewValidOAuth2LaunchRequest(clientSecret = "${clientSecret}");
+			OAuth2.viewValidOAuth2LaunchRequest(clientSecret = "abc123");
 		}
 
 		task ("Verify authorization is granted via user") {
-			Navigator.openURL();
+			OAuth2.openSSLPage();
 
 			OAuth2.viewGrantedAuthViaUser(applicationName = "Test Expired Application");
 
@@ -709,17 +950,24 @@ definition {
 		}
 
 		task ("Verify Test Expired Application") {
+
+			// Pausing 20 seconds due to assert the authorization is not yet expired. See LPS-105156 for more details.
+
 			Pause(locator1 = "20000");
 
 			Refresh();
 
 			OAuth2.viewUserConnectedExpirationValue(expirationValue = "Within");
 
+			// Pausing 30 seconds due to assert the authorization has expired. See LPS-105156 for more details.
+
 			Pause(locator1 = "30000");
 
 			Refresh();
 
 			OAuth2.viewUserConnectedExpirationValue(expirationValue = "Seconds Ago");
+
+			// Pausing 30 seconds due to assert the authorization is deleted. See LPS-105156 for more details.
 
 			Pause(locator1 = "30000");
 
@@ -837,24 +1085,32 @@ definition {
 	}
 
 	@description = "This is a use case for LRQA-47381. User can authorize external applications."
+	@ignore = "true"
 	test ExternalApplicationCanBeAuthorized {
 		property custom.properties = "virtual.hosts.default.site.name=Guest";
+		property oauth2.local.enabled = "true";
 		property portal.acceptance = "true";
+		property portal.ssl.enabled = "true";
 		property test.name.skip.portal.instance = "OAuth2#ExternalApplicationCanBeAuthorized";
 
 		task ("Add and edit an external application") {
+			OAuth2.openSSLPage();
+
 			OAuth2.addAndEditExternalApplication(
 				applicationName = "Third-party Application",
-				callbackUri = '''http://martamedio.com/oauth2-tester/?url=${portalURL}&client_id=abc123''',
+				baseURL = "https://localhost:8443",
+				callbackUri = '''https://localhost:8443/oauth2-tester/?url=https://localhost:8443&client_id=abc123''',
 				clientId = "abc123",
 				clientProfile = "Web Application",
-				clientSecret = "abc123");
+				clientSecret = "abc123",
+				websiteURL = "https://localhost:8443");
 		}
 
 		task ("Authorize the new external application") {
 			OAuth2.authorizeMyApplication(
 				clientId = "abc123",
-				clientSecret = "abc123");
+				clientSecret = "abc123",
+				portalURL = "https://localhost:8443");
 		}
 
 		task ("Launch request") {
@@ -863,19 +1119,26 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-126596. User can authorize trusted external applications."
+	@ignore = "true"
 	@priority = "3"
 	test ExternalApplicationCanBeTrustedAndAuthorized {
 		property custom.properties = "virtual.hosts.default.site.name=Guest";
+		property oauth2.local.enabled = "true";
+		property portal.ssl.enabled = "true";
 		property test.name.skip.portal.instance = "OAuth2#ExternalApplicationCanBeTrustedAndAuthorized";
 
 		task ("Add and edit an external trusted application") {
+			OAuth2.openSSLPage();
+
 			OAuth2.addAndEditExternalApplication(
 				applicationName = "Third-party Application",
-				callbackUri = '''http://martamedio.com/oauth2-tester/?url=${portalURL}&client_id=abc123''',
+				baseURL = "https://localhost:8443",
+				callbackUri = '''https://localhost:8443/oauth2-tester/?url=https://localhost:8443&client_id=abc123''',
 				checkboxCheckList = "Trusted Application",
 				clientId = "abc123",
 				clientProfile = "Web Application",
-				clientSecret = "abc123");
+				clientSecret = "abc123",
+				websiteURL = "https://localhost:8443");
 		}
 
 		task ("Authorize the new external application") {
@@ -984,6 +1247,249 @@ definition {
 		}
 	}
 
+	@description = "This is a use case for LPS-145190 TC-4 The system configuration will be ignored and the instance configuration will be used for token validation when the same JWT issuer is configured at both system and instance configuration scopes."
+	@priority = "5"
+	test InstanceLevelConfigurationWillCoverSystemLevelWhenTheyConfiguredWithSameIssuer {
+		property portal.acceptance = "true";
+		property test.name.skip.portal.instance = "OAuth2#InstanceLevelConfigurationWillCoverSystemLevelWhenTheyConfiguredWithSameIssuer";
+
+		task ("Add the OSGI configuration file to configure System Settings") {
+			OSGiConfig.copyOSGiConfigFile(
+				osgiConfigFileBaseDir = "test/functional/com/liferay/portalweb/tests/coreinfrastructure/security/oauth2/dependencies",
+				osgiConfigFileName = "com.liferay.oauth2.provider.rest.internal.configuration.OAuth2InAssertionConfiguration~default.config");
+		}
+
+		task ("Add the OSGI configuration file to configure Instance Settings") {
+			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.oauth2.provider.rest.internal.configuration.OAuth2InAssertionConfiguration~instance~screenName.config");
+		}
+
+		task ("Add a new OAuth2 application") {
+			OAuth2.openOAuth2Admin();
+
+			OAuth2.addApplication(
+				applicationName = "OAuth2 Application",
+				checkboxUncheckList = "Authorization Code");
+		}
+
+		task ("Input OAuth2 valuies") {
+			OAuth2.inputApplicationValues(
+				clientId = "abc123",
+				clientSecret = "abc123");
+		}
+
+		task ("Edit OAuth2 scopes") {
+			Navigator.gotoBack();
+
+			OAuth2.editScopes(
+				applicationName = "OAuth2 Application",
+				resourceCheckList = "analytics.read,analytics.write",
+				resourcePanels = "Analytics");
+		}
+
+		task ("Authorize application with the JWT which includes email as its subject value.") {
+			OAuth2.requestAccessTokenWithJWTViaCurl(
+				clientId = "abc123",
+				clientSecret = "abc123",
+				jwtFileBaseDir = "test/functional/com/liferay/portalweb/tests/coreinfrastructure/security/oauth2/dependencies",
+				jwtFileName = "jwt_email_test.txt",
+				noResponse = "true",
+				scopes = "");
+		}
+
+		task ("Verify that there is no granted authorization via admin ") {
+			OAuth2.viewGrantedAuthViaAdmin(
+				applicationName = "OAuth2 Application",
+				noAuthorizations = "true");
+		}
+
+		task ("Authorize application with the JWT which includes screen name as its subject value.") {
+			var scopeList = OAuth2.requestAccessTokenWithJWTViaCurl(
+				clientId = "abc123",
+				clientSecret = "abc123",
+				jwtFileBaseDir = "test/functional/com/liferay/portalweb/tests/coreinfrastructure/security/oauth2/dependencies",
+				jwtFileName = "jwt_screenname_test.txt",
+				scopes = "");
+		}
+
+		task ("Verify granted authorization via admin") {
+			OAuth2.viewGrantedAuthViaAdmin(
+				applicationName = "OAuth2 Application",
+				userName = "Test Test");
+		}
+	}
+
+	@description = "This is a use case for LPS-145190 TC-1 TC-8 TC-9 Liferay is able to accept JWT assertion as grant type to issue access token with email address as user authentication type."
+	@priority = "5"
+	test JWTAssertionCanBeAcceptedAsGrantTypeWithEmailAddressAsUserAuthenticationType {
+		property portal.acceptance = "true";
+		property test.name.skip.portal.instance = "OAuth2#ApplicationCanBeAuthorizedWithJWTBearerAsGrantTypeAndEmailAddressAsUserAuthenticationType";
+
+		task ("Add the OSGI configuration file") {
+			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.oauth2.provider.rest.internal.configuration.OAuth2InAssertionConfiguration~instance.config");
+		}
+
+		task ("Add a new OAuth2 application") {
+			OAuth2.openOAuth2Admin();
+
+			OAuth2.addApplication(
+				applicationName = "OAuth2 Application",
+				checkboxUncheckList = "Authorization Code");
+		}
+
+		task ("Input OAuth2 valuies") {
+			OAuth2.inputApplicationValues(
+				clientId = "abc123",
+				clientSecret = "abc123");
+		}
+
+		task ("Edit OAuth2 scopes") {
+			Navigator.gotoBack();
+
+			OAuth2.editScopes(
+				applicationName = "OAuth2 Application",
+				resourceCheckList = "analytics.read,analytics.write",
+				resourcePanels = "Analytics");
+		}
+
+		task ("Authorize application and scope parameter is ignored.") {
+			var scopeList = OAuth2.requestAccessTokenWithJWTViaCurl(
+				clientId = "abc123",
+				clientSecret = "abc123",
+				jwtFileBaseDir = "test/functional/com/liferay/portalweb/tests/coreinfrastructure/security/oauth2/dependencies",
+				jwtFileName = "jwt_email_test.txt",
+				scopes = "");
+		}
+
+		task ("Verify the issued access token grant all the OAuth2 scopes that are configured.") {
+			if ("${scopeList}" == "analytics.read analytics.write") {
+				echo("The issued access token grant all the OAuth2 scopes that are configured.");
+			}
+			else {
+				fail("FAIL. Scopes aren't matched.");
+			}
+		}
+
+		task ("Verify granted authorization via admin") {
+			OAuth2.viewGrantedAuthViaAdmin(
+				applicationName = "OAuth2 Application",
+				userName = "Test Test");
+		}
+
+		task ("Revoke granted authorization via admin") {
+			OAuth2.revokeGrantedAuthViaAdmin(
+				applicationName = "OAuth2 Application",
+				userName = "Test Test");
+
+			Refresh();
+		}
+
+		task ("Authorize application and scope parameter contains subset of configured scopes.") {
+			var scopeList = OAuth2.requestAccessTokenWithJWTViaCurl(
+				clientId = "abc123",
+				clientSecret = "abc123",
+				jwtFileBaseDir = "test/functional/com/liferay/portalweb/tests/coreinfrastructure/security/oauth2/dependencies",
+				jwtFileName = "jwt_email_test.txt",
+				scopes = "analytics.read");
+		}
+
+		task ("Verify the issued access token grant all the OAuth2 scopes that are configured.") {
+			if ("${scopeList}" == "analytics.read") {
+				echo("The issued access token grant the subset of configured scopes.");
+			}
+			else {
+				fail("FAIL. Scopes aren't matched.");
+			}
+		}
+
+		task ("Verify granted authorization via admin") {
+			OAuth2.viewGrantedAuthViaAdmin(
+				applicationName = "OAuth2 Application",
+				userName = "Test Test");
+		}
+
+		task ("Revoke granted authorization via admin") {
+			OAuth2.revokeGrantedAuthViaAdmin(
+				applicationName = "OAuth2 Application",
+				userName = "Test Test");
+
+			Refresh();
+		}
+
+		task ("Authorize application and scope paramter contains scopes that were not configured.") {
+			OAuth2.requestAccessTokenWithJWTViaCurl(
+				clientId = "abc123",
+				clientSecret = "abc123",
+				jwtFileBaseDir = "test/functional/com/liferay/portalweb/tests/coreinfrastructure/security/oauth2/dependencies",
+				jwtFileName = "jwt_email_test.txt",
+				noResponse = "true",
+				scopes = "liferay-json-web-services.userprofile");
+		}
+
+		task ("Verify that there is no granted authorization via admin ") {
+			OAuth2.viewGrantedAuthViaAdmin(
+				applicationName = "OAuth2 Application",
+				noAuthorizations = "true");
+		}
+	}
+
+	@description = "This is a use case for LPS-145190 TC-2 Liferay is able to accept JWT assertion as grant type to issue access token with screen name as user authentication type."
+	@priority = "5"
+	test JWTAssertionCanBeAcceptedAsGrantTypeWithScreenNameAsUserAuthenticationType {
+		property portal.acceptance = "true";
+		property test.name.skip.portal.instance = "OAuth2#JWTAssertionCanBeAcceptedAsGrantTypeWithScreenNameAsUserAuthenticationType";
+
+		task ("Add the OSGI configuration file") {
+			OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.oauth2.provider.rest.internal.configuration.OAuth2InAssertionConfiguration~instance~screenName.config");
+		}
+
+		task ("Add a new OAuth2 application") {
+			OAuth2.openOAuth2Admin();
+
+			OAuth2.addApplication(
+				applicationName = "OAuth2 Application",
+				checkboxUncheckList = "Authorization Code");
+		}
+
+		task ("Input OAuth2 valuies") {
+			OAuth2.inputApplicationValues(
+				clientId = "abc123",
+				clientSecret = "abc123");
+		}
+
+		task ("Edit OAuth2 scopes") {
+			Navigator.gotoBack();
+
+			OAuth2.editScopes(
+				applicationName = "OAuth2 Application",
+				resourceCheckList = "analytics.read,analytics.write",
+				resourcePanels = "Analytics");
+		}
+
+		task ("Authorize application and scope parameter is ignored.") {
+			var scopeList = OAuth2.requestAccessTokenWithJWTViaCurl(
+				clientId = "abc123",
+				clientSecret = "abc123",
+				jwtFileBaseDir = "test/functional/com/liferay/portalweb/tests/coreinfrastructure/security/oauth2/dependencies",
+				jwtFileName = "jwt_screenname_test.txt",
+				scopes = "");
+		}
+
+		task ("Verify the issued access token grant all the OAuth2 scopes that are configured.") {
+			if ("${scopeList}" == "analytics.read analytics.write") {
+				echo("The issued access token grant all the OAuth2 scopes that are configured.");
+			}
+			else {
+				fail("FAIL. Scopes aren't matched.");
+			}
+		}
+
+		task ("Verify granted authorization via admin") {
+			OAuth2.viewGrantedAuthViaAdmin(
+				applicationName = "OAuth2 Application",
+				userName = "Test Test");
+		}
+	}
+
 	@description = "This is a use case for LRQA-48782. Add and Edit OAuth SAP entries."
 	test OAuth2SAPEntriesCanBeAddedAndEdited {
 		property custom.properties = "access.control.sanitize.security.exception=false${line.separator}json.service.serialize.throwable=true";
@@ -1026,8 +1532,8 @@ definition {
 
 		task ("Get access token") {
 			var accessToken = OAuth2.getAccessToken(
-				clientId = "${generatedClientId}",
-				clientSecret = "${generatedClientSecret}",
+				client_id = "${generatedClientId}",
+				client_secret = "${generatedClientSecret}",
 				grantFlow = "clientCredentials");
 		}
 
@@ -1096,8 +1602,8 @@ definition {
 
 		task ("Verify portal version equals 7.4") {
 			var accessToken = OAuth2.getAccessToken(
-				clientId = "${generatedClientId}",
-				clientSecret = "${generatedClientSecret}",
+				client_id = "${generatedClientId}",
+				client_secret = "${generatedClientSecret}",
 				grantFlow = "clientCredentials");
 
 			SystemSettings.assertPortalBuildNumber(
@@ -1106,10 +1612,49 @@ definition {
 		}
 	}
 
+	@description = "This is a use case for LPS-165963. TC-1: Assert public key is present in JWKS format in URI where DXP makes."
+	@priority = "3"
+	test ObtainPublicKeyInJWKSFormatInURI {
+		property test.name.skip.portal.instance = "OAuth2#ObtainPublicKeyInJWKSFormatInURI";
+
+		task ("Given: Provide a signing key in JSON Web Key format") {
+			var jwk = FileUtil.read("test/functional/com/liferay/portalweb/tests/coreinfrastructure/security/oauth2/dependencies/jwk.txt");
+
+			ApplicationsMenu.gotoPortlet(
+				category = "Configuration",
+				panel = "Control Panel",
+				portlet = "System Settings");
+
+			SystemSettings.gotoConfiguration(
+				configurationCategory = "OAuth 2",
+				configurationName = "Authorization Server Configuration",
+				configurationScope = "System Scope");
+
+			PortletEntry.inputTextArea(
+				fieldId = "JsonWebKey",
+				text = "${jwk}");
+
+			PortletEntry.save();
+		}
+
+		task ("When: Visit URI where can obtain a JWKS") {
+			Navigator.openSpecificURL(url = "http://localhost:8080/o/oauth2/jwks");
+		}
+
+		task ("Then: Assert public key in JWKS format is present") {
+			AssertTextEquals.assertPartialText(
+				locator1 = "//body/pre",
+				value1 = "keys");
+
+			AssertTextEquals.assertPartialText(
+				locator1 = "//body/pre",
+				value1 = "lOwi0XbSFqBSushw_6JqePPSkGZJuFTVQdw");
+		}
+	}
+
 	@description = "This is a use case for LPS-110393. Verify that panels under global scopes can be expanded."
 	@priority = "4"
 	test PanelsShouldBeExpandableOnGlobalScopes {
-		property portal.upstream = "quarantine";
 		property test.name.skip.portal.instance = "OAuth2#PanelsShouldBeExpandableOnGlobalScopes";
 
 		task ("Delete OSGi JAX-RS Default configuration") {
@@ -1142,20 +1687,27 @@ definition {
 	}
 
 	@description = "This is a use case for LRQA-57134. Refresh token can expire and can be renewed."
+	@ignore = "true"
 	@priority = "4"
 	test RefreshTokenTimeCanBeSetExpiredAndRenewed {
 		property custom.properties = "virtual.hosts.default.site.name=Guest";
+		property oauth2.local.enabled = "true";
 		property osgi.module.configuration.file.names = "com.liferay.oauth2.provider.rest.internal.spi.bearer.token.provider.configuration.DefaultBearerTokenProviderConfiguration.config";
-		property osgi.module.configurations = "access.token.expires.in=&quot;8&quot;";
+		property osgi.module.configurations = "access.token.expires.in=\"8\"";
+		property portal.ssl.enabled = "true";
 		property test.name.skip.portal.instance = "OAuth2#RefreshTokenTimeCanBeSetExpiredAndRenewed";
 
 		task ("Add and edit an external application") {
+			OAuth2.openSSLPage();
+
 			OAuth2.addAndEditExternalApplication(
 				applicationName = "Third-party Application",
-				callbackUri = '''http://martamedio.com/oauth2-tester/?url=${portalURL}&client_id=abc123''',
+				baseURL = "https://localhost:8443",
+				callbackUri = '''https://localhost:8443/oauth2-tester/?url=https://localhost:8443&client_id=abc123''',
 				clientId = "abc123",
 				clientProfile = "Web Application",
-				clientSecret = "abc123");
+				clientSecret = "abc123",
+				websiteURL = "https://localhost:8443");
 		}
 
 		task ("Authorize application") {
@@ -1178,21 +1730,24 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-129395. Remember device option should be visible in OAuth 2 admin page if it was set in the application settings."
+	@ignore = "true"
 	@priority = "5"
 	test RememberDeviceExternalPropertyShouldBeVisible {
+		property oauth2.local.enabled = "true";
+		property portal.ssl.enabled = "true";
 		property test.name.skip.portal.instance = "OAuth2#RememberDeviceExternalPropertyShouldBeVisible";
 
 		task ("Add a new external application with remember device checked") {
-			var portalURL = PropsUtil.get("portal.url");
-			var clientId = "abc123";
+			OAuth2.openSSLPage();
 
-			OAuth2.openOAuth2Admin();
+			OAuth2.openOAuth2Admin(baseURL = "https://localhost:8443");
 
 			OAuth2.addApplication(
 				applicationName = "Remember Device Application",
-				callbackUri = '''http://martamedio.com/oauth2-tester/?url=${portalURL}&client_id=${clientId}''',
+				callbackUri = '''https://localhost:8443/oauth2-tester/?url=https://localhost:8443&client_id=abc123''',
 				checkboxCheckList = "Remember Device",
-				clientProfile = "Web Application");
+				clientProfile = "Web Application",
+				websiteURL = "https://localhost:8443");
 		}
 
 		task ("Verify application was added and has the 'Remember Device' external option") {
@@ -1205,20 +1760,26 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-129398. User can authorize multiple external applications which have the remember device option checked."
+	@ignore = "true"
 	@priority = "4"
 	test RememberDeviceShouldWorkWithMultipleAuthorizations {
+		property oauth2.local.enabled = "true";
+		property portal.ssl.enabled = "true";
 		property test.name.skip.portal.instance = "OAuth2#RememberDeviceShouldWorkWithMultipleAuthorizations";
 
 		task ("Add and edit 2 external applications") {
 			for (var count : list "1,2") {
+				OAuth2.openSSLPage();
+
 				OAuth2.addAndEditExternalApplication(
 					applicationName = "My Application${count}",
-					callbackUri = '''http://martamedio.com/oauth2-tester/?url=${portalURL}&client_id=default${count}''',
+					baseURL = "https://localhost:8443",
+					callbackUri = '''https://localhost:8443/oauth2-tester/?url=https://localhost:8443&client_id=default${count}''',
 					checkboxCheckList = "Remember Device",
 					clientId = "default${count}",
 					clientProfile = "Web Application",
 					clientSecret = "defaultsecret${count}",
-					websiteURL = "http://www.liferay.com");
+					websiteURL = "https://localhost:8443");
 			}
 		}
 
@@ -1261,23 +1822,29 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-129397 TC-3: User can evoke authorizations via new kebab menu option in OAuth 2 application's row when the device is remembered."
+	@ignore = "true"
 	@priority = "3"
 	test RevokeAuthorizationViaKebabMenuWithRememberDevice {
+		property oauth2.local.enabled = "true";
+		property portal.ssl.enabled = "true";
 		property test.name.skip.portal.instance = "OAuth2#RevokeAuthorizationViaKebabMenuWithRememberDevice";
 
 		task ("Add and edit an external application") {
+			OAuth2.openSSLPage();
+
 			OAuth2.addAndEditExternalApplication(
 				applicationName = "My Application",
-				callbackUri = '''http://martamedio.com/oauth2-tester/?url=${portalURL}&client_id=default''',
+				baseURL = "https://localhost:8443",
+				callbackUri = '''https://localhost:8443/oauth2-tester/?url=https://localhost:8443&client_id=default''',
 				checkboxCheckList = "Remember Device",
 				clientId = "default",
 				clientProfile = "Web Application",
 				clientSecret = "defaultsecret",
-				websiteURL = "http://localhost:8080");
+				websiteURL = "https://localhost:8443");
 		}
 
 		task ("Verify My Application has 0 authorizations at OAuth 2 admin") {
-			OAuth2.openOAuth2Admin();
+			OAuth2.openOAuth2Admin(baseURL = "https://localhost:8443");
 
 			OAuth2.viewApplicationInAuthorizationsTable(
 				entryIndex = "0",
@@ -1298,7 +1865,7 @@ definition {
 		}
 
 		task ("Verify My Application has 1 authorization at OAuth 2 admin") {
-			OAuth2.openOAuth2Admin();
+			OAuth2.openOAuth2Admin(baseURL = "https://localhost:8443");
 
 			OAuth2.viewApplicationInAuthorizationsTable(
 				entryIndex = "1",
@@ -1382,7 +1949,7 @@ definition {
 	@description = "This is a use case for LRQA-40999. User can add and remove configurations in the scope mappings."
 	test ScopeMappingsCanBeUpdated {
 		property osgi.module.configuration.file.names = "com.liferay.oauth2.provider.scope.internal.configuration.ConfigurableScopeMapperConfiguration~liferay~oauth2~scope~sample~qa~app.config";
-		property osgi.module.configurations = "mapping=[&quot;example-scope-1,example-scope-2\=everything.read,everything.write&quot;]${line.separator}osgi.jaxrs.name=&quot;liferay-oauth2-scope-sample-qa-app&quot;${line.separator}passthrough=&quot;false&quot;";
+		property osgi.module.configurations = "mapping=[\"example-scope-1,example-scope-2\=everything.read,everything.write\"]${line.separator}osgi.jaxrs.name=\"liferay-oauth2-scope-sample-qa-app\"${line.separator}passthrough=\"false\"";
 		property test.name.skip.portal.instance = "OAuth2#ScopeMappingsCanBeUpdated";
 
 		FileInstall.deployFileOnServer(jarFile = "com.liferay.oauth2.provider.scope.sample.qa.jar");
@@ -1449,23 +2016,58 @@ definition {
 		}
 	}
 
+	@description = "This is a use case for LPS-130869. OAuth2 token introspection should work with empty client secret for PKCE application."
+	@ignore = "true"
+	@priority = "4"
+	test TokenIntrospectionShouldWorkWithEmptyClientSecretForPKCE {
+		property oauth2.local.enabled = "true";
+		property portal.ssl.enabled = "true";
+		property test.name.skip.portal.instance = "OAuth2#TokenIntrospectionShouldWorkWithEmptyClientSecretForPKCE";
+
+		task ("Given: Add and edit an PKCE application") {
+			OAuth2.openSSLPage();
+
+			OAuth2.addAndEditExternalApplication(
+				applicationName = "My Application",
+				baseURL = "https://localhost:8443",
+				callbackUri = '''https://localhost:8443/oauth2-tester/pkce/?url=https://localhost:8443&client_id=pkce''',
+				checkboxCheckList = "Token Introspection",
+				checkboxUncheckList = "Authorization Code,Client Credentials,JWT_BEARER,Resource Owner Password Credentials",
+				clientAuthenticationMethod = "None",
+				clientId = "pkce",
+				clientProfile = "Other",
+				clientSecret = "",
+				websiteURL = "https://localhost:8443");
+		}
+
+		task ("When: Authorize PKCE application") {
+			OAuth2.authorizePKCEApplication(clientId = "pkce");
+		}
+
+		task ("Then: Verify server returns information about the token") {
+			OAuth2.introspectAccessToken(requestResult = '''active":true,"client_id":"pkce''');
+		}
+	}
+
 	@description = "This is a use case for LPS-129395. External applications have trusted label in OAuth 2 admin page when they are created with the trusted device option."
+	@ignore = "true"
 	@priority = "5"
 	test TrustedExternalPropertyShouldBeVisible {
+		property oauth2.local.enabled = "true";
+		property portal.ssl.enabled = "true";
 		property test.name.skip.portal.instance = "OAuth2#TrustedExternalPropertyShouldBeVisible";
 
 		task ("Add a trusted OAuth 2 application") {
-			var portalURL = PropsUtil.get("portal.url");
+			OAuth2.openSSLPage();
 
-			OAuth2.openOAuth2Admin();
-
-			var clientId = "abc123";
+			OAuth2.openOAuth2Admin(baseURL = "https://localhost:8443");
 
 			OAuth2.addApplication(
 				applicationName = "Trusted Application",
-				callbackUri = '''http://martamedio.com/oauth2-tester/?url=${portalURL}&client_id=${clientId}''',
+				callbackUri = '''https://localhost:8443/oauth2-tester/?url=https://localhost:8443&client_id=abc123''',
 				checkboxCheckList = "Trusted Application",
-				clientProfile = "Web Application");
+				clientProfile = "Web Application",
+				websiteURL = "https://localhost:8443");
 		}
 
 		task ("Verify application was added") {

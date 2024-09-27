@@ -49,6 +49,16 @@ renderResponse.setTitle(LanguageUtil.get(request, "select-template"));
 						</p>
 
 						<ul class="nav nav-stacked">
+							<li class="nav-item">
+								<a class="nav-link text-truncate <%= selectLayoutPageTemplateEntryDisplayContext.isBasicTemplates() ? "active" : StringPool.BLANK %>" href="<%= layoutsAdminDisplayContext.getSelectLayoutPageTemplateEntryURL(0, layoutsAdminDisplayContext.getSelPlid(), "basic-templates", layoutsAdminDisplayContext.isPrivateLayout()) %>">
+									<liferay-ui:message key="basic-templates" />
+								</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link text-truncate <%= selectLayoutPageTemplateEntryDisplayContext.isGlobalTemplates() ? "active" : StringPool.BLANK %>" href="<%= layoutsAdminDisplayContext.getSelectLayoutPageTemplateEntryURL(0, layoutsAdminDisplayContext.getSelPlid(), "global-templates", layoutsAdminDisplayContext.isPrivateLayout()) %>">
+									<liferay-ui:message key="global-templates" />
+								</a>
+							</li>
 
 							<%
 							for (LayoutPageTemplateCollection layoutPageTemplateCollection : LayoutPageTemplateCollectionServiceUtil.getLayoutPageTemplateCollections(scopeGroupId)) {
@@ -67,16 +77,6 @@ renderResponse.setTitle(LanguageUtil.get(request, "select-template"));
 							}
 							%>
 
-							<li class="nav-item">
-								<a class="nav-link text-truncate <%= selectLayoutPageTemplateEntryDisplayContext.isBasicTemplates() ? "active" : StringPool.BLANK %>" href="<%= layoutsAdminDisplayContext.getSelectLayoutPageTemplateEntryURL(0, layoutsAdminDisplayContext.getSelPlid(), "basic-templates", layoutsAdminDisplayContext.isPrivateLayout()) %>">
-									<liferay-ui:message key="basic-templates" />
-								</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link text-truncate <%= selectLayoutPageTemplateEntryDisplayContext.isGlobalTemplates() ? "active" : StringPool.BLANK %>" href="<%= layoutsAdminDisplayContext.getSelectLayoutPageTemplateEntryURL(0, layoutsAdminDisplayContext.getSelPlid(), "global-templates", layoutsAdminDisplayContext.isPrivateLayout()) %>">
-									<liferay-ui:message key="global-templates" />
-								</a>
-							</li>
 						</ul>
 					</li>
 				</ul>
@@ -160,8 +160,8 @@ renderResponse.setTitle(LanguageUtil.get(request, "select-template"));
 	</clay:row>
 </clay:container-fluid>
 
-<aui:script require="frontend-js-web/liferay/delegate/delegate.es as delegateModule">
-	var delegate = delegateModule.default;
+<aui:script require="frontend-js-web/index as frontendJsWeb">
+	var {delegate} = frontendJsWeb;
 
 	var layoutPageTemplateEntries = document.getElementById(
 		'<portlet:namespace />layoutPageTemplateEntries'

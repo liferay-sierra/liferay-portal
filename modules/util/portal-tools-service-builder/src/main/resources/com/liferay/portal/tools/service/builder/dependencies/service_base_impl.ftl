@@ -40,6 +40,8 @@ import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.PersistedModel;
 import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.search.Indexable;
@@ -165,6 +167,8 @@ import org.osgi.service.component.annotations.Reference;
 	public abstract class ${entity.name}LocalServiceBaseImpl extends BaseLocalServiceImpl implements ${entity.name}LocalService,
 	<#if dependencyInjectorDS>
 		AopService,
+	<#elseif osgiModule && entity.isChangeTrackingEnabled()>
+		CTService<${entity.name}>,
 	</#if>
 
 	IdentifiableOSGiService
@@ -803,6 +807,12 @@ import org.osgi.service.component.annotations.Reference;
 		 */
 		@Override
 		public PersistedModel deletePersistedModel(PersistedModel persistedModel) throws PortalException {
+			<#if serviceBuilder.isVersionGTE_7_4_0()>
+				if (_log.isWarnEnabled()) {
+					_log.warn("Implement ${entity.name}LocalServiceImpl#delete${entity.name}(${entity.name}) to avoid orphaned data");
+				}
+			</#if>
+
 			return ${entity.variableName}LocalService.delete${entity.name}((${entity.name})persistedModel);
 		}
 
@@ -956,7 +966,11 @@ import org.osgi.service.component.annotations.Reference;
 		 * <strong>Important:</strong> Inspect ${entity.name}LocalServiceImpl for overloaded versions of the method. If provided, use these entry points to the API, as the implementation logic may require the additional parameters defined there.
 		 * </p>
 		 *
-		 * @param ${entity.variableName} the ${entity.humanName}
+		<#if entity.versionEntity??>
+		 	* @param draft${entity.name} the ${entity.humanName}
+		<#else>
+			* @param ${entity.variableName} the ${entity.humanName}
+		</#if>
 		 * @return the ${entity.humanName} that was updated
 		<#list serviceBaseExceptions as exception>
 		 * @throws ${exception}
@@ -2137,6 +2151,8 @@ import org.osgi.service.component.annotations.Reference;
 			</#if>
 		</#if>
 	</#list>
+
+	private static final Log _log = LogFactoryUtil.getLog(${entity.name}${sessionTypeName}ServiceBaseImpl.class);
 
 	<#if lazyBlobExists>
 		<#if dependencyInjectorDS>

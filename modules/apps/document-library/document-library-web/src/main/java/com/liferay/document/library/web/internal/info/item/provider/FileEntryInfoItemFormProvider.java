@@ -34,11 +34,12 @@ import com.liferay.info.item.field.reader.InfoItemFieldReaderFieldSetProvider;
 import com.liferay.info.item.provider.InfoItemFormProvider;
 import com.liferay.info.localized.InfoLocalizedValue;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.Portal;
 import com.liferay.template.info.item.provider.TemplateInfoItemFieldSetProvider;
 
 import java.util.ArrayList;
@@ -231,7 +232,7 @@ public class FileEntryInfoItemFormProvider
 			long fileEntryTypeId)
 		throws NoSuchFormVariationException {
 
-		Set<Locale> availableLocales = LanguageUtil.getAvailableLocales();
+		Set<Locale> availableLocales = _language.getAvailableLocales();
 
 		InfoLocalizedValue.Builder infoLocalizedValueBuilder =
 			InfoLocalizedValue.builder();
@@ -310,6 +311,10 @@ public class FileEntryInfoItemFormProvider
 			return infoFieldSets;
 		}
 		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return Collections.emptyList();
 		}
 	}
@@ -337,6 +342,9 @@ public class FileEntryInfoItemFormProvider
 			throw new RuntimeException("Unexpected exception", portalException);
 		}
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		FileEntryInfoItemFormProvider.class);
 
 	@Reference
 	private AssetEntryInfoItemFieldSetProvider
@@ -366,7 +374,7 @@ public class FileEntryInfoItemFormProvider
 		_infoItemFieldReaderFieldSetProvider;
 
 	@Reference
-	private Portal _portal;
+	private Language _language;
 
 	@Reference
 	private TemplateInfoItemFieldSetProvider _templateInfoItemFieldSetProvider;

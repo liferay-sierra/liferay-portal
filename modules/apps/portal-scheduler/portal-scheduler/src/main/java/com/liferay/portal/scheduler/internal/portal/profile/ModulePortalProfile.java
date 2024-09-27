@@ -23,7 +23,6 @@ import com.liferay.portal.kernel.util.ProxyFactory;
 import com.liferay.portal.profile.BaseDSModulePortalProfile;
 import com.liferay.portal.profile.PortalProfile;
 import com.liferay.portal.scheduler.internal.SchedulerEngineHelperImpl;
-import com.liferay.portal.scheduler.internal.messaging.config.SchedulerProxyMessagingConfigurator;
 import com.liferay.portal.scheduler.internal.verify.SchedulerHelperPropertiesVerifyProcess;
 
 import java.util.ArrayList;
@@ -68,15 +67,10 @@ public class ModulePortalProfile extends BaseDSModulePortalProfile {
 		init(
 			componentContext, supportedPortalProfileNames,
 			SchedulerEngineHelperImpl.class.getName(),
-			SchedulerHelperPropertiesVerifyProcess.class.getName(),
-			SchedulerProxyMessagingConfigurator.class.getName());
+			SchedulerHelperPropertiesVerifyProcess.class.getName());
 	}
 
-	@Reference(unbind = "-")
-	protected void setProps(Props props) {
-		_props = props;
-	}
-
+	@Reference
 	private Props _props;
 
 }

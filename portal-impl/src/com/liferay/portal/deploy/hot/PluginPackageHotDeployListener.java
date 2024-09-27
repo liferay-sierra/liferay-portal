@@ -14,7 +14,6 @@
 
 package com.liferay.portal.deploy.hot;
 
-import com.liferay.petra.log4j.Log4JUtil;
 import com.liferay.portal.kernel.configuration.Configuration;
 import com.liferay.portal.kernel.configuration.ConfigurationFactoryUtil;
 import com.liferay.portal.kernel.deploy.hot.BaseHotDeployListener;
@@ -24,11 +23,11 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.plugin.PluginPackage;
 import com.liferay.portal.kernel.service.ServiceComponentLocalServiceUtil;
-import com.liferay.portal.kernel.service.configuration.ServiceComponentConfiguration;
 import com.liferay.portal.kernel.service.configuration.servlet.ServletServiceContextComponentConfiguration;
 import com.liferay.portal.kernel.servlet.ServletContextPool;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.log4j.Log4JUtil;
 import com.liferay.portal.plugin.PluginPackageUtil;
 import com.liferay.util.portlet.PortletProps;
 
@@ -70,15 +69,6 @@ public class PluginPackageHotDeployListener extends BaseHotDeployListener {
 			throwHotDeployException(
 				hotDeployEvent, "Error unregistering plugins for ", throwable);
 		}
-	}
-
-	protected void destroyServiceComponent(
-			ServiceComponentConfiguration serviceComponentConfiguration,
-			ClassLoader classLoader)
-		throws Exception {
-
-		ServiceComponentLocalServiceUtil.destroyServiceComponent(
-			serviceComponentConfiguration, classLoader);
 	}
 
 	protected void doInvokeDeploy(HotDeployEvent hotDeployEvent)
@@ -149,10 +139,6 @@ public class PluginPackageHotDeployListener extends BaseHotDeployListener {
 		PluginPackageUtil.unregisterInstalledPluginPackage(pluginPackage);
 
 		ServletContextPool.remove(servletContextName);
-
-		destroyServiceComponent(
-			new ServletServiceContextComponentConfiguration(servletContext),
-			hotDeployEvent.getContextClassLoader());
 
 		if (_log.isInfoEnabled()) {
 			_log.info(

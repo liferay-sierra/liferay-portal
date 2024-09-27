@@ -17,29 +17,11 @@ import {fireEvent, render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import {CONTAINER_DISPLAY_OPTIONS} from '../../../../../../../../../src/main/resources/META-INF/resources/page_editor/app/config/constants/containerDisplayOptions';
+import {CONTENT_DISPLAY_OPTIONS} from '../../../../../../../../../src/main/resources/META-INF/resources/page_editor/app/config/constants/contentDisplayOptions';
 import {LAYOUT_DATA_ITEM_TYPES} from '../../../../../../../../../src/main/resources/META-INF/resources/page_editor/app/config/constants/layoutDataItemTypes';
 import {StoreAPIContextProvider} from '../../../../../../../../../src/main/resources/META-INF/resources/page_editor/app/contexts/StoreContext';
 import updateItemConfig from '../../../../../../../../../src/main/resources/META-INF/resources/page_editor/app/thunks/updateItemConfig';
 import ContainerGeneralPanel from '../../../../../../../../../src/main/resources/META-INF/resources/page_editor/plugins/browser/components/page-structure/components/item-configuration-panels/ContainerGeneralPanel';
-
-jest.mock(
-	'../../../../../../../../../src/main/resources/META-INF/resources/page_editor/app/config',
-	() => ({
-		config: {
-			availableLanguages: {
-				en_US: {
-					default: false,
-					displayName: 'English (United States)',
-					languageIcon: 'en-us',
-					languageId: 'en_US',
-					w3cLanguageId: 'en-US',
-				},
-			},
-			commonStyles: [],
-		},
-	})
-);
 
 jest.mock(
 	'../../../../../../../../../src/main/resources/META-INF/resources/page_editor/app/thunks/updateItemConfig',
@@ -56,6 +38,7 @@ function renderComponent(
 			dispatch={() => {}}
 			getState={() => ({
 				languageId: 'en_US',
+				permissions: {UPDATE: true},
 				segmentsExperienceId: '0',
 				selectedViewportSize: 'desktop',
 			})}
@@ -111,7 +94,6 @@ describe('ContainerGeneralPanel', () => {
 				},
 			},
 			itemId: 'some-container-id',
-			segmentsExperienceId: '0',
 		});
 	});
 
@@ -131,7 +113,6 @@ describe('ContainerGeneralPanel', () => {
 				},
 			},
 			itemId: 'some-container-id',
-			segmentsExperienceId: '0',
 		});
 	});
 
@@ -171,24 +152,39 @@ describe('ContainerGeneralPanel', () => {
 		);
 	});
 
-	it('shows Align and Justify selects when item is flex container', async () => {
+	it('does not show Flex Wrap, Align and Justify selects when item is not flex container', async () => {
 		renderComponent({
-			contentDisplay: CONTAINER_DISPLAY_OPTIONS.flexRow,
+			contentDisplay: CONTENT_DISPLAY_OPTIONS.block,
 		});
 
+		expect(screen.queryByLabelText('flex-wrap')).not.toBeInTheDocument();
+		expect(screen.queryByLabelText('align-items')).not.toBeInTheDocument();
+		expect(
+			screen.queryByLabelText('justify-content')
+		).not.toBeInTheDocument();
+	});
+
+	it('shows Flex Wrap, Align and Justify selects when item is flex container', async () => {
+		renderComponent({
+			contentDisplay: CONTENT_DISPLAY_OPTIONS.flexRow,
+		});
+
+		expect(screen.getByLabelText('flex-wrap')).toBeInTheDocument();
 		expect(screen.getByLabelText('align-items')).toBeInTheDocument();
 		expect(screen.getByLabelText('justify-content')).toBeInTheDocument();
 	});
 
-	it('sets correct default values for Align and Justify when flex is selected', async () => {
+	it('sets correct default values for Flex Wrap, Align and Justify when flex is selected', async () => {
 		renderComponent({
-			contentDisplay: CONTAINER_DISPLAY_OPTIONS.flexRow,
+			contentDisplay: CONTENT_DISPLAY_OPTIONS.flexRow,
 		});
 
+		const flexWrapInput = screen.getByLabelText('flex-wrap');
 		const alignInput = screen.getByLabelText('align-items');
 		const justifyInput = screen.getByLabelText('justify-content');
 
-		expect(alignInput.value).toBe('align-items-stretch');
-		expect(justifyInput.value).toBe('justify-content-start');
+		expect(flexWrapInput).toHaveValue('');
+		expect(alignInput).toHaveValue('');
+		expect(justifyInput).toHaveValue('');
 	});
 });

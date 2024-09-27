@@ -78,7 +78,7 @@ public interface BatchPlannerPlanLocalService
 
 	public BatchPlannerPlan addBatchPlannerPlan(
 			long userId, boolean export, String externalType,
-			String externalURL, String internalClassName, String name,
+			String externalURL, String internalClassName, String name, int size,
 			String taskItemDelegateName, boolean template)
 		throws PortalException;
 
@@ -97,6 +97,8 @@ public interface BatchPlannerPlanLocalService
 	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
 		throws PortalException;
 
+	public void deactivateBatchPlannerPlan(String batchEngineTaskERC);
+
 	/**
 	 * Deletes the batch planner plan from the database. Also notifies the appropriate model listeners.
 	 *
@@ -106,10 +108,12 @@ public interface BatchPlannerPlanLocalService
 	 *
 	 * @param batchPlannerPlan the batch planner plan
 	 * @return the batch planner plan that was removed
+	 * @throws PortalException
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	public BatchPlannerPlan deleteBatchPlannerPlan(
-		BatchPlannerPlan batchPlannerPlan);
+			BatchPlannerPlan batchPlannerPlan)
+		throws PortalException;
 
 	/**
 	 * Deletes the batch planner plan with the primary key from the database. Also notifies the appropriate model listeners.
@@ -262,10 +266,6 @@ public interface BatchPlannerPlanLocalService
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
 		throws PortalException;
 
-	public BatchPlannerPlan updateActive(
-			long batchPlannerPlanId, boolean active)
-		throws PortalException;
-
 	/**
 	 * Updates the batch planner plan in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
@@ -281,8 +281,11 @@ public interface BatchPlannerPlanLocalService
 		BatchPlannerPlan batchPlannerPlan);
 
 	public BatchPlannerPlan updateBatchPlannerPlan(
-			long userId, long batchPlannerPlanId, String externalType,
+			long batchPlannerPlanId, String externalType,
 			String internalClassName, String name)
+		throws PortalException;
+
+	public BatchPlannerPlan updateStatus(long batchPlannerPlanId, int status)
 		throws PortalException;
 
 }

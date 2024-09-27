@@ -31,7 +31,6 @@ import com.liferay.asset.kernel.service.AssetEntryServiceUtil;
 import com.liferay.asset.kernel.service.AssetVocabularyServiceUtil;
 import com.liferay.asset.kernel.service.persistence.AssetEntryQuery;
 import com.liferay.asset.list.asset.entry.provider.AssetListAssetEntryProvider;
-import com.liferay.asset.list.constants.AssetListEntryTypeConstants;
 import com.liferay.asset.list.model.AssetListEntry;
 import com.liferay.asset.list.service.AssetListEntryServiceUtil;
 import com.liferay.asset.publisher.constants.AssetPublisherPortletKeys;
@@ -39,17 +38,20 @@ import com.liferay.asset.publisher.util.AssetEntryResult;
 import com.liferay.asset.publisher.util.AssetPublisherHelper;
 import com.liferay.asset.publisher.web.internal.action.AssetEntryActionRegistry;
 import com.liferay.asset.publisher.web.internal.configuration.AssetPublisherPortletInstanceConfiguration;
+import com.liferay.asset.publisher.web.internal.configuration.AssetPublisherSelectionStyleConfigurationUtil;
 import com.liferay.asset.publisher.web.internal.configuration.AssetPublisherWebConfiguration;
 import com.liferay.asset.publisher.web.internal.constants.AssetPublisherSelectionStyleConstants;
 import com.liferay.asset.publisher.web.internal.helper.AssetPublisherWebHelper;
 import com.liferay.asset.publisher.web.internal.util.AssetPublisherCustomizer;
 import com.liferay.asset.util.AssetHelper;
 import com.liferay.asset.util.AssetPublisherAddItemHolder;
+import com.liferay.asset.util.LinkedAssetEntryIdsUtil;
 import com.liferay.document.library.kernel.document.conversion.DocumentConversionUtil;
+import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.info.collection.provider.CollectionQuery;
 import com.liferay.info.collection.provider.InfoCollectionProvider;
 import com.liferay.info.collection.provider.item.selector.criterion.InfoCollectionProviderItemSelectorCriterion;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.list.provider.item.selector.criterion.InfoListProviderItemSelectorReturnType;
 import com.liferay.info.pagination.InfoPage;
 import com.liferay.item.selector.ItemSelector;
@@ -76,6 +78,7 @@ import com.liferay.portal.kernel.portlet.PortletIdCodec;
 import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
+import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
@@ -148,7 +151,7 @@ public class AssetPublisherDisplayContext {
 			AssetPublisherHelper assetPublisherHelper,
 			AssetPublisherWebConfiguration assetPublisherWebConfiguration,
 			AssetPublisherWebHelper assetPublisherWebHelper,
-			InfoItemServiceTracker infoItemServiceTracker,
+			InfoItemServiceRegistry infoItemServiceRegistry,
 			ItemSelector itemSelector, PortletRequest portletRequest,
 			PortletResponse portletResponse,
 			PortletPreferences portletPreferences,
@@ -163,7 +166,7 @@ public class AssetPublisherDisplayContext {
 		_assetPublisherHelper = assetPublisherHelper;
 		_assetPublisherWebConfiguration = assetPublisherWebConfiguration;
 		_assetPublisherWebHelper = assetPublisherWebHelper;
-		_infoItemServiceTracker = infoItemServiceTracker;
+		_infoItemServiceRegistry = infoItemServiceRegistry;
 		_itemSelector = itemSelector;
 		_portletRequest = portletRequest;
 		_portletResponse = portletResponse;
@@ -335,7 +338,7 @@ public class AssetPublisherDisplayContext {
 				}
 
 				InfoCollectionProvider<AssetEntry> infoCollectionProvider =
-					_infoItemServiceTracker.getInfoItemService(
+					_infoItemServiceRegistry.getInfoItemService(
 						InfoCollectionProvider.class, getInfoListProviderKey());
 
 				if (infoCollectionProvider == null) {
@@ -440,10 +443,7 @@ public class AssetPublisherDisplayContext {
 
 		SearchContainer<AssetEntry> searchContainer = getSearchContainer();
 
-		searchContainer.setResultsAndTotal(
-			() -> assetEntries.subList(
-				searchContainer.getStart(), searchContainer.getResultEnd()),
-			assetEntries.size());
+		searchContainer.setResultsAndTotal(assetEntries);
 
 		List<AssetEntryResult> assetEntryResults = new ArrayList<>();
 
@@ -720,7 +720,6 @@ public class AssetPublisherDisplayContext {
 				"selectedCategories", "{selectedCategories}");
 			portletURL.setParameter("singleSelect", "{singleSelect}");
 			portletURL.setParameter("vocabularyIds", "{vocabularyIds}");
-
 			portletURL.setWindowState(LiferayWindowState.POP_UP);
 
 			return portletURL.toString();
@@ -920,7 +919,7 @@ public class AssetPublisherDisplayContext {
 		}
 
 		InfoCollectionProvider<AssetEntry> infoCollectionProvider =
-			_infoItemServiceTracker.getInfoItemService(
+			_infoItemServiceRegistry.getInfoItemService(
 				InfoCollectionProvider.class, getInfoListProviderKey());
 
 		if (infoCollectionProvider == null) {
@@ -1039,6 +1038,18 @@ public class AssetPublisherDisplayContext {
 		if (getAssetCategoryId() > 0) {
 			portletURL.setParameter(
 				"categoryId", String.valueOf(getAssetCategoryId()));
+		}
+
+		if (!isPaginationTypeNone()) {
+			String redirect = ParamUtil.getString(_portletRequest, "redirect");
+
+			if (Validator.isNull(redirect)) {
+				redirect = PortalUtil.getCurrentURL(_portletRequest);
+			}
+
+			if (Validator.isNotNull(redirect)) {
+				portletURL.setParameter("redirect", redirect);
+			}
 		}
 
 		return portletURL;
@@ -1179,7 +1190,8 @@ public class AssetPublisherDisplayContext {
 
 		_selectionStyle = GetterUtil.getString(
 			_portletPreferences.getValue("selectionStyle", null),
-			AssetPublisherSelectionStyleConstants.TYPE_DYNAMIC);
+			AssetPublisherSelectionStyleConfigurationUtil.
+				defaultSelectionStyle());
 
 		return _selectionStyle;
 	}
@@ -1246,9 +1258,26 @@ public class AssetPublisherDisplayContext {
 						return true;
 					}
 
+					if (classNameId == PortalUtil.getClassNameId(
+							FileEntry.class.getName())) {
+
+						classNameId = PortalUtil.getClassNameId(
+							DLFileEntry.class.getName());
+					}
+
 					AssetRendererFactory<?> assetRendererFactory =
 						AssetRendererFactoryRegistryUtil.
 							getAssetRendererFactoryByClassNameId(classNameId);
+
+					if (assetRendererFactory == null) {
+						if (_log.isDebugEnabled()) {
+							_log.debug(
+								"Unable to get asset renderer factory for " +
+									"class name ID " + classNameId);
+						}
+
+						continue;
+					}
 
 					if (assetRendererFactory.isSelectable()) {
 						return true;
@@ -1565,16 +1594,7 @@ public class AssetPublisherDisplayContext {
 		return false;
 	}
 
-	public boolean isSelectionStyleManual() throws PortalException {
-		AssetListEntry assetListEntry = fetchAssetListEntry();
-
-		if (isSelectionStyleAssetList() && (assetListEntry != null) &&
-			(assetListEntry.getType() ==
-				AssetListEntryTypeConstants.TYPE_MANUAL)) {
-
-			return true;
-		}
-
+	public boolean isSelectionStyleManual() {
 		if (Objects.equals(
 				getSelectionStyle(),
 				AssetPublisherSelectionStyleConstants.TYPE_MANUAL)) {
@@ -1897,25 +1917,32 @@ public class AssetPublisherDisplayContext {
 	public void setLayoutAssetEntry(AssetEntry assetEntry)
 		throws PortalException {
 
-		if (_httpServletRequest.getAttribute(WebKeys.LAYOUT_ASSET_ENTRY) !=
-				null) {
-
-			return;
-		}
-
 		String defaultAssetPublisherPortletId =
 			_assetPublisherWebHelper.getDefaultAssetPublisherId(
 				_themeDisplay.getLayout());
 
-		if (isDefaultAssetPublisher() ||
-			Validator.isNull(defaultAssetPublisherPortletId) ||
-			!PortletPermissionUtil.contains(
+		if (!isDefaultAssetPublisher() &&
+			Validator.isNotNull(defaultAssetPublisherPortletId) &&
+			PortletPermissionUtil.contains(
 				_themeDisplay.getPermissionChecker(), _themeDisplay.getLayout(),
 				defaultAssetPublisherPortletId, ActionKeys.VIEW)) {
+
+			return;
+		}
+
+		if (_httpServletRequest.getAttribute(WebKeys.LAYOUT_ASSET_ENTRY) ==
+				null) {
 
 			_httpServletRequest.setAttribute(
 				WebKeys.LAYOUT_ASSET_ENTRY, assetEntry);
 		}
+
+		if (assetEntry == null) {
+			return;
+		}
+
+		LinkedAssetEntryIdsUtil.addLinkedAssetEntryId(
+			_httpServletRequest, assetEntry.getEntryId());
 	}
 
 	public void setPageKeywords() {
@@ -2173,7 +2200,7 @@ public class AssetPublisherDisplayContext {
 	private String[] _extensions;
 	private long[] _groupIds;
 	private final HttpServletRequest _httpServletRequest;
-	private final InfoItemServiceTracker _infoItemServiceTracker;
+	private final InfoItemServiceRegistry _infoItemServiceRegistry;
 	private String _infoListProviderKey;
 	private final ItemSelector _itemSelector;
 	private Boolean _mergeURLTags;

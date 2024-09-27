@@ -15,7 +15,7 @@
 package com.liferay.dynamic.data.mapping.form.renderer.internal;
 
 import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormEvaluator;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderingContext;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormTemplateContextFactory;
 import com.liferay.dynamic.data.mapping.form.renderer.internal.helper.DDMFormTemplateContextFactoryHelper;
@@ -25,7 +25,6 @@ import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMFormLayout;
 import com.liferay.dynamic.data.mapping.model.DDMFormRule;
 import com.liferay.dynamic.data.mapping.model.LocalizedValue;
-import com.liferay.dynamic.data.mapping.service.DDMDataProviderInstanceService;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLayoutLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.dynamic.data.mapping.util.DDM;
@@ -35,11 +34,12 @@ import com.liferay.osgi.service.tracker.collections.map.PropertyServiceReference
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONFactory;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.util.AggregateResourceBundle;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.HtmlParser;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -74,7 +74,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marcellus Tavares
  */
-@Component(immediate = true, service = DDMFormTemplateContextFactory.class)
+@Component(service = DDMFormTemplateContextFactory.class)
 public class DDMFormTemplateContextFactoryImpl
 	implements DDMFormTemplateContextFactory {
 
@@ -100,7 +100,7 @@ public class DDMFormTemplateContextFactoryImpl
 
 			Map<String, DDMFormField> settingsDDMFormFieldsMap =
 				SettingsDDMFormFieldsUtil.getSettingsDDMFormFields(
-					_ddmFormFieldTypeServicesTracker,
+					_ddmFormFieldTypeServicesRegistry,
 					ddmFormLayoutDDMFormField.getType());
 
 			List<DDMFormField> visualPropertiesDDMFormFields = ListUtil.filter(
@@ -245,7 +245,7 @@ public class DDMFormTemplateContextFactoryImpl
 
 		String cancelLabel = GetterUtil.getString(
 			ddmFormRenderingContext.getCancelLabel(),
-			LanguageUtil.get(resourceBundle, "cancel"));
+			_language.get(resourceBundle, "cancel"));
 
 		templateContext.put("cancelLabel", cancelLabel);
 
@@ -268,14 +268,14 @@ public class DDMFormTemplateContextFactoryImpl
 		else {
 			templateContext.put(
 				"defaultLanguageId",
-				LanguageUtil.getLanguageId(ddmForm.getDefaultLocale()));
+				_language.getLanguageId(ddmForm.getDefaultLocale()));
 		}
 
 		templateContext.put(
 			"defaultSiteLanguageId",
-			LanguageUtil.getLanguageId(LocaleUtil.getSiteDefault()));
+			_language.getLanguageId(LocaleUtil.getSiteDefault()));
 		templateContext.put(
-			"editingLanguageId", LanguageUtil.getLanguageId(locale));
+			"editingLanguageId", _language.getLanguageId(locale));
 		templateContext.put(
 			"evaluatorURL", _getDDMFormContextProviderServletURL());
 		templateContext.put("groupId", ddmFormRenderingContext.getGroupId());
@@ -337,7 +337,7 @@ public class DDMFormTemplateContextFactoryImpl
 
 		String submitLabel = GetterUtil.getString(
 			ddmFormRenderingContext.getSubmitLabel(),
-			LanguageUtil.get(resourceBundle, "submit-form"));
+			_language.get(resourceBundle, "submit-form"));
 
 		templateContext.put("submitLabel", submitLabel);
 
@@ -362,9 +362,9 @@ public class DDMFormTemplateContextFactoryImpl
 		ResourceBundle resourceBundle) {
 
 		return HashMapBuilder.put(
-			"next", LanguageUtil.get(resourceBundle, "next")
+			"next", _language.get(resourceBundle, "next")
 		).put(
-			"previous", LanguageUtil.get(resourceBundle, "previous")
+			"previous", _language.get(resourceBundle, "previous")
 		).build();
 	}
 
@@ -376,12 +376,12 @@ public class DDMFormTemplateContextFactoryImpl
 			new DDMFormPagesTemplateContextFactory(
 				ddmForm, ddmFormLayout, ddmFormRenderingContext,
 				_ddmStructureLayoutLocalService, _ddmStructureLocalService,
-				_groupLocalService, _jsonFactory);
+				_groupLocalService, _htmlParser, _jsonFactory);
 
 		ddmFormPagesTemplateContextFactory.setDDMFormEvaluator(
 			_ddmFormEvaluator);
-		ddmFormPagesTemplateContextFactory.setDDMFormFieldTypeServicesTracker(
-			_ddmFormFieldTypeServicesTracker);
+		ddmFormPagesTemplateContextFactory.setDDMFormFieldTypeServicesRegistry(
+			_ddmFormFieldTypeServicesRegistry);
 
 		return ddmFormPagesTemplateContextFactory.create();
 	}
@@ -469,9 +469,6 @@ public class DDMFormTemplateContextFactoryImpl
 	@Reference
 	private DDM _ddm;
 
-	@Reference
-	private DDMDataProviderInstanceService _ddmDataProviderInstanceService;
-
 	@Reference(
 		target = "(osgi.http.whiteboard.servlet.name=com.liferay.dynamic.data.mapping.form.renderer.internal.servlet.DDMFormContextProviderServlet)"
 	)
@@ -481,7 +478,7 @@ public class DDMFormTemplateContextFactoryImpl
 	private DDMFormEvaluator _ddmFormEvaluator;
 
 	@Reference
-	private DDMFormFieldTypeServicesTracker _ddmFormFieldTypeServicesTracker;
+	private DDMFormFieldTypeServicesRegistry _ddmFormFieldTypeServicesRegistry;
 
 	private final DDMFormTemplateContextFactoryHelper
 		_ddmFormTemplateContextFactoryHelper =
@@ -497,7 +494,13 @@ public class DDMFormTemplateContextFactoryImpl
 	private GroupLocalService _groupLocalService;
 
 	@Reference
+	private HtmlParser _htmlParser;
+
+	@Reference
 	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

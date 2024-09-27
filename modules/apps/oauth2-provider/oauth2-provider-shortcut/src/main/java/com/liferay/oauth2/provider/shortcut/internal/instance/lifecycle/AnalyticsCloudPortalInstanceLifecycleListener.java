@@ -14,7 +14,6 @@
 
 package com.liferay.oauth2.provider.shortcut.internal.instance.lifecycle;
 
-import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.oauth2.provider.constants.ClientProfile;
 import com.liferay.oauth2.provider.constants.GrantType;
 import com.liferay.oauth2.provider.constants.OAuth2ProviderActionKeys;
@@ -41,7 +40,6 @@ import com.liferay.portal.kernel.model.ResourcePermission;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
-import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.CompanyService;
 import com.liferay.portal.kernel.service.ContactService;
@@ -55,7 +53,6 @@ import com.liferay.portal.kernel.service.UserGroupService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.UserService;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
-import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.language.LanguageResources;
@@ -163,14 +160,15 @@ public class AnalyticsCloudPortalInstanceLifecycleListener
 						add(GrantType.REFRESH_TOKEN);
 					}
 				},
-				user.getUserId(),
+				"client_secret_post", user.getUserId(),
 				OAuth2SecureRandomGenerator.generateClientId(),
 				ClientProfile.WEB_APPLICATION.id(),
 				OAuth2SecureRandomGenerator.generateClientSecret(), null, null,
-				"https://analytics.liferay.com", 0, _APPLICATION_NAME, null,
+				"https://analytics.liferay.com", 0, null, _APPLICATION_NAME,
+				null,
 				Collections.singletonList(
 					"https://analytics.liferay.com/oauth/receive"),
-				this::_buildScopes, new ServiceContext());
+				false, false, this::_buildScopes, new ServiceContext());
 
 		Class<?> clazz = getClass();
 
@@ -308,16 +306,8 @@ public class AnalyticsCloudPortalInstanceLifecycleListener
 		"DELETE", "GET", "POST"
 	};
 
-	@Reference(
-		target = "(indexer.class.name=com.liferay.document.library.kernel.model.DLFileEntry)"
-	)
-	private Indexer<DLFileEntry> _indexer;
-
 	@Reference
 	private OAuth2ApplicationLocalService _oAuth2ApplicationLocalService;
-
-	@Reference
-	private Portal _portal;
 
 	@Reference
 	private ResourcePermissionLocalService _resourcePermissionLocalService;

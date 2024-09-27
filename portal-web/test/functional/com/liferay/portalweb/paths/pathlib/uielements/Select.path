@@ -12,7 +12,7 @@
 <tbody>
 <tr>
 	<td>ADDRESS_TYPE</td>
-	<td>//div[label[contains(.,'Type')]]/select[contains(@name,'addressType')]</td>
+	<td>//div[label[contains(.,'Type')]]/select[contains(@name,'addressListTypeId0')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -23,6 +23,11 @@
 <tr>
 	<td>ANY_DISABLED</td>
 	<td>//div[not(contains(@class,'hide'))]/div[contains(@class,'input-select-wrapper')][label[contains(.,'${key_selectFieldLabel}')]]/select[contains(@class,'disabled')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>ANY_ID</td>
+	<td>//select[contains(@id,'${selectId}')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -121,6 +126,16 @@
 	<td></td>
 </tr>
 <tr>
+	<td>GENERIC_SELECT_FIELD_WITH_ICON</td>
+	<td>//div[label[*[name()='svg'][contains(@class,'lexicon-icon-${key_text}')]]]//following-sibling::select</td>
+	<td></td>
+</tr>
+<tr>
+	<td>GENERIC_SELECT_FIELD_WITH_ICON_TEXT</td>
+	<td>//div[label[*[name()='svg'][contains(@class,'lexicon-icon-${key_text}')]]]//following-sibling::div/span[contains(@class,'text-truncate')]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>GENERIC_SELECT_VALUE</td>
 	<td>//div[label[normalize-space(text())='${key_fieldLabel}']]/select//option[normalize-space(text())='${key_value}']</td>
 	<td></td>
@@ -206,8 +221,18 @@
 	<td></td>
 </tr>
 <tr>
+	<td>SELECT_VALUE_ID</td>
+	<td>//select[contains(@id,'${selectFieldId}')]/option[normalize-space(text())='${option}']</td>
+	<td></td>
+</tr>
+<tr>
 	<td>SELECT</td>
 	<td>//select</td>
+	<td></td>
+</tr>
+<tr>
+	<td>SELECT_FIELD_LABEL</td>
+	<td>//label[normalize-space(text())='${selectFieldLabel}']//following-sibling::select</td>
 	<td></td>
 </tr>
 <tr>
@@ -248,6 +273,11 @@
 <tr>
 	<td>WORKFLOW_DEFAULT</td>
 	<td>//select[contains(@id,'workflowDefinition-1')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>HEADLESS_SERVERS</td>
+	<td>//div[contains(@class,'servers')]//select</td>
 	<td></td>
 </tr>
 </tbody>

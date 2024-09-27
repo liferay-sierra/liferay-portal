@@ -42,7 +42,7 @@ import org.osgi.service.component.annotations.Component;
  * @author Leonardo Barros
  */
 @Component(
-	immediate = true, property = "ddm.form.instance.record.writer.type=xls",
+	property = "ddm.form.instance.record.writer.type=xls",
 	service = DDMFormInstanceRecordWriter.class
 )
 public class DDMFormInstanceRecordXLSWriter
@@ -89,6 +89,8 @@ public class DDMFormInstanceRecordXLSWriter
 
 			for (Map<String, String> ddmFormFieldsValue :
 					ddmFormFieldsValueList) {
+
+				rowCellStyle.setQuotePrefixed(true);
 
 				createRow(
 					rowIndex++, rowCellStyle, ddmFormFieldsValue.values(),

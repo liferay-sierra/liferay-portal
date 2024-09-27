@@ -50,7 +50,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Daniel Kocsis
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + CalendarPortletKeys.CALENDAR_ADMIN,
 	service = StagedModelDataHandler.class
 )
@@ -333,11 +332,9 @@ public class CalendarBookingStagedModelDataHandler
 			CalendarBooking.class.getName());
 
 		if (trashHandler.isRestorable(existingBooking.getCalendarBookingId())) {
-			long userId = portletDataContext.getUserId(
-				calendarBooking.getUserUuid());
-
 			trashHandler.restoreTrashEntry(
-				userId, existingBooking.getCalendarBookingId());
+				portletDataContext.getUserId(calendarBooking.getUserUuid()),
+				existingBooking.getCalendarBookingId());
 		}
 	}
 

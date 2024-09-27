@@ -23,6 +23,7 @@ import com.liferay.commerce.product.service.CommerceCatalogService;
 import com.liferay.commerce.product.service.CommerceChannelRelService;
 import com.liferay.commerce.product.url.CPFriendlyURL;
 import com.liferay.item.selector.ItemSelector;
+import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCRenderCommand;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -38,7 +39,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	property = {
 		"javax.portlet.name=" + CPPortletKeys.CP_DEFINITIONS,
 		"mvc.command.name=/cp_definitions/edit_c_product_external_reference_code"
@@ -57,8 +57,8 @@ public class EditCProductExternalReferenceCodeMVCRenderCommand
 			new CPDefinitionsDisplayContext(
 				_actionHelper, _portal.getHttpServletRequest(renderRequest),
 				_commerceAccountGroupRelService, _commerceCatalogService,
-				_commerceChannelRelService, _cpDefinitionService,
-				_cpFriendlyURL, _itemSelector);
+				_commerceChannelRelService, _configurationProvider,
+				_cpDefinitionService, _cpFriendlyURL, _itemSelector);
 
 		renderRequest.setAttribute(
 			WebKeys.PORTLET_DISPLAY_CONTEXT, cpDefinitionsDisplayContext);
@@ -77,6 +77,9 @@ public class EditCProductExternalReferenceCodeMVCRenderCommand
 
 	@Reference
 	private CommerceChannelRelService _commerceChannelRelService;
+
+	@Reference
+	private ConfigurationProvider _configurationProvider;
 
 	@Reference
 	private CPDefinitionService _cpDefinitionService;

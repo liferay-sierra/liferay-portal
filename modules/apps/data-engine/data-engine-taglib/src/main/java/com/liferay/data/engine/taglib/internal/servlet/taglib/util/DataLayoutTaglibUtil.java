@@ -27,13 +27,10 @@ import com.liferay.data.engine.rest.resource.v2_0.DataDefinitionResource;
 import com.liferay.data.engine.rest.resource.v2_0.DataLayoutResource;
 import com.liferay.data.engine.rest.resource.v2_0.DataRecordResource;
 import com.liferay.data.engine.taglib.servlet.taglib.definition.DataLayoutBuilderDefinition;
-import com.liferay.dynamic.data.mapping.form.builder.context.DDMFormBuilderContextFactory;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldType;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderingContext;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormTemplateContextFactory;
-import com.liferay.dynamic.data.mapping.form.values.factory.DDMFormValuesFactory;
-import com.liferay.dynamic.data.mapping.io.DDMFormDeserializer;
 import com.liferay.dynamic.data.mapping.io.DDMFormLayoutDeserializer;
 import com.liferay.dynamic.data.mapping.io.DDMFormLayoutDeserializerDeserializeRequest;
 import com.liferay.dynamic.data.mapping.io.DDMFormLayoutDeserializerDeserializeResponse;
@@ -67,7 +64,7 @@ import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -111,7 +108,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
  * @author Gabriel Albuquerque
  * @author Leonardo Barros
  */
-@Component(immediate = true, service = DataLayoutTaglibUtil.class)
+@Component(service = {})
 public class DataLayoutTaglibUtil {
 
 	public static Set<Locale> getAvailableLocales(
@@ -594,19 +591,19 @@ public class DataLayoutTaglibUtil {
 
 	private boolean _hasJavascriptModule(String name) {
 		DDMFormFieldType ddmFormFieldType =
-			_ddmFormFieldTypeServicesTracker.getDDMFormFieldType(name);
+			_ddmFormFieldTypeServicesRegistry.getDDMFormFieldType(name);
 
 		return Validator.isNotNull(ddmFormFieldType.getModuleName());
 	}
 
 	private String _resolveFieldTypeModule(String name) {
 		return _resolveModuleName(
-			_ddmFormFieldTypeServicesTracker.getDDMFormFieldType(name));
+			_ddmFormFieldTypeServicesRegistry.getDDMFormFieldType(name));
 	}
 
 	private String _resolveFieldTypesModules() {
 		Set<String> ddmFormFieldTypeNames =
-			_ddmFormFieldTypeServicesTracker.getDDMFormFieldTypeNames();
+			_ddmFormFieldTypeServicesRegistry.getDDMFormFieldTypeNames();
 
 		Stream<String> stream = ddmFormFieldTypeNames.stream();
 
@@ -689,20 +686,14 @@ public class DataLayoutTaglibUtil {
 	private DataRecordResource.Factory _dataRecordResourceFactory;
 
 	@Reference
-	private DDMFormBuilderContextFactory _ddmFormBuilderContextFactory;
-
-	@Reference
 	private DDMFormBuilderSettingsRetrieverHelper
 		_ddmFormBuilderSettingsRetrieverHelper;
 
 	@Reference
-	private DDMFormFieldTypeServicesTracker _ddmFormFieldTypeServicesTracker;
+	private DDMFormFieldTypeServicesRegistry _ddmFormFieldTypeServicesRegistry;
 
 	@Reference
 	private DDMFormTemplateContextFactory _ddmFormTemplateContextFactory;
-
-	@Reference
-	private DDMFormValuesFactory _ddmFormValuesFactory;
 
 	@Reference
 	private DDMStructureLayoutLocalService _ddmStructureLayoutLocalService;
@@ -710,14 +701,14 @@ public class DataLayoutTaglibUtil {
 	@Reference
 	private DDMStructureLocalService _ddmStructureLocalService;
 
-	@Reference(target = "(ddm.form.deserializer.type=json)")
-	private DDMFormDeserializer _jsonDDMFormDeserializer;
-
 	@Reference(target = "(ddm.form.layout.deserializer.type=json)")
 	private DDMFormLayoutDeserializer _jsonDDMFormLayoutDeserializer;
 
 	@Reference
 	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private NPMResolver _npmResolver;
@@ -747,7 +738,7 @@ public class DataLayoutTaglibUtil {
 					_httpServletRequest.getParameter("dataDefinition"));
 
 				ddmForm = DataDefinitionDDMFormUtil.toDDMForm(
-					dataDefinition, _ddmFormFieldTypeServicesTracker);
+					dataDefinition, _ddmFormFieldTypeServicesRegistry);
 			}
 			else {
 				ddmForm = _getDDMForm();
@@ -782,7 +773,7 @@ public class DataLayoutTaglibUtil {
 			throws Exception {
 
 			DDMFormFieldType ddmFormFieldType =
-				_ddmFormFieldTypeServicesTracker.getDDMFormFieldType(
+				_ddmFormFieldTypeServicesRegistry.getDDMFormFieldType(
 					ddmFormField.getType());
 
 			DDMForm ddmForm = DDMFormFactory.create(
@@ -1010,17 +1001,16 @@ public class DataLayoutTaglibUtil {
 				StringUtil.replace(
 					dataDefinitionJSON, "defaultValue", "predefinedValue"));
 
-			jsonObject = jsonObject.put(
-				"availableLanguageIds",
-				JSONUtil.toJSONArray(
-					_availableLocales,
-					availableLocale -> LanguageUtil.getLanguageId(
-						availableLocale))
-			).put(
-				"defaultLanguageId", ddmStructure.getDefaultLanguageId()
-			);
-
-			ddmStructure.setDefinition(jsonObject.toJSONString());
+			ddmStructure.setDefinition(
+				jsonObject.put(
+					"availableLanguageIds",
+					JSONUtil.toJSONArray(
+						_availableLocales,
+						availableLocale -> _language.getLanguageId(
+							availableLocale))
+				).put(
+					"defaultLanguageId", ddmStructure.getDefaultLanguageId()
+				).toString());
 
 			return ddmStructure.getDDMForm();
 		}
@@ -1048,7 +1038,7 @@ public class DataLayoutTaglibUtil {
 					},
 					new String[] {"size", "columns", "pages", "rows"}));
 
-			return _deserializeDDMFormLayout(jsonObject.toJSONString());
+			return _deserializeDDMFormLayout(jsonObject.toString());
 		}
 
 		private List<Map<String, Object>> _getNestedFields(

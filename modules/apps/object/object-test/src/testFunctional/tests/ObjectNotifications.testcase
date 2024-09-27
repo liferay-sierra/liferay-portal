@@ -1,0 +1,435 @@
+@component-name = "portal-object"
+definition {
+
+	property portal.release = "true";
+	property portal.upstream = "true";
+	property testray.main.component.name = "Object";
+
+	setUp {
+		TestCase.setUpPortalInstance();
+
+		User.firstLoginPG();
+	}
+
+	tearDown {
+		ObjectAdmin.deleteAllCustomObjectsViaAPI();
+
+		var testPortalInstance = PropsUtil.get("test.portal.instance");
+
+		if ("${testPortalInstance}" == "true") {
+			PortalInstances.tearDownCP();
+		}
+	}
+
+	@description = "LPS-161924 - Verify that it's possible to add attachments to the notification template"
+	@priority = "3"
+	test CanAddAttachment {
+		task ("Given an object with an attachment field is created") {
+			ObjectAdmin.addObjectViaAPI(
+				labelName = "Custom Object 161924",
+				objectName = "CustomObject161924",
+				pluralLabelName = "Custom Objects 161924");
+
+			ObjectAdmin.addObjectFieldViaAPI(
+				fieldBusinessType = "Attachment",
+				fieldLabelName = "From Computer And Show Files In DM",
+				fieldName = "fromComputerAndShowFilesInDM",
+				fieldType = "Long",
+				fileSource = "userComputer",
+				isRequired = "false",
+				objectName = "CustomObject161924");
+		}
+
+		task ("And given a notification template is created") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Notifications",
+				panel = "Control Panel",
+				portlet = "Templates");
+
+			ObjectNotifications.addNewNotificationTemplate(
+				fromAddress = "test@liferay",
+				fromName = "Test Test",
+				name = "Notification Template");
+		}
+
+		task ("When an attachment is added to the notification template") {
+			ObjectNotifications.addNotificationTemplateAttachment(objectLabel = "Custom Object 161924");
+
+			Button.clickSave();
+		}
+
+		task ("Then the attachment should be present in the notification template") {
+			Click(
+				key_objectLabel = "Notification Template",
+				locator1 = "ObjectAdmin#OBJECT_KEBAB_MENU");
+
+			MenuItem.clickNoError(menuItem = "View");
+
+			AssertElementPresent(
+				key_dataSource = "Custom Object 161924",
+				locator1 = "ObjectNotifications#DATA_SOURCE_ATTACHMENTS");
+
+			AssertElementPresent(locator1 = "ObjectNotifications#FIELD_ATTACHMENTS_OBJECT");
+		}
+	}
+
+	@description = "LPS-161917 - Verify that it's possible to create an e-mail notification template"
+	@priority = "3"
+	test CanCreateEmailTemplate {
+		task ("Go to Templates and add a new Notification Template") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Notifications",
+				panel = "Control Panel",
+				portlet = "Templates");
+
+			ObjectNotifications.addNewNotificationTemplate(
+				emailBody = "Email Body",
+				entryTo = "test@liferay.com",
+				fromAddress = "Liferay",
+				fromName = "Test Test",
+				name = "Notification Template",
+				subject = "Subject");
+
+			Button.clickSave();
+		}
+
+		task ("Assert the Notification Template is present") {
+			Refresh();
+
+			AssertElementPresent(
+				key_name = "Notification Template",
+				locator1 = "ObjectAdmin#TABLE_LIST_TITLE");
+		}
+	}
+
+	@description = "LPS-161928 - Verify that it's possible to delete attachments to the notification template"
+	@priority = "3"
+	test CanDeleteAttachment {
+		task ("Given an object with an attachment field is created") {
+			ObjectAdmin.addObjectViaAPI(
+				labelName = "Custom Object 161928",
+				objectName = "CustomObject161928",
+				pluralLabelName = "Custom Objects 161928");
+
+			ObjectAdmin.addObjectFieldViaAPI(
+				fieldBusinessType = "Attachment",
+				fieldLabelName = "From Computer And Show Files In DM",
+				fieldName = "fromComputerAndShowFilesInDM",
+				fieldType = "Long",
+				fileSource = "userComputer",
+				isRequired = "false",
+				objectName = "CustomObject161928");
+		}
+
+		task ("And given a notification template is created") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Notifications",
+				panel = "Control Panel",
+				portlet = "Templates");
+
+			ObjectNotifications.addNewNotificationTemplate(
+				fromAddress = "test@liferay",
+				fromName = "Test Test",
+				name = "Notification Template");
+		}
+
+		task ("And given an attachment is added to the notification template") {
+			ObjectNotifications.addNotificationTemplateAttachment(objectLabel = "Custom Object 161928");
+
+			Button.clickSave();
+		}
+
+		task ("When the attachment is deleted from the notification template") {
+			Click(
+				key_objectLabel = "Notification Template",
+				locator1 = "ObjectAdmin#OBJECT_KEBAB_MENU");
+
+			MenuItem.clickNoError(menuItem = "View");
+
+			Click(locator1 = "ObjectNotifications#DELETE_ATTACHMENT_BUTTON");
+		}
+
+		task ("Then the attachment shouldn't be present in the notification template") {
+			AssertElementNotPresent(locator1 = "ObjectNotifications#FIELD_ATTACHMENTS_OBJECT");
+		}
+	}
+
+	@description = "LPS-161919 - Verify that it's possible to delete an e-mail notification template"
+	@priority = "3"
+	test CanDeleteEmailTemplate {
+		task ("Go to Templates and add a new Notification Template") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Notifications",
+				panel = "Control Panel",
+				portlet = "Templates");
+
+			ObjectNotifications.addNewNotificationTemplate(
+				emailBody = "Email Body",
+				entryTo = "test@liferay.com",
+				fromAddress = "Liferay",
+				fromName = "Test Test",
+				name = "Notification Template",
+				subject = "Subject");
+
+			Button.clickSave();
+		}
+
+		task ("Delete the Notification Template") {
+			ObjectNotifications.deleteNotificationTemplate(templateName = "Notification Template");
+		}
+
+		task ("Assert the Notification Template is not present") {
+			Refresh();
+
+			AssertElementNotPresent(
+				key_name = "Notification Template",
+				locator1 = "ObjectAdmin#TABLE_LIST_TITLE");
+		}
+	}
+
+	@description = "LPS-161922 - Verify that it's possible to delete a notification"
+	@priority = "4"
+	test CanDeleteNotification {
+		task ("Given a notification template is created") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Notifications",
+				panel = "Control Panel",
+				portlet = "Templates");
+
+			ObjectNotifications.addNewNotificationTemplate(
+				emailBody = "Email Body",
+				entryTo = "test@liferay.com",
+				fromAddress = "Liferay",
+				fromName = "Test Test",
+				name = "Notification Template",
+				subject = "Subject");
+
+			Button.clickSave();
+		}
+
+		task ("And given an object with an attachment field is created") {
+			ObjectAdmin.addObjectViaAPI(
+				labelName = "Custom Object 161922",
+				objectName = "CustomObject161922",
+				pluralLabelName = "Custom Objects 161922");
+
+			ObjectAdmin.addObjectFieldViaAPI(
+				fieldBusinessType = "Attachment",
+				fieldLabelName = "Custom Field",
+				fieldName = "customObjectField",
+				fieldType = "Long",
+				fileSource = "userComputer",
+				isRequired = "false",
+				objectName = "CustomObject161922",
+				showFilesInDocumentsAndMedia = "true");
+
+			ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject161922");
+		}
+
+		task ("And given an Action is created") {
+			ObjectAdmin.openObjectAdmin();
+
+			ObjectPortlet.selectCustomObject(label = "Custom Object 161922");
+
+			ObjectAdmin.goToActionsTab();
+
+			ObjectAdmin.addObjectActionViaUI(
+				actionName = "Custom Action",
+				active = "true",
+				inputMethod = "true",
+				inputValue = "Action shot on add",
+				notificationName = "Notification Template",
+				objectLabel = "Custom Object 161922",
+				thenAction = "Notification",
+				whenAction = "On After Add");
+		}
+
+		task ("When an entry is created") {
+			ObjectAdmin.addObjectSingleFieldEntryViaAPI(
+				fieldName = "customObjectField",
+				objectName = "CustomObject161922",
+				value = "Entry A");
+		}
+
+		task ("When the notification is generated and then deleted") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Notifications",
+				panel = "Control Panel",
+				portlet = "Queue");
+
+			ObjectNotifications.deleteQueue(
+				status = "Unsent",
+				triggerBy = "CustomObject161922");
+		}
+
+		task ("Then the notification is no longer present on the page") {
+			AssertElementNotPresent(
+				key_objectName = "CustomObject161922",
+				locator1 = "ObjectNotifications#OBJECT_QUEUE_NAME");
+		}
+	}
+
+	@description = "LPS-161918 - Verify that it's possible to edit an e-mail notification template"
+	@priority = "3"
+	test CanEditEmailTemplate {
+		task ("Go to Templates and add a new Notification Template") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Notifications",
+				panel = "Control Panel",
+				portlet = "Templates");
+
+			ObjectNotifications.addNewNotificationTemplate(
+				emailBody = "Email Body",
+				entryTo = "test@liferay.com",
+				fromAddress = "Liferay",
+				fromName = "Test Test",
+				name = "Notification Template",
+				subject = "Subject");
+
+			Button.clickSave();
+		}
+
+		task ("Edit the created notification Template") {
+			ObjectNotifications.editNotificationTemplate(
+				name = "New Notification Edited",
+				notificationTemplateName = "Notification Template");
+
+			Button.clickSave();
+		}
+
+		task ("Assert only the edited Notification Template is present") {
+			Refresh();
+
+			AssertElementPresent(
+				key_name = "New Notification Edited",
+				locator1 = "ObjectAdmin#TABLE_LIST_TITLE");
+
+			AssertElementNotPresent(
+				key_name = "Notification Template",
+				locator1 = "ObjectAdmin#TABLE_LIST_TITLE");
+		}
+	}
+
+	@description = "LPS-161923 - Verify that it's possible to search for notifications"
+	@priority = "3"
+	test CanSearchForNotifications {
+		task ("Go to Templates and add Notification Templates") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Notifications",
+				panel = "Control Panel",
+				portlet = "Templates");
+
+			for (var templateName : list "Test,Liferay,Site") {
+				ObjectNotifications.addNewNotificationTemplate(
+					emailBody = "Email Body",
+					entryTo = "test@liferay.com",
+					fromAddress = "Liferay",
+					fromName = "Test Test",
+					name = "Notification ${templateName}",
+					subject = "Subject");
+
+				Button.clickSave();
+			}
+		}
+
+		task ("Search for Liferay") {
+			Refresh();
+
+			Type(
+				locator1 = "ObjectPortlet#SEARCH_FIELD",
+				value1 = "Liferay");
+
+			KeyPress(
+				locator1 = "ObjectPortlet#SEARCH_FIELD",
+				value1 = "\RETURN");
+		}
+
+		task ("Assert only Notification Liferay is present") {
+			AssertElementPresent(
+				key_name = "Notification Liferay",
+				locator1 = "ObjectAdmin#TABLE_LIST_TITLE");
+
+			AssertElementNotPresent(
+				key_name = "Notification Site",
+				locator1 = "ObjectAdmin#TABLE_LIST_TITLE");
+
+			AssertElementNotPresent(
+				key_name = "Notification Test",
+				locator1 = "ObjectAdmin#TABLE_LIST_TITLE");
+		}
+	}
+
+	@description = "LPS-161920 - Verify that it's possible to send an e-mail notification via an Action"
+	@priority = "3"
+	test CanSendEmailViaAction {
+		task ("Go to Templates and add a new Notification Template") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Notifications",
+				panel = "Control Panel",
+				portlet = "Templates");
+
+			ObjectNotifications.addNewNotificationTemplate(
+				emailBody = "Email Body",
+				entryTo = "test@liferay.com",
+				fromAddress = "Liferay",
+				fromName = "Test Test",
+				name = "Notification Template",
+				subject = "Subject");
+
+			Button.clickSave();
+		}
+
+		task ("Create a Custom Object and add a field") {
+			ObjectAdmin.addObjectViaAPI(
+				labelName = "Custom Object 161920",
+				objectName = "CustomObject161920",
+				pluralLabelName = "Custom Objects 161920");
+
+			ObjectAdmin.addObjectFieldViaAPI(
+				fieldBusinessType = "Text",
+				fieldLabelName = "Custom Field",
+				fieldName = "customObjectField",
+				fieldType = "String",
+				isRequired = "false",
+				objectName = "CustomObject161920");
+
+			ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject161920");
+		}
+
+		task ("Add a new action") {
+			ObjectAdmin.openObjectAdmin();
+
+			ObjectPortlet.selectCustomObject(label = "Custom Object 161920");
+
+			ObjectAdmin.goToActionsTab();
+
+			ObjectAdmin.gotoAddObjectAction();
+
+			ObjectAdmin.fillObjectAction(
+				actionName = "Action Name",
+				notificationName = "Notification Template",
+				thenAction = "Notification",
+				whenAction = "On After Add");
+
+			Button.clickSave();
+		}
+
+		task ("Go to the created Object and add an Entry") {
+			ObjectAdmin.goToCustomObject(objectName = "CustomObject161920");
+
+			ObjectAdmin.addObjectStringFieldEntryViaUI(entryValue = "Entry");
+		}
+
+		task ("Go to the Notifications Queue and assert the notification is present") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Notifications",
+				panel = "Control Panel",
+				portlet = "Queue");
+
+			AssertElementPresent(
+				key_validationInfo = "Subject",
+				locator1 = "ObjectCustomValidation#VIEW_INFO_VALIDATION");
+		}
+	}
+
+}

@@ -13,13 +13,21 @@
  */
 
 import React from 'react';
-import {TObjectLayoutRow} from '../types';
-interface IObjectLayoutBoxProps extends React.HTMLAttributes<HTMLElement> {
+import {BoxType, TObjectLayoutRow} from '../types';
+interface ObjectLayoutBoxProps extends React.HTMLAttributes<HTMLElement> {
 	boxIndex: number;
 	collapsable: boolean;
 	label: string;
 	objectLayoutRows?: TObjectLayoutRow[];
 	tabIndex: number;
+	type: BoxType;
 }
-declare const ObjectLayoutBox: React.FC<IObjectLayoutBoxProps>;
-export default ObjectLayoutBox;
+export declare function ObjectLayoutBox({
+	boxIndex,
+	collapsable,
+	label,
+	objectLayoutRows,
+	tabIndex,
+	type,
+}: ObjectLayoutBoxProps): JSX.Element;
+export {};

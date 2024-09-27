@@ -33,7 +33,7 @@ import com.liferay.commerce.service.CommerceOrderLocalService;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Country;
@@ -113,7 +113,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Luca Pellizzon
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "commerce.payment.engine.method.key=" + PayPalCommercePaymentMethod.KEY,
 	service = CommercePaymentMethod.class
 )
@@ -240,7 +239,7 @@ public class PayPalCommercePaymentMethod implements CommercePaymentMethod {
 				status, true, url, null, Collections.emptyList(), success);
 		}
 		catch (IOException ioException) {
-			_log.error(ioException.getMessage(), ioException);
+			_log.error(ioException);
 
 			HttpException httpException = (HttpException)ioException;
 
@@ -384,7 +383,7 @@ public class PayPalCommercePaymentMethod implements CommercePaymentMethod {
 				null, Collections.emptyList(), success);
 		}
 		catch (IOException ioException) {
-			_log.error(ioException.getMessage(), ioException);
+			_log.error(ioException);
 
 			HttpException httpException = (HttpException)ioException;
 
@@ -440,7 +439,7 @@ public class PayPalCommercePaymentMethod implements CommercePaymentMethod {
 				messages, success);
 		}
 		catch (PayPalRESTException payPalRESTException) {
-			_log.error(payPalRESTException.getMessage(), payPalRESTException);
+			_log.error(payPalRESTException);
 
 			return new CommercePaymentResult(
 				commercePaymentRequest.getTransactionId(),
@@ -464,7 +463,7 @@ public class PayPalCommercePaymentMethod implements CommercePaymentMethod {
 
 	@Override
 	public String getName(Locale locale) {
-		return LanguageUtil.get(locale, KEY);
+		return _language.get(locale, KEY);
 	}
 
 	/**
@@ -511,7 +510,7 @@ public class PayPalCommercePaymentMethod implements CommercePaymentMethod {
 			}
 		}
 		catch (Exception exception) {
-			_log.error(exception.getMessage(), exception);
+			_log.error(exception);
 		}
 
 		return false;
@@ -683,7 +682,7 @@ public class PayPalCommercePaymentMethod implements CommercePaymentMethod {
 				success);
 		}
 		catch (IOException ioException) {
-			_log.error(ioException.getMessage(), ioException);
+			_log.error(ioException);
 
 			HttpException httpException = (HttpException)ioException;
 
@@ -757,7 +756,7 @@ public class PayPalCommercePaymentMethod implements CommercePaymentMethod {
 				true, url, null, messages, success);
 		}
 		catch (PayPalRESTException payPalRESTException) {
-			_log.error(payPalRESTException.getMessage(), payPalRESTException);
+			_log.error(payPalRESTException);
 
 			return new CommercePaymentResult(
 				commercePaymentRequest.getTransactionId(),
@@ -992,6 +991,8 @@ public class PayPalCommercePaymentMethod implements CommercePaymentMethod {
 			PurchaseUnitRequest purchaseUnitRequest = new PurchaseUnitRequest();
 
 			purchaseUnitRequest.amountWithBreakdown(amountWithBreakdown);
+			purchaseUnitRequest.referenceId(
+				String.valueOf(commerceOrderItem.getCommerceOrderItemId()));
 
 			purchaseUnitRequests.add(purchaseUnitRequest);
 		}
@@ -1294,7 +1295,7 @@ public class PayPalCommercePaymentMethod implements CommercePaymentMethod {
 			locale = LocaleUtil.getSiteDefault();
 		}
 
-		return LanguageUtil.get(_getResourceBundle(locale), key);
+		return _language.get(_getResourceBundle(locale), key);
 	}
 
 	private ResourceBundle _getResourceBundle(Locale locale) {
@@ -1314,7 +1315,6 @@ public class PayPalCommercePaymentMethod implements CommercePaymentMethod {
 
 			if (country != null) {
 				shippingAddress.setCountryCode(country.getA2());
-
 				shippingAddress.setLine1(commerceAddress.getStreet1());
 				shippingAddress.setLine2(commerceAddress.getStreet2());
 				shippingAddress.setPostalCode(commerceAddress.getZip());
@@ -1338,7 +1338,6 @@ public class PayPalCommercePaymentMethod implements CommercePaymentMethod {
 
 		patch.setOp(PayPalCommercePaymentMethodConstants.OPERATION_REPLACE);
 		patch.setPath(StringPool.FORWARD_SLASH);
-
 		patch.setValue(
 			Collections.singletonMap(
 				PayPalCommercePaymentMethodConstants.STATE,
@@ -1366,5 +1365,8 @@ public class PayPalCommercePaymentMethod implements CommercePaymentMethod {
 
 	@Reference
 	private ConfigurationProvider _configurationProvider;
+
+	@Reference
+	private Language _language;
 
 }

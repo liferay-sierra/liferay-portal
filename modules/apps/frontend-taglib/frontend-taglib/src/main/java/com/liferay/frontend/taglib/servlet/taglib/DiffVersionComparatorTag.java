@@ -17,7 +17,6 @@ package com.liferay.frontend.taglib.servlet.taglib;
 import com.liferay.diff.DiffVersion;
 import com.liferay.diff.DiffVersionsInfo;
 import com.liferay.frontend.taglib.internal.servlet.ServletContextUtil;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
@@ -29,6 +28,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.JavaConstants;
@@ -78,12 +78,13 @@ public class DiffVersionComparatorTag extends IncludeTag {
 			() -> {
 				Date modifiedDate = diffVersion.getModifiedDate();
 
-				String timeDescription = LanguageUtil.getTimeDescription(
-					httpServletRequest,
-					System.currentTimeMillis() - modifiedDate.getTime(), true);
-
 				return LanguageUtil.format(
-					httpServletRequest, "x-ago", timeDescription, false);
+					httpServletRequest, "x-ago",
+					LanguageUtil.getTimeDescription(
+						httpServletRequest,
+						System.currentTimeMillis() - modifiedDate.getTime(),
+						true),
+					false);
 			}
 		).put(
 			"inRange",

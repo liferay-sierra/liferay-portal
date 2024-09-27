@@ -48,7 +48,7 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 
 import java.io.Serializable;
 
@@ -204,7 +204,7 @@ public class LayoutSEOEntryPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<LayoutSEOEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (LayoutSEOEntry layoutSEOEntry : list) {
@@ -596,7 +596,7 @@ public class LayoutSEOEntryPersistenceImpl
 
 			finderArgs = new Object[] {uuid};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -732,7 +732,7 @@ public class LayoutSEOEntryPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = finderCache.getResult(
-				_finderPathFetchByUUID_G, finderArgs);
+				_finderPathFetchByUUID_G, finderArgs, this);
 		}
 
 		if (result instanceof LayoutSEOEntry) {
@@ -852,7 +852,7 @@ public class LayoutSEOEntryPersistenceImpl
 
 			finderArgs = new Object[] {uuid, groupId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1024,7 +1024,7 @@ public class LayoutSEOEntryPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<LayoutSEOEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (LayoutSEOEntry layoutSEOEntry : list) {
@@ -1449,7 +1449,7 @@ public class LayoutSEOEntryPersistenceImpl
 
 			finderArgs = new Object[] {uuid, companyId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1600,7 +1600,8 @@ public class LayoutSEOEntryPersistenceImpl
 		Object result = null;
 
 		if (useFinderCache && productionMode) {
-			result = finderCache.getResult(_finderPathFetchByG_P_L, finderArgs);
+			result = finderCache.getResult(
+				_finderPathFetchByG_P_L, finderArgs, this);
 		}
 
 		if (result instanceof LayoutSEOEntry) {
@@ -1718,7 +1719,7 @@ public class LayoutSEOEntryPersistenceImpl
 
 			finderArgs = new Object[] {groupId, privateLayout, layoutId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1930,7 +1931,7 @@ public class LayoutSEOEntryPersistenceImpl
 		layoutSEOEntry.setNew(true);
 		layoutSEOEntry.setPrimaryKey(layoutSEOEntryId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		layoutSEOEntry.setUuid(uuid);
 
@@ -2052,7 +2053,7 @@ public class LayoutSEOEntryPersistenceImpl
 			(LayoutSEOEntryModelImpl)layoutSEOEntry;
 
 		if (Validator.isNull(layoutSEOEntry.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			layoutSEOEntry.setUuid(uuid);
 		}
@@ -2178,7 +2179,9 @@ public class LayoutSEOEntryPersistenceImpl
 	 */
 	@Override
 	public LayoutSEOEntry fetchByPrimaryKey(Serializable primaryKey) {
-		if (ctPersistenceHelper.isProductionMode(LayoutSEOEntry.class)) {
+		if (ctPersistenceHelper.isProductionMode(
+				LayoutSEOEntry.class, primaryKey)) {
+
 			return super.fetchByPrimaryKey(primaryKey);
 		}
 
@@ -2397,7 +2400,7 @@ public class LayoutSEOEntryPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<LayoutSEOEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -2473,7 +2476,7 @@ public class LayoutSEOEntryPersistenceImpl
 
 		if (productionMode) {
 			count = (Long)finderCache.getResult(
-				_finderPathCountAll, FINDER_ARGS_EMPTY);
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 		}
 
 		if (count == null) {
@@ -2777,7 +2780,6 @@ public class LayoutSEOEntryPersistenceImpl
 	}
 
 	@Reference
-	private LayoutSEOEntryModelArgumentsResolver
-		_layoutSEOEntryModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

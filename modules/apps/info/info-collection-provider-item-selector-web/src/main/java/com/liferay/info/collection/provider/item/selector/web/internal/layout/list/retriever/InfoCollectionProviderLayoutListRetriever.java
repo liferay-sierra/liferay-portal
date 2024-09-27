@@ -16,7 +16,6 @@ package com.liferay.info.collection.provider.item.selector.web.internal.layout.l
 
 import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.service.AssetEntryLocalService;
-import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.info.collection.provider.CollectionQuery;
 import com.liferay.info.collection.provider.ConfigurableInfoCollectionProvider;
 import com.liferay.info.collection.provider.FilteredInfoCollectionProvider;
@@ -27,18 +26,17 @@ import com.liferay.info.item.ClassPKInfoItemIdentifier;
 import com.liferay.info.item.InfoItemFieldValues;
 import com.liferay.info.item.InfoItemIdentifier;
 import com.liferay.info.item.InfoItemReference;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFieldValuesProvider;
 import com.liferay.info.list.provider.item.selector.criterion.InfoListProviderItemSelectorReturnType;
 import com.liferay.info.pagination.InfoPage;
 import com.liferay.info.pagination.Pagination;
+import com.liferay.info.search.InfoSearchClassMapperRegistry;
 import com.liferay.layout.list.retriever.KeyListObjectReference;
 import com.liferay.layout.list.retriever.LayoutListRetriever;
 import com.liferay.layout.list.retriever.LayoutListRetrieverContext;
 import com.liferay.portal.kernel.model.ClassedModel;
 import com.liferay.portal.kernel.repository.model.FileEntry;
-import com.liferay.portal.kernel.service.GroupLocalService;
-import com.liferay.portal.kernel.service.UserLocalService;
 
 import java.util.Collections;
 import java.util.List;
@@ -63,13 +61,14 @@ public class InfoCollectionProviderLayoutListRetriever
 		LayoutListRetrieverContext layoutListRetrieverContext) {
 
 		InfoCollectionProvider<Object> infoCollectionProvider =
-			_infoItemServiceTracker.getInfoItemService(
+			_infoItemServiceRegistry.getInfoItemService(
 				InfoCollectionProvider.class, keyListObjectReference.getKey());
 
 		if (infoCollectionProvider == null) {
-			infoCollectionProvider = _infoItemServiceTracker.getInfoItemService(
-				RelatedInfoItemCollectionProvider.class,
-				keyListObjectReference.getKey());
+			infoCollectionProvider =
+				_infoItemServiceRegistry.getInfoItemService(
+					RelatedInfoItemCollectionProvider.class,
+					keyListObjectReference.getKey());
 		}
 
 		if (infoCollectionProvider == null) {
@@ -139,13 +138,14 @@ public class InfoCollectionProviderLayoutListRetriever
 		LayoutListRetrieverContext layoutListRetrieverContext) {
 
 		InfoCollectionProvider<?> infoCollectionProvider =
-			_infoItemServiceTracker.getInfoItemService(
+			_infoItemServiceRegistry.getInfoItemService(
 				InfoCollectionProvider.class, keyListObjectReference.getKey());
 
 		if (infoCollectionProvider == null) {
-			infoCollectionProvider = _infoItemServiceTracker.getInfoItemService(
-				RelatedInfoItemCollectionProvider.class,
-				keyListObjectReference.getKey());
+			infoCollectionProvider =
+				_infoItemServiceRegistry.getInfoItemService(
+					RelatedInfoItemCollectionProvider.class,
+					keyListObjectReference.getKey());
 		}
 
 		if (infoCollectionProvider == null) {
@@ -209,13 +209,14 @@ public class InfoCollectionProviderLayoutListRetriever
 		KeyListObjectReference keyListObjectReference) {
 
 		InfoCollectionProvider<Object> infoCollectionProvider =
-			_infoItemServiceTracker.getInfoItemService(
+			_infoItemServiceRegistry.getInfoItemService(
 				InfoCollectionProvider.class, keyListObjectReference.getKey());
 
 		if (infoCollectionProvider == null) {
-			infoCollectionProvider = _infoItemServiceTracker.getInfoItemService(
-				RelatedInfoItemCollectionProvider.class,
-				keyListObjectReference.getKey());
+			infoCollectionProvider =
+				_infoItemServiceRegistry.getInfoItemService(
+					RelatedInfoItemCollectionProvider.class,
+					keyListObjectReference.getKey());
 		}
 
 		if (infoCollectionProvider == null) {
@@ -244,7 +245,7 @@ public class InfoCollectionProviderLayoutListRetriever
 		}
 
 		InfoItemFieldValuesProvider<Object> infoItemFieldValuesProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFieldValuesProvider.class,
 				_getModelClassName(contextObject));
 
@@ -264,14 +265,8 @@ public class InfoCollectionProviderLayoutListRetriever
 		ClassPKInfoItemIdentifier classPKInfoItemIdentifier =
 			(ClassPKInfoItemIdentifier)infoItemIdentifier;
 
-		String className = infoItemReference.getClassName();
-
-		if (Objects.equals(className, FileEntry.class.getName())) {
-
-			// LPS-111037
-
-			className = DLFileEntry.class.getName();
-		}
+		String className = _infoSearchClassMapperRegistry.getSearchClassName(
+			infoItemReference.getClassName());
 
 		return _assetEntryLocalService.fetchEntry(
 			className, classPKInfoItemIdentifier.getClassPK());
@@ -291,12 +286,9 @@ public class InfoCollectionProviderLayoutListRetriever
 	private AssetEntryLocalService _assetEntryLocalService;
 
 	@Reference
-	private GroupLocalService _groupLocalService;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
-
-	@Reference
-	private UserLocalService _userLocalService;
+	private InfoSearchClassMapperRegistry _infoSearchClassMapperRegistry;
 
 }

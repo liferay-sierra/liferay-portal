@@ -36,10 +36,8 @@ import org.yaml.snakeyaml.introspector.PropertyUtils;
 import org.yaml.snakeyaml.representer.Representer;
 
 /**
- * @author     Peter Shin
- * @deprecated As of Athanasius (7.3.x)
+ * @author Peter Shin
  */
-@Deprecated
 public class YAMLUtil {
 
 	public static ConfigYAML loadConfigYAML(String yamlString) {

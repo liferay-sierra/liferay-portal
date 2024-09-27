@@ -30,10 +30,10 @@ import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.permission.LayoutPermissionUtil;
 import com.liferay.portal.kernel.servlet.PipingServletResponse;
-import com.liferay.portal.kernel.servlet.TransferHeadersHelperUtil;
+import com.liferay.portal.kernel.servlet.TransferHeadersHelper;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
@@ -52,7 +52,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Juergen Kappler
  */
 @Component(
-	immediate = true,
 	property = "layout.type=" + LayoutConstants.TYPE_COLLECTION,
 	service = LayoutTypeController.class
 )
@@ -121,8 +120,8 @@ public class CollectionPageLayoutTypeController
 		}
 
 		RequestDispatcher requestDispatcher =
-			TransferHeadersHelperUtil.getTransferHeadersRequestDispatcher(
-				servletContext.getRequestDispatcher(page));
+			_transferHeadersHelper.getTransferHeadersRequestDispatcher(
+				_servletContext.getRequestDispatcher(page));
 
 		UnsyncStringWriter unsyncStringWriter = new UnsyncStringWriter();
 
@@ -156,12 +155,12 @@ public class CollectionPageLayoutTypeController
 					"p_l_back_url");
 
 				if (Validator.isNotNull(backURL)) {
-					layoutFullURL = _http.addParameter(
+					layoutFullURL = HttpComponentsUtil.addParameter(
 						layoutFullURL, "p_l_back_url", backURL);
 				}
 
 				httpServletResponse.sendRedirect(
-					_http.addParameter(
+					HttpComponentsUtil.addParameter(
 						layoutFullURL, "p_l_mode", Constants.EDIT));
 			}
 			else {
@@ -235,27 +234,21 @@ public class CollectionPageLayoutTypeController
 	}
 
 	@Override
-	protected String getViewPage() {
-		return _VIEW_PAGE;
+	protected ServletContext getServletContext() {
+		return _servletContext;
 	}
 
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.layout.type.controller.collection)",
-		unbind = "-"
-	)
-	protected void setServletContext(ServletContext servletContext) {
-		this.servletContext = servletContext;
+	@Override
+	protected String getViewPage() {
+		return _VIEW_PAGE;
 	}
 
 	private boolean _hasUpdatePermissions(
 		PermissionChecker permissionChecker, Layout layout) {
 
 		try {
-			if (LayoutPermissionUtil.contains(
-					permissionChecker, layout, ActionKeys.UPDATE) ||
-				LayoutPermissionUtil.contains(
-					permissionChecker, layout,
-					ActionKeys.UPDATE_LAYOUT_CONTENT)) {
+			if (LayoutPermissionUtil.containsLayoutUpdatePermission(
+					permissionChecker, layout)) {
 
 				return true;
 			}
@@ -281,12 +274,17 @@ public class CollectionPageLayoutTypeController
 		CollectionPageLayoutTypeController.class);
 
 	@Reference
-	private Http _http;
-
-	@Reference
 	private LayoutLocalService _layoutLocalService;
 
 	@Reference
 	private Portal _portal;
+
+	@Reference(
+		target = "(osgi.web.symbolicname=com.liferay.layout.type.controller.collection)"
+	)
+	private ServletContext _servletContext;
+
+	@Reference
+	private TransferHeadersHelper _transferHeadersHelper;
 
 }

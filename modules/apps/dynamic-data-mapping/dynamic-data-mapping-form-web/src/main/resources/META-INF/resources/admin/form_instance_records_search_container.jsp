@@ -46,7 +46,7 @@ PortletURL portletURL = ddmFormViewFormInstanceRecordsDisplayContext.getPortletU
 	sortingURL="<%= ddmFormViewFormInstanceRecordsDisplayContext.getSortingURL() %>"
 />
 
-<c:if test="<%= ddmFormAdminDisplayContext.isExpirationDateEnabled() && DDMFormInstanceExpirationStatusUtil.isFormExpired(ddmFormViewFormInstanceRecordsDisplayContext.getDDMFormInstance(), timeZone) %>">
+<c:if test="<%= DDMFormInstanceExpirationStatusUtil.isFormExpired(ddmFormViewFormInstanceRecordsDisplayContext.getDDMFormInstance(), timeZone) %>">
 	<clay:stripe
 		dismissible="<%= true %>"
 		displayType="warning"
@@ -86,7 +86,7 @@ PortletURL portletURL = ddmFormViewFormInstanceRecordsDisplayContext.getPortletU
 
 						<div class="search-container-column-language">
 							<svg class="h4 lexicon-icon lexicon-icon-<%= w3cLanguageId %> reference-mark">
-								<use xlink:href="<%= themeDisplay.getPathThemeImages() %>/clay/icons.svg#<%= w3cLanguageId %>" />
+								<use xlink:href="<%= FrontendIconsUtil.getSpritemap(themeDisplay) %>#<%= w3cLanguageId %>" />
 							</svg>
 						</div>
 					</liferay-ui:search-container-column-text>

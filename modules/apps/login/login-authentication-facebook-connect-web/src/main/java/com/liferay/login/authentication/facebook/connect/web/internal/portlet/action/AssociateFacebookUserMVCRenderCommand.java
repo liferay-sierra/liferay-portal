@@ -65,25 +65,15 @@ public class AssociateFacebookUserMVCRenderCommand implements MVCRenderCommand {
 			renderRequest, "userId");
 
 		if (facebookIncompleteUserId != 0) {
-			User user = _userLocalService.fetchUser(facebookIncompleteUserId);
-
-			return _renderUpdateAccount(renderRequest, user);
+			return _renderUpdateAccount(
+				renderRequest,
+				_userLocalService.fetchUser(facebookIncompleteUserId));
 		}
 
 		// This return statement may be used if the user presses the browser's
 		// back button
 
 		return "/login.jsp";
-	}
-
-	@Reference(unbind = "-")
-	protected void setFacebookConnect(FacebookConnect facebookConnect) {
-		_facebookConnect = facebookConnect;
-	}
-
-	@Reference(unbind = "-")
-	protected void setUserLocalService(UserLocalService userLocalService) {
-		_userLocalService = userLocalService;
 	}
 
 	private String _renderUpdateAccount(
@@ -95,7 +85,10 @@ public class AssociateFacebookUserMVCRenderCommand implements MVCRenderCommand {
 		return "/update_account.jsp";
 	}
 
+	@Reference
 	private FacebookConnect _facebookConnect;
+
+	@Reference
 	private UserLocalService _userLocalService;
 
 }

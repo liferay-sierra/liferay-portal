@@ -18,7 +18,7 @@ import com.liferay.gogo.shell.web.internal.constants.GogoShellPortletKeys;
 import com.liferay.gogo.shell.web.internal.constants.GogoShellWebKeys;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayOutputStream;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
@@ -27,7 +27,6 @@ import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.TransientValue;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -73,7 +72,8 @@ import org.osgi.service.component.annotations.Reference;
 		"javax.portlet.init-param.view-template=/view.jsp",
 		"javax.portlet.name=" + GogoShellPortletKeys.GOGO_SHELL,
 		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=administrator"
+		"javax.portlet.security-role-ref=administrator",
+		"javax.portlet.version=3.0"
 	},
 	service = Portlet.class
 )
@@ -184,7 +184,7 @@ public class GogoShellPortlet extends MVCPortlet {
 
 		if (matcher.find()) {
 			throw new Exception(
-				LanguageUtil.format(
+				_language.format(
 					themeDisplay.getLocale(), "the-command-x-is-not-supported",
 					command));
 		}
@@ -272,6 +272,6 @@ public class GogoShellPortlet extends MVCPortlet {
 	private CommandProcessor _commandProcessor;
 
 	@Reference
-	private Portal _portal;
+	private Language _language;
 
 }

@@ -182,6 +182,7 @@ const MillerColumnsItem = ({
 		quickActions = [],
 		selectable,
 		states = [],
+		target,
 		title,
 		url,
 		viewUrl,
@@ -196,9 +197,11 @@ const MillerColumnsItem = ({
 	const ref = useRef();
 	const timeoutRef = useRef();
 
-	const [dropdownActionsActive, setDropdownActionsActive] = useState();
 	const [dropZone, setDropZone] = useState();
-	const [layoutActionsActive, setLayoutActionsActive] = useState();
+
+	const [dropdownActionsActive, setDropdownActionsActive] = useState(false);
+
+	const [layoutActionsActive, setLayoutActionsActive] = useState(false);
 
 	const dropdownActions = useMemo(() => {
 		const dropdownActions = actions.map((action) => {
@@ -216,6 +219,7 @@ const MillerColumnsItem = ({
 								ACTIONS[action](child.data, namespace);
 							}
 						},
+						symbolLeft: child.icon,
 					};
 				}),
 			};
@@ -374,10 +378,14 @@ const MillerColumnsItem = ({
 				</ClayLayout.ContentCol>
 			)}
 
-			<ClayLayout.ContentCol expand>
+			<ClayLayout.ContentCol className="pl-1" expand>
 				<h4 className="list-group-title text-truncate-inline">
 					{viewUrl ? (
-						<ClayLink className="text-truncate" href={viewUrl}>
+						<ClayLink
+							className="text-truncate"
+							href={viewUrl}
+							target={target}
+						>
 							{title}
 						</ClayLink>
 					) : (
@@ -402,17 +410,19 @@ const MillerColumnsItem = ({
 				)}
 			</ClayLayout.ContentCol>
 
-			{layoutActions.length > 0 && (
+			{!!layoutActions.length && (
 				<ClayLayout.ContentCol className="miller-columns-item-actions">
 					<ClayDropDown
 						active={layoutActionsActive}
 						onActiveChange={setLayoutActionsActive}
+						renderMenuOnClick
 						trigger={
 							<ClayButtonWithIcon
 								borderless
 								displayType="secondary"
 								small
 								symbol="plus"
+								title={Liferay.Language.get('add-child-page')}
 							/>
 						}
 					>
@@ -450,18 +460,22 @@ const MillerColumnsItem = ({
 				</ClayLayout.ContentCol>
 			))}
 
-			{dropdownActions.length > 0 && (
+			{!!dropdownActions.length && (
 				<ClayLayout.ContentCol className="miller-columns-item-actions">
 					<ClayDropDownWithItems
 						active={dropdownActionsActive}
 						items={dropdownActions}
 						onActiveChange={setDropdownActionsActive}
+						renderMenuOnClick
 						trigger={
 							<ClayButtonWithIcon
 								borderless
 								displayType="secondary"
 								small
 								symbol="ellipsis-v"
+								title={Liferay.Language.get(
+									'open-page-options-menu'
+								)}
 							/>
 						}
 					/>

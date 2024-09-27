@@ -17,15 +17,20 @@ package com.liferay.fragment.entry.processor.editable.internal.mapper;
 import com.liferay.fragment.entry.processor.editable.mapper.EditableElementMapper;
 import com.liferay.fragment.entry.processor.helper.FragmentEntryProcessorHelper;
 import com.liferay.fragment.processor.FragmentEntryProcessorContext;
-import com.liferay.info.constants.InfoDisplayWebKeys;
-import com.liferay.info.item.provider.InfoItemFieldValuesProvider;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.util.WebKeys;
 
 import java.util.HashMap;
 
@@ -52,69 +57,43 @@ public class LinkEditableElementMapper implements EditableElementMapper {
 			FragmentEntryProcessorContext fragmentEntryProcessorContext)
 		throws PortalException {
 
+		String href = null;
+
 		JSONObject hrefJSONObject = configJSONObject.getJSONObject("href");
 
-		boolean assetDisplayPage =
-			_fragmentEntryProcessorHelper.isAssetDisplayPage(
-				fragmentEntryProcessorContext.getMode());
-		boolean collectionMapped =
-			_fragmentEntryProcessorHelper.isMappedCollection(configJSONObject);
-		boolean layoutMapped = _fragmentEntryProcessorHelper.isMappedLayout(
-			configJSONObject);
-		boolean mapped = _fragmentEntryProcessorHelper.isMapped(
-			configJSONObject);
+		if (_fragmentEntryProcessorHelper.isMapped(configJSONObject) ||
+			_fragmentEntryProcessorHelper.isMappedCollection(
+				configJSONObject) ||
+			_fragmentEntryProcessorHelper.isMappedDisplayPage(
+				configJSONObject)) {
 
-		if ((hrefJSONObject == null) && !assetDisplayPage &&
-			!collectionMapped && !layoutMapped && !mapped) {
-
-			return;
-		}
-
-		String href = StringPool.BLANK;
-
-		if (collectionMapped) {
 			href = GetterUtil.getString(
-				_fragmentEntryProcessorHelper.getMappedCollectionValue(
-					configJSONObject, fragmentEntryProcessorContext));
-		}
-		else if (layoutMapped) {
-			href = GetterUtil.getString(
-				_fragmentEntryProcessorHelper.getMappedLayoutValue(
-					configJSONObject, fragmentEntryProcessorContext));
-		}
-		else if (mapped) {
-			href = GetterUtil.getString(
-				_fragmentEntryProcessorHelper.getMappedInfoItemFieldValue(
+				_fragmentEntryProcessorHelper.getFieldValue(
 					configJSONObject, new HashMap<>(),
 					fragmentEntryProcessorContext));
 		}
-		else if (assetDisplayPage && configJSONObject.has("mappedField")) {
-			HttpServletRequest httpServletRequest =
-				fragmentEntryProcessorContext.getHttpServletRequest();
-
-			if (httpServletRequest != null) {
-				String mappedField = configJSONObject.getString("mappedField");
-
-				Object infoItem = httpServletRequest.getAttribute(
-					InfoDisplayWebKeys.INFO_ITEM);
-
-				InfoItemFieldValuesProvider<Object>
-					infoItemFieldValuesProvider =
-						(InfoItemFieldValuesProvider)
-							httpServletRequest.getAttribute(
-								InfoDisplayWebKeys.
-									INFO_ITEM_FIELD_VALUES_PROVIDER);
-
-				href = GetterUtil.getString(
-					_fragmentEntryProcessorHelper.getMappedInfoItemFieldValue(
-						mappedField, infoItemFieldValuesProvider,
-						fragmentEntryProcessorContext.getLocale(), infoItem));
-			}
+		else if (_isMappedLayout(configJSONObject)) {
+			href = GetterUtil.getString(
+				_getMappedLayoutValue(
+					configJSONObject, fragmentEntryProcessorContext));
 		}
 		else if (hrefJSONObject != null) {
-			href = hrefJSONObject.getString(
-				LocaleUtil.toLanguageId(
-					fragmentEntryProcessorContext.getLocale()));
+			String languageId = LocaleUtil.toLanguageId(
+				fragmentEntryProcessorContext.getLocale());
+
+			if (!hrefJSONObject.has(languageId)) {
+				languageId = LocaleUtil.toLanguageId(
+					LocaleUtil.getSiteDefault());
+			}
+
+			href = hrefJSONObject.getString(languageId);
+		}
+		else {
+			href = configJSONObject.getString("href");
+		}
+
+		if (Validator.isNull(href)) {
+			return;
 		}
 
 		Element linkElement = new Element("a");
@@ -174,6 +153,59 @@ public class LinkEditableElementMapper implements EditableElementMapper {
 		}
 	}
 
+	private Object _getMappedLayoutValue(
+			JSONObject jsonObject,
+			FragmentEntryProcessorContext fragmentEntryProcessorContext)
+		throws PortalException {
+
+		if (!_isMappedLayout(jsonObject)) {
+			return StringPool.BLANK;
+		}
+
+		HttpServletRequest httpServletRequest =
+			fragmentEntryProcessorContext.getHttpServletRequest();
+
+		if (httpServletRequest == null) {
+			return StringPool.BLANK;
+		}
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
+		if (themeDisplay == null) {
+			return StringPool.BLANK;
+		}
+
+		JSONObject layoutJSONObject = jsonObject.getJSONObject("layout");
+
+		long groupId = layoutJSONObject.getLong("groupId");
+
+		Group group = _groupLocalService.fetchGroup(groupId);
+
+		if (group == null) {
+			return StringPool.POUND;
+		}
+
+		Layout layout = _layoutLocalService.fetchLayout(
+			groupId, layoutJSONObject.getBoolean("privateLayout"),
+			layoutJSONObject.getLong("layoutId"));
+
+		if (layout == null) {
+			return StringPool.POUND;
+		}
+
+		return _portal.getLayoutRelativeURL(layout, themeDisplay);
+	}
+
+	private boolean _isMappedLayout(JSONObject jsonObject) {
+		if (jsonObject.has("layout")) {
+			return true;
+		}
+
+		return false;
+	}
+
 	private void _replaceLinkContent(
 		Element element, Element firstChildElement, Element linkElement,
 		boolean replaceLink) {
@@ -194,5 +226,14 @@ public class LinkEditableElementMapper implements EditableElementMapper {
 
 	@Reference
 	private FragmentEntryProcessorHelper _fragmentEntryProcessorHelper;
+
+	@Reference
+	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private LayoutLocalService _layoutLocalService;
+
+	@Reference
+	private Portal _portal;
 
 }

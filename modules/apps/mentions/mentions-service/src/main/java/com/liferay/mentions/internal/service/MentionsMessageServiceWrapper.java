@@ -26,8 +26,8 @@ import com.liferay.portal.kernel.parsers.bbcode.BBCodeTranslatorUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceWrapper;
 import com.liferay.portal.kernel.settings.LocalizedValuesMap;
-import com.liferay.portal.kernel.util.HtmlUtil;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HtmlParser;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -78,7 +78,7 @@ public class MentionsMessageServiceWrapper
 		String title = message.getSubject();
 
 		if (message.isDiscussion()) {
-			title = StringUtil.shorten(HtmlUtil.extractText(content), 100);
+			title = StringUtil.shorten(_htmlParser.extractText(content), 100);
 		}
 
 		MentionsGroupServiceConfiguration mentionsGroupServiceConfiguration =
@@ -108,7 +108,7 @@ public class MentionsMessageServiceWrapper
 		else {
 			serviceContext.setAttribute(
 				"contentURL",
-				_http.addParameter(
+				HttpComponentsUtil.addParameter(
 					contentURL,
 					serviceContext.getAttribute("namespace") + "messageId",
 					message.getMessageId()));
@@ -122,31 +122,16 @@ public class MentionsMessageServiceWrapper
 		return message;
 	}
 
-	@Reference(unbind = "-")
-	protected void setConfigurationProvider(
-		ConfigurationProvider configurationProvider) {
-
-		_configurationProvider = configurationProvider;
-	}
-
-	@Reference(unbind = "-")
-	protected void setMBMessageLocalService(
-		MBMessageLocalService mbMessageLocalService) {
-
-		_mbMessageLocalService = mbMessageLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setMentionsNotifier(MentionsNotifier mentionsNotifier) {
-		_mentionsNotifier = mentionsNotifier;
-	}
-
+	@Reference
 	private ConfigurationProvider _configurationProvider;
 
 	@Reference
-	private Http _http;
+	private HtmlParser _htmlParser;
 
+	@Reference
 	private MBMessageLocalService _mbMessageLocalService;
+
+	@Reference
 	private MentionsNotifier _mentionsNotifier;
 
 	@Reference

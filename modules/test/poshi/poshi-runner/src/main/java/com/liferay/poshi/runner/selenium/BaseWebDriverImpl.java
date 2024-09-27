@@ -14,7 +14,10 @@
 
 package com.liferay.poshi.runner.selenium;
 
-import com.deque.axe.AXE;
+import com.deque.html.axecore.results.Results;
+import com.deque.html.axecore.results.Rule;
+import com.deque.html.axecore.selenium.AxeBuilder;
+import com.deque.html.axecore.selenium.AxeReporter;
 
 import com.liferay.poshi.core.PoshiContext;
 import com.liferay.poshi.core.PoshiGetterUtil;
@@ -28,11 +31,14 @@ import com.liferay.poshi.core.util.StringPool;
 import com.liferay.poshi.core.util.StringUtil;
 import com.liferay.poshi.core.util.Validator;
 import com.liferay.poshi.runner.exception.ElementNotFoundPoshiRunnerException;
+import com.liferay.poshi.runner.exception.JavaScriptException;
 import com.liferay.poshi.runner.exception.PoshiRunnerWarningException;
 import com.liferay.poshi.runner.util.AntCommands;
 import com.liferay.poshi.runner.util.ArchiveUtil;
 import com.liferay.poshi.runner.util.EmailCommands;
 import com.liferay.poshi.runner.util.HtmlUtil;
+import com.liferay.poshi.runner.var.type.DefaultTable;
+import com.liferay.poshi.runner.var.type.Table;
 
 import com.testautomationguru.ocular.Ocular;
 import com.testautomationguru.ocular.OcularConfiguration;
@@ -45,9 +51,6 @@ import java.awt.event.KeyEvent;
 
 import java.io.File;
 import java.io.StringReader;
-
-import java.net.URI;
-import java.net.URL;
 
 import java.nio.file.Paths;
 
@@ -83,9 +86,6 @@ import javax.xml.xpath.XPathFactory;
 import junit.framework.TestCase;
 
 import net.jsourcerer.webdriver.jserrorcollector.JavaScriptError;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -151,7 +151,18 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 
 		window.setSize(new Dimension(1280, 1040));
 
-		webDriver.get(browserURL);
+		try {
+			webDriver.get(browserURL);
+		}
+		catch (WebDriverException webDriverException) {
+			String message = webDriverException.getMessage();
+
+			if (!message.contains("ERR_CONNECTION_REFUSED")) {
+				throw webDriverException;
+			}
+
+			System.out.println(browserURL + " is unavailable");
+		}
 
 		ocularConfig();
 	}
@@ -204,29 +215,7 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 
 	@Override
 	public void assertAccessible() throws Exception {
-		WebDriver webDriver = WebDriverUtil.getWebDriver();
-
-		String sourceDirFilePath = LiferaySeleniumUtil.getSourceDirFilePath(
-			getTestDependenciesDirName());
-
-		File file = new File(sourceDirFilePath + "/axe.min.js");
-
-		URI uri = file.toURI();
-
-		URL url = uri.toURL();
-
-		AXE.Builder axeBuilder = new AXE.Builder(webDriver, url);
-
-		axeBuilder = axeBuilder.options(
-			PropsValues.ACCESSIBILITY_STANDARDS_JSON);
-
-		JSONObject jsonObject = axeBuilder.analyze();
-
-		JSONArray jsonArray = jsonObject.getJSONArray("violations");
-
-		if (jsonArray.length() != 0) {
-			throw new Exception(AXE.report(jsonArray));
-		}
+		assertElementAccessible(null);
 	}
 
 	@Override
@@ -354,6 +343,33 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 	}
 
 	@Override
+	public void assertElementAccessible(String locator) throws Exception {
+		WebDriver webDriver = WebDriverUtil.getWebDriver();
+
+		AxeBuilder axeBuilder = new AxeBuilder();
+
+		axeBuilder.withTags(
+			Arrays.asList(PropsValues.ACCESSIBILITY_STANDARDS_TAGS.split(",")));
+
+		Results results = null;
+
+		if (Validator.isNotNull(locator)) {
+			results = axeBuilder.analyze(webDriver, getWebElement(locator));
+		}
+		else {
+			results = axeBuilder.analyze(webDriver);
+		}
+
+		List<Rule> violations = results.getViolations();
+
+		if (!violations.isEmpty()) {
+			AxeReporter.getReadableAxeResults("analyze", webDriver, violations);
+
+			throw new Exception(AxeReporter.getAxeResultString());
+		}
+	}
+
+	@Override
 	public void assertElementNotPresent(String locator) throws Exception {
 		Condition elementNotPresentCondition = getElementNotPresentCondition(
 			locator);
@@ -438,41 +454,37 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 			return;
 		}
 
-		List<JavaScriptError> javaScriptErrors = new ArrayList<>();
+		JavaScriptException javaScriptException = null;
 
-		try {
-			javaScriptErrors.addAll(
-				JavaScriptError.readErrors(getWrappedWebDriver("//body")));
-		}
-		catch (Exception exception) {
-		}
+		List<JavaScriptError> javaScriptErrors = JavaScriptError.readErrors(
+			getWrappedWebDriver("//body"));
 
-		List<Exception> exceptions = new ArrayList<>();
+		for (JavaScriptError javaScriptError : javaScriptErrors) {
+			String javaScriptErrorValue = javaScriptError.toString();
 
-		if (!javaScriptErrors.isEmpty()) {
-			for (JavaScriptError javaScriptError : javaScriptErrors) {
-				String javaScriptErrorValue = javaScriptError.toString();
+			if ((Validator.isNotNull(ignoreJavaScriptError) &&
+				 javaScriptErrorValue.contains(ignoreJavaScriptError)) ||
+				LiferaySeleniumUtil.isInIgnoreErrorsFile(
+					javaScriptErrorValue, "javascript")) {
 
-				if ((Validator.isNotNull(ignoreJavaScriptError) &&
-					 javaScriptErrorValue.contains(ignoreJavaScriptError)) ||
-					LiferaySeleniumUtil.isInIgnoreErrorsFile(
-						javaScriptErrorValue, "javascript")) {
+				continue;
+			}
 
-					continue;
-				}
+			String message = "JAVA_SCRIPT_ERROR: " + javaScriptErrorValue;
 
-				String message = "JAVA_SCRIPT_ERROR: " + javaScriptErrorValue;
+			System.out.println(message);
 
-				System.out.println(message);
-
-				exceptions.add(new PoshiRunnerWarningException(message));
+			if (javaScriptException == null) {
+				javaScriptException = new JavaScriptException(message);
+			}
+			else {
+				PoshiRunnerWarningException.addException(
+					new JavaScriptException(message));
 			}
 		}
 
-		if (!exceptions.isEmpty()) {
-			LiferaySeleniumUtil.addToJavaScriptExceptions(exceptions);
-
-			throw exceptions.get(0);
+		if (javaScriptException != null) {
+			throw javaScriptException;
 		}
 	}
 
@@ -688,6 +700,46 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 			selectLocator, pattern);
 
 		selectedLabelCondition.assertTrue();
+	}
+
+	@Override
+	public void assertTable(String locator, String tableString)
+		throws Exception {
+
+		Table htmlTable = getHTMLTable(locator);
+
+		Table table = new DefaultTable(tableString);
+
+		if (htmlTable.getTableSize() != table.getTableSize()) {
+			throw new Exception(
+				"Expected " + table.getTableSize() + " rows but found " +
+					htmlTable.getTableSize() + " rows");
+		}
+
+		for (int i = 0; i < htmlTable.getTableSize(); i++) {
+			List<String> htmlCellValues = htmlTable.getRowByIndex(i);
+
+			List<String> cellValues = table.getRowByIndex(i);
+
+			if (htmlCellValues.size() != cellValues.size()) {
+				throw new Exception(
+					"Expected " + cellValues.size() + " columns but found " +
+						htmlCellValues.size() + " columns");
+			}
+
+			for (int j = 0; j < htmlCellValues.size(); j++) {
+				String htmlCellValue = htmlCellValues.get(j);
+
+				String cellValue = cellValues.get(j);
+
+				if (!htmlCellValue.equals(cellValue)) {
+					throw new Exception(
+						"Expected text \"" + cellValue +
+							"\" does not match actual text \"" + htmlCellValue +
+								"\"");
+				}
+			}
+		}
 	}
 
 	@Override
@@ -957,31 +1009,7 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 	public void executeJavaScript(
 		String javaScript, String argument1, String argument2) {
 
-		JavascriptExecutor javascriptExecutor =
-			(JavascriptExecutor)getWrappedWebDriver("//body");
-
-		Object object1 = null;
-		Object object2 = null;
-
-		try {
-			object1 = getWebElement(argument1);
-		}
-		catch (ElementNotFoundPoshiRunnerException | InvalidSelectorException
-					exception) {
-
-			object1 = argument1;
-		}
-
-		try {
-			object2 = getWebElement(argument2);
-		}
-		catch (ElementNotFoundPoshiRunnerException | InvalidSelectorException
-					exception) {
-
-			object2 = argument2;
-		}
-
-		javascriptExecutor.executeScript(javaScript, object1, object2);
+		getJavaScriptResult(javaScript, argument1, argument2);
 	}
 
 	@Override
@@ -1055,12 +1083,12 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 	}
 
 	@Override
-	public int getElementHeight(String locator) {
+	public long getElementHeight(String locator) {
 		WebElement webElement = getWebElement(locator);
 
 		Dimension dimension = webElement.getSize();
 
-		return dimension.getHeight();
+		return GetterUtil.getLong(dimension.getHeight());
 	}
 
 	@Override
@@ -1077,12 +1105,12 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 	}
 
 	@Override
-	public int getElementWidth(String locator) {
+	public long getElementWidth(String locator) {
 		WebElement webElement = getWebElement(locator);
 
 		Dimension dimension = webElement.getSize();
 
-		return dimension.getWidth();
+		return GetterUtil.getLong(dimension.getWidth());
 	}
 
 	@Override
@@ -1220,7 +1248,9 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 		Object object2 = null;
 
 		try {
-			object1 = getWebElement(argument1);
+			if (Validator.isNotNull(argument1)) {
+				object1 = getWebElement(argument1);
+			}
 		}
 		catch (ElementNotFoundPoshiRunnerException | InvalidSelectorException
 					exception) {
@@ -1229,7 +1259,9 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 		}
 
 		try {
-			object2 = getWebElement(argument2);
+			if (Validator.isNotNull(argument2)) {
+				object2 = getWebElement(argument2);
+			}
 		}
 		catch (ElementNotFoundPoshiRunnerException | InvalidSelectorException
 					exception) {
@@ -1302,14 +1334,13 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 		return LiferaySeleniumUtil.getNumberIncrement(value);
 	}
 
-	@Override
-	public String getOcularResultImageDirName() {
-		return _OCULAR_RESULT_IMAGE_DIR_NAME;
+	public String getOcularBaselineImageDirName() {
+		return _OCULAR_BASELINE_IMAGE_DIR_NAME;
 	}
 
 	@Override
-	public String getOcularSnapImageDirName() {
-		return _OCULAR_SNAP_IMAGE_DIR_NAME;
+	public String getOcularResultImageDirName() {
+		return _OCULAR_RESULT_IMAGE_DIR_NAME;
 	}
 
 	@Override
@@ -1427,6 +1458,13 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 	@Override
 	public String getTitle() {
 		return _webDriver.getTitle();
+	}
+
+	@Override
+	public String getWebElementAttribute(String locator, String attributeName) {
+		WebElement webElement = getWebElement(locator);
+
+		return webElement.getAttribute(attributeName);
 	}
 
 	@Override
@@ -1805,6 +1843,11 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 	}
 
 	@Override
+	public void javaScriptMouseOver(String locator) {
+		executeJavaScriptEvent(locator, "MouseEvent", "mouseover");
+	}
+
+	@Override
 	public void javaScriptMouseUp(String locator) {
 		executeJavaScriptEvent(locator, "MouseEvent", "mouseup");
 	}
@@ -2031,15 +2074,16 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 	}
 
 	@Override
-	public void ocularAssertElementImage(String locator, String fileName)
+	public void ocularAssertElementImage(
+			String locator, String fileName, String match)
 		throws Exception {
 
-		File snapFile = new File(
-			PropsValues.TEST_BASE_DIR_NAME + getOcularSnapImageDirName() + "/" +
-				fileName);
+		File baselineFile = new File(
+			PropsValues.TEST_BASE_DIR_NAME + getOcularBaselineImageDirName() +
+				"/" + fileName);
 
-		if (!snapFile.exists()) {
-			File snapParentFile = snapFile.getParentFile();
+		if (!baselineFile.exists()) {
+			File snapParentFile = baselineFile.getParentFile();
 
 			snapParentFile.mkdirs();
 		}
@@ -2055,6 +2099,8 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 		OcularConfiguration ocularConfiguration = Ocular.config();
 
 		ocularConfiguration.resultPath(Paths.get(resultParentFile.getPath()));
+
+		ocularConfiguration.globalSimilarity(GetterUtil.getInteger(match));
 
 		WebElement webElement = getWebElement(locator);
 
@@ -2933,34 +2979,6 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 	}
 
 	@Override
-	public void typeAlloyEditor(String locator, String value) {
-		JavascriptExecutor javascriptExecutor =
-			(JavascriptExecutor)getWrappedWebDriver(locator);
-
-		StringBuilder sb = new StringBuilder();
-
-		sb.append("CKEDITOR.instances[\"");
-
-		String titleAttribute = getAttribute(locator + "@title");
-
-		int x = titleAttribute.indexOf(",");
-
-		int y = titleAttribute.indexOf(",", x + 1);
-
-		if (y == -1) {
-			y = titleAttribute.length();
-		}
-
-		sb.append(titleAttribute.substring(x + 2, y));
-
-		sb.append("\"].setData(\"");
-		sb.append(HtmlUtil.escapeJS(StringUtil.replace(value, "\\", "\\\\")));
-		sb.append("\");");
-
-		javascriptExecutor.executeScript(sb.toString());
-	}
-
-	@Override
 	public void typeCKEditor(String locator, String value) {
 		StringBuilder sb = new StringBuilder();
 
@@ -3036,7 +3054,7 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 				charSequences.add(charSequence);
 			}
 
-			webElement.sendKeys(Keys.chord(charSequences));
+			webElement.sendKeys(charSequences.toArray(new CharSequence[0]));
 
 			return;
 		}
@@ -3076,19 +3094,30 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 	}
 
 	@Override
-	public void uploadCommonFile(String location, String value)
+	public void uploadCommonFile(String locator, String commonFilePath)
 		throws Exception {
 
-		String fileName =
+		String filePath =
 			FileUtil.getSeparator() + getTestDependenciesDirName() +
-				FileUtil.getSeparator() + value;
+				FileUtil.getSeparator() + commonFilePath;
 
-		fileName = LiferaySeleniumUtil.getSourceDirFilePath(fileName);
+		filePath = LiferaySeleniumUtil.getSourceDirFilePath(filePath);
 
-		if (value.endsWith(".jar") || value.endsWith(".lar") ||
-			value.endsWith(".war") || value.endsWith(".zip")) {
+		uploadFile(locator, FileUtil.fixFilePath(filePath));
+	}
 
-			File file = new File(fileName);
+	@Override
+	public void uploadFile(String locator, String filePath) {
+		makeVisible(locator);
+
+		WebElement webElement = getWebElement(locator);
+
+		filePath = FileUtil.getCanonicalPath(filePath);
+
+		if (filePath.endsWith(".jar") || filePath.endsWith(".lar") ||
+			filePath.endsWith(".war") || filePath.endsWith(".zip")) {
+
+			File file = new File(filePath);
 
 			if (file.isDirectory()) {
 				String archiveFilePath =
@@ -3097,24 +3126,15 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 
 				archiveFilePath = FileUtil.getCanonicalPath(archiveFilePath);
 
-				ArchiveUtil.archive(fileName, archiveFilePath);
+				ArchiveUtil.archive(filePath, archiveFilePath);
 
-				fileName = archiveFilePath;
+				filePath = archiveFilePath;
 			}
 		}
 
-		fileName = FileUtil.fixFilePath(fileName);
+		filePath = FileUtil.fixFilePath(filePath);
 
-		uploadFile(location, fileName);
-	}
-
-	@Override
-	public void uploadFile(String location, String value) {
-		makeVisible(location);
-
-		WebElement webElement = getWebElement(location);
-
-		webElement.sendKeys(FileUtil.getCanonicalPath(value));
+		webElement.sendKeys(filePath);
 	}
 
 	@Override
@@ -3660,15 +3680,15 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 		};
 	}
 
-	protected int getElementPositionBottom(String locator) {
+	protected long getElementPositionBottom(String locator) {
 		return getElementPositionTop(locator) + getElementHeight(locator);
 	}
 
-	protected int getElementPositionCenterX(String locator) {
+	protected long getElementPositionCenterX(String locator) {
 		return getElementPositionLeft(locator) + (getElementWidth(locator) / 2);
 	}
 
-	protected int getElementPositionCenterY(String locator) {
+	protected long getElementPositionCenterY(String locator) {
 		return getElementPositionTop(locator) + (getElementHeight(locator) / 2);
 	}
 
@@ -3680,7 +3700,7 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 		return point.getX();
 	}
 
-	protected int getElementPositionRight(String locator) {
+	protected long getElementPositionRight(String locator) {
 		return getElementPositionLeft(locator) + getElementWidth(locator);
 	}
 
@@ -3745,6 +3765,31 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 		return _frameWebElements;
 	}
 
+	protected Table getHTMLTable(String locator) {
+		List<List<String>> table = new ArrayList<>();
+
+		List<WebElement> rowWebElements = findElements(
+			By.xpath(locator + "//tr"));
+
+		for (int i = 2; i <= rowWebElements.size(); i++) {
+			List<String> webElementTexts = new ArrayList<>();
+
+			List<WebElement> columnWebElements = findElements(
+				By.xpath(locator + "//tr[" + i + "]//td"));
+
+			for (int j = 1; j <= columnWebElements.size(); j++) {
+				WebElement webElement = findElement(
+					By.xpath(locator + "//tr[" + i + "]//td[" + j + "]"));
+
+				webElementTexts.add(webElement.getText());
+			}
+
+			table.add(webElementTexts);
+		}
+
+		return new DefaultTable(table);
+	}
+
 	protected ImageTarget getImageTarget(String image) throws Exception {
 		String fileName =
 			FileUtil.getSeparator() + getSikuliImagesDirName() + image;
@@ -3768,7 +3813,9 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 				Object object = null;
 
 				try {
-					object = getWebElement(argument);
+					if (Validator.isNotNull(argument)) {
+						object = getWebElement(argument);
+					}
 				}
 				catch (ElementNotFoundPoshiRunnerException |
 					   InvalidSelectorException | NullPointerException
@@ -4369,7 +4416,7 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 		OcularConfiguration ocularConfiguration = Ocular.config();
 
 		ocularConfiguration = ocularConfiguration.snapshotPath(
-			Paths.get(testBaseDirName, getOcularSnapImageDirName()));
+			Paths.get(testBaseDirName, getOcularBaselineImageDirName()));
 
 		FileUtil.delete(
 			new File(testBaseDirName, getOcularResultImageDirName()));
@@ -4501,8 +4548,11 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 		}
 
 		public void waitFor(String throwException) throws Exception {
-			for (int second = 0; second < PropsValues.TIMEOUT_EXPLICIT_WAIT;
-				 second++) {
+			int timeout = PropsValues.TIMEOUT_EXPLICIT_WAIT * 1000;
+			int wait = 500;
+
+			for (int millisecond = 0; millisecond < timeout;
+				 millisecond += wait) {
 
 				try {
 					if (evaluate()) {
@@ -4512,7 +4562,7 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 				catch (Exception exception) {
 				}
 
-				Thread.sleep(1000);
+				Thread.sleep(wait);
 			}
 
 			if ((throwException == null) ||
@@ -4526,9 +4576,9 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 
 	}
 
-	private static final String _OCULAR_RESULT_IMAGE_DIR_NAME;
+	private static final String _OCULAR_BASELINE_IMAGE_DIR_NAME;
 
-	private static final String _OCULAR_SNAP_IMAGE_DIR_NAME;
+	private static final String _OCULAR_RESULT_IMAGE_DIR_NAME;
 
 	private static final String _OUTPUT_DIR_NAME;
 
@@ -4568,8 +4618,8 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 
 		String ocularResultImageDirName =
 			testDependenciesDirName + "//ocular//result";
-		String ocularSnapImageDirName =
-			testDependenciesDirName + "//ocular//snap";
+		String ocularBaselineImageDirName =
+			testDependenciesDirName + "//ocular//baseline";
 		String sikuliImagesDirName =
 			testDependenciesDirName + "//sikuli//linux//";
 
@@ -4582,8 +4632,8 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 		else if (OSDetector.isWindows()) {
 			ocularResultImageDirName = StringUtil.replace(
 				ocularResultImageDirName, "//", "\\");
-			ocularSnapImageDirName = StringUtil.replace(
-				ocularSnapImageDirName, "//", "\\");
+			ocularBaselineImageDirName = StringUtil.replace(
+				ocularBaselineImageDirName, "//", "\\");
 			outputDirName = StringUtil.replace(outputDirName, "//", "\\");
 			sikuliImagesDirName = StringUtil.replace(
 				sikuliImagesDirName, "//", "\\");
@@ -4596,7 +4646,7 @@ public abstract class BaseWebDriverImpl implements LiferaySelenium, WebDriver {
 
 		_OUTPUT_DIR_NAME = outputDirName;
 		_OCULAR_RESULT_IMAGE_DIR_NAME = ocularResultImageDirName;
-		_OCULAR_SNAP_IMAGE_DIR_NAME = ocularSnapImageDirName;
+		_OCULAR_BASELINE_IMAGE_DIR_NAME = ocularBaselineImageDirName;
 		_SIKULI_IMAGES_DIR_NAME = sikuliImagesDirName;
 		_TEST_DEPENDENCIES_DIR_NAME = testDependenciesDirName;
 	}

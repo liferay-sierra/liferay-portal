@@ -14,17 +14,22 @@
 
 package com.liferay.jenkins.results.parser.test.clazz.group;
 
+import com.liferay.jenkins.results.parser.JenkinsResultsParserUtil;
 import com.liferay.jenkins.results.parser.PortalTestClassJob;
 import com.liferay.jenkins.results.parser.job.property.JobProperty;
 
 import java.io.File;
 import java.io.IOException;
 
+import java.nio.file.PathMatcher;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
@@ -43,12 +48,42 @@ public abstract class ModulesBatchTestClassGroup extends BatchTestClassGroup {
 
 	@Override
 	public JSONObject getJSONObject() {
-		JSONObject jsonObject = super.getJSONObject();
+		if (jsonObject != null) {
+			return jsonObject;
+		}
+
+		jsonObject = super.getJSONObject();
 
 		jsonObject.put("exclude_globs", getGlobs(getExcludesJobProperties()));
 		jsonObject.put("include_globs", getGlobs(getIncludesJobProperties()));
+		jsonObject.put("modified_dirs_list", moduleDirsList);
 
 		return jsonObject;
+	}
+
+	protected ModulesBatchTestClassGroup(
+		JSONObject jsonObject, PortalTestClassJob portalTestClassJob) {
+
+		super(jsonObject, portalTestClassJob);
+
+		JSONArray modifiedDirsJSONArray = jsonObject.optJSONArray(
+			"modified_dirs_list");
+
+		if ((modifiedDirsJSONArray == null) ||
+			modifiedDirsJSONArray.isEmpty()) {
+
+			return;
+		}
+
+		for (int i = 0; i < modifiedDirsJSONArray.length(); i++) {
+			String modifiedDirPath = modifiedDirsJSONArray.getString(i);
+
+			if (JenkinsResultsParserUtil.isNullOrEmpty(modifiedDirPath)) {
+				continue;
+			}
+
+			moduleDirsList.add(new File(modifiedDirPath));
+		}
 	}
 
 	protected ModulesBatchTestClassGroup(
@@ -178,6 +213,38 @@ public abstract class ModulesBatchTestClassGroup extends BatchTestClassGroup {
 		recordJobProperties(includesJobProperties);
 
 		return includesJobProperties;
+	}
+
+	protected List<PathMatcher> getIncludesPathMatchers() {
+		if (!isRootCauseAnalysis()) {
+			return getPathMatchers(getIncludesJobProperties());
+		}
+
+		String portalBatchTestSelector = System.getenv(
+			"PORTAL_BATCH_TEST_SELECTOR");
+
+		if (JenkinsResultsParserUtil.isNullOrEmpty(portalBatchTestSelector)) {
+			portalBatchTestSelector = getBuildStartProperty(
+				"PORTAL_BATCH_TEST_SELECTOR");
+		}
+
+		List<String> includeGlobs = new ArrayList<>();
+
+		if (!JenkinsResultsParserUtil.isNullOrEmpty(portalBatchTestSelector)) {
+			Collections.addAll(
+				includeGlobs,
+				JenkinsResultsParserUtil.getGlobsFromProperty(
+					portalBatchTestSelector));
+		}
+
+		File portalModulesBaseDir = new File(
+			portalGitWorkingDirectory.getWorkingDirectory(), "modules");
+
+		return JenkinsResultsParserUtil.toPathMatchers(
+			JenkinsResultsParserUtil.combine(
+				JenkinsResultsParserUtil.getCanonicalPath(portalModulesBaseDir),
+				File.separator),
+			includeGlobs.toArray(new String[0]));
 	}
 
 	protected abstract void setTestClasses() throws IOException;

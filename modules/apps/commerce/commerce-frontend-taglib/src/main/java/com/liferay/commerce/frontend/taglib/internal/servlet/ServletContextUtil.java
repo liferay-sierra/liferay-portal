@@ -28,6 +28,7 @@ import com.liferay.commerce.product.util.CPSubscriptionTypeRegistry;
 import com.liferay.commerce.service.CommerceOrderItemLocalService;
 import com.liferay.commerce.service.CommerceOrderTypeLocalService;
 import com.liferay.frontend.js.loader.modules.extender.npm.NPMResolver;
+import com.liferay.info.item.renderer.InfoItemRendererRegistry;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 
 import javax.servlet.ServletContext;
@@ -41,9 +42,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marco Leo
  * @author Alessio Antonio Rendina
  */
-@Component(
-	enabled = false, immediate = true, service = ServletContextUtil.class
-)
+@Component(immediate = true, service = ServletContextUtil.class)
 public class ServletContextUtil {
 
 	public static CommerceChannelLocalService getCommerceChannelLocalService() {
@@ -102,6 +101,10 @@ public class ServletContextUtil {
 
 	public static CPSubscriptionTypeRegistry getCPSubscriptionTypeRegistry() {
 		return _servletContextUtil._getCPSubscriptionTypeRegistry();
+	}
+
+	public static InfoItemRendererRegistry getInfoItemRendererRegistry() {
+		return _servletContextUtil._getInfoItemRendererRegistry();
 	}
 
 	public static NPMResolver getNPMResolver() {
@@ -210,6 +213,13 @@ public class ServletContextUtil {
 	}
 
 	@Reference(unbind = "-")
+	protected void setInfoItemRendererRegistry(
+		InfoItemRendererRegistry infoItemRendererRegistry) {
+
+		_infoItemRendererRegistry = infoItemRendererRegistry;
+	}
+
+	@Reference(unbind = "-")
 	protected void setNPMResolver(NPMResolver npmResolver) {
 		_npmResolver = npmResolver;
 	}
@@ -281,6 +291,10 @@ public class ServletContextUtil {
 		return _cpSubscriptionTypeRegistry;
 	}
 
+	private InfoItemRendererRegistry _getInfoItemRendererRegistry() {
+		return _infoItemRendererRegistry;
+	}
+
 	private NPMResolver _getNPMResolver() {
 		return _npmResolver;
 	}
@@ -308,6 +322,7 @@ public class ServletContextUtil {
 	private CPFriendlyURL _cpFriendlyURL;
 	private CPInstanceHelper _cpInstanceHelper;
 	private CPSubscriptionTypeRegistry _cpSubscriptionTypeRegistry;
+	private InfoItemRendererRegistry _infoItemRendererRegistry;
 	private NPMResolver _npmResolver;
 	private ProductHelper _productHelper;
 	private ServletContext _servletContext;

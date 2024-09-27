@@ -14,10 +14,10 @@
 
 package com.liferay.site.admin.web.internal.display.context;
 
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.LayoutSetPrototype;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.LayoutSetPrototypeServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -88,15 +88,8 @@ public class SelectSiteInitializerDisplayContext {
 				_renderRequest, _getPortletURL(), null,
 				"there-are-no-site-templates");
 
-		List<SiteInitializerItem> siteInitializerItems =
-			_getSiteInitializerItems();
-
 		siteInitializerItemSearchContainer.setResultsAndTotal(
-			() -> ListUtil.subList(
-				siteInitializerItems,
-				siteInitializerItemSearchContainer.getStart(),
-				siteInitializerItemSearchContainer.getEnd()),
-			siteInitializerItems.size());
+			_getSiteInitializerItems());
 
 		return siteInitializerItemSearchContainer;
 	}

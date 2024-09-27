@@ -30,26 +30,26 @@ import com.liferay.journal.service.JournalFeedLocalService;
 import com.liferay.journal.util.JournalContent;
 import com.liferay.journal.util.comparator.ArticleDisplayDateComparator;
 import com.liferay.journal.util.comparator.ArticleModifiedDateComparator;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Image;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.PortletRequestModel;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.service.ImageLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
@@ -189,10 +189,9 @@ public class JournalRSSHelper {
 	public FileEntry getFileEntry(String url) {
 		FileEntry fileEntry = null;
 
-		String queryString = _http.getQueryString(url);
-
-		Map<String, String[]> parameters = _http.parameterMapFromString(
-			queryString);
+		Map<String, String[]> parameters =
+			HttpComponentsUtil.parameterMapFromString(
+				HttpComponentsUtil.getQueryString(url));
 
 		if (url.startsWith("/documents/")) {
 			String[] pathArray = StringUtil.split(url, CharPool.SLASH);
@@ -207,7 +206,7 @@ public class JournalRSSHelper {
 			}
 			else if (pathArray.length == 5) {
 				folderId = GetterUtil.getLong(pathArray[3]);
-				title = _http.decodeURL(pathArray[4]);
+				title = HttpComponentsUtil.decodeURL(pathArray[4]);
 			}
 			else if (pathArray.length > 5) {
 				uuid = pathArray[5];
@@ -312,10 +311,9 @@ public class JournalRSSHelper {
 	public Image getImage(String url) {
 		Image image = null;
 
-		String queryString = _http.getQueryString(url);
-
-		Map<String, String[]> parameters = _http.parameterMapFromString(
-			queryString);
+		Map<String, String[]> parameters =
+			HttpComponentsUtil.parameterMapFromString(
+				HttpComponentsUtil.getQueryString(url));
 
 		if (parameters.containsKey("image_id") ||
 			parameters.containsKey("img_id") ||
@@ -379,7 +377,7 @@ public class JournalRSSHelper {
 			feed = _journalFeedLocalService.getFeed(groupId, feedId);
 		}
 
-		String languageId = LanguageUtil.getLanguageId(resourceRequest);
+		String languageId = _language.getLanguageId(resourceRequest);
 
 		long plid = _portal.getPlidFromFriendlyURL(
 			themeDisplay.getCompanyId(), feed.getTargetLayoutFriendlyUrl());
@@ -613,7 +611,7 @@ public class JournalRSSHelper {
 			if (elType.equals("document_library")) {
 				String url = element.elementText("dynamic-content");
 
-				JSONObject jsonObject = JSONFactoryUtil.createJSONObject(url);
+				JSONObject jsonObject = _jsonFactory.createJSONObject(url);
 
 				String uuid = jsonObject.getString("uuid");
 				long groupId = jsonObject.getLong("groupId");
@@ -698,9 +696,6 @@ public class JournalRSSHelper {
 	private DLURLHelper _dlURLHelper;
 
 	@Reference
-	private Http _http;
-
-	@Reference
 	private ImageLocalService _imageLocalService;
 
 	@Reference
@@ -714,6 +709,12 @@ public class JournalRSSHelper {
 
 	@Reference
 	private JournalFeedLocalService _journalFeedLocalService;
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;

@@ -26,9 +26,6 @@ definition {
 
 	@priority = "4"
 	test AddCustomFieldsSmoke {
-		property osgi.app.includes = "bookmarks";
-		property portal.release = "false";
-
 		ApplicationsMenu.gotoPortlet(
 			category = "Configuration",
 			panel = "Control Panel",
@@ -253,12 +250,52 @@ definition {
 			panel = "Control Panel",
 			portlet = "Users and Organizations");
 
-		User.gotoEditCP(userScreenName = "usersn");
+		UserNavigator.gotoUser(userScreenName = "usersn");
 
 		User.viewUserCustomFieldsCP(
 			customFieldName = "Nickname",
 			customFieldType = "Input Field",
 			startingValue = "Nickname");
+	}
+
+	@description = "This is a use case for LPS-146795. The user admin could add new user with space character in geolocation custom field name."
+	@priority = "4"
+	test AddNewUserWithGeolocationCustomFields {
+		ApplicationsMenu.gotoPortlet(
+			category = "Configuration",
+			panel = "Control Panel",
+			portlet = "Custom Fields");
+
+		CustomFields.addCP(
+			customFieldName = "Test Field",
+			customFieldType = "Geolocation",
+			resourceName = "User");
+
+		ApplicationsMenu.gotoPortlet(
+			category = "Users",
+			panel = "Control Panel",
+			portlet = "Users and Organizations");
+
+		User.addCP(
+			lat = "39.88446750779911",
+			lng = "116.37856166209812",
+			userEmailAddress = "userea@liferay.com",
+			userFirstName = "userfn",
+			userLastName = "userln",
+			userScreenName = "usersn");
+
+		Alert.viewSuccessMessage();
+
+		ApplicationsMenu.gotoPortlet(
+			category = "Users",
+			panel = "Control Panel",
+			portlet = "Users and Organizations");
+
+		User.viewCP(
+			userEmailAddress = "userea@liferay.com",
+			userFirstName = "userfn",
+			userLastName = "userln",
+			userScreenName = "usersn");
 	}
 
 	@priority = "5"
@@ -301,7 +338,7 @@ definition {
 			panel = "Control Panel",
 			portlet = "Users and Organizations");
 
-		User.gotoEditCP(userScreenName = "usersn");
+		UserNavigator.gotoUser(userScreenName = "usersn");
 
 		User.viewUserCustomFieldsCP(
 			customFieldName = "Text Field",
@@ -329,7 +366,7 @@ definition {
 			portlet = "Pages",
 			site = "${siteName}");
 
-		PagesAdmin.addPublicPage(pageName = "Wiki Test Page");
+		PagesAdmin.addPage(pageName = "Wiki Test Page");
 
 		Navigator.gotoPage(pageName = "Wiki Test Page");
 

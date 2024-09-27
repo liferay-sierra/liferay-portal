@@ -22,48 +22,42 @@
 	}
 </script>
 
-<script>
-	const pathnameRegexp = /\/documents\/(\d+)\/(\d+)\/(.+?)\/([^&]+)/;
+<aui:script>
+	function getValueByAttribute(node, attr) {
+		return (
+			node.dataset[attr] ||
+			(node.parentElement && node.parentElement.dataset[attr])
+		);
+	}
 
 	function sendAnalyticsEvent(anchor) {
-		const fileEntryId =
-			anchor.dataset.analyticsFileEntryId ||
-			(anchor.parentElement &&
-				anchor.parentElement.dataset.analyticsFileEntryId);
+		var fileEntryId = getValueByAttribute(anchor, 'analyticsFileEntryId');
+		var title = getValueByAttribute(anchor, 'analyticsFileEntryTitle');
+		var version = getValueByAttribute(anchor, 'analyticsFileEntryVersion');
 
-		const getParameterValue = (parameterName) => {
-			let result = null;
-
-			anchor.search
-				.substr(1)
-				.split('&')
-				.forEach((item) => {
-					const tmp = item.split('=');
-
-					if (tmp[0] === parameterName) {
-						result = decodeURIComponent(tmp[1]);
-					}
-				});
-
-			return result;
-		};
-
-		const match = pathnameRegexp.exec(anchor.pathname);
-
-		if (fileEntryId && match) {
+		if (fileEntryId) {
 			Analytics.send('documentDownloaded', 'Document', {
-				groupId: match[1],
+				groupId: themeDisplay.getScopeGroupId(),
 				fileEntryId,
 				preview: !!window.<%= DocumentLibraryAnalyticsConstants.JS_PREFIX %>isViewFileEntry,
-				title: decodeURIComponent(match[3].replace(/\+/gi, ' ')),
-				version: getParameterValue('version'),
+				title,
+				version,
 			});
 		}
 	}
 
 	function handleDownloadClick(event) {
 		if (window.Analytics) {
-			if (
+			if (event.target.nodeName.toLowerCase() === 'a') {
+				sendAnalyticsEvent(event.target);
+			}
+			else if (
+				event.target.parentNode &&
+				event.target.parentNode.nodeName.toLowerCase() === 'a'
+			) {
+				sendAnalyticsEvent(event.target.parentNode);
+			}
+			else if (
 				event.target.dataset.action === 'download' ||
 				event.target.querySelector('.lexicon-icon-download') ||
 				event.target.classList.contains('lexicon-icon-download') ||
@@ -72,26 +66,17 @@
 						'lexicon-icon-download'
 					))
 			) {
-				const selectedFiles = document.querySelectorAll(
+				var selectedFiles = document.querySelectorAll(
 					'.portlet-document-library .entry-selector:checked'
 				);
 
 				selectedFiles.forEach(({value}) => {
-					const selectedFile = document.querySelector(
+					var selectedFile = document.querySelector(
 						'[data-analytics-file-entry-id="' + value + '"]'
 					);
 
 					sendAnalyticsEvent(selectedFile);
 				});
-			}
-			else if (event.target.nodeName.toLowerCase() === 'a') {
-				sendAnalyticsEvent(event.target);
-			}
-			else if (
-				event.target.parentNode &&
-				event.target.parentNode.nodeName.toLowerCase() === 'a'
-			) {
-				sendAnalyticsEvent(event.target.parentNode);
 			}
 		}
 	}
@@ -103,4 +88,4 @@
 	Liferay.once('portletReady', () => {
 		document.body.addEventListener('click', handleDownloadClick);
 	});
-</script>
+</aui:script>

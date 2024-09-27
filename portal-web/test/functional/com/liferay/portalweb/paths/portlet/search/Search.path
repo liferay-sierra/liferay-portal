@@ -17,13 +17,27 @@
 </tr>
 <tr>
 	<td>GLOBAL_SEARCH_SUGGESTION</td>
-	<td>//div[contains(@class,'commerce-suggestions__item ') and contains(.,'${key_entryName}')]
-</td>
+	<td>//div[contains(@class,'commerce-suggestions__item ') and contains(.,'${key_entryName}')]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>CATEGORY_FACET_CLOUD_LAYOUT</td>
 	<td>//ul[contains(@class,'tag-cloud')]//button[contains(.,'${categoryName}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>CATEGORY_FACET_EXPAND_VOCABULARIES</td>
+	<td>xpath=(//span[*[name()='svg'][contains(@class,'lexicon-icon-angle-right component-expanded-d-none')]])[2]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>CATEGORY_FACET_VOCABULARY_CHECKBOX</td>
+	<td>//div[@class='autofit-row'][contains(.,'${key_vocabularyName}')]//input[@type='checkbox']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>CATEGORY_FACET_VOCABULARY_SCOPE_RADIO</td>
+	<td>//span[contains(.,'${vocabularyScope}')]/preceding-sibling::input[@role='radio']</td>
 	<td></td>
 </tr>
 <tr>
@@ -63,12 +77,17 @@
 </tr>
 <tr>
 	<td>EMBEDDED_SEARCH_BAR_ELLIPSIS_ICON</td>
-	<td>//header[contains(@class,'portlet-topper') and contains(.,'Search')][ancestor::header[@id='banner']]//div[contains(@class,'portlet-options')]/a</td>
+	<td>//header[contains(@class,'portlet-topper') and contains(.,'Search')][ancestor::header[@id='banner']]//button[*//*[name()='svg'][contains(@class,'icon-ellipsis-v')]]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>EMBEDDED_SEARCH_BAR_SCOPE_SELECT</td>
-	<td>//header[@id='banner']//div/select[@title='Scope']</td>
+	<td>//header[@id='banner']//div/select[@name='scope']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>EMBEDDED_SEARCH_BAR_SCOPE_SELECT_OPTION</td>
+	<td>//header[@id='banner']//div/select[@title='Scope']/option[contains(.,'${searchScope}')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -87,8 +106,13 @@
 	<td></td>
 </tr>
 <tr>
+	<td>MODIFIED_FACET_CONFIG_SPECIFIC_FIELD</td>
+	<td>//div[contains(@class,'modified-facet')]//input[@value='${fieldValue}']</td>
+	<td></td>
+</tr>
+<tr>
 	<td>MODIFIED_FACET_SELECTION</td>
-	<td>//li[contains(@name,'ModifiedFacet')]//span[contains(.,'${range}')]</td>
+	<td>//div[contains(@id,'ModifiedFacet')]//span[contains(.,'${range}')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -102,23 +126,28 @@
 	<td></td>
 </tr>
 <tr>
+	<td>SEARCH_BAR_WIDGET_MAGNIFYING_GLASS_BUTTON</td>
+	<td>//div[input[not(ancestor::header[@id='banner'])][contains(@data-qa-id,'searchInput')]]//button</td>
+	<td></td>
+</tr>
+<tr>
 	<td>SEARCH_RESULT_WIDGET</td>
 	<td>//div//a[contains(text(), '${key_contentName}')]/../../div//strong[text()='${key_contentType}']</td>
 	<td></td>
 </tr>
 <tr>
-	<td>SEARCH_BAR_WIDGET_ELLIPSIS_ICON</td>
-	<td>//header[contains(@class,'portlet-topper') and contains(.,'Search Bar')][not(ancestor::header[@id='banner'])]//div[contains(@class,'portlet-options')]/a</td>
+	<td>SEARCH_WIDGET_ELLIPSIS_ICON</td>
+	<td>//header[contains(@class,'portlet-topper') and contains(.,'${key_portletName}')][not(ancestor::header[@id='banner'])]//button[*//*[name()='svg'][contains(@class,'icon-ellipsis-v')]]</td>
 	<td></td>
 </tr>
 <tr>
-	<td>SEARCH_BAR_WIDGET_ELLIPSIS_ICON_SPECIFIC</td>
-	<td>xpath=(//header[contains(@class,'portlet-topper') and contains(.,'Search Bar')][not(ancestor::header[@id='banner'])]//div[contains(@class,'portlet-options')]/a)[${key_index}]</td>
+	<td>SEARCH_WIDGET_ELLIPSIS_ICON_SPECIFIC</td>
+	<td>xpath=(//header[contains(@class,'portlet-topper') and contains(.,'${key_portletName}')][not(ancestor::header[@id='banner'])]//button[*//*[name()='svg'][contains(@class,'icon-ellipsis-v')]])[${key_index}]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>SEARCH_BAR_WIDGET_SCOPE_SELECT</td>
-	<td>//div[not(ancestor::header[@id='banner'])]/select[@title='Scope']</td>
+	<td>//div[not(ancestor::header[@id='banner'])]/select[@title='Scope']/option[contains(.,'${searchScope}')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -178,7 +207,7 @@
 </tr>
 <tr>
 	<td>SUGGESTION_WIDGET_ELLIPSIS_ICON</td>
-	<td>//div[contains(@class,'portlet-borderless')]//header[contains(@class,'portlet-topper') and contains(.,'Suggestions')]//div[contains(@class,'portlet-options')]/a</td>
+	<td>//div[contains(@class,'portlet-borderless')]//header[contains(@class,'portlet-topper') and contains(.,'Suggestions')]//button[*//*[name()='svg'][contains(@class,'icon-ellipsis-v')]]</td>
 	<td></td>
 </tr>
 <tr>

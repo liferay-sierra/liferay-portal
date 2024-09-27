@@ -14,14 +14,19 @@
 
 package com.liferay.layout.type.controller.content.internal.layout.type.controller;
 
+import com.liferay.layout.content.LayoutContentProvider;
 import com.liferay.layout.content.page.editor.constants.ContentPageEditorWebKeys;
+import com.liferay.layout.model.LayoutLocalization;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
 import com.liferay.layout.security.permission.resource.LayoutContentModelResourcePermission;
+import com.liferay.layout.service.LayoutLocalizationLocalService;
 import com.liferay.layout.type.controller.BaseLayoutTypeControllerImpl;
 import com.liferay.petra.io.unsync.UnsyncStringWriter;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.exception.NoSuchLayoutException;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
@@ -31,16 +36,21 @@ import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.service.permission.LayoutPermission;
 import com.liferay.portal.kernel.servlet.PipingServletResponse;
-import com.liferay.portal.kernel.servlet.TransferHeadersHelperUtil;
+import com.liferay.portal.kernel.servlet.TransferHeadersHelper;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+
+import java.util.Locale;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
@@ -55,7 +65,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Juergen Kappler
  */
 @Component(
-	immediate = true, property = "layout.type=" + LayoutConstants.TYPE_CONTENT,
+	property = "layout.type=" + LayoutConstants.TYPE_CONTENT,
 	service = LayoutTypeController.class
 )
 public class ContentLayoutTypeController extends BaseLayoutTypeControllerImpl {
@@ -122,6 +132,22 @@ public class ContentLayoutTypeController extends BaseLayoutTypeControllerImpl {
 			}
 		}
 
+		if (!layout.isPublished()) {
+			if (hasUpdatePermissions == null) {
+				hasUpdatePermissions = _hasUpdatePermissions(
+					themeDisplay.getPermissionChecker(), layout);
+			}
+
+			if (!hasUpdatePermissions) {
+				throw new NoSuchLayoutException();
+			}
+		}
+		else if (layoutMode.equals(Constants.VIEW)) {
+			_updateLayoutContent(
+				httpServletRequest, httpServletResponse, layout,
+				themeDisplay.getLocale());
+		}
+
 		String page = getViewPage();
 
 		if (layoutMode.equals(Constants.EDIT)) {
@@ -129,8 +155,8 @@ public class ContentLayoutTypeController extends BaseLayoutTypeControllerImpl {
 		}
 
 		RequestDispatcher requestDispatcher =
-			TransferHeadersHelperUtil.getTransferHeadersRequestDispatcher(
-				servletContext.getRequestDispatcher(page));
+			_transferHeadersHelper.getTransferHeadersRequestDispatcher(
+				_servletContext.getRequestDispatcher(page));
 
 		UnsyncStringWriter unsyncStringWriter = new UnsyncStringWriter();
 
@@ -182,18 +208,18 @@ public class ContentLayoutTypeController extends BaseLayoutTypeControllerImpl {
 					"p_l_back_url");
 
 				if (Validator.isNotNull(backURL)) {
-					layoutFullURL = _http.addParameter(
+					layoutFullURL = HttpComponentsUtil.addParameter(
 						layoutFullURL, "p_l_back_url", backURL);
 				}
 
-				layoutFullURL = _http.addParameter(
+				layoutFullURL = HttpComponentsUtil.addParameter(
 					layoutFullURL, "p_l_mode", Constants.EDIT);
 
 				long segmentsExperienceId = ParamUtil.getLong(
 					httpServletRequest, "segmentsExperienceId", -1);
 
 				if (segmentsExperienceId != -1) {
-					layoutFullURL = _http.setParameter(
+					layoutFullURL = HttpComponentsUtil.setParameter(
 						layoutFullURL, "segmentsExperienceId",
 						segmentsExperienceId);
 				}
@@ -271,16 +297,13 @@ public class ContentLayoutTypeController extends BaseLayoutTypeControllerImpl {
 	}
 
 	@Override
-	protected String getViewPage() {
-		return _VIEW_PAGE;
+	protected ServletContext getServletContext() {
+		return _servletContext;
 	}
 
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.layout.type.controller.content)",
-		unbind = "-"
-	)
-	protected void setServletContext(ServletContext servletContext) {
-		this.servletContext = servletContext;
+	@Override
+	protected String getViewPage() {
+		return _VIEW_PAGE;
 	}
 
 	private LayoutPageTemplateEntry _fetchLayoutPageTemplateEntry(
@@ -309,11 +332,8 @@ public class ContentLayoutTypeController extends BaseLayoutTypeControllerImpl {
 		PermissionChecker permissionChecker, Layout layout) {
 
 		try {
-			if (_layoutPermission.contains(
-					permissionChecker, layout, ActionKeys.UPDATE) ||
-				_layoutPermission.contains(
-					permissionChecker, layout,
-					ActionKeys.UPDATE_LAYOUT_CONTENT) ||
+			if (_layoutPermission.containsLayoutUpdatePermission(
+					permissionChecker, layout) ||
 				_modelResourcePermission.contains(
 					permissionChecker, layout.getPlid(), ActionKeys.UPDATE)) {
 
@@ -329,6 +349,35 @@ public class ContentLayoutTypeController extends BaseLayoutTypeControllerImpl {
 		return false;
 	}
 
+	private void _updateLayoutContent(
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse, Layout layout,
+			Locale locale)
+		throws Exception {
+
+		LayoutLocalization layoutLocalization =
+			_layoutLocalizationLocalService.fetchLayoutLocalization(
+				layout.getGroupId(), LocaleUtil.toLanguageId(locale),
+				layout.getPlid());
+
+		if (layoutLocalization != null) {
+			return;
+		}
+
+		ServiceContext serviceContext = ServiceContextFactory.getInstance(
+			httpServletRequest);
+
+		for (Locale curLocale :
+				_language.getAvailableLocales(layout.getGroupId())) {
+
+			_layoutLocalizationLocalService.updateLayoutLocalization(
+				_layoutContentProvider.getLayoutContent(
+					httpServletRequest, httpServletResponse, layout, curLocale),
+				LocaleUtil.toLanguageId(curLocale), layout.getPlid(),
+				serviceContext);
+		}
+	}
+
 	private static final String _EDIT_LAYOUT_PAGE =
 		"/layout/edit_layout/content.jsp";
 
@@ -342,7 +391,13 @@ public class ContentLayoutTypeController extends BaseLayoutTypeControllerImpl {
 		ContentLayoutTypeController.class);
 
 	@Reference
-	private Http _http;
+	private Language _language;
+
+	@Reference
+	private LayoutContentProvider _layoutContentProvider;
+
+	@Reference
+	private LayoutLocalizationLocalService _layoutLocalizationLocalService;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;
@@ -359,5 +414,13 @@ public class ContentLayoutTypeController extends BaseLayoutTypeControllerImpl {
 
 	@Reference
 	private Portal _portal;
+
+	@Reference(
+		target = "(osgi.web.symbolicname=com.liferay.layout.type.controller.content)"
+	)
+	private ServletContext _servletContext;
+
+	@Reference
+	private TransferHeadersHelper _transferHeadersHelper;
 
 }

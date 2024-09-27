@@ -26,7 +26,7 @@ import com.liferay.expando.kernel.model.ExpandoBridge;
 import com.liferay.headless.commerce.core.util.LanguageUtils;
 import com.liferay.headless.commerce.delivery.catalog.dto.v1_0.Product;
 import com.liferay.headless.commerce.delivery.catalog.dto.v1_0.ProductConfiguration;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -43,7 +43,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Andrea Sbarra
  */
 @Component(
-	enabled = false, property = "dto.class.name=CPDefinition",
+	property = "dto.class.name=CPDefinition",
 	service = {DTOConverter.class, ProductDTOConverter.class}
 )
 public class ProductDTOConverter
@@ -64,7 +64,7 @@ public class ProductDTOConverter
 		CPDefinition cpDefinition = _cpDefinitionLocalService.getCPDefinition(
 			(Long)productDTOConverterContext.getId());
 
-		String languageId = LanguageUtil.getLanguageId(
+		String languageId = _language.getLanguageId(
 			productDTOConverterContext.getLocale());
 
 		ExpandoBridge expandoBridge = cpDefinition.getExpandoBridge();
@@ -72,17 +72,17 @@ public class ProductDTOConverter
 		Product product = new Product() {
 			{
 				createDate = cpDefinition.getCreateDate();
-				description = cpDefinition.getDescription();
+				description = cpDefinition.getDescription(languageId);
 				expando = expandoBridge.getAttributes();
 				id = cpDefinition.getCPDefinitionId();
 				metaDescription = cpDefinition.getMetaDescription(languageId);
 				metaKeyword = cpDefinition.getMetaKeywords(languageId);
 				metaTitle = cpDefinition.getMetaTitle(languageId);
 				modifiedDate = cpDefinition.getModifiedDate();
-				name = cpDefinition.getName();
+				name = cpDefinition.getName(languageId);
 				productId = cpDefinition.getCProductId();
 				productType = cpDefinition.getProductTypeName();
-				shortDescription = cpDefinition.getShortDescription();
+				shortDescription = cpDefinition.getShortDescription(languageId);
 				slug = cpDefinition.getURL(languageId);
 				tags = _getTags(cpDefinition);
 				urls = LanguageUtils.getLanguageIdMap(
@@ -165,5 +165,8 @@ public class ProductDTOConverter
 
 	@Reference
 	private CPDefinitionLocalService _cpDefinitionLocalService;
+
+	@Reference
+	private Language _language;
 
 }

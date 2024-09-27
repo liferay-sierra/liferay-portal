@@ -41,7 +41,6 @@ import com.liferay.search.experiences.model.SXPBlueprintModel;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 
 import java.sql.Blob;
@@ -83,14 +82,15 @@ public class SXPBlueprintModelImpl
 
 	public static final Object[][] TABLE_COLUMNS = {
 		{"mvccVersion", Types.BIGINT}, {"uuid_", Types.VARCHAR},
+		{"externalReferenceCode", Types.VARCHAR},
 		{"sxpBlueprintId", Types.BIGINT}, {"companyId", Types.BIGINT},
 		{"userId", Types.BIGINT}, {"userName", Types.VARCHAR},
 		{"createDate", Types.TIMESTAMP}, {"modifiedDate", Types.TIMESTAMP},
 		{"configurationJSON", Types.CLOB}, {"description", Types.VARCHAR},
 		{"elementInstancesJSON", Types.CLOB}, {"schemaVersion", Types.VARCHAR},
-		{"title", Types.VARCHAR}, {"status", Types.INTEGER},
-		{"statusByUserId", Types.BIGINT}, {"statusByUserName", Types.VARCHAR},
-		{"statusDate", Types.TIMESTAMP}
+		{"title", Types.VARCHAR}, {"version", Types.VARCHAR},
+		{"status", Types.INTEGER}, {"statusByUserId", Types.BIGINT},
+		{"statusByUserName", Types.VARCHAR}, {"statusDate", Types.TIMESTAMP}
 	};
 
 	public static final Map<String, Integer> TABLE_COLUMNS_MAP =
@@ -99,6 +99,7 @@ public class SXPBlueprintModelImpl
 	static {
 		TABLE_COLUMNS_MAP.put("mvccVersion", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("uuid_", Types.VARCHAR);
+		TABLE_COLUMNS_MAP.put("externalReferenceCode", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("sxpBlueprintId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("companyId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("userId", Types.BIGINT);
@@ -110,6 +111,7 @@ public class SXPBlueprintModelImpl
 		TABLE_COLUMNS_MAP.put("elementInstancesJSON", Types.CLOB);
 		TABLE_COLUMNS_MAP.put("schemaVersion", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("title", Types.VARCHAR);
+		TABLE_COLUMNS_MAP.put("version", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("status", Types.INTEGER);
 		TABLE_COLUMNS_MAP.put("statusByUserId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("statusByUserName", Types.VARCHAR);
@@ -117,7 +119,7 @@ public class SXPBlueprintModelImpl
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table SXPBlueprint (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,sxpBlueprintId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,configurationJSON TEXT null,description STRING null,elementInstancesJSON TEXT null,schemaVersion VARCHAR(75) null,title STRING null,status INTEGER,statusByUserId LONG,statusByUserName VARCHAR(75) null,statusDate DATE null)";
+		"create table SXPBlueprint (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,externalReferenceCode VARCHAR(75) null,sxpBlueprintId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,configurationJSON TEXT null,description STRING null,elementInstancesJSON TEXT null,schemaVersion VARCHAR(75) null,title STRING null,version VARCHAR(75) null,status INTEGER,statusByUserId LONG,statusByUserName VARCHAR(75) null,statusDate DATE null)";
 
 	public static final String TABLE_SQL_DROP = "drop table SXPBlueprint";
 
@@ -143,14 +145,20 @@ public class SXPBlueprintModelImpl
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long UUID_COLUMN_BITMASK = 2L;
+	public static final long EXTERNALREFERENCECODE_COLUMN_BITMASK = 2L;
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
+	 */
+	@Deprecated
+	public static final long UUID_COLUMN_BITMASK = 4L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
 	 *		#getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long SXPBLUEPRINTID_COLUMN_BITMASK = 4L;
+	public static final long SXPBLUEPRINTID_COLUMN_BITMASK = 8L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
@@ -251,34 +259,6 @@ public class SXPBlueprintModelImpl
 		return _attributeSetterBiConsumers;
 	}
 
-	private static Function<InvocationHandler, SXPBlueprint>
-		_getProxyProviderFunction() {
-
-		Class<?> proxyClass = ProxyUtil.getProxyClass(
-			SXPBlueprint.class.getClassLoader(), SXPBlueprint.class,
-			ModelWrapper.class);
-
-		try {
-			Constructor<SXPBlueprint> constructor =
-				(Constructor<SXPBlueprint>)proxyClass.getConstructor(
-					InvocationHandler.class);
-
-			return invocationHandler -> {
-				try {
-					return constructor.newInstance(invocationHandler);
-				}
-				catch (ReflectiveOperationException
-							reflectiveOperationException) {
-
-					throw new InternalError(reflectiveOperationException);
-				}
-			};
-		}
-		catch (NoSuchMethodException noSuchMethodException) {
-			throw new InternalError(noSuchMethodException);
-		}
-	}
-
 	private static final Map<String, Function<SXPBlueprint, Object>>
 		_attributeGetterFunctions;
 	private static final Map<String, BiConsumer<SXPBlueprint, Object>>
@@ -298,6 +278,12 @@ public class SXPBlueprintModelImpl
 		attributeGetterFunctions.put("uuid", SXPBlueprint::getUuid);
 		attributeSetterBiConsumers.put(
 			"uuid", (BiConsumer<SXPBlueprint, String>)SXPBlueprint::setUuid);
+		attributeGetterFunctions.put(
+			"externalReferenceCode", SXPBlueprint::getExternalReferenceCode);
+		attributeSetterBiConsumers.put(
+			"externalReferenceCode",
+			(BiConsumer<SXPBlueprint, String>)
+				SXPBlueprint::setExternalReferenceCode);
 		attributeGetterFunctions.put(
 			"sxpBlueprintId", SXPBlueprint::getSXPBlueprintId);
 		attributeSetterBiConsumers.put(
@@ -348,6 +334,10 @@ public class SXPBlueprintModelImpl
 		attributeGetterFunctions.put("title", SXPBlueprint::getTitle);
 		attributeSetterBiConsumers.put(
 			"title", (BiConsumer<SXPBlueprint, String>)SXPBlueprint::setTitle);
+		attributeGetterFunctions.put("version", SXPBlueprint::getVersion);
+		attributeSetterBiConsumers.put(
+			"version",
+			(BiConsumer<SXPBlueprint, String>)SXPBlueprint::setVersion);
 		attributeGetterFunctions.put("status", SXPBlueprint::getStatus);
 		attributeSetterBiConsumers.put(
 			"status",
@@ -416,6 +406,35 @@ public class SXPBlueprintModelImpl
 	@Deprecated
 	public String getOriginalUuid() {
 		return getColumnOriginalValue("uuid_");
+	}
+
+	@JSON
+	@Override
+	public String getExternalReferenceCode() {
+		if (_externalReferenceCode == null) {
+			return "";
+		}
+		else {
+			return _externalReferenceCode;
+		}
+	}
+
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_externalReferenceCode = externalReferenceCode;
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getColumnOriginalValue(String)}
+	 */
+	@Deprecated
+	public String getOriginalExternalReferenceCode() {
+		return getColumnOriginalValue("externalReferenceCode");
 	}
 
 	@JSON
@@ -828,6 +847,26 @@ public class SXPBlueprintModelImpl
 
 	@JSON
 	@Override
+	public String getVersion() {
+		if (_version == null) {
+			return "";
+		}
+		else {
+			return _version;
+		}
+	}
+
+	@Override
+	public void setVersion(String version) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_version = version;
+	}
+
+	@JSON
+	@Override
 	public int getStatus() {
 		return _status;
 	}
@@ -1139,6 +1178,7 @@ public class SXPBlueprintModelImpl
 
 		sxpBlueprintImpl.setMvccVersion(getMvccVersion());
 		sxpBlueprintImpl.setUuid(getUuid());
+		sxpBlueprintImpl.setExternalReferenceCode(getExternalReferenceCode());
 		sxpBlueprintImpl.setSXPBlueprintId(getSXPBlueprintId());
 		sxpBlueprintImpl.setCompanyId(getCompanyId());
 		sxpBlueprintImpl.setUserId(getUserId());
@@ -1150,6 +1190,7 @@ public class SXPBlueprintModelImpl
 		sxpBlueprintImpl.setElementInstancesJSON(getElementInstancesJSON());
 		sxpBlueprintImpl.setSchemaVersion(getSchemaVersion());
 		sxpBlueprintImpl.setTitle(getTitle());
+		sxpBlueprintImpl.setVersion(getVersion());
 		sxpBlueprintImpl.setStatus(getStatus());
 		sxpBlueprintImpl.setStatusByUserId(getStatusByUserId());
 		sxpBlueprintImpl.setStatusByUserName(getStatusByUserName());
@@ -1167,6 +1208,8 @@ public class SXPBlueprintModelImpl
 		sxpBlueprintImpl.setMvccVersion(
 			this.<Long>getColumnOriginalValue("mvccVersion"));
 		sxpBlueprintImpl.setUuid(this.<String>getColumnOriginalValue("uuid_"));
+		sxpBlueprintImpl.setExternalReferenceCode(
+			this.<String>getColumnOriginalValue("externalReferenceCode"));
 		sxpBlueprintImpl.setSXPBlueprintId(
 			this.<Long>getColumnOriginalValue("sxpBlueprintId"));
 		sxpBlueprintImpl.setCompanyId(
@@ -1187,6 +1230,8 @@ public class SXPBlueprintModelImpl
 		sxpBlueprintImpl.setSchemaVersion(
 			this.<String>getColumnOriginalValue("schemaVersion"));
 		sxpBlueprintImpl.setTitle(this.<String>getColumnOriginalValue("title"));
+		sxpBlueprintImpl.setVersion(
+			this.<String>getColumnOriginalValue("version"));
 		sxpBlueprintImpl.setStatus(
 			this.<Integer>getColumnOriginalValue("status"));
 		sxpBlueprintImpl.setStatusByUserId(
@@ -1283,6 +1328,18 @@ public class SXPBlueprintModelImpl
 			sxpBlueprintCacheModel.uuid = null;
 		}
 
+		sxpBlueprintCacheModel.externalReferenceCode =
+			getExternalReferenceCode();
+
+		String externalReferenceCode =
+			sxpBlueprintCacheModel.externalReferenceCode;
+
+		if ((externalReferenceCode != null) &&
+			(externalReferenceCode.length() == 0)) {
+
+			sxpBlueprintCacheModel.externalReferenceCode = null;
+		}
+
 		sxpBlueprintCacheModel.sxpBlueprintId = getSXPBlueprintId();
 
 		sxpBlueprintCacheModel.companyId = getCompanyId();
@@ -1358,6 +1415,14 @@ public class SXPBlueprintModelImpl
 			sxpBlueprintCacheModel.title = null;
 		}
 
+		sxpBlueprintCacheModel.version = getVersion();
+
+		String version = sxpBlueprintCacheModel.version;
+
+		if ((version != null) && (version.length() == 0)) {
+			sxpBlueprintCacheModel.version = null;
+		}
+
 		sxpBlueprintCacheModel.status = getStatus();
 
 		sxpBlueprintCacheModel.statusByUserId = getStatusByUserId();
@@ -1431,46 +1496,18 @@ public class SXPBlueprintModelImpl
 		return sb.toString();
 	}
 
-	@Override
-	public String toXmlString() {
-		Map<String, Function<SXPBlueprint, Object>> attributeGetterFunctions =
-			getAttributeGetterFunctions();
-
-		StringBundler sb = new StringBundler(
-			(5 * attributeGetterFunctions.size()) + 4);
-
-		sb.append("<model><model-name>");
-		sb.append(getModelClassName());
-		sb.append("</model-name>");
-
-		for (Map.Entry<String, Function<SXPBlueprint, Object>> entry :
-				attributeGetterFunctions.entrySet()) {
-
-			String attributeName = entry.getKey();
-			Function<SXPBlueprint, Object> attributeGetterFunction =
-				entry.getValue();
-
-			sb.append("<column><column-name>");
-			sb.append(attributeName);
-			sb.append("</column-name><column-value><![CDATA[");
-			sb.append(attributeGetterFunction.apply((SXPBlueprint)this));
-			sb.append("]]></column-value></column>");
-		}
-
-		sb.append("</model>");
-
-		return sb.toString();
-	}
-
 	private static class EscapedModelProxyProviderFunctionHolder {
 
 		private static final Function<InvocationHandler, SXPBlueprint>
-			_escapedModelProxyProviderFunction = _getProxyProviderFunction();
+			_escapedModelProxyProviderFunction =
+				ProxyUtil.getProxyProviderFunction(
+					SXPBlueprint.class, ModelWrapper.class);
 
 	}
 
 	private long _mvccVersion;
 	private String _uuid;
+	private String _externalReferenceCode;
 	private long _sxpBlueprintId;
 	private long _companyId;
 	private long _userId;
@@ -1485,6 +1522,7 @@ public class SXPBlueprintModelImpl
 	private String _schemaVersion;
 	private String _title;
 	private String _titleCurrentLanguageId;
+	private String _version;
 	private int _status;
 	private long _statusByUserId;
 	private String _statusByUserName;
@@ -1521,6 +1559,8 @@ public class SXPBlueprintModelImpl
 
 		_columnOriginalValues.put("mvccVersion", _mvccVersion);
 		_columnOriginalValues.put("uuid_", _uuid);
+		_columnOriginalValues.put(
+			"externalReferenceCode", _externalReferenceCode);
 		_columnOriginalValues.put("sxpBlueprintId", _sxpBlueprintId);
 		_columnOriginalValues.put("companyId", _companyId);
 		_columnOriginalValues.put("userId", _userId);
@@ -1533,6 +1573,7 @@ public class SXPBlueprintModelImpl
 			"elementInstancesJSON", _elementInstancesJSON);
 		_columnOriginalValues.put("schemaVersion", _schemaVersion);
 		_columnOriginalValues.put("title", _title);
+		_columnOriginalValues.put("version", _version);
 		_columnOriginalValues.put("status", _status);
 		_columnOriginalValues.put("statusByUserId", _statusByUserId);
 		_columnOriginalValues.put("statusByUserName", _statusByUserName);
@@ -1564,35 +1605,39 @@ public class SXPBlueprintModelImpl
 
 		columnBitmasks.put("uuid_", 2L);
 
-		columnBitmasks.put("sxpBlueprintId", 4L);
+		columnBitmasks.put("externalReferenceCode", 4L);
 
-		columnBitmasks.put("companyId", 8L);
+		columnBitmasks.put("sxpBlueprintId", 8L);
 
-		columnBitmasks.put("userId", 16L);
+		columnBitmasks.put("companyId", 16L);
 
-		columnBitmasks.put("userName", 32L);
+		columnBitmasks.put("userId", 32L);
 
-		columnBitmasks.put("createDate", 64L);
+		columnBitmasks.put("userName", 64L);
 
-		columnBitmasks.put("modifiedDate", 128L);
+		columnBitmasks.put("createDate", 128L);
 
-		columnBitmasks.put("configurationJSON", 256L);
+		columnBitmasks.put("modifiedDate", 256L);
 
-		columnBitmasks.put("description", 512L);
+		columnBitmasks.put("configurationJSON", 512L);
 
-		columnBitmasks.put("elementInstancesJSON", 1024L);
+		columnBitmasks.put("description", 1024L);
 
-		columnBitmasks.put("schemaVersion", 2048L);
+		columnBitmasks.put("elementInstancesJSON", 2048L);
 
-		columnBitmasks.put("title", 4096L);
+		columnBitmasks.put("schemaVersion", 4096L);
 
-		columnBitmasks.put("status", 8192L);
+		columnBitmasks.put("title", 8192L);
 
-		columnBitmasks.put("statusByUserId", 16384L);
+		columnBitmasks.put("version", 16384L);
 
-		columnBitmasks.put("statusByUserName", 32768L);
+		columnBitmasks.put("status", 32768L);
 
-		columnBitmasks.put("statusDate", 65536L);
+		columnBitmasks.put("statusByUserId", 65536L);
+
+		columnBitmasks.put("statusByUserName", 131072L);
+
+		columnBitmasks.put("statusDate", 262144L);
 
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}

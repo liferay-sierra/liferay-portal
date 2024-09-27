@@ -24,7 +24,7 @@ import com.liferay.portal.kernel.service.LayoutSetPrototypeService;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.site.admin.web.internal.constants.SiteAdminPortletKeys;
-import com.liferay.sites.kernel.util.SitesUtil;
+import com.liferay.sites.kernel.util.Sites;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -46,7 +46,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + SiteAdminPortletKeys.SITE_ADMIN,
 		"mvc.command.name=/site_admin/reset_merge_fail_count_and_merge"
@@ -68,7 +67,7 @@ public class ResetMergeFailCountAndMergeMVCActionCommand
 			_layoutSetPrototypeService.getLayoutSetPrototype(
 				layoutSetPrototypeId);
 
-		SitesUtil.setMergeFailCount(layoutSetPrototype, 0);
+		_sites.setMergeFailCount(layoutSetPrototype, 0);
 
 		long groupId = ParamUtil.getLong(actionRequest, "groupId");
 		boolean privateLayoutSet = ParamUtil.getBoolean(
@@ -77,15 +76,15 @@ public class ResetMergeFailCountAndMergeMVCActionCommand
 		LayoutSet layoutSet = _layoutSetLocalService.getLayoutSet(
 			groupId, privateLayoutSet);
 
-		SitesUtil.resetPrototype(layoutSet);
+		_sites.resetPrototype(layoutSet);
 
-		SitesUtil.mergeLayoutSetPrototypeLayouts(
+		_sites.mergeLayoutSetPrototypeLayouts(
 			_groupLocalService.getGroup(groupId), layoutSet);
 
 		layoutSetPrototype = _layoutSetPrototypeService.getLayoutSetPrototype(
 			layoutSetPrototypeId);
 
-		if (SitesUtil.getMergeFailCount(layoutSetPrototype) > 0) {
+		if (_sites.getMergeFailCount(layoutSetPrototype) > 0) {
 			SessionErrors.add(actionRequest, "resetMergeFailCountAndMerge");
 		}
 	}
@@ -98,5 +97,8 @@ public class ResetMergeFailCountAndMergeMVCActionCommand
 
 	@Reference
 	private LayoutSetPrototypeService _layoutSetPrototypeService;
+
+	@Reference
+	private Sites _sites;
 
 }

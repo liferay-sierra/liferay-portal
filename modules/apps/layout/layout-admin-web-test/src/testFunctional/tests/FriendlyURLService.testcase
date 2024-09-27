@@ -1,4 +1,4 @@
-@component-name = "portal-collaboration"
+@component-name = "portal-lima"
 definition {
 
 	property portal.acceptance = "true";
@@ -29,9 +29,95 @@ definition {
 		}
 	}
 
+	@description = "This ensures that accessing an old friendlyURL in the default language after publishing the new friendly URL will redirect the user to the new URL."
+	@priority = "5"
+	test CanAccessOldFriendlyURLAfterPublishing {
+		var portalURL = PropsUtil.get("portal.url");
+
+		JSONStaging.enableLocalStaging(groupName = "Test Site Name");
+
+		PagesAdmin.openToConfigurePublicPage(
+			groupName = "Test Site Name (Staging)",
+			layoutName = "Test Source Page",
+			site = "false",
+			siteURLKey = "test-site-name-staging");
+
+		PagesAdmin.editFriendlyURL(friendlyURLEdit = "/new-test-page");
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Test Source Page",
+			siteName = "Test Site Name");
+
+		Staging.gotoPublishToLive();
+
+		Staging.publishToLive();
+
+		Navigator.openSpecificURL(url = "${portalURL}/web/test-site-name/test-source-page");
+
+		AssertLocation(value1 = "${portalURL}/en/web/test-site-name/new-test-page");
+
+		AssertVisible(
+			key_pageName = "Test Source Page",
+			locator1 = "Home#PAGE_ACTIVE");
+	}
+
+	@description = "This ensures that accessing an old localized friendlyURL after publishing the new friendly URL will redirect the user to the new URL."
+	@priority = "5"
+	test CanAccessOldLocalizedFriendlyURLAfterPublishing {
+		var portalURL = PropsUtil.get("portal.url");
+
+		JSONStaging.enableLocalStaging(groupName = "Test Site Name");
+
+		PagesAdmin.openToConfigurePublicPage(
+			groupName = "Test Site Name (Staging)",
+			layoutName = "Test Source Page",
+			site = "false",
+			siteURLKey = "test-site-name-staging");
+
+		PagesAdmin.addLocalizedFriendlyURL(
+			friendlyURLLocalizedList = "es-ES",
+			localizedFriendlyURLList = "/pagina-de-prueba",
+			localizedNameList = "Pagina de prueba");
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Test Source Page",
+			siteName = "Test Site Name");
+
+		Staging.gotoPublishToLive();
+
+		Staging.publishToLive();
+
+		PagesAdmin.openToConfigurePublicPage(
+			groupName = "Test Site Name (Staging)",
+			layoutName = "Test Source Page",
+			site = "false",
+			siteURLKey = "test-site-name-staging");
+
+		PagesAdmin.addLocalizedFriendlyURL(
+			friendlyURLLocalizedList = "es-ES",
+			localizedFriendlyURLList = "/nueva-pagina-de-prueba",
+			localizedNameList = "-");
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Test Source Page",
+			siteName = "Test Site Name");
+
+		Staging.gotoPublishToLive();
+
+		Staging.publishToLive();
+
+		Navigator.openSpecificURL(url = "${portalURL}/es/web/test-site-name/pagina-de-prueba");
+
+		AssertLocation(value1 = "${portalURL}/es/web/test-site-name/nueva-pagina-de-prueba");
+
+		AssertVisible(
+			key_pageName = "Pagina de prueba",
+			locator1 = "Home#PAGE_ACTIVE");
+	}
+
 	@description = "This test covers LPS-125475. The default page will be displayed when accessing a page through a language without a specific layout."
 	@priority = "3"
-	test AccessWithSpecificDisabledLanguage {
+	test CanAccessWithSpecificDisabledLanguageAfterSettingLocally {
 		property custom.properties = "locales.enabled=zh_CN,en_US,en_AU,fr_FR,de_DE,it_IT,ja_JP,pt_BR,es_ES${line.separator}locales=zh_CN,en_US,en_AU,fr_FR,de_DE,it_IT,ja_JP,pt_BR,es_ES,ru_RU,pl_PL,sv_SE,hu_HU,ar_SA,nb_NO,hr_HR,fi_FI,nl_NL,cs_CZ";
 
 		var portalURL = PropsUtil.get("portal.url");
@@ -63,26 +149,100 @@ definition {
 
 		AssetPublisherPortlet.configureDisplaySettings(displaySettings = "Set as the Default Asset Publisher for This Page");
 
-		WebContentNavigator.openWebContentAdmin(siteURLKey = "test-site-name");
-
-		WebContentNavigator.gotoAddCP();
+		WebContentNavigator.openToAddBasicArticle(
+			groupName = "Test Site Name",
+			siteURLKey = "test-site-name");
 
 		WebContent.addWithFriendlyURL(
 			friendlyURL = '''link&''',
 			webContentContent = "WC WebContent Content",
 			webContentTitle = "WC WebContent Title");
 
-		WebContentNavigator.gotoEditCP(webContentTitle = "WC WebContent Title");
+		WebContentNavigator.openToEditWCInSite(
+			groupName = "Test Site Name",
+			siteURLKey = "test-site-name",
+			urlTitle = '''link-''',
+			webContentTitle = "WC WebContent Title");
 
 		WebContent.editDisplayPage(
 			pageName = "Test Source Page",
-			pageType = "Public Pages");
+			pageType = "Pages");
 
 		PortletEntry.publish();
 
 		Navigator.openSpecificURL(url = "${portalURL}/web/test-site-name/-/link-");
 
 		AssetPublisherPortlet.viewAssetPG(assetTitle = "WC WebContent Title");
+	}
+
+	@description = "This ensures that a user is redirected to the updated friendlyURL when he accesses the former friendlyURL."
+	@priority = "5"
+	test CanRedirectToUpdatedFriendlyURL {
+		var portalURL = PropsUtil.get("portal.url");
+
+		PagesAdmin.openToConfigurePublicPage(
+			groupName = "Test Site Name",
+			layoutName = "Test Source Page",
+			siteURLKey = "test-site-name");
+
+		PagesAdmin.editFriendlyURL(friendlyURLEdit = "/new-test-page");
+
+		Navigator.openSpecificURL(url = "${portalURL}/web/test-site-name/test-source-page");
+
+		AssertLocation(value1 = "${portalURL}/en/web/test-site-name/new-test-page");
+
+		AssertVisible(
+			key_pageName = "Test Source Page",
+			locator1 = "Home#PAGE_ACTIVE");
+	}
+
+	@description = "This ensures that a user is redirected to the updated localized friendlyURL when he accesses the former localized friendlyURL."
+	@priority = "5"
+	test CanRedirectToUpdatedLocalizedFriendlyURL {
+		var portalURL = PropsUtil.get("portal.url");
+
+		PagesAdmin.openToConfigurePublicPage(
+			groupName = "Test Site Name",
+			layoutName = "Test Source Page",
+			siteURLKey = "test-site-name");
+
+		PagesAdmin.addLocalizedFriendlyURL(
+			friendlyURLLocalizedList = "es-ES,es-ES",
+			localizedFriendlyURLList = "/pagina-de-prueba,/nueva-pagina-de-prueba",
+			localizedNameList = "Pagina de prueba,-");
+
+		Navigator.openSpecificURL(url = "${portalURL}/es/web/test-site-name/pagina-de-prueba");
+
+		AssertLocation(value1 = "${portalURL}/es/web/test-site-name/nueva-pagina-de-prueba");
+
+		AssertVisible(
+			key_pageName = "Pagina de prueba",
+			locator1 = "Home#PAGE_ACTIVE");
+	}
+
+	@description = "This ensures that the old friendlyURL can be removed from the history."
+	@priority = "5"
+	test CanRemoveOldFriendlyURL {
+		var portalURL = PropsUtil.get("portal.url");
+
+		JSONLayout.addPublicLayout(
+			groupName = "Test Site Name",
+			layoutName = "Test Page");
+
+		PagesAdmin.openToConfigurePublicPage(
+			groupName = "Test Site Name",
+			layoutName = "Test Page",
+			siteURLKey = "test-site-name");
+
+		PagesAdmin.editFriendlyURL(friendlyURLEdit = "/new-test-page");
+
+		PagesAdmin.gotoFriendlyURLHistory();
+
+		PagesAdmin.removeOldFriendlyURL(oldFriendlyURL = "/test-page");
+
+		Navigator.openSpecificURL(url = "${portalURL}/web/test-site-name/test-page");
+
+		AssertTextPresent(value1 = "The requested resource could not be found.");
 	}
 
 	@description = "This ensures that the friendlyURL of web content can be reset to default."
@@ -114,13 +274,18 @@ definition {
 
 		WebContent.editDisplayPage(
 			pageName = "Test Source Page",
-			pageType = "Public Pages");
+			pageType = "Pages");
 
 		WebContent.editFriendlyURL(webContentFriendlyURL = "friendlyUrl");
 
 		PortletEntry.publish();
 
-		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Article");
+		WebContentNavigator.openToEditWCInSite(
+			groupName = "Test Site Name",
+			siteURLKey = "test-site-name",
+			urlTitle = "friendlyurl",
+			version = "1.1",
+			webContentTitle = "Web Content Article");
 
 		WebContent.editFriendlyURL(webContentFriendlyURL = "web-content-article");
 
@@ -131,139 +296,19 @@ definition {
 		AssetPublisherPortlet.viewAssetPG(assetTitle = "Web Content Article");
 	}
 
-	@description = "This ensures that a previous friendlyURL of web content can be deleted when updating."
-	@priority = "4"
-	test CanViewWCWithLatestFriendlyURL {
-		var portalURL = PropsUtil.get("portal.url");
-
-		JSONLayout.addWidgetToPublicLayout(
-			groupName = "Test Site Name",
-			layoutName = "Test Source Page",
-			widgetName = "Asset Publisher");
-
-		Navigator.openSitePage(
-			pageName = "Test Source Page",
-			siteName = "Test Site Name");
-
-		AssetPublisherPortlet.configureDisplaySettings(displaySettings = "Set as the Default Asset Publisher for This Page");
-
-		WebContentNavigator.openWebContentAdmin(siteURLKey = "test-site-name");
-
-		WebContentNavigator.gotoAddCP();
-
-		WebContent.addWithFriendlyURL(
-			friendlyURL = "friendlyUrl",
-			webContentContent = "WC WebContent Content",
-			webContentTitle = "WC WebContent Title");
-
-		WebContentNavigator.gotoEditCP(webContentTitle = "WC WebContent Title");
-
-		WebContent.editFriendlyURL(webContentFriendlyURL = "editedfriendlyUrl");
-
-		WebContent.editDisplayPage(
-			pageName = "Test Source Page",
-			pageType = "Public Pages");
-
-		PortletEntry.publish();
-
-		Navigator.openSpecificURL(url = "${portalURL}/web/test-site-name/-/friendlyUrl");
-
-		AssertTextEquals(
-			locator1 = "Home#ERROR_MESSAGE_ALERT_ERROR",
-			value1 = "Not Found");
-
-		Navigator.openSpecificURL(url = "${portalURL}/web/test-site-name/-/editedfriendlyUrl");
-
-		AssetPublisherPortlet.viewAssetPG(assetTitle = "WC WebContent Title");
-	}
-
-	@description = "This ensures that a user is redirected to the updated friendlyURL when he accesses the former friendlyURL."
-	@priority = "5"
-	test RedirectToUpdatedFriendlyURL {
-		var portalURL = PropsUtil.get("portal.url");
-
-		PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
-
-		PagesAdmin.gotoPageEllipsisMenuItem(
-			menuItem = "Configure",
-			pageName = "Test Source Page");
-
-		PagesAdmin.editFriendlyURL(friendlyURLEdit = "/new-test-page");
-
-		Navigator.openSpecificURL(url = "${portalURL}/web/test-site-name/test-source-page");
-
-		AssertLocation(value1 = "${portalURL}/en/web/test-site-name/new-test-page");
-
-		AssertVisible(
-			key_pageName = "Test Source Page",
-			locator1 = "Home#PAGE_ACTIVE");
-	}
-
-	@description = "This ensures that a user is redirected to the updated localized friendlyURL when he accesses the former localized friendlyURL."
-	@priority = "5"
-	test RedirectToUpdatedLocalizedFriendlyURL {
-		var portalURL = PropsUtil.get("portal.url");
-
-		PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
-
-		PagesAdmin.gotoPageEllipsisMenuItem(
-			menuItem = "Configure",
-			pageName = "Test Source Page");
-
-		PagesAdmin.addLocalizedFriendlyURL(
-			friendlyURLLocalizedList = "es-ES,es-ES",
-			localizedFriendlyURLList = "/pagina-de-prueba,/nueva-pagina-de-prueba",
-			localizedNameList = "Pagina de prueba,-");
-
-		Navigator.openSpecificURL(url = "${portalURL}/es/web/test-site-name/pagina-de-prueba");
-
-		AssertLocation(value1 = "${portalURL}/es/web/test-site-name/nueva-pagina-de-prueba");
-
-		AssertVisible(
-			key_pageName = "Pagina de prueba",
-			locator1 = "Home#PAGE_ACTIVE");
-	}
-
-	@description = "This ensures that the old friendlyURL can be removed from the history."
-	@priority = "5"
-	test RemoveOldFriendlyURL {
-		var portalURL = PropsUtil.get("portal.url");
-
-		JSONLayout.addPublicLayout(
-			groupName = "Test Site Name",
-			layoutName = "Test Page");
-
-		PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
-
-		PagesAdmin.gotoPageEllipsisMenuItem(
-			menuItem = "Configure",
-			pageName = "Test Page");
-
-		PagesAdmin.editFriendlyURL(friendlyURLEdit = "/new-test-page");
-
-		PagesAdmin.gotoFriendlyURLHistory();
-
-		PagesAdmin.removeOldFriendlyURL(oldFriendlyURL = "/test-page");
-
-		Navigator.openSpecificURL(url = "${portalURL}/web/test-site-name/test-page");
-
-		AssertTextPresent(value1 = "The requested resource could not be found.");
-	}
-
 	@description = "This ensures that the old friendlyURL can be restored from the history."
 	@priority = "5"
-	test RestoreOldFriendlyURL {
+	test CanRestoreOldFriendlyURL {
 		var portalURL = PropsUtil.get("portal.url");
 
 		JSONLayout.addPublicLayout(
 			groupName = "Test Site Name",
 			layoutName = "Test Page");
 
-		PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
-
-		PagesAdmin.gotoPageEllipsisMenuItem(
-			menuItem = "Configure",
-			pageName = "Test Page");
+		PagesAdmin.openToConfigurePublicPage(
+			groupName = "Test Site Name",
+			layoutName = "Test Page",
+			siteURLKey = "test-site-name");
 
 		PagesAdmin.editFriendlyURL(friendlyURLEdit = "/new-test-page");
 
@@ -280,108 +325,17 @@ definition {
 		AssertLocation(value1 = "${portalURL}/web/test-site-name/test-page");
 	}
 
-	@description = "This ensures that accessing an old friendlyURL in the default language after publishing the new friendly URL will redirect the user to the new URL."
-	@priority = "5"
-	test StagingFriendlyURLRedirect {
-		var portalURL = PropsUtil.get("portal.url");
-
-		Staging.openStagingAdmin(siteURLKey = "test-site-name");
-
-		Staging.activateStagingCP(siteName = "Test Site Name");
-
-		PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name-staging");
-
-		PagesAdmin.gotoPageEllipsisMenuItem(
-			menuItem = "Configure",
-			pageName = "Test Source Page");
-
-		PagesAdmin.editFriendlyURL(friendlyURLEdit = "/new-test-page");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Test Source Page",
-			siteName = "Test Site Name");
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		Navigator.openSpecificURL(url = "${portalURL}/web/test-site-name/test-source-page");
-
-		AssertLocation(value1 = "${portalURL}/en/web/test-site-name/new-test-page");
-
-		AssertVisible(
-			key_pageName = "Test Source Page",
-			locator1 = "Home#PAGE_ACTIVE");
-	}
-
-	@description = "This ensures that accessing an old localized friendlyURL after publishing the new friendly URL will redirect the user to the new URL."
-	@priority = "5"
-	test StagingLocalizedFriendlyURLRedirect {
-		var portalURL = PropsUtil.get("portal.url");
-
-		Staging.openStagingAdmin(siteURLKey = "test-site-name");
-
-		Staging.activateStagingCP(siteName = "Test Site Name");
-
-		PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name-staging");
-
-		PagesAdmin.gotoPageEllipsisMenuItem(
-			menuItem = "Configure",
-			pageName = "Test Source Page");
-
-		PagesAdmin.addLocalizedFriendlyURL(
-			friendlyURLLocalizedList = "es-ES",
-			localizedFriendlyURLList = "/pagina-de-prueba",
-			localizedNameList = "Pagina de prueba");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Test Source Page",
-			siteName = "Test Site Name");
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name-staging");
-
-		PagesAdmin.gotoPageEllipsisMenuItem(
-			menuItem = "Configure",
-			pageName = "Test Source Page");
-
-		PagesAdmin.addLocalizedFriendlyURL(
-			friendlyURLLocalizedList = "es-ES",
-			localizedFriendlyURLList = "/nueva-pagina-de-prueba",
-			localizedNameList = "-");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Test Source Page",
-			siteName = "Test Site Name");
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		Navigator.openSpecificURL(url = "${portalURL}/es/web/test-site-name/pagina-de-prueba");
-
-		AssertLocation(value1 = "${portalURL}/es/web/test-site-name/nueva-pagina-de-prueba");
-
-		AssertVisible(
-			key_pageName = "Pagina de prueba",
-			locator1 = "Home#PAGE_ACTIVE");
-	}
-
 	@description = "This ensures that both the active URL and old friendlyURL can be viewed from the history."
 	@priority = "5"
-	test ViewFriendlyURLs {
+	test CanViewFriendlyURLsFromHistory {
 		JSONLayout.addPublicLayout(
 			groupName = "Test Site Name",
 			layoutName = "Test Page");
 
-		PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
-
-		PagesAdmin.gotoPageEllipsisMenuItem(
-			menuItem = "Configure",
-			pageName = "Test Page");
+		PagesAdmin.openToConfigurePublicPage(
+			groupName = "Test Site Name",
+			layoutName = "Test Page",
+			siteURLKey = "test-site-name");
 
 		PagesAdmin.editFriendlyURL(friendlyURLEdit = "/new-test-page");
 
@@ -402,12 +356,11 @@ definition {
 
 	@description = "This test covers LPS-116068. It ensures that both the active URL and old friendlyURL can be viewed from the history of a default page."
 	@priority = "5"
-	test ViewFriendlyURLsViaDefaultPage {
-		PagesAdmin.openPagesAdmin(siteURLKey = "guest");
-
-		PagesAdmin.gotoPageEllipsisMenuItem(
-			menuItem = "Configure",
-			pageName = "Search");
+	test CanViewFriendlyURLsViaDefaultPage {
+		PagesAdmin.openToConfigurePublicPage(
+			groupName = "Guest",
+			layoutName = "Search",
+			siteURLKey = "guest");
 
 		PagesAdmin.editFriendlyURL(friendlyURLEdit = "/new-search-page");
 
@@ -428,14 +381,13 @@ definition {
 
 	@description = "This test covers LPS-119836. It ensures the localized URL with special characters can be escaped correctly and viewed in friendly URL history."
 	@priority = "4"
-	test ViewFriendlyURLWithSpecialCharacters {
+	test CanViewFriendlyURLWithSpecialCharacters {
 		property portal.acceptance = "false";
 
-		PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
-
-		PagesAdmin.gotoPageEllipsisMenuItem(
-			menuItem = "Configure",
-			pageName = "Test Source Page");
+		PagesAdmin.openToConfigurePublicPage(
+			groupName = "Test Site Name",
+			layoutName = "Test Source Page",
+			siteURLKey = "test-site-name");
 
 		PagesAdmin.addLocalizedFriendlyURL(
 			friendlyURLLocalizedList = "es-ES",
@@ -452,11 +404,10 @@ definition {
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "en/web/test-site-name/test-source-page");
 
-		PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
-
-		PagesAdmin.gotoPageEllipsisMenuItem(
-			menuItem = "Configure",
-			pageName = "Test Source Page");
+		PagesAdmin.openToConfigurePublicPage(
+			groupName = "Test Site Name",
+			layoutName = "Test Source Page",
+			siteURLKey = "test-site-name");
 
 		PagesAdmin.addLocalizedFriendlyURL(
 			friendlyURLLocalizedList = "es-ES",
@@ -475,23 +426,20 @@ definition {
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "es/web/test-site-name/test-source-page");
 
-		AssertLocation(value1 = "${portalURL}/es/web/test-site-name/p%C3%A1gina-de-prueba");
-
-		AssertTextNotPresent(value1 = "The requested resource could not be found");
+		AssertLocation(value1 = "${portalURL}/es/web/test-site-name/%5E_%5E");
 	}
 
 	@description = "This ensures that both the localized active URL and old friendlyURL can be viewed from the history."
 	@priority = "5"
-	test ViewLocalizedFriendlyURLs {
+	test CanViewLocalizedFriendlyURLsFromHistory {
 		JSONLayout.addPublicLayout(
 			groupName = "Test Site Name",
 			layoutName = "Test Page");
 
-		PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
-
-		PagesAdmin.gotoPageEllipsisMenuItem(
-			menuItem = "Configure",
-			pageName = "Test Page");
+		PagesAdmin.openToConfigurePublicPage(
+			groupName = "Test Site Name",
+			layoutName = "Test Page",
+			siteURLKey = "test-site-name");
 
 		PagesAdmin.editFriendlyURL(friendlyURLEdit = "/new-test-page");
 
@@ -521,16 +469,15 @@ definition {
 
 	@description = "This ensures that the multiple old friendlyURLs can be viewed from the history. This test also covers the first old friendlyURL is the last one."
 	@priority = "5"
-	test ViewMultipleOldFriendlyURLs {
+	test CanViewMultipleOldFriendlyURLsFromHistory {
 		JSONLayout.addPublicLayout(
 			groupName = "Test Site Name",
 			layoutName = "Test Page");
 
-		PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
-
-		PagesAdmin.gotoPageEllipsisMenuItem(
-			menuItem = "Configure",
-			pageName = "Test Page");
+		PagesAdmin.openToConfigurePublicPage(
+			groupName = "Test Site Name",
+			layoutName = "Test Page",
+			siteURLKey = "test-site-name");
 
 		PagesAdmin.editFriendlyURL(friendlyURLEdit = "/new-test-page");
 
@@ -547,16 +494,15 @@ definition {
 
 	@description = "This ensures that only the active URL can be viewed by default language from the history after localization without friendlyURL."
 	@priority = "5"
-	test ViewURLsAfterLocalizationWithoutFriendlyURL {
+	test CanViewURLsAfterLocalizationWithoutFriendlyURL {
 		JSONLayout.addPublicLayout(
 			groupName = "Test Site Name",
 			layoutName = "Test Page");
 
-		PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
-
-		PagesAdmin.gotoPageEllipsisMenuItem(
-			menuItem = "Configure",
-			pageName = "Test Page");
+		PagesAdmin.openToConfigurePublicPage(
+			groupName = "Test Site Name",
+			layoutName = "Test Page",
+			siteURLKey = "test-site-name");
 
 		PagesAdmin.editFriendlyURL(friendlyURLEdit = "/new-test-page");
 
@@ -577,6 +523,314 @@ definition {
 		PagesAdmin.viewActiveURL(activeURL = "/new-test-page");
 
 		PagesAdmin.viewOldFriendlyURLNotPresent(oldFriendlyURLList = "/test-page");
+	}
+
+	@description = "This ensures that a previous friendlyURL of web content can be deleted when updating."
+	@priority = "4"
+	test CanViewWCWithLatestFriendlyURL {
+		var portalURL = PropsUtil.get("portal.url");
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Test Site Name",
+			layoutName = "Test Source Page",
+			widgetName = "Asset Publisher");
+
+		Navigator.openSitePage(
+			pageName = "Test Source Page",
+			siteName = "Test Site Name");
+
+		AssetPublisherPortlet.configureDisplaySettings(displaySettings = "Set as the Default Asset Publisher for This Page");
+
+		WebContentNavigator.openToAddBasicArticle(
+			groupName = "Test Site Name",
+			siteURLKey = "test-site-name");
+
+		WebContent.addWithFriendlyURL(
+			friendlyURL = "friendlyUrl",
+			webContentContent = "WC WebContent Content",
+			webContentTitle = "WC WebContent Title");
+
+		WebContentNavigator.openToEditWCInSite(
+			groupName = "Test Site Name",
+			siteURLKey = "test-site-name",
+			urlTitle = "friendlyurl",
+			webContentTitle = "Web Content Article");
+
+		WebContent.editFriendlyURL(webContentFriendlyURL = "editedfriendlyUrl");
+
+		WebContent.editDisplayPage(
+			pageName = "Test Source Page",
+			pageType = "Pages");
+
+		PortletEntry.publish();
+
+		Navigator.openSpecificURL(url = "${portalURL}/web/test-site-name/-/friendlyUrl");
+
+		AssertTextEquals(
+			locator1 = "Home#ERROR_MESSAGE_ALERT_ERROR",
+			value1 = "Not Found");
+
+		Navigator.openSpecificURL(url = "${portalURL}/web/test-site-name/-/editedfriendlyUrl");
+
+		AssetPublisherPortlet.viewAssetPG(assetTitle = "WC WebContent Title");
+	}
+
+	@description = "This ensures that the default URL of the document will be displayed when accessing a document stored in the current site asset."
+	@priority = "5"
+	test DefaultURLIsDisplayedWhenAccessingDocumentInCurrentSite {
+		var portalURL = PropsUtil.get("portal.url");
+
+		JSONLayout.addPublicLayout(
+			groupName = "Guest",
+			layoutName = "Test Page");
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Guest",
+			layoutName = "Test Page",
+			widgetName = "Asset Publisher");
+
+		JSONDocument.addFileWithUploadedFile(
+			dmDocumentDescription = "DM Document Description",
+			dmDocumentTitle = "DM Document Title",
+			groupName = "Guest",
+			mimeType = "image/jpeg",
+			sourceFileName = "Document_1.jpg");
+
+		JSONLayoutpagetemplate.addDisplayPageTemplateEntry(
+			contentType = "Document",
+			displayPageTemplateEntryName = "Document DPT",
+			groupName = "Guest",
+			subType = "Basic Document");
+
+		DisplayPageTemplatesAdmin.openDisplayPagesAdmin(siteURLKey = "guest");
+
+		DisplayPageTemplatesAdmin.gotoDisplayPage(displayPageName = "Document DPT");
+
+		PageEditor.publish();
+
+		DisplayPageTemplatesAdmin.markDisplayPageAsDefault(displayPageName = "Document DPT");
+
+		Navigator.gotoPage(pageName = "Test Page");
+
+		AssetPublisherPortlet.configureDynamicAssetSelectionPG(portletName = "Asset Publisher");
+
+		Navigator.gotoPage(pageName = "Test Page");
+
+		AssetPublisherPortlet.clickAssetTitle(assetTitle = "DM Document Title");
+
+		AssertLocation.assertPartialLocation(value1 = "${portalURL}/web/guest/d/dm-document-title");
+	}
+
+	@description = "This ensures that the permanent redirection can be performed when accessing the old friendly URL of a blog entry displayed with a display page template."
+	@priority = "4"
+	test PermanentRedirectionCanBePerformedWhenAccessingBlogOldFriendlyURL {
+		property custom.properties = "locale.prepend.friendly.url.style=0";
+		property portal.acceptance = "false";
+		property test.name.skip.portal.instance = "FriendlyURLService#PermanentRedirectionCanBePerformedWhenAccessingBlogOldFriendlyURL";
+
+		var portalURL = PropsUtil.get("portal.url");
+
+		Redirect.configureFriendlyURLRedirection(redirectionType = "Permanent");
+
+		JSONLayoutpagetemplate.addDisplayPageTemplateEntry(
+			contentType = "Blogs Entry",
+			displayPageTemplateEntryName = "Display Page Name",
+			groupName = "Test Site Name");
+
+		DisplayPageTemplatesAdmin.openDisplayPagesAdmin(siteURLKey = "test-site-name");
+
+		DisplayPageTemplatesAdmin.gotoDisplayPage(displayPageName = "Display Page Name");
+
+		PageEditor.publish();
+
+		DisplayPageTemplatesAdmin.markDisplayPageAsDefault(displayPageName = "Display Page Name");
+
+		JSONBlog.addEntry(
+			entryContent = "Blogs Entry Content",
+			entryTitle = "Blogs Entry Title",
+			groupName = "Test Site Name");
+
+		BlogsNavigator.openToEditEntryInSite(
+			entryTitle = "Blogs Entry Title",
+			groupName = "Test Site Name",
+			siteURLKey = "test-site-name");
+
+		Panel.expandPanel(panel = "Configuration");
+
+		BlogsEntry.addCustomURL(customURL = "blogs-entry-new");
+
+		PortletEntry.publish();
+
+		Navigator.openSpecificURL(url = "${portalURL}/web/test-site-name/b/blogs-entry-title");
+
+		AssertLocation(value1 = "${portalURL}/web/test-site-name/b/blogs-entry-new");
+
+		Redirect.viewURLRedirectionType(
+			permanent = "true",
+			url = "${portalURL}/web/test-site-name/b/blogs-entry-title");
+	}
+
+	@description = "This ensures that the permanent redirection can be performed when accessing the old friendly URL of a page."
+	@priority = "4"
+	test PermanentRedirectionCanBePerformedWhenAccessingPageOldFriendlyURL {
+		property custom.properties = "locale.prepend.friendly.url.style=0";
+		property test.name.skip.portal.instance = "FriendlyURLService#PermanentRedirectionCanBePerformedWhenAccessingPageOldFriendlyURL";
+
+		var portalURL = PropsUtil.get("portal.url");
+
+		Redirect.configureFriendlyURLRedirection(
+			redirectionType = "Permanent",
+			systemSettingsInstanceScope = "true");
+
+		PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
+
+		PagesAdmin.gotoPageEllipsisMenuItem(
+			menuItem = "Configure",
+			pageName = "Test Source Page");
+
+		PagesAdmin.editFriendlyURL(friendlyURLEdit = "/new-page-url");
+
+		Navigator.openSpecificURL(url = "${portalURL}/web/test-site-name/test-source-page");
+
+		AssertLocation(value1 = "${portalURL}/web/test-site-name/new-page-url");
+
+		AssertVisible(
+			key_pageName = "Test Source Page",
+			locator1 = "Home#PAGE_ACTIVE");
+
+		Redirect.viewURLRedirectionType(
+			permanent = "true",
+			url = "${portalURL}/web/test-site-name/test-source-page");
+	}
+
+	@description = "This ensures that the temporary redirection can be performed when accessing the old friendly URL of a blog entry displayed with a display page template."
+	@priority = "4"
+	test TemporaryRedirectionCanBePerformedWhenAccessingBlogOldFriendlyURL {
+		property custom.properties = "locale.prepend.friendly.url.style=0";
+		property portal.acceptance = "false";
+		property test.name.skip.portal.instance = "FriendlyURLService#TemporaryRedirectionCanBePerformedWhenAccessingBlogOldFriendlyURL";
+
+		var portalURL = PropsUtil.get("portal.url");
+
+		Redirect.configureFriendlyURLRedirection(
+			redirectionType = "Temporary",
+			systemSettingsInstanceScope = "true");
+
+		JSONLayoutpagetemplate.addDisplayPageTemplateEntry(
+			contentType = "Blogs Entry",
+			displayPageTemplateEntryName = "Display Page Name",
+			groupName = "Test Site Name");
+
+		DisplayPageTemplatesAdmin.openDisplayPagesAdmin(siteURLKey = "test-site-name");
+
+		DisplayPageTemplatesAdmin.gotoDisplayPage(displayPageName = "Display Page Name");
+
+		PageEditor.publish();
+
+		DisplayPageTemplatesAdmin.markDisplayPageAsDefault(displayPageName = "Display Page Name");
+
+		JSONBlog.addEntry(
+			entryContent = "Blogs Entry Content",
+			entryTitle = "Blogs Entry Title",
+			groupName = "Test Site Name");
+
+		BlogsNavigator.openToEditEntryInSite(
+			entryTitle = "Blogs Entry Title",
+			groupName = "Test Site Name",
+			siteURLKey = "test-site-name");
+
+		Panel.expandPanel(panel = "Configuration");
+
+		BlogsEntry.addCustomURL(customURL = "blogs-entry-new");
+
+		PortletEntry.publish();
+
+		Navigator.openSpecificURL(url = "${portalURL}/web/test-site-name/b/blogs-entry-title");
+
+		AssertLocation(value1 = "${portalURL}/web/test-site-name/b/blogs-entry-new");
+
+		Redirect.viewURLRedirectionType(
+			temporary = "true",
+			url = "${portalURL}/web/test-site-name/b/blogs-entry-title");
+	}
+
+	@description = "This ensures that the temporary redirection can be performed when accessing the old friendly URL of a page."
+	@priority = "4"
+	test TemporaryRedirectionCanBePerformedWhenAccessingPageOldFriendlyURL {
+		property custom.properties = "locale.prepend.friendly.url.style=0";
+		property test.name.skip.portal.instance = "FriendlyURLService#TemporaryRedirectionCanBePerformedWhenAccessingPageOldFriendlyURL";
+
+		var portalURL = PropsUtil.get("portal.url");
+
+		Redirect.configureFriendlyURLRedirection(redirectionType = "Temporary");
+
+		PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
+
+		PagesAdmin.gotoPageEllipsisMenuItem(
+			menuItem = "Configure",
+			pageName = "Test Source Page");
+
+		PagesAdmin.editFriendlyURL(friendlyURLEdit = "/new-page-url");
+
+		Navigator.openSpecificURL(url = "${portalURL}/web/test-site-name/test-source-page");
+
+		AssertLocation(value1 = "${portalURL}/web/test-site-name/new-page-url");
+
+		AssertVisible(
+			key_pageName = "Test Source Page",
+			locator1 = "Home#PAGE_ACTIVE");
+
+		Redirect.viewURLRedirectionType(
+			temporary = "true",
+			url = "${portalURL}/web/test-site-name/test-source-page");
+	}
+
+	@description = "This ensures that the friendly URL will contain the group info to identify the attribution of the document when accessing other site documents."
+	@priority = "5"
+	test URLIsDisplayedWithGroupWhenAccessingDocumentInOtherSite {
+		var portalURL = PropsUtil.get("portal.url");
+
+		JSONLayout.addPublicLayout(
+			groupName = "Guest",
+			layoutName = "Test Page");
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Guest",
+			layoutName = "Test Page",
+			widgetName = "Asset Publisher");
+
+		JSONDocument.addFileWithUploadedFile(
+			dmDocumentDescription = "DM Document Description",
+			dmDocumentTitle = "DM Document Title",
+			groupName = "Test Site Name",
+			mimeType = "image/jpeg",
+			sourceFileName = "Document_1.jpg");
+
+		JSONLayoutpagetemplate.addDisplayPageTemplateEntry(
+			contentType = "Document",
+			displayPageTemplateEntryName = "Document DPT",
+			groupName = "Test Site Name",
+			subType = "Basic Document");
+
+		DisplayPageTemplatesAdmin.openDisplayPagesAdmin(siteURLKey = "test-site-name");
+
+		DisplayPageTemplatesAdmin.gotoDisplayPage(displayPageName = "Document DPT");
+
+		PageEditor.publish();
+
+		DisplayPageTemplatesAdmin.markDisplayPageAsDefault(displayPageName = "Document DPT");
+
+		Navigator.gotoPage(pageName = "Test Page");
+
+		AssetPublisherPortlet.configureDynamicAssetSelectionPG(portletName = "Asset Publisher");
+
+		AssetPublisherPortlet.configureScope(otherSite = "Test Site Name");
+
+		Navigator.gotoPage(pageName = "Test Page");
+
+		AssetPublisherPortlet.clickAssetTitle(assetTitle = "DM Document Title");
+
+		AssertLocation.assertPartialLocation(value1 = "${portalURL}/web/test-site-name/d/dm-document-title");
 	}
 
 }

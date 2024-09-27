@@ -20,7 +20,7 @@ definition {
 				vocabularyName = "${vocabularyName}");
 		}
 
-		Button.clickAdd();
+		Button.click(button = "Add");
 
 		SelectFrame.selectFrameTop();
 
@@ -42,17 +42,36 @@ definition {
 
 				SelectFrame(locator1 = "IFrame#MODAL_BODY");
 
-				Pause(locator1 = "3000");
+				Portlet.expandTree();
 
-				AssertClick.assertPartialTextClickAt(
+				Click(
 					key_nodeName = "${linkPageName}",
-					locator1 = "Treeview#NODE_UNSELECTED",
-					value1 = "${linkPageName}");
+					locator1 = "Treeview#NODE_UNSELECTED");
 
 				SelectFrameTop();
 			}
 		}
 		else if ("${sitePageType}" == "Link to URL") {
+			if (isSet(targetType)) {
+				Navigator.gotoNavTab(navTab = "Advanced");
+
+				Select(
+					key_fieldLabel = "Target type",
+					locator1 = "Select#GENERIC_SELECT_FIELD",
+					value1 = "${targetType}");
+			}
+
+			if (isSet(target)) {
+				Navigator.gotoNavTab(navTab = "Advanced");
+
+				Type(
+					key_text = "Target",
+					locator1 = "TextInput#ANY",
+					value1 = "${target}");
+			}
+
+			Navigator.gotoNavUnderline(navUnderline = "General");
+
 			Type(
 				locator1 = "TextInput#URL",
 				value1 = "${pageTypeURL}");
@@ -67,6 +86,8 @@ definition {
 			PagesAdmin.togglePageTemplateInheritChanges(toggleValue = "${inheritChanges}");
 		}
 
+		Navigator.gotoNavUnderline(navUnderline = "General");
+
 		AssertVisible(locator1 = "TextInput#NAME");
 
 		if (isSet(openGraph)) {
@@ -75,14 +96,14 @@ definition {
 				customTitle = "${customTitle}");
 		}
 
-		Button.click(button = "Save");
+		if (isSet(sitePageType) || isSet(inheritChanges) || isSet(openGraph)) {
+			Button.click(button = "Save");
+		}
 	}
 
 	@summary = "Add newly created pages to specified navigation menus or assert that the option to add the pages to navigation menus is missing."
 	macro _addPageToNavigationMenu {
 		if (isSet(navigationMenus)) {
-			Pause(locator1 = "5000");
-
 			for (var navigationMenu : list "${navigationMenus}") {
 				if ("${assertCheckboxMissing}" == "true") {
 					AssertElementNotPresent(
@@ -91,10 +112,6 @@ definition {
 				}
 				else {
 					Check(
-						checkboxName = "${navigationMenu}",
-						locator1 = "Checkbox#ANY_CHECKBOX");
-
-					AssertChecked(
 						checkboxName = "${navigationMenu}",
 						locator1 = "Checkbox#ANY_CHECKBOX");
 				}
@@ -192,8 +209,6 @@ definition {
 
 		LexiconCard.viewCardPresent(card = "${sitePageType}");
 
-		Pause(locator1 = "3000");
-
 		LexiconCard.clickCard(card = "${sitePageType}");
 	}
 
@@ -204,6 +219,12 @@ definition {
 	}
 
 	macro addChildPage {
+		if (IsTextNotEqual(locator1 = "ControlMenu#HEADING", value1 = "Pages")) {
+			ProductMenu.gotoPortlet(
+				category = "Site Builder",
+				portlet = "Pages");
+		}
+
 		MouseOver(
 			key_itemName = "${parentPageName}",
 			locator1 = "PagesAdmin#LIST_GROUP_ITEM");
@@ -220,6 +241,30 @@ definition {
 			pageName = "${childPageName}",
 			pageTemplateName = "${pageTemplateName}",
 			sitePageType = "${sitePageType}");
+	}
+
+	macro addCSSExtensions {
+		WaitForEditable(
+			key_text = "Add CSS Client Extensions",
+			locator1 = "Button#ANY");
+
+		Click(
+			key_text = "Add CSS Client Extensions",
+			locator1 = "Button#ANY");
+
+		SelectFrame(locator1 = "IFrame#MODAL_BODY");
+
+		for (var extensionName : list "${extensionNameList}") {
+			Check(
+				key_listEntry = "${extensionName}",
+				locator1 = "LexiconList#LIST_ENTRY_CHECKBOX");
+		}
+
+		SelectFrameTop();
+
+		Click(
+			key_text = "Add",
+			locator1 = "Modal#MODAL_FOOTER_BUTTON");
 	}
 
 	macro addJavaScript {
@@ -243,6 +288,32 @@ definition {
 		AssertClickNoError(
 			locator1 = "Button#SAVE",
 			value1 = "Save");
+	}
+
+	macro addJavaScriptExtensions {
+		WaitForEditable(
+			key_text = "Add JavaScript Client Extensions",
+			locator1 = "Button#ANY");
+
+		Click(
+			key_text = "Add JavaScript Client Extensions",
+			locator1 = "Button#ANY");
+
+		MenuItem.click(menuItem = "${insertion}");
+
+		SelectFrame(locator1 = "IFrame#MODAL_BODY");
+
+		for (var extensionName : list "${extensionNameList}") {
+			Check(
+				key_listEntry = "${extensionName}",
+				locator1 = "LexiconList#LIST_ENTRY_CHECKBOX");
+		}
+
+		SelectFrameTop();
+
+		Click(
+			key_text = "Add",
+			locator1 = "Modal#MODAL_FOOTER_BUTTON");
 	}
 
 	macro addLocalizedCanonicalURL {
@@ -277,6 +348,7 @@ definition {
 			PortletEntry.save();
 
 			var i = ${i} + 1;
+
 			var i = StringUtil.valueOf("${i}");
 		}
 	}
@@ -311,6 +383,7 @@ definition {
 			}
 
 			var i = ${i} + 1;
+
 			var i = StringUtil.valueOf("${i}");
 		}
 	}
@@ -330,6 +403,7 @@ definition {
 				localizedName = "${localizedName}");
 
 			var i = ${i} + 1;
+
 			var i = StringUtil.valueOf("${i}");
 		}
 
@@ -371,7 +445,36 @@ definition {
 			pageTypeURL = "${pageTypeURL}",
 			portlet = "${portlet}",
 			sitePageType = "${sitePageType}",
+			target = "${target}",
+			targetType = "${targetType}",
 			vocabularyName = "${vocabularyName}");
+	}
+
+	macro addPageUnderSitePagesVariation {
+		LexiconEntry.gotoAddMenuItem(menuItem = "Page");
+
+		WaitForPageLoad();
+
+		PagesAdmin._selectPageType(
+			collectionName = "${collectionName}",
+			pageTemplateName = "${pageTemplateName}",
+			sitePageType = "${sitePageType}");
+
+		SelectFrame(locator1 = "IFrame#MODAL_BODY");
+
+		PortletEntry.inputName(name = "${pageName}");
+
+		Button.click(button = "Add");
+
+		SelectFrame.selectFrameTop();
+
+		VerifyElementPresent(locator1 = "Message#SUCCESS");
+
+		AssertVisible(locator1 = "TextInput#NAME");
+
+		Button.click(button = "Save");
+
+		WaitForSPARefresh();
 	}
 
 	macro addPrivateChildPage {
@@ -481,6 +584,8 @@ definition {
 	macro addPublicPageUnderSitePagesVariation {
 		LexiconEntry.gotoAddMenuItem(menuItem = "Public Page");
 
+		WaitForPageLoad();
+
 		PagesAdmin._selectPageType(
 			collectionName = "${collectionName}",
 			pageTemplateName = "${pageTemplateName}",
@@ -490,7 +595,7 @@ definition {
 
 		PortletEntry.inputName(name = "${pageName}");
 
-		Button.clickAdd();
+		Button.click(button = "Add");
 
 		SelectFrame.selectFrameTop();
 
@@ -501,6 +606,24 @@ definition {
 		Button.click(button = "Save");
 
 		WaitForSPARefresh();
+	}
+
+	macro addThemeCSSExtension {
+		WaitForEditable(
+			key_text = "Client Extension",
+			locator1 = "TextInput#ANY");
+
+		Click(
+			key_text = "Client Extension",
+			locator1 = "TextInput#ANY");
+
+		SelectFrame(locator1 = "IFrame#MODAL_BODY");
+
+		Click(
+			key_listEntry = "${extensionName}",
+			locator1 = "LexiconList#LIST_ENTRY_TITLE");
+
+		SelectFrameTop();
 	}
 
 	macro cannotDeletePagesAssociatedWithSiteTemplate {
@@ -523,7 +646,7 @@ definition {
 		PortletEntry.selectAll();
 
 		AssertElementPresent(
-			key_text = "times-circle",
+			key_text = "trash",
 			locator1 = "Icon#ANY_DISABLED");
 	}
 
@@ -544,13 +667,24 @@ definition {
 	}
 
 	macro changeSiteCurrentTheme {
-		PagesAdmin.togglePrivacy(privacy = "${privacy}");
+		WaitForPageLoad();
 
-		Click(
-			key_pageName = "${privacy}",
-			locator1 = "Icon#COG_PAGE");
+		Click.waitForMenuToggleJSClick(locator1 = "Icon#HEADER_VERTICAL_ELLIPSIS");
+
+		if (IsElementPresent(key_menuItem = "Configuration", locator1 = "MenuItem#DROPDOWN_MENU_ITEM")) {
+			DropdownMenuItem.click(menuItem = "Configuration");
+		}
+		else {
+			PagesAdmin.togglePrivacy(privacy = "${privacy}");
+
+			Click(
+				key_pageName = "${privacy}",
+				locator1 = "Icon#COG_PAGE");
+		}
 
 		Navigator.gotoNavTab(navTab = "Look and Feel");
+
+		Panel.expandPanel(panel = "Look and Feel");
 
 		Theme.changeCurrentTheme(themeName = "${themeName}");
 
@@ -620,6 +754,18 @@ definition {
 		PortletEntry.save();
 	}
 
+	macro convertToContentPageByIcon {
+		for (var pageName : list "${pageNameList}") {
+			PagesAdmin.selectPageItem(pageName = "${pageName}");
+		}
+
+		ClickNoError(
+			key_text = "page",
+			locator1 = "ManagementBar#ANY_ICON");
+
+		AssertConfirm(value1 = "Are you sure you want to convert the selected pages?");
+	}
+
 	macro deleteFriendlyURL {
 		Navigator.gotoNavTab(navTab = "General");
 
@@ -670,20 +816,60 @@ definition {
 			key_pageName = "${pageName}",
 			locator1 = "PagesAdmin#LIST_GROUP_ITEM_ELLIPSIS_ICON");
 
-		MenuItem.clickNoError(menuItem = "Delete");
+		MenuItem.click(menuItem = "Delete");
 
 		if (isSet(hasChidren) && isSet(hasScopeGroup)) {
-			AssertConfirm(value1 = "Are you sure you want to delete the page &quot;${pageName}&quot;? This page serves as a scope for content and also contains child pages. Any content scoped to this page and child pages will also be removed.");
+			AssertTextEquals(
+				locator1 = "Modal#BODY",
+				value1 = "Are you sure you want to delete the page \"${pageName}\"? This page serves as a scope for content and also contains child pages. Any content scoped to this page and child pages will also be removed.");
 		}
 		else if (isSet(hasChildren)) {
-			AssertConfirm(value1 = "Are you sure you want to delete the page &quot;${pageName}&quot;? This page contains child pages that will also be removed.");
+			AssertTextEquals(
+				locator1 = "Modal#BODY",
+				value1 = "Are you sure you want to delete the page \"${pageName}\"? This page contains child pages that will also be removed.");
 		}
 		else if (isSet(hasScopeGroup)) {
-			AssertConfirm(value1 = "Are you sure you want to delete the page &quot;${pageName}&quot;? This page serves as a scope for content. Any content that is scoped to this page will also be removed.");
+			AssertTextEquals(
+				locator1 = "Modal#BODY",
+				value1 = "Are you sure you want to delete the page \"${pageName}\"? This page serves as a scope for content. Any content that is scoped to this page will also be removed.");
 		}
 		else {
-			AssertConfirm(value1 = "Are you sure you want to delete the page &quot;${pageName}&quot;? It will be removed immediately.");
+			AssertTextEquals(
+				locator1 = "Modal#BODY",
+				value1 = "Are you sure you want to delete the page \"${pageName}\"? It will be removed immediately.");
 		}
+
+		Click(
+			key_text = "Delete",
+			locator1 = "Modal#MODAL_FOOTER_BUTTON");
+
+		if (isSet(failure)) {
+			if (IsElementPresent(locator1 = "Message#ERROR_2")) {
+				Alert.viewRequestFailedToComplete();
+
+				AssertTextEquals(
+					locator1 = "Message#ERROR_2",
+					value1 = "${failure}");
+			}
+			else {
+				AssertTextEquals(
+					locator1 = "Message#ERROR",
+					value1 = "${failure}");
+			}
+		}
+		else {
+			Alert.viewSuccessMessage();
+		}
+	}
+
+	macro discardDraft {
+		WaitForPageLoad();
+
+		PagesAdmin.openPageEllipsisMenu(pageName = "${pageName}");
+
+		MenuItem.clickNoError(menuItem = "Discard Draft");
+
+		AssertConfirm(value1 = "Are you sure you want to discard the current draft and apply the latest published changes?");
 
 		if (isSet(failure)) {
 			if (IsElementPresent(locator1 = "Message#ERROR_2")) {
@@ -877,11 +1063,39 @@ definition {
 
 	macro openPagesAdmin {
 		var siteURLKey = StringUtil.replace("${siteURLKey}", " ", "-");
+
 		var siteURLKey = StringUtil.lowerCase("${siteURLKey}");
 
 		Navigator.openWithAppendToBaseURL(
 			baseURL = "${baseURL}",
 			urlAppend = "group/${siteURLKey}/~/control_panel/manage?p_p_id=com_liferay_layout_admin_web_portlet_GroupPagesPortlet");
+	}
+
+	@summary = "You can use this navigation when you need to access the configuration quickly without checking the UI"
+	macro openToConfigurePublicPage {
+		var baseURL = "${baseURL}";
+
+		if (!(isSet(baseURL))) {
+			var baseURL = PropsUtil.get("portal.url");
+		}
+
+		var plid = JSONLayout.getPlid(
+			groupName = "${groupName}",
+			layoutName = "${layoutName}",
+			privateLayout = "${privateLayout}",
+			site = "${site}");
+
+		if (!(isSet(site))) {
+			var site = "true";
+		}
+
+		var groupId = JSONLayoutSetter.setGroupId(
+			groupName = "${groupName}",
+			site = "${site}");
+
+		Navigator.openWithAppendToBaseURL(
+			baseURL = "${baseURL}",
+			urlAppend = "group/${siteURLKey}/~/control_panel/manage?p_p_id=com_liferay_layout_admin_web_portlet_GroupPagesPortlet&_com_liferay_layout_admin_web_portlet_GroupPagesPortlet_mvcRenderCommandName=%2Flayout_admin%2Fedit_layout&_com_liferay_layout_admin_web_portlet_GroupPagesPortlet_portletResource=com_liferay_layout_admin_web_portlet_GroupPagesPortlet&_com_liferay_layout_admin_web_portlet_GroupPagesPortlet_groupId=${groupId}&_com_liferay_layout_admin_web_portlet_GroupPagesPortlet_privateLayout=false&p_r_p_selPlid=${plid}");
 	}
 
 	macro removeOldFriendlyURL {
@@ -927,6 +1141,45 @@ definition {
 		PortletEntry.save();
 	}
 
+	macro selectFavicon {
+		WaitForEditable(
+			key_text = "Change Favicon",
+			locator1 = "Button#ANY");
+
+		Click(
+			key_text = "Change Favicon",
+			locator1 = "Button#ANY");
+
+		if (isSet(imageFileName)) {
+			ItemSelector.selectDMImage(imageFileName = "${imageFileName}");
+		}
+		else {
+			ItemSelector.uploadFile(uploadFileName = "${uploadFileName}");
+		}
+
+		SelectFrameTop();
+	}
+
+	macro selectFaviconExtension {
+		WaitForEditable(
+			key_text = "Change Favicon",
+			locator1 = "Button#ANY");
+
+		Click(
+			key_text = "Change Favicon",
+			locator1 = "Button#ANY");
+
+		SelectFrame(locator1 = "IFrame#MODAL_BODY");
+
+		Navigator.gotoNavTab(navTab = "Client Extension");
+
+		Click(
+			key_listEntry = "${extensionName}",
+			locator1 = "LexiconList#LIST_ENTRY_TITLE");
+
+		SelectFrameTop();
+	}
+
 	macro selectPageItem {
 		var key_pageName = "${pageName}";
 
@@ -937,48 +1190,107 @@ definition {
 	macro tearDownCP {
 		PagesAdmin.openPagesAdmin(siteURLKey = "guest");
 
-		Pause(locator1 = "5000");
+		WaitForPageLoad();
 
-		while (IsElementPresent(key_index = "4", locator1 = "PagesAdmin#LIST_GROUP_ITEM_ROW_ELLIPSIS")) {
-			Click.waitForMenuToggleJSClick(
-				key_index = "4",
+		Click.waitForMenuToggleJSClick(locator1 = "Icon#HEADER_VERTICAL_ELLIPSIS");
+
+		if (IsElementPresent(key_menuItem = "Configuration", locator1 = "MenuItem#DROPDOWN_MENU_ITEM")) {
+			while (IsElementPresent(key_index = "3", locator1 = "PagesAdmin#LIST_GROUP_ITEM_ROW_ELLIPSIS")) {
+				Click.waitForMenuToggleJSClick(
+					key_index = "3",
+					locator1 = "PagesAdmin#LIST_GROUP_ITEM_ROW_ELLIPSIS");
+
+				MenuItem.click(menuItem = "Delete");
+
+				AssertTextEquals.assertPartialText(
+					locator1 = "Modal#BODY",
+					value1 = "Are you sure you want to delete the page");
+
+				Click(
+					key_text = "Delete",
+					locator1 = "Modal#MODAL_FOOTER_BUTTON");
+			}
+
+			AssertElementNotPresent(
+				key_index = "3",
 				locator1 = "PagesAdmin#LIST_GROUP_ITEM_ROW_ELLIPSIS");
 
-			MenuItem.clickNoError(menuItem = "Delete");
+			while (IsElementPresent(key_pageName = "Home", locator1 = "PagesAdmin#LIST_GROUP_ITEM_CHILD_INDICATOR")) {
+				PagesAdmin.expandPageTree(depth = "1");
 
-			AssertConfirm(value1 = "Are you sure you want to delete this page?");
+				Click.waitForMenuToggleJSClick(
+					key_index = "3",
+					locator1 = "PagesAdmin#LIST_GROUP_ITEM_ROW_ELLIPSIS");
+
+				MenuItem.click(menuItem = "Delete");
+
+				AssertTextEquals.assertPartialText(
+					locator1 = "Modal#BODY",
+					value1 = "Are you sure you want to delete the page");
+
+				Click(
+					key_text = "Delete",
+					locator1 = "Modal#MODAL_FOOTER_BUTTON");
+
+				AssertElementNotPresent(
+					key_index = "3",
+					locator1 = "PagesAdmin#LIST_GROUP_ITEM_ROW_ELLIPSIS");
+			}
 		}
+		else {
+			while (IsElementPresent(key_index = "4", locator1 = "PagesAdmin#LIST_GROUP_ITEM_ROW_ELLIPSIS")) {
+				Click.waitForMenuToggleJSClick(
+					key_index = "4",
+					locator1 = "PagesAdmin#LIST_GROUP_ITEM_ROW_ELLIPSIS");
 
-		AssertElementNotPresent(
-			key_index = "4",
-			locator1 = "PagesAdmin#LIST_GROUP_ITEM_ROW_ELLIPSIS");
+				MenuItem.click(menuItem = "Delete");
 
-		while (IsElementPresent(key_pageName = "Home", locator1 = "PagesAdmin#LIST_GROUP_ITEM_CHILD_INDICATOR")) {
-			PagesAdmin.expandPageTree(depth = "2");
+				AssertTextEquals.assertPartialText(
+					locator1 = "Modal#BODY",
+					value1 = "Are you sure you want to delete the page");
 
-			Click.waitForMenuToggleJSClick(
-				key_index = "4",
-				locator1 = "PagesAdmin#LIST_GROUP_ITEM_ROW_ELLIPSIS");
-
-			MenuItem.clickNoError(menuItem = "Delete");
-
-			AssertConfirm(value1 = "Are you sure you want to delete this? It will be deleted immediately.");
+				Click(
+					key_text = "Delete",
+					locator1 = "Modal#MODAL_FOOTER_BUTTON");
+			}
 
 			AssertElementNotPresent(
 				key_index = "4",
 				locator1 = "PagesAdmin#LIST_GROUP_ITEM_ROW_ELLIPSIS");
+
+			while (IsElementPresent(key_pageName = "Home", locator1 = "PagesAdmin#LIST_GROUP_ITEM_CHILD_INDICATOR")) {
+				PagesAdmin.expandPageTree(depth = "2");
+
+				Click.waitForMenuToggleJSClick(
+					key_index = "4",
+					locator1 = "PagesAdmin#LIST_GROUP_ITEM_ROW_ELLIPSIS");
+
+				MenuItem.click(menuItem = "Delete");
+
+				AssertTextEquals.assertPartialText(
+					locator1 = "Modal#BODY",
+					value1 = "Are you sure you want to delete the page");
+
+				Click(
+					key_text = "Delete",
+					locator1 = "Modal#MODAL_FOOTER_BUTTON");
+
+				AssertElementNotPresent(
+					key_index = "4",
+					locator1 = "PagesAdmin#LIST_GROUP_ITEM_ROW_ELLIPSIS");
+			}
 		}
 	}
 
 	macro toggleHiddenFromNavigationMenuWidget {
 		if ("${toggleValue}" == "enable") {
 			Check.checkToggleSwitch(
-				key_toggleSwitchLabel = "Hidden from Navigation Menu Widget",
+				key_toggleSwitchLabel = "Hidden from Menu Display",
 				locator1 = "ToggleSwitch#ANY_TOGGLE_SWITCH");
 		}
 		else if ("${toggleValue}" == "disable") {
 			Uncheck.uncheckToggleSwitch(
-				key_toggleSwitchLabel = "Hidden from Navigation Menu Widget",
+				key_toggleSwitchLabel = "Hidden from Menu Display",
 				locator1 = "ToggleSwitch#ANY_TOGGLE_SWITCH");
 		}
 		else {
@@ -1021,11 +1333,15 @@ definition {
 			buttonId = "uploadImage",
 			locator1 = "Button#BUTTON_ID");
 
+		WaitForEditable(locator1 = "TextInput#FILE");
+
 		UploadCommonFile.uploadCommonFileHiddenNoMouseOver(
 			locator1 = "TextInput#FILE",
 			value1 = "${logoFile}");
 
-		Pause(locator1 = "10000");
+		WaitForElementPresent(
+			key_text = "Done",
+			locator1 = "Button#ANY_ENABLED");
 
 		Button.clickDone();
 
@@ -1114,7 +1430,9 @@ definition {
 				portlet = "Pages");
 		}
 
-		PagesAdmin.togglePrivacy(privacy = "${privacy}");
+		if (isSet(privacy)) {
+			PagesAdmin.togglePrivacy(privacy = "${privacy}");
+		}
 
 		AssertElementNotPresent(
 			key_pageName = "${pageName}",
@@ -1128,7 +1446,9 @@ definition {
 				portlet = "Pages");
 		}
 
-		PagesAdmin.togglePrivacy(privacy = "${privacy}");
+		if (isSet(privacy)) {
+			PagesAdmin.togglePrivacy(privacy = "${privacy}");
+		}
 
 		if (isSet(depth)) {
 			PagesAdmin.expandPageTree(depth = "${depth}");

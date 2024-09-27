@@ -46,7 +46,7 @@ import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.exception.NoSuchLayoutException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -96,9 +96,9 @@ import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.ElementHandler;
 import com.liferay.portal.kernel.xml.ElementProcessor;
 import com.liferay.portal.kernel.zip.ZipReader;
-import com.liferay.portal.kernel.zip.ZipReaderFactoryUtil;
+import com.liferay.portal.kernel.zip.ZipReaderFactory;
 import com.liferay.portal.kernel.zip.ZipWriter;
-import com.liferay.portal.kernel.zip.ZipWriterFactoryUtil;
+import com.liferay.portal.kernel.zip.ZipWriterFactory;
 import com.liferay.portal.model.impl.LayoutImpl;
 import com.liferay.staging.configuration.StagingConfiguration;
 
@@ -108,7 +108,6 @@ import java.io.Serializable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -136,16 +135,14 @@ import org.xml.sax.XMLReader;
  */
 @Component(
 	configurationPid = "com.liferay.staging.configuration.StagingConfiguration",
-	immediate = true, service = ExportImportHelper.class
+	service = ExportImportHelper.class
 )
 public class ExportImportHelperImpl implements ExportImportHelper {
 
 	@Override
 	public long[] getAllLayoutIds(long groupId, boolean privateLayout) {
-		List<Layout> layouts = _layoutLocalService.getLayouts(
-			groupId, privateLayout);
-
-		return getLayoutIds(layouts);
+		return getLayoutIds(
+			_layoutLocalService.getLayouts(groupId, privateLayout));
 	}
 
 	@Override
@@ -286,7 +283,7 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 			return layoutIdMap;
 		}
 
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray(layoutIdsJSON);
+		JSONArray jsonArray = _jsonFactory.createJSONArray(layoutIdsJSON);
 
 		for (int i = 0; i < jsonArray.length(); ++i) {
 			JSONObject jsonObject = jsonArray.getJSONObject(i);
@@ -482,7 +479,7 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 			String userIdStrategy = MapUtil.getString(
 				parameterMap, PortletDataHandlerKeys.USER_ID_STRATEGY);
 
-			zipReader = ZipReaderFactoryUtil.getZipReader(file);
+			zipReader = _zipReaderFactory.getZipReader(file);
 
 			PortletDataContext portletDataContext =
 				_portletDataContextFactory.createImportPortletDataContext(
@@ -596,7 +593,7 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 	public String getSelectedLayoutsJSON(
 		long groupId, boolean privateLayout, String selectedNodes) {
 
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 		List<Layout> layouts = _layoutLocalService.getLayouts(
 			groupId, privateLayout, LayoutConstants.DEFAULT_PARENT_LAYOUT_ID);
@@ -1135,63 +1132,13 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 			(_stagingConfiguration.stagingDeleteTempLAROnFailure() &&
 			 _stagingConfiguration.stagingDeleteTempLAROnSuccess())) {
 
-			return ZipWriterFactoryUtil.getZipWriter();
+			return _zipWriterFactory.getZipWriter();
 		}
 
-		return ZipWriterFactoryUtil.getZipWriter(
+		return _zipWriterFactory.getZipWriter(
 			new File(
 				SystemProperties.get(SystemProperties.TMP_DIR) +
 					StringPool.SLASH + fileName));
-	}
-
-	@Reference(unbind = "-")
-	protected void setDlFileEntryLocalService(
-		DLFileEntryLocalService dlFileEntryLocalService) {
-
-		_dlFileEntryLocalService = dlFileEntryLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setGroupLocalService(GroupLocalService groupLocalService) {
-		_groupLocalService = groupLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setLayoutLocalService(
-		LayoutLocalService layoutLocalService) {
-
-		_layoutLocalService = layoutLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setLayoutRevisionLocalService(
-		LayoutRevisionLocalService layoutRevisionLocalService) {
-
-		_layoutRevisionLocalService = layoutRevisionLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setLayoutService(LayoutService layoutService) {
-		_layoutService = layoutService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setPortletLocalService(
-		PortletLocalService portletLocalService) {
-
-		_portletLocalService = portletLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setSystemEventLocalService(
-		SystemEventLocalService systemEventLocalService) {
-
-		_systemEventLocalService = systemEventLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setUserLocalService(UserLocalService userLocalService) {
-		_userLocalService = userLocalService;
 	}
 
 	private Map<String, Boolean> _createAllPortletSetupControlsMap(
@@ -1446,7 +1393,7 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 		boolean includeChildren = true;
 
 		if (ListUtil.isNotEmpty(childLayouts)) {
-			childLayoutsJSONArray = JSONFactoryUtil.createJSONArray();
+			childLayoutsJSONArray = _jsonFactory.createJSONArray();
 
 			for (Layout childLayout : childLayouts) {
 				if (!_populateLayoutsJSON(
@@ -1501,7 +1448,8 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 			StagedModelDataHandlerRegistryUtil.getStagedModelDataHandler(
 				className);
 
-		if (!stagedModelDataHandler.validateReference(
+		if ((stagedModelDataHandler == null) ||
+			!stagedModelDataHandler.validateReference(
 				portletDataContext, element)) {
 
 			MissingReference missingReference = new MissingReference(element);
@@ -1510,11 +1458,10 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 				(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
 					Group.class);
 
-			long groupId = MapUtil.getLong(
-				groupIds,
-				GetterUtil.getLong(element.attributeValue("group-id")));
-
-			missingReference.setGroupId(groupId);
+			missingReference.setGroupId(
+				MapUtil.getLong(
+					groupIds,
+					GetterUtil.getLong(element.attributeValue("group-id"))));
 
 			return missingReference;
 		}
@@ -1528,10 +1475,22 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 	@Reference
 	private ConfigurationProvider _configurationProvider;
 
+	@Reference
 	private DLFileEntryLocalService _dlFileEntryLocalService;
+
+	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
 	private LayoutLocalService _layoutLocalService;
+
+	@Reference
 	private LayoutRevisionLocalService _layoutRevisionLocalService;
+
+	@Reference
 	private LayoutService _layoutService;
 
 	@Reference
@@ -1540,10 +1499,22 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 	@Reference
 	private PortletDataHandlerProvider _portletDataHandlerProvider;
 
+	@Reference
 	private PortletLocalService _portletLocalService;
+
 	private volatile StagingConfiguration _stagingConfiguration;
+
+	@Reference
 	private SystemEventLocalService _systemEventLocalService;
+
+	@Reference
 	private UserLocalService _userLocalService;
+
+	@Reference
+	private ZipReaderFactory _zipReaderFactory;
+
+	@Reference
+	private ZipWriterFactory _zipWriterFactory;
 
 	private class ManifestSummaryElementProcessor implements ElementProcessor {
 
@@ -1561,12 +1532,11 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 			if (elementName.equals("header")) {
 				String exportDateString = element.attributeValue("export-date");
 
-				Date exportDate = GetterUtil.getDate(
-					exportDateString,
-					DateFormatFactoryUtil.getSimpleDateFormat(
-						Time.RFC822_FORMAT));
-
-				_manifestSummary.setExportDate(exportDate);
+				_manifestSummary.setExportDate(
+					GetterUtil.getDate(
+						exportDateString,
+						DateFormatFactoryUtil.getSimpleDateFormat(
+							Time.RFC822_FORMAT)));
 			}
 			else if (elementName.equals("portlet")) {
 				String portletId = element.attributeValue("portlet-id");

@@ -14,6 +14,7 @@
 
 package com.liferay.headless.admin.workflow.internal.resource.v1_0.factory;
 
+import com.liferay.headless.admin.workflow.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.headless.admin.workflow.resource.v1_0.WorkflowInstanceResource;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -33,14 +34,18 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -58,7 +61,10 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @author Javier Gamarra
  * @generated
  */
-@Component(immediate = true, service = WorkflowInstanceResource.Factory.class)
+@Component(
+	property = "resource.locator.key=/headless-admin-workflow/v1.0/WorkflowInstance",
+	service = WorkflowInstanceResource.Factory.class
+)
 @Generated("")
 public class WorkflowInstanceResourceFactoryImpl
 	implements WorkflowInstanceResource.Factory {
@@ -73,9 +79,7 @@ public class WorkflowInstanceResourceFactoryImpl
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (WorkflowInstanceResource)ProxyUtil.newProxyInstance(
-					WorkflowInstanceResource.class.getClassLoader(),
-					new Class<?>[] {WorkflowInstanceResource.class},
+				return _workflowInstanceResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -134,14 +138,32 @@ public class WorkflowInstanceResourceFactoryImpl
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		WorkflowInstanceResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, WorkflowInstanceResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		WorkflowInstanceResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			WorkflowInstanceResource.class.getClassLoader(),
+			WorkflowInstanceResource.class);
+
+		try {
+			Constructor<WorkflowInstanceResource> constructor =
+				(Constructor<WorkflowInstanceResource>)
+					proxyClass.getConstructor(InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -164,7 +186,7 @@ public class WorkflowInstanceResourceFactoryImpl
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		WorkflowInstanceResource workflowInstanceResource =
@@ -190,6 +212,7 @@ public class WorkflowInstanceResourceFactoryImpl
 		workflowInstanceResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		workflowInstanceResource.setRoleLocalService(_roleLocalService);
+		workflowInstanceResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(workflowInstanceResource, arguments);
@@ -205,6 +228,10 @@ public class WorkflowInstanceResourceFactoryImpl
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, WorkflowInstanceResource>
+		_workflowInstanceResourceProxyProviderFunction =
+			_getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -227,9 +254,6 @@ public class WorkflowInstanceResourceFactoryImpl
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -238,6 +262,9 @@ public class WorkflowInstanceResourceFactoryImpl
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

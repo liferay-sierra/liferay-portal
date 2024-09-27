@@ -14,14 +14,14 @@
 
 package com.liferay.portal.workflow.web.internal.portlet.action;
 
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -47,7 +47,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Leonardo Barros
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + WorkflowPortletKeys.CONTROL_PANEL_WORKFLOW,
 		"mvc.command.name=/portal_workflow/deploy_workflow_definition"
@@ -62,7 +61,7 @@ public class DeployWorkflowDefinitionMVCActionCommand
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
-		Map<Locale, String> titleMap = LocalizationUtil.getLocalizationMap(
+		Map<Locale, String> titleMap = localization.getLocalizationMap(
 			actionRequest, "title");
 
 		validateTitle(actionRequest, titleMap);
@@ -127,12 +126,11 @@ public class DeployWorkflowDefinitionMVCActionCommand
 				WorkflowWebKeys.WORKFLOW_PUBLISH_DEFINITION_ACTION));
 
 		if (definitionPublishing) {
-			return LanguageUtil.get(
+			return language.get(
 				resourceBundle, "workflow-published-successfully");
 		}
 
-		return LanguageUtil.get(
-			resourceBundle, "workflow-updated-successfully");
+		return language.get(resourceBundle, "workflow-updated-successfully");
 	}
 
 	protected void validateTitle(
@@ -155,7 +153,7 @@ public class DeployWorkflowDefinitionMVCActionCommand
 				bytes);
 		}
 		catch (WorkflowException workflowException) {
-			String message = LanguageUtil.get(
+			String message = language.get(
 				getResourceBundle(actionRequest),
 				"please-enter-a-valid-definition-before-publishing");
 
@@ -164,7 +162,13 @@ public class DeployWorkflowDefinitionMVCActionCommand
 		}
 	}
 
-	@Reference(target = "(proxy.bean=false)")
+	@Reference
+	protected Language language;
+
+	@Reference
+	protected Localization localization;
+
+	@Reference
 	protected WorkflowDefinitionManager unproxiedWorkflowDefinitionManager;
 
 	private static final Log _log = LogFactoryUtil.getLog(

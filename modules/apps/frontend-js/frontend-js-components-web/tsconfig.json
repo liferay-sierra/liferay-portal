@@ -1,5 +1,5 @@
 {
-	"@generated": "18dd83b8589b2b2687fdf1d16b925ae66e33ab21",
+	"@generated": "769173daa389b2d31ebca83e5d8197a1592bfbb6",
 	"@overrides": {
 	},
 	"@readonly": "** AUTO-GENERATED: DO NOT EDIT OUTSIDE @overrides **",
@@ -13,9 +13,6 @@
 		"moduleResolution": "node",
 		"outDir": "./types",
 		"paths": {
-			"@liferay/frontend-js-react-web": [
-				"../frontend-js-react-web/src/main/resources/META-INF/resources/js/index.ts"
-			],
 			"@liferay/frontend-js-state-web": [
 				"../frontend-js-state-web/src/main/resources/META-INF/resources/index.ts"
 			]
@@ -29,15 +26,15 @@
 			"./node_modules/@types"
 		]
 	},
+	"exclude": [
+		"test/**/*",
+		"**/__tests__/**"
+	],
 	"include": [
 		"src/**/*",
-		"test/**/*",
 		"../../../global.d.ts"
 	],
 	"references": [
-		{
-			"path": "../frontend-js-react-web"
-		},
 		{
 			"path": "../frontend-js-state-web"
 		}

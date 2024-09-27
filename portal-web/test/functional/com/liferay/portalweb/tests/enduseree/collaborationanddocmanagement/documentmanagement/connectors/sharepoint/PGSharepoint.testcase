@@ -1,9 +1,11 @@
 @component-name = "portal-document-management-ee"
 definition {
 
+	// Stop running on release until ISIT-32385 fixed
+
 	property cmis.repository.type = "sharepoint2010";
-	property custom.properties = "session.store.password=true${line.separator}company.security.auth.type=screenName${line.separator}default.layout.template.id=1_column";
-	property osgi.app.includes = "sharepoint-soap";
+	property custom.properties = "session.store.password=true${line.separator}company.security.auth.type=screenName${line.separator}default.layout.template.id=1_column${line.separator}dl.actions.visible=true";
+	property osgi.modules.includes = "sharepoint-soap";
 	property portal.release = "false";
 	property portal.upstream = "true";
 	property test.run.environment = "EE";
@@ -47,21 +49,18 @@ definition {
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(
+		PagesAdmin.addPage(
 			pageName = "Documents and Media Page",
 			sitePageType = "Widget Page");
 
 		PagesAdmin.configurePage(
 			columnName = "1 Column",
 			pageName = "Documents and Media Page",
-			privacy = "Public Pages",
 			sitePageType = "Widget Page");
 
 		Navigator.gotoPage(pageName = "Documents and Media Page");
 
 		Portlet.addPG(portletName = "Documents and Media");
-
-		DMDocument.enableActionsMenuOnPortlet();
 
 		Navigator.gotoPage(pageName = "Documents and Media Page");
 
@@ -77,8 +76,6 @@ definition {
 			roleTitle = "Guest");
 
 		PortletEntry.save();
-
-		DMDocument.enableActionsMenuOnPortlet();
 
 		Navigator.gotoPage(pageName = "Documents and Media Page");
 

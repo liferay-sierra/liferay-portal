@@ -13,12 +13,13 @@
  */
 
 import {
+	DXP_APPLICATION_IDS,
 	VALIDATION_PROPERTIES_MAXIMUM_LENGTH,
 	VALIDATION_PROPERTY_NAME_MAXIMUM_LENGTH,
 	VALIDATION_PROPERTY_VALUE_MAXIMUM_LENGTH,
 } from './constants';
 
-const isValidEvent = ({eventId, eventProps}) => {
+const isValidEvent = ({applicationId, eventId, eventProps}) => {
 	const validationsEventId = _validate([
 		validateIsString('eventId'),
 		validateEmptyString('eventId'),
@@ -29,9 +30,18 @@ const isValidEvent = ({eventId, eventProps}) => {
 		validateEmptyString('eventPropKey'),
 		validateMaxLength(),
 	]);
-	const validationsValue = _validate([
+	const validateValue = [
 		validateMaxLength(VALIDATION_PROPERTY_VALUE_MAXIMUM_LENGTH),
-	]);
+	];
+
+	// Ignore validation by attribute if applicationId is from DXP
+
+	if (!DXP_APPLICATION_IDS.includes(applicationId)) {
+		validateValue.push(validateAttributeType);
+	}
+
+	const validationsValue = _validate(validateValue);
+
 	let errors = [];
 
 	errors = errors.concat(validationsEventId(eventId));
@@ -54,6 +64,20 @@ const isValidEvent = ({eventId, eventProps}) => {
 	}
 
 	return true;
+};
+
+const validateAttributeType = (attributeValue) => {
+	let error = '';
+
+	const valid = ['string', 'number', 'boolean'].includes(
+		typeof attributeValue
+	);
+
+	if (!valid) {
+		error = 'Attribute must be a String, Number, or Boolean.';
+	}
+
+	return error;
 };
 
 const validateEmptyString = (labelField) => (str) => {
@@ -114,6 +138,7 @@ const _showErrors = (errorsArr) =>
 
 export {
 	isValidEvent,
+	validateAttributeType,
 	validateEmptyString,
 	validateMaxLength,
 	validatePropsLength,

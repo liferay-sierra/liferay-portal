@@ -23,7 +23,7 @@ import com.liferay.layout.util.template.LayoutRow;
 import com.liferay.layout.util.template.LayoutTypeSettingsInspectorUtil;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutTemplate;
 import com.liferay.portal.kernel.model.LayoutTypePortlet;
@@ -45,14 +45,14 @@ import org.jsoup.select.Elements;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Rubén Pulido
  */
 @Component(
 	configurationPid = "com.liferay.layout.internal.configuration.LayoutConverterConfiguration",
-	immediate = true, property = "layout.template.id=default",
-	service = LayoutConverter.class
+	property = "layout.template.id=default", service = LayoutConverter.class
 )
 public class DefaultLayoutConverter implements LayoutConverter {
 
@@ -141,7 +141,7 @@ public class DefaultLayoutConverter implements LayoutConverter {
 				typeSettingsUnicodeProperties)) {
 
 			conversionWarningMessages.add(
-				LanguageUtil.get(
+				_language.get(
 					locale,
 					"this-page-uses-nested-applications-widgets.-they-have-" +
 						"been-placed-in-a-single-column-and-may-require-" +
@@ -152,7 +152,7 @@ public class DefaultLayoutConverter implements LayoutConverter {
 				typeSettingsUnicodeProperties)) {
 
 			conversionWarningMessages.add(
-				LanguageUtil.get(
+				_language.get(
 					locale,
 					"this-page-has-customizable-columns.-this-capability-is-" +
 						"not-supported-for-content-pages-and-will-be-lost-if-" +
@@ -166,7 +166,7 @@ public class DefaultLayoutConverter implements LayoutConverter {
 					LayoutTypePortletConstants.LAYOUT_TEMPLATE_ID))) {
 
 			conversionWarningMessages.add(
-				LanguageUtil.get(
+				_language.get(
 					locale,
 					"this-page-uses-a-custom-page-layout.-a-best-effort-" +
 						"conversion-has-been-performed.-verify-the-" +
@@ -175,7 +175,7 @@ public class DefaultLayoutConverter implements LayoutConverter {
 
 		if (!_isLayoutTemplateParseable(layout)) {
 			conversionWarningMessages.add(
-				LanguageUtil.get(
+				_language.get(
 					locale,
 					"this-page-uses-a-custom-page-layout.-all-widgets-have-" +
 						"been-placed-in-a-single-column-and-will-require-" +
@@ -244,6 +244,9 @@ public class DefaultLayoutConverter implements LayoutConverter {
 	}
 
 	private static final String _CSS_CLASS_COLUMN_PREFIX = "col-md-";
+
+	@Reference
+	private Language _language;
 
 	private volatile LayoutConverterConfiguration _layoutConverterConfiguration;
 

@@ -120,7 +120,7 @@ definition {
 
 		User.openUsersAdmin();
 
-		Site.assignUserSitesCP(
+		User.editUserSiteCP(
 			siteName = "Liferay",
 			userScreenName = "user1");
 
@@ -346,7 +346,7 @@ definition {
 			panel = "Site Administration",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "Test Page");
+		PagesAdmin.addPage(pageName = "Test Page");
 
 		Navigator.gotoPage(pageName = "Test Page");
 
@@ -364,6 +364,7 @@ definition {
 	@description = "Verify that, when a Web Content is moved to a Folder, it's Workflow changes"
 	@priority = "4"
 	test MoveWebContentToFolderChangeItsWorkflow {
+		property portal.upstream = "quarantine";
 		property test.name.skip.portal.instance = "WorkflowWebContent#MoveWebContentToFolderChangeItsWorkflow";
 
 		Workflow.duplicateSingleApproverWorkflow(workflowName = "Copy of Single Approver");

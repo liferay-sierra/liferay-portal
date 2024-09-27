@@ -37,7 +37,7 @@ import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.jsonwebservice.NoSuchJSONWebServiceException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -171,7 +171,7 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 
 			FileEntry fileEntry = _dlAppService.addFileEntry(
 				null, repositoryId, folderId, sourceFileName, mimeType, title,
-				description, changeLog, file, null, null, serviceContext);
+				null, description, changeLog, file, null, null, serviceContext);
 
 			return toSyncDLObject(
 				fileEntry, SyncDLObjectConstants.EVENT_ADD, checksum);
@@ -392,7 +392,7 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 
 			FileEntry fileEntry = _dlAppService.addFileEntry(
 				null, repositoryId, folderId, sourceFileName,
-				sourceFileEntry.getMimeType(), title, null, null,
+				sourceFileEntry.getMimeType(), title, null, null, null,
 				fileVersion.getContentStream(false), sourceFileEntry.getSize(),
 				null, null, serviceContext);
 
@@ -438,10 +438,9 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 		try {
 			_syncHelper.checkSyncEnabled(repositoryId);
 
-			FileEntry fileEntry = _dlAppService.getFileEntry(
-				repositoryId, folderId, title);
-
-			return toSyncDLObject(fileEntry, SyncDLObjectConstants.EVENT_GET);
+			return toSyncDLObject(
+				_dlAppService.getFileEntry(repositoryId, folderId, title),
+				SyncDLObjectConstants.EVENT_GET);
 		}
 		catch (PortalException portalException) {
 			throw new PortalException(
@@ -599,28 +598,24 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 
 			SyncContext syncContext = new SyncContext();
 
-			String authType = PrefsPropsUtil.getString(
-				CompanyThreadLocal.getCompanyId(),
-				PropsKeys.COMPANY_SECURITY_AUTH_TYPE,
-				PropsUtil.get(PropsKeys.COMPANY_SECURITY_AUTH_TYPE));
-
-			syncContext.setAuthType(authType);
+			syncContext.setAuthType(
+				PrefsPropsUtil.getString(
+					CompanyThreadLocal.getCompanyId(),
+					PropsKeys.COMPANY_SECURITY_AUTH_TYPE,
+					PropsUtil.get(PropsKeys.COMPANY_SECURITY_AUTH_TYPE)));
 
 			boolean oAuthEnabled = PrefsPropsUtil.getBoolean(
 				user.getCompanyId(), SyncConstants.SYNC_OAUTH_ENABLED);
 
 			if (oAuthEnabled) {
-				String oAuthConsumerKey = PrefsPropsUtil.getString(
-					user.getCompanyId(), SyncConstants.SYNC_OAUTH_CONSUMER_KEY);
-
-				syncContext.setOAuthConsumerKey(oAuthConsumerKey);
-
-				String oAuthConsumerSecret = PrefsPropsUtil.getString(
-					user.getCompanyId(),
-					SyncConstants.SYNC_OAUTH_CONSUMER_SECRET);
-
-				syncContext.setOAuthConsumerSecret(oAuthConsumerSecret);
-
+				syncContext.setOAuthConsumerKey(
+					PrefsPropsUtil.getString(
+						user.getCompanyId(),
+						SyncConstants.SYNC_OAUTH_CONSUMER_KEY));
+				syncContext.setOAuthConsumerSecret(
+					PrefsPropsUtil.getString(
+						user.getCompanyId(),
+						SyncConstants.SYNC_OAUTH_CONSUMER_SECRET));
 				syncContext.setOAuthEnabled(true);
 			}
 
@@ -637,24 +632,18 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 					SyncServiceConfigurationValues.SYNC_LAN_ENABLED);
 
 				if (lanEnabled) {
-					String lanCertificate = PrefsPropsUtil.getString(
-						user.getCompanyId(),
-						SyncConstants.SYNC_LAN_CERTIFICATE);
-
-					syncContext.setLanCertificate(lanCertificate);
-
+					syncContext.setLanCertificate(
+						PrefsPropsUtil.getString(
+							user.getCompanyId(),
+							SyncConstants.SYNC_LAN_CERTIFICATE));
 					syncContext.setLanEnabled(true);
-
-					String lanKey = PrefsPropsUtil.getString(
-						user.getCompanyId(), SyncConstants.SYNC_LAN_KEY);
-
-					syncContext.setLanKey(lanKey);
-
-					String lanServerUuid = PrefsPropsUtil.getString(
-						user.getCompanyId(),
-						SyncConstants.SYNC_LAN_SERVER_UUID);
-
-					syncContext.setLanServerUuid(lanServerUuid);
+					syncContext.setLanKey(
+						PrefsPropsUtil.getString(
+							user.getCompanyId(), SyncConstants.SYNC_LAN_KEY));
+					syncContext.setLanServerUuid(
+						PrefsPropsUtil.getString(
+							user.getCompanyId(),
+							SyncConstants.SYNC_LAN_SERVER_UUID));
 				}
 
 				syncContext.setPortalBuildNumber(ReleaseInfo.getBuildNumber());
@@ -709,11 +698,10 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 				lastAccessTime, repositoryId, events);
 
 			if (count == 0) {
-				SyncDLObjectUpdate syncDLObjectUpdate = getSyncDLObjectUpdate(
-					Collections.<SyncDLObject>emptyList(), 0, lastAccessTime,
-					lastAccessTime);
-
-				return syncDLObjectUpdate.toString();
+				return String.valueOf(
+					getSyncDLObjectUpdate(
+						Collections.<SyncDLObject>emptyList(), 0,
+						lastAccessTime, lastAccessTime));
 			}
 
 			int start = 0;
@@ -745,11 +733,11 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 			SyncDLObject syncDLObject = syncDLObjects.get(
 				syncDLObjects.size() - 1);
 
-			SyncDLObjectUpdate syncDLObjectUpdate = getSyncDLObjectUpdate(
-				checkSyncDLObjects(syncDLObjects, repositoryId, lastAccessTime),
-				count, syncDLObject.getModifiedTime(), lastAccessTime);
-
-			return syncDLObjectUpdate.toString();
+			return String.valueOf(
+				getSyncDLObjectUpdate(
+					checkSyncDLObjects(
+						syncDLObjects, repositoryId, lastAccessTime),
+					count, syncDLObject.getModifiedTime(), lastAccessTime));
 		}
 		catch (PortalException portalException) {
 			throw new PortalException(
@@ -776,12 +764,12 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 			SyncDLObject syncDLObject = syncDLObjects.get(
 				syncDLObjects.size() - 1);
 
-			SyncDLObjectUpdate syncDLObjectUpdate = getSyncDLObjectUpdate(
-				checkSyncDLObjects(syncDLObjects, repositoryId, lastAccessTime),
-				syncDLObjects.size(), syncDLObject.getModifiedTime(),
-				lastAccessTime);
-
-			return syncDLObjectUpdate.toString();
+			return String.valueOf(
+				getSyncDLObjectUpdate(
+					checkSyncDLObjects(
+						syncDLObjects, repositoryId, lastAccessTime),
+					syncDLObjects.size(), syncDLObject.getModifiedTime(),
+					lastAccessTime));
 		}
 		catch (PortalException portalException) {
 			throw new PortalException(
@@ -1098,12 +1086,12 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 
 			String manifest = zipReader.getEntryAsString("/manifest.json");
 
-			JSONArray jsonArray = JSONFactoryUtil.createJSONArray(manifest);
+			JSONArray jsonArray = _jsonFactory.createJSONArray(manifest);
 
 			for (int i = 0; i < jsonArray.length(); i++) {
 				JSONWebServiceActionParametersMap
 					jsonWebServiceActionParametersMap =
-						JSONFactoryUtil.looseDeserialize(
+						_jsonFactory.looseDeserialize(
 							String.valueOf(jsonArray.getJSONObject(i)),
 							JSONWebServiceActionParametersMap.class);
 
@@ -1172,7 +1160,7 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 			populateServiceContext(serviceContext, fileEntry.getGroupId());
 
 			fileEntry = _dlAppService.updateFileEntry(
-				fileEntryId, sourceFileName, mimeType, title, description,
+				fileEntryId, sourceFileName, mimeType, title, null, description,
 				changeLog,
 				DLVersionNumberIncrease.fromMajorVersion(majorVersion), file,
 				fileEntry.getExpirationDate(), fileEntry.getReviewDate(),
@@ -1620,7 +1608,7 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 				}
 				catch (Exception exception) {
 					if (_log.isDebugEnabled()) {
-						_log.debug(exception.getMessage(), exception);
+						_log.debug(exception);
 					}
 				}
 			}
@@ -1853,6 +1841,9 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 
 	@Reference
 	private GroupService _groupService;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private OrganizationLocalService _organizationLocalService;

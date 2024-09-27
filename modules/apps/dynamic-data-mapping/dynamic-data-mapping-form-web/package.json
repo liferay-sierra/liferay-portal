@@ -1,26 +1,19 @@
 {
 	"dependencies": {
-		"@clayui/alert": "3.40.0",
-		"@clayui/button": "3.40.0",
-		"@clayui/data-provider": "3.45.0",
-		"@clayui/form": "3.45.0",
-		"@clayui/layout": "3.40.0",
-		"@clayui/link": "3.45.0",
-		"@clayui/modal": "3.45.0",
-		"classnames": "2.3.1",
+		"@liferay/frontend-icons-web": "*",
+		"@liferay/frontend-js-react-web": "*",
+		"@types/react-router-dom": "^5.3.3",
 		"clipboard": "2.0.4",
+		"data-engine-js-components-web": "*",
+		"data-engine-taglib": "*",
+		"frontend-js-web": "*",
 		"object-hash": "^2.0.1",
 		"react": "16.12.0",
-		"react-dnd": "11.1.1",
-		"react-dnd-html5-backend": "11.1.1",
 		"react-router-dom": "^5.0.1"
 	},
 	"jest": {
 		"modulePathIgnorePatterns": [
 			"/__mock__/"
-		],
-		"setupFilesAfterEnv": [
-			"<rootDir>/jest-setup.config.js"
 		]
 	},
 	"main": "admin/js/App.es.js",
@@ -32,5 +25,5 @@
 		"format": "liferay-npm-scripts fix",
 		"test": "liferay-npm-scripts test"
 	},
-	"version": "4.0.76"
+	"version": "4.0.117"
 }

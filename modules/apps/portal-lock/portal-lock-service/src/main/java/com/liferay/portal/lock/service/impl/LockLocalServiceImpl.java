@@ -41,6 +41,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+import javax.persistence.PersistenceException;
+
 import org.hibernate.exception.ConstraintViolationException;
 import org.hibernate.exception.LockAcquisitionException;
 
@@ -81,7 +83,7 @@ public class LockLocalServiceImpl extends LockLocalServiceBaseImpl {
 		Lock lock = lockPersistence.fetchByC_K(className, key);
 
 		if ((lock != null) && lock.isExpired()) {
-			expireLock(lock);
+			_expireLock(lock);
 
 			lock = null;
 		}
@@ -106,7 +108,7 @@ public class LockLocalServiceImpl extends LockLocalServiceBaseImpl {
 		Lock lock = lockPersistence.findByC_K(className, key);
 
 		if (lock.isExpired()) {
-			expireLock(lock);
+			_expireLock(lock);
 
 			throw new ExpiredLockException();
 		}
@@ -188,7 +190,7 @@ public class LockLocalServiceImpl extends LockLocalServiceBaseImpl {
 
 		if (lock != null) {
 			if (lock.isExpired()) {
-				expireLock(lock);
+				_expireLock(lock);
 
 				lock = null;
 			}
@@ -293,7 +295,9 @@ public class LockLocalServiceImpl extends LockLocalServiceBaseImpl {
 			catch (Throwable throwable) {
 				Throwable causeThrowable = throwable;
 
-				if (throwable instanceof ORMException) {
+				if (throwable instanceof ORMException ||
+					throwable instanceof PersistenceException) {
+
 					causeThrowable = throwable.getCause();
 				}
 
@@ -426,7 +430,7 @@ public class LockLocalServiceImpl extends LockLocalServiceBaseImpl {
 		}
 	}
 
-	protected void expireLock(Lock lock) {
+	private void _expireLock(Lock lock) {
 		LockListener lockListener = _getLockListener(lock.getClassName());
 
 		String key = lock.getKey();

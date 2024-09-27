@@ -22,7 +22,7 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.permission.GroupPermission;
-import com.liferay.portal.kernel.service.permission.PortalPermissionUtil;
+import com.liferay.portal.kernel.service.permission.PortalPermission;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -40,7 +40,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Drew Brokke
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + UsersAdminPortletKeys.MY_ORGANIZATIONS,
 		"javax.portlet.name=" + UsersAdminPortletKeys.USERS_ADMIN,
@@ -68,7 +67,7 @@ public class EditProfileAndDashboardMVCActionCommand
 
 		if (_groupPermission.contains(
 				permissionChecker, group.getGroupId(), ActionKeys.UPDATE) &&
-			PortalPermissionUtil.contains(
+			_portalPermission.contains(
 				permissionChecker, ActionKeys.UNLINK_LAYOUT_SET_PROTOTYPE)) {
 
 			long publicLayoutSetPrototypeId = ParamUtil.getLong(
@@ -104,6 +103,9 @@ public class EditProfileAndDashboardMVCActionCommand
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private PortalPermission _portalPermission;
 
 	@Reference
 	private Sites _sites;

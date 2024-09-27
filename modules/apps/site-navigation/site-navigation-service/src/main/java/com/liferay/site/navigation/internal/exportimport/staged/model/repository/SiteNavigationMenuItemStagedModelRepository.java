@@ -34,7 +34,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pavel Savinov
  */
 @Component(
-	immediate = true,
 	property = "model.class.name=com.liferay.site.navigation.model.SiteNavigationMenuItem",
 	service = StagedModelRepository.class
 )
@@ -151,11 +150,9 @@ public class SiteNavigationMenuItemStagedModelRepository
 			SiteNavigationMenuItem siteNavigationMenuItem)
 		throws PortalException {
 
-		long userId = portletDataContext.getUserId(
-			siteNavigationMenuItem.getUserUuid());
-
 		return _siteNavigationMenuItemLocalService.updateSiteNavigationMenuItem(
-			userId, siteNavigationMenuItem.getSiteNavigationMenuItemId(),
+			portletDataContext.getUserId(siteNavigationMenuItem.getUserUuid()),
+			siteNavigationMenuItem.getSiteNavigationMenuItemId(),
 			siteNavigationMenuItem.getGroupId(),
 			siteNavigationMenuItem.getSiteNavigationMenuId(),
 			siteNavigationMenuItem.getParentSiteNavigationMenuItemId(),

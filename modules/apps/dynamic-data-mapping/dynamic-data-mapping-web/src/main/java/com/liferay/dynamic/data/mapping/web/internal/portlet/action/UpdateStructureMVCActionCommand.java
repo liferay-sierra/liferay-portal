@@ -24,7 +24,7 @@ import com.liferay.dynamic.data.mapping.util.DDM;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.ParamUtil;
 
 import java.util.Locale;
@@ -40,7 +40,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Leonardo Barros
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + DDMPortletKeys.DYNAMIC_DATA_MAPPING,
 		"mvc.command.name=/dynamic_data_mapping/update_structure"
@@ -61,18 +60,6 @@ public class UpdateStructureMVCActionCommand extends BaseDDMMVCActionCommand {
 		setRedirectAttribute(actionRequest, structure);
 	}
 
-	@Reference(unbind = "-")
-	protected void setDDM(DDM ddm) {
-		_ddm = ddm;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMStructureService(
-		DDMStructureService ddmStructureService) {
-
-		_ddmStructureService = ddmStructureService;
-	}
-
 	private DDMStructure _updateStructure(ActionRequest actionRequest)
 		throws Exception {
 
@@ -81,10 +68,10 @@ public class UpdateStructureMVCActionCommand extends BaseDDMMVCActionCommand {
 		long parentStructureId = ParamUtil.getLong(
 			actionRequest, "parentStructureId",
 			DDMStructureConstants.DEFAULT_PARENT_STRUCTURE_ID);
-		Map<Locale, String> nameMap = LocalizationUtil.getLocalizationMap(
+		Map<Locale, String> nameMap = _localization.getLocalizationMap(
 			actionRequest, "name");
-		Map<Locale, String> descriptionMap =
-			LocalizationUtil.getLocalizationMap(actionRequest, "description");
+		Map<Locale, String> descriptionMap = _localization.getLocalizationMap(
+			actionRequest, "description");
 
 		DDMForm ddmForm = _ddm.getDDMForm(actionRequest);
 
@@ -98,7 +85,13 @@ public class UpdateStructureMVCActionCommand extends BaseDDMMVCActionCommand {
 			ddmFormLayout, serviceContext);
 	}
 
+	@Reference
 	private DDM _ddm;
+
+	@Reference
 	private DDMStructureService _ddmStructureService;
+
+	@Reference
+	private Localization _localization;
 
 }

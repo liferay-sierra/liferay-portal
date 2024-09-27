@@ -27,7 +27,7 @@ import com.liferay.commerce.product.data.source.CPDataSourceResult;
 import com.liferay.commerce.product.util.CPDefinitionHelper;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -52,7 +52,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.commerce.product.configuration.CPDefinitionLinkTypeConfiguration",
-	enabled = false, immediate = true,
+	immediate = true,
 	property = "commerce.product.data.source.name=definitionLinkDataSource",
 	service = CPDataSource.class
 )
@@ -60,8 +60,8 @@ public class DefinitionLinkTypeCPDataSourceImpl implements CPDataSource {
 
 	@Override
 	public String getLabel(Locale locale) {
-		return LanguageUtil.get(locale, "product-relations") +
-			StringPool.SPACE + _cpDefinitionLinkTypeConfiguration.type();
+		return _language.get(locale, "product-relations") + StringPool.SPACE +
+			_cpDefinitionLinkTypeConfiguration.type();
 	}
 
 	@Override
@@ -135,6 +135,9 @@ public class DefinitionLinkTypeCPDataSourceImpl implements CPDataSource {
 
 	private volatile CPDefinitionLinkTypeConfiguration
 		_cpDefinitionLinkTypeConfiguration;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

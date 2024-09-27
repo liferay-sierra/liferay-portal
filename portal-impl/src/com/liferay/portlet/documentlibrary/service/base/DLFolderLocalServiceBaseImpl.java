@@ -49,6 +49,8 @@ import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.PersistedModel;
 import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.search.Indexable;
@@ -271,6 +273,48 @@ public abstract class DLFolderLocalServiceBaseImpl
 	}
 
 	/**
+	 * Returns the document library folder with the matching external reference code and group.
+	 *
+	 * @param groupId the primary key of the group
+	 * @param externalReferenceCode the document library folder's external reference code
+	 * @return the matching document library folder, or <code>null</code> if a matching document library folder could not be found
+	 */
+	@Override
+	public DLFolder fetchDLFolderByExternalReferenceCode(
+		long groupId, String externalReferenceCode) {
+
+		return dlFolderPersistence.fetchByG_ERC(groupId, externalReferenceCode);
+	}
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link #fetchDLFolderByExternalReferenceCode(long, String)}
+	 */
+	@Deprecated
+	@Override
+	public DLFolder fetchDLFolderByReferenceCode(
+		long groupId, String externalReferenceCode) {
+
+		return fetchDLFolderByExternalReferenceCode(
+			groupId, externalReferenceCode);
+	}
+
+	/**
+	 * Returns the document library folder with the matching external reference code and group.
+	 *
+	 * @param groupId the primary key of the group
+	 * @param externalReferenceCode the document library folder's external reference code
+	 * @return the matching document library folder
+	 * @throws PortalException if a matching document library folder could not be found
+	 */
+	@Override
+	public DLFolder getDLFolderByExternalReferenceCode(
+			long groupId, String externalReferenceCode)
+		throws PortalException {
+
+		return dlFolderPersistence.findByG_ERC(groupId, externalReferenceCode);
+	}
+
+	/**
 	 * Returns the document library folder with the primary key.
 	 *
 	 * @param folderId the primary key of the document library folder
@@ -466,6 +510,11 @@ public abstract class DLFolderLocalServiceBaseImpl
 	@Override
 	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
 		throws PortalException {
+
+		if (_log.isWarnEnabled()) {
+			_log.warn(
+				"Implement DLFolderLocalServiceImpl#deleteDLFolder(DLFolder) to avoid orphaned data");
+		}
 
 		return dlFolderLocalService.deleteDLFolder((DLFolder)persistedModel);
 	}
@@ -911,6 +960,9 @@ public abstract class DLFolderLocalServiceBaseImpl
 
 	@BeanReference(type = DLFileEntryTypePersistence.class)
 	protected DLFileEntryTypePersistence dlFileEntryTypePersistence;
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		DLFolderLocalServiceBaseImpl.class);
 
 	@BeanReference(type = PersistedModelLocalServiceRegistry.class)
 	protected PersistedModelLocalServiceRegistry

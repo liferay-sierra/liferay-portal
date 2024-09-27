@@ -115,7 +115,7 @@ ContentDashboardAdminDisplayContext contentDashboardAdminDisplayContext = (Conte
 				searchContainer="<%= contentDashboardAdminDisplayContext.getSearchContainer() %>"
 			>
 				<liferay-ui:search-container-row
-					className="com.liferay.content.dashboard.web.internal.item.ContentDashboardItem"
+					className="com.liferay.content.dashboard.item.ContentDashboardItem"
 					keyProperty="id"
 					modelVar="contentDashboardItem"
 				>
@@ -267,14 +267,14 @@ ContentDashboardAdminDisplayContext contentDashboardAdminDisplayContext = (Conte
 					>
 
 						<%
-						List<ContentDashboardItem.Version> versions = contentDashboardItem.getVersions(locale);
+						List<ContentDashboardItemVersion> contentDashboardItemVersions = contentDashboardItem.getLatestContentDashboardItemVersions(locale);
 
-						for (ContentDashboardItem.Version version : versions) {
+						for (ContentDashboardItemVersion contentDashboardItemVersion : contentDashboardItemVersions) {
 						%>
 
 							<clay:label
-								displayType="<%= version.getStyle() %>"
-								label="<%= version.getLabel() %>"
+								displayType="<%= contentDashboardItemVersion.getStyle() %>"
+								label="<%= contentDashboardItemVersion.getLabel() %>"
 							/>
 
 						<%
@@ -290,6 +290,22 @@ ContentDashboardAdminDisplayContext contentDashboardAdminDisplayContext = (Conte
 
 					<liferay-ui:search-container-column-text>
 						<clay:dropdown-actions
+							additionalProps='<%=
+								HashMapBuilder.<String, Object>put(
+									"currentRowId", rowId
+								).put(
+									"namespace", liferayPortletResponse.getNamespace()
+								).put(
+									"panelState", contentDashboardAdminDisplayContext.getPanelState()
+								).put(
+									"selectedItemFetchURL", contentDashboardAdminDisplayContext.getSelectedItemFetchURL(contentDashboardItem)
+								).put(
+									"selectedItemRowId", contentDashboardAdminDisplayContext.getSelectedItemRowId()
+								).put(
+									"singlePageApplicationEnabled", contentDashboardAdminDisplayContext.getSinglePageApplicationEnabled()
+								).build()
+							%>'
+							aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 							dropdownItems="<%= contentDashboardAdminDisplayContext.getDropdownItems(contentDashboardItem) %>"
 							propsTransformer="js/transformers/ActionsComponentPropsTransformer"
 						/>

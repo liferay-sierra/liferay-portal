@@ -15,16 +15,16 @@
 package com.liferay.template.web.internal.display.context;
 
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemDetailsProvider;
 import com.liferay.info.item.provider.InfoItemFormVariationsProvider;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -50,9 +50,9 @@ public class InformationTemplatesTemplateDisplayContext
 
 		super(liferayPortletRequest, liferayPortletResponse);
 
-		_infoItemServiceTracker =
-			(InfoItemServiceTracker)liferayPortletRequest.getAttribute(
-				InfoItemServiceTracker.class.getName());
+		_infoItemServiceRegistry =
+			(InfoItemServiceRegistry)liferayPortletRequest.getAttribute(
+				InfoItemServiceRegistry.class.getName());
 	}
 
 	public List<DropdownItem> getTemplateEntryActionDropdownItems(
@@ -128,7 +128,7 @@ public class InformationTemplatesTemplateDisplayContext
 		}
 
 		return Optional.ofNullable(
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFormVariationsProvider.class,
 				templateEntry.getInfoItemClassName())
 		).map(
@@ -146,7 +146,7 @@ public class InformationTemplatesTemplateDisplayContext
 
 	public String getTemplateTypeLabel(TemplateEntry templateEntry) {
 		return Optional.ofNullable(
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemDetailsProvider.class,
 				templateEntry.getInfoItemClassName())
 		).map(
@@ -160,7 +160,7 @@ public class InformationTemplatesTemplateDisplayContext
 		);
 	}
 
-	private final InfoItemServiceTracker _infoItemServiceTracker;
+	private final InfoItemServiceRegistry _infoItemServiceRegistry;
 	private SearchContainer<TemplateEntry> _templateEntrySearchContainer;
 
 }

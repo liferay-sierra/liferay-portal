@@ -28,7 +28,6 @@ import com.liferay.bookmarks.service.base.BookmarksEntryLocalServiceBaseImpl;
 import com.liferay.bookmarks.social.BookmarksActivityKeys;
 import com.liferay.bookmarks.util.comparator.EntryModifiedDateComparator;
 import com.liferay.expando.kernel.service.ExpandoRowLocalService;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
@@ -47,6 +46,7 @@ import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.notifications.UserNotificationDefinition;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.Indexable;
@@ -56,8 +56,11 @@ import com.liferay.portal.kernel.search.IndexerRegistryUtil;
 import com.liferay.portal.kernel.search.QueryConfig;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.Sort;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
 import com.liferay.portal.kernel.settings.LocalizedValuesMap;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
@@ -65,7 +68,7 @@ import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.GroupSubscriptionCheckSubscriptionSender;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.SubscriptionSender;
@@ -114,7 +117,7 @@ public class BookmarksEntryLocalServiceImpl
 
 		// Entry
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		if (Validator.isNull(name)) {
 			name = url;
@@ -136,13 +139,16 @@ public class BookmarksEntryLocalServiceImpl
 		entry.setName(name);
 		entry.setUrl(url);
 		entry.setDescription(description);
+		entry.setStatusByUserId(userId);
+		entry.setStatusByUserName(user.getFullName());
+		entry.setStatusDate(serviceContext.getModifiedDate(new Date()));
 		entry.setExpandoBridgeAttributes(serviceContext);
 
 		entry = bookmarksEntryPersistence.update(entry);
 
 		// Resources
 
-		resourceLocalService.addModelResources(entry, serviceContext);
+		_resourceLocalService.addModelResources(entry, serviceContext);
 
 		// Asset
 
@@ -201,7 +207,7 @@ public class BookmarksEntryLocalServiceImpl
 
 		// Resources
 
-		resourceLocalService.deleteResource(
+		_resourceLocalService.deleteResource(
 			entry, ResourceConstants.SCOPE_INDIVIDUAL);
 
 		// Asset
@@ -213,7 +219,7 @@ public class BookmarksEntryLocalServiceImpl
 
 		_expandoRowLocalService.deleteRows(
 			entry.getCompanyId(),
-			classNameLocalService.getClassNameId(
+			_classNameLocalService.getClassNameId(
 				BookmarksEntry.class.getName()),
 			entry.getEntryId());
 
@@ -243,7 +249,7 @@ public class BookmarksEntryLocalServiceImpl
 
 		_viewCountManager.deleteViewCount(
 			entry.getCompanyId(),
-			classNameLocalService.getClassNameId(BookmarksEntry.class),
+			_classNameLocalService.getClassNameId(BookmarksEntry.class),
 			entry.getEntryId());
 
 		return entry;
@@ -445,7 +451,7 @@ public class BookmarksEntryLocalServiceImpl
 	public BookmarksEntry openEntry(long userId, BookmarksEntry entry) {
 		_viewCountManager.incrementViewCount(
 			entry.getCompanyId(),
-			classNameLocalService.getClassNameId(BookmarksEntry.class),
+			_classNameLocalService.getClassNameId(BookmarksEntry.class),
 			entry.getEntryId(), 1);
 
 		return entry;
@@ -627,11 +633,16 @@ public class BookmarksEntryLocalServiceImpl
 
 		_validate(url);
 
+		User user = _userLocalService.getUser(userId);
+
 		entry.setFolderId(folderId);
 		entry.setTreePath(entry.buildTreePath());
 		entry.setName(name);
 		entry.setUrl(url);
 		entry.setDescription(description);
+		entry.setStatusByUserId(userId);
+		entry.setStatusByUserName(user.getFullName());
+		entry.setStatusDate(serviceContext.getModifiedDate(new Date()));
 		entry.setExpandoBridgeAttributes(serviceContext);
 
 		entry = bookmarksEntryPersistence.update(entry);
@@ -667,7 +678,7 @@ public class BookmarksEntryLocalServiceImpl
 
 		// Entry
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		entry.setStatus(status);
 		entry.setStatusByUserId(userId);
@@ -733,12 +744,12 @@ public class BookmarksEntryLocalServiceImpl
 				entry.getFolderId());
 		}
 
-		Group group = _groupLocalService.fetchGroup(entry.getGroupId());
-
 		return PortletURLBuilder.create(
 			_portal.getControlPanelPortletURL(
-				httpServletRequest, group, BookmarksPortletKeys.BOOKMARKS_ADMIN,
-				0, 0, PortletRequest.RENDER_PHASE)
+				httpServletRequest,
+				_groupLocalService.fetchGroup(entry.getGroupId()),
+				BookmarksPortletKeys.BOOKMARKS_ADMIN, 0, 0,
+				PortletRequest.RENDER_PHASE)
 		).setMVCRenderCommandName(
 			"/bookmarks/view"
 		).setParameter(
@@ -776,7 +787,7 @@ public class BookmarksEntryLocalServiceImpl
 		String statusByUserName = StringPool.BLANK;
 
 		try {
-			User user = userLocalService.getUserById(
+			User user = _userLocalService.getUserById(
 				serviceContext.getGuestOrUserId());
 
 			statusByUserName = user.getFullName();
@@ -834,12 +845,12 @@ public class BookmarksEntryLocalServiceImpl
 
 		if (bodyLocalizedValuesMap != null) {
 			subscriptionSender.setLocalizedBodyMap(
-				LocalizationUtil.getMap(bodyLocalizedValuesMap));
+				_localization.getMap(bodyLocalizedValuesMap));
 		}
 
 		if (subjectLocalizedValuesMap != null) {
 			subscriptionSender.setLocalizedSubjectMap(
-				LocalizationUtil.getMap(subjectLocalizedValuesMap));
+				_localization.getMap(subjectLocalizedValuesMap));
 		}
 
 		subscriptionSender.setMailId("bookmarks_entry", entry.getEntryId());
@@ -853,7 +864,6 @@ public class BookmarksEntryLocalServiceImpl
 		}
 
 		subscriptionSender.setNotificationType(notificationType);
-
 		subscriptionSender.setPortletId(BookmarksPortletKeys.BOOKMARKS);
 		subscriptionSender.setReplyToAddress(fromAddress);
 		subscriptionSender.setScopeGroupId(entry.getGroupId());
@@ -896,6 +906,9 @@ public class BookmarksEntryLocalServiceImpl
 	private AssetLinkLocalService _assetLinkLocalService;
 
 	@Reference
+	private ClassNameLocalService _classNameLocalService;
+
+	@Reference
 	private ConfigurationProvider _configurationProvider;
 
 	@Reference
@@ -905,10 +918,16 @@ public class BookmarksEntryLocalServiceImpl
 	private GroupLocalService _groupLocalService;
 
 	@Reference
+	private Localization _localization;
+
+	@Reference
 	private Portal _portal;
 
 	@Reference
 	private RatingsStatsLocalService _ratingsStatsLocalService;
+
+	@Reference
+	private ResourceLocalService _resourceLocalService;
 
 	@Reference
 	private SocialActivityLocalService _socialActivityLocalService;
@@ -921,6 +940,9 @@ public class BookmarksEntryLocalServiceImpl
 
 	@Reference
 	private TrashVersionLocalService _trashVersionLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 	@Reference
 	private ViewCountManager _viewCountManager;

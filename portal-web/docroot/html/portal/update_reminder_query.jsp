@@ -31,7 +31,7 @@ if (referer.equals(themeDisplay.getPathMain() + "/portal/update_reminder_query")
 		<div class="autofit-padded-no-gutters-x autofit-row">
 			<div class="autofit-col autofit-col-expand">
 				<h2 class="sheet-title">
-					<liferay-ui:message key="password-reminder" />
+					<liferay-ui:message key="password-recovery-question-and-answer" />
 				</h2>
 			</div>
 
@@ -55,7 +55,22 @@ if (referer.equals(themeDisplay.getPathMain() + "/portal/update_reminder_query")
 			</c:if>
 
 			<aui:fieldset>
-				<%@ include file="/html/portal/update_reminder_query_question.jspf" %>
+				<aui:select autoFocus="<%= true %>" cssClass="reminder-query-question" label="question" name="reminderQueryQuestion">
+
+					<%
+					for (String question : user.getReminderQueryQuestions()) {
+					%>
+
+						<aui:option label="<%= question %>" />
+
+					<%
+					}
+					%>
+
+					<c:if test="<%= PrefsPropsUtil.getBoolean(company.getCompanyId(), PropsKeys.USERS_REMINDER_QUERIES_CUSTOM_QUESTION_ENABLED, PropsValues.USERS_REMINDER_QUERIES_CUSTOM_QUESTION_ENABLED) %>">
+						<aui:option label="<%= UsersAdmin.CUSTOM_QUESTION %>" />
+					</c:if>
+				</aui:select>
 
 				<c:if test="<%= PrefsPropsUtil.getBoolean(company.getCompanyId(), PropsKeys.USERS_REMINDER_QUERIES_CUSTOM_QUESTION_ENABLED, PropsValues.USERS_REMINDER_QUERIES_CUSTOM_QUESTION_ENABLED) %>">
 					<div class="hide" id="customQuestionContainer">

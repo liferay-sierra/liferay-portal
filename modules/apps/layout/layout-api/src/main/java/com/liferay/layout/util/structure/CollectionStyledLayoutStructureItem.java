@@ -14,10 +14,16 @@
 
 package com.liferay.layout.util.structure;
 
+import com.liferay.layout.helper.CollectionPaginationHelper;
+import com.liferay.layout.responsive.ViewportSize;
 import com.liferay.layout.util.constants.LayoutDataItemTypeConstants;
+import com.liferay.layout.util.structure.collection.EmptyCollectionOptions;
 import com.liferay.petra.lang.HashUtil;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -48,6 +54,17 @@ public class CollectionStyledLayoutStructureItem
 				_collectionJSONObject,
 				collectionStyledLayoutStructureItem._collectionJSONObject) ||
 			!Objects.equals(
+				_displayAllItems,
+				collectionStyledLayoutStructureItem._displayAllItems) ||
+			!Objects.equals(
+				_displayAllPages,
+				collectionStyledLayoutStructureItem._displayAllPages) ||
+			!Objects.equals(
+				_emptyCollectionOptions,
+				collectionStyledLayoutStructureItem._emptyCollectionOptions) ||
+			!Objects.equals(
+				_gutters, collectionStyledLayoutStructureItem._gutters) ||
+			!Objects.equals(
 				_listStyle, collectionStyledLayoutStructureItem._listStyle) ||
 			!Objects.equals(
 				_numberOfColumns,
@@ -59,11 +76,17 @@ public class CollectionStyledLayoutStructureItem
 				_numberOfItemsPerPage,
 				collectionStyledLayoutStructureItem._numberOfItemsPerPage) ||
 			!Objects.equals(
+				_numberOfPages,
+				collectionStyledLayoutStructureItem._numberOfPages) ||
+			!Objects.equals(
 				_paginationType,
 				collectionStyledLayoutStructureItem._paginationType) ||
 			!Objects.equals(
 				_showAllItems,
-				collectionStyledLayoutStructureItem._showAllItems)) {
+				collectionStyledLayoutStructureItem._showAllItems) ||
+			!Objects.equals(
+				_verticalAlignment,
+				collectionStyledLayoutStructureItem._verticalAlignment)) {
 
 			return false;
 		}
@@ -71,16 +94,49 @@ public class CollectionStyledLayoutStructureItem
 		return super.equals(object);
 	}
 
+	public String getAlign() {
+		return _align;
+	}
+
 	public JSONObject getCollectionJSONObject() {
 		return _collectionJSONObject;
+	}
+
+	public EmptyCollectionOptions getEmptyCollectionOptions() {
+		return _emptyCollectionOptions;
+	}
+
+	public String getFlexWrap() {
+		return _flexWrap;
 	}
 
 	@Override
 	public JSONObject getItemConfigJSONObject() {
 		JSONObject jsonObject = super.getItemConfigJSONObject();
 
-		return jsonObject.put(
+		jsonObject = jsonObject.put(
+			"align", _align
+		).put(
 			"collection", _collectionJSONObject
+		).put(
+			"displayAllItems", _displayAllItems
+		).put(
+			"displayAllPages", _displayAllPages
+		).put(
+			"emptyCollectionOptions",
+			() -> {
+				if (_emptyCollectionOptions == null) {
+					return null;
+				}
+
+				return _emptyCollectionOptions.toJSONObject();
+			}
+		).put(
+			"flexWrap", _flexWrap
+		).put(
+			"gutters", _gutters
+		).put(
+			"justify", _justify
 		).put(
 			"listItemStyle", _listItemStyle
 		).put(
@@ -92,17 +148,54 @@ public class CollectionStyledLayoutStructureItem
 		).put(
 			"numberOfItemsPerPage", _numberOfItemsPerPage
 		).put(
+			"numberOfPages", _numberOfPages
+		).put(
 			"paginationType", _paginationType
 		).put(
 			"showAllItems", _showAllItems
 		).put(
 			"templateKey", _templateKey
+		).put(
+			"verticalAlignment", _verticalAlignment
 		);
+
+		for (ViewportSize viewportSize : _viewportSizes) {
+			if (viewportSize.equals(ViewportSize.DESKTOP)) {
+				continue;
+			}
+
+			JSONObject currentViewportConfigurationJSONObject =
+				JSONFactoryUtil.createJSONObject();
+
+			if (jsonObject.has(viewportSize.getViewportSizeId())) {
+				currentViewportConfigurationJSONObject =
+					jsonObject.getJSONObject(viewportSize.getViewportSizeId());
+			}
+
+			JSONObject viewportConfigurationJSONObject =
+				_viewportConfigurationJSONObjects.getOrDefault(
+					viewportSize.getViewportSizeId(),
+					JSONFactoryUtil.createJSONObject());
+
+			currentViewportConfigurationJSONObject.put(
+				"numberOfColumns",
+				viewportConfigurationJSONObject.get("numberOfColumns"));
+
+			jsonObject.put(
+				viewportSize.getViewportSizeId(),
+				currentViewportConfigurationJSONObject);
+		}
+
+		return jsonObject;
 	}
 
 	@Override
 	public String getItemType() {
 		return LayoutDataItemTypeConstants.TYPE_COLLECTION;
+	}
+
+	public String getJustify() {
+		return _justify;
 	}
 
 	public String getListItemStyle() {
@@ -125,6 +218,10 @@ public class CollectionStyledLayoutStructureItem
 		return _numberOfItemsPerPage;
 	}
 
+	public int getNumberOfPages() {
+		return _numberOfPages;
+	}
+
 	public String getPaginationType() {
 		return _paginationType;
 	}
@@ -133,17 +230,82 @@ public class CollectionStyledLayoutStructureItem
 		return _templateKey;
 	}
 
+	public String getVerticalAlignment() {
+		return _verticalAlignment;
+	}
+
+	public Map<String, JSONObject> getViewportConfigurationJSONObjects() {
+		return _viewportConfigurationJSONObjects;
+	}
+
 	@Override
 	public int hashCode() {
 		return HashUtil.hash(0, getItemId());
 	}
 
+	public boolean isDisplayAllItems() {
+		return _displayAllItems;
+	}
+
+	public boolean isDisplayAllPages() {
+		return _displayAllPages;
+	}
+
+	public boolean isGutters() {
+		return _gutters;
+	}
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
+	 *             #isDisplayAllItems()}
+	 */
+	@Deprecated
 	public boolean isShowAllItems() {
 		return _showAllItems;
 	}
 
+	public void setAlign(String align) {
+		_align = align;
+	}
+
 	public void setCollectionJSONObject(JSONObject collectionJSONObject) {
 		_collectionJSONObject = collectionJSONObject;
+	}
+
+	public void setDisplayAllItems(Boolean displayAllItems) {
+		if (displayAllItems == null) {
+			_displayAllItems = false;
+		}
+		else {
+			_displayAllItems = displayAllItems;
+		}
+	}
+
+	public void setDisplayAllPages(Boolean displayAllPages) {
+		if (displayAllPages == null) {
+			_displayAllPages = true;
+		}
+		else {
+			_displayAllPages = displayAllPages;
+		}
+	}
+
+	public void setEmptyCollectionOptions(
+		EmptyCollectionOptions emptyCollectionOptions) {
+
+		_emptyCollectionOptions = emptyCollectionOptions;
+	}
+
+	public void setFlexWrap(String flexWrap) {
+		_flexWrap = flexWrap;
+	}
+
+	public void setGutters(boolean gutters) {
+		_gutters = gutters;
+	}
+
+	public void setJustify(String justify) {
+		_justify = justify;
 	}
 
 	public void setListItemStyle(String listItemStyle) {
@@ -166,10 +328,19 @@ public class CollectionStyledLayoutStructureItem
 		_numberOfItemsPerPage = numberOfItemsPerPage;
 	}
 
+	public void setNumberOfPages(int numberOfPages) {
+		_numberOfPages = numberOfPages;
+	}
+
 	public void setPaginationType(String paginationType) {
 		_paginationType = paginationType;
 	}
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
+	 *             #setDisplayAllItems(Boolean)}
+	 */
+	@Deprecated
 	public void setShowAllItems(Boolean showAllItems) {
 		if (showAllItems == null) {
 			_showAllItems = false;
@@ -183,13 +354,70 @@ public class CollectionStyledLayoutStructureItem
 		_templateKey = templateKey;
 	}
 
+	public void setVerticalAlignment(String verticalAlignment) {
+		_verticalAlignment = verticalAlignment;
+	}
+
+	public void setViewportConfiguration(
+		String viewportSizeId, JSONObject configurationJSONObject) {
+
+		_viewportConfigurationJSONObjects.put(
+			viewportSizeId,
+			_viewportConfigurationJSONObjects.getOrDefault(
+				viewportSizeId, JSONFactoryUtil.createJSONObject()
+			).put(
+				"numberOfColumns",
+				() -> {
+					if (configurationJSONObject.has("numberOfColumns")) {
+						return configurationJSONObject.getInt(
+							"numberOfColumns");
+					}
+
+					return null;
+				}
+			));
+	}
+
 	@Override
 	public void updateItemConfig(JSONObject itemConfigJSONObject) {
 		super.updateItemConfig(itemConfigJSONObject);
 
+		if (itemConfigJSONObject.has("align")) {
+			setAlign(itemConfigJSONObject.getString("align"));
+		}
+
 		if (itemConfigJSONObject.has("collection")) {
 			setCollectionJSONObject(
 				itemConfigJSONObject.getJSONObject("collection"));
+		}
+
+		if (itemConfigJSONObject.has("displayAllItems")) {
+			setDisplayAllItems(
+				itemConfigJSONObject.getBoolean("displayAllItems"));
+		}
+
+		if (itemConfigJSONObject.has("displayAllPages")) {
+			setDisplayAllPages(
+				itemConfigJSONObject.getBoolean("displayAllPages"));
+		}
+
+		if (itemConfigJSONObject.has("emptyCollectionOptions")) {
+			setEmptyCollectionOptions(
+				EmptyCollectionOptions.of(
+					itemConfigJSONObject.getJSONObject(
+						"emptyCollectionOptions")));
+		}
+
+		if (itemConfigJSONObject.has("flexWrap")) {
+			setFlexWrap(itemConfigJSONObject.getString("flexWrap"));
+		}
+
+		if (itemConfigJSONObject.has("gutters")) {
+			setGutters(itemConfigJSONObject.getBoolean("gutters"));
+		}
+
+		if (itemConfigJSONObject.has("justify")) {
+			setJustify(itemConfigJSONObject.getString("justify"));
 		}
 
 		if (itemConfigJSONObject.has("showAllItems")) {
@@ -217,6 +445,10 @@ public class CollectionStyledLayoutStructureItem
 				itemConfigJSONObject.getInt("numberOfItemsPerPage"));
 		}
 
+		if (itemConfigJSONObject.has("numberOfPages")) {
+			setNumberOfPages(itemConfigJSONObject.getInt("numberOfPages"));
+		}
+
 		if (itemConfigJSONObject.has("paginationType")) {
 			setPaginationType(itemConfigJSONObject.getString("paginationType"));
 		}
@@ -224,16 +456,48 @@ public class CollectionStyledLayoutStructureItem
 		if (itemConfigJSONObject.has("templateKey")) {
 			setTemplateKey(itemConfigJSONObject.getString("templateKey"));
 		}
+
+		if (itemConfigJSONObject.has("verticalAlignment")) {
+			setVerticalAlignment(
+				itemConfigJSONObject.getString("verticalAlignment"));
+		}
+
+		for (ViewportSize viewportSize : _viewportSizes) {
+			if (viewportSize.equals(ViewportSize.DESKTOP)) {
+				continue;
+			}
+
+			if (itemConfigJSONObject.has(viewportSize.getViewportSizeId())) {
+				setViewportConfiguration(
+					viewportSize.getViewportSizeId(),
+					itemConfigJSONObject.getJSONObject(
+						viewportSize.getViewportSizeId()));
+			}
+		}
 	}
 
+	private static final ViewportSize[] _viewportSizes = ViewportSize.values();
+
+	private String _align = "";
 	private JSONObject _collectionJSONObject;
+	private boolean _displayAllItems;
+	private boolean _displayAllPages = true;
+	private EmptyCollectionOptions _emptyCollectionOptions;
+	private String _flexWrap = "";
+	private boolean _gutters = true;
+	private String _justify = "";
 	private String _listItemStyle;
 	private String _listStyle;
 	private int _numberOfColumns = 1;
 	private int _numberOfItems = 5;
-	private int _numberOfItemsPerPage = 5;
-	private String _paginationType;
+	private int _numberOfItemsPerPage = 20;
+	private int _numberOfPages = 5;
+	private String _paginationType =
+		CollectionPaginationHelper.PAGINATION_TYPE_NUMERIC;
 	private boolean _showAllItems;
 	private String _templateKey;
+	private String _verticalAlignment = "start";
+	private final Map<String, JSONObject> _viewportConfigurationJSONObjects =
+		new HashMap<>();
 
 }

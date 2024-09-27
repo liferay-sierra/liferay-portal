@@ -50,7 +50,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Julio Camarero
  */
-@Component(immediate = true, service = RecentGroupManager.class)
+@Component(service = RecentGroupManager.class)
 public class RecentGroupManager {
 
 	public void addRecentGroup(
@@ -106,33 +106,6 @@ public class RecentGroupManager {
 		return Collections.emptyList();
 	}
 
-	/**
-	 * @deprecated As of Judson (7.1.x), replaced by {@link
-	 *             #getRecentGroups(String, PortletRequest)}
-	 */
-	@Deprecated
-	protected List<Group> getRecentGroups(String value) {
-		long[] groupIds = StringUtil.split(value, 0L);
-
-		if (ArrayUtil.isEmpty(groupIds)) {
-			return Collections.emptyList();
-		}
-
-		List<Group> groups = new ArrayList<>(groupIds.length);
-
-		for (long groupId : groupIds) {
-			Group group = _groupLocalService.fetchGroup(groupId);
-
-			if (!_groupLocalService.isLiveGroupActive(group)) {
-				continue;
-			}
-
-			groups.add(group);
-		}
-
-		return groups;
-	}
-
 	protected List<Group> getRecentGroups(
 			String value, PortletRequest portletRequest)
 		throws Exception {
@@ -152,7 +125,8 @@ public class RecentGroupManager {
 		for (long groupId : groupIds) {
 			Group group = _groupLocalService.fetchGroup(groupId);
 
-			if (!_groupPermission.contains(
+			if ((group == null) ||
+				!_groupPermission.contains(
 					permissionChecker, group.getGroupId(), ActionKeys.VIEW) ||
 				!_groupLocalService.isLiveGroupActive(group)) {
 
@@ -181,10 +155,9 @@ public class RecentGroupManager {
 			portletRequest.setAttribute(
 				SiteWebKeys.GROUP_URL_PROVIDER_CONTROL_PANEL, Boolean.TRUE);
 
-			String groupURL = _groupURLProvider.getGroupURL(
-				group, portletRequest);
+			if (Validator.isNull(
+					_groupURLProvider.getGroupURL(group, portletRequest))) {
 
-			if (Validator.isNull(groupURL)) {
 				continue;
 			}
 
@@ -192,11 +165,6 @@ public class RecentGroupManager {
 		}
 
 		return groups;
-	}
-
-	@Reference(unbind = "-")
-	protected void setGroupLocalService(GroupLocalService groupLocalService) {
-		_groupLocalService = groupLocalService;
 	}
 
 	private long _getLiveGroupId(long groupId) {
@@ -231,6 +199,7 @@ public class RecentGroupManager {
 	private static final Log _log = LogFactoryUtil.getLog(
 		RecentGroupManager.class);
 
+	@Reference
 	private GroupLocalService _groupLocalService;
 
 	@Reference

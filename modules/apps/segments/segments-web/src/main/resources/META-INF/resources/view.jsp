@@ -41,6 +41,34 @@ request.setAttribute("view.jsp-eventName", eventName);
 	sortingURL="<%= segmentsDisplayContext.getSortingURL() %>"
 />
 
+<c:if test="<%= !segmentsDisplayContext.isSegmentationEnabled(themeDisplay.getCompanyId()) %>">
+	<clay:stripe
+		defaultTitleDisabled="<%= true %>"
+		dismissible="<%= true %>"
+		displayType="warning"
+	>
+		<strong><liferay-ui:message key="segmentation-is-disabled" /></strong>
+
+		<%
+		String segmentsConfigurationURL = segmentsDisplayContext.getSegmentsCompanyConfigurationURL(request);
+		%>
+
+		<c:choose>
+			<c:when test="<%= segmentsConfigurationURL != null %>">
+				<clay:link
+					href="<%= segmentsConfigurationURL %>"
+					label='<%= LanguageUtil.get(request, "to-enable,-go-to-instance-settings") %>'
+				/>
+			</c:when>
+			<c:otherwise>
+				<span><%=
+				LanguageUtil.get(
+					request, "contact-your-system-administrator-to-enable-it") %></span>
+			</c:otherwise>
+		</c:choose>
+	</clay:stripe>
+</c:if>
+
 <portlet:actionURL name="/segments/delete_segments_entry" var="deleteSegmentsEntryURL">
 	<portlet:param name="redirect" value="<%= currentURL %>" />
 </portlet:actionURL>
@@ -138,12 +166,12 @@ request.setAttribute("view.jsp-eventName", eventName);
 	<aui:input name="siteRoleIds" type="hidden" />
 </aui:form>
 
-<aui:script require="frontend-js-web/liferay/delegate/delegate.es as delegateModule">
+<aui:script require="frontend-js-web/index as frontendJsWeb">
+	var {delegate} = frontendJsWeb;
+
 	var form = document.getElementById(
 		'<portlet:namespace />updateSegmentsEntrySiteRolesFm'
 	);
-
-	var delegate = delegateModule.default;
 
 	var delegateHandler = delegate(
 		document,

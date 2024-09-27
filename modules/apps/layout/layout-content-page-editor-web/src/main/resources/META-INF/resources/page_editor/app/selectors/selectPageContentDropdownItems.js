@@ -12,7 +12,7 @@
  * details.
  */
 
-import {openModal} from 'frontend-js-web';
+import {openModal, sub} from 'frontend-js-web';
 
 import {selectPageContents} from './selectPageContents';
 
@@ -41,8 +41,9 @@ export function selectPageContentDropdownItems(classPK, label = '') {
 			dropdownItems.push({
 				href: editURL,
 				label: label
-					? Liferay.Util.sub(Liferay.Language.get('edit-x'), label)
+					? sub(Liferay.Language.get('edit-x'), label)
 					: Liferay.Language.get('edit'),
+				symbolLeft: 'pencil',
 			});
 		}
 
@@ -61,60 +62,67 @@ export function selectPageContentDropdownItems(classPK, label = '') {
 						title: Liferay.Language.get('view-items'),
 						url: viewItemsURL,
 					}),
+				symbolLeft: 'list-ul',
 			});
 		}
 
 		if (addItems) {
 			dropdownItems.push({
+				type: 'divider',
+			});
+
+			dropdownItems.push({
 				items: addItems,
 				label: Liferay.Language.get('add-items'),
+				symbolLeft: 'plus',
 				type: 'contextual',
 			});
 		}
 
 		if (permissionsURL) {
 			dropdownItems.push({
+				type: 'divider',
+			});
+
+			dropdownItems.push({
 				label: label
-					? Liferay.Util.sub(
-							Liferay.Language.get('edit-x-permissions'),
-							label
-					  )
+					? sub(Liferay.Language.get('edit-x-permissions'), label)
 					: Liferay.Language.get('permissions'),
 				onClick: () =>
 					openModal({
 						title: label
-							? Liferay.Util.sub(
+							? sub(
 									Liferay.Language.get('edit-x-permissions'),
 									label
 							  )
 							: Liferay.Language.get('permissions'),
 						url: permissionsURL,
 					}),
+				symbolLeft: 'password-policies',
 			});
 		}
 
 		if (viewUsagesURL) {
 			dropdownItems.push({
+				type: 'divider',
+			});
+
+			dropdownItems.push({
 				label: label
-					? Liferay.Util.sub(
-							Liferay.Language.get('view-x-usages'),
-							label
-					  )
+					? sub(Liferay.Language.get('view-x-usages'), label)
 					: Liferay.Language.get('view-usages'),
 				onClick: () =>
 					openModal({
 						title: label
-							? Liferay.Util.sub(
-									Liferay.Language.get('view-x-usages'),
-									label
-							  )
+							? sub(Liferay.Language.get('view-x-usages'), label)
 							: Liferay.Language.get('view-usages'),
 						url: viewUsagesURL,
 					}),
+				symbolLeft: 'list-ul',
 			});
 		}
 
-		if (dropdownItems.length === 0) {
+		if (!dropdownItems.length) {
 			return null;
 		}
 

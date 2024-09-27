@@ -33,7 +33,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Samuel Trong Tran
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + UserAssociatedDataPortletKeys.USER_ASSOCIATED_DATA,
 		"mvc.command.name=/user_associated_data/anonymize_nonreviewable_uad_data"
@@ -54,11 +53,10 @@ public class AnonymizeNonreviewableUADDataMVCActionCommand
 		for (UADAnonymizer<?> uadAnonymizer : uadAnonymizers) {
 			User selectedUser = getSelectedUser(actionRequest);
 
-			User anonymousUser = _uadAnonymousUserProvider.getAnonymousUser(
-				selectedUser.getCompanyId());
-
 			uadAnonymizer.autoAnonymizeAll(
-				selectedUser.getUserId(), anonymousUser);
+				selectedUser.getUserId(),
+				_uadAnonymousUserProvider.getAnonymousUser(
+					selectedUser.getCompanyId()));
 		}
 
 		doNonreviewableRedirect(actionRequest, actionResponse);

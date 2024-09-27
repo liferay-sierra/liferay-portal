@@ -24,12 +24,13 @@ import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Indexer;
+import com.liferay.portal.kernel.search.SearchEngineHelper;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.rule.SynchronousDestinationTestRule;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.HtmlParser;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.search.searcher.SearchRequestBuilderFactory;
@@ -88,7 +89,7 @@ public class BlogsEntryIndexerIndexedFieldsTest {
 		_groups = groupSearchFixture.getGroups();
 
 		_indexedFieldsFixture = new IndexedFieldsFixture(
-			resourcePermissionLocalService);
+			resourcePermissionLocalService, searchEngineHelper);
 	}
 
 	@Test
@@ -118,6 +119,8 @@ public class BlogsEntryIndexerIndexedFieldsTest {
 				searchRequestBuilderFactory.builder(
 				).companyId(
 					_group.getCompanyId()
+				).fetchSourceIncludes(
+					new String[] {"*_sortable"}
 				).fields(
 					StringPool.STAR
 				).groupIds(
@@ -141,6 +144,9 @@ public class BlogsEntryIndexerIndexedFieldsTest {
 
 	@Inject
 	protected ResourcePermissionLocalService resourcePermissionLocalService;
+
+	@Inject
+	protected SearchEngineHelper searchEngineHelper;
 
 	@Inject
 	protected Searcher searcher;
@@ -185,6 +191,8 @@ public class BlogsEntryIndexerIndexedFieldsTest {
 		).put(
 			"localized_title", StringUtil.lowerCase(blogsEntry.getTitle())
 		).put(
+			"statusByUserId", String.valueOf(blogsEntry.getStatusByUserId())
+		).put(
 			"title_sortable", StringUtil.lowerCase(blogsEntry.getTitle())
 		).put(
 			"urlTitle", blogsEntry.getUrlTitle()
@@ -227,7 +235,7 @@ public class BlogsEntryIndexerIndexedFieldsTest {
 
 			map.put(
 				"content_" + LocaleUtil.toLanguageId(locale),
-				HtmlUtil.extractText(blogsEntry.getContent()));
+				_htmlParser.extractText(blogsEntry.getContent()));
 		}
 	}
 
@@ -282,6 +290,9 @@ public class BlogsEntryIndexerIndexedFieldsTest {
 
 	@DeleteAfterTestRun
 	private List<Group> _groups;
+
+	@Inject
+	private HtmlParser _htmlParser;
 
 	private IndexedFieldsFixture _indexedFieldsFixture;
 

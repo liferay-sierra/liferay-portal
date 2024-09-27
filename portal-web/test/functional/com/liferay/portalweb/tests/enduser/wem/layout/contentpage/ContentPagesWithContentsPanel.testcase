@@ -215,7 +215,7 @@ definition {
 			PageEditor.viewFragmentEditableImage(
 				id = "image-square",
 				imageDescription = "",
-				imageFileName = "Document_1.jpg");
+				imageFileName = "document_1-jpg");
 		}
 
 		task ("Access to the document editor via Page Content panel") {
@@ -233,9 +233,7 @@ definition {
 		task ("View the edited title is shown in Page Content panel") {
 			PageEditor.assertFragmentSidebarLoaded();
 
-			PageEditor.gotoTab(tabName = "Browser");
-
-			Navigator.gotoNavTab(navTab = "Page Content");
+			PageEditor.gotoTab(tabName = "Page Content");
 
 			AssertVisible(
 				key_itemName = "Document Title",
@@ -287,7 +285,7 @@ definition {
 				locator1 = "AP#ASSET_ABSTRACT_DESCRIPTION",
 				value1 = "WC WebContent Content Edit");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("View the edited web content in view mode") {
@@ -340,7 +338,7 @@ definition {
 				locator1 = "WCD#WEB_CONTENT_CONTENT",
 				value1 = "WC WebContent Content Edit");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("View the edited web content in view mode") {
@@ -368,9 +366,7 @@ definition {
 		}
 
 		task ("Access to the inline text editor of Heading via Page Content panel") {
-			PageEditor.gotoTab(tabName = "Browser");
-
-			Navigator.gotoNavTab(navTab = "Page Content");
+			PageEditor.gotoTab(tabName = "Page Content");
 
 			PageEditor.editFragmentTextViaPageContentPanel(
 				itemName = "Heading Example",
@@ -398,9 +394,7 @@ definition {
 		}
 
 		task ("Access to the inline text editor of Paragraph via Page Content panel") {
-			PageEditor.gotoTab(tabName = "Browser");
-
-			Navigator.gotoNavTab(navTab = "Page Content");
+			PageEditor.gotoTab(tabName = "Page Content");
 
 			PageEditor.editFragmentTextViaPageContentPanel(
 				itemName = "A paragraph is a self-contained unit of a discourse in writing dealing with a particular point or idea. Paragraphs are usually an expected part of formal writing, used to organize longer prose.",
@@ -567,7 +561,7 @@ definition {
 		}
 
 		task ("Filter the displayed assets by category in Page Content panel") {
-			Navigator.gotoNavTab(navTab = "Page Content");
+			PageEditor.gotoTab(tabName = "Page Content");
 
 			PageEditor.selectContentFilter(filter = "Inline Text");
 
@@ -675,17 +669,15 @@ definition {
 			PageEditor.viewFragmentEditableImage(
 				id = "image-square",
 				imageDescription = "",
-				imageFileName = "analytics-cloud-hero-image.png");
+				imageFileName = "analytics-cloud-hero-image-png");
 		}
 
 		task ("Take down the naturalWidth and naturalHeight of image") {
-			var naturalWidth = selenium.getAttribute("//img[contains(@data-lfr-editable-id,'image-square') and contains(@src,'analytics-cloud-hero-image.png')]@naturalWidth");
-			var naturalHeight = selenium.getAttribute("//img[contains(@data-lfr-editable-id,'image-square') and contains(@src,'analytics-cloud-hero-image.png')]@naturalHeight");
+			var naturalWidth = selenium.getAttribute("//img[contains(@data-lfr-editable-id,'image-square') and contains(@src,'analytics-cloud-hero-image-png')]@naturalWidth");
+			var naturalHeight = selenium.getAttribute("//img[contains(@data-lfr-editable-id,'image-square') and contains(@src,'analytics-cloud-hero-image-png')]@naturalHeight");
 		}
 
 		task ("Edit the image via the image editor on Page Content panel") {
-			Navigator.gotoNavTab(navTab = "Page Content");
-
 			PageEditor.gotoEllipsisMenuItemInPageContentPanel(
 				itemName = "analytics-cloud-hero-image.png",
 				menuItem = "Edit Image");
@@ -696,7 +688,7 @@ definition {
 		}
 
 		task ("Take down the new naturalWidth and naturalHeight of image") {
-			Navigator.gotoNavTab(navTab = "Page Elements");
+			PageEditor.gotoTab(tabName = "Browser");
 
 			WaitForElementPresent(
 				key_resolutionLabel = "Width",
@@ -717,7 +709,7 @@ definition {
 				actual = "${naturalHeight}",
 				expected = "${editedNaturalHeight}");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Take down the new naturalWidth and naturalHeight of image at view mode") {
@@ -728,10 +720,10 @@ definition {
 			PageEditor.viewFragmentEditableImage(
 				id = "image-square",
 				imageDescription = "",
-				imageFileName = "analytics-cloud-hero-image.png");
+				imageFileName = "analytics-cloud-hero-image-png");
 
-			var editedNaturalWidth = selenium.getAttribute("//img[contains(@data-lfr-editable-id,'image-square') and contains(@src,'analytics-cloud-hero-image.png')]@naturalWidth");
-			var editedNaturalHeight = selenium.getAttribute("//img[contains(@data-lfr-editable-id,'image-square') and contains(@src,'analytics-cloud-hero-image.png')]@naturalHeight");
+			var editedNaturalWidth = selenium.getAttribute("//img[contains(@data-lfr-editable-id,'image-square') and contains(@src,'analytics-cloud-hero-image-png')]@naturalWidth");
+			var editedNaturalHeight = selenium.getAttribute("//img[contains(@data-lfr-editable-id,'image-square') and contains(@src,'analytics-cloud-hero-image-png')]@naturalHeight");
 		}
 
 		task ("View the naturalWidth doesn't change") {
@@ -774,19 +766,17 @@ definition {
 		}
 
 		task ("View the mapped image is shown in Banner Center fragment") {
-			PageEditor.viewContainerStyle(backgroundImage = "analytics-cloud-hero-image.png");
+			PageEditor.viewContainerStyle(backgroundImage = "analytics-cloud-hero-image\.png");
 		}
 
 		task ("View the version of mapped image") {
 			AssertVisible(
-				backgroundImageStyle = "version=1.0",
+				backgroundImageStyle = "version\=1\.0",
 				locator1 = "Fragment#BACKGROUND_IMAGE_STYLE",
 				position = "1");
 		}
 
 		task ("Edit the image via the image editor on Page Content panel") {
-			Navigator.gotoNavTab(navTab = "Page Content");
-
 			PageEditor.gotoEllipsisMenuItemInPageContentPanel(
 				itemName = "analytics-cloud-hero-image.png",
 				menuItem = "Edit Image");
@@ -797,18 +787,18 @@ definition {
 		}
 
 		task ("View the version of mapped image") {
-			Navigator.gotoNavTab(navTab = "Page Elements");
+			PageEditor.gotoTab(tabName = "Browser");
 
 			WaitForElementPresent(
 				key_resolutionLabel = "Width",
 				locator1 = "PageEditor#IMAGE_RESOLUTION_LABEL");
 
 			AssertVisible(
-				backgroundImageStyle = "version=2.0",
+				backgroundImageStyle = "version\=2\.0",
 				locator1 = "Fragment#BACKGROUND_IMAGE_STYLE",
 				position = "1");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("View the version of mapped image at view mode") {
@@ -974,7 +964,7 @@ definition {
 		}
 
 		task ("Search the displayed assets by keyword when the content filter is All Content") {
-			Navigator.gotoNavTab(navTab = "Page Content");
+			PageEditor.gotoTab(tabName = "Page Content");
 
 			PageEditor.searchInPageContentPanel(searchTerm = "Heading");
 
@@ -1157,9 +1147,7 @@ definition {
 		}
 
 		task ("View the dashed outline of editable field when hover on inline text items") {
-			PageEditor.gotoTab(tabName = "Browser");
-
-			Navigator.gotoNavTab(navTab = "Page Content");
+			PageEditor.gotoTab(tabName = "Page Content");
 
 			MouseOver(
 				key_itemName = "Heading Example",
@@ -1174,7 +1162,7 @@ definition {
 				value1 = "dashed");
 
 			MouseOver(
-				key_sidebarButton = "Browser",
+				key_sidebarButton = "Page Content",
 				locator1 = "PageEditor#FRAGMENT_SIDEBAR_TITLE");
 
 			MouseOver(
@@ -1205,7 +1193,7 @@ definition {
 		}
 
 		task ("View the dashed outline of editable field when hover on inline text items") {
-			Navigator.gotoNavTab(navTab = "Page Content");
+			PageEditor.gotoTab(tabName = "Page Content");
 
 			MouseOver(
 				key_itemName = "Edit Text",
@@ -1220,7 +1208,7 @@ definition {
 				value1 = "dashed");
 
 			MouseOver(
-				key_sidebarButton = "Browser",
+				key_sidebarButton = "Page Content",
 				locator1 = "PageEditor#FRAGMENT_SIDEBAR_TITLE");
 
 			MouseOver(
@@ -1318,7 +1306,7 @@ definition {
 		}
 
 		task ("View the dashed outline of mapped editable field when hover on assets") {
-			Navigator.gotoNavTab(navTab = "Page Content");
+			PageEditor.gotoTab(tabName = "Page Content");
 
 			MouseOver(
 				key_itemName = "Web Content Title",
@@ -1333,7 +1321,7 @@ definition {
 				value1 = "dashed");
 
 			MouseOver(
-				key_sidebarButton = "Browser",
+				key_sidebarButton = "Page Content",
 				locator1 = "PageEditor#FRAGMENT_SIDEBAR_TITLE");
 
 			MouseOver(
@@ -1349,7 +1337,7 @@ definition {
 				value1 = "dashed");
 
 			MouseOver(
-				key_sidebarButton = "Browser",
+				key_sidebarButton = "Page Content",
 				locator1 = "PageEditor#FRAGMENT_SIDEBAR_TITLE");
 
 			MouseOver(
@@ -1358,7 +1346,7 @@ definition {
 
 			var backgroundImageOutlineStyle = Css.getPseudoElementCssValue(
 				attribute = "outline-style",
-				element = "//div[contains(@class,'page-editor__topper')][@draggable][.//div[contains(@style,'Document_1.jpg')]]",
+				element = "//div[contains(@class,'page-editor__topper')][@draggable][.//div[contains(@style,'Document_1\\.jpg')]]",
 				pseudo = ":after");
 
 			TestUtils.assertEquals(
@@ -1457,9 +1445,7 @@ definition {
 		}
 
 		task ("View the details of displayed assets in Page Content panel") {
-			PageEditor.gotoTab(tabName = "Browser");
-
-			Navigator.gotoNavTab(navTab = "Page Content");
+			PageEditor.gotoTab(tabName = "Page Content");
 
 			AssertVisible(
 				key_category = "Document",
@@ -1480,6 +1466,44 @@ definition {
 				key_itemType = "Web Content Article - Basic Web Content",
 				key_style = "semi-bold",
 				locator1 = "PageEditor#PAGE_CONTENTS_ITEM_DETAILS_WITH_TYPE");
+		}
+	}
+
+	@description = "This is a test for LPS-153356. View Page Content tab on sidebar of content page."
+	@priority = "4"
+	test ViewPageContentOnSidebarOfContentPage {
+		task ("Given a page creator has a content page with Heading fragment") {
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Test Page Name",
+				siteName = "Test Site Name");
+
+			PageEditor.addFragment(
+				collectionName = "Basic Components",
+				fragmentName = "Heading");
+		}
+
+		task ("When the page creator clicks on Content Panel on sidebar") {
+			PageEditor.gotoTab(tabName = "Page Content");
+		}
+
+		task ("Then the page creator can validate Page Content tab") {
+			task ("View paperclip icon is shown") {
+				AssertElementPresent(
+					key_text = "paperclip",
+					locator1 = "Icon#ANY");
+			}
+
+			task ("View title and description on Page Content tab") {
+				AssertVisible(
+					key_sidebarButton = "Page Content",
+					locator1 = "PageEditor#FRAGMENT_SIDEBAR_TITLE");
+
+				AssertTextPresent(value1 = "Access the content included in the page and the options to edit them.");
+			}
+
+			task ("View the order of Page Content is the fourth") {
+				PageEditor.viewOrderOfSideBarButtons(buttonNameList = "Fragments and Widgets,Browser,Page Design Options,Page Content,Comments");
+			}
 		}
 	}
 
@@ -1517,7 +1541,7 @@ definition {
 				locator1 = "PageEditorEditableLink#FIELD",
 				value1 = "Title");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("View permissions of mapped web content in Contents panel") {
@@ -1525,9 +1549,7 @@ definition {
 				pageName = "Test Page Name",
 				siteName = "Test Site Name");
 
-			PageEditor.gotoTab(tabName = "Browser");
-
-			Navigator.gotoNavTab(navTab = "Page Content");
+			PageEditor.gotoTab(tabName = "Page Content");
 
 			LexiconEntry.gotoFragmentPageContentEllipsisMenuItem(
 				menuItem = "Permissions",
@@ -1546,9 +1568,7 @@ definition {
 				pageName = "Test Page Name",
 				siteName = "Test Site Name");
 
-			PageEditor.gotoTab(tabName = "Browser");
-
-			Navigator.gotoNavTab(navTab = "Page Content");
+			PageEditor.gotoTab(tabName = "Page Content");
 
 			LexiconEntry.gotoFragmentPageContentEllipsisMenuItem(
 				menuItem = "View Usages",

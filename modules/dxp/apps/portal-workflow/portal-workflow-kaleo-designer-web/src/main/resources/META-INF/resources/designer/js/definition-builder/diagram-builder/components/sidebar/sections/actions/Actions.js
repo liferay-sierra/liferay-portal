@@ -16,6 +16,7 @@ import ActionsInfo from './ActionsInfo';
 
 const Actions = (props) => {
 	const {selectedItem} = useContext(DiagramBuilderContext);
+
 	const {actions} = selectedItem?.data;
 	const [sections, setSections] = useState([{identifier: `${Date.now()}-0`}]);
 
@@ -30,7 +31,8 @@ const Actions = (props) => {
 					identifier: `${Date.now()}-${i}`,
 					name: actions.name[i],
 					priority: actions.priority[i],
-					template: actions.script[i],
+					script: actions.script[i],
+					scriptLanguage: actions.scriptLanguage[i],
 				});
 			}
 

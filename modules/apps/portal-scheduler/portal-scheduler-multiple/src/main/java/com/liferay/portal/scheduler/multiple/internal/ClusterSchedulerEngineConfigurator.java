@@ -39,9 +39,11 @@ public class ClusterSchedulerEngineConfigurator {
 
 	@Activate
 	protected void activate(BundleContext bundleContext) {
+		SchedulerEngine schedulerEngine = _schedulerEngine;
+
 		if (_clusterLink.isEnabled()) {
 			ClusterSchedulerEngine clusterSchedulerEngine =
-				new ClusterSchedulerEngine(_schedulerEngine, _triggerFactory);
+				new ClusterSchedulerEngine(schedulerEngine, _triggerFactory);
 
 			clusterSchedulerEngine.setClusterExecutor(_clusterExecutor);
 			clusterSchedulerEngine.setClusterMasterExecutor(
@@ -52,12 +54,12 @@ public class ClusterSchedulerEngineConfigurator {
 				IdentifiableOSGiService.class, clusterSchedulerEngine,
 				new HashMapDictionary<String, Object>());
 
-			_schedulerEngine = ClusterableProxyFactory.createClusterableProxy(
+			schedulerEngine = ClusterableProxyFactory.createClusterableProxy(
 				clusterSchedulerEngine);
 		}
 
 		_schedulerEngineServiceRegistration = bundleContext.registerService(
-			SchedulerEngine.class, _schedulerEngine,
+			SchedulerEngine.class, schedulerEngine,
 			HashMapDictionaryBuilder.<String, Object>put(
 				"scheduler.engine.proxy", Boolean.TRUE
 			).build());
@@ -74,46 +76,26 @@ public class ClusterSchedulerEngineConfigurator {
 		}
 	}
 
-	@Reference(unbind = "-")
-	protected void setClusterExecutor(ClusterExecutor clusterExecutor) {
-		_clusterExecutor = clusterExecutor;
-	}
-
-	@Reference(unbind = "-")
-	protected void setClusterLink(ClusterLink clusterLink) {
-		_clusterLink = clusterLink;
-	}
-
-	@Reference(unbind = "-")
-	protected void setClusterMasterExecutor(
-		ClusterMasterExecutor clusterMasterExecutor) {
-
-		_clusterMasterExecutor = clusterMasterExecutor;
-	}
-
-	@Reference(unbind = "-")
-	protected void setProps(Props props) {
-		_props = props;
-	}
-
-	@Reference(target = "(scheduler.engine.proxy.bean=true)", unbind = "-")
-	protected void setSchedulerEngine(SchedulerEngine schedulerEngine) {
-		_schedulerEngine = schedulerEngine;
-	}
-
-	@Reference(unbind = "-")
-	protected void TriggerFactory(TriggerFactory triggerFactory) {
-		_triggerFactory = triggerFactory;
-	}
-
+	@Reference
 	private ClusterExecutor _clusterExecutor;
+
+	@Reference
 	private ClusterLink _clusterLink;
+
+	@Reference
 	private ClusterMasterExecutor _clusterMasterExecutor;
+
+	@Reference
 	private Props _props;
+
+	@Reference(target = "(scheduler.engine.proxy=false)")
 	private SchedulerEngine _schedulerEngine;
+
 	private volatile ServiceRegistration<SchedulerEngine>
 		_schedulerEngineServiceRegistration;
 	private ServiceRegistration<IdentifiableOSGiService> _serviceRegistration;
+
+	@Reference
 	private TriggerFactory _triggerFactory;
 
 }

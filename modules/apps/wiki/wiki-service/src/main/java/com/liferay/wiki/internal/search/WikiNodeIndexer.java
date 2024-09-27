@@ -132,16 +132,7 @@ public class WikiNodeIndexer extends BaseIndexer<WikiNode> {
 			return;
 		}
 
-		_indexWriterHelper.updateDocument(
-			getSearchEngineId(), wikiNode.getCompanyId(), document,
-			isCommitImmediately());
-	}
-
-	@Reference(unbind = "-")
-	protected void setWikiNodeLocalService(
-		WikiNodeLocalService wikiNodeLocalService) {
-
-		_wikiNodeLocalService = wikiNodeLocalService;
+		_indexWriterHelper.updateDocument(wikiNode.getCompanyId(), document);
 	}
 
 	@Reference
@@ -149,8 +140,8 @@ public class WikiNodeIndexer extends BaseIndexer<WikiNode> {
 
 	private void _deleteDocument(WikiNode wikiNode) throws Exception {
 		_indexWriterHelper.deleteDocument(
-			getSearchEngineId(), wikiNode.getCompanyId(),
-			uidFactory.getUID(wikiNode), isCommitImmediately());
+			wikiNode.getCompanyId(), uidFactory.getUID(wikiNode),
+			isCommitImmediately());
 	}
 
 	private void _reindexEntries(long companyId) throws Exception {
@@ -179,7 +170,6 @@ public class WikiNodeIndexer extends BaseIndexer<WikiNode> {
 					}
 				}
 			});
-		indexableActionableDynamicQuery.setSearchEngineId(getSearchEngineId());
 
 		indexableActionableDynamicQuery.performActions();
 	}
@@ -193,6 +183,7 @@ public class WikiNodeIndexer extends BaseIndexer<WikiNode> {
 	@Reference
 	private TrashHelper _trashHelper;
 
+	@Reference
 	private WikiNodeLocalService _wikiNodeLocalService;
 
 	@Reference(target = "(model.class.name=com.liferay.wiki.model.WikiNode)")

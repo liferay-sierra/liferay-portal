@@ -18,11 +18,11 @@ import com.liferay.commerce.product.constants.CPField;
 import com.liferay.commerce.product.item.selector.criterion.CPDefinitionItemSelectorCriterion;
 import com.liferay.commerce.product.item.selector.web.internal.display.context.CPDefinitionItemSelectorViewDisplayContext;
 import com.liferay.commerce.product.service.CPDefinitionService;
-import com.liferay.commerce.product.type.CPTypeServicesTracker;
+import com.liferay.commerce.product.type.CPTypeRegistry;
 import com.liferay.item.selector.ItemSelectorReturnType;
 import com.liferay.item.selector.ItemSelectorView;
 import com.liferay.item.selector.criteria.UUIDItemSelectorReturnType;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -48,7 +48,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alessio Antonio Rendina
  */
-@Component(enabled = false, immediate = true, service = ItemSelectorView.class)
+@Component(immediate = true, service = ItemSelectorView.class)
 public class CPDefinitionItemSelectorView
 	implements ItemSelectorView<CPDefinitionItemSelectorCriterion> {
 
@@ -70,7 +70,7 @@ public class CPDefinitionItemSelectorView
 
 	@Override
 	public String getTitle(Locale locale) {
-		return LanguageUtil.get(locale, "products");
+		return _language.get(locale, "products");
 	}
 
 	@Override
@@ -100,7 +100,7 @@ public class CPDefinitionItemSelectorView
 			cpDefinitionItemSelectorViewDisplayContext =
 				new CPDefinitionItemSelectorViewDisplayContext(
 					httpServletRequest, portletURL, itemSelectedEventName,
-					_cpDefinitionService, _cpTypeServicesTracker);
+					_cpDefinitionService, _cpTypeRegistry);
 
 		httpServletRequest.setAttribute(
 			WebKeys.PORTLET_DISPLAY_CONTEXT,
@@ -123,7 +123,10 @@ public class CPDefinitionItemSelectorView
 	private CPDefinitionService _cpDefinitionService;
 
 	@Reference
-	private CPTypeServicesTracker _cpTypeServicesTracker;
+	private CPTypeRegistry _cpTypeRegistry;
+
+	@Reference
+	private Language _language;
 
 	@Reference(
 		target = "(osgi.web.symbolicname=com.liferay.commerce.product.item.selector.web)"

@@ -15,17 +15,17 @@
 package com.liferay.style.book.web.internal.display.context;
 
 import com.liferay.fragment.contributor.FragmentCollectionContributor;
-import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
+import com.liferay.fragment.contributor.FragmentCollectionContributorRegistry;
 import com.liferay.fragment.model.FragmentCollection;
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.service.FragmentCollectionLocalServiceUtil;
 import com.liferay.fragment.service.FragmentEntryLocalServiceUtil;
-import com.liferay.petra.portlet.url.builder.ResourceURLBuilder;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.portlet.url.builder.ResourceURLBuilder;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -49,8 +49,8 @@ public class PreviewFragmentCollectionDisplayContext {
 
 		_httpServletRequest = httpServletRequest;
 
-		_fragmentCollectionContributorTracker =
-			(FragmentCollectionContributorTracker)
+		_fragmentCollectionContributorRegistry =
+			(FragmentCollectionContributorRegistry)
 				httpServletRequest.getAttribute(
 					StyleBookWebKeys.FRAGMENT_COLLECTION_CONTRIBUTOR_TRACKER);
 	}
@@ -81,12 +81,12 @@ public class PreviewFragmentCollectionDisplayContext {
 		}
 
 		FragmentCollectionContributor fragmentCollectionContributor =
-			_fragmentCollectionContributorTracker.
+			_fragmentCollectionContributorRegistry.
 				getFragmentCollectionContributor(getFragmentCollectionKey());
 
 		if (fragmentCollectionContributor != null) {
-			fragmentEntries =
-				fragmentCollectionContributor.getFragmentEntries();
+			fragmentEntries = fragmentCollectionContributor.getFragmentEntries(
+				_httpServletRequest.getLocale());
 		}
 
 		for (FragmentEntry fragmentEntry : fragmentEntries) {
@@ -132,9 +132,10 @@ public class PreviewFragmentCollectionDisplayContext {
 		String portletNamespace = PortalUtil.getPortletNamespace(
 			getStyleBookPortletNamespace());
 
-		url = HttpUtil.addParameter(url, portletNamespace + "groupId", groupId);
+		url = HttpComponentsUtil.addParameter(
+			url, portletNamespace + "groupId", groupId);
 
-		return HttpUtil.addParameter(
+		return HttpComponentsUtil.addParameter(
 			url, portletNamespace + "fragmentEntryKey", fragmentEntryKey);
 	}
 
@@ -148,8 +149,8 @@ public class PreviewFragmentCollectionDisplayContext {
 		return _groupId;
 	}
 
-	private final FragmentCollectionContributorTracker
-		_fragmentCollectionContributorTracker;
+	private final FragmentCollectionContributorRegistry
+		_fragmentCollectionContributorRegistry;
 	private String _fragmentCollectionKey;
 	private Long _groupId;
 	private final HttpServletRequest _httpServletRequest;

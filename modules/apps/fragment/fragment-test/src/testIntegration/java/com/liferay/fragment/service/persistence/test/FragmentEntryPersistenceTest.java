@@ -168,6 +168,8 @@ public class FragmentEntryPersistenceTest {
 
 		newFragmentEntry.setType(RandomTestUtil.nextInt());
 
+		newFragmentEntry.setTypeOptions(RandomTestUtil.randomString());
+
 		newFragmentEntry.setLastPublishDate(RandomTestUtil.nextDate());
 
 		newFragmentEntry.setStatus(RandomTestUtil.nextInt());
@@ -241,6 +243,9 @@ public class FragmentEntryPersistenceTest {
 			existingFragmentEntry.isReadOnly(), newFragmentEntry.isReadOnly());
 		Assert.assertEquals(
 			existingFragmentEntry.getType(), newFragmentEntry.getType());
+		Assert.assertEquals(
+			existingFragmentEntry.getTypeOptions(),
+			newFragmentEntry.getTypeOptions());
 		Assert.assertEquals(
 			Time.getShortTimestamp(existingFragmentEntry.getLastPublishDate()),
 			Time.getShortTimestamp(newFragmentEntry.getLastPublishDate()));
@@ -347,6 +352,21 @@ public class FragmentEntryPersistenceTest {
 
 		_persistence.countByFragmentCollectionId_Head(
 			0L, RandomTestUtil.randomBoolean());
+	}
+
+	@Test
+	public void testCountByType() throws Exception {
+		_persistence.countByType(RandomTestUtil.nextInt());
+
+		_persistence.countByType(0);
+	}
+
+	@Test
+	public void testCountByType_Head() throws Exception {
+		_persistence.countByType_Head(
+			RandomTestUtil.nextInt(), RandomTestUtil.randomBoolean());
+
+		_persistence.countByType_Head(0, RandomTestUtil.randomBoolean());
 	}
 
 	@Test
@@ -875,6 +895,8 @@ public class FragmentEntryPersistenceTest {
 		fragmentEntry.setReadOnly(RandomTestUtil.randomBoolean());
 
 		fragmentEntry.setType(RandomTestUtil.nextInt());
+
+		fragmentEntry.setTypeOptions(RandomTestUtil.randomString());
 
 		fragmentEntry.setLastPublishDate(RandomTestUtil.nextDate());
 

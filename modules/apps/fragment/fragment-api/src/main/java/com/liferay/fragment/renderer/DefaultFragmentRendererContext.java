@@ -16,12 +16,11 @@ package com.liferay.fragment.renderer;
 
 import com.liferay.fragment.constants.FragmentEntryLinkConstants;
 import com.liferay.fragment.model.FragmentEntryLink;
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.info.form.InfoForm;
+import com.liferay.info.item.InfoItemReference;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
 
-import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -32,41 +31,28 @@ public class DefaultFragmentRendererContext implements FragmentRendererContext {
 
 	public DefaultFragmentRendererContext(FragmentEntryLink fragmentEntryLink) {
 		_fragmentEntryLink = fragmentEntryLink;
+
+		_fragmentEntryElementId = "fragment-" + PortalUUIDUtil.generate();
 	}
 
 	@Override
-	public Optional<Object> getDisplayObjectOptional() {
-		return Optional.ofNullable(_displayObject);
+	public Optional<InfoItemReference> getContextInfoItemReferenceOptional() {
+		return Optional.ofNullable(_infoItemReference);
 	}
 
 	@Override
 	public String getFragmentElementId() {
-		StringBundler sb = new StringBundler(8);
-
-		sb.append("fragment-");
-		sb.append(_fragmentEntryLink.getFragmentEntryId());
-		sb.append("-");
-		sb.append(_fragmentEntryLink.getNamespace());
-
-		if (!ListUtil.isEmpty(_collectionStyledLayoutStructureItemIds)) {
-			sb.append("-");
-			sb.append(
-				ListUtil.toString(
-					_collectionStyledLayoutStructureItemIds, StringPool.BLANK,
-					StringPool.DASH));
-		}
-
-		if (_collectionElementIndex > -1) {
-			sb.append("-");
-			sb.append(_collectionElementIndex);
-		}
-
-		return sb.toString();
+		return _fragmentEntryElementId;
 	}
 
 	@Override
 	public FragmentEntryLink getFragmentEntryLink() {
 		return _fragmentEntryLink;
+	}
+
+	@Override
+	public Optional<InfoForm> getInfoFormOptional() {
+		return Optional.ofNullable(_infoForm);
 	}
 
 	@Override
@@ -109,19 +95,14 @@ public class DefaultFragmentRendererContext implements FragmentRendererContext {
 		return _useCachedContent;
 	}
 
-	public void setCollectionElementIndex(int collectionElementIndex) {
-		_collectionElementIndex = collectionElementIndex;
+	public void setContextInfoItemReference(
+		InfoItemReference infoItemReference) {
+
+		_infoItemReference = infoItemReference;
 	}
 
-	public void setCollectionStyledLayoutStructureItemIds(
-		List<String> collectionStyledLayoutStructureItemIds) {
-
-		_collectionStyledLayoutStructureItemIds =
-			collectionStyledLayoutStructureItemIds;
-	}
-
-	public void setDisplayObject(Object object) {
-		_displayObject = object;
+	public void setInfoForm(InfoForm infoForm) {
+		_infoForm = infoForm;
 	}
 
 	public void setLocale(Locale locale) {
@@ -156,10 +137,10 @@ public class DefaultFragmentRendererContext implements FragmentRendererContext {
 		_useCachedContent = useCachedContent;
 	}
 
-	private int _collectionElementIndex = -1;
-	private List<String> _collectionStyledLayoutStructureItemIds;
-	private Object _displayObject;
+	private final String _fragmentEntryElementId;
 	private final FragmentEntryLink _fragmentEntryLink;
+	private InfoForm _infoForm;
+	private InfoItemReference _infoItemReference;
 	private Locale _locale = LocaleUtil.getMostRelevantLocale();
 	private String _mode = FragmentEntryLinkConstants.VIEW;
 	private long _previewClassNameId;

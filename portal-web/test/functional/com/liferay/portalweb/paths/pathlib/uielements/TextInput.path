@@ -21,6 +21,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>ALERT_MESSAGE</td>
+	<td>//div[label[contains(.,'${key_fieldLabel}')]]//div[contains(@class,'text-danger')][normalize-space()='${key_alertMessage}']</td>
+	<td></td>
+</tr>
+<tr>
 	<td>ANSWER</td>
 	<td>//div[label[contains(.,'Answer')]]/input[@type='password']</td>
 	<td></td>
@@ -36,8 +41,23 @@
 	<td></td>
 </tr>
 <tr>
+	<td>ANY_SPECIFIC</td>
+	<td>//div/label[text()='${key_text}']/..//input[not(contains(@type,'checkbox'))]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>ANY_DISABLED</td>
 	<td>//div[contains(@class,'input-text-wrapper')]/label[contains(.,'${key_selectFieldLabel}')]//following-sibling::input[contains(@class,'disabled')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>ANY_PLACEHOLDER</td>
+	<td>//input[contains(@placeholder,'${key_placeHolder}') and not(contains(@class,'disabled'))]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>ANY_WITH_AIRA_LABEL</td>
+	<td>//input[@aria-label='${ariaLabel}']</td>
 	<td></td>
 </tr>
 <tr>
@@ -52,7 +72,7 @@
 </tr>
 <tr>
 	<td>BORDER_BOTTOM_INPUT_FIELD</td>
-	<td>//button[contains(@class,'collapse-icon')][normalize-space()='${key_borderBottom}']/following-sibling::div[1]//div[label[normalize-space(text())='${key_fieldLabel}']]/input</td>
+	<td>//button[contains(@class,'collapse-icon')][normalize-space()='${key_borderBottom}']/following-sibling::div[1]//div[label[normalize-space(text())='${key_fieldLabel}']]//input</td>
 	<td></td>
 </tr>
 <tr>
@@ -138,6 +158,11 @@
 <tr>
 	<td>DESCRIPTION</td>
 	<td>//input[contains(@id,'description')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>DESTINATION_URL</td>
+	<td>//input[contains(@name,'destinationURL_${key_index}')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -306,8 +331,23 @@
 	<td></td>
 </tr>
 <tr>
+	<td>GENERIC_NUMBER_INPUT_N</td>
+	<td>xpath=(//div[label[contains(.,'${key_fieldLabel}')]]//input[@type='number'])[${key_indexNumber}]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>GENERIC_TEXT_INPUT</td>
 	<td>//div[label[contains(.,'${key_fieldLabel}')]]//input[@type='text'] | //div[contains(@class,'ddm-field') and contains(.,'${key_fieldLabel}')]//input[@type='text']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>GENERIC_TEXT_INPUT_WITH_ICON</td>
+	<td>//div[label[*[name()='svg'][contains(@class,'lexicon-icon-${key_text}')]]]//preceding-sibling::input</td>
+	<td></td>
+</tr>
+<tr>
+	<td>GENERIC_TEXT_INPUT_N</td>
+	<td>xpath=(//div[label[contains(.,'${key_fieldLabel}')]]//input[@type='text'] | //div[contains(@class,'ddm-field') and contains(.,'${key_fieldLabel}')]//input[@type='text'])[${key_indexNumber}]</td>
 	<td></td>
 </tr>
 <tr>
@@ -457,7 +497,7 @@
 </tr>
 <tr>
 	<td>PASSWORD</td>
-	<td>//div[label[contains(.,'Password')]]/input | //div[label[contains(.,"parola d'ordine")]]/input | //div[label[contains(.,'Contraseña')]]/input | //div[label[contains(.,'パスワード')]]/input | //div[label[contains(.,'密码')]]/input | //div[contains(.,'Kennwort')]//input[@type='password']</td>
+	<td>//div[label[contains(.,'Password') and not(contains(.,'One-Time Password'))]]/input | //div[label[contains(.,"parola d'ordine")]]/input | //div[label[contains(.,'Contraseña')]]/input | //div[label[contains(.,'パスワード')]]/input | //div[label[contains(.,'密码')]]/input | //div[contains(.,'Kennwort')]//input[@type='password']</td>
 	<td></td>
 </tr>
 <tr>
@@ -481,8 +521,13 @@
 	<td></td>
 </tr>
 <tr>
-	<td>PIWIK</td>
-	<td>//textarea[contains(@id,'piwik')]</td>
+	<td>PATTERN</td>
+	<td>//input[contains(@name,'pattern_${key_index}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>MATOMO</td>
+	<td>//textarea[contains(@id,'matomo')]</td>
 	<td></td>
 </tr>
 <tr>

@@ -55,7 +55,7 @@ public class DefaultLocalRepositoryImpl implements LocalRepository {
 	@Override
 	public FileEntry addFileEntry(
 		String externalReferenceCode, long userId, long folderId,
-		String sourceFileName, String mimeType, String title,
+		String sourceFileName, String mimeType, String title, String urlTitle,
 		String description, String changeLog, File file, Date expirationDate,
 		Date reviewDate, ServiceContext serviceContext) {
 
@@ -65,7 +65,7 @@ public class DefaultLocalRepositoryImpl implements LocalRepository {
 	@Override
 	public FileEntry addFileEntry(
 		String externalReferenceCode, long userId, long folderId,
-		String sourceFileName, String mimeType, String title,
+		String sourceFileName, String mimeType, String title, String urlTitle,
 		String description, String changeLog, InputStream inputStream,
 		long size, Date expirationDate, Date reviewDate,
 		ServiceContext serviceContext) {
@@ -149,6 +149,13 @@ public class DefaultLocalRepositoryImpl implements LocalRepository {
 	@Override
 	public void deleteFolder(long folderId) throws PortalException {
 		_repository.deleteFolder(folderId);
+	}
+
+	@Override
+	public FileEntry fetchFileEntry(long folderId, String title)
+		throws PortalException {
+
+		return _repository.fetchFileEntry(folderId, title);
 	}
 
 	@Override
@@ -379,7 +386,7 @@ public class DefaultLocalRepositoryImpl implements LocalRepository {
 	@Override
 	public FileEntry updateFileEntry(
 		long userId, long fileEntryId, String sourceFileName, String mimeType,
-		String title, String description, String changeLog,
+		String title, String urlTitle, String description, String changeLog,
 		DLVersionNumberIncrease dlVersionNumberIncrease, File file,
 		Date expirationDate, Date reviewDate, ServiceContext serviceContext) {
 
@@ -389,7 +396,7 @@ public class DefaultLocalRepositoryImpl implements LocalRepository {
 	@Override
 	public FileEntry updateFileEntry(
 		long userId, long fileEntryId, String sourceFileName, String mimeType,
-		String title, String description, String changeLog,
+		String title, String urlTitle, String description, String changeLog,
 		DLVersionNumberIncrease dlVersionNumberIncrease,
 		InputStream inputStream, long size, Date expirationDate,
 		Date reviewDate, ServiceContext serviceContext) {

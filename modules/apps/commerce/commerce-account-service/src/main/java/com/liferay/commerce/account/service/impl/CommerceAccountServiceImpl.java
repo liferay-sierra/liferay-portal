@@ -19,23 +19,34 @@ import com.liferay.commerce.account.constants.CommerceAccountConstants;
 import com.liferay.commerce.account.exception.NoSuchAccountException;
 import com.liferay.commerce.account.model.CommerceAccount;
 import com.liferay.commerce.account.service.base.CommerceAccountServiceBaseImpl;
+import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.SortFactoryUtil;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
-import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionFactory;
 import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 
 import java.util.Collections;
 import java.util.List;
+
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Marco Leo
  * @author Alessio Antonio Rendina
  */
+@Component(
+	property = {
+		"json.web.service.context.name=commerce",
+		"json.web.service.context.path=CommerceAccount"
+	},
+	service = AopService.class
+)
 public class CommerceAccountServiceImpl extends CommerceAccountServiceBaseImpl {
 
 	@Override
@@ -207,7 +218,7 @@ public class CommerceAccountServiceImpl extends CommerceAccountServiceBaseImpl {
 			String keywords, Boolean active, int start, int end)
 		throws PortalException {
 
-		User user = userLocalService.fetchUser(userId);
+		User user = _userLocalService.fetchUser(userId);
 
 		if (user == null) {
 			return Collections.emptyList();
@@ -247,7 +258,7 @@ public class CommerceAccountServiceImpl extends CommerceAccountServiceBaseImpl {
 
 		Boolean active = true;
 
-		if (hasManageCommerceAccountPermissions()) {
+		if (_hasManageCommerceAccountPermissions()) {
 			active = null;
 		}
 
@@ -264,7 +275,7 @@ public class CommerceAccountServiceImpl extends CommerceAccountServiceBaseImpl {
 
 		Boolean active = true;
 
-		if (hasManageCommerceAccountPermissions()) {
+		if (_hasManageCommerceAccountPermissions()) {
 			active = null;
 		}
 
@@ -279,7 +290,7 @@ public class CommerceAccountServiceImpl extends CommerceAccountServiceBaseImpl {
 			String keywords, Boolean active)
 		throws PortalException {
 
-		User user = userLocalService.fetchUser(userId);
+		User user = _userLocalService.fetchUser(userId);
 
 		if (user == null) {
 			return 0;
@@ -393,7 +404,7 @@ public class CommerceAccountServiceImpl extends CommerceAccountServiceBaseImpl {
 			commerceAccountId, commerceAddressId);
 	}
 
-	protected boolean hasManageCommerceAccountPermissions()
+	private boolean _hasManageCommerceAccountPermissions()
 		throws PortalException {
 
 		PortletResourcePermission portletResourcePermission =
@@ -424,11 +435,13 @@ public class CommerceAccountServiceImpl extends CommerceAccountServiceBaseImpl {
 			CommerceAccountActionKeys.MANAGE_ALL_ACCOUNTS);
 	}
 
-	private static volatile ModelResourcePermission<CommerceAccount>
-		_commerceAccountModelResourcePermission =
-			ModelResourcePermissionFactory.getInstance(
-				CommerceAccountServiceImpl.class,
-				"_commerceAccountModelResourcePermission",
-				CommerceAccount.class);
+	@Reference(
+		target = "(model.class.name=com.liferay.commerce.account.model.CommerceAccount)"
+	)
+	private ModelResourcePermission<CommerceAccount>
+		_commerceAccountModelResourcePermission;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

@@ -51,16 +51,14 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.odata.entity.EntityModel;
+import com.liferay.portal.vulcan.aggregation.Aggregation;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
-import com.liferay.portal.vulcan.permission.PermissionUtil;
-import com.liferay.portal.vulcan.resource.EntityModelResource;
 import com.liferay.portal.vulcan.util.ContentLanguageUtil;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 import com.liferay.portal.vulcan.util.SearchUtil;
-import com.liferay.portal.vulcan.util.TransformUtil;
 import com.liferay.portlet.asset.model.impl.AssetCategoryImpl;
 import com.liferay.portlet.asset.service.permission.AssetCategoriesPermission;
 import com.liferay.portlet.asset.service.permission.AssetCategoryPermission;
@@ -94,7 +92,7 @@ import org.osgi.service.component.annotations.ServiceScope;
 	scope = ServiceScope.PROTOTYPE, service = TaxonomyCategoryResource.class
 )
 public class TaxonomyCategoryResourceImpl
-	extends BaseTaxonomyCategoryResourceImpl implements EntityModelResource {
+	extends BaseTaxonomyCategoryResourceImpl {
 
 	@Override
 	public void deleteTaxonomyCategory(String taxonomyCategoryId)
@@ -171,8 +169,9 @@ public class TaxonomyCategoryResourceImpl
 
 	@Override
 	public Page<TaxonomyCategory> getTaxonomyCategoryTaxonomyCategoriesPage(
-			String parentTaxonomyCategoryId, String search, Filter filter,
-			Pagination pagination, Sort[] sorts)
+			String parentTaxonomyCategoryId, String search,
+			Aggregation aggregation, Filter filter, Pagination pagination,
+			Sort[] sorts)
 		throws Exception {
 
 		Map<String, Map<String, String>> actions = null;
@@ -204,7 +203,7 @@ public class TaxonomyCategoryResourceImpl
 		String taxonomyCategoryId = parentTaxonomyCategoryId;
 
 		return _getCategoriesPage(
-			actions,
+			actions, aggregation,
 			booleanQuery -> {
 				BooleanFilter booleanFilter =
 					booleanQuery.getPreBooleanFilter();
@@ -219,8 +218,8 @@ public class TaxonomyCategoryResourceImpl
 
 	@Override
 	public Page<TaxonomyCategory> getTaxonomyVocabularyTaxonomyCategoriesPage(
-			Long taxonomyVocabularyId, String search, Filter filter,
-			Pagination pagination, Sort[] sorts)
+			Long taxonomyVocabularyId, String search, Aggregation aggregation,
+			Filter filter, Pagination pagination, Sort[] sorts)
 		throws Exception {
 
 		AssetVocabulary assetVocabulary = _assetVocabularyService.getVocabulary(
@@ -233,11 +232,27 @@ public class TaxonomyCategoryResourceImpl
 					ActionKeys.ADD_CATEGORY, assetVocabulary,
 					"postTaxonomyVocabularyTaxonomyCategory")
 			).put(
+				"createBatch",
+				addAction(
+					ActionKeys.VIEW, assetVocabulary,
+					"postTaxonomyVocabularyTaxonomyCategoryBatch")
+			).put(
+				"deleteBatch",
+				addAction(
+					ActionKeys.DELETE, assetVocabulary,
+					"deleteTaxonomyCategoryBatch")
+			).put(
 				"get",
 				addAction(
 					ActionKeys.VIEW, assetVocabulary,
 					"getTaxonomyVocabularyTaxonomyCategoriesPage")
+			).put(
+				"updateBatch",
+				addAction(
+					ActionKeys.UPDATE, assetVocabulary,
+					"putTaxonomyCategoryBatch")
 			).build(),
+			aggregation,
 			booleanQuery -> {
 				BooleanFilter booleanFilter =
 					booleanQuery.getPreBooleanFilter();
@@ -266,18 +281,9 @@ public class TaxonomyCategoryResourceImpl
 		AssetVocabulary assetVocabulary = _assetVocabularyService.getVocabulary(
 			taxonomyVocabularyId);
 
-		AssetCategory assetCategory =
-			_assetCategoryLocalService.getAssetCategoryByExternalReferenceCode(
-				assetVocabulary.getGroupId(), externalReferenceCode);
-
-		PermissionUtil.checkPermission(
-			ActionKeys.VIEW, groupLocalService,
-			getPermissionCheckerResourceName(assetCategory.getCategoryId()),
-			getPermissionCheckerResourceId(assetCategory.getCategoryId()),
-			getPermissionCheckerGroupId(
-				String.valueOf(assetCategory.getCategoryId())));
-
-		return _toTaxonomyCategory(assetCategory);
+		return _toTaxonomyCategory(
+			_assetCategoryService.getAssetCategoryByExternalReferenceCode(
+				assetVocabulary.getGroupId(), externalReferenceCode));
 	}
 
 	@Override
@@ -452,7 +458,7 @@ public class TaxonomyCategoryResourceImpl
 	}
 
 	private Page<TaxonomyCategory> _getCategoriesPage(
-			Map<String, Map<String, String>> actions,
+			Map<String, Map<String, String>> actions, Aggregation aggregation,
 			UnsafeConsumer<BooleanQuery, Exception> booleanQueryUnsafeConsumer,
 			Filter filter, String keywords, Pagination pagination, Sort[] sorts)
 		throws Exception {
@@ -462,8 +468,10 @@ public class TaxonomyCategoryResourceImpl
 			AssetCategory.class.getName(), keywords, pagination,
 			queryConfig -> queryConfig.setSelectedFieldNames(
 				Field.ASSET_CATEGORY_ID),
-			searchContext -> searchContext.setCompanyId(
-				contextCompany.getCompanyId()),
+			searchContext -> {
+				searchContext.addVulcanAggregation(aggregation);
+				searchContext.setCompanyId(contextCompany.getCompanyId());
+			},
 			sorts,
 			document -> _toTaxonomyCategory(
 				_assetCategoryService.getCategory(
@@ -492,6 +500,7 @@ public class TaxonomyCategoryResourceImpl
 		projectionList.add(ProjectionFactoryUtil.property("modifiedDate"));
 		projectionList.add(ProjectionFactoryUtil.property("name"));
 		projectionList.add(ProjectionFactoryUtil.property("userId"));
+		projectionList.add(ProjectionFactoryUtil.property("vocabularyId"));
 
 		return projectionList;
 	}
@@ -561,6 +570,7 @@ public class TaxonomyCategoryResourceImpl
 				setModifiedDate(_toDate((Timestamp)assetCategory[6]));
 				setName((String)assetCategory[7]);
 				setUserId((long)assetCategory[8]);
+				setVocabularyId((long)assetCategory[9]);
 			}
 		};
 	}
@@ -572,7 +582,7 @@ public class TaxonomyCategoryResourceImpl
 	private String[] _toStringArray(
 		TaxonomyCategoryProperty[] taxonomyCategoryProperties) {
 
-		return TransformUtil.transform(
+		return transform(
 			taxonomyCategoryProperties,
 			taxonomyCategoryProperty -> StringBundler.concat(
 				taxonomyCategoryProperty.getKey(), StringPool.COLON,

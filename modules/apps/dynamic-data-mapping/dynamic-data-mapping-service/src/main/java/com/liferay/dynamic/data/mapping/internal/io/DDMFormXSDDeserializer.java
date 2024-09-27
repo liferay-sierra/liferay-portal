@@ -28,6 +28,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReader;
@@ -46,7 +47,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pablo Carvalho
  */
 @Component(
-	immediate = true, property = "ddm.form.deserializer.type=xsd",
+	property = "ddm.form.deserializer.type=xsd",
 	service = DDMFormDeserializer.class
 )
 public class DDMFormXSDDeserializer implements DDMFormDeserializer {
@@ -244,10 +245,9 @@ public class DDMFormXSDDeserializer implements DDMFormDeserializer {
 	protected void setDDMFormFieldOptions(
 		Element dynamicElementElement, DDMFormField ddmFormField) {
 
-		DDMFormFieldOptions ddmFormFieldOptions = getDDMFormFieldOptions(
-			dynamicElementElement.elements("dynamic-element"));
-
-		ddmFormField.setDDMFormFieldOptions(ddmFormFieldOptions);
+		ddmFormField.setDDMFormFieldOptions(
+			getDDMFormFieldOptions(
+				dynamicElementElement.elements("dynamic-element")));
 	}
 
 	protected void setDDMFormFields(Element rootElement, DDMForm ddmForm) {
@@ -264,15 +264,8 @@ public class DDMFormXSDDeserializer implements DDMFormDeserializer {
 	protected void setNestedDDMFormField(
 		Element dynamicElementElement, DDMFormField ddmFormField) {
 
-		List<DDMFormField> nestedDDMFormFields = getDDMFormFields(
-			dynamicElementElement);
-
-		ddmFormField.setNestedDDMFormFields(nestedDDMFormFields);
-	}
-
-	@Reference(unbind = "-")
-	protected void setSAXReader(SAXReader saxReader) {
-		_saxReader = saxReader;
+		ddmFormField.setNestedDDMFormFields(
+			getDDMFormFields(dynamicElementElement));
 	}
 
 	private Element _fetchMetadataEntry(
@@ -302,10 +295,9 @@ public class DDMFormXSDDeserializer implements DDMFormDeserializer {
 	private void _setDDMFormFieldLocalizable(
 		Element dynamicElementElement, DDMFormField ddmFormField) {
 
-		boolean localizable = GetterUtil.getBoolean(
-			dynamicElementElement.attributeValue("localizable"), true);
-
-		ddmFormField.setLocalizable(localizable);
+		ddmFormField.setLocalizable(
+			GetterUtil.getBoolean(
+				dynamicElementElement.attributeValue("localizable"), true));
 	}
 
 	private void _setDDMFormFieldMetadata(
@@ -352,67 +344,65 @@ public class DDMFormXSDDeserializer implements DDMFormDeserializer {
 	private void _setDDMFormFieldMultiple(
 		Element dynamicElementElement, DDMFormField ddmFormField) {
 
-		boolean multiple = GetterUtil.getBoolean(
-			dynamicElementElement.attributeValue("multiple"));
-
-		ddmFormField.setMultiple(multiple);
+		ddmFormField.setMultiple(
+			GetterUtil.getBoolean(
+				dynamicElementElement.attributeValue("multiple")));
 	}
 
 	private void _setDDMFormFieldNamespace(
 		Element dynamicElementElement, DDMFormField ddmFormField) {
 
-		String fieldNamespace = dynamicElementElement.attributeValue(
-			"fieldNamespace");
-
-		ddmFormField.setFieldNamespace(fieldNamespace);
+		ddmFormField.setFieldNamespace(
+			dynamicElementElement.attributeValue("fieldNamespace"));
 	}
 
 	private void _setDDMFormFieldReadOnly(
 		Element dynamicElementElement, DDMFormField ddmFormField) {
 
-		boolean readOnly = GetterUtil.getBoolean(
-			dynamicElementElement.attributeValue("readOnly"));
-
-		ddmFormField.setReadOnly(readOnly);
+		ddmFormField.setReadOnly(
+			GetterUtil.getBoolean(
+				dynamicElementElement.attributeValue("readOnly")));
 	}
 
 	private void _setDDMFormFieldReference(
 		Element dynamicElementElement, DDMFormField ddmFormField) {
 
-		ddmFormField.setFieldReference(
-			dynamicElementElement.attributeValue("fieldReference"));
+		String fieldReference = dynamicElementElement.attributeValue(
+			"fieldReference");
+
+		if (Validator.isNotNull(fieldReference)) {
+			ddmFormField.setFieldReference(fieldReference);
+		}
 	}
 
 	private void _setDDMFormFieldRepeatable(
 		Element dynamicElementElement, DDMFormField ddmFormField) {
 
-		boolean repeatable = GetterUtil.getBoolean(
-			dynamicElementElement.attributeValue("repeatable"));
-
-		ddmFormField.setRepeatable(repeatable);
+		ddmFormField.setRepeatable(
+			GetterUtil.getBoolean(
+				dynamicElementElement.attributeValue("repeatable")));
 	}
 
 	private void _setDDMFormFieldRequired(
 		Element dynamicElementElement, DDMFormField ddmFormField) {
 
-		boolean required = GetterUtil.getBoolean(
-			dynamicElementElement.attributeValue("required"));
-
-		ddmFormField.setRequired(required);
+		ddmFormField.setRequired(
+			GetterUtil.getBoolean(
+				dynamicElementElement.attributeValue("required")));
 	}
 
 	private void _setDDMFormFieldShowLabel(
 		Element dynamicElementElement, DDMFormField ddmFormField) {
 
-		boolean showLabel = GetterUtil.getBoolean(
-			dynamicElementElement.attributeValue("showLabel"), true);
-
-		ddmFormField.setShowLabel(showLabel);
+		ddmFormField.setShowLabel(
+			GetterUtil.getBoolean(
+				dynamicElementElement.attributeValue("showLabel"), true));
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		DDMFormXSDDeserializer.class);
 
+	@Reference
 	private SAXReader _saxReader;
 
 }

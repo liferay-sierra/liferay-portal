@@ -47,10 +47,7 @@ import org.osgi.service.component.annotations.Deactivate;
 /**
  * @author Alessio Antonio Rendina
  */
-@Component(
-	enabled = false, immediate = true,
-	service = CommerceOrderValidatorRegistry.class
-)
+@Component(immediate = true, service = CommerceOrderValidatorRegistry.class)
 public class CommerceOrderValidatorRegistryImpl
 	implements CommerceOrderValidatorRegistry {
 
@@ -87,7 +84,7 @@ public class CommerceOrderValidatorRegistryImpl
 		}
 
 		Map<Long, List<CommerceOrderValidatorResult>>
-			commerceOrderValidatorResultMap = new HashMap<>();
+			commerceOrderValidatorResultsMap = new HashMap<>();
 
 		List<CommerceOrderItem> commerceOrderItems =
 			commerceOrder.getCommerceOrderItems();
@@ -113,12 +110,12 @@ public class CommerceOrderValidatorRegistryImpl
 				}
 			}
 
-			commerceOrderValidatorResultMap.put(
+			commerceOrderValidatorResultsMap.put(
 				commerceOrderItem.getCommerceOrderItemId(),
 				filteredCommerceOrderValidatorResults);
 		}
 
-		return commerceOrderValidatorResultMap;
+		return commerceOrderValidatorResultsMap;
 	}
 
 	@Override

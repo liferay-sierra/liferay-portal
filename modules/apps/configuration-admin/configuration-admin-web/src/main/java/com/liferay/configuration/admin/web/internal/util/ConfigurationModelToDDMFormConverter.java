@@ -20,6 +20,8 @@ import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldOptions;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldType;
+import com.liferay.dynamic.data.mapping.model.DDMFormFieldValidation;
+import com.liferay.dynamic.data.mapping.model.DDMFormFieldValidationExpression;
 import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.storage.constants.FieldConstants;
 import com.liferay.dynamic.data.mapping.util.DDMFormFactory;
@@ -54,6 +56,9 @@ import org.osgi.service.metatype.ObjectClassDefinition;
  */
 public class ConfigurationModelToDDMFormConverter {
 
+	public static final String NUMBER_TYPE_VALUE_VALIDATION_EXPRESSION_NAME =
+		"numberTypeValueValidation";
+
 	public ConfigurationModelToDDMFormConverter(
 		ConfigurationModel configurationModel, Locale locale,
 		ResourceBundle resourceBundle) {
@@ -75,6 +80,12 @@ public class ConfigurationModelToDDMFormConverter {
 
 		_addRequiredDDMFormFields(ddmForm);
 		_addOptionalDDMFormFields(ddmForm);
+
+		if (_configurationModel.isReadOnly()) {
+			for (DDMFormField ddmFormField : ddmForm.getDDMFormFields()) {
+				ddmFormField.setReadOnly(true);
+			}
+		}
 
 		return ddmForm;
 	}
@@ -169,7 +180,7 @@ public class ConfigurationModelToDDMFormConverter {
 		ConfigurationFieldOptionsProvider configurationFieldOptionsProvider =
 			getConfigurationFieldOptionsProvider(attributeDefinition);
 
-		if (!SetUtil.isEmpty(ddmFormFieldOptions.getOptionsValues()) ||
+		if (SetUtil.isNotEmpty(ddmFormFieldOptions.getOptionsValues()) ||
 			(configurationFieldOptionsProvider != null)) {
 
 			return DDMFormFieldType.SELECT;
@@ -191,10 +202,8 @@ public class ConfigurationModelToDDMFormConverter {
 
 		for (AttributeDefinition attributeDefinition : attributeDefinitions) {
 			if (!ddmFormFieldsMap.containsKey(attributeDefinition.getID())) {
-				DDMFormField ddmFormField = _getDDMFormField(
-					attributeDefinition, required);
-
-				ddmForm.addDDMFormField(ddmFormField);
+				ddmForm.addDDMFormField(
+					_getDDMFormField(attributeDefinition, required));
 			}
 		}
 	}
@@ -264,7 +273,9 @@ public class ConfigurationModelToDDMFormConverter {
 			attributeDefinition, ddmFormFieldOptions);
 
 		DDMFormField ddmFormField = new DDMFormField(
-			attributeDefinition.getID(), type);
+			DDMFormFieldNameUtil.normalizeFieldName(
+				attributeDefinition.getID()),
+			type);
 
 		_setDDMFormFieldDataType(attributeDefinition, ddmFormField);
 		_setDDMFormFieldLabel(attributeDefinition, ddmFormField);
@@ -273,8 +284,10 @@ public class ConfigurationModelToDDMFormConverter {
 		_setDDMFormFieldReadOnly(attributeDefinition, ddmFormField);
 		_setDDMFormFieldRequired(ddmFormField, required);
 		_setDDMFormFieldTip(attributeDefinition, ddmFormField);
+		_setDDMFormFieldValidation(ddmFormField);
 		_setDDMFormFieldVisibilityExpression(attributeDefinition, ddmFormField);
 
+		ddmFormField.setFieldReference(attributeDefinition.getID());
 		ddmFormField.setLocalizable(true);
 		ddmFormField.setShowLabel(true);
 
@@ -439,6 +452,60 @@ public class ConfigurationModelToDDMFormConverter {
 		tip.addString(_locale, sb.toString());
 
 		ddmFormField.setTip(tip);
+	}
+
+	private void _setDDMFormFieldValidation(DDMFormField ddmFormField) {
+		String dataType = ddmFormField.getDataType();
+
+		String maxNumericValue = null;
+
+		if (dataType.equals(FieldConstants.DOUBLE)) {
+			maxNumericValue = String.valueOf(Double.MAX_VALUE);
+		}
+		else if (dataType.equals(FieldConstants.FLOAT)) {
+			maxNumericValue = String.valueOf(Float.MAX_VALUE);
+		}
+		else if (dataType.equals(FieldConstants.INTEGER)) {
+			maxNumericValue = String.valueOf(Integer.MAX_VALUE);
+		}
+		else if (dataType.equals(FieldConstants.LONG)) {
+			maxNumericValue = String.valueOf(Long.MAX_VALUE);
+		}
+		else if (dataType.equals(FieldConstants.SHORT)) {
+			maxNumericValue = String.valueOf(Short.MAX_VALUE);
+		}
+
+		if (maxNumericValue == null) {
+			return;
+		}
+
+		DDMFormFieldValidation ddmFormFieldValidation =
+			new DDMFormFieldValidation();
+
+		LocalizedValue errorMessageLocalizedValue = new LocalizedValue();
+
+		errorMessageLocalizedValue.addString(
+			_locale,
+			LanguageUtil.format(
+				_locale, "please-enter-a-value-less-than-or-equal-to-x",
+				maxNumericValue));
+
+		ddmFormFieldValidation.setErrorMessageLocalizedValue(
+			errorMessageLocalizedValue);
+
+		DDMFormFieldValidationExpression ddmFormFieldValidationExpression =
+			new DDMFormFieldValidationExpression();
+
+		ddmFormFieldValidationExpression.setName(
+			NUMBER_TYPE_VALUE_VALIDATION_EXPRESSION_NAME);
+		ddmFormFieldValidationExpression.setValue(
+			StringBundler.concat(
+				"(", ddmFormField.getName(), "<=", maxNumericValue, ")"));
+
+		ddmFormFieldValidation.setDDMFormFieldValidationExpression(
+			ddmFormFieldValidationExpression);
+
+		ddmFormField.setDDMFormFieldValidation(ddmFormFieldValidation);
 	}
 
 	private void _setDDMFormFieldVisibilityExpression(

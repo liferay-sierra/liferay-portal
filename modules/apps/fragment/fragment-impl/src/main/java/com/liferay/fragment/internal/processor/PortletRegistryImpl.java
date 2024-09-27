@@ -15,28 +15,24 @@
 package com.liferay.fragment.internal.processor;
 
 import com.liferay.fragment.contributor.PortletAliasRegistration;
-import com.liferay.fragment.internal.constants.PortletFragmentEntryProcessorWebKeys;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.processor.PortletRegistry;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.model.LayoutTypePortlet;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.portlet.PortletIdCodec;
-import com.liferay.portal.kernel.portlet.PortletJSONUtil;
+import com.liferay.portal.kernel.portlet.render.PortletRenderParts;
+import com.liferay.portal.kernel.portlet.render.PortletRenderUtil;
 import com.liferay.portal.kernel.service.PortletLocalService;
-import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
-import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.util.WebKeys;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,6 +68,27 @@ public class PortletRegistryImpl implements PortletRegistry {
 
 		List<String> portletIds = new ArrayList<>();
 
+		if (fragmentEntryLink.isTypePortlet()) {
+			try {
+				JSONObject jsonObject = _jsonFactory.createJSONObject(
+					fragmentEntryLink.getEditableValues());
+
+				String portletId = jsonObject.getString("portletId");
+
+				if (Validator.isNotNull(portletId)) {
+					String instanceId = jsonObject.getString("instanceId");
+
+					portletIds.add(
+						PortletIdCodec.encode(portletId, instanceId));
+				}
+			}
+			catch (PortalException portalException) {
+				_log.error("Unable to get portlet IDs", portalException);
+			}
+
+			return portletIds;
+		}
+
 		Document document = Jsoup.parseBodyFragment(
 			fragmentEntryLink.getHtml());
 
@@ -102,22 +119,6 @@ public class PortletRegistryImpl implements PortletRegistry {
 				fragmentEntryLink.getNamespace() + element.attr("id"));
 
 			portletIds.add(portletId);
-		}
-
-		try {
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-				fragmentEntryLink.getEditableValues());
-
-			String portletId = jsonObject.getString("portletId");
-
-			if (Validator.isNotNull(portletId)) {
-				String instanceId = jsonObject.getString("instanceId");
-
-				portletIds.add(PortletIdCodec.encode(portletId, instanceId));
-			}
-		}
-		catch (PortalException portalException) {
-			_log.error("Unable to get portlet IDs", portalException);
 		}
 
 		return portletIds;
@@ -167,21 +168,17 @@ public class PortletRegistryImpl implements PortletRegistry {
 			Collectors.toList()
 		);
 
-		List<Portlet> allPortlets = _getAllPortlets(httpServletRequest);
-
 		for (Portlet portlet : portlets) {
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
-
 			try {
-				PortletJSONUtil.populatePortletJSONObject(
-					httpServletRequest, StringPool.BLANK, portlet, allPortlets,
-					jsonObject);
+				PortletRenderParts portletRenderParts =
+					PortletRenderUtil.getPortletRenderParts(
+						httpServletRequest, StringPool.BLANK, portlet);
 
-				PortletJSONUtil.writeHeaderPaths(
-					httpServletResponse, jsonObject);
+				PortletRenderUtil.writeHeaderPaths(
+					httpServletResponse, portletRenderParts);
 
-				PortletJSONUtil.writeFooterPaths(
-					httpServletResponse, jsonObject);
+				PortletRenderUtil.writeFooterPaths(
+					httpServletResponse, portletRenderParts);
 			}
 			catch (Exception exception) {
 				_log.error(
@@ -230,37 +227,11 @@ public class PortletRegistryImpl implements PortletRegistry {
 		_portletNames.remove(alias, portletName);
 	}
 
-	private List<Portlet> _getAllPortlets(
-		HttpServletRequest httpServletRequest) {
-
-		List<Portlet> allPortlets =
-			(List<Portlet>)httpServletRequest.getAttribute(
-				PortletFragmentEntryProcessorWebKeys.ALL_PORTLETS);
-
-		if (ListUtil.isNotEmpty(allPortlets)) {
-			return allPortlets;
-		}
-
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)httpServletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
-
-		LayoutTypePortlet layoutTypePortlet =
-			themeDisplay.getLayoutTypePortlet();
-
-		allPortlets = layoutTypePortlet.getAllPortlets();
-
-		httpServletRequest.setAttribute(
-			PortletFragmentEntryProcessorWebKeys.ALL_PORTLETS, allPortlets);
-
-		return allPortlets;
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		PortletRegistryImpl.class);
 
 	@Reference
-	private Portal _portal;
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private PortletLocalService _portletLocalService;

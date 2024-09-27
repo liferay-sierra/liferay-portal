@@ -3,8 +3,6 @@ definition {
 	macro addUser {
 		LexiconEntry.gotoAdd();
 
-		Pause(locator1 = "3000");
-
 		SelectFrame(locator1 = "IFrame#SELECT_ACCOUNT");
 
 		AssertClick(
@@ -42,8 +40,6 @@ definition {
 	}
 
 	macro deactivateUser {
-		Search.searchCP(searchTerm = "${userFirstName}");
-
 		LexiconEntry.gotoEntryMenuItemNoError(
 			menuItem = "Deactivate",
 			rowEntry = "${userFirstName}");
@@ -169,8 +165,6 @@ definition {
 			key_text = "View Valid Domains",
 			locator1 = "Button#ANY",
 			value1 = "View Valid Domains");
-
-		Pause(locator1 = "3000");
 
 		SelectFrame(locator1 = "IFrame#VALID_DOMAINS");
 

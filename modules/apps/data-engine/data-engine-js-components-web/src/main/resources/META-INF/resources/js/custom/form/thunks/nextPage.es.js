@@ -24,10 +24,27 @@ export default function nextPage({
 	groupId,
 	pages,
 	portletNamespace,
-	previousIndex = activePage,
 	rules,
+	selectedPage,
 	viewMode,
 }) {
+	const isValidPage = (currentPage, pages) => {
+		const visitor = new PagesVisitor(pages);
+		let validPage = true;
+
+		visitor.mapFields(
+			({valid}, fieldIndex, columnIndex, rowIndex, pageIndex) => {
+				if (currentPage === pageIndex && !valid) {
+					validPage = false;
+				}
+			},
+			true,
+			true
+		);
+
+		return validPage;
+	};
+
 	return (dispatch) => {
 		evaluate(null, {
 			activePage,
@@ -38,28 +55,40 @@ export default function nextPage({
 			nextPage: activePage + 1,
 			pages,
 			portletNamespace,
-			previousIndex,
 			previousPage: activePage,
 			rules,
 			viewMode,
 		}).then((evaluatedPages) => {
 			let validPage = true;
-			const visitor = new PagesVisitor(evaluatedPages);
 
-			visitor.mapFields(
-				({valid}, fieldIndex, columnIndex, rowIndex, pageIndex) => {
-					if (activePage === pageIndex && !valid) {
-						validPage = false;
+			let currentPage = activePage;
+
+			if (selectedPage) {
+				while (validPage) {
+					validPage = isValidPage(currentPage, evaluatedPages);
+
+					if (currentPage === selectedPage) {
+						break;
 					}
-				},
-				true,
-				true
-			);
 
-			if (validPage) {
-				const nextActivePageIndex = evaluatedPages.findIndex(
-					({enabled}, index) => enabled && index > previousIndex
-				);
+					if (validPage) {
+						currentPage++;
+					}
+				}
+			}
+			else {
+				validPage = isValidPage(activePage, evaluatedPages);
+			}
+
+			if (validPage || selectedPage) {
+				const nextActivePageIndex = selectedPage
+					? evaluatedPages.findIndex(
+							({enabled}, index) =>
+								enabled && index === currentPage
+					  )
+					: evaluatedPages.findIndex(
+							({enabled}, index) => enabled && index > activePage
+					  );
 
 				const activePageUpdated = Math.min(
 					nextActivePageIndex,
@@ -83,8 +112,9 @@ export default function nextPage({
 				});
 			}
 			else {
+				const pageIndex = selectedPage ? currentPage : activePage;
 				dispatch({
-					payload: {newPages: evaluatedPages, pageIndex: activePage},
+					payload: {newPages: evaluatedPages, pageIndex},
 					type: CORE_EVENT_TYPES.PAGE.VALIDATION_FAILED,
 				});
 			}

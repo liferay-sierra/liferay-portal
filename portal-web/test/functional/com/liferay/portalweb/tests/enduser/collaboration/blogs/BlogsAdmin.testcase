@@ -1,4 +1,4 @@
-@component-name = "portal-collaboration"
+@component-name = "portal-lima"
 definition {
 
 	property portal.acceptance = "true";
@@ -24,9 +24,9 @@ definition {
 	}
 
 	@description = "This checks that an entry can be added in the control panel."
+	@e2etest
 	@priority = "5"
 	@refactordone
-	@uitest
 	test CanAddEntryInAdmin {
 		property app.server.types = "jboss,tcserver,tomcat,weblogic,websphere,wildfly";
 		property database.types = "db2,hypersonic,mariadb,mysql,oracle,postgresql,sqlserver,sybase";
@@ -46,6 +46,30 @@ definition {
 		BlogsEntry.viewEntryCP(
 			entryContent = "Blogs Entry Content",
 			entryTitle = "Blogs Entry Title");
+	}
+
+	@description = "This test covers LPS-67664. It ensures that a user can order blog entries by display date."
+	@priority = "4"
+	test CanOrderByDisplayDate {
+		JSONBlog.addEntry(
+			entryContent = "Blogs Entry Content",
+			entryTitle = "Blogs Entry Title");
+
+		JSONBlog.addEntry(
+			entryContent = "Blogs Entry Content",
+			entryTitle = "Test Title");
+
+		BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
+
+		ManagementBar.setFilterAndOrder(menuItem = "Display Date");
+
+		Click(locator1 = "ManagementBar#ORDER_ICON_GENERIC");
+
+		Blogs.viewEntryTitle(
+			entryTitle = "Test Title",
+			position = "1");
+
+		ManagementBar.viewFilterAndOrderSelectedItem(menuItem = "Display Date");
 	}
 
 	@description = "This checks that the content for a blogs entry can be searched in admin."

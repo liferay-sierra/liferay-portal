@@ -15,7 +15,7 @@
 package com.liferay.dynamic.data.mapping.form.renderer.internal.servlet;
 
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldType;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.frontend.js.loader.modules.extender.npm.NPMResolver;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.events.EventsProcessorUtil;
@@ -52,7 +52,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Matuzalem Teles
  */
 @Component(
-	immediate = true,
 	property = {
 		"osgi.http.whiteboard.context.path=/dynamic-data-mapping-form-field-types",
 		"osgi.http.whiteboard.servlet.name=com.liferay.dynamic.data.mapping.form.renderer.internal.servlet.DDMFormFieldTypesServlet",
@@ -99,7 +98,7 @@ public class DDMFormFieldTypesServlet extends HttpServlet {
 		JSONArray fieldTypesJSONArray = _jsonFactory.createJSONArray();
 
 		Set<String> ddmFormFieldTypeNames =
-			_ddmFormFieldTypeServicesTracker.getDDMFormFieldTypeNames();
+			_ddmFormFieldTypeServicesRegistry.getDDMFormFieldTypeNames();
 
 		Stream<String> stream = ddmFormFieldTypeNames.stream();
 
@@ -114,7 +113,7 @@ public class DDMFormFieldTypesServlet extends HttpServlet {
 		httpServletResponse.setStatus(HttpServletResponse.SC_OK);
 
 		ServletResponseUtil.write(
-			httpServletResponse, fieldTypesJSONArray.toJSONString());
+			httpServletResponse, fieldTypesJSONArray.toString());
 	}
 
 	@Reference
@@ -137,7 +136,7 @@ public class DDMFormFieldTypesServlet extends HttpServlet {
 		).put(
 			"javaScriptModule",
 			_resolveModuleName(
-				_ddmFormFieldTypeServicesTracker.getDDMFormFieldType(
+				_ddmFormFieldTypeServicesRegistry.getDDMFormFieldType(
 					ddmFormFieldName))
 		).put(
 			"name", ddmFormFieldName
@@ -160,7 +159,7 @@ public class DDMFormFieldTypesServlet extends HttpServlet {
 		DDMFormFieldTypesServlet.class);
 
 	@Reference
-	private DDMFormFieldTypeServicesTracker _ddmFormFieldTypeServicesTracker;
+	private DDMFormFieldTypeServicesRegistry _ddmFormFieldTypeServicesRegistry;
 
 	@Reference
 	private JSONFactory _jsonFactory;

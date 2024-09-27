@@ -52,6 +52,7 @@ const STATE = {
 			},
 		},
 	},
+	permissions: {UPDATE: true},
 	segmentsExperienceId: '0',
 	selectedViewportSize: 'desktop',
 };
@@ -84,19 +85,6 @@ const renderComponent = ({
 	);
 
 jest.mock(
-	'../../../../../../../../../src/main/resources/META-INF/resources/page_editor/app/config',
-	() => ({
-		config: {
-			availableViewportSizes: {
-				desktop: {label: 'Desktop'},
-				landscapeMobile: {label: 'landscapeMobile'},
-			},
-			commonStyles: [],
-		},
-	})
-);
-
-jest.mock(
 	'../../../../../../../../../src/main/resources/META-INF/resources/page_editor/app/thunks/updateItemConfig',
 	() => jest.fn()
 );
@@ -124,8 +112,6 @@ describe('RowGeneralPanel', () => {
 		expect(updateRowColumns).toHaveBeenCalledWith({
 			itemId: '0',
 			numberOfColumns: 6,
-			segmentsExperienceId: '0',
-			viewportSizeId: 'desktop',
 		});
 	});
 
@@ -139,7 +125,6 @@ describe('RowGeneralPanel', () => {
 		expect(updateItemConfig).toHaveBeenCalledWith({
 			itemConfig: {gutters: false},
 			itemId: '0',
-			segmentsExperienceId: '0',
 		});
 	});
 
@@ -157,7 +142,6 @@ describe('RowGeneralPanel', () => {
 				modulesPerRow: 2,
 			},
 			itemId: '0',
-			segmentsExperienceId: '0',
 		});
 	});
 
@@ -208,7 +192,6 @@ describe('RowGeneralPanel', () => {
 				verticalAlignment: 'middle',
 			},
 			itemId: '0',
-			segmentsExperienceId: '0',
 		});
 	});
 
@@ -244,7 +227,6 @@ describe('RowGeneralPanel', () => {
 				reverseOrder: true,
 			},
 			itemId: '0',
-			segmentsExperienceId: '0',
 		});
 	});
 
@@ -265,7 +247,6 @@ describe('RowGeneralPanel', () => {
 				tablet: {modulesPerRow: 1},
 			},
 			itemId: '0',
-			segmentsExperienceId: '0',
 		});
 	});
 });

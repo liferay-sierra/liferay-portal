@@ -14,13 +14,15 @@ export const STATUS_TAG_TYPES = {
 	expired: 2,
 	future: 3,
 	inProgress: 4,
-	notActivated: 5,
+	invited: 5,
+	notActivated: 6,
 };
 
 export const STATUS_TAG_TYPE_NAMES = {
 	active: 'Active',
 	expired: 'Expired',
 	future: 'Future',
-	inProgress: 'In Progress',
-	notActivated: 'Not Activated',
+	inProgress: 'In-Progress',
+	invited: 'Invited',
+	notActivated: 'Not-Activated',
 };

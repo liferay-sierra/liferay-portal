@@ -48,15 +48,18 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.model.ResourceAction;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.service.WorkflowInstanceLinkLocalService;
 import com.liferay.portal.kernel.service.permission.ModelPermissions;
+import com.liferay.portal.kernel.service.permission.ModelPermissionsFactory;
 import com.liferay.portal.kernel.service.persistence.UserPersistence;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -472,36 +475,6 @@ public class DLFileEntryTypeLocalServiceImpl
 		return dlFileEntryTypePersistence.findByG_F(groupId, fileEntryTypeKey);
 	}
 
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x)
-	 */
-	@Deprecated
-	@Override
-	public List<DLFileEntryType> getFileEntryTypes(long ddmStructureId)
-		throws PortalException {
-
-		List<DLFileEntryType> fileEntryTypes = new ArrayList<>();
-
-		long classNameId = _classNameLocalService.getClassNameId(
-			DLFileEntryType.class);
-
-		List<DDMStructureLink> ddmStructureLinks =
-			DDMStructureLinkManagerUtil.getStructureLinks(ddmStructureId);
-
-		for (DDMStructureLink ddmStructureLink : ddmStructureLinks) {
-			if (classNameId != ddmStructureLink.getClassNameId()) {
-				continue;
-			}
-
-			DLFileEntryType fileEntryType = getFileEntryType(
-				ddmStructureLink.getClassPK());
-
-			fileEntryTypes.add(fileEntryType);
-		}
-
-		return fileEntryTypes;
-	}
-
 	@Override
 	public List<DLFileEntryType> getFileEntryTypes(long[] groupIds) {
 		return dlFileEntryTypePersistence.findByGroupId(groupIds);
@@ -512,7 +485,9 @@ public class DLFileEntryTypeLocalServiceImpl
 			long[] groupIds, long folderId, boolean inherited)
 		throws PortalException {
 
-		if (!inherited) {
+		if (!inherited &&
+			(folderId != DLFolderConstants.DEFAULT_PARENT_FOLDER_ID)) {
+
 			return _dlFolderPersistence.getDLFileEntryTypes(folderId);
 		}
 
@@ -621,7 +596,7 @@ public class DLFileEntryTypeLocalServiceImpl
 
 		return _dlFileEntryLocalService.updateFileEntry(
 			serviceContext.getUserId(), dlFileEntry.getFileEntryId(), null,
-			null, null, null, null,
+			null, null, null, null, null,
 			DLVersionNumberIncrease.fromMajorVersion(false),
 			getDefaultFileEntryTypeId(folderId), null, null, null, 0, null,
 			null, serviceContext);
@@ -749,44 +724,6 @@ public class DLFileEntryTypeLocalServiceImpl
 		}
 	}
 
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {{@link
-	 *             #getDefaultFileEntryTypeId(long)}}
-	 */
-	@Deprecated
-	protected static long getDefaultFileEntryTypeId(
-			DLFolderPersistence dlFolderPersistence, long folderId)
-		throws PortalException {
-
-		return DLFileEntryTypeLocalServiceUtil.getDefaultFileEntryTypeId(
-			folderId);
-	}
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {{@link
-	 *             #_getFileEntryTypesPrimaryFolderId(long)}}
-	 */
-	@Deprecated
-	protected static long getFileEntryTypesPrimaryFolderId(
-			DLFolderPersistence dlFolderPersistence, long folderId)
-		throws NoSuchFolderException {
-
-		while (folderId != DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
-			DLFolder dlFolder = dlFolderPersistence.findByPrimaryKey(folderId);
-
-			if (dlFolder.getRestrictionType() ==
-					DLFolderConstants.
-						RESTRICTION_TYPE_FILE_ENTRY_TYPES_AND_WORKFLOW) {
-
-				break;
-			}
-
-			folderId = dlFolder.getParentFolderId();
-		}
-
-		return folderId;
-	}
-
 	protected void addFileEntryTypeResources(
 			DLFileEntryType dlFileEntryType, boolean addGroupPermissions,
 			boolean addGuestPermissions)
@@ -796,6 +733,13 @@ public class DLFileEntryTypeLocalServiceImpl
 			dlFileEntryType.getCompanyId(), dlFileEntryType.getGroupId(),
 			dlFileEntryType.getUserId(), DLFileEntryType.class.getName(),
 			dlFileEntryType.getFileEntryTypeId(), false, addGroupPermissions,
+			addGuestPermissions);
+
+		_resourceLocalService.addResources(
+			dlFileEntryType.getCompanyId(), dlFileEntryType.getGroupId(),
+			dlFileEntryType.getUserId(),
+			_DL_FILE_ENTRY_METADATA_DDM_STRUCTURE_CLASS_NAME,
+			dlFileEntryType.getDataDefinitionId(), false, addGroupPermissions,
 			addGuestPermissions);
 	}
 
@@ -807,6 +751,52 @@ public class DLFileEntryTypeLocalServiceImpl
 			dlFileEntryType.getCompanyId(), dlFileEntryType.getGroupId(),
 			dlFileEntryType.getUserId(), DLFileEntryType.class.getName(),
 			dlFileEntryType.getFileEntryTypeId(), modelPermissions);
+
+		ModelPermissions dlFileEntryMetadataDDMStructureModelPermissions = null;
+
+		if (modelPermissions != null) {
+			dlFileEntryMetadataDDMStructureModelPermissions =
+				ModelPermissionsFactory.create(
+					_DL_FILE_ENTRY_METADATA_DDM_STRUCTURE_CLASS_NAME);
+
+			List<ResourceAction> dlFileEntryMetadataResourceActions =
+				_resourceActionLocalService.getResourceActions(
+					_DL_FILE_ENTRY_METADATA_DDM_STRUCTURE_CLASS_NAME);
+
+			Set<String> dlFileEntryMetadataActionIds = new HashSet<>();
+
+			for (ResourceAction resourceAction :
+					dlFileEntryMetadataResourceActions) {
+
+				dlFileEntryMetadataActionIds.add(resourceAction.getActionId());
+			}
+
+			for (String roleName : modelPermissions.getRoleNames()) {
+				Set<String> dlFileEntryMetadataDDMStructureActionIds =
+					new HashSet<>();
+
+				for (String actionId :
+						modelPermissions.getActionIds(roleName)) {
+
+					if (dlFileEntryMetadataActionIds.contains(actionId)) {
+						dlFileEntryMetadataDDMStructureActionIds.add(actionId);
+					}
+				}
+
+				dlFileEntryMetadataDDMStructureModelPermissions.
+					addRolePermissions(
+						roleName,
+						dlFileEntryMetadataDDMStructureActionIds.toArray(
+							new String[0]));
+			}
+		}
+
+		_resourceLocalService.addModelResources(
+			dlFileEntryType.getCompanyId(), dlFileEntryType.getGroupId(),
+			dlFileEntryType.getUserId(),
+			_DL_FILE_ENTRY_METADATA_DDM_STRUCTURE_CLASS_NAME,
+			dlFileEntryType.getDataDefinitionId(),
+			dlFileEntryMetadataDDMStructureModelPermissions);
 	}
 
 	protected void cascadeFileEntryTypes(
@@ -840,10 +830,7 @@ public class DLFileEntryTypeLocalServiceImpl
 
 			_dlAppHelperLocalService.updateAsset(
 				userId, new LiferayFileEntry(dlFileEntry),
-				new LiferayFileVersion(dlFileVersion),
-				serviceContext.getAssetCategoryIds(),
-				serviceContext.getAssetTagNames(),
-				serviceContext.getAssetLinkEntryIds());
+				new LiferayFileVersion(dlFileVersion), serviceContext);
 		}
 
 		List<DLFolder> subfolders = _dlFolderPersistence.findByG_M_P_H(
@@ -1108,6 +1095,11 @@ public class DLFileEntryTypeLocalServiceImpl
 		}
 	}
 
+	private static final String
+		_DL_FILE_ENTRY_METADATA_DDM_STRUCTURE_CLASS_NAME =
+			"com.liferay.document.library.kernel.model.DLFileEntryMetadata-" +
+				"com.liferay.dynamic.data.mapping.model.DDMStructure";
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		DLFileEntryTypeLocalServiceImpl.class);
 
@@ -1128,6 +1120,9 @@ public class DLFileEntryTypeLocalServiceImpl
 
 	@BeanReference(type = DLFolderPersistence.class)
 	private DLFolderPersistence _dlFolderPersistence;
+
+	@BeanReference(type = ResourceActionLocalService.class)
+	private ResourceActionLocalService _resourceActionLocalService;
 
 	@BeanReference(type = ResourceLocalService.class)
 	private ResourceLocalService _resourceLocalService;

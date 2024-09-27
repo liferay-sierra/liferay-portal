@@ -16,6 +16,8 @@ package com.liferay.commerce.internal.order;
 
 import com.liferay.commerce.account.constants.CommerceAccountConstants;
 import com.liferay.commerce.account.model.CommerceAccount;
+import com.liferay.commerce.account.service.CommerceAccountService;
+import com.liferay.commerce.account.util.CommerceAccountHelper;
 import com.liferay.commerce.configuration.CommerceOrderCheckoutConfiguration;
 import com.liferay.commerce.constants.CommerceCheckoutWebKeys;
 import com.liferay.commerce.constants.CommerceConstants;
@@ -37,11 +39,13 @@ import com.liferay.commerce.service.CommerceOrderItemService;
 import com.liferay.commerce.service.CommerceOrderLocalService;
 import com.liferay.commerce.service.CommerceOrderService;
 import com.liferay.commerce.util.CommerceCheckoutStep;
-import com.liferay.commerce.util.CommerceCheckoutStepServicesTracker;
+import com.liferay.commerce.util.CommerceCheckoutStepRegistry;
 import com.liferay.petra.lang.CentralizedThreadLocal;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.cookies.CookiesManagerUtil;
+import com.liferay.portal.kernel.cookies.constants.CookiesConstants;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
@@ -58,7 +62,6 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.CookieKeys;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -85,9 +88,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marco Leo
  * @author Andrea Di Giorgi
  */
-@Component(
-	enabled = false, immediate = true, service = CommerceOrderHttpHelper.class
-)
+@Component(immediate = true, service = CommerceOrderHttpHelper.class)
 public class CommerceOrderHttpHelperImpl implements CommerceOrderHttpHelper {
 
 	@Override
@@ -270,8 +271,8 @@ public class CommerceOrderHttpHelperImpl implements CommerceOrderHttpHelper {
 
 		try {
 			List<CommerceCheckoutStep> commerceCheckoutSteps =
-				_commerceCheckoutStepServicesTracker.getCommerceCheckoutSteps(
-					httpServletRequest, themeDisplay.getResponse());
+				_commerceCheckoutStepRegistry.getCommerceCheckoutSteps(
+					httpServletRequest, themeDisplay.getResponse(), true);
 
 			if ((commerceCheckoutSteps != null) &&
 				!commerceCheckoutSteps.isEmpty()) {
@@ -327,20 +328,22 @@ public class CommerceOrderHttpHelperImpl implements CommerceOrderHttpHelper {
 					"continueAsGuest", Boolean.TRUE.toString());
 
 				Cookie cookie = new Cookie(
-					CookieKeys.COMMERCE_CONTINUE_AS_GUEST,
+					CookiesConstants.NAME_COMMERCE_CONTINUE_AS_GUEST,
 					Boolean.TRUE.toString());
 
-				String domain = CookieKeys.getDomain(httpServletRequest);
+				String domain = CookiesManagerUtil.getDomain(
+					httpServletRequest);
 
 				if (Validator.isNotNull(domain)) {
 					cookie.setDomain(domain);
 				}
 
-				cookie.setMaxAge(CookieKeys.MAX_AGE);
+				cookie.setMaxAge(CookiesConstants.MAX_AGE);
 				cookie.setPath(StringPool.SLASH);
 
-				CookieKeys.addCookie(
-					httpServletRequest, themeDisplay.getResponse(), cookie);
+				CookiesManagerUtil.addCookie(
+					CookiesConstants.CONSENT_TYPE_FUNCTIONAL, cookie,
+					httpServletRequest, themeDisplay.getResponse());
 			}
 
 			portletURL.setParameter("redirect", checkoutPortletURL.toString());
@@ -438,6 +441,16 @@ public class CommerceOrderHttpHelperImpl implements CommerceOrderHttpHelper {
 			HttpServletRequest httpServletRequest, CommerceOrder commerceOrder)
 		throws PortalException {
 
+		CommerceAccount commerceAccount =
+			_commerceAccountService.fetchCommerceAccount(
+				commerceOrder.getCommerceAccountId());
+
+		if (commerceAccount != null) {
+			_commerceAccountHelper.setCurrentCommerceAccount(
+				httpServletRequest, commerceOrder.getGroupId(),
+				commerceAccount.getCommerceAccountId());
+		}
+
 		ThemeDisplay themeDisplay =
 			(ThemeDisplay)httpServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
@@ -462,16 +475,6 @@ public class CommerceOrderHttpHelperImpl implements CommerceOrderHttpHelper {
 
 		httpSession.setAttribute(
 			getCookieName(commerceOrder.getGroupId()), commerceOrder.getUuid());
-	}
-
-	@Reference(
-		target = "(model.class.name=com.liferay.commerce.model.CommerceOrder)",
-		unbind = "-"
-	)
-	protected void setModelResourcePermission(
-		ModelResourcePermission<CommerceOrder> modelResourcePermission) {
-
-		_commerceOrderModelResourcePermission = modelResourcePermission;
 	}
 
 	private CommerceOrder _checkGuestOrder(
@@ -567,8 +570,8 @@ public class CommerceOrderHttpHelperImpl implements CommerceOrderHttpHelper {
 		String commerceOrderUuid = (String)httpSession.getAttribute(cookieName);
 
 		if (Validator.isNull(commerceOrderUuid)) {
-			commerceOrderUuid = CookieKeys.getCookie(
-				httpServletRequest, cookieName, true);
+			commerceOrderUuid = CookiesManagerUtil.getCookieValue(
+				cookieName, httpServletRequest, true);
 		}
 
 		return commerceOrderUuid;
@@ -674,7 +677,7 @@ public class CommerceOrderHttpHelperImpl implements CommerceOrderHttpHelper {
 		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
 			"content.Language", locale, getClass());
 
-		return LanguageUtil.get(resourceBundle, key);
+		return _language.get(resourceBundle, key);
 	}
 
 	private PortletURL _getPortletURL(
@@ -725,17 +728,18 @@ public class CommerceOrderHttpHelperImpl implements CommerceOrderHttpHelper {
 		Cookie cookie = new Cookie(
 			getCookieName(commerceChannelGroupId), commerceOrder.getUuid());
 
-		String domain = CookieKeys.getDomain(themeDisplay.getRequest());
+		String domain = CookiesManagerUtil.getDomain(themeDisplay.getRequest());
 
 		if (Validator.isNotNull(domain)) {
 			cookie.setDomain(domain);
 		}
 
-		cookie.setMaxAge(CookieKeys.MAX_AGE);
+		cookie.setMaxAge(CookiesConstants.MAX_AGE);
 		cookie.setPath(StringPool.SLASH);
 
-		CookieKeys.addCookie(
-			themeDisplay.getRequest(), themeDisplay.getResponse(), cookie);
+		CookiesManagerUtil.addCookie(
+			CookiesConstants.CONSENT_TYPE_FUNCTIONAL, cookie,
+			themeDisplay.getRequest(), themeDisplay.getResponse());
 	}
 
 	private void _validateCommerceOrderItemVersions(
@@ -747,7 +751,6 @@ public class CommerceOrderHttpHelperImpl implements CommerceOrderHttpHelper {
 
 		versionCommerceOrderValidatorImpl.setCommerceOrderItemLocalService(
 			_commerceOrderItemLocalService);
-
 		versionCommerceOrderValidatorImpl.setCPInstanceLocalService(
 			_cpInstanceLocalService);
 
@@ -762,18 +765,21 @@ public class CommerceOrderHttpHelperImpl implements CommerceOrderHttpHelper {
 	private static final Log _log = LogFactoryUtil.getLog(
 		CommerceOrderHttpHelperImpl.class);
 
-	private static ModelResourcePermission<CommerceOrder>
-		_commerceOrderModelResourcePermission;
 	private static final ThreadLocal<CommerceOrder> _commerceOrderThreadLocal =
 		new CentralizedThreadLocal<>(
 			CommerceOrderHttpHelperImpl.class.getName());
 
 	@Reference
+	private CommerceAccountHelper _commerceAccountHelper;
+
+	@Reference
+	private CommerceAccountService _commerceAccountService;
+
+	@Reference
 	private CommerceChannelLocalService _commerceChannelLocalService;
 
 	@Reference
-	private CommerceCheckoutStepServicesTracker
-		_commerceCheckoutStepServicesTracker;
+	private CommerceCheckoutStepRegistry _commerceCheckoutStepRegistry;
 
 	@Reference
 	private CommerceOrderItemLocalService _commerceOrderItemLocalService;
@@ -784,6 +790,12 @@ public class CommerceOrderHttpHelperImpl implements CommerceOrderHttpHelper {
 	@Reference
 	private CommerceOrderLocalService _commerceOrderLocalService;
 
+	@Reference(
+		target = "(model.class.name=com.liferay.commerce.model.CommerceOrder)"
+	)
+	private ModelResourcePermission<CommerceOrder>
+		_commerceOrderModelResourcePermission;
+
 	@Reference
 	private CommerceOrderService _commerceOrderService;
 
@@ -792,6 +804,9 @@ public class CommerceOrderHttpHelperImpl implements CommerceOrderHttpHelper {
 
 	@Reference
 	private CPInstanceLocalService _cpInstanceLocalService;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;

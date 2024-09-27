@@ -204,7 +204,7 @@ public class OrganizationPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<Organization>)FinderCacheUtil.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (Organization organization : list) {
@@ -949,7 +949,8 @@ public class OrganizationPersistenceImpl
 
 			finderArgs = new Object[] {uuid};
 
-			count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs);
+			count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1181,7 +1182,7 @@ public class OrganizationPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<Organization>)FinderCacheUtil.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (Organization organization : list) {
@@ -1974,7 +1975,8 @@ public class OrganizationPersistenceImpl
 
 			finderArgs = new Object[] {uuid, companyId};
 
-			count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs);
+			count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2211,7 +2213,7 @@ public class OrganizationPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<Organization>)FinderCacheUtil.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (Organization organization : list) {
@@ -2908,7 +2910,8 @@ public class OrganizationPersistenceImpl
 
 			finderArgs = new Object[] {companyId};
 
-			count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs);
+			count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -3102,7 +3105,7 @@ public class OrganizationPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<Organization>)FinderCacheUtil.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (Organization organization : list) {
@@ -3800,7 +3803,8 @@ public class OrganizationPersistenceImpl
 
 			finderArgs = new Object[] {companyId};
 
-			count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs);
+			count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -4001,7 +4005,7 @@ public class OrganizationPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<Organization>)FinderCacheUtil.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (Organization organization : list) {
@@ -4752,7 +4756,8 @@ public class OrganizationPersistenceImpl
 
 			finderArgs = new Object[] {companyId, parentOrganizationId};
 
-			count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs);
+			count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -4952,7 +4957,7 @@ public class OrganizationPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<Organization>)FinderCacheUtil.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (Organization organization : list) {
@@ -5752,7 +5757,8 @@ public class OrganizationPersistenceImpl
 
 			finderArgs = new Object[] {companyId, treePath};
 
-			count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs);
+			count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -5961,7 +5967,7 @@ public class OrganizationPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = FinderCacheUtil.getResult(
-				_finderPathFetchByC_N, finderArgs);
+				_finderPathFetchByC_N, finderArgs, this);
 		}
 
 		if (result instanceof Organization) {
@@ -6081,7 +6087,8 @@ public class OrganizationPersistenceImpl
 
 			finderArgs = new Object[] {companyId, name};
 
-			count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs);
+			count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -6242,7 +6249,7 @@ public class OrganizationPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<Organization>)FinderCacheUtil.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (Organization organization : list) {
@@ -7038,7 +7045,8 @@ public class OrganizationPersistenceImpl
 
 			finderArgs = new Object[] {companyId, name};
 
-			count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs);
+			count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -7274,7 +7282,7 @@ public class OrganizationPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<Organization>)FinderCacheUtil.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (Organization organization : list) {
@@ -7694,7 +7702,8 @@ public class OrganizationPersistenceImpl
 				organizationId, companyId, parentOrganizationId
 			};
 
-			count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs);
+			count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -7919,7 +7928,7 @@ public class OrganizationPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<Organization>)FinderCacheUtil.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (Organization organization : list) {
@@ -8764,7 +8773,8 @@ public class OrganizationPersistenceImpl
 
 			finderArgs = new Object[] {companyId, parentOrganizationId, name};
 
-			count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs);
+			count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -8992,7 +9002,7 @@ public class OrganizationPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = FinderCacheUtil.getResult(
-				_finderPathFetchByC_ERC, finderArgs);
+				_finderPathFetchByC_ERC, finderArgs, this);
 		}
 
 		if (result instanceof Organization) {
@@ -9051,23 +9061,6 @@ public class OrganizationPersistenceImpl
 					}
 				}
 				else {
-					if (list.size() > 1) {
-						Collections.sort(list, Collections.reverseOrder());
-
-						if (_log.isWarnEnabled()) {
-							if (!productionMode || !useFinderCache) {
-								finderArgs = new Object[] {
-									companyId, externalReferenceCode
-								};
-							}
-
-							_log.warn(
-								"OrganizationPersistenceImpl.fetchByC_ERC(long, String, boolean) with parameters (" +
-									StringUtil.merge(finderArgs) +
-										") yields a result set with more than 1 result. This violates the logical unique restriction. There is no order guarantee on which result is returned by this finder.");
-						}
-					}
-
 					Organization organization = list.get(0);
 
 					result = organization;
@@ -9133,7 +9126,8 @@ public class OrganizationPersistenceImpl
 
 			finderArgs = new Object[] {companyId, externalReferenceCode};
 
-			count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs);
+			count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -9482,6 +9476,10 @@ public class OrganizationPersistenceImpl
 			organization.setUuid(uuid);
 		}
 
+		if (Validator.isNull(organization.getExternalReferenceCode())) {
+			organization.setExternalReferenceCode(organization.getUuid());
+		}
+
 		ServiceContext serviceContext =
 			ServiceContextThreadLocal.getServiceContext();
 
@@ -9602,7 +9600,9 @@ public class OrganizationPersistenceImpl
 	 */
 	@Override
 	public Organization fetchByPrimaryKey(Serializable primaryKey) {
-		if (CTPersistenceHelperUtil.isProductionMode(Organization.class)) {
+		if (CTPersistenceHelperUtil.isProductionMode(
+				Organization.class, primaryKey)) {
+
 			return super.fetchByPrimaryKey(primaryKey);
 		}
 
@@ -9818,7 +9818,7 @@ public class OrganizationPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<Organization>)FinderCacheUtil.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -9894,7 +9894,7 @@ public class OrganizationPersistenceImpl
 
 		if (productionMode) {
 			count = (Long)FinderCacheUtil.getResult(
-				_finderPathCountAll, FINDER_ARGS_EMPTY);
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 		}
 
 		if (count == null) {
@@ -10619,7 +10619,7 @@ public class OrganizationPersistenceImpl
 		ctStrictColumnNames.add("recursable");
 		ctStrictColumnNames.add("regionId");
 		ctStrictColumnNames.add("countryId");
-		ctStrictColumnNames.add("statusId");
+		ctStrictColumnNames.add("statusListTypeId");
 		ctStrictColumnNames.add("comments");
 		ctStrictColumnNames.add("logoId");
 		ctStrictColumnNames.add("groups_");
@@ -10638,6 +10638,9 @@ public class OrganizationPersistenceImpl
 		_mappingTableNames.add("Users_Orgs");
 
 		_uniqueIndexColumnNames.add(new String[] {"companyId", "name"});
+
+		_uniqueIndexColumnNames.add(
+			new String[] {"companyId", "externalReferenceCode"});
 	}
 
 	/**

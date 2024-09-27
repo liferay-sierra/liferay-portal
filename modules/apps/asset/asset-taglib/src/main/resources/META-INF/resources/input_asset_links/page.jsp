@@ -34,7 +34,7 @@
 			data='<%= (Map<String, Object>)selectorEntry.get("data") %>'
 			id='<%= (String)selectorEntry.get("id") %>'
 			message='<%= HtmlUtil.escape((String)selectorEntry.get("message")) %>'
-			url="javascript:;"
+			url="javascript:void(0);"
 		/>
 
 	<%
@@ -92,7 +92,7 @@
 		<liferay-ui:search-container-column-text
 			cssClass="text-right"
 		>
-			<a class="modify-link" data-rowId="<%= assetLinkEntry.getEntryId() %>" href="javascript:;"><%= removeLinkIcon %></a>
+			<a class="modify-link" data-rowId="<%= assetLinkEntry.getEntryId() %>" href="javascript:void(0);"><%= removeLinkIcon %></a>
 		</liferay-ui:search-container-column-text>
 	</liferay-ui:search-container-row>
 
@@ -134,31 +134,31 @@
 			Liferay.Util.openSelectionModal({
 				buttonAddLabel: '<liferay-ui:message key="done" />',
 				multiple: true,
-				onSelect: function (assetEntryIds) {
-					if (assetEntryIds) {
+				onSelect: function (selectedItems) {
+					if (selectedItems) {
 						Array.prototype.forEach.call(
-							assetEntryIds,
-							(assetEntry) => {
-								var entityId = assetEntry.entityid;
+							selectedItems,
+							(selectedItem) => {
+								const assetEntry = JSON.parse(selectedItem.value);
+
+								var entityId = assetEntry.assetEntryId;
 
 								if (searchContainerData.indexOf(entityId) == -1) {
 									var entryLink =
 										'<div class="text-right"><a class="modify-link" data-rowId="' +
 										entityId +
-										'" href="javascript:;"><%= UnicodeFormatter.toString(removeLinkIcon) %></a></div>';
+										'" href="javascript:void(0);"><%= UnicodeFormatter.toString(removeLinkIcon) %></a></div>';
 
 									var entryHtml =
 										'<h4 class="list-group-title">' +
-										Liferay.Util.escapeHTML(
-											assetEntry.assettitle
-										) +
+										Liferay.Util.escapeHTML(assetEntry.title) +
 										'</h4><p class="list-group-subtitle">' +
 										Liferay.Util.escapeHTML(
-											assetEntry.assettype
+											assetEntry.assetType
 										) +
 										'</p><p class="list-group-subtitle"><liferay-ui:message key="scope" />: ' +
 										Liferay.Util.escapeHTML(
-											assetEntry.groupdescriptivename
+											assetEntry.groupDescriptiveName
 										) +
 										'</p>';
 

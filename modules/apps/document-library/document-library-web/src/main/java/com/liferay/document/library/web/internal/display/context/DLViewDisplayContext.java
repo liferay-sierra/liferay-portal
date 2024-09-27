@@ -26,7 +26,6 @@ import com.liferay.document.library.web.internal.security.permission.resource.DL
 import com.liferay.item.selector.ItemSelector;
 import com.liferay.item.selector.criteria.FolderItemSelectorReturnType;
 import com.liferay.item.selector.criteria.folder.criterion.FolderItemSelectorCriterion;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
@@ -34,6 +33,7 @@ import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.ClassNameLocalServiceUtil;
@@ -46,6 +46,7 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portlet.asset.util.comparator.AssetVocabularyGroupLocalizedTitleComparator;
+import com.liferay.taglib.security.PermissionsURLTag;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -150,12 +151,31 @@ public class DLViewDisplayContext {
 		).buildString();
 	}
 
+	public String[] getEntryColumnNames() {
+		return _dlPortletInstanceSettingsHelper.getEntryColumns();
+	}
+
 	public Folder getFolder() {
 		return _dlAdminDisplayContext.getFolder();
 	}
 
 	public long getFolderId() {
 		return _dlAdminDisplayContext.getFolderId();
+	}
+
+	public String getPermissionURL() throws Exception {
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)_httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
+		if (!themeDisplay.isSignedIn()) {
+			return StringPool.BLANK;
+		}
+
+		return PermissionsURLTag.doTag(
+			null, DLFileEntryConstants.getClassName(),
+			themeDisplay.getScopeGroupId(),
+			LiferayWindowState.POP_UP.toString(), _httpServletRequest);
 	}
 
 	public long getRepositoryId() {

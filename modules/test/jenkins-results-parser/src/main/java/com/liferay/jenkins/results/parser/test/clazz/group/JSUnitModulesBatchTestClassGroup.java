@@ -30,6 +30,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.json.JSONObject;
+
 /**
  * @author Michael Hashimoto
  */
@@ -53,6 +55,12 @@ public class JSUnitModulesBatchTestClassGroup
 	}
 
 	protected JSUnitModulesBatchTestClassGroup(
+		JSONObject jsonObject, PortalTestClassJob portalTestClassJob) {
+
+		super(jsonObject, portalTestClassJob);
+	}
+
+	protected JSUnitModulesBatchTestClassGroup(
 		String batchName, PortalTestClassJob portalTestClassJob) {
 
 		super(batchName, portalTestClassJob);
@@ -67,8 +75,7 @@ public class JSUnitModulesBatchTestClassGroup
 
 		List<PathMatcher> excludesPathMatchers = getPathMatchers(
 			getExcludesJobProperties());
-		List<PathMatcher> includesPathMatchers = getPathMatchers(
-			getIncludesJobProperties());
+		List<PathMatcher> includesPathMatchers = getIncludesPathMatchers();
 
 		if (testRelevantChanges) {
 			moduleDirs.addAll(

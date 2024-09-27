@@ -19,8 +19,6 @@ import com.liferay.expando.kernel.model.ExpandoColumn;
 import com.liferay.expando.kernel.model.ExpandoTable;
 import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
 import com.liferay.expando.kernel.service.ExpandoTableLocalService;
-import com.liferay.petra.encryptor.Encryptor;
-import com.liferay.petra.encryptor.EncryptorException;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
@@ -28,12 +26,16 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.db.partition.DBPartitionUtil;
 import com.liferay.portal.kernel.bean.BeanReference;
+import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
+import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Disjunction;
 import com.liferay.portal.kernel.dao.orm.EntityCacheUtil;
 import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.encryptor.EncryptorException;
+import com.liferay.portal.kernel.encryptor.EncryptorUtil;
 import com.liferay.portal.kernel.exception.CompanyMxException;
 import com.liferay.portal.kernel.exception.CompanyNameException;
 import com.liferay.portal.kernel.exception.CompanyVirtualHostException;
@@ -183,8 +185,6 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 	 * @param  webId the the company's web domain
 	 * @param  virtualHostname the company's virtual host name
 	 * @param  mx the company's mail domain
-	 * @param  system whether the company is the very first company (i.e., the
-	 *         super company)
 	 * @param  maxUsers the max number of company users (optionally
 	 *         <code>0</code>)
 	 * @param  active whether the company is active
@@ -193,7 +193,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 	@Override
 	public Company addCompany(
 			Long companyId, String webId, String virtualHostname, String mx,
-			boolean system, int maxUsers, boolean active)
+			int maxUsers, boolean active)
 		throws PortalException {
 
 		// Company
@@ -230,7 +230,6 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		try {
 			company.setWebId(webId);
 			company.setMx(mx);
-			company.setSystem(system);
 			company.setMaxUsers(maxUsers);
 			company.setActive(active);
 
@@ -256,7 +255,8 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			// Company info
 
 			try {
-				company.setKey(Encryptor.serializeKey(Encryptor.generateKey()));
+				company.setKey(
+					EncryptorUtil.serializeKey(EncryptorUtil.generateKey()));
 			}
 			catch (EncryptorException encryptorException) {
 				throw new SystemException(encryptorException);
@@ -271,10 +271,6 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			}
 
 			_addDefaultUser(company);
-
-			if (webId.equals(PropsValues.COMPANY_DEFAULT_WEB_ID)) {
-				return company;
-			}
 
 			company = _checkCompany(company, mx);
 
@@ -313,12 +309,11 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 	@Deprecated
 	@Override
 	public Company addCompany(
-			String webId, String virtualHostname, String mx, boolean system,
-			int maxUsers, boolean active)
+			String webId, String virtualHostname, String mx, int maxUsers,
+			boolean active)
 		throws PortalException {
 
-		return addCompany(
-			null, webId, virtualHostname, mx, system, maxUsers, active);
+		return addCompany(null, webId, virtualHostname, mx, maxUsers, active);
 	}
 
 	/**
@@ -375,7 +370,8 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		}
 
 		try {
-			company.setKey(Encryptor.serializeKey(Encryptor.generateKey()));
+			company.setKey(
+				EncryptorUtil.serializeKey(EncryptorUtil.generateKey()));
 		}
 		catch (EncryptorException encryptorException) {
 			throw new SystemException(encryptorException);
@@ -482,7 +478,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		List<Company> companies = null;
 
 		if (!CompanyThreadLocal.isLocked()) {
-			companies = companyLocalService.getCompanies(false);
+			companies = companyLocalService.getCompanies();
 		}
 
 		forEachCompany(unsafeConsumer, companies);
@@ -522,7 +518,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 		if (!CompanyThreadLocal.isLocked()) {
 			companyIds = ListUtil.toLongArray(
-				companyLocalService.getCompanies(false), Company::getCompanyId);
+				companyLocalService.getCompanies(), Company::getCompanyId);
 		}
 
 		forEachCompanyId(unsafeConsumer, companyIds);
@@ -557,35 +553,6 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 	@Override
 	public List<Company> getCompanies() {
 		return companyPersistence.findAll();
-	}
-
-	/**
-	 * Returns all the companies used by WSRP.
-	 *
-	 * @param  system whether the company is the very first company (i.e., the
-	 *         super company)
-	 * @return the companies used by WSRP
-	 */
-	@Override
-	public List<Company> getCompanies(boolean system) {
-		return companyPersistence.findBySystem(system);
-	}
-
-	@Override
-	public List<Company> getCompanies(boolean system, int start, int end) {
-		return companyPersistence.findBySystem(system, start, end);
-	}
-
-	/**
-	 * Returns the number of companies used by WSRP.
-	 *
-	 * @param  system whether the company is the very first company (i.e., the
-	 *         super company)
-	 * @return the number of companies used by WSRP
-	 */
-	@Override
-	public int getCompaniesCount(boolean system) {
-		return companyPersistence.countBySystem(system);
 	}
 
 	/**
@@ -967,11 +934,6 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 				Property nameProperty = PropertyFactoryUtil.forName("name");
 
 				dynamicQuery.add(nameProperty.isNotNull());
-
-				Property typeProperty = PropertyFactoryUtil.forName("type");
-
-				dynamicQuery.add(
-					typeProperty.ne(GroupConstants.TYPE_SITE_SYSTEM));
 			});
 		groupActionableDynamicQuery.setCompanyId(user.getCompanyId());
 		groupActionableDynamicQuery.setPerformActionMethod(
@@ -1442,14 +1404,27 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		return company;
 	}
 
-	protected void preregisterCompany(long companyId) {
+	protected void preregisterCompany(Company company) {
 		try {
-			SearchEngineHelperUtil.initialize(companyId);
+			SearchEngineHelperUtil.initialize(company.getCompanyId());
 		}
 		catch (Exception exception) {
 			_log.error(
-				"Unable to initialize search engine for company " + companyId,
+				"Unable to initialize search engine for company " +
+					company.getCompanyId(),
 				exception);
+		}
+
+		PortalInstanceLifecycleManager portalInstanceLifecycleManager =
+			_serviceTracker.getService();
+
+		if (portalInstanceLifecycleManager != null) {
+			portalInstanceLifecycleManager.preregisterCompany(company);
+		}
+		else {
+			synchronized (_preregisterPendingCompanies) {
+				_preregisterPendingCompanies.add(company);
+			}
 		}
 	}
 
@@ -1550,12 +1525,10 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 				LocaleException localeException = new LocaleException(
 					LocaleException.TYPE_DISPLAY_SETTINGS);
 
-				localeException.setSourceAvailableLocales(
-					Arrays.asList(
-						LocaleUtil.fromLanguageIds(PropsValues.LOCALES)));
-				localeException.setTargetAvailableLocales(
-					Arrays.asList(
-						LocaleUtil.fromLanguageIds(languageIdsArray)));
+				localeException.setSourceAvailableLanguageIds(
+					Arrays.asList(PropsValues.LOCALES));
+				localeException.setTargetAvailableLanguageIds(
+					Arrays.asList(languageIdsArray));
 
 				throw localeException;
 			}
@@ -1658,8 +1631,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			_actionableDynamicQuery.setCompanyId(companyId);
 			_actionableDynamicQuery.setPerformActionMethod(
 				(ExpandoColumn expandoColumn) ->
-					_expandoColumnLocalService.deleteExpandoColumn(
-						expandoColumn));
+					_expandoColumnLocalService.deleteColumn(expandoColumn));
 		}
 
 		protected void performActions() throws PortalException {
@@ -1952,7 +1924,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			LocaleThreadLocal.getSiteDefaultLocale();
 
 		try {
-			preregisterCompany(company.getCompanyId());
+			preregisterCompany(company);
 
 			Locale companyDefaultLocale = LocaleUtil.fromLanguageId(
 				PropsValues.COMPANY_DEFAULT_LOCALE);
@@ -2053,6 +2025,9 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 				() -> {
 					EntityCacheUtil.removeResult(
 						company.getClass(), company.getPrimaryKeyObj());
+
+					PortalCacheHelperUtil.removePortalCaches(
+						PortalCacheManagerNames.MULTI_VM, companyId);
 
 					return null;
 				});
@@ -2235,6 +2210,8 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 	@BeanReference(type = PortletPersistence.class)
 	private PortletPersistence _portletPersistence;
 
+	private final Set<Company> _preregisterPendingCompanies = new HashSet<>();
+
 	@BeanReference(type = RoleLocalService.class)
 	private RoleLocalService _roleLocalService;
 
@@ -2270,6 +2247,15 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 			PortalInstanceLifecycleManager portalInstanceLifecycleManager =
 				_bundleContext.getService(serviceReference);
+
+			synchronized (_preregisterPendingCompanies) {
+				forEachCompany(
+					company -> portalInstanceLifecycleManager.registerCompany(
+						company),
+					new ArrayList<Company>(_preregisterPendingCompanies));
+
+				_preregisterPendingCompanies.clear();
+			}
 
 			synchronized (_pendingCompanies) {
 				forEachCompany(

@@ -12,6 +12,8 @@
  * details.
  */
 
+import ClayIcon from '@clayui/icon';
+import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React from 'react';
 
@@ -27,30 +29,51 @@ export default function CollectionSelector({
 	itemSelectorURL,
 	label,
 	onCollectionSelect,
+	onPreventCollectionSelect,
 	optionsMenuItems = DEFAULT_OPTION_MENU_ITEMS,
-	shouldPreventCollectionSelect,
 }) {
 	const eventName = `${config.portletNamespace}selectInfoList`;
 
 	const customCollectionSelectorURL = useCustomCollectionSelectorURL();
 
+	const filterConfig = collectionItem?.config ?? {};
+
+	const isPrefiltered = !!Object.keys(filterConfig).length;
+
 	return (
-		<ItemSelector
-			eventName={eventName}
-			itemSelectorURL={
-				customCollectionSelectorURL ||
-				itemSelectorURL ||
-				config.infoListSelectorURL
-			}
-			label={label}
-			onItemSelect={onCollectionSelect}
-			optionsMenuItems={optionsMenuItems}
-			quickMappedInfoItems={config.selectedMappingTypes?.linkedCollection}
-			selectedItem={collectionItem}
-			shouldPreventItemSelect={shouldPreventCollectionSelect}
-			showMappedItems={!!config.selectedMappingTypes?.linkedCollection}
-			transformValueCallback={itemSelectorValueToCollection}
-		/>
+		<>
+			<ItemSelector
+				className={classNames({'mb-0': isPrefiltered})}
+				eventName={eventName}
+				itemSelectorURL={
+					customCollectionSelectorURL ||
+					itemSelectorURL ||
+					config.infoListSelectorURL
+				}
+				label={label}
+				onItemSelect={onCollectionSelect}
+				onPreventCollectionSelect={onPreventCollectionSelect}
+				optionsMenuItems={optionsMenuItems}
+				quickMappedInfoItems={
+					config.selectedMappingTypes?.linkedCollection
+				}
+				selectedItem={collectionItem}
+				showMappedItems={
+					!!config.selectedMappingTypes?.linkedCollection
+				}
+				transformValueCallback={itemSelectorValueToCollection}
+			/>
+
+			{isPrefiltered && (
+				<p className="text-info">
+					<ClayIcon className="mr-2 mt-0" symbol="info-panel-open" />
+
+					<span className="text-2">
+						{Liferay.Language.get('collection-prefiltered')}
+					</span>
+				</p>
+			)}
+		</>
 	);
 }
 
@@ -58,5 +81,5 @@ CollectionSelector.propTypes = {
 	collectionItem: PropTypes.shape({title: PropTypes.string}),
 	label: PropTypes.string,
 	onCollectionSelect: PropTypes.func.isRequired,
-	shouldPreventCollectionSelect: PropTypes.func,
+	onPreventCollectionSelect: PropTypes.func,
 };

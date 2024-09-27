@@ -45,6 +45,7 @@ export {PagesVisitor} from './utils/visitors.es';
 
 export {EVENT_TYPES} from './core/actions/eventTypes.es';
 export {Field} from './core/components/Field/Field.es';
+export {FieldFeedback} from './core/components/FieldFeedback';
 export {FieldStateless} from './core/components/Field/FieldStateless.es';
 export * as DefaultVariant from './core/components/PageRenderer/DefaultVariant.es';
 export {Layout} from './core/components/PageRenderer/Layout.es';
@@ -63,7 +64,7 @@ export {default as PartialResults} from './custom/form/components/PartialResults
 
 // Custom Form
 
-export {EVENT_TYPES as FORM_EVENT_TYPES} from './custom/form/eventTypes.es';
+export {EVENT_TYPES as FORM_EVENT_TYPES} from './custom/form/eventTypes';
 
 // Custom Form Report
 
@@ -73,3 +74,11 @@ export {default as FormReport} from './custom/form-report/index';
 
 export {FormFieldSettings} from './custom/form/FormFieldSettings.es';
 export {FormView} from './custom/form/FormView.es';
+
+// Keyboard drag and drop
+
+export {
+	KeyboardDNDContextProvider,
+	useSetSourceItem as useSetKeyboardDNDSourceItem,
+	useText as useKeyboardDNDText,
+} from './core/components/KeyboardDNDContext';

@@ -35,6 +35,7 @@ definition {
 	macro clearFacet {
 		if (isSet(facetClass)) {
 			var facetClass = StringUtil.toLowerCase("${facetClass}");
+
 			var key_facetClass = "${facetClass}_facet";
 
 			AssertClick.assertPartialTextClickAt(
@@ -79,6 +80,30 @@ definition {
 				value1 = "${aggregationField}");
 		}
 
+		if (isSet(customParameterName)) {
+			Type(
+				key_fieldLabel = "Custom Parameter Name",
+				locator1 = "TextInput#GENERIC_TEXT_INPUT",
+				value1 = "${customParameterName}");
+		}
+
+		PortletEntry.save();
+
+		IFrame.closeFrame();
+	}
+
+	macro configureFolderFacet {
+		Portlet.gotoPortletOptions(
+			portletName = "Folder Facet",
+			portletOption = "Configuration");
+
+		SelectFrame(locator1 = "IFrame#CONFIGURATION");
+
+		Select(
+			key_fieldLabel = "Order Terms By",
+			locator1 = "Select#GENERIC_SELECT_FIELD",
+			value1 = "${sortOption}");
+
 		PortletEntry.save();
 
 		IFrame.closeFrame();
@@ -100,11 +125,13 @@ definition {
 
 		var searchURLList = StringUtil.replace("${searchURL}", "&", ",");
 		var facetValue = StringUtil.replace("${facetValue}", " ", "%20");
+
 		var facetValueList = "${facetValue}";
 
 		for (var facetKeyValuePair : list "${searchURLList}") {
 			if (contains("${facetKeyValuePair}", "${facetClass}")) {
 				var facetKeyValue = StringUtil.stripBetween("${facetKeyValuePair}", "${facetClass}", "=");
+
 				var facetValueList = StringUtil.add("${facetValueList}", "${facetKeyValue}");
 				var searchURL = StringUtil.stripBetween("${searchURL}", "&${facetClass}", "${facetKeyValue}");
 				var facetClassFound = "true";
@@ -113,6 +140,7 @@ definition {
 
 		if ("${facetClassFound}" == "true") {
 			var facetValueList = RegexUtil.replace("${facetValueList}", "(.*),$", "1");
+
 			var facetValueList = ListUtil.sort("${facetValueList}");
 
 			for (var facetValueListValue : list "${facetValueList}") {
@@ -128,8 +156,10 @@ definition {
 
 	macro generateFacetClearedURL {
 		var facetClass = StringUtil.toLowerCase("${facetClass}");
+
 		var beforeFacetGroup = RegexUtil.replace("${searchURL}", "^(.*?)((?:&${facetClass}[^&]+)+)(.*)", "1");
 		var afterFacetGroup = RegexUtil.replace("${searchURL}", "^(.*?)((?:&${facetClass}[^&]+)+)(.*)", "3");
+
 		var searchURL = "${beforeFacetGroup}${afterFacetGroup}";
 
 		return "${searchURL}";
@@ -279,6 +309,19 @@ definition {
 		PortletEntry.save();
 
 		IFrame.closeFrame();
+	}
+
+	macro viewFacetItemsSpecificOrder {
+		var resultOrder = "0";
+
+		for (var facetItem : list "${facetList}") {
+			var resultOrder = ${resultOrder} + 1;
+
+			AssertElementPresent(
+				key_facetItem = "${facetItem}",
+				key_resultOrder = "${resultOrder}",
+				locator1 = "SearchResults#FACET_PORTLET_ITEMS_SPECIFIC_ORDER");
+		}
 	}
 
 }

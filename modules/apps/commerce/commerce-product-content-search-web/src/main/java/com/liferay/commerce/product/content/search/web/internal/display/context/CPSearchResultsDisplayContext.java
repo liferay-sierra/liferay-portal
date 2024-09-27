@@ -26,7 +26,7 @@ import com.liferay.commerce.product.content.search.web.internal.configuration.CP
 import com.liferay.commerce.product.data.source.CPDataSourceResult;
 import com.liferay.commerce.product.display.context.helper.CPRequestHelper;
 import com.liferay.commerce.product.type.CPType;
-import com.liferay.commerce.product.type.CPTypeServicesTracker;
+import com.liferay.commerce.product.type.CPTypeRegistry;
 import com.liferay.commerce.product.util.CPDefinitionHelper;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -36,7 +36,7 @@ import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -65,7 +65,7 @@ public class CPSearchResultsDisplayContext {
 				cpContentListEntryRendererRegistry,
 			CPContentListRendererRegistry cpContentListRendererRegistry,
 			CPDefinitionHelper cpDefinitionHelper,
-			CPTypeServicesTracker cpTypeServicesTracker,
+			CPTypeRegistry cpTypeRegistry,
 			HttpServletRequest httpServletRequest,
 			PortletSharedSearchResponse portletSharedSearchResponse)
 		throws ConfigurationException {
@@ -74,7 +74,7 @@ public class CPSearchResultsDisplayContext {
 			cpContentListEntryRendererRegistry;
 		_cpContentListRendererRegistry = cpContentListRendererRegistry;
 		_cpDefinitionHelper = cpDefinitionHelper;
-		_cpTypeServicesTracker = cpTypeServicesTracker;
+		_cpTypeRegistry = cpTypeRegistry;
 		_httpServletRequest = httpServletRequest;
 		_portletSharedSearchResponse = portletSharedSearchResponse;
 
@@ -180,7 +180,7 @@ public class CPSearchResultsDisplayContext {
 	}
 
 	public List<CPType> getCPTypes() {
-		return _cpTypeServicesTracker.getCPTypes();
+		return _cpTypeRegistry.getCPTypes();
 	}
 
 	public String getDisplayStyle() {
@@ -204,6 +204,24 @@ public class CPSearchResultsDisplayContext {
 		}
 
 		return _displayStyleGroupId;
+	}
+
+	public String getNames() {
+		StringBundler sb = new StringBundler();
+
+		List<CPType> cpTypes = getCPTypes();
+
+		for (int i = 0; i < cpTypes.size(); i++) {
+			CPType cpType = cpTypes.get(i);
+
+			sb.append(cpType.getLabel(_cpRequestHelper.getLocale()));
+
+			if ((i + 1) < cpTypes.size()) {
+				sb.append(",");
+			}
+		}
+
+		return sb.toString();
 	}
 
 	public String getOrderByCol() {
@@ -326,7 +344,7 @@ public class CPSearchResultsDisplayContext {
 	}
 
 	private String _getURLString() {
-		return HttpUtil.removeParameter(
+		return HttpComponentsUtil.removeParameter(
 			PortalUtil.getCurrentURL(_cpRequestHelper.getRequest()), "start");
 	}
 
@@ -337,7 +355,7 @@ public class CPSearchResultsDisplayContext {
 	private final CPRequestHelper _cpRequestHelper;
 	private final CPSearchResultsPortletInstanceConfiguration
 		_cpSearchResultsPortletInstanceConfiguration;
-	private final CPTypeServicesTracker _cpTypeServicesTracker;
+	private final CPTypeRegistry _cpTypeRegistry;
 	private long _displayStyleGroupId;
 	private final HttpServletRequest _httpServletRequest;
 	private final PortletSharedSearchResponse _portletSharedSearchResponse;

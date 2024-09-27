@@ -23,19 +23,21 @@ const SelectTypeAndSubtype = ({
 	itemSelectorSaveEvent,
 	portletNamespace,
 }) => {
-	const nodes = nodeTreeArrayMapper({
-		childrenPropertyKey: 'itemSubtypes',
-		namePropertyKey: 'label',
-		nodeArray: contentDashboardItemTypes,
-	});
-
 	return (
 		<TreeFilter
 			childrenPropertyKey="itemSubtypes"
 			itemSelectorSaveEvent={itemSelectorSaveEvent}
-			mandatoryFieldsForFiltering={['className', 'classPK']}
+			mandatoryFieldsForFiltering={[
+				'className',
+				'classPK',
+				'entryClassName',
+			]}
 			namePropertyKey="label"
-			nodes={nodes}
+			nodes={nodeTreeArrayMapper({
+				childrenPropertyKey: 'itemSubtypes',
+				namePropertyKey: 'label',
+				nodeArray: contentDashboardItemTypes,
+			})}
 			portletNamespace={portletNamespace}
 		/>
 	);

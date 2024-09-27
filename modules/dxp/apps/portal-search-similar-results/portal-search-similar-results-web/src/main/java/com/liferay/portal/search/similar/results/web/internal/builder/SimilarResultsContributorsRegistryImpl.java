@@ -14,18 +14,20 @@
 
 package com.liferay.portal.search.similar.results.web.internal.builder;
 
+import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerList;
+import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerListFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.search.similar.results.web.spi.contributor.SimilarResultsContributor;
 import com.liferay.portal.search.similar.results.web.spi.contributor.helper.RouteHelper;
 
 import java.util.Optional;
-import java.util.stream.Stream;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.Deactivate;
 
 /**
  * @author Wade Cao
@@ -41,31 +43,29 @@ public class SimilarResultsContributorsRegistryImpl
 			return Optional.empty();
 		}
 
-		String decodedURLString = _http.decodeURL(urlString);
+		for (SimilarResultsContributor similarResultsContributor :
+				_serviceTrackerList) {
 
-		Stream<SimilarResultsContributor> stream =
-			_similarResultsContributorsHolder.stream();
+			Optional<SimilarResultsRoute> similarResultsRouteOptional =
+				_detectRoute(similarResultsContributor, urlString);
 
-		return stream.map(
-			similarResultsContributor -> _detectRoute(
-				similarResultsContributor, decodedURLString)
-		).filter(
-			Optional::isPresent
-		).map(
-			Optional::get
-		).findFirst();
+			if (similarResultsRouteOptional.isPresent()) {
+				return similarResultsRouteOptional;
+			}
+		}
+
+		return Optional.empty();
 	}
 
-	@Reference(unbind = "-")
-	public void setHttp(Http http) {
-		_http = http;
+	@Activate
+	protected void activate(BundleContext bundleContext) {
+		_serviceTrackerList = ServiceTrackerListFactory.open(
+			bundleContext, SimilarResultsContributor.class);
 	}
 
-	@Reference(unbind = "-")
-	public void setSimilarResultsContributorsHolder(
-		SimilarResultsContributorsHolder similarResultsContributorsHolder) {
-
-		_similarResultsContributorsHolder = similarResultsContributorsHolder;
+	@Deactivate
+	protected void deactivate() {
+		_serviceTrackerList.close();
 	}
 
 	private Optional<SimilarResultsRoute> _detectRoute(
@@ -99,7 +99,6 @@ public class SimilarResultsContributorsRegistryImpl
 	private static final Log _log = LogFactoryUtil.getLog(
 		SimilarResultsContributorsRegistryImpl.class);
 
-	private Http _http;
-	private SimilarResultsContributorsHolder _similarResultsContributorsHolder;
+	private ServiceTrackerList<SimilarResultsContributor> _serviceTrackerList;
 
 }

@@ -77,10 +77,14 @@ public class CPTaxCategoryCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(21);
+		StringBundler sb = new StringBundler(25);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", ctCollectionId=");
+		sb.append(ctCollectionId);
+		sb.append(", uuid=");
+		sb.append(uuid);
 		sb.append(", externalReferenceCode=");
 		sb.append(externalReferenceCode);
 		sb.append(", CPTaxCategoryId=");
@@ -109,6 +113,14 @@ public class CPTaxCategoryCacheModel
 		CPTaxCategoryImpl cpTaxCategoryImpl = new CPTaxCategoryImpl();
 
 		cpTaxCategoryImpl.setMvccVersion(mvccVersion);
+		cpTaxCategoryImpl.setCtCollectionId(ctCollectionId);
+
+		if (uuid == null) {
+			cpTaxCategoryImpl.setUuid("");
+		}
+		else {
+			cpTaxCategoryImpl.setUuid(uuid);
+		}
 
 		if (externalReferenceCode == null) {
 			cpTaxCategoryImpl.setExternalReferenceCode("");
@@ -164,6 +176,9 @@ public class CPTaxCategoryCacheModel
 	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
+
+		ctCollectionId = objectInput.readLong();
+		uuid = objectInput.readUTF();
 		externalReferenceCode = objectInput.readUTF();
 
 		CPTaxCategoryId = objectInput.readLong();
@@ -181,6 +196,15 @@ public class CPTaxCategoryCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		objectOutput.writeLong(ctCollectionId);
+
+		if (uuid == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(uuid);
+		}
 
 		if (externalReferenceCode == null) {
 			objectOutput.writeUTF("");
@@ -221,6 +245,8 @@ public class CPTaxCategoryCacheModel
 	}
 
 	public long mvccVersion;
+	public long ctCollectionId;
+	public String uuid;
 	public String externalReferenceCode;
 	public long CPTaxCategoryId;
 	public long companyId;

@@ -25,7 +25,6 @@ import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemList;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.LabelItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.LabelItemListBuilder;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.language.LanguageUtil;
@@ -33,7 +32,9 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -103,9 +104,59 @@ public class ViewAccountUsersManagementToolbarDisplayContext
 
 	@Override
 	public CreationMenu getCreationMenu() {
-		return CreationMenuBuilder.addPrimaryDropdownItem(
+		return CreationMenuBuilder.addDropdownItem(
+			dropdownItem -> {
+				dropdownItem.putData("action", "inviteAccountUsers");
+				dropdownItem.putData(
+					"inviteAccountUsersURL",
+					PortletURLBuilder.createActionURL(
+						liferayPortletResponse
+					).setActionName(
+						"/account_admin/invite_account_users"
+					).buildString());
+				dropdownItem.putData(
+					"requestInvitationsURL",
+					PortletURLBuilder.createRenderURL(
+						liferayPortletResponse
+					).setMVCPath(
+						"/account_entries_admin/invite_account_users.jsp"
+					).setRedirect(
+						currentURLObj
+					).setParameter(
+						"accountEntryId", _getAccountEntryId()
+					).setWindowState(
+						LiferayWindowState.POP_UP
+					).buildString());
+				dropdownItem.setLabel(
+					LanguageUtil.get(httpServletRequest, "invite-users"));
+			}
+		).addDropdownItem(
 			dropdownItem -> {
 				dropdownItem.putData("action", "selectAccountUsers");
+				dropdownItem.putData(
+					"assignAccountUsersURL",
+					PortletURLBuilder.createActionURL(
+						liferayPortletResponse
+					).setActionName(
+						"/account_admin/assign_account_users"
+					).buildString());
+				dropdownItem.putData(
+					"selectAccountUsersURL",
+					PortletURLBuilder.createRenderURL(
+						liferayPortletResponse
+					).setMVCPath(
+						"/account_entries_admin/select_account_users.jsp"
+					).setRedirect(
+						currentURLObj
+					).setParameter(
+						"accountEntryId", _getAccountEntryId()
+					).setParameter(
+						"openModalOnRedirect", Boolean.TRUE
+					).setParameter(
+						"showCreateButton", Boolean.TRUE
+					).setWindowState(
+						LiferayWindowState.POP_UP
+					).buildString());
 				dropdownItem.setLabel(
 					LanguageUtil.get(httpServletRequest, "assign-users"));
 			}
@@ -124,14 +175,12 @@ public class ViewAccountUsersManagementToolbarDisplayContext
 					).setNavigation(
 						(String)null
 					).buildString());
-
 				labelItem.setCloseable(true);
-
-				String label = String.format(
-					"%s: %s", LanguageUtil.get(httpServletRequest, "status"),
-					LanguageUtil.get(httpServletRequest, getNavigation()));
-
-				labelItem.setLabel(label);
+				labelItem.setLabel(
+					String.format(
+						"%s: %s",
+						LanguageUtil.get(httpServletRequest, "status"),
+						LanguageUtil.get(httpServletRequest, getNavigation())));
 			}
 		).build();
 	}
@@ -153,13 +202,6 @@ public class ViewAccountUsersManagementToolbarDisplayContext
 
 			return liferayPortletResponse.createRenderURL();
 		}
-	}
-
-	@Override
-	public String getSearchActionURL() {
-		PortletURL searchActionURL = getPortletURL();
-
-		return searchActionURL.toString();
 	}
 
 	@Override

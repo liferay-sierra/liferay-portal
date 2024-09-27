@@ -91,7 +91,7 @@
 												%>
 
 													<th class="lfr-<%= userNotificationDeliveryType.getName() %>-column">
-														<%= LanguageUtil.get(request, userNotificationDeliveryType.getName()) %>
+														<liferay-ui:message key="<%= userNotificationDeliveryType.getName() %>" />
 													</th>
 
 												<%
@@ -148,9 +148,7 @@
 			<aui:input name="userNotificationDeliveryIds" type="hidden" value="<%= StringUtil.merge(userNotificationDeliveryIds) %>" />
 
 			<liferay-frontend:edit-form-footer>
-				<aui:button type="submit" value="save" />
-
-				<aui:button type="cancel" />
+				<liferay-frontend:edit-form-buttons />
 			</liferay-frontend:edit-form-footer>
 		</liferay-frontend:edit-form>
 	</div>

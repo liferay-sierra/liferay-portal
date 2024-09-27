@@ -42,10 +42,6 @@ html#{$cadmin-selector} {
 			.sidebar-header {
 				height: 64px;
 				line-height: 32px;
-
-				.lexicon-icon {
-					font-size: 14px;
-				}
 			}
 			.sidebar-body {
 				bottom: 0;
@@ -63,6 +59,13 @@ html#{$cadmin-selector} {
 			.segments-experiment-details {
 				hyphens: auto;
 				overflow-wrap: break-word;
+			}
+
+			.segments-experiments-empty-state {
+				&__image {
+					height: auto;
+					width: 185px;
+				}
 			}
 		}
 	}

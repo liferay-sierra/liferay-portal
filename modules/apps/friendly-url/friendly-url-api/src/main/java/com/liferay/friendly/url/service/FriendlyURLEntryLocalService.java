@@ -272,12 +272,15 @@ public interface FriendlyURLEntryLocalService
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public FriendlyURLEntryLocalization fetchFriendlyURLEntryLocalization(
+		long groupId, long classNameId, String languageId, String urlTitle);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public FriendlyURLEntryLocalization fetchFriendlyURLEntryLocalization(
 		long friendlyURLEntryId, String languageId);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public FriendlyURLEntry fetchMainFriendlyURLEntry(
-			long classNameId, long classPK)
-		throws PortalException;
+		long classNameId, long classPK);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ActionableDynamicQuery getActionableDynamicQuery();
@@ -369,6 +372,11 @@ public interface FriendlyURLEntryLocalService
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public FriendlyURLEntryLocalization getFriendlyURLEntryLocalization(
+			long groupId, long classNameId, String languageId, String urlTitle)
+		throws NoSuchFriendlyURLEntryLocalizationException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public FriendlyURLEntryLocalization getFriendlyURLEntryLocalization(
 			long friendlyURLEntryId, String languageId)
 		throws PortalException;
 
@@ -409,15 +417,6 @@ public interface FriendlyURLEntryLocalService
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
 		throws PortalException;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 #getUniqueUrlTitle(long, long, long, String, String)}
-	 */
-	@Deprecated
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public String getUniqueUrlTitle(
-		long groupId, long classNameId, long classPK, String urlTitle);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public String getUniqueUrlTitle(
@@ -470,6 +469,11 @@ public interface FriendlyURLEntryLocalService
 
 	public void validate(
 			long groupId, long classNameId, long classPK, String urlTitle)
+		throws PortalException;
+
+	public void validate(
+			long groupId, long classNameId, long classPK, String languageId,
+			String urlTitle)
 		throws PortalException;
 
 	public void validate(long groupId, long classNameId, String urlTitle)

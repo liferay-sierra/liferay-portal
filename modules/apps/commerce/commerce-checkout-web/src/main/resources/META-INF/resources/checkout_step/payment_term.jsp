@@ -27,13 +27,15 @@ long paymentCommerceTermEntryId = BeanParamUtil.getLong(termCommerceCheckoutStep
 <div id="commercePaymentTermContainer">
 	<c:choose>
 		<c:when test="<%= paymentCommerceTermEntries.isEmpty() %>">
-			<aui:row>
-				<aui:col widht="100">
+			<clay:row>
+				<clay:col
+					size="12"
+				>
 					<aui:alert type="info">
 						<liferay-ui:message key="there-are-no-available-payment-terms" />
 					</aui:alert>
-				</aui:col>
-			</aui:row>
+				</clay:col>
+			</clay:row>
 
 			<aui:script use="aui-base">
 				var continueButton = A.one('#<portlet:namespace />continue');
@@ -44,15 +46,35 @@ long paymentCommerceTermEntryId = BeanParamUtil.getLong(termCommerceCheckoutStep
 			</aui:script>
 		</c:when>
 		<c:otherwise>
+			<liferay-ui:error key="paymentTermsInvalid" message="please-select-payment-terms" />
+
 			<ul class="list-group">
 
 				<%
 				for (CommerceTermEntry commerceTermEntry : paymentCommerceTermEntries) {
+					String paymentTermsId = liferayPortletResponse.getNamespace() + "item_" + commerceTermEntry.getCommerceTermEntryId();
 				%>
 
 					<li class="commerce-payment-types list-group-item list-group-item-flex">
-						<div class="autofit-col autofit-col-expand">
-							<aui:input checked="<%= paymentCommerceTermEntryId == commerceTermEntry.getCommerceTermEntryId() %>" label="<%= commerceTermEntry.getLabel(LanguageUtil.getLanguageId(locale)) %>" name="commercePaymentTermId" type="radio" value="<%= commerceTermEntry.getCommerceTermEntryId() %>" />
+						<div class="autofit-col autofit-col-expand p-2 pl-3">
+							<aui:input checked="<%= paymentCommerceTermEntryId == commerceTermEntry.getCommerceTermEntryId() %>" cssClass="mr-3" label="<%= commerceTermEntry.getLabel(LanguageUtil.getLanguageId(locale)) %>" labelCssClass="align-items-center d-inline-flex mb-0" name="paymentCommerceTermEntryId" type="radio" value="<%= commerceTermEntry.getCommerceTermEntryId() %>" />
+						</div>
+
+						<div class="autofit-col p-2 pr-3">
+							<a href="#" id="<%= paymentTermsId %>"><liferay-ui:message key="more-info"></liferay-ui:message></a>
+
+							<liferay-frontend:component
+								context='<%=
+									HashMapBuilder.<String, Object>put(
+										"HTMLElementId", paymentTermsId
+									).put(
+										"modalContent", commerceTermEntry.getDescription(LanguageUtil.getLanguageId(locale))
+									).put(
+										"modalTitle", commerceTermEntry.getLabel(LanguageUtil.getLanguageId(locale))
+									).build()
+								%>'
+								module="js/attachModalToHTMLElement"
+							/>
 						</div>
 					</li>
 

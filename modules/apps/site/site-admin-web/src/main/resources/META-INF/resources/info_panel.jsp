@@ -103,6 +103,7 @@ request.removeAttribute(WebKeys.SEARCH_CONTAINER_RESULT_ROW);
 							<ul class="autofit-padded-no-gutters autofit-row">
 								<li class="autofit-col">
 									<clay:dropdown-actions
+										aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 										dropdownItems="<%= siteAdminDisplayContext.getActionDropdownItems(group) %>"
 										propsTransformer="js/SiteDropdownDefaultPropsTransformer"
 									/>
@@ -162,19 +163,19 @@ request.removeAttribute(WebKeys.SEARCH_CONTAINER_RESULT_ROW);
 
 							<c:if test="<%= siteAdminDisplayContext.getUsersCount(group) > 0 %>">
 								<div>
-									<aui:a href='<%= HttpUtil.addParameter(assignMembersURL.toString(), "tabs1", "users") %>' label='<%= LanguageUtil.format(request, (siteAdminDisplayContext.getUsersCount(group) == 1) ? "x-user" : "x-users", siteAdminDisplayContext.getUsersCount(group), false) %>' />
+									<aui:a href='<%= HttpComponentsUtil.addParameter(assignMembersURL.toString(), "tabs1", "users") %>' label='<%= LanguageUtil.format(request, (siteAdminDisplayContext.getUsersCount(group) == 1) ? "x-user" : "x-users", siteAdminDisplayContext.getUsersCount(group), false) %>' />
 								<div>
 							</c:if>
 
 							<c:if test="<%= siteAdminDisplayContext.getOrganizationsCount(group) > 0 %>">
 								<div>
-									<aui:a href='<%= HttpUtil.addParameter(assignMembersURL.toString(), "tabs1", "organizations") %>' label='<%= LanguageUtil.format(request, (siteAdminDisplayContext.getOrganizationsCount(group) == 1) ? "x-organization" : "x-organizations", siteAdminDisplayContext.getOrganizationsCount(group), false) %>' />
+									<aui:a href='<%= HttpComponentsUtil.addParameter(assignMembersURL.toString(), "tabs1", "organizations") %>' label='<%= LanguageUtil.format(request, (siteAdminDisplayContext.getOrganizationsCount(group) == 1) ? "x-organization" : "x-organizations", siteAdminDisplayContext.getOrganizationsCount(group), false) %>' />
 								</div>
 							</c:if>
 
 							<c:if test="<%= siteAdminDisplayContext.getUserGroupsCount(group) > 0 %>">
 								<div>
-									<aui:a href='<%= HttpUtil.addParameter(assignMembersURL.toString(), "tabs1", "user-groups") %>' label='<%= LanguageUtil.format(request, (siteAdminDisplayContext.getUserGroupsCount(group) == 1) ? "x-user-groups" : "x-user-groups", siteAdminDisplayContext.getUserGroupsCount(group), false) %>' />
+									<aui:a href='<%= HttpComponentsUtil.addParameter(assignMembersURL.toString(), "tabs1", "user-groups") %>' label='<%= LanguageUtil.format(request, (siteAdminDisplayContext.getUserGroupsCount(group) == 1) ? "x-user-groups" : "x-user-groups", siteAdminDisplayContext.getUserGroupsCount(group), false) %>' />
 								</div>
 							</c:if>
 						</li>

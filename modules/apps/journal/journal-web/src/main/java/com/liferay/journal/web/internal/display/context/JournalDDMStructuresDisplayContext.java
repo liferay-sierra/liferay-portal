@@ -22,10 +22,10 @@ import com.liferay.dynamic.data.mapping.util.comparator.StructureNameComparator;
 import com.liferay.journal.constants.JournalPortletKeys;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.web.internal.configuration.JournalWebConfiguration;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.portlet.SearchOrderByUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -199,6 +199,8 @@ public class JournalDDMStructuresDisplayContext {
 	}
 
 	private OrderByComparator<DDMStructure> _getOrderByComparator() {
+		OrderByComparator<DDMStructure> orderByComparator = null;
+
 		boolean orderByAsc = false;
 
 		String orderByType = getOrderByType();
@@ -207,15 +209,15 @@ public class JournalDDMStructuresDisplayContext {
 			orderByAsc = true;
 		}
 
-		OrderByComparator<DDMStructure> orderByComparator = null;
+		String orderByCol = getOrderByCol();
 
-		if (_orderByCol.equals("id")) {
+		if (orderByCol.equals("id")) {
 			orderByComparator = new StructureIdComparator(orderByAsc);
 		}
-		else if (_orderByCol.equals("modified-date")) {
+		else if (orderByCol.equals("modified-date")) {
 			orderByComparator = new StructureModifiedDateComparator(orderByAsc);
 		}
-		else if (_orderByCol.equals("name")) {
+		else if (orderByCol.equals("name")) {
 			orderByComparator = new StructureNameComparator(
 				orderByAsc, _themeDisplay.getLocale());
 		}

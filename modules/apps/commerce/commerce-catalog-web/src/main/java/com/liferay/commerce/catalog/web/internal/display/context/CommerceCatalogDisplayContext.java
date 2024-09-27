@@ -34,7 +34,6 @@ import com.liferay.item.selector.ItemSelector;
 import com.liferay.item.selector.ItemSelectorReturnType;
 import com.liferay.item.selector.criteria.FileEntryItemSelectorReturnType;
 import com.liferay.item.selector.criteria.image.criterion.ImageItemSelectorCriterion;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
@@ -45,6 +44,7 @@ import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
@@ -265,11 +265,10 @@ public class CommerceCatalogDisplayContext {
 			Collections.<ItemSelectorReturnType>singletonList(
 				new FileEntryItemSelectorReturnType()));
 
-		PortletURL itemSelectorURL = _itemSelector.getItemSelectorURL(
-			requestBackedPortletURLFactory, "addFileEntry",
-			imageItemSelectorCriterion);
-
-		return itemSelectorURL.toString();
+		return String.valueOf(
+			_itemSelector.getItemSelectorURL(
+				requestBackedPortletURLFactory, "addFileEntry",
+				imageItemSelectorCriterion));
 	}
 
 	public long getImageMaxSize() {
@@ -320,10 +319,8 @@ public class CommerceCatalogDisplayContext {
 				"))) and type eq '", type, StringPool.APOSTROPHE),
 			true);
 
-		return StringBundler.concat(
-			_portal.getPortalURL(cpRequestHelper.getRequest()),
-			"/o/headless-commerce-admin-pricing/v2.0/price-lists?filter=",
-			encodedFilter);
+		return "/o/headless-commerce-admin-pricing/v2.0/price-lists?filter=" +
+			encodedFilter;
 	}
 
 	public boolean hasAddCatalogPermission() {

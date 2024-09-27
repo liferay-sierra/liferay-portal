@@ -21,6 +21,7 @@ import com.liferay.blogs.service.BlogsEntryService;
 import com.liferay.document.library.kernel.service.DLAppService;
 import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
 import com.liferay.expando.kernel.service.ExpandoTableLocalService;
+import com.liferay.headless.common.spi.odata.entity.EntityFieldsUtil;
 import com.liferay.headless.common.spi.resource.SPIRatingResource;
 import com.liferay.headless.common.spi.service.context.ServiceContextRequestUtil;
 import com.liferay.headless.delivery.dto.v1_0.BlogPosting;
@@ -30,12 +31,11 @@ import com.liferay.headless.delivery.dto.v1_0.TaxonomyCategoryBrief;
 import com.liferay.headless.delivery.dto.v1_0.util.CustomFieldsUtil;
 import com.liferay.headless.delivery.internal.dto.v1_0.converter.BlogPostingDTOConverter;
 import com.liferay.headless.delivery.internal.dto.v1_0.util.DisplayPageRendererUtil;
-import com.liferay.headless.delivery.internal.dto.v1_0.util.EntityFieldsUtil;
 import com.liferay.headless.delivery.internal.dto.v1_0.util.RatingUtil;
 import com.liferay.headless.delivery.internal.odata.entity.v1_0.BlogPostingEntityModel;
 import com.liferay.headless.delivery.resource.v1_0.BlogPostingResource;
-import com.liferay.info.item.InfoItemServiceTracker;
-import com.liferay.layout.display.page.LayoutDisplayPageProviderTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
+import com.liferay.layout.display.page.LayoutDisplayPageProviderRegistry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryService;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.search.Field;
@@ -52,13 +52,12 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.odata.entity.EntityModel;
+import com.liferay.portal.search.expando.ExpandoBridgeIndexer;
 import com.liferay.portal.vulcan.aggregation.Aggregation;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
-import com.liferay.portal.vulcan.permission.PermissionUtil;
-import com.liferay.portal.vulcan.resource.EntityModelResource;
 import com.liferay.portal.vulcan.util.LocalDateTimeUtil;
 import com.liferay.portal.vulcan.util.SearchUtil;
 import com.liferay.ratings.kernel.service.RatingsEntryLocalService;
@@ -82,8 +81,7 @@ import org.osgi.service.component.annotations.ServiceScope;
 	properties = "OSGI-INF/liferay/rest/v1_0/blog-posting.properties",
 	scope = ServiceScope.PROTOTYPE, service = BlogPostingResource.class
 )
-public class BlogPostingResourceImpl
-	extends BaseBlogPostingResourceImpl implements EntityModelResource {
+public class BlogPostingResourceImpl extends BaseBlogPostingResourceImpl {
 
 	@Override
 	public void deleteBlogPosting(Long blogPostingId) throws Exception {
@@ -133,8 +131,8 @@ public class BlogPostingResourceImpl
 		return DisplayPageRendererUtil.toHTML(
 			BlogsEntry.class.getName(), 0, displayPageKey,
 			blogsEntry.getGroupId(), contextHttpServletRequest,
-			contextHttpServletResponse, blogsEntry, _infoItemServiceTracker,
-			_layoutDisplayPageProviderTracker, _layoutLocalService,
+			contextHttpServletResponse, blogsEntry, _infoItemServiceRegistry,
+			_layoutDisplayPageProviderRegistry, _layoutLocalService,
 			_layoutPageTemplateEntryService);
 	}
 
@@ -143,8 +141,8 @@ public class BlogPostingResourceImpl
 		return new BlogPostingEntityModel(
 			EntityFieldsUtil.getEntityFields(
 				_portal.getClassNameId(BlogsEntry.class.getName()),
-				contextCompany.getCompanyId(), _expandoColumnLocalService,
-				_expandoTableLocalService));
+				contextCompany.getCompanyId(), _expandoBridgeIndexer,
+				_expandoColumnLocalService, _expandoTableLocalService));
 	}
 
 	@Override
@@ -152,20 +150,9 @@ public class BlogPostingResourceImpl
 			Long siteId, String externalReferenceCode)
 		throws Exception {
 
-		BlogsEntry blogsEntry =
-			_blogsEntryLocalService.getBlogsEntryByExternalReferenceCode(
-				siteId, externalReferenceCode);
-
-		String resourceName = getPermissionCheckerResourceName(
-			blogsEntry.getEntryId());
-		Long resourceId = getPermissionCheckerResourceId(
-			blogsEntry.getEntryId());
-
-		PermissionUtil.checkPermission(
-			ActionKeys.VIEW, groupLocalService, resourceName, resourceId,
-			getPermissionCheckerGroupId(blogsEntry.getEntryId()));
-
-		return _toBlogPosting(blogsEntry);
+		return _toBlogPosting(
+			_blogsEntryService.getBlogsEntryByExternalReferenceCode(
+				siteId, externalReferenceCode));
 	}
 
 	@Override
@@ -181,6 +168,16 @@ public class BlogPostingResourceImpl
 					ActionKeys.ADD_ENTRY, "postSiteBlogPosting",
 					BlogsConstants.RESOURCE_NAME, siteId)
 			).put(
+				"createBatch",
+				addAction(
+					ActionKeys.ADD_ENTRY, "postSiteBlogPostingBatch",
+					BlogsConstants.RESOURCE_NAME, siteId)
+			).put(
+				"deleteBatch",
+				addAction(
+					ActionKeys.DELETE, "deleteBlogPostingBatch",
+					BlogsConstants.RESOURCE_NAME, null)
+			).put(
 				"subscribe",
 				addAction(
 					ActionKeys.SUBSCRIBE, "putSiteBlogPostingSubscribe",
@@ -190,6 +187,11 @@ public class BlogPostingResourceImpl
 				addAction(
 					ActionKeys.SUBSCRIBE, "putSiteBlogPostingUnsubscribe",
 					BlogsConstants.RESOURCE_NAME, siteId)
+			).put(
+				"updateBatch",
+				addAction(
+					ActionKeys.UPDATE, "putBlogPostingBatch",
+					BlogsConstants.RESOURCE_NAME, null)
 			).build(),
 			booleanQuery -> {
 			},
@@ -484,16 +486,20 @@ public class BlogPostingResourceImpl
 	private DTOConverterRegistry _dtoConverterRegistry;
 
 	@Reference
+	private ExpandoBridgeIndexer _expandoBridgeIndexer;
+
+	@Reference
 	private ExpandoColumnLocalService _expandoColumnLocalService;
 
 	@Reference
 	private ExpandoTableLocalService _expandoTableLocalService;
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
-	private LayoutDisplayPageProviderTracker _layoutDisplayPageProviderTracker;
+	private LayoutDisplayPageProviderRegistry
+		_layoutDisplayPageProviderRegistry;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;

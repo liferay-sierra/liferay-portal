@@ -46,8 +46,10 @@ import com.liferay.portal.kernel.trash.TrashRenderer;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.PrefsPropsUtil;
+import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.UnicodeProperties;
-import com.liferay.trash.kernel.util.TrashUtil;
+import com.liferay.portal.util.PropsValues;
 import com.liferay.trash.model.TrashEntry;
 import com.liferay.trash.model.TrashVersion;
 import com.liferay.trash.model.impl.TrashEntryImpl;
@@ -177,11 +179,9 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 
 				Date createDate = trashEntry.getCreateDate();
 
-				Date date = getMaxAge(group);
+				Date date = _getMaxAge(group);
 
-				if (createDate.before(date) ||
-					!TrashUtil.isTrashEnabled(group)) {
-
+				if (createDate.before(date) || !_isTrashEnabled(group)) {
 					TrashHandler trashHandler =
 						TrashHandlerRegistryUtil.getTrashHandler(
 							trashEntry.getClassName());
@@ -397,7 +397,7 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 			Indexer<TrashEntry> indexer = _indexerRegistry.nullSafeGetIndexer(
 				TrashEntry.class);
 
-			SearchContext searchContext = buildSearchContext(
+			SearchContext searchContext = _buildSearchContext(
 				companyId, groupId, userId, keywords, start, end, sort);
 
 			return indexer.search(searchContext);
@@ -416,7 +416,7 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 			Indexer<TrashEntry> indexer = _indexerRegistry.nullSafeGetIndexer(
 				TrashEntry.class);
 
-			SearchContext searchContext = buildSearchContext(
+			SearchContext searchContext = _buildSearchContext(
 				companyId, groupId, userId, keywords, start, end, sort);
 
 			Hits hits = indexer.search(searchContext);
@@ -430,7 +430,7 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 		}
 	}
 
-	protected SearchContext buildSearchContext(
+	private SearchContext _buildSearchContext(
 		long companyId, long groupId, long userId, String keywords, int start,
 		int end, Sort sort) {
 
@@ -454,16 +454,6 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 		queryConfig.setScoreEnabled(false);
 
 		return searchContext;
-	}
-
-	protected Date getMaxAge(Group group) throws PortalException {
-		Calendar calendar = Calendar.getInstance();
-
-		calendar.setTime(new Date());
-
-		calendar.add(Calendar.MINUTE, -TrashUtil.getMaxAge(group));
-
-		return calendar.getTime();
 	}
 
 	private List<TrashEntry> _getEntries(Hits hits) {
@@ -529,6 +519,42 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 		}
 
 		return entries;
+	}
+
+	private Date _getMaxAge(Group group) throws PortalException {
+		Calendar calendar = Calendar.getInstance();
+
+		calendar.setTime(new Date());
+
+		int trashEntriesMaxAge = PrefsPropsUtil.getInteger(
+			group.getCompanyId(), PropsKeys.TRASH_ENTRIES_MAX_AGE,
+			PropsValues.TRASH_ENTRIES_MAX_AGE);
+
+		UnicodeProperties typeSettingsUnicodeProperties =
+			group.getParentLiveGroupTypeSettingsProperties();
+
+		calendar.add(
+			Calendar.MINUTE,
+			-GetterUtil.getInteger(
+				typeSettingsUnicodeProperties.getProperty("trashEntriesMaxAge"),
+				trashEntriesMaxAge));
+
+		return calendar.getTime();
+	}
+
+	private boolean _isTrashEnabled(Group group) {
+		boolean companyTrashEnabled = PrefsPropsUtil.getBoolean(
+			group.getCompanyId(), PropsKeys.TRASH_ENABLED);
+
+		if (!companyTrashEnabled) {
+			return false;
+		}
+
+		UnicodeProperties typeSettingsUnicodeProperties =
+			group.getParentLiveGroupTypeSettingsProperties();
+
+		return GetterUtil.getBoolean(
+			typeSettingsUnicodeProperties.getProperty("trashEnabled"), true);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

@@ -14,18 +14,25 @@
 
 package com.liferay.object.web.internal.object.entries.display.context;
 
+import com.liferay.frontend.data.set.filter.FDSFilter;
 import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
+import com.liferay.frontend.data.set.model.FDSSortItemBuilder;
+import com.liferay.frontend.data.set.model.FDSSortItemList;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
 import com.liferay.object.constants.ObjectActionKeys;
 import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
+import com.liferay.object.model.ObjectView;
+import com.liferay.object.model.ObjectViewSortColumn;
 import com.liferay.object.scope.ObjectScopeProvider;
 import com.liferay.object.service.ObjectFieldLocalService;
-import com.liferay.object.web.internal.configuration.activator.FFObjectViewConfigurationActivator;
+import com.liferay.object.service.ObjectViewLocalService;
 import com.liferay.object.web.internal.constants.ObjectWebKeys;
 import com.liferay.object.web.internal.display.context.helper.ObjectRequestHelper;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
+import com.liferay.object.web.internal.object.entries.frontend.data.set.filter.factory.ObjectFieldFDSFilterFactory;
+import com.liferay.object.web.internal.object.entries.frontend.data.set.filter.factory.ObjectFieldFDSFilterFactoryRegistry;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -34,12 +41,16 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -57,44 +68,28 @@ import javax.servlet.http.HttpServletRequest;
 public class ViewObjectEntriesDisplayContext {
 
 	public ViewObjectEntriesDisplayContext(
-		FFObjectViewConfigurationActivator ffObjectViewConfigurationActivator,
 		HttpServletRequest httpServletRequest,
+		ObjectFieldFDSFilterFactoryRegistry objectFieldFDSFilterFactoryRegistry,
 		ObjectFieldLocalService objectFieldLocalService,
 		ObjectScopeProvider objectScopeProvider,
+		ObjectViewLocalService objectViewLocalService,
 		PortletResourcePermission portletResourcePermission,
 		String restContextPath) {
 
-		_ffObjectViewConfigurationActivator =
-			ffObjectViewConfigurationActivator;
 		_httpServletRequest = httpServletRequest;
+		_objectFieldFDSFilterFactoryRegistry =
+			objectFieldFDSFilterFactoryRegistry;
 		_objectFieldLocalService = objectFieldLocalService;
 		_objectScopeProvider = objectScopeProvider;
+		_objectViewLocalService = objectViewLocalService;
 		_portletResourcePermission = portletResourcePermission;
 
-		_apiURL = "/o" + restContextPath;
+		_apiURL = _getAPIURL(restContextPath);
 		_objectRequestHelper = new ObjectRequestHelper(httpServletRequest);
 	}
 
 	public String getAPIURL() {
-		try {
-			long groupId = _objectScopeProvider.getGroupId(_httpServletRequest);
-
-			if (!_objectScopeProvider.isGroupAware() ||
-				!_objectScopeProvider.isValidGroupId(groupId)) {
-
-				return _apiURL + _getNestedFieldsQueryString();
-			}
-
-			return StringBundler.concat(
-				_apiURL, "/scopes/", groupId, _getNestedFieldsQueryString());
-		}
-		catch (PortalException portalException) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(portalException);
-			}
-
-			return _apiURL;
-		}
+		return _apiURL + _getQueryString();
 	}
 
 	public CreationMenu getCreationMenu() throws Exception {
@@ -139,7 +134,7 @@ public class ViewObjectEntriesDisplayContext {
 				).setMVCRenderCommandName(
 					"/object_entries/edit_object_entry"
 				).setParameter(
-					"objectEntryId", "{id}"
+					"externalReferenceCode", "{externalReferenceCode}"
 				).buildString(),
 				"view", "view",
 				LanguageUtil.get(_objectRequestHelper.getRequest(), "view"),
@@ -148,7 +143,8 @@ public class ViewObjectEntriesDisplayContext {
 				LanguageUtil.get(
 					_objectRequestHelper.getRequest(),
 					"are-you-sure-you-want-to-delete-this-entry"),
-				_apiURL + "/{id}", "trash", "delete",
+				_apiURL + "/by-external-reference-code/{externalReferenceCode}",
+				"trash", "delete",
 				LanguageUtil.get(_objectRequestHelper.getRequest(), "delete"),
 				"delete", "delete", "async"),
 			new FDSActionDropdownItem(
@@ -158,8 +154,63 @@ public class ViewObjectEntriesDisplayContext {
 				"get", "permissions", "modal-permissions"));
 	}
 
+	public List<FDSFilter> getFDSFilters() {
+		ObjectView objectView = _objectViewLocalService.fetchDefaultObjectView(
+			_objectDefinition.getObjectDefinitionId());
+
+		if (objectView == null) {
+			return Collections.emptyList();
+		}
+
+		return TransformUtil.transform(
+			objectView.getObjectViewFilterColumns(),
+			objectViewFilterColumn -> {
+				ObjectFieldFDSFilterFactory objectFieldFDSFilterFactory =
+					_objectFieldFDSFilterFactoryRegistry.
+						getObjectFieldFDSFilterFactory(
+							objectView.getObjectDefinitionId(),
+							objectViewFilterColumn);
+
+				return objectFieldFDSFilterFactory.create(
+					_objectRequestHelper.getLocale(),
+					_objectDefinition.getObjectDefinitionId(),
+					objectViewFilterColumn);
+			});
+	}
+
 	public String getFDSId() {
 		return _objectRequestHelper.getPortletId();
+	}
+
+	public FDSSortItemList getFDSSortItemList() {
+		ObjectView objectView = _objectViewLocalService.fetchDefaultObjectView(
+			_objectDefinition.getObjectDefinitionId());
+
+		FDSSortItemList fdsSortItemList = new FDSSortItemList();
+
+		if (objectView == null) {
+			return fdsSortItemList;
+		}
+
+		for (ObjectViewSortColumn objectViewSortColumn :
+				objectView.getObjectViewSortColumns()) {
+
+			fdsSortItemList.add(
+				FDSSortItemBuilder.setDirection(
+					objectViewSortColumn.getSortOrder()
+				).setKey(
+					() -> {
+						String objectFieldName = StringUtil.replace(
+							objectViewSortColumn.getObjectFieldName(),
+							"createDate", "dateCreated");
+
+						return StringUtil.replace(
+							objectFieldName, "modifiedDate", "dateModified");
+					}
+				).build());
+		}
+
+		return fdsSortItemList;
 	}
 
 	public ObjectDefinition getObjectDefinition() {
@@ -184,11 +235,30 @@ public class ViewObjectEntriesDisplayContext {
 			_objectRequestHelper.getLiferayPortletResponse());
 	}
 
-	private String _getNestedFieldsQueryString() {
-		if (!_ffObjectViewConfigurationActivator.enabled()) {
-			return StringPool.BLANK;
-		}
+	private String _getAPIURL(String restContextPath) {
+		String apiURL = "/o" + restContextPath;
 
+		try {
+			long groupId = _objectScopeProvider.getGroupId(_httpServletRequest);
+
+			if (!_objectScopeProvider.isGroupAware() ||
+				!_objectScopeProvider.isValidGroupId(groupId)) {
+
+				return apiURL;
+			}
+
+			return StringBundler.concat(apiURL, "/scopes/", groupId);
+		}
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(portalException);
+			}
+
+			return apiURL;
+		}
+	}
+
+	private String _getNestedFieldsQueryString() {
 		List<ObjectField> objectFields =
 			_objectFieldLocalService.getObjectFields(
 				_objectDefinition.getObjectDefinitionId());
@@ -210,14 +280,14 @@ public class ViewObjectEntriesDisplayContext {
 			}
 		).distinct(
 		).collect(
-			Collectors.joining("&nestedFields=")
+			Collectors.joining(StringPool.COMMA)
 		);
 
 		if (Validator.isNull(queryString)) {
 			return StringPool.BLANK;
 		}
 
-		return "?nestedFields=" + queryString;
+		return "nestedFields=" + queryString;
 	}
 
 	private String _getPermissionsURL() throws Exception {
@@ -245,17 +315,53 @@ public class ViewObjectEntriesDisplayContext {
 		).buildString();
 	}
 
+	private String _getQueryString() {
+		List<String> queryStrings = new ArrayList<>();
+
+		String nestedFieldsQueryString = _getNestedFieldsQueryString();
+
+		if (Validator.isNotNull(nestedFieldsQueryString)) {
+			queryStrings.add(nestedFieldsQueryString);
+		}
+
+		String searchByObjectViewQueryString =
+			_getSearchByObjectViewQueryString();
+
+		if (Validator.isNotNull(searchByObjectViewQueryString)) {
+			queryStrings.add(searchByObjectViewQueryString);
+		}
+
+		if (ListUtil.isEmpty(queryStrings)) {
+			return StringPool.BLANK;
+		}
+
+		return StringPool.QUESTION +
+			StringUtil.merge(queryStrings, StringPool.AMPERSAND);
+	}
+
+	private String _getSearchByObjectViewQueryString() {
+		ObjectView objectView = _objectViewLocalService.fetchDefaultObjectView(
+			_objectDefinition.getObjectDefinitionId());
+
+		if (objectView == null) {
+			return StringPool.BLANK;
+		}
+
+		return "searchByObjectView";
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		ViewObjectEntriesDisplayContext.class);
 
 	private final String _apiURL;
-	private final FFObjectViewConfigurationActivator
-		_ffObjectViewConfigurationActivator;
 	private final HttpServletRequest _httpServletRequest;
 	private ObjectDefinition _objectDefinition;
+	private final ObjectFieldFDSFilterFactoryRegistry
+		_objectFieldFDSFilterFactoryRegistry;
 	private final ObjectFieldLocalService _objectFieldLocalService;
 	private final ObjectRequestHelper _objectRequestHelper;
 	private final ObjectScopeProvider _objectScopeProvider;
+	private final ObjectViewLocalService _objectViewLocalService;
 	private final PortletResourcePermission _portletResourcePermission;
 
 }

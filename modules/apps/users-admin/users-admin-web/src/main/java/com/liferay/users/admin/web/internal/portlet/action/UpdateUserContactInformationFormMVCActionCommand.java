@@ -25,10 +25,8 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
-import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.ContactLocalService;
-import com.liferay.portal.kernel.service.UserLocalService;
-import com.liferay.portal.kernel.service.permission.UserPermissionUtil;
+import com.liferay.portal.kernel.service.permission.UserPermission;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -48,7 +46,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pei-Jung Lan
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + UsersAdminPortletKeys.MY_ACCOUNT,
 		"javax.portlet.name=" + UsersAdminPortletKeys.MY_ORGANIZATIONS,
@@ -71,7 +68,7 @@ public class UpdateUserContactInformationFormMVCActionCommand
 			ThemeDisplay themeDisplay =
 				(ThemeDisplay)actionRequest.getAttribute(WebKeys.THEME_DISPLAY);
 
-			UserPermissionUtil.check(
+			_userPermission.check(
 				themeDisplay.getPermissionChecker(), user.getUserId(),
 				ActionKeys.UPDATE);
 
@@ -149,15 +146,12 @@ public class UpdateUserContactInformationFormMVCActionCommand
 	}
 
 	@Reference
-	private CompanyLocalService _companyLocalService;
-
-	@Reference
 	private ContactLocalService _contactLocalService;
 
 	@Reference
 	private Portal _portal;
 
 	@Reference
-	private UserLocalService _userLocalService;
+	private UserPermission _userPermission;
 
 }

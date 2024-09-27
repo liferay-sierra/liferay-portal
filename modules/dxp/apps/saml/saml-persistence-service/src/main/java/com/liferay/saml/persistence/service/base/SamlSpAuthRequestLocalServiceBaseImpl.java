@@ -28,6 +28,8 @@ import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Projection;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.PersistedModel;
 import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.search.Indexable;
@@ -41,14 +43,7 @@ import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.saml.persistence.model.SamlSpAuthRequest;
 import com.liferay.saml.persistence.service.SamlSpAuthRequestLocalService;
 import com.liferay.saml.persistence.service.SamlSpAuthRequestLocalServiceUtil;
-import com.liferay.saml.persistence.service.persistence.SamlIdpSpConnectionPersistence;
-import com.liferay.saml.persistence.service.persistence.SamlIdpSpSessionPersistence;
-import com.liferay.saml.persistence.service.persistence.SamlIdpSsoSessionPersistence;
-import com.liferay.saml.persistence.service.persistence.SamlPeerBindingPersistence;
 import com.liferay.saml.persistence.service.persistence.SamlSpAuthRequestPersistence;
-import com.liferay.saml.persistence.service.persistence.SamlSpIdpConnectionPersistence;
-import com.liferay.saml.persistence.service.persistence.SamlSpMessagePersistence;
-import com.liferay.saml.persistence.service.persistence.SamlSpSessionPersistence;
 
 import java.io.Serializable;
 
@@ -338,6 +333,11 @@ public abstract class SamlSpAuthRequestLocalServiceBaseImpl
 	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
 		throws PortalException {
 
+		if (_log.isWarnEnabled()) {
+			_log.warn(
+				"Implement SamlSpAuthRequestLocalServiceImpl#deleteSamlSpAuthRequest(SamlSpAuthRequest) to avoid orphaned data");
+		}
+
 		return samlSpAuthRequestLocalService.deleteSamlSpAuthRequest(
 			(SamlSpAuthRequest)persistedModel);
 	}
@@ -481,46 +481,16 @@ public abstract class SamlSpAuthRequestLocalServiceBaseImpl
 		}
 	}
 
-	@Reference
-	protected SamlIdpSpConnectionPersistence samlIdpSpConnectionPersistence;
-
-	@Reference
-	protected SamlIdpSpSessionPersistence samlIdpSpSessionPersistence;
-
-	@Reference
-	protected SamlIdpSsoSessionPersistence samlIdpSsoSessionPersistence;
-
-	@Reference
-	protected SamlPeerBindingPersistence samlPeerBindingPersistence;
-
 	protected SamlSpAuthRequestLocalService samlSpAuthRequestLocalService;
 
 	@Reference
 	protected SamlSpAuthRequestPersistence samlSpAuthRequestPersistence;
 
 	@Reference
-	protected SamlSpIdpConnectionPersistence samlSpIdpConnectionPersistence;
-
-	@Reference
-	protected SamlSpMessagePersistence samlSpMessagePersistence;
-
-	@Reference
-	protected SamlSpSessionPersistence samlSpSessionPersistence;
-
-	@Reference
 	protected com.liferay.counter.kernel.service.CounterLocalService
 		counterLocalService;
 
-	@Reference
-	protected com.liferay.portal.kernel.service.ClassNameLocalService
-		classNameLocalService;
-
-	@Reference
-	protected com.liferay.portal.kernel.service.ResourceLocalService
-		resourceLocalService;
-
-	@Reference
-	protected com.liferay.portal.kernel.service.UserLocalService
-		userLocalService;
+	private static final Log _log = LogFactoryUtil.getLog(
+		SamlSpAuthRequestLocalServiceBaseImpl.class);
 
 }

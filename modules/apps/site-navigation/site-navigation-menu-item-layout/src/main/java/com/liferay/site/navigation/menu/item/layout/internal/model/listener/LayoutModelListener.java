@@ -47,7 +47,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Pavel Savinov
  */
-@Component(immediate = true, service = ModelListener.class)
+@Component(service = ModelListener.class)
 public class LayoutModelListener extends BaseModelListener<Layout> {
 
 	@Override
@@ -247,14 +247,7 @@ public class LayoutModelListener extends BaseModelListener<Layout> {
 			return false;
 		}
 
-		Layout draftLayout = layout.fetchDraftLayout();
-
-		if (draftLayout == null) {
-			return false;
-		}
-
-		return GetterUtil.getBoolean(
-			draftLayout.getTypeSettingsProperty("published"));
+		return layout.isPublished();
 	}
 
 	private boolean _menuItemExists(long siteNavigationMenuId, Layout layout) {

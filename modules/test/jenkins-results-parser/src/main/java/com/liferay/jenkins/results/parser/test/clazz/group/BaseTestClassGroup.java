@@ -46,9 +46,26 @@ public abstract class BaseTestClassGroup implements TestClassGroup {
 		return testClassFiles;
 	}
 
+	@Override
+	public boolean hasTestClasses() {
+		List<TestClass> testClasses = getTestClasses();
+
+		if ((testClasses != null) && !testClasses.isEmpty()) {
+			return true;
+		}
+
+		return false;
+	}
+
 	protected void addTestClass(TestClass testClass) {
 		if (!testClasses.contains(testClass)) {
 			testClasses.add(testClass);
+		}
+	}
+
+	protected void addTestClasses(List<TestClass> testClasses) {
+		for (TestClass testClass : testClasses) {
+			addTestClass(testClass);
 		}
 	}
 

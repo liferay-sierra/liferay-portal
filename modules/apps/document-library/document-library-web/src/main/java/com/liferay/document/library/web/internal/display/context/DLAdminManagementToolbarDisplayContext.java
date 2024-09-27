@@ -27,7 +27,6 @@ import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLAppServiceUtil;
 import com.liferay.document.library.kernel.service.DLFileEntryTypeLocalServiceUtil;
 import com.liferay.document.library.kernel.util.DLUtil;
-import com.liferay.document.library.web.internal.configuration.FFManagementToolbarConfigurationUtil;
 import com.liferay.document.library.web.internal.constants.DLWebKeys;
 import com.liferay.document.library.web.internal.display.context.helper.DLPortletInstanceSettingsHelper;
 import com.liferay.document.library.web.internal.display.context.helper.DLRequestHelper;
@@ -42,7 +41,6 @@ import com.liferay.frontend.taglib.clay.servlet.taglib.util.LabelItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.LabelItemListBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.ViewTypeItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.ViewTypeItemList;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.language.LanguageUtil;
@@ -52,15 +50,18 @@ import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
 import com.liferay.portal.kernel.portlet.toolbar.contributor.PortletToolbarContributor;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.ClassNameLocalServiceUtil;
 import com.liferay.portal.kernel.servlet.taglib.ui.Menu;
 import com.liferay.portal.kernel.servlet.taglib.ui.URLMenuItem;
 import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -83,21 +84,20 @@ public class DLAdminManagementToolbarDisplayContext
 	extends SearchContainerManagementToolbarDisplayContext {
 
 	public DLAdminManagementToolbarDisplayContext(
-		HttpServletRequest httpServletRequest,
-		LiferayPortletRequest liferayPortletRequest,
-		LiferayPortletResponse liferayPortletResponse,
 		DLAdminDisplayContext dlAdminDisplayContext,
-		DLTrashHelper dlTrashHelper) {
+		DLTrashHelper dlTrashHelper, HttpServletRequest httpServletRequest,
+		LiferayPortletRequest liferayPortletRequest,
+		LiferayPortletResponse liferayPortletResponse) {
 
 		super(
 			httpServletRequest, liferayPortletRequest, liferayPortletResponse,
 			dlAdminDisplayContext.getSearchContainer());
 
+		_dlAdminDisplayContext = dlAdminDisplayContext;
+		_dlTrashHelper = dlTrashHelper;
 		_httpServletRequest = httpServletRequest;
 		_liferayPortletRequest = liferayPortletRequest;
 		_liferayPortletResponse = liferayPortletResponse;
-		_dlAdminDisplayContext = dlAdminDisplayContext;
-		_dlTrashHelper = dlTrashHelper;
 
 		_currentURLObj = PortletURLUtil.getCurrent(
 			liferayPortletRequest, liferayPortletResponse);
@@ -188,23 +188,9 @@ public class DLAdminManagementToolbarDisplayContext
 			() -> !user.isDefaultUser(),
 			dropdownItem -> {
 				dropdownItem.putData("action", "deleteEntries");
-
-				Group scopeGroup = _themeDisplay.getScopeGroup();
-
-				if (_dlTrashHelper.isTrashEnabled(
-						scopeGroup.getGroupId(), _getRepositoryId())) {
-
-					dropdownItem.setIcon("trash");
-					dropdownItem.setLabel(
-						LanguageUtil.get(
-							_httpServletRequest, "move-to-recycle-bin"));
-				}
-				else {
-					dropdownItem.setIcon("times-circle");
-					dropdownItem.setLabel(
-						LanguageUtil.get(_httpServletRequest, "delete"));
-				}
-
+				dropdownItem.setIcon("trash");
+				dropdownItem.setLabel(
+					LanguageUtil.get(_httpServletRequest, "delete"));
 				dropdownItem.setQuickAction(true);
 			}
 		).add(
@@ -224,6 +210,15 @@ public class DLAdminManagementToolbarDisplayContext
 				dropdownItem.setLabel(
 					LanguageUtil.get(
 						_httpServletRequest, "checkout[document]"));
+				dropdownItem.setQuickAction(false);
+			}
+		).add(
+			() -> stagedActions && !user.isDefaultUser(),
+			dropdownItem -> {
+				dropdownItem.putData("action", "permissions");
+				dropdownItem.setIcon("password-policies");
+				dropdownItem.setLabel(
+					LanguageUtil.get(_httpServletRequest, "permissions"));
 				dropdownItem.setQuickAction(false);
 			}
 		).build();
@@ -310,9 +305,8 @@ public class DLAdminManagementToolbarDisplayContext
 						_httpServletRequest, "filter-by-navigation"));
 			}
 		).addGroup(
-			() ->
-				!FFManagementToolbarConfigurationUtil.
-					enableDesignImprovements(),
+			() -> !GetterUtil.getBoolean(
+				PropsUtil.get("feature.flag.LPS-144527")),
 			dropdownGroupItem -> {
 				dropdownGroupItem.setDropdownItems(_getOrderByDropdownItems());
 				dropdownGroupItem.setLabel(
@@ -354,12 +348,11 @@ public class DLAdminManagementToolbarDisplayContext
 						_httpServletRequest.getLocale());
 				}
 
-				String label = String.format(
-					"%s: %s",
-					LanguageUtil.get(_httpServletRequest, "document-type"),
-					HtmlUtil.escape(fileEntryTypeName));
-
-				labelItem.setLabel(label);
+				labelItem.setLabel(
+					String.format(
+						"%s: %s",
+						LanguageUtil.get(_httpServletRequest, "document-type"),
+						HtmlUtil.escape(fileEntryTypeName)));
 			}
 		).add(
 			() -> Objects.equals(_getNavigation(), "mine"),
@@ -377,11 +370,11 @@ public class DLAdminManagementToolbarDisplayContext
 
 				User user = _themeDisplay.getUser();
 
-				String label = String.format(
-					"%s: %s", LanguageUtil.get(_httpServletRequest, "owner"),
-					HtmlUtil.escape(user.getFullName()));
-
-				labelItem.setLabel(label);
+				labelItem.setLabel(
+					String.format(
+						"%s: %s",
+						LanguageUtil.get(_httpServletRequest, "owner"),
+						HtmlUtil.escape(user.getFullName())));
 			}
 		).build();
 	}
@@ -394,7 +387,7 @@ public class DLAdminManagementToolbarDisplayContext
 	@Override
 	public List<DropdownItem> getOrderDropdownItems() {
 		if (_isSearch() ||
-			!FFManagementToolbarConfigurationUtil.enableDesignImprovements()) {
+			!GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-144527"))) {
 
 			return null;
 		}
@@ -647,7 +640,6 @@ public class DLAdminManagementToolbarDisplayContext
 			dropdownItem -> {
 				dropdownItem.setActive(
 					navigation.equals("home") && (fileEntryTypeId == -1));
-
 				dropdownItem.setHref(
 					PortletURLBuilder.create(
 						PortletURLUtil.clone(
@@ -661,14 +653,12 @@ public class DLAdminManagementToolbarDisplayContext
 					).setParameter(
 						"fileEntryTypeId", (String)null
 					).buildPortletURL());
-
 				dropdownItem.setLabel(
 					LanguageUtil.get(_httpServletRequest, "all"));
 			}
 		).add(
 			dropdownItem -> {
 				dropdownItem.setActive(navigation.equals("recent"));
-
 				dropdownItem.setHref(
 					PortletURLBuilder.create(
 						PortletURLUtil.clone(
@@ -678,7 +668,6 @@ public class DLAdminManagementToolbarDisplayContext
 					).setNavigation(
 						"recent"
 					).buildPortletURL());
-
 				dropdownItem.setLabel(
 					LanguageUtil.get(_httpServletRequest, "recent"));
 			}
@@ -686,7 +675,6 @@ public class DLAdminManagementToolbarDisplayContext
 			_themeDisplay::isSignedIn,
 			dropdownItem -> {
 				dropdownItem.setActive(navigation.equals("mine"));
-
 				dropdownItem.setHref(
 					PortletURLBuilder.create(
 						PortletURLUtil.clone(
@@ -696,7 +684,6 @@ public class DLAdminManagementToolbarDisplayContext
 					).setNavigation(
 						"mine"
 					).buildPortletURL());
-
 				dropdownItem.setLabel(
 					LanguageUtil.get(_httpServletRequest, "mine"));
 			}

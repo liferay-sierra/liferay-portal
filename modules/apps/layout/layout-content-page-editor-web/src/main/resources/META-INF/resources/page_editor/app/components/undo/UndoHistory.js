@@ -14,7 +14,6 @@
 
 import {ClayButtonWithIcon} from '@clayui/button';
 import ClayDropDown, {Align} from '@clayui/drop-down';
-import ClayDropDownDivider from '@clayui/drop-down/lib/Divider';
 import {
 	ReactPortal,
 	useEventListener,
@@ -66,7 +65,10 @@ export default function UndoHistory() {
 				alignmentPosition={Align.BottomRight}
 				className="ml-2"
 				menuElementAttrs={{
-					className: 'cadmin page-editor__undo-history',
+					className: 'page-editor__undo-history',
+					containerProps: {
+						className: 'cadmin',
+					},
 				}}
 				onActiveChange={setActive}
 				trigger={
@@ -94,7 +96,7 @@ export default function UndoHistory() {
 						type={UNDO_TYPES.undo}
 					/>
 
-					<ClayDropDownDivider />
+					<ClayDropDown.Divider />
 
 					<ClayDropDown.Item
 						disabled={!undoHistory.length}
@@ -112,7 +114,7 @@ export default function UndoHistory() {
 			</ClayDropDown>
 
 			{loading && (
-				<ReactPortal>
+				<ReactPortal className="cadmin">
 					<Overlay />
 				</ReactPortal>
 			)}

@@ -49,18 +49,21 @@ public class PortalWorkspaceGitRepository extends BaseWorkspaceGitRepository {
 		MultiPattern multiPattern = new MultiPattern(
 			ciTestRelevantBypassFilePathPatterns.split("\\s*,\\s*"));
 
-		List<String> modifiedFilePaths = new ArrayList<>();
+		List<String> filePaths = new ArrayList<>();
 
 		GitWorkingDirectory gitWorkingDirectory = getGitWorkingDirectory();
 
 		for (File modifiedFile : gitWorkingDirectory.getModifiedFilesList()) {
-			modifiedFilePaths.add(
+			filePaths.add(
 				JenkinsResultsParserUtil.getCanonicalPath(modifiedFile));
 		}
 
-		if (!multiPattern.matchesAll(
-				modifiedFilePaths.toArray(new String[0]))) {
+		for (File deletedFile : gitWorkingDirectory.getDeletedFilesList()) {
+			filePaths.add(
+				JenkinsResultsParserUtil.getCanonicalPath(deletedFile));
+		}
 
+		if (!multiPattern.matchesAll(filePaths.toArray(new String[0]))) {
 			return false;
 		}
 
@@ -218,7 +221,17 @@ public class PortalWorkspaceGitRepository extends BaseWorkspaceGitRepository {
 	}
 
 	private Properties _getPortalTestProperties() {
-		return getProperties("portal.test.properties");
+		Properties testProperties = getProperties("portal.test.properties");
+
+		String companyDefaultLocale = System.getenv(
+			"TEST_COMPANY_DEFAULT_LOCALE");
+
+		if (!JenkinsResultsParserUtil.isNullOrEmpty(companyDefaultLocale)) {
+			testProperties.setProperty(
+				"test.company.default.locale", companyDefaultLocale);
+		}
+
+		return testProperties;
 	}
 
 	private void _writeAppServerPropertiesFile() {

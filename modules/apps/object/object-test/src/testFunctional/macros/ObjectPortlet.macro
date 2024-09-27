@@ -1,5 +1,20 @@
 definition {
 
+	macro addCustomFieldEntryViaUI {
+		LexiconEntry.gotoAdd();
+
+		Type.type(
+			key_customField = "${customField}",
+			locator1 = "ObjectPortlet#ENTRY_FIELD_GENERIC",
+			value1 = "${entry}");
+
+		Button.clickSave();
+
+		WaitForSPARefresh();
+
+		WaitForPageLoad();
+	}
+
 	macro addSingleFieldEntryViaUI {
 		LexiconEntry.gotoAdd();
 
@@ -24,10 +39,24 @@ definition {
 			locator1 = "ObjectPortlet#ENTRY_VALUE");
 	}
 
+	macro assertColumnLabelEntries {
+		AssertElementPresent(
+			key_sortFieldName = "${columnLabelName}",
+			locator1 = "ObjectPortlet#SORT_FIELD",
+			value1 = "${columnLabelName}");
+	}
+
 	macro assertDeleteEntryButtonNotPresent {
-		AssertElementNotPresent(
-			key_entry = "${entry}",
-			locator1 = "ObjectPortlet#ENTRY_KEBAB_MENU");
+		if (IsElementPresent(key_entry = "", locator1 = "ObjectPortlet#ENTRY_KEBAB_MENU")) {
+			Click(
+				key_entry = "${entry}",
+				locator1 = "ObjectPortlet#ENTRY_KEBAB_MENU");
+		}
+		else {
+			AssertElementNotPresent(
+				key_entry = "${entry}",
+				locator1 = "ObjectPortlet#ENTRY_KEBAB_MENU");
+		}
 
 		AssertElementNotPresent(locator1 = "ObjectPortlet#DELETE_ENTRY_BUTTON");
 	}
@@ -40,6 +69,12 @@ definition {
 
 	macro assertEntryColumnNotPresent {
 		AssertElementNotPresent(
+			key_column = "${column}",
+			locator1 = "ObjectPortlet#ENTRY_COLUMN");
+	}
+
+	macro assertEntryColumnPresent {
+		AssertElementPresent(
 			key_column = "${column}",
 			locator1 = "ObjectPortlet#ENTRY_COLUMN");
 	}
@@ -195,8 +230,8 @@ definition {
 
 	macro assertRelationshipEntrySearchResultsPresent {
 		AssertElementPresent(
-			key_entry = "${entry}",
-			locator1 = "ObjectPortlet#SEARCH_RESULT_RELATIONSHIP_ENTRY");
+			locator1 = "ObjectPortlet#SEARCH_RELATIONSHIP_ENTRY",
+			value1 = "${entry}");
 	}
 
 	macro assertUserCanNotUpdateEntryWithoutPermission {
@@ -241,6 +276,25 @@ definition {
 		Click(
 			key_picklistOption = "${entryOption}",
 			locator1 = "ObjectAdmin#ENTRY_PICKLIST_OPTION");
+	}
+
+	macro chooseEntryOnRelationshipFieldSpecific {
+		Click(
+			key_relationshipFieldLabel = "${relationshipFieldLabel}",
+			locator1 = "ObjectPortlet#SEARCH_ENTRY_ON_RELATIONSHIP_FIELD_LABEL_SPECIFIC");
+
+		KeyPress(
+			key_relationshipFieldLabel = "${relationshipFieldLabel}",
+			locator1 = "ObjectPortlet#SEARCH_ENTRY_ON_RELATIONSHIP_FIELD_LABEL_SPECIFIC",
+			value1 = "\BACK_SPACE");
+
+		Click(
+			key_picklistOption = "${entryOption}",
+			locator1 = "ObjectAdmin#ENTRY_PICKLIST_OPTION");
+
+		Button.clickSave();
+
+		WaitForSPARefresh();
 	}
 
 	macro deleteEntry {
@@ -294,9 +348,19 @@ definition {
 	}
 
 	macro selectCustomObject {
+		WaitForElementPresent(
+			key_label = "${label}",
+			locator1 = "ObjectPortlet#SELECT_CUSTOM_OBJECT");
+
 		Click(
 			key_label = "${label}",
 			locator1 = "ObjectPortlet#SELECT_CUSTOM_OBJECT");
+	}
+
+	macro selectObject {
+		Click(
+			key_label = "${label}",
+			locator1 = "ObjectPortlet#SELECT_OBJECT");
 	}
 
 	macro selectRelationshipFieldEntry {
@@ -315,11 +379,24 @@ definition {
 		WaitForPageLoad();
 	}
 
+	macro selectSystemObject {
+		Click(
+			key_label = "${label}",
+			locator1 = "ObjectPortlet#SELECT_SYSTEM_OBJECT");
+	}
+
 	macro sortField {
 		Click(
 			key_sortFieldName = "${sortFieldName}",
 			locator1 = "ObjectPortlet#SORT_FIELD",
 			value1 = "${sortFieldName}");
+	}
+
+	macro typeCustomField {
+		Type.type(
+			key_customField = "${customField}",
+			locator1 = "ObjectPortlet#ENTRY_FIELD_GENERIC",
+			value1 = "${entry}");
 	}
 
 	macro updateBooleanEntry {
@@ -359,8 +436,14 @@ definition {
 		WaitForPageLoad();
 	}
 
+	macro viewEmptyLabelInDateEntry {
+		AssertElementPresent(locator1 = "ObjectPortlet#VIEW_EMPTY_LABEL_IN_DATE_ENTRY");
+	}
+
 	macro viewEntry {
 		WaitForSPARefresh();
+
+		SelectFrameTop();
 
 		AssertElementPresent(
 			key_entry = "${entry}",
@@ -370,13 +453,15 @@ definition {
 	macro viewEntryDetails {
 		var key_entry = "${entry}";
 
+		SelectFrameTop();
+
 		if (IsElementPresent(locator1 = "ObjectPortlet#ENTRY_KEBAB_MENU")) {
 			Click(locator1 = "ObjectPortlet#ENTRY_KEBAB_MENU");
 
 			Click(locator1 = "ObjectPortlet#VIEW_ENTRY_BUTTON");
 		}
 		else {
-			Click(locator1 = "ObjectPortlet#VIEW_ENTRY_EYE_BUTTON");
+			Click(locator1 = "Icon#EYE_PREVIEW");
 		}
 
 		WaitForPageLoad();

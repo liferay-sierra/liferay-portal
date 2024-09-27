@@ -31,7 +31,6 @@ import org.osgi.service.component.annotations.Component;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	property = {
 		"json.web.service.context.name=commerce",
 		"json.web.service.context.path=CSDiagramPin"
@@ -54,9 +53,8 @@ public class CSDiagramPinServiceImpl extends CSDiagramPinServiceBaseImpl {
 	}
 
 	@Override
-	public void deleteCSDiagramPin(long csDiagramPinId) throws PortalException {
-		CSDiagramPin csDiagramPin = csDiagramPinLocalService.getCSDiagramPin(
-			csDiagramPinId);
+	public void deleteCSDiagramPin(CSDiagramPin csDiagramPin)
+		throws PortalException {
 
 		_cpDefinitionModelResourcePermission.check(
 			getPermissionChecker(), csDiagramPin.getCPDefinitionId(),

@@ -26,7 +26,7 @@ definition {
 	macro addForm {
 		SelectFrame(locator1 = "DDMEditStructure#IFRAME");
 
-		LexiconEntry.gotoAdd();
+		LexiconEntry.gotoAddNoSelectFrame();
 
 		Click(locator1 = "DDMEditStructure#NAME_FIELD");
 
@@ -356,7 +356,7 @@ definition {
 	}
 
 	macro editDescription {
-		Pause(locator1 = "1000");
+		WaitForPageLoad();
 
 		Type(
 			key_fieldName = "${fieldName}",
@@ -539,6 +539,7 @@ definition {
 
 	macro populateFieldTextBox {
 		var fieldName = StringUtil.replace("${fieldName}", " ", "_");
+
 		var key_fieldName = "${fieldName}";
 
 		Type(
@@ -1069,7 +1070,8 @@ definition {
 
 	macro viewPublishedWorkflowDefinitions {
 		AssertClick(
-			locator1 = "KaleoFormsAdminEditProcess#WORKFLOW_NAVIGATION_PUBLISHED_TAB",
+			key_assetTitle = "Published",
+			locator1 = "NavBar#ASSET_TITLE",
 			value1 = "Published");
 	}
 
@@ -1136,7 +1138,8 @@ definition {
 
 	macro viewUnpublishedWorkflowDefinitions {
 		AssertClick(
-			locator1 = "KaleoFormsAdminEditProcess#WORKFLOW_NAVIGATION_UNPUBLISHED_TAB",
+			key_assetTitle = "Unpublished",
+			locator1 = "NavBar#ASSET_TITLE",
 			value1 = "Unpublished");
 	}
 

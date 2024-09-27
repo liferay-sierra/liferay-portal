@@ -71,8 +71,8 @@ public interface ObjectRelationshipLocalService
 	@Indexable(type = IndexableType.REINDEX)
 	public ObjectRelationship addObjectRelationship(
 			long userId, long objectDefinitionId1, long objectDefinitionId2,
-			String deletionType, Map<Locale, String> labelMap, String name,
-			String type)
+			long parameterObjectFieldId, String deletionType,
+			Map<Locale, String> labelMap, String name, String type)
 		throws PortalException;
 
 	/**
@@ -92,6 +92,11 @@ public interface ObjectRelationshipLocalService
 	public void addObjectRelationshipMappingTableValues(
 			long userId, long objectRelationshipId, long primaryKey1,
 			long primaryKey2, ServiceContext serviceContext)
+		throws PortalException;
+
+	@Indexable(type = IndexableType.REINDEX)
+	public ObjectRelationship createManyToManyObjectRelationshipTable(
+			long userId, ObjectRelationship objectRelationship)
 		throws PortalException;
 
 	/**
@@ -149,6 +154,9 @@ public interface ObjectRelationshipLocalService
 
 	public void deleteObjectRelationshipMappingTableValues(
 			long objectRelationshipId, long primaryKey1, long primaryKey2)
+		throws PortalException;
+
+	public void deleteObjectRelationships(long objectDefinitionId1)
 		throws PortalException;
 
 	/**
@@ -235,6 +243,11 @@ public interface ObjectRelationshipLocalService
 		long objectRelationshipId);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public ObjectRelationship fetchObjectRelationshipByObjectDefinitionId(
+			long objectDefinitionId, String name)
+		throws Exception;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ObjectRelationship fetchObjectRelationshipByObjectFieldId2(
 		long objectFieldId2);
 
@@ -274,6 +287,16 @@ public interface ObjectRelationshipLocalService
 	public ObjectRelationship getObjectRelationship(long objectRelationshipId)
 		throws PortalException;
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public ObjectRelationship getObjectRelationship(
+			long objectDefinitionId1, String name)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public ObjectRelationship getObjectRelationshipByObjectDefinitionId(
+			long objectDefinitionId, String objectRelationshipName)
+		throws Exception;
+
 	/**
 	 * Returns the object relationship with the matching UUID and company.
 	 *
@@ -309,6 +332,18 @@ public interface ObjectRelationshipLocalService
 	public List<ObjectRelationship> getObjectRelationships(
 		long objectDefinitionId1, int start, int end);
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<ObjectRelationship> getObjectRelationships(
+		long objectDefinitionId1, long objectDefinition2, String type);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<ObjectRelationship> getObjectRelationships(
+		long objectDefinitionId, String type);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<ObjectRelationship> getObjectRelationships(
+		long objectDefinitionId1, String deletionType, boolean reverse);
+
 	/**
 	 * Returns the number of object relationships.
 	 *
@@ -334,8 +369,8 @@ public interface ObjectRelationshipLocalService
 
 	@Indexable(type = IndexableType.REINDEX)
 	public ObjectRelationship updateObjectRelationship(
-			long objectRelationshipId, String deletionType,
-			Map<Locale, String> labelMap)
+			long objectRelationshipId, long parameterObjectFieldId,
+			String deletionType, Map<Locale, String> labelMap)
 		throws PortalException;
 
 	/**

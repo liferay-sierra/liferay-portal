@@ -1,39 +1,18 @@
 @component-name = "portal-commerce"
 definition {
 
+	property custom.properties = "jsonws.web.service.paths.excludes=${line.separator}company.security.strangers.verify=false";
 	property portal.release = "true";
 	property portal.upstream = "true";
+	property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
 	property testray.main.component.name = "Shopping Experience";
 
 	setUp {
-		TestCase.setUpPortalInstance();
-
-		User.firstLoginPG();
-
-		PortalSettings.gotoConfiguration(
-			configurationCategory = "User Authentication",
-			configurationName = "General",
-			configurationScope = "Virtual Instance Scope");
-
-		Uncheck(locator1 = "PortalSettingsAuthentication#AUTHENTICATION_GENERAL_REQUIRE_STRANGERS_TO_VERIFY_THEIR_EMAIL_ADDRESS_CHECKBOX");
-
-		PortletEntry.save();
+		CommerceConfiguration.commerceSetUp();
 	}
 
 	tearDown {
-		Navigator.openURL();
-
-		if (IsElementPresent(locator1 = "UserBar#USER_AVATAR_IMAGE")) {
-			User.logoutPG();
-		}
-
-		User.firstLoginPG();
-
-		CommerceConfiguration.commerceAdminTearDown(userScreenName = "buyer");
-
-		CommerceConfiguration.commerceInitializersTearDown();
-
-		User.logoutPG();
+		CommerceConfiguration.commerceTearDown(doLogout = "true");
 	}
 
 	@description = "This is a functional test for COMMERCE-8145 - Without an account, add to cart and quantity selector are disabled for admin user"
@@ -71,7 +50,6 @@ definition {
 	@description = "This is a functional test for COMMERCE-8145 - Without an account, add to cart and quantity selector are disabled for non-admin user"
 	@priority = "4"
 	test AddToCartButtonAndQuantitySelectorAreDisabledForNewUser {
-		property custom.properties = "jsonws.web.service.paths.excludes=";
 		property portal.acceptance = "false";
 
 		CommerceAccelerators.initializeNewSiteViaAccelerator(siteName = "Minium");
@@ -207,8 +185,8 @@ definition {
 		User.logoutPG();
 
 		CommerceLogin.miniumLogin(
+			newPassword = "test",
 			password = "ttest",
-			resetPassword = "test",
 			urlAppend = "web/minium",
 			userEmailAddress = "buyer@liferay.com");
 
@@ -216,11 +194,7 @@ definition {
 			productName = "Simple T-Shirt",
 			productQuantity = "1");
 
-		CommerceNavigator.gotoMiniCart();
-
-		Button.click(button = "View Details");
-
-		Button.click(button = "Checkout");
+		CommerceCheckout.gotoCheckout();
 
 		CommerceCheckout.initializersCheckout(
 			newAddressAddress = "Test Address",
@@ -265,12 +239,13 @@ definition {
 		Click(locator1 = "//a[contains(text(),'View')]");
 
 		AssertTextEquals(
+			key_productName = "Brake Pads",
 			locator1 = "CommerceAccelerators#ORDER_DETAILS_PRICE",
 			value1 = "$ 18.90");
 	}
 
 	@description = "This is a test for COMMERCE-4958."
-	test CheckoutWithOneShippingOption {
+	test CheckoutWithDefaultShippingOption {
 		property portal.acceptance = "true";
 
 		CommerceAccelerators.initializeNewSiteViaAccelerator(siteName = "Speedwell");
@@ -305,11 +280,7 @@ definition {
 			productName = "U-Joint",
 			productQuantity = "1");
 
-		CommerceNavigator.gotoMiniCart();
-
-		Button.click(button = "Submit");
-
-		Pause(locator1 = "3000");
+		CommerceCheckout.gotoCheckoutViaMiniCart();
 
 		CommerceCheckout.initializersCheckout(
 			newAddressAddress = "Test Address",
@@ -320,13 +291,16 @@ definition {
 			productName = "U-Joint",
 			productQuantity = "1",
 			productUnitPrice = "24",
-			shippingMethod = "Standard");
+			shippingMethod = "Standard",
+			singleShippingOption = "true");
 	}
 
 	test DeactivateCommerceAccount {
 		property portal.acceptance = "quarantine";
 		property portal.release = "quarantine";
 		property portal.upstream = "quarantine";
+
+		// Quarantined because of COMMERCE-9825
 
 		CommerceAccelerators.initializeNewSiteViaAccelerator(siteName = "Minium");
 
@@ -361,8 +335,8 @@ definition {
 		User.logoutPG();
 
 		CommerceLogin.miniumLogin(
+			newPassword = "test",
 			password = "ttest",
-			resetPassword = "test",
 			urlAppend = "web/minium",
 			userEmailAddress = "buyer@liferay.com");
 
@@ -442,8 +416,8 @@ definition {
 		User.logoutPG();
 
 		CommerceLogin.miniumLogin(
+			newPassword = "test",
 			password = "ttest",
-			resetPassword = "test",
 			urlAppend = "web/minium",
 			userEmailAddress = "buyer@liferay.com");
 
@@ -516,7 +490,7 @@ definition {
 			fragmentName = "HTML",
 			targetFragmentName = "Heading");
 
-		PageEditor.clickPublish();
+		PageEditor.publish();
 
 		ContentPagesNavigator.openViewContentPage(
 			pageName = "Test Content Page Name",
@@ -648,6 +622,8 @@ definition {
 		property portal.release = "quarantine";
 		property portal.upstream = "quarantine";
 
+		// Quarantined because of COMMERCE-9825
+
 		CommerceAccelerators.initializeNewSiteViaAccelerator(siteName = "Minium");
 
 		CommerceNavigator.gotoPortlet(
@@ -689,8 +665,8 @@ definition {
 		User.logoutPG();
 
 		CommerceLogin.miniumLogin(
+			newPassword = "test",
 			password = "ttest",
-			resetPassword = "test",
 			urlAppend = "web/minium",
 			userEmailAddress = "buyer@liferay.com");
 
@@ -700,13 +676,7 @@ definition {
 			productName = "ABS Sensor",
 			productQuantity = "2");
 
-		Pause(locator1 = "5000");
-
-		CommerceNavigator.gotoMiniCart();
-
-		Button.click(button = "Submit");
-
-		Pause(locator1 = "3000");
+		CommerceCheckout.gotoCheckoutViaMiniCart();
 
 		CommerceCheckout.initializersCheckout(
 			newAddressAddress = "Test Address",
@@ -835,8 +805,8 @@ definition {
 		User.logoutPG();
 
 		CommerceLogin.miniumLogin(
+			newPassword = "test",
 			password = "ttest",
-			resetPassword = "test",
 			urlAppend = "web/minium",
 			userEmailAddress = "buyer@liferay.com");
 
@@ -848,11 +818,7 @@ definition {
 
 		Refresh();
 
-		CommerceNavigator.gotoMiniCart();
-
-		Button.click(button = "View Details");
-
-		Button.click(button = "Checkout");
+		CommerceCheckout.gotoCheckout();
 
 		CommerceCheckout.initializersCheckout(
 			newAddressAddress = "Test Address",
@@ -998,8 +964,8 @@ definition {
 		CommerceLogin.speedwellLogout();
 
 		CommerceLogin.speedwellLogin(
+			newPassword = "test",
 			password = "ttest",
-			resetPassword = "test",
 			urlAppend = "web/speedwell",
 			userEmailAddress = "buyer@liferay.com");
 
@@ -1011,15 +977,7 @@ definition {
 			productName = "ABS Sensor",
 			productQuantity = "2");
 
-		Pause(locator1 = "5000");
-
-		Refresh();
-
-		CommerceNavigator.gotoMiniCart();
-
-		Button.click(button = "Submit");
-
-		Pause(locator1 = "3000");
+		CommerceCheckout.gotoCheckoutViaMiniCart();
 
 		CommerceCheckout.initializersCheckout(
 			newAddressAddress = "Test Address",

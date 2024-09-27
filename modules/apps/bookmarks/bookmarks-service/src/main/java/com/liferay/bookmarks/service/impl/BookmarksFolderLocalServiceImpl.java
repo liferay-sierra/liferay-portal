@@ -24,6 +24,7 @@ import com.liferay.bookmarks.model.BookmarksEntry;
 import com.liferay.bookmarks.model.BookmarksFolder;
 import com.liferay.bookmarks.service.BookmarksEntryLocalService;
 import com.liferay.bookmarks.service.base.BookmarksFolderLocalServiceBaseImpl;
+import com.liferay.bookmarks.service.persistence.BookmarksEntryPersistence;
 import com.liferay.bookmarks.util.comparator.FolderIdComparator;
 import com.liferay.expando.kernel.service.ExpandoRowLocalService;
 import com.liferay.petra.string.StringPool;
@@ -40,7 +41,10 @@ import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.tree.TreeModelTasksAdapter;
 import com.liferay.portal.kernel.tree.TreePathUtil;
@@ -85,13 +89,13 @@ public class BookmarksFolderLocalServiceImpl
 
 		// Folder
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		long groupId = serviceContext.getScopeGroupId();
 
-		parentFolderId = getParentFolderId(groupId, parentFolderId);
+		parentFolderId = _getParentFolderId(groupId, parentFolderId);
 
-		validate(name);
+		_validate(name);
 
 		long folderId = counterLocalService.increment();
 
@@ -112,7 +116,7 @@ public class BookmarksFolderLocalServiceImpl
 
 		// Resources
 
-		resourceLocalService.addModelResources(folder, serviceContext);
+		_resourceLocalService.addModelResources(folder, serviceContext);
 
 		// Asset
 
@@ -164,7 +168,7 @@ public class BookmarksFolderLocalServiceImpl
 
 		// Resources
 
-		resourceLocalService.deleteResource(
+		_resourceLocalService.deleteResource(
 			folder, ResourceConstants.SCOPE_INDIVIDUAL);
 
 		// Entries
@@ -181,7 +185,7 @@ public class BookmarksFolderLocalServiceImpl
 
 		_expandoRowLocalService.deleteRows(
 			folder.getCompanyId(),
-			classNameLocalService.getClassNameId(
+			_classNameLocalService.getClassNameId(
 				BookmarksFolder.class.getName()),
 			folder.getFolderId());
 
@@ -372,10 +376,10 @@ public class BookmarksFolderLocalServiceImpl
 		BookmarksFolder folder = bookmarksFolderPersistence.findByPrimaryKey(
 			folderId);
 
-		parentFolderId = getParentFolderId(folder, parentFolderId);
+		parentFolderId = _getParentFolderId(folder, parentFolderId);
 
 		if (folderId != parentFolderId) {
-			mergeFolders(folder, parentFolderId);
+			_mergeFolders(folder, parentFolderId);
 		}
 	}
 
@@ -441,12 +445,10 @@ public class BookmarksFolderLocalServiceImpl
 
 			// Folders and entries
 
-			List<Object> foldersAndEntries =
+			_restoreDependentsFromTrash(
 				bookmarksFolderLocalService.getFoldersAndEntries(
 					folder.getGroupId(), folder.getFolderId(),
-					WorkflowConstants.STATUS_IN_TRASH);
-
-			restoreDependentsFromTrash(foldersAndEntries);
+					WorkflowConstants.STATUS_IN_TRASH));
 		}
 
 		return bookmarksFolderLocalService.moveFolder(folderId, parentFolderId);
@@ -480,11 +482,10 @@ public class BookmarksFolderLocalServiceImpl
 
 		// Folders and entries
 
-		List<Object> foldersAndEntries =
+		_moveDependentsToTrash(
 			bookmarksFolderLocalService.getFoldersAndEntries(
-				folder.getGroupId(), folder.getFolderId());
-
-		moveDependentsToTrash(foldersAndEntries, trashEntry.getEntryId());
+				folder.getGroupId(), folder.getFolderId()),
+			trashEntry.getEntryId());
 
 		// Social
 
@@ -561,12 +562,10 @@ public class BookmarksFolderLocalServiceImpl
 
 		// Folders and entries
 
-		List<Object> foldersAndEntries =
+		_restoreDependentsFromTrash(
 			bookmarksFolderLocalService.getFoldersAndEntries(
 				folder.getGroupId(), folder.getFolderId(),
-				WorkflowConstants.STATUS_IN_TRASH);
-
-		restoreDependentsFromTrash(foldersAndEntries);
+				WorkflowConstants.STATUS_IN_TRASH));
 
 		// Trash
 
@@ -639,9 +638,9 @@ public class BookmarksFolderLocalServiceImpl
 		BookmarksFolder folder = bookmarksFolderPersistence.findByPrimaryKey(
 			folderId);
 
-		parentFolderId = getParentFolderId(folder, parentFolderId);
+		parentFolderId = _getParentFolderId(folder, parentFolderId);
 
-		validate(name);
+		_validate(name);
 
 		long oldParentFolderId = folder.getParentFolderId();
 
@@ -679,7 +678,7 @@ public class BookmarksFolderLocalServiceImpl
 
 		// Folder
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		folder.setStatus(status);
 		folder.setStatusByUserId(userId);
@@ -709,7 +708,7 @@ public class BookmarksFolderLocalServiceImpl
 		return folder;
 	}
 
-	protected long getParentFolderId(
+	private long _getParentFolderId(
 		BookmarksFolder folder, long parentFolderId) {
 
 		if (parentFolderId ==
@@ -743,7 +742,7 @@ public class BookmarksFolderLocalServiceImpl
 		return parentFolderId;
 	}
 
-	protected long getParentFolderId(long groupId, long parentFolderId) {
+	private long _getParentFolderId(long groupId, long parentFolderId) {
 		if (parentFolderId !=
 				BookmarksFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
 
@@ -761,24 +760,24 @@ public class BookmarksFolderLocalServiceImpl
 		return parentFolderId;
 	}
 
-	protected void mergeFolders(BookmarksFolder fromFolder, long toFolderId)
+	private void _mergeFolders(BookmarksFolder fromFolder, long toFolderId)
 		throws PortalException {
 
 		List<BookmarksFolder> folders = bookmarksFolderPersistence.findByG_P(
 			fromFolder.getGroupId(), fromFolder.getFolderId());
 
 		for (BookmarksFolder folder : folders) {
-			mergeFolders(folder, toFolderId);
+			_mergeFolders(folder, toFolderId);
 		}
 
-		List<BookmarksEntry> entries = bookmarksEntryPersistence.findByG_F(
+		List<BookmarksEntry> entries = _bookmarksEntryPersistence.findByG_F(
 			fromFolder.getGroupId(), fromFolder.getFolderId());
 
 		for (BookmarksEntry entry : entries) {
 			entry.setFolderId(toFolderId);
 			entry.setTreePath(entry.buildTreePath());
 
-			entry = bookmarksEntryPersistence.update(entry);
+			entry = _bookmarksEntryPersistence.update(entry);
 
 			Indexer<BookmarksEntry> indexer =
 				IndexerRegistryUtil.nullSafeGetIndexer(BookmarksEntry.class);
@@ -789,7 +788,7 @@ public class BookmarksFolderLocalServiceImpl
 		bookmarksFolderLocalService.deleteFolder(fromFolder);
 	}
 
-	protected void moveDependentsToTrash(
+	private void _moveDependentsToTrash(
 			List<Object> foldersAndEntries, long trashEntryId)
 		throws PortalException {
 
@@ -808,7 +807,7 @@ public class BookmarksFolderLocalServiceImpl
 
 				entry.setStatus(WorkflowConstants.STATUS_IN_TRASH);
 
-				entry = bookmarksEntryPersistence.update(entry);
+				entry = _bookmarksEntryPersistence.update(entry);
 
 				// Trash
 
@@ -866,7 +865,7 @@ public class BookmarksFolderLocalServiceImpl
 				List<Object> curFoldersAndEntries = getFoldersAndEntries(
 					folder.getGroupId(), folder.getFolderId());
 
-				moveDependentsToTrash(curFoldersAndEntries, trashEntryId);
+				_moveDependentsToTrash(curFoldersAndEntries, trashEntryId);
 
 				// Asset
 
@@ -885,7 +884,7 @@ public class BookmarksFolderLocalServiceImpl
 		}
 	}
 
-	protected void restoreDependentsFromTrash(List<Object> foldersAndEntries)
+	private void _restoreDependentsFromTrash(List<Object> foldersAndEntries)
 		throws PortalException {
 
 		for (Object object : foldersAndEntries) {
@@ -911,7 +910,7 @@ public class BookmarksFolderLocalServiceImpl
 
 				entry.setStatus(oldStatus);
 
-				entry = bookmarksEntryPersistence.update(entry);
+				entry = _bookmarksEntryPersistence.update(entry);
 
 				// Trash
 
@@ -965,7 +964,7 @@ public class BookmarksFolderLocalServiceImpl
 					folder.getGroupId(), folder.getFolderId(),
 					WorkflowConstants.STATUS_IN_TRASH);
 
-				restoreDependentsFromTrash(curFoldersAndEntries);
+				_restoreDependentsFromTrash(curFoldersAndEntries);
 
 				// Trash
 
@@ -990,7 +989,7 @@ public class BookmarksFolderLocalServiceImpl
 		}
 	}
 
-	protected void validate(String name) throws PortalException {
+	private void _validate(String name) throws PortalException {
 		if (Validator.isNull(name) || name.contains("\\\\") ||
 			name.contains("//")) {
 
@@ -1008,10 +1007,19 @@ public class BookmarksFolderLocalServiceImpl
 	private BookmarksEntryLocalService _bookmarksEntryLocalService;
 
 	@Reference
+	private BookmarksEntryPersistence _bookmarksEntryPersistence;
+
+	@Reference
+	private ClassNameLocalService _classNameLocalService;
+
+	@Reference
 	private ExpandoRowLocalService _expandoRowLocalService;
 
 	@Reference
 	private RatingsStatsLocalService _ratingsStatsLocalService;
+
+	@Reference
+	private ResourceLocalService _resourceLocalService;
 
 	@Reference
 	private SocialActivityLocalService _socialActivityLocalService;
@@ -1024,5 +1032,8 @@ public class BookmarksFolderLocalServiceImpl
 
 	@Reference
 	private TrashVersionLocalService _trashVersionLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

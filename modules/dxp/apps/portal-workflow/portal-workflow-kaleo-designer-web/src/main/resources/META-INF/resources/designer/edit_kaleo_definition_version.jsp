@@ -28,7 +28,7 @@ String successMessageKey = KaleoDesignerPortletKeys.KALEO_DESIGNER + "requestPro
 	<c:when test="<%= WorkflowEngineManagerUtil.isDeployed() %>">
 
 		<%
-		String mvcPath = ParamUtil.getString(request, "mvcPath", KaleoDesignerUtil.getEditJspPath());
+		String mvcPath = ParamUtil.getString(request, "mvcPath", "/designer/edit_workflow_definition.jsp");
 
 		String redirect = ParamUtil.getString(request, "redirect");
 		String closeRedirect = ParamUtil.getString(request, "closeRedirect");
@@ -85,57 +85,64 @@ String successMessageKey = KaleoDesignerPortletKeys.KALEO_DESIGNER + "requestPro
 		<c:if test="<%= kaleoDefinitionVersion != null %>">
 			<aui:model-context bean="<%= kaleoDefinitionVersion %>" model="<%= KaleoDefinitionVersion.class %>" />
 
-			<liferay-frontend:info-bar>
+			<div class="management-bar management-bar-light navbar navbar-expand-md">
 				<clay:container-fluid>
-					<c:if test="<%= !Objects.equals(state, WorkflowWebKeys.WORKFLOW_PREVIEW_BEFORE_RESTORE_STATE) %>">
-						<div class="info-bar-item">
-							<c:choose>
-								<c:when test="<%= (kaleoDefinition != null) && kaleoDefinition.isActive() %>">
-									<clay:label
-										displayType="info"
-										label="published"
-										large="<%= true %>"
-									/>
-								</c:when>
-								<c:otherwise>
-									<clay:label
-										label="not-published"
-										large="<%= true %>"
-									/>
-								</c:otherwise>
-							</c:choose>
-						</div>
-					</c:if>
+					<ul class="m-auto navbar-nav"></ul>
 
-					<%
-					String userName = kaleoDesignerDisplayContext.getUserName(kaleoDefinitionVersion);
-					%>
+					<ul class="middle navbar-nav">
+						<li class="nav-item">
+							<c:if test="<%= !Objects.equals(state, WorkflowWebKeys.WORKFLOW_PREVIEW_BEFORE_RESTORE_STATE) %>">
+								<c:choose>
+									<c:when test="<%= (kaleoDefinition != null) && kaleoDefinition.isActive() %>">
+										<clay:label
+											displayType="info"
+											label="published"
+											large="<%= true %>"
+										/>
+									</c:when>
+									<c:otherwise>
+										<clay:label
+											label="not-published"
+											large="<%= true %>"
+										/>
+									</c:otherwise>
+								</c:choose>
+							</c:if>
 
-					<span>
-						<c:choose>
-							<c:when test="<%= userName == null %>">
-								<%= dateFormatTime.format(kaleoDefinitionVersion.getModifiedDate()) %>
-							</c:when>
-							<c:when test="<%= Objects.equals(state, WorkflowWebKeys.WORKFLOW_PREVIEW_BEFORE_RESTORE_STATE) %>">
-								<liferay-ui:message arguments="<%= new String[] {dateFormatTime.format(kaleoDefinitionVersion.getModifiedDate()), HtmlUtil.escape(userName)} %>" key="revision-from-x-by-x" translateArguments="<%= false %>" />
-							</c:when>
-							<c:otherwise>
-								<liferay-ui:message arguments="<%= new String[] {dateFormatTime.format(kaleoDefinitionVersion.getModifiedDate()), HtmlUtil.escape(userName)} %>" key="x,-by-x" translateArguments="<%= false %>" />
-							</c:otherwise>
-						</c:choose>
-					</span>
+							<%
+							String userName = kaleoDesignerDisplayContext.getUserName(kaleoDefinitionVersion);
+							%>
+
+							<span>
+								<c:choose>
+									<c:when test="<%= userName == null %>">
+										<%= dateFormatTime.format(kaleoDefinitionVersion.getModifiedDate()) %>
+									</c:when>
+									<c:when test="<%= Objects.equals(state, WorkflowWebKeys.WORKFLOW_PREVIEW_BEFORE_RESTORE_STATE) %>">
+										<liferay-ui:message arguments="<%= new String[] {dateFormatTime.format(kaleoDefinitionVersion.getModifiedDate()), HtmlUtil.escape(userName)} %>" key="revision-from-x-by-x" translateArguments="<%= false %>" />
+									</c:when>
+									<c:otherwise>
+										<liferay-ui:message arguments="<%= new String[] {dateFormatTime.format(kaleoDefinitionVersion.getModifiedDate()), HtmlUtil.escape(userName)} %>" key="x,-by-x" translateArguments="<%= false %>" />
+									</c:otherwise>
+								</c:choose>
+							</span>
+						</li>
+					</ul>
+
+					<ul class="end navbar-nav">
+						<li class="nav-item">
+							<c:if test='<%= !Objects.equals(state, WorkflowWebKeys.WORKFLOW_PREVIEW_BEFORE_RESTORE_STATE) && !Objects.equals(state, "view") %>'>
+								<liferay-frontend:sidebar-toggler-button
+									cssClass="btn-secondary"
+									icon="info-circle"
+									label="info"
+									typeMobile="relative"
+								/>
+							</c:if>
+						</li>
+					</ul>
 				</clay:container-fluid>
-
-				<c:if test='<%= !Objects.equals(state, WorkflowWebKeys.WORKFLOW_PREVIEW_BEFORE_RESTORE_STATE) && !Objects.equals(state, "view") %>'>
-					<liferay-frontend:info-bar-buttons>
-						<liferay-frontend:info-bar-sidenav-toggler-button
-							icon="info-circle"
-							label="info"
-							typeMobile="relative"
-						/>
-					</liferay-frontend:info-bar-buttons>
-				</c:if>
-			</liferay-frontend:info-bar>
+			</div>
 		</c:if>
 
 		<div class="closed sidenav-container sidenav-right" id="<portlet:namespace />infoPanelId">
@@ -147,7 +154,7 @@ String successMessageKey = KaleoDesignerPortletKeys.KALEO_DESIGNER + "requestPro
 								<clay:container-fluid>
 									<ul class="tbar-nav">
 										<li class="tbar-item">
-											<aui:icon cssClass="component-action sidenav-close" image="times" markupView="lexicon" url="javascript:;" />
+											<aui:icon cssClass="component-action sidenav-close" image="times" markupView="lexicon" url="javascript:void(0);" />
 										</li>
 									</ul>
 								</clay:container-fluid>
@@ -236,7 +243,7 @@ String successMessageKey = KaleoDesignerPortletKeys.KALEO_DESIGNER + "requestPro
 
 			<div class="sidenav-content">
 				<clay:container-fluid
-					size='<%= Objects.equals(renderRequest.getWindowState(), LiferayWindowState.POP_UP) ? "xl" : "lg" %>'
+					size='<%= (Objects.equals(renderRequest.getWindowState(), LiferayWindowState.POP_UP) || Objects.equals(renderRequest.getWindowState(), WindowState.MAXIMIZED)) ? "xl" : "lg" %>'
 				>
 					<aui:form cssClass="full-width-content" method="post" name="fm" onSubmit="event.preventDefault();">
 						<aui:model-context bean="<%= kaleoDefinitionVersion %>" model="<%= KaleoDefinitionVersion.class %>" />
@@ -268,12 +275,12 @@ String successMessageKey = KaleoDesignerPortletKeys.KALEO_DESIGNER + "requestPro
 											<div class="tabbable-content">
 												<ul class="nav nav-tabs">
 													<li class="active nav-item">
-														<a class="active nav-link" href="javascript:;">
+														<a class="active nav-link" href="javascript:void(0);">
 															<liferay-ui:message key="nodes" />
 														</a>
 													</li>
 													<li class="nav-item">
-														<a class="nav-link" href="javascript:;">
+														<a class="nav-link" href="javascript:void(0);">
 															<liferay-ui:message key="properties" />
 														</a>
 													</li>
@@ -292,12 +299,12 @@ String successMessageKey = KaleoDesignerPortletKeys.KALEO_DESIGNER + "requestPro
 												<div class="main-tab tabbable-content">
 													<ul class="nav nav-tabs">
 														<li class="active nav-item">
-															<a class="active nav-link" href="javascript:;">
+															<a class="active nav-link" href="javascript:void(0);">
 																<liferay-ui:message key="diagram" />
 															</a>
 														</li>
 														<li class="nav-item">
-															<a class="nav-link" href="javascript:;">
+															<a class="nav-link" href="javascript:void(0);">
 																<liferay-ui:message key="source" />
 															</a>
 														</li>
@@ -417,7 +424,7 @@ String successMessageKey = KaleoDesignerPortletKeys.KALEO_DESIGNER + "requestPro
 									};
 
 									var initializeKaleoDesigner = function () {
-										<portlet:namespace />kaleoDesigner = new Liferay.KaleoDesigner({
+										window.<portlet:namespace />kaleoDesigner = new Liferay.KaleoDesigner({
 
 											<%
 											String availableFields = ParamUtil.getString(request, "availableFields");
@@ -663,18 +670,18 @@ String successMessageKey = KaleoDesignerPortletKeys.KALEO_DESIGNER + "requestPro
 
 									<c:choose>
 										<c:when test="<%= kaleoDefinitionVersion == null %>">
-											var titleComponent = Liferay.component('<portlet:namespace />title');
+											Liferay.componentReady('<portlet:namespace />title').then((titleComponent) => {
+												var titlePlaceholderInput = titleComponent.get('inputPlaceholder');
 
-											var titlePlaceholderInput = titleComponent.get('inputPlaceholder');
-
-											if (titlePlaceholderInput) {
-												titlePlaceholderInput.after('change', (event) => {
-													<portlet:namespace />kaleoDesigner.set(
-														'definitionName',
-														titleComponent.getValue()
-													);
-												});
-											}
+												if (titlePlaceholderInput) {
+													titlePlaceholderInput.after('change', (event) => {
+														<portlet:namespace />kaleoDesigner.set(
+															'definitionName',
+															titleComponent.getValue()
+														);
+													});
+												}
+											});
 										</c:when>
 									</c:choose>
 
@@ -739,7 +746,7 @@ String successMessageKey = KaleoDesignerPortletKeys.KALEO_DESIGNER + "requestPro
 							</c:when>
 							<c:when test='<%= Objects.equals(state, "view") && KaleoDefinitionVersionPermission.contains(permissionChecker, kaleoDefinitionVersion, ActionKeys.UPDATE) %>'>
 								<portlet:renderURL var="editURL">
-									<portlet:param name="mvcPath" value="<%= KaleoDesignerUtil.getEditJspPath() %>" />
+									<portlet:param name="mvcPath" value="/designer/edit_workflow_definition.jsp" />
 									<portlet:param name="redirect" value="<%= currentURL %>" />
 									<portlet:param name="name" value="<%= kaleoDefinitionVersion.getName() %>" />
 									<portlet:param name="draftVersion" value="<%= kaleoDefinitionVersion.getVersion() %>" />

@@ -17,6 +17,16 @@ definition {
 		IFrame.closeFrame();
 	}
 
+	macro clearSearchBar {
+		DoubleClick(locator1 = "CommerceEntry#SEARCH_PRODUCT_RELATIONS");
+
+		KeyPress(
+			locator1 = "CommerceEntry#SEARCH_PRODUCT_RELATIONS",
+			value1 = "\BACK_SPACE");
+
+		Click(locator1 = "AppBuilder#SEARCH_BUTTON");
+	}
+
 	macro editMiniCartItemQuantity {
 		Type(
 			key_cartItemSku = "${cartItemSku}",
@@ -41,10 +51,12 @@ definition {
 	}
 
 	macro gotoFrontStoreProductPage {
+		var baseURL = PropsUtil.get("portal.url");
 		var productName = StringUtil.replace("${productName}", " ", "-");
+
 		var productName = StringUtil.lowerCase("${productName}");
 
-		Navigator.openSpecificURL(url = "localhost:8080/web/guest/p/${productName}");
+		Navigator.openWithAppendToBaseURL(urlAppend = "web/guest/p/${productName}");
 	}
 
 	macro gotoMiniCart {
@@ -60,10 +72,22 @@ definition {
 			value1 = "${entryName}");
 	}
 
+	macro gotoMiniumAccountOrderDefaults {
+		Navigator.openWithAppendToBaseURL(urlAppend = "web/minium/account-management");
+
+		CommerceNavigator.gotoEntry(entryName = "${accountName}");
+
+		CommerceEntry.gotoMenuTab(menuTab = "Channel Defaults");
+	}
+
 	macro gotoMiniumSidebarItem {
+		ScrollBy(value1 = "0, -1000");
+
 		Click(
 			key_menuItem = "${menuItem}",
 			locator1 = "CommerceAccelerators#MINIUM_SIDEBAR_MENU_ITEM");
+
+		WaitForPageLoad();
 	}
 
 	macro gotoOptionValues {
@@ -90,14 +114,20 @@ definition {
 			category = "${category}",
 			panel = "Commerce",
 			portlet = "${portlet}");
+
+		WaitForPageLoad();
 	}
 
 	macro gotoProductDetails {
-		var productName = StringUtil.lowerCase("${productName}");
+		var productName = CommerceUtilities.convertStringToKey(string = "${productName}");
 
 		Click(
 			key_productName = "${productName}",
 			locator1 = "CommerceFrontStore#PRODUCT_CARD_CATALOG_IMAGE");
+	}
+
+	macro goToProductOptionsAdminViaURL {
+		Navigator.openWithAppendToBaseURL(urlAppend = "group/guest/~/control_panel/manage?p_p_id=com_liferay_commerce_product_options_web_internal_portlet_CPOptionsPortlet&p_p_lifecycle=0&p_p_state=maximized&p_v_l_s_g_id=20121");
 	}
 
 	macro gotoSpeedwellAccountDropdownItem {
@@ -126,6 +156,10 @@ definition {
 		Click(
 			key_entryName = "${entryName}",
 			locator1 = "CommerceEntry#TABLE_LIST_TITLE");
+	}
+
+	macro goToWishLists {
+		Navigator.openWithAppendToBaseURL(urlAppend = "web/minium/lists");
 	}
 
 	macro searchCatalog {

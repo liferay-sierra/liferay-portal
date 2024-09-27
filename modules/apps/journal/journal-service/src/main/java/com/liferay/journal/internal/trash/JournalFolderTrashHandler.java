@@ -35,9 +35,9 @@ import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.trash.TrashRenderer;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.trash.constants.TrashActionKeys;
+import com.liferay.trash.constants.TrashEntryConstants;
 import com.liferay.trash.kernel.exception.RestoreEntryException;
 import com.liferay.trash.kernel.model.TrashEntry;
-import com.liferay.trash.kernel.model.TrashEntryConstants;
 
 import javax.portlet.PortletRequest;
 
@@ -327,19 +327,13 @@ public class JournalFolderTrashHandler extends BaseJournalTrashHandler {
 			permissionChecker, classPK, actionId);
 	}
 
-	@Reference(unbind = "-")
-	protected void setJournalFolderLocalService(
-		JournalFolderLocalService journalFolderLocalService) {
-
-		_journalFolderLocalService = journalFolderLocalService;
-	}
-
 	private JournalFolder _getJournalFolder(long classPK)
 		throws PortalException {
 
 		return _journalFolderLocalService.getFolder(classPK);
 	}
 
+	@Reference
 	private JournalFolderLocalService _journalFolderLocalService;
 
 	@Reference(

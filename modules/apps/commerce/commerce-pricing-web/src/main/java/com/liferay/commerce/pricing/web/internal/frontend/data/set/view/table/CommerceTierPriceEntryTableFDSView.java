@@ -20,7 +20,6 @@ import com.liferay.frontend.data.set.view.table.BaseTableFDSView;
 import com.liferay.frontend.data.set.view.table.FDSTableSchema;
 import com.liferay.frontend.data.set.view.table.FDSTableSchemaBuilder;
 import com.liferay.frontend.data.set.view.table.FDSTableSchemaBuilderFactory;
-import com.liferay.frontend.data.set.view.table.FDSTableSchemaField;
 
 import java.util.Locale;
 
@@ -31,7 +30,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "frontend.data.set.name=" + CommercePricingFDSNames.TIER_PRICE_ENTRIES,
 	service = FDSView.class
 )
@@ -42,26 +40,21 @@ public class CommerceTierPriceEntryTableFDSView extends BaseTableFDSView {
 		FDSTableSchemaBuilder fdsTableSchemaBuilder =
 			_fdsTableSchemaBuilderFactory.create();
 
-		fdsTableSchemaBuilder.addFDSTableSchemaField("quantity", "quantity");
-
-		FDSTableSchemaField priceField =
-			fdsTableSchemaBuilder.addFDSTableSchemaField("price", "tier-price");
-
-		priceField.setContentRenderer("actionLink");
-
-		fdsTableSchemaBuilder.addFDSTableSchemaField(
-			"startDate", "publish-date");
-
-		fdsTableSchemaBuilder.addFDSTableSchemaField(
-			"endDate", "expiration-date");
-
-		fdsTableSchemaBuilder.addFDSTableSchemaField(
-			"override", "override-discount");
-
-		fdsTableSchemaBuilder.addFDSTableSchemaField(
-			"discountLevels", "discount-levels");
-
-		return fdsTableSchemaBuilder.build();
+		return fdsTableSchemaBuilder.add(
+			"quantity", "quantity"
+		).add(
+			"price", "tier-price",
+			fdsTableSchemaField -> fdsTableSchemaField.setContentRenderer(
+				"actionLink")
+		).add(
+			"startDate", "publish-date"
+		).add(
+			"endDate", "expiration-date"
+		).add(
+			"override", "override-discount"
+		).add(
+			"discountLevels", "discount-levels"
+		).build();
 	}
 
 	@Reference

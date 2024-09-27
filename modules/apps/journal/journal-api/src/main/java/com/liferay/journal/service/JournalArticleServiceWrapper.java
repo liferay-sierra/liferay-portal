@@ -339,15 +339,27 @@ public class JournalArticleServiceWrapper
 			java.util.Map<java.util.Locale, String> titleMap,
 			java.util.Map<java.util.Locale, String> descriptionMap,
 			String content, String ddmStructureKey, String ddmTemplateKey,
-			String layoutUuid, boolean indexable, boolean smallImage,
-			String smallImageURL, java.io.File smallImageFile,
+			String layoutUuid, int displayDateMonth, int displayDateDay,
+			int displayDateYear, int displayDateHour, int displayDateMinute,
+			int expirationDateMonth, int expirationDateDay,
+			int expirationDateYear, int expirationDateHour,
+			int expirationDateMinute, boolean neverExpire, int reviewDateMonth,
+			int reviewDateDay, int reviewDateYear, int reviewDateHour,
+			int reviewDateMinute, boolean neverReview, boolean indexable,
+			boolean smallImage, String smallImageURL,
+			java.io.File smallImageFile,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _journalArticleService.addArticleDefaultValues(
 			groupId, classNameId, classPK, titleMap, descriptionMap, content,
-			ddmStructureKey, ddmTemplateKey, layoutUuid, indexable, smallImage,
-			smallImageURL, smallImageFile, serviceContext);
+			ddmStructureKey, ddmTemplateKey, layoutUuid, displayDateMonth,
+			displayDateDay, displayDateYear, displayDateHour, displayDateMinute,
+			expirationDateMonth, expirationDateDay, expirationDateYear,
+			expirationDateHour, expirationDateMinute, neverExpire,
+			reviewDateMonth, reviewDateDay, reviewDateYear, reviewDateHour,
+			reviewDateMinute, neverReview, indexable, smallImage, smallImageURL,
+			smallImageFile, serviceContext);
 	}
 
 	/**
@@ -670,6 +682,16 @@ public class JournalArticleServiceWrapper
 
 		return _journalArticleService.getArticles(
 			groupId, folderId, locale, start, end, orderByComparator);
+	}
+
+	@Override
+	public java.util.List<JournalArticle> getArticlesByArticleId(
+		long groupId, String articleId, int status, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
+			orderByComparator) {
+
+		return _journalArticleService.getArticlesByArticleId(
+			groupId, articleId, status, start, end, orderByComparator);
 	}
 
 	/**
@@ -1019,6 +1041,14 @@ public class JournalArticleServiceWrapper
 	public int getArticlesCountByArticleId(long groupId, String articleId) {
 		return _journalArticleService.getArticlesCountByArticleId(
 			groupId, articleId);
+	}
+
+	@Override
+	public int getArticlesCountByArticleId(
+		long groupId, String articleId, int status) {
+
+		return _journalArticleService.getArticlesCountByArticleId(
+			groupId, articleId, status);
 	}
 
 	/**
@@ -2489,15 +2519,27 @@ public class JournalArticleServiceWrapper
 			java.util.Map<java.util.Locale, String> titleMap,
 			java.util.Map<java.util.Locale, String> descriptionMap,
 			String content, String ddmStructureKey, String ddmTemplateKey,
-			String layoutUuid, boolean indexable, boolean smallImage,
-			String smallImageURL, java.io.File smallImageFile,
+			String layoutUuid, int displayDateMonth, int displayDateDay,
+			int displayDateYear, int displayDateHour, int displayDateMinute,
+			int expirationDateMonth, int expirationDateDay,
+			int expirationDateYear, int expirationDateHour,
+			int expirationDateMinute, boolean neverExpire, int reviewDateMonth,
+			int reviewDateDay, int reviewDateYear, int reviewDateHour,
+			int reviewDateMinute, boolean neverReview, boolean indexable,
+			boolean smallImage, String smallImageURL,
+			java.io.File smallImageFile,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _journalArticleService.updateArticleDefaultValues(
 			groupId, articleId, titleMap, descriptionMap, content,
-			ddmStructureKey, ddmTemplateKey, layoutUuid, indexable, smallImage,
-			smallImageURL, smallImageFile, serviceContext);
+			ddmStructureKey, ddmTemplateKey, layoutUuid, displayDateMonth,
+			displayDateDay, displayDateYear, displayDateHour, displayDateMinute,
+			expirationDateMonth, expirationDateDay, expirationDateYear,
+			expirationDateHour, expirationDateMinute, neverExpire,
+			reviewDateMonth, reviewDateDay, reviewDateYear, reviewDateHour,
+			reviewDateMinute, neverReview, indexable, smallImage, smallImageURL,
+			smallImageFile, serviceContext);
 	}
 
 	/**

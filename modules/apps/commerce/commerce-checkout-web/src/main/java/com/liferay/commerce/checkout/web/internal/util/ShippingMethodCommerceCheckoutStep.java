@@ -28,6 +28,8 @@ import com.liferay.commerce.model.CommerceShippingOption;
 import com.liferay.commerce.service.CommerceOrderLocalService;
 import com.liferay.commerce.service.CommerceOrderService;
 import com.liferay.commerce.service.CommerceShippingMethodLocalService;
+import com.liferay.commerce.shipping.engine.fixed.service.CommerceShippingFixedOptionLocalService;
+import com.liferay.commerce.shipping.engine.fixed.service.CommerceShippingFixedOptionQualifierLocalService;
 import com.liferay.commerce.util.BaseCommerceCheckoutStep;
 import com.liferay.commerce.util.CommerceCheckoutStep;
 import com.liferay.commerce.util.CommerceShippingEngineRegistry;
@@ -36,6 +38,7 @@ import com.liferay.frontend.taglib.servlet.taglib.util.JSPRenderer;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
@@ -70,7 +73,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Luca Pellizzon
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = {
 		"commerce.checkout.step.name=" + ShippingMethodCommerceCheckoutStep.NAME,
 		"commerce.checkout.step.order:Integer=20"
@@ -140,7 +143,9 @@ public class ShippingMethodCommerceCheckoutStep
 			shippingMethodCheckoutStepDisplayContext =
 				new ShippingMethodCheckoutStepDisplayContext(
 					_commercePriceFormatter, _commerceShippingEngineRegistry,
-					_commerceShippingMethodLocalService, httpServletRequest);
+					_commerceShippingMethodLocalService,
+					_commerceShippingFixedOptionLocalService,
+					_configurationProvider, httpServletRequest);
 
 		CommerceOrder commerceOrder =
 			shippingMethodCheckoutStepDisplayContext.getCommerceOrder();
@@ -209,7 +214,7 @@ public class ShippingMethodCommerceCheckoutStep
 		for (CommerceShippingOption commerceShippingOption :
 				commerceShippingOptions) {
 
-			if (shippingOptionName.equals(commerceShippingOption.getName())) {
+			if (shippingOptionName.equals(commerceShippingOption.getKey())) {
 				return commerceShippingOption.getAmount();
 			}
 		}
@@ -218,16 +223,6 @@ public class ShippingMethodCommerceCheckoutStep
 			StringBundler.concat(
 				"Unable to get amount of option \"", shippingOptionName,
 				"\" for shipping method ", commerceShippingMethodId));
-	}
-
-	@Reference(
-		target = "(model.class.name=com.liferay.commerce.model.CommerceOrder)",
-		unbind = "-"
-	)
-	protected void setModelResourcePermission(
-		ModelResourcePermission<CommerceOrder> modelResourcePermission) {
-
-		_commerceOrderModelResourcePermission = modelResourcePermission;
 	}
 
 	private void _updateCommerceOrderShippingMethod(ActionRequest actionRequest)
@@ -276,7 +271,7 @@ public class ShippingMethodCommerceCheckoutStep
 			commerceShippingOptionName, themeDisplay.getLocale());
 
 		try {
-			TransactionInvokerUtil.invoke(
+			CommerceOrder updateCommerceOrder = TransactionInvokerUtil.invoke(
 				_transactionConfig,
 				() -> {
 					_commerceOrderLocalService.updateCommerceShippingMethod(
@@ -284,11 +279,15 @@ public class ShippingMethodCommerceCheckoutStep
 						commerceShippingMethodId, commerceShippingOptionName,
 						shippingAmount, commerceContext);
 
-					_commerceOrderLocalService.recalculatePrice(
+					return _commerceOrderLocalService.recalculatePrice(
 						commerceOrder.getCommerceOrderId(), commerceContext);
-
-					return null;
 				});
+
+			_commerceOrderLocalService.resetTermsAndConditions(
+				commerceOrder.getCommerceOrderId(), true, false);
+
+			actionRequest.setAttribute(
+				CommerceCheckoutWebKeys.COMMERCE_ORDER, updateCommerceOrder);
 		}
 		catch (Throwable throwable) {
 			throw new PortalException(throwable);
@@ -305,6 +304,9 @@ public class ShippingMethodCommerceCheckoutStep
 	@Reference
 	private CommerceOrderLocalService _commerceOrderLocalService;
 
+	@Reference(
+		target = "(model.class.name=com.liferay.commerce.model.CommerceOrder)"
+	)
 	private ModelResourcePermission<CommerceOrder>
 		_commerceOrderModelResourcePermission;
 
@@ -318,11 +320,22 @@ public class ShippingMethodCommerceCheckoutStep
 	private CommerceShippingEngineRegistry _commerceShippingEngineRegistry;
 
 	@Reference
+	private CommerceShippingFixedOptionLocalService
+		_commerceShippingFixedOptionLocalService;
+
+	@Reference
+	private CommerceShippingFixedOptionQualifierLocalService
+		_commerceShippingFixedOptionQualifierLocalService;
+
+	@Reference
 	private CommerceShippingHelper _commerceShippingHelper;
 
 	@Reference
 	private CommerceShippingMethodLocalService
 		_commerceShippingMethodLocalService;
+
+	@Reference
+	private ConfigurationProvider _configurationProvider;
 
 	@Reference
 	private JSPRenderer _jspRenderer;

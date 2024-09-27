@@ -19,7 +19,7 @@ import com.liferay.invitation.invite.members.service.MemberRequestLocalService;
 import com.liferay.portal.dao.orm.custom.sql.CustomSQL;
 import com.liferay.portal.kernel.dao.orm.CustomSQLParam;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -51,7 +51,6 @@ import javax.portlet.ActionResponse;
 import javax.portlet.Portlet;
 import javax.portlet.PortletException;
 import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
 import javax.portlet.ResourceRequest;
 import javax.portlet.ResourceResponse;
 
@@ -62,7 +61,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Ryan Park
  */
 @Component(
-	immediate = true,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.css-class-wrapper=so-portlet-invite-members",
@@ -77,7 +75,8 @@ import org.osgi.service.component.annotations.Reference;
 		"javax.portlet.name=" + InviteMembersPortletKeys.INVITE_MEMBERS,
 		"javax.portlet.resource-bundle=content.Language",
 		"javax.portlet.security-role-ref=guest,power-user,user",
-		"javax.portlet.supported-public-render-parameter=invitedMembersCount"
+		"javax.portlet.supported-public-render-parameter=invitedMembersCount",
+		"javax.portlet.version=3.0"
 	},
 	service = Portlet.class
 )
@@ -114,7 +113,7 @@ public class InviteMembersPortlet extends MVCPortlet {
 			themeDisplay.getCompanyId(), themeDisplay.getScopeGroupId(),
 			keywords, start, end);
 
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 		for (User user : users) {
 			jsonArray.put(
@@ -181,7 +180,7 @@ public class InviteMembersPortlet extends MVCPortlet {
 			actionRequest, "memberRequestId");
 		int status = ParamUtil.getInteger(actionRequest, "status");
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+		JSONObject jsonObject = _jsonFactory.createJSONObject();
 
 		try {
 			_memberRequestLocalService.updateMemberRequest(
@@ -198,13 +197,6 @@ public class InviteMembersPortlet extends MVCPortlet {
 		}
 
 		writeJSON(actionRequest, actionResponse, jsonObject);
-	}
-
-	@Reference(
-		target = "(&(release.bundle.symbolic.name=com.liferay.invitation.invite.members.service)(&(release.schema.version>=2.0.0)(!(release.schema.version>=3.0.0))))",
-		unbind = "-"
-	)
-	protected void setRelease(Release release) {
 	}
 
 	private List<User> _getAvailableUsers(
@@ -286,18 +278,18 @@ public class InviteMembersPortlet extends MVCPortlet {
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			actionRequest);
 
-		PortletURL portletURL = PortletProviderUtil.getPortletURL(
-			actionRequest, _groupLocalService.getGroup(groupId),
-			UserNotificationEvent.class.getName(), PortletProvider.Action.VIEW);
-
-		serviceContext.setAttribute("redirectURL", portletURL.toString());
-
-		String createAccountURL = _portal.getCreateAccountURL(
-			_portal.getHttpServletRequest(actionRequest), themeDisplay);
-
-		serviceContext.setAttribute("createAccountURL", createAccountURL);
-
+		serviceContext.setAttribute(
+			"createAccountURL",
+			_portal.getCreateAccountURL(
+				_portal.getHttpServletRequest(actionRequest), themeDisplay));
 		serviceContext.setAttribute("loginURL", themeDisplay.getURLSignIn());
+		serviceContext.setAttribute(
+			"redirectURL",
+			String.valueOf(
+				PortletProviderUtil.getPortletURL(
+					actionRequest, _groupLocalService.getGroup(groupId),
+					UserNotificationEvent.class.getName(),
+					PortletProvider.Action.VIEW)));
 
 		_memberRequestLocalService.addMemberRequests(
 			themeDisplay.getUserId(), groupId, receiverUserIds, invitedRoleId,
@@ -318,10 +310,18 @@ public class InviteMembersPortlet extends MVCPortlet {
 	private GroupLocalService _groupLocalService;
 
 	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
 	private MemberRequestLocalService _memberRequestLocalService;
 
 	@Reference
 	private Portal _portal;
+
+	@Reference(
+		target = "(&(release.bundle.symbolic.name=com.liferay.invitation.invite.members.service)(&(release.schema.version>=2.0.0)(!(release.schema.version>=3.0.0))))"
+	)
+	private Release _release;
 
 	@Reference
 	private UserLocalService _userLocalService;

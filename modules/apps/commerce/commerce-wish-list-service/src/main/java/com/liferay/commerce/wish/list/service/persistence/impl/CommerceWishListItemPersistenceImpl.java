@@ -21,7 +21,9 @@ import com.liferay.commerce.wish.list.model.impl.CommerceWishListItemImpl;
 import com.liferay.commerce.wish.list.model.impl.CommerceWishListItemModelImpl;
 import com.liferay.commerce.wish.list.service.persistence.CommerceWishListItemPersistence;
 import com.liferay.commerce.wish.list.service.persistence.CommerceWishListItemUtil;
+import com.liferay.commerce.wish.list.service.persistence.impl.constants.CommercePersistenceConstants;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.configuration.Configuration;
 import com.liferay.portal.kernel.dao.orm.EntityCache;
 import com.liferay.portal.kernel.dao.orm.FinderCache;
 import com.liferay.portal.kernel.dao.orm.FinderPath;
@@ -29,11 +31,13 @@ import com.liferay.portal.kernel.dao.orm.Query;
 import com.liferay.portal.kernel.dao.orm.QueryPos;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.dao.orm.SessionFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 import com.liferay.portal.kernel.service.persistence.impl.BasePersistenceImpl;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
@@ -41,7 +45,6 @@ import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.spring.extender.service.ServiceReference;
 
 import java.io.Serializable;
 
@@ -55,6 +58,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.sql.DataSource;
+
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Reference;
+
 /**
  * The persistence implementation for the commerce wish list item service.
  *
@@ -65,6 +75,9 @@ import java.util.Set;
  * @author Andrea Di Giorgi
  * @generated
  */
+@Component(
+	service = {CommerceWishListItemPersistence.class, BasePersistence.class}
+)
 public class CommerceWishListItemPersistenceImpl
 	extends BasePersistenceImpl<CommerceWishListItem>
 	implements CommerceWishListItemPersistence {
@@ -188,7 +201,7 @@ public class CommerceWishListItemPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<CommerceWishListItem>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (CommerceWishListItem commerceWishListItem : list) {
@@ -561,7 +574,7 @@ public class CommerceWishListItemPersistenceImpl
 
 		Object[] finderArgs = new Object[] {commerceWishListId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -705,7 +718,7 @@ public class CommerceWishListItemPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<CommerceWishListItem>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (CommerceWishListItem commerceWishListItem : list) {
@@ -1102,7 +1115,7 @@ public class CommerceWishListItemPersistenceImpl
 
 		Object[] finderArgs = new Object[] {CPInstanceUuid};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -1255,7 +1268,7 @@ public class CommerceWishListItemPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<CommerceWishListItem>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (CommerceWishListItem commerceWishListItem : list) {
@@ -1623,7 +1636,7 @@ public class CommerceWishListItemPersistenceImpl
 
 		Object[] finderArgs = new Object[] {CProductId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -1774,7 +1787,7 @@ public class CommerceWishListItemPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<CommerceWishListItem>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (CommerceWishListItem commerceWishListItem : list) {
@@ -2196,7 +2209,7 @@ public class CommerceWishListItemPersistenceImpl
 
 		Object[] finderArgs = new Object[] {commerceWishListId, CPInstanceUuid};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -2364,7 +2377,7 @@ public class CommerceWishListItemPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<CommerceWishListItem>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (CommerceWishListItem commerceWishListItem : list) {
@@ -2759,7 +2772,7 @@ public class CommerceWishListItemPersistenceImpl
 
 		Object[] finderArgs = new Object[] {commerceWishListId, CProductId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -2896,7 +2909,7 @@ public class CommerceWishListItemPersistenceImpl
 
 		if (useFinderCache) {
 			result = finderCache.getResult(
-				_finderPathFetchByCW_CPI_CP, finderArgs);
+				_finderPathFetchByCW_CPI_CP, finderArgs, this);
 		}
 
 		if (result instanceof CommerceWishListItem) {
@@ -3041,7 +3054,7 @@ public class CommerceWishListItemPersistenceImpl
 			commerceWishListId, CPInstanceUuid, CProductId
 		};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -3560,7 +3573,7 @@ public class CommerceWishListItemPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<CommerceWishListItem>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -3630,7 +3643,7 @@ public class CommerceWishListItemPersistenceImpl
 	@Override
 	public int countAll() {
 		Long count = (Long)finderCache.getResult(
-			_finderPathCountAll, FINDER_ARGS_EMPTY);
+			_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -3680,7 +3693,8 @@ public class CommerceWishListItemPersistenceImpl
 	/**
 	 * Initializes the commerce wish list item persistence.
 	 */
-	public void afterPropertiesSet() {
+	@Activate
+	public void activate() {
 		_valueObjectFinderCacheListThreshold = GetterUtil.getInteger(
 			PropsUtil.get(PropsKeys.VALUE_OBJECT_FINDER_CACHE_LIST_THRESHOLD));
 
@@ -3809,7 +3823,8 @@ public class CommerceWishListItemPersistenceImpl
 		_setCommerceWishListItemUtilPersistence(this);
 	}
 
-	public void destroy() {
+	@Deactivate
+	public void deactivate() {
 		_setCommerceWishListItemUtilPersistence(null);
 
 		entityCache.removeCache(CommerceWishListItemImpl.class.getName());
@@ -3831,10 +3846,36 @@ public class CommerceWishListItemPersistenceImpl
 		}
 	}
 
-	@ServiceReference(type = EntityCache.class)
+	@Override
+	@Reference(
+		target = CommercePersistenceConstants.SERVICE_CONFIGURATION_FILTER,
+		unbind = "-"
+	)
+	public void setConfiguration(Configuration configuration) {
+	}
+
+	@Override
+	@Reference(
+		target = CommercePersistenceConstants.ORIGIN_BUNDLE_SYMBOLIC_NAME_FILTER,
+		unbind = "-"
+	)
+	public void setDataSource(DataSource dataSource) {
+		super.setDataSource(dataSource);
+	}
+
+	@Override
+	@Reference(
+		target = CommercePersistenceConstants.ORIGIN_BUNDLE_SYMBOLIC_NAME_FILTER,
+		unbind = "-"
+	)
+	public void setSessionFactory(SessionFactory sessionFactory) {
+		super.setSessionFactory(sessionFactory);
+	}
+
+	@Reference
 	protected EntityCache entityCache;
 
-	@ServiceReference(type = FinderCache.class)
+	@Reference
 	protected FinderCache finderCache;
 
 	private static final String _SQL_SELECT_COMMERCEWISHLISTITEM =

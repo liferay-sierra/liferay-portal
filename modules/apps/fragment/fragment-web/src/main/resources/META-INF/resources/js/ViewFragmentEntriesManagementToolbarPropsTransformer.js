@@ -12,31 +12,27 @@
  * details.
  */
 
-import {openSelectionModal, openSimpleInputModal} from 'frontend-js-web';
+import {render} from '@liferay/frontend-js-react-web';
+import {getCheckedCheckboxes, openSelectionModal} from 'frontend-js-web';
+
+import AddFragmentModal from './AddFragmentModal';
+import openDeleteFragmentModal from './openDeleteFragmentModal';
 
 export default function propsTransformer({
 	additionalProps: {
+		addFragmentEntryURL,
 		copyFragmentEntryURL,
 		deleteFragmentCompositionsAndFragmentEntriesURL,
 		exportFragmentCompositionsAndFragmentEntriesURL,
+		fieldTypes,
 		fragmentCollectionId,
+		fragmentTypes,
 		moveFragmentCompositionsAndFragmentEntriesURL,
 		selectFragmentCollectionURL,
 	},
 	portletNamespace,
 	...otherProps
 }) {
-	const addFragmentEntry = (itemData) => {
-		openSimpleInputModal({
-			dialogTitle: itemData?.title,
-			formSubmitURL: itemData?.addFragmentEntryURL,
-			mainFieldLabel: Liferay.Language.get('name'),
-			mainFieldName: 'name',
-			mainFieldPlaceholder: Liferay.Language.get('name'),
-			namespace: `${portletNamespace}`,
-		});
-	};
-
 	const copySelectedFragmentEntries = () => {
 		const form = document.getElementById(`${portletNamespace}fm`);
 
@@ -44,7 +40,7 @@ export default function propsTransformer({
 			return;
 		}
 
-		const fragmentEntryIds = Liferay.Util.listCheckedExcept(
+		const fragmentEntryIds = getCheckedCheckboxes(
 			form,
 			`${portletNamespace}allRowIds`
 		);
@@ -78,20 +74,19 @@ export default function propsTransformer({
 	};
 
 	const deleteFragmentCompositionsAndFragmentEntries = () => {
-		if (
-			confirm(
-				Liferay.Language.get('are-you-sure-you-want-to-delete-this')
-			)
-		) {
-			const form = document.getElementById(`${portletNamespace}fm`);
+		openDeleteFragmentModal({
+			multiple: true,
+			onDelete: () => {
+				const form = document.getElementById(`${portletNamespace}fm`);
 
-			if (form) {
-				submitForm(
-					form,
-					deleteFragmentCompositionsAndFragmentEntriesURL
-				);
-			}
-		}
+				if (form) {
+					submitForm(
+						form,
+						deleteFragmentCompositionsAndFragmentEntriesURL
+					);
+				}
+			},
+		});
 	};
 
 	const exportFragmentCompositionsAndFragmentEntries = () => {
@@ -109,13 +104,13 @@ export default function propsTransformer({
 			return;
 		}
 
-		const fragmentCompositionIds = Liferay.Util.listCheckedExcept(
+		const fragmentCompositionIds = getCheckedCheckboxes(
 			form,
 			`${portletNamespace}allRowIds`,
 			`${portletNamespace}rowIdsFragmentComposition`
 		);
 
-		const fragmentEntryIds = Liferay.Util.listCheckedExcept(
+		const fragmentEntryIds = getCheckedCheckboxes(
 			form,
 			`${portletNamespace}allRowIds`,
 			`${portletNamespace}rowIdsFragmentEntry`
@@ -202,14 +197,17 @@ export default function propsTransformer({
 				moveFragmentCompositionsAndFragmentEntries();
 			}
 		},
-		onCreateButtonClick(event, {item}) {
-			const data = item?.data;
-
-			const action = data?.action;
-
-			if (action === 'addFragmentEntry') {
-				addFragmentEntry(data);
-			}
+		onCreateButtonClick() {
+			render(
+				AddFragmentModal,
+				{
+					addFragmentEntryURL,
+					fieldTypes,
+					fragmentTypes,
+					namespace: portletNamespace,
+				},
+				document.createElement('div')
+			);
 		},
 	};
 }

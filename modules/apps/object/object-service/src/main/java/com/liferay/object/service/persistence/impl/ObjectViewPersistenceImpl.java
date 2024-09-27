@@ -46,7 +46,7 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 
 import java.io.Serializable;
 
@@ -193,7 +193,7 @@ public class ObjectViewPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<ObjectView>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (ObjectView objectView : list) {
@@ -573,7 +573,7 @@ public class ObjectViewPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -732,7 +732,7 @@ public class ObjectViewPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<ObjectView>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (ObjectView objectView : list) {
@@ -1144,7 +1144,7 @@ public class ObjectViewPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid, companyId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -1305,7 +1305,7 @@ public class ObjectViewPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<ObjectView>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (ObjectView objectView : list) {
@@ -1672,7 +1672,7 @@ public class ObjectViewPersistenceImpl
 
 		Object[] finderArgs = new Object[] {objectDefinitionId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -1825,7 +1825,7 @@ public class ObjectViewPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<ObjectView>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (ObjectView objectView : list) {
@@ -2224,7 +2224,7 @@ public class ObjectViewPersistenceImpl
 			objectDefinitionId, defaultObjectView
 		};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -2377,7 +2377,7 @@ public class ObjectViewPersistenceImpl
 		objectView.setNew(true);
 		objectView.setPrimaryKey(objectViewId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		objectView.setUuid(uuid);
 
@@ -2495,7 +2495,7 @@ public class ObjectViewPersistenceImpl
 			(ObjectViewModelImpl)objectView;
 
 		if (Validator.isNull(objectView.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			objectView.setUuid(uuid);
 		}
@@ -2688,7 +2688,7 @@ public class ObjectViewPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<ObjectView>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -2758,7 +2758,7 @@ public class ObjectViewPersistenceImpl
 	@Override
 	public int countAll() {
 		Long count = (Long)finderCache.getResult(
-			_finderPathCountAll, FINDER_ARGS_EMPTY);
+			_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -2992,6 +2992,6 @@ public class ObjectViewPersistenceImpl
 	}
 
 	@Reference
-	private ObjectViewModelArgumentsResolver _objectViewModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

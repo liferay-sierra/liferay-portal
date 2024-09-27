@@ -42,7 +42,7 @@ if (journalContentDisplayContext.isShowArticle()) {
 
 					<c:if test="<%= journalContentDisplayContext.isShowSelectArticleLink() %>">
 						<div>
-							<aui:a href="javascript:;" onClick="<%= portletDisplay.getURLConfigurationJS() %>"><liferay-ui:message key="select-web-content-to-make-it-visible" /></aui:a>
+							<aui:a href="javascript:void(0);" onClick="<%= portletDisplay.getURLConfigurationJS() %>"><liferay-ui:message key="select-web-content-to-make-it-visible" /></aui:a>
 						</div>
 					</c:if>
 				</div>
@@ -70,7 +70,7 @@ if (journalContentDisplayContext.isShowArticle()) {
 						<liferay-util:buffer
 							var="selectJournalArticleLink"
 						>
-							<aui:a href="javascript:;" label="select-another" onClick="<%= portletDisplay.getURLConfigurationJS() %>" />
+							<aui:a href="javascript:void(0);" label="select-another" onClick="<%= portletDisplay.getURLConfigurationJS() %>" />
 						</liferay-util:buffer>
 
 						<div>
@@ -170,20 +170,8 @@ if (journalContentDisplayContext.isShowArticle()) {
 						<div class="<%= journalContentDisplayContext.isPreview() ? "p-1 preview-asset-entry" : StringPool.BLANK %>" <%= AUIUtil.buildData(data) %>>
 							<liferay-journal:journal-article-display
 								articleDisplay="<%= articleDisplay %>"
+								paginationURL="<%= renderResponse.createRenderURL() %>"
 							/>
-
-							<c:if test="<%= articleDisplay.isPaginate() %>">
-								<liferay-ui:page-iterator
-									cur="<%= articleDisplay.getCurrentPage() %>"
-									curParam="page"
-									delta="<%= 1 %>"
-									id="articleDisplayPages"
-									maxPages="<%= 25 %>"
-									portletURL="<%= renderResponse.createRenderURL() %>"
-									total="<%= articleDisplay.getNumberOfPages() %>"
-									type="article"
-								/>
-							</c:if>
 						</div>
 					</c:when>
 				</c:choose>
@@ -213,7 +201,7 @@ if (journalContentDisplayContext.isShowArticle()) {
 	%>
 
 	<c:if test="<%= ListUtil.isNotEmpty(selectedUserToolAssetAddonEntries) || (ratingsContentMetadataAssetAddonEntry != null) %>">
-		<div class="separator"><!-- --></div>
+		<hr class="separator" />
 
 		<clay:content-row
 			cssClass="mb-4 user-tool-asset-addon-entries"
@@ -241,7 +229,7 @@ if (journalContentDisplayContext.isShowArticle()) {
 	%>
 
 	<c:if test="<%= ListUtil.isNotEmpty(commentsContentMetadataAssetAddonEntries) %>">
-		<div class="separator"><!-- --></div>
+		<hr class="separator" />
 
 		<div class="asset-links content-metadata-asset-addon-entries mb-4">
 			<liferay-asset:asset-addon-entry-display

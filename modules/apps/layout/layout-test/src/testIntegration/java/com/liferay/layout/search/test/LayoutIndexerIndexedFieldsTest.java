@@ -15,11 +15,13 @@
 package com.liferay.layout.search.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Field;
+import com.liferay.portal.kernel.search.SearchEngineHelper;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
@@ -42,6 +44,7 @@ import com.liferay.users.admin.test.util.search.UserSearchFixture;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.After;
 import org.junit.Before;
@@ -98,6 +101,8 @@ public class LayoutIndexerIndexedFieldsTest {
 
 		indexedFieldsFixture.postProcessDocument(document);
 
+		_postProcessDocument(document, layout);
+
 		FieldValuesAssert.assertFieldValues(
 			_expectedFieldValues(layout), document, searchTerm);
 	}
@@ -110,7 +115,8 @@ public class LayoutIndexerIndexedFieldsTest {
 
 	protected void setUpIndexedFieldsFixture() {
 		indexedFieldsFixture = new IndexedFieldsFixture(
-			resourcePermissionLocalService, uidFactory, documentBuilderFactory);
+			resourcePermissionLocalService, searchEngineHelper, uidFactory,
+			documentBuilderFactory);
 	}
 
 	protected void setUpLayoutFixture() {
@@ -146,6 +152,9 @@ public class LayoutIndexerIndexedFieldsTest {
 
 	@Inject
 	protected ResourcePermissionLocalService resourcePermissionLocalService;
+
+	@Inject
+	protected SearchEngineHelper searchEngineHelper;
 
 	@Inject
 	protected UIDFactory uidFactory;
@@ -184,6 +193,8 @@ public class LayoutIndexerIndexedFieldsTest {
 		).put(
 			"privateLayout", "false"
 		).put(
+			"statusByUserId", String.valueOf(layout.getStatusByUserId())
+		).put(
 			"title_ja_JP", layout.getName(LocaleUtil.JAPAN)
 		).build();
 
@@ -221,6 +232,17 @@ public class LayoutIndexerIndexedFieldsTest {
 		indexedFieldsFixture.populateRoleIdFields(
 			layout.getCompanyId(), Layout.class.getName(),
 			layout.getPrimaryKey(), layout.getGroupId(), null, map);
+	}
+
+	private void _postProcessDocument(Document document, Layout layout) {
+		Set<Locale> locales = LanguageUtil.getAvailableLocales(
+			layout.getGroupId());
+
+		for (Locale locale : locales) {
+			document.remove(
+				LocalizationUtil.getLocalizedName(
+					Field.CONTENT, LocaleUtil.toLanguageId(locale)));
+		}
 	}
 
 	private Group _group;

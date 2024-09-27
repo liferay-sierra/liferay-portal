@@ -14,6 +14,7 @@
 
 package com.liferay.analytics.reports.web.internal.item.action.provider.test;
 
+import com.liferay.analytics.reports.constants.AnalyticsReportsWebKeys;
 import com.liferay.analytics.reports.info.action.provider.AnalyticsReportsContentDashboardItemActionProvider;
 import com.liferay.analytics.reports.test.MockObject;
 import com.liferay.analytics.reports.test.analytics.reports.info.item.MockObjectAnalyticsReportsInfoItem;
@@ -64,19 +65,19 @@ public class AnalyticsReportsContentDashboardItemActionProviderTest {
 	public void setUp() throws Exception {
 		_group = GroupTestUtil.addGroup();
 
-		_layout = LayoutTestUtil.addLayout(_group.getGroupId());
+		_layout = LayoutTestUtil.addTypePortletLayout(_group.getGroupId());
 	}
 
 	@Test
 	public void testIsShowContentDashboardItemAction() throws Exception {
 		MockContextUtil.testWithMockContext(
-			new MockContextUtil.MockContext.Builder().
-				mockObjectAnalyticsReportsInfoItem(
-					MockObjectAnalyticsReportsInfoItem.builder(
-					).show(
-						true
-					).build()
-				).build(),
+			new MockContextUtil.MockContext.Builder(
+			).mockObjectAnalyticsReportsInfoItem(
+				MockObjectAnalyticsReportsInfoItem.builder(
+				).show(
+					true
+				).build()
+			).build(),
 			() -> Assert.assertTrue(
 				_analyticsReportsContentDashboardItemActionProvider.
 					isShowContentDashboardItemAction(
@@ -89,13 +90,13 @@ public class AnalyticsReportsContentDashboardItemActionProviderTest {
 		throws Exception {
 
 		MockContextUtil.testWithMockContext(
-			new MockContextUtil.MockContext.Builder().
-				mockObjectAnalyticsReportsInfoItem(
-					MockObjectAnalyticsReportsInfoItem.builder(
-					).show(
-						true
-					).build()
-				).build(),
+			new MockContextUtil.MockContext.Builder(
+			).mockObjectAnalyticsReportsInfoItem(
+				MockObjectAnalyticsReportsInfoItem.builder(
+				).show(
+					true
+				).build()
+			).build(),
 			() -> Assert.assertFalse(
 				_analyticsReportsContentDashboardItemActionProvider.
 					isShowContentDashboardItemAction(
@@ -108,10 +109,10 @@ public class AnalyticsReportsContentDashboardItemActionProviderTest {
 			new MockHttpServletRequest();
 
 		mockHttpServletRequest.setAttribute(
-			WebKeys.THEME_DISPLAY, _getThemeDisplay());
-		mockHttpServletRequest.setAttribute(
-			"INFO_ITEM_REFERENCE",
+			AnalyticsReportsWebKeys.ANALYTICS_INFO_ITEM_REFERENCE,
 			new InfoItemReference(MockObject.class.getName(), 0));
+		mockHttpServletRequest.setAttribute(
+			WebKeys.THEME_DISPLAY, _getThemeDisplay());
 
 		return mockHttpServletRequest;
 	}

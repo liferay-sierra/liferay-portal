@@ -5,6 +5,15 @@ definition {
 	var userPasswordReminderAnswer = "test";
 
 	macro _signIn {
+		var appServerType = PropsUtil.get("app.server.type");
+
+		if ("${appServerType}" == "weblogic") {
+
+			// Pausing 2 seconds due to LPS-159595
+
+			Pause(locator1 = "2000");
+		}
+
 		if (isSet(virtualHostsURL)) {
 			Navigator.openSpecificURL(url = "${virtualHostsURL}/web/guest?SM_USER=${userEmailAddress}");
 		}
@@ -14,7 +23,12 @@ definition {
 			Navigator.openSpecificURL(url = "${baseURL}/web/guest?SM_USER=${userEmailAddress}");
 		}
 
-		AssertElementPresent(locator1 = "UserBar#USER_AVATAR_IMAGE");
+		if (isSet(licenseExpired)) {
+			Navigator.openURL();
+		}
+		else {
+			AssertElementPresent(locator1 = "UserBar#USER_AVATAR_IMAGE");
+		}
 
 		WaitForLiferayEvent.initializeLiferayEventLog();
 	}
@@ -46,7 +60,9 @@ definition {
 
 	macro signInPortalInstanceSetUp {
 		var portalURL = PropsUtil.get("portal.url");
+
 		var portalURL = StringUtil.replace("${portalURL}", "http://", "");
+
 		var portalURL = StringUtil.replace("${portalURL}", ":8080", "");
 
 		HeadlessPortalInstanceAPI.addPortalInstance(
@@ -68,6 +84,7 @@ definition {
 		JSONUser.agreeToTermsAndAnswerReminderQuery(userEmailAddress = "test@liferay.com");
 
 		SignIn._signIn(
+			licenseExpired = "${licenseExpired}",
 			userEmailAddress = "${userEmailAddress}",
 			userPassword = "${userPassword}");
 	}

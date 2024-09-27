@@ -58,7 +58,7 @@ import com.liferay.commerce.subscription.CommerceSubscriptionEntryHelperUtil;
 import com.liferay.commerce.util.CommerceShippingHelper;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.messaging.DestinationNames;
@@ -82,6 +82,8 @@ import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 
+import java.math.BigDecimal;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -93,9 +95,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alec Sloan
  */
-@Component(
-	enabled = false, immediate = true, service = CommerceOrderEngine.class
-)
+@Component(immediate = true, service = CommerceOrderEngine.class)
 public class CommerceOrderEngineImpl implements CommerceOrderEngine {
 
 	@Override
@@ -152,8 +152,9 @@ public class CommerceOrderEngineImpl implements CommerceOrderEngine {
 		if (currentCommerceOrderStatus == null) {
 			return nextCommerceOrderStatuses;
 		}
-		else if (currentCommerceOrderStatus.getKey() ==
-					CommerceOrderConstants.ORDER_STATUS_ON_HOLD) {
+
+		if (currentCommerceOrderStatus.getKey() ==
+				CommerceOrderConstants.ORDER_STATUS_ON_HOLD) {
 
 			nextCommerceOrderStatuses.add(
 				_commerceOrderStatusRegistry.getCommerceOrderStatus(
@@ -168,40 +169,39 @@ public class CommerceOrderEngineImpl implements CommerceOrderEngine {
 		int currentOrderStatusIndex = commerceOrderStatuses.indexOf(
 			currentCommerceOrderStatus);
 
-		if (currentOrderStatusIndex != (commerceOrderStatuses.size() - 1)) {
-			CommerceOrderStatus nextCommerceOrderStatus = null;
+		if (currentOrderStatusIndex == (commerceOrderStatuses.size() - 1)) {
+			return nextCommerceOrderStatuses;
+		}
 
-			for (int i = currentOrderStatusIndex + 1;
-				 i < commerceOrderStatuses.size(); i++) {
+		CommerceOrderStatus nextCommerceOrderStatus = null;
 
-				if ((nextCommerceOrderStatus != null) &&
-					(nextCommerceOrderStatus.getPriority() >
-						currentCommerceOrderStatus.getPriority())) {
+		for (int i = currentOrderStatusIndex + 1;
+			 i < commerceOrderStatuses.size(); i++) {
 
-					break;
-				}
+			if ((nextCommerceOrderStatus != null) &&
+				(nextCommerceOrderStatus.getPriority() >
+					currentCommerceOrderStatus.getPriority())) {
 
-				nextCommerceOrderStatus = commerceOrderStatuses.get(i);
+				break;
 			}
 
-			for (CommerceOrderStatus commerceOrderStatus :
-					commerceOrderStatuses) {
+			nextCommerceOrderStatus = commerceOrderStatuses.get(i);
+		}
 
-				if ((commerceOrderStatus.isTransitionCriteriaMet(
-						commerceOrder) &&
-					 (((commerceOrderStatus.getPriority() ==
-						 CommerceOrderConstants.ORDER_STATUS_ANY) &&
-					   (currentCommerceOrderStatus.getKey() !=
-						   CommerceOrderConstants.ORDER_STATUS_OPEN)) ||
-					  (commerceOrderStatus.getPriority() ==
-						  nextCommerceOrderStatus.getPriority()))) ||
-					(!_commerceShippingHelper.isShippable(commerceOrder) &&
-					 commerceOrderStatus.isValidForOrder(commerceOrder) &&
-					 (commerceOrderStatus.getPriority() >
-						 currentCommerceOrderStatus.getPriority()))) {
+		for (CommerceOrderStatus commerceOrderStatus : commerceOrderStatuses) {
+			if ((!_commerceShippingHelper.isShippable(commerceOrder) &&
+				 commerceOrderStatus.isValidForOrder(commerceOrder) &&
+				 (commerceOrderStatus.getPriority() >
+					 currentCommerceOrderStatus.getPriority())) ||
+				((((commerceOrderStatus.getPriority() ==
+					CommerceOrderConstants.ORDER_STATUS_ANY) &&
+				   (currentCommerceOrderStatus.getKey() !=
+					   CommerceOrderConstants.ORDER_STATUS_OPEN)) ||
+				  (commerceOrderStatus.getPriority() ==
+					  nextCommerceOrderStatus.getPriority())) &&
+				 commerceOrderStatus.isTransitionCriteriaMet(commerceOrder))) {
 
-					nextCommerceOrderStatuses.add(commerceOrderStatus);
-				}
+				nextCommerceOrderStatuses.add(commerceOrderStatus);
 			}
 		}
 
@@ -223,6 +223,50 @@ public class CommerceOrderEngineImpl implements CommerceOrderEngine {
 				}
 
 			});
+	}
+
+	@Override
+	public CommerceOrder updateCommerceOrder(
+			String externalReferenceCode, long commerceOrderId,
+			long billingAddressId, long commerceShippingMethodId,
+			long shippingAddressId, String advanceStatus,
+			String commercePaymentMethodKey, String purchaseOrderNumber,
+			BigDecimal shippingAmount, String shippingOptionName,
+			BigDecimal shippingWithTaxAmount, BigDecimal subtotal,
+			BigDecimal subtotalWithTaxAmount, BigDecimal taxAmount,
+			BigDecimal total, BigDecimal totalDiscountAmount,
+			BigDecimal totalWithTaxAmount, CommerceContext commerceContext,
+			boolean recalculatePrice)
+		throws PortalException {
+
+		try {
+			return _executeInTransaction(
+				() -> {
+					CommerceOrder updatedCommerceOrder =
+						_commerceOrderLocalService.updateCommerceOrder(
+							externalReferenceCode, commerceOrderId,
+							billingAddressId, commerceShippingMethodId,
+							shippingAddressId, advanceStatus,
+							commercePaymentMethodKey, purchaseOrderNumber,
+							shippingAmount, shippingOptionName,
+							shippingWithTaxAmount, subtotal,
+							subtotalWithTaxAmount, taxAmount, total,
+							totalDiscountAmount, totalWithTaxAmount,
+							commerceContext);
+
+					if (recalculatePrice) {
+						updatedCommerceOrder =
+							_commerceOrderLocalService.recalculatePrice(
+								updatedCommerceOrder.getCommerceOrderId(),
+								commerceContext);
+					}
+
+					return updatedCommerceOrder;
+				});
+		}
+		catch (Throwable throwable) {
+			throw new PortalException(throwable);
+		}
 	}
 
 	private void _bookQuantities(long commerceOrderId) throws Exception {
@@ -437,11 +481,10 @@ public class CommerceOrderEngineImpl implements CommerceOrderEngine {
 				_dtoConverterRegistry, commerceOrder.getCommerceOrderId(),
 				LocaleUtil.getSiteDefault(), null, null));
 
-		JSONObject commerceOrderJSONObject = JSONFactoryUtil.createJSONObject(
+		JSONObject commerceOrderJSONObject = _jsonFactory.createJSONObject(
 			commerceOrderObject.toString());
 
-		JSONArray commerceOrderItemsJSONArray =
-			JSONFactoryUtil.createJSONArray();
+		JSONArray commerceOrderItemsJSONArray = _jsonFactory.createJSONArray();
 
 		DTOConverter<?, ?> commerceOrderItemDTOConverter =
 			_dtoConverterRegistry.getDTOConverter(
@@ -459,7 +502,7 @@ public class CommerceOrderEngineImpl implements CommerceOrderEngine {
 						LocaleUtil.getSiteDefault(), null, null));
 
 			JSONObject commerceOrderItemJSONObject =
-				JSONFactoryUtil.createJSONObject(
+				_jsonFactory.createJSONObject(
 					commerceOrderItemObject.toString());
 
 			commerceOrderItemsJSONArray.put(commerceOrderItemJSONObject);
@@ -690,6 +733,9 @@ public class CommerceOrderEngineImpl implements CommerceOrderEngine {
 
 	@Reference
 	private DTOConverterRegistry _dtoConverterRegistry;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private UserLocalService _userLocalService;

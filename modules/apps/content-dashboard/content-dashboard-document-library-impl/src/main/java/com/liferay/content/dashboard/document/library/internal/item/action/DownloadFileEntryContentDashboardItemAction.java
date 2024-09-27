@@ -21,8 +21,10 @@ import com.liferay.info.item.provider.InfoItemFieldValuesProvider;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.util.ContentTypes;
 
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -63,6 +65,14 @@ public class DownloadFileEntryContentDashboardItemAction
 
 	@Override
 	public String getURL() {
+		if (Objects.equals(
+				_fileEntry.getMimeType(),
+				ContentTypes.
+					APPLICATION_VND_LIFERAY_VIDEO_EXTERNAL_SHORTCUT_HTML)) {
+
+			return StringPool.BLANK;
+		}
+
 		InfoItemFieldValues infoItemFieldValues =
 			_infoItemFieldValuesProvider.getInfoItemFieldValues(_fileEntry);
 

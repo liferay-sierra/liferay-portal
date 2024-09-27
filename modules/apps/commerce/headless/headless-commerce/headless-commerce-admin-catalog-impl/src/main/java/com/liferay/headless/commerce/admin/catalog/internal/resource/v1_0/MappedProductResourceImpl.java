@@ -27,6 +27,7 @@ import com.liferay.headless.commerce.admin.catalog.internal.dto.v1_0.converter.M
 import com.liferay.headless.commerce.admin.catalog.internal.util.v1_0.MappedProductUtil;
 import com.liferay.headless.commerce.admin.catalog.resource.v1_0.MappedProductResource;
 import com.liferay.headless.commerce.core.util.ServiceContextHelper;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
@@ -51,17 +52,20 @@ import org.osgi.service.component.annotations.ServiceScope;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	properties = "OSGI-INF/liferay/rest/v1_0/mapped-product.properties",
 	scope = ServiceScope.PROTOTYPE,
 	service = {MappedProductResource.class, NestedFieldSupport.class}
 )
+@CTAware
 public class MappedProductResourceImpl
 	extends BaseMappedProductResourceImpl implements NestedFieldSupport {
 
 	@Override
 	public void deleteMappedProduct(Long mappedProductId) throws Exception {
-		_csDiagramEntryService.deleteCSDiagramEntry(mappedProductId);
+		CSDiagramEntry csDiagramEntry =
+			_csDiagramEntryService.getCSDiagramEntry(mappedProductId);
+
+		_csDiagramEntryService.deleteCSDiagramEntry(csDiagramEntry);
 	}
 
 	@Override

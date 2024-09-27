@@ -1,6 +1,5 @@
 @import 'atlas-variables';
 
-@import '../ddm_template_editor/components/PortletIcon';
 @import '../ddm_template_editor/components/PropertiesPanel';
 
 $toolbarDesktopHeight: 4rem;
@@ -119,8 +118,7 @@ $productMenuWidth: 320px;
 					}
 
 					> .tbar-item:first-child {
-						border-top: solid thin #e7e7ed;
-						order: 1;
+						border-bottom: solid thin #e7e7ed;
 						width: 100%;
 					}
 
@@ -166,8 +164,7 @@ $productMenuWidth: 320px;
 
 				> .container-fluid > .tbar-nav {
 					> .tbar-item:first-child {
-						border-top: none;
-						order: 0;
+						border-bottom: none;
 						width: auto;
 					}
 
@@ -294,5 +291,11 @@ $productMenuWidth: 320px;
 		.green {
 			color: #008000;
 		}
+	}
+
+	.entry-thumbnail .label {
+		border-bottom-left-radius: 0;
+		border-top-left-radius: 0;
+		border-top-right-radius: 0;
 	}
 }

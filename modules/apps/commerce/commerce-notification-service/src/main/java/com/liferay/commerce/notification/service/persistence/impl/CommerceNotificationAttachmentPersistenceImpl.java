@@ -21,7 +21,9 @@ import com.liferay.commerce.notification.model.impl.CommerceNotificationAttachme
 import com.liferay.commerce.notification.model.impl.CommerceNotificationAttachmentModelImpl;
 import com.liferay.commerce.notification.service.persistence.CommerceNotificationAttachmentPersistence;
 import com.liferay.commerce.notification.service.persistence.CommerceNotificationAttachmentUtil;
+import com.liferay.commerce.notification.service.persistence.impl.constants.CommercePersistenceConstants;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.configuration.Configuration;
 import com.liferay.portal.kernel.dao.orm.EntityCache;
 import com.liferay.portal.kernel.dao.orm.FinderCache;
 import com.liferay.portal.kernel.dao.orm.FinderPath;
@@ -29,11 +31,13 @@ import com.liferay.portal.kernel.dao.orm.Query;
 import com.liferay.portal.kernel.dao.orm.QueryPos;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.dao.orm.SessionFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 import com.liferay.portal.kernel.service.persistence.impl.BasePersistenceImpl;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
@@ -42,8 +46,7 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
-import com.liferay.portal.spring.extender.service.ServiceReference;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 
 import java.io.Serializable;
 
@@ -57,6 +60,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.sql.DataSource;
+
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Reference;
+
 /**
  * The persistence implementation for the commerce notification attachment service.
  *
@@ -67,6 +77,11 @@ import java.util.Set;
  * @author Alessio Antonio Rendina
  * @generated
  */
+@Component(
+	service = {
+		CommerceNotificationAttachmentPersistence.class, BasePersistence.class
+	}
+)
 public class CommerceNotificationAttachmentPersistenceImpl
 	extends BasePersistenceImpl<CommerceNotificationAttachment>
 	implements CommerceNotificationAttachmentPersistence {
@@ -185,7 +200,7 @@ public class CommerceNotificationAttachmentPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<CommerceNotificationAttachment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (CommerceNotificationAttachment
@@ -585,7 +600,7 @@ public class CommerceNotificationAttachmentPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -719,7 +734,7 @@ public class CommerceNotificationAttachmentPersistenceImpl
 
 		if (useFinderCache) {
 			result = finderCache.getResult(
-				_finderPathFetchByUUID_G, finderArgs);
+				_finderPathFetchByUUID_G, finderArgs, this);
 		}
 
 		if (result instanceof CommerceNotificationAttachment) {
@@ -835,7 +850,7 @@ public class CommerceNotificationAttachmentPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid, groupId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -1003,7 +1018,7 @@ public class CommerceNotificationAttachmentPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<CommerceNotificationAttachment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (CommerceNotificationAttachment
@@ -1428,7 +1443,7 @@ public class CommerceNotificationAttachmentPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid, companyId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -1602,7 +1617,7 @@ public class CommerceNotificationAttachmentPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<CommerceNotificationAttachment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (CommerceNotificationAttachment
@@ -2004,7 +2019,7 @@ public class CommerceNotificationAttachmentPersistenceImpl
 
 		Object[] finderArgs = new Object[] {commerceNotificationQueueEntryId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -2204,7 +2219,7 @@ public class CommerceNotificationAttachmentPersistenceImpl
 		commerceNotificationAttachment.setPrimaryKey(
 			commerceNotificationAttachmentId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		commerceNotificationAttachment.setUuid(uuid);
 
@@ -2338,7 +2353,7 @@ public class CommerceNotificationAttachmentPersistenceImpl
 					commerceNotificationAttachment;
 
 		if (Validator.isNull(commerceNotificationAttachment.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			commerceNotificationAttachment.setUuid(uuid);
 		}
@@ -2545,7 +2560,7 @@ public class CommerceNotificationAttachmentPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<CommerceNotificationAttachment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -2618,7 +2633,7 @@ public class CommerceNotificationAttachmentPersistenceImpl
 	@Override
 	public int countAll() {
 		Long count = (Long)finderCache.getResult(
-			_finderPathCountAll, FINDER_ARGS_EMPTY);
+			_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -2673,7 +2688,8 @@ public class CommerceNotificationAttachmentPersistenceImpl
 	/**
 	 * Initializes the commerce notification attachment persistence.
 	 */
-	public void afterPropertiesSet() {
+	@Activate
+	public void activate() {
 		_valueObjectFinderCacheListThreshold = GetterUtil.getInteger(
 			PropsUtil.get(PropsKeys.VALUE_OBJECT_FINDER_CACHE_LIST_THRESHOLD));
 
@@ -2762,7 +2778,8 @@ public class CommerceNotificationAttachmentPersistenceImpl
 		_setCommerceNotificationAttachmentUtilPersistence(this);
 	}
 
-	public void destroy() {
+	@Deactivate
+	public void deactivate() {
 		_setCommerceNotificationAttachmentUtilPersistence(null);
 
 		entityCache.removeCache(
@@ -2787,10 +2804,36 @@ public class CommerceNotificationAttachmentPersistenceImpl
 		}
 	}
 
-	@ServiceReference(type = EntityCache.class)
+	@Override
+	@Reference(
+		target = CommercePersistenceConstants.SERVICE_CONFIGURATION_FILTER,
+		unbind = "-"
+	)
+	public void setConfiguration(Configuration configuration) {
+	}
+
+	@Override
+	@Reference(
+		target = CommercePersistenceConstants.ORIGIN_BUNDLE_SYMBOLIC_NAME_FILTER,
+		unbind = "-"
+	)
+	public void setDataSource(DataSource dataSource) {
+		super.setDataSource(dataSource);
+	}
+
+	@Override
+	@Reference(
+		target = CommercePersistenceConstants.ORIGIN_BUNDLE_SYMBOLIC_NAME_FILTER,
+		unbind = "-"
+	)
+	public void setSessionFactory(SessionFactory sessionFactory) {
+		super.setSessionFactory(sessionFactory);
+	}
+
+	@Reference
 	protected EntityCache entityCache;
 
-	@ServiceReference(type = FinderCache.class)
+	@Reference
 	protected FinderCache finderCache;
 
 	private static final String _SQL_SELECT_COMMERCENOTIFICATIONATTACHMENT =
@@ -2829,5 +2872,8 @@ public class CommerceNotificationAttachmentPersistenceImpl
 	protected FinderCache getFinderCache() {
 		return finderCache;
 	}
+
+	@Reference
+	private PortalUUID _portalUUID;
 
 }

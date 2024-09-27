@@ -23,6 +23,7 @@ import com.liferay.portal.kernel.search.IndexerRegistry;
 import com.liferay.portal.kernel.search.SearchEngineHelper;
 import com.liferay.portal.kernel.search.background.task.ReindexBackgroundTaskConstants;
 import com.liferay.portal.kernel.search.background.task.ReindexStatusMessageSender;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.PropsUtil;
@@ -39,10 +40,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import org.mockito.Matchers;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 
 /**
  * @author Adam Brandizzi
@@ -56,8 +54,6 @@ public abstract class BaseReindexSingleIndexerBackgroundTaskExecutorTestCase {
 
 	@Before
 	public void setUp() throws Exception {
-		MockitoAnnotations.initMocks(this);
-
 		long companyId = RandomTestUtil.randomLong();
 
 		setUpBackgroundTask(companyId);
@@ -70,8 +66,9 @@ public abstract class BaseReindexSingleIndexerBackgroundTaskExecutorTestCase {
 
 		SearchEngineHelper searchEngineHelper = new SearchEngineHelperImpl();
 
-		searchEngineHelper.setSearchEngine(
-			"test", searchEngineFixture.getSearchEngine());
+		ReflectionTestUtil.setFieldValue(
+			searchEngineHelper, "_searchEngine",
+			searchEngineFixture.getSearchEngine());
 
 		_companyId = companyId;
 		_searchEngineFixture = searchEngineFixture;
@@ -138,33 +135,25 @@ public abstract class BaseReindexSingleIndexerBackgroundTaskExecutorTestCase {
 
 	protected void setUpIndexerRegistry() {
 		Mockito.when(
-			_indexerRegistry.getIndexer(Matchers.anyString())
+			_indexerRegistry.getIndexer(Mockito.anyString())
 		).thenReturn(
 			_indexer
 		);
 	}
 
-	@Mock
-	private BackgroundTask _backgroundTask;
-
+	private final BackgroundTask _backgroundTask = Mockito.mock(
+		BackgroundTask.class);
 	private long _companyId;
-
-	@Mock
-	private Indexer<Object> _indexer;
-
-	@Mock
-	private IndexerRegistry _indexerRegistry;
-
-	@Mock
-	private IndexWriterHelper _indexWriterHelper;
-
-	@Mock
-	private ReindexStatusMessageSender _reindexStatusMessageSender;
-
+	private final Indexer<Object> _indexer = Mockito.mock(Indexer.class);
+	private final IndexerRegistry _indexerRegistry = Mockito.mock(
+		IndexerRegistry.class);
+	private final IndexWriterHelper _indexWriterHelper = Mockito.mock(
+		IndexWriterHelper.class);
+	private final ReindexStatusMessageSender _reindexStatusMessageSender =
+		Mockito.mock(ReindexStatusMessageSender.class);
 	private SearchEngineFixture _searchEngineFixture;
 	private SearchEngineHelper _searchEngineHelper;
-
-	@Mock
-	private ServiceTrackerList<Indexer<?>> _systemIndexers;
+	private final ServiceTrackerList<Indexer<?>> _systemIndexers = Mockito.mock(
+		ServiceTrackerList.class);
 
 }

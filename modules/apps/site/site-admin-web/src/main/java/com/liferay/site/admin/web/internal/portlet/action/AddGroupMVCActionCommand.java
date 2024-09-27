@@ -19,10 +19,10 @@ import com.liferay.layout.seo.service.LayoutSEOSiteLocalService;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.change.tracking.CTTransactionException;
 import com.liferay.portal.kernel.exception.LocaleException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.User;
@@ -42,7 +42,7 @@ import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
@@ -78,7 +78,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + SiteAdminPortletKeys.SITE_ADMIN,
 		"mvc.command.name=/site_admin/add_group"
@@ -92,7 +91,7 @@ public class AddGroupMVCActionCommand extends BaseMVCActionCommand {
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+		JSONObject jsonObject = _jsonFactory.createJSONObject();
 
 		try {
 			Callable<Group> groupCallable = new GroupCallable(actionRequest);
@@ -199,10 +198,10 @@ public class AddGroupMVCActionCommand extends BaseMVCActionCommand {
 		ServiceContextThreadLocal.pushServiceContext(serviceContext);
 
 		String name = ParamUtil.getString(actionRequest, "name");
-		Map<Locale, String> nameMap = LocalizationUtil.getLocalizationMap(
+		Map<Locale, String> nameMap = _localization.getLocalizationMap(
 			actionRequest, "name");
-		Map<Locale, String> descriptionMap =
-			LocalizationUtil.getLocalizationMap(actionRequest, "description");
+		Map<Locale, String> descriptionMap = _localization.getLocalizationMap(
+			actionRequest, "description");
 		int type = ParamUtil.getInteger(
 			actionRequest, "type", GroupConstants.TYPE_SITE_OPEN);
 		String friendlyURL = ParamUtil.getString(
@@ -229,7 +228,7 @@ public class AddGroupMVCActionCommand extends BaseMVCActionCommand {
 		boolean openGraphEnabled = ParamUtil.getBoolean(
 			actionRequest, "openGraphEnabled", true);
 		Map<Locale, String> openGraphImageAltMap =
-			LocalizationUtil.getLocalizationMap(
+			_localization.getLocalizationMap(
 				actionRequest, "openGraphImageAlt");
 		long openGraphImageFileEntryId = ParamUtil.getLong(
 			actionRequest, "openGraphImageFileEntryId");
@@ -363,8 +362,7 @@ public class AddGroupMVCActionCommand extends BaseMVCActionCommand {
 			formTypeSettingsUnicodeProperties.setProperty(
 				PropsKeys.LOCALES,
 				StringUtil.merge(
-					LocaleUtil.toLanguageIds(
-						LanguageUtil.getAvailableLocales())));
+					LocaleUtil.toLanguageIds(_language.getAvailableLocales())));
 
 			User user = themeDisplay.getDefaultUser();
 
@@ -410,7 +408,7 @@ public class AddGroupMVCActionCommand extends BaseMVCActionCommand {
 
 		// Virtual hosts
 
-		Set<Locale> availableLocales = LanguageUtil.getAvailableLocales(
+		Set<Locale> availableLocales = _language.getAvailableLocales(
 			liveGroup.getGroupId());
 
 		_layoutSetService.updateVirtualHosts(
@@ -514,10 +512,19 @@ public class AddGroupMVCActionCommand extends BaseMVCActionCommand {
 	private GroupService _groupService;
 
 	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
+
+	@Reference
 	private LayoutSEOSiteLocalService _layoutSEOSiteLocalService;
 
 	@Reference
 	private LayoutSetService _layoutSetService;
+
+	@Reference
+	private Localization _localization;
 
 	@Reference
 	private Portal _portal;

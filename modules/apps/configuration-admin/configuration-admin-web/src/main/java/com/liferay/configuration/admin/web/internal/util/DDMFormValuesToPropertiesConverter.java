@@ -37,6 +37,7 @@ import com.liferay.portal.kernel.settings.LocationVariableProtocol;
 import com.liferay.portal.kernel.settings.LocationVariableResolver;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
 
@@ -80,6 +81,8 @@ public class DDMFormValuesToPropertiesConverter {
 		_ddmFormFieldsMap = ddmForm.getDDMFormFieldsMap(false);
 
 		_ddmFormFieldValuesMap = ddmFormValues.getDDMFormFieldValuesMap();
+		_ddmFormFieldValuesReferencesMap =
+			ddmFormValues.getDDMFormFieldValuesReferencesMap(false);
 	}
 
 	public Dictionary<String, Object> getProperties() {
@@ -93,6 +96,11 @@ public class DDMFormValuesToPropertiesConverter {
 
 			List<DDMFormFieldValue> ddmFormFieldValues =
 				_ddmFormFieldValuesMap.get(attributeDefinition.getID());
+
+			if (ddmFormFieldValues == null) {
+				ddmFormFieldValues = _ddmFormFieldValuesReferencesMap.get(
+					attributeDefinition.getID());
+			}
 
 			if (attributeDefinition.getCardinality() == 0) {
 				value = _toSimpleValue(ddmFormFieldValues.get(0));
@@ -189,8 +197,10 @@ public class DDMFormValuesToPropertiesConverter {
 		String defaultValue, int type, Object value) {
 
 		if ((_locationVariableResolver == null) ||
-			!_locationVariableResolver.isLocationVariable(
-				defaultValue, LocationVariableProtocol.RESOURCE)) {
+			(!_locationVariableResolver.isLocationVariable(
+				defaultValue, LocationVariableProtocol.LANGUAGE) &&
+			 !_locationVariableResolver.isLocationVariable(
+				 defaultValue, LocationVariableProtocol.RESOURCE))) {
 
 			return false;
 		}
@@ -253,7 +263,12 @@ public class DDMFormValuesToPropertiesConverter {
 		Vector<Serializable> values = new Vector<>();
 
 		for (DDMFormFieldValue ddmFormFieldValue : ddmFormFieldValues) {
-			values.add(_toSimpleValue(ddmFormFieldValue));
+			Serializable simpleDDMFormFieldValue = _toSimpleValue(
+				ddmFormFieldValue);
+
+			if (!Validator.isBlank(simpleDDMFormFieldValue.toString())) {
+				values.add(simpleDDMFormFieldValue);
+			}
 		}
 
 		return values;
@@ -265,6 +280,8 @@ public class DDMFormValuesToPropertiesConverter {
 	private final ConfigurationModel _configurationModel;
 	private final Map<String, DDMFormField> _ddmFormFieldsMap;
 	private final Map<String, List<DDMFormFieldValue>> _ddmFormFieldValuesMap;
+	private final Map<String, List<DDMFormFieldValue>>
+		_ddmFormFieldValuesReferencesMap;
 	private final Locale _defaultLocale;
 	private final JSONFactory _jsonFactory;
 	private final Locale _locale;

@@ -87,9 +87,10 @@ public interface MBMessageLocalService
 		throws PortalException;
 
 	public MBMessage addDiscussionMessage(
-			long userId, String userName, long groupId, String className,
-			long classPK, long threadId, long parentMessageId, String subject,
-			String body, ServiceContext serviceContext)
+			String externalReferenceCode, long userId, String userName,
+			long groupId, String className, long classPK, long threadId,
+			long parentMessageId, String subject, String body,
+			ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
@@ -711,10 +712,14 @@ public interface MBMessageLocalService
 	public void unsubscribeMessage(long userId, long messageId)
 		throws PortalException;
 
-	public void updateAnswer(long messageId, boolean answer, boolean cascade)
+	@Indexable(type = IndexableType.REINDEX)
+	public MBMessage updateAnswer(
+			long messageId, boolean answer, boolean cascade)
 		throws PortalException;
 
-	public void updateAnswer(MBMessage message, boolean answer, boolean cascade)
+	@Indexable(type = IndexableType.REINDEX)
+	public MBMessage updateAnswer(
+			MBMessage message, boolean answer, boolean cascade)
 		throws PortalException;
 
 	public void updateAsset(

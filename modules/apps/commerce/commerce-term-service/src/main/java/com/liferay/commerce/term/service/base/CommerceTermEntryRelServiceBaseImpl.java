@@ -17,8 +17,6 @@ package com.liferay.commerce.term.service.base;
 import com.liferay.commerce.term.model.CommerceTermEntryRel;
 import com.liferay.commerce.term.service.CommerceTermEntryRelService;
 import com.liferay.commerce.term.service.CommerceTermEntryRelServiceUtil;
-import com.liferay.commerce.term.service.persistence.CTermEntryLocalizationPersistence;
-import com.liferay.commerce.term.service.persistence.CommerceTermEntryPersistence;
 import com.liferay.commerce.term.service.persistence.CommerceTermEntryRelPersistence;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.dao.db.DB;
@@ -26,6 +24,8 @@ import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.jdbc.SqlUpdate;
 import com.liferay.portal.kernel.dao.jdbc.SqlUpdateFactoryUtil;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.service.BaseServiceImpl;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -138,9 +138,6 @@ public abstract class CommerceTermEntryRelServiceBaseImpl
 	}
 
 	@Reference
-	protected CommerceTermEntryPersistence commerceTermEntryPersistence;
-
-	@Reference
 	protected com.liferay.commerce.term.service.CommerceTermEntryRelLocalService
 		commerceTermEntryRelLocalService;
 
@@ -150,30 +147,10 @@ public abstract class CommerceTermEntryRelServiceBaseImpl
 	protected CommerceTermEntryRelPersistence commerceTermEntryRelPersistence;
 
 	@Reference
-	protected CTermEntryLocalizationPersistence
-		cTermEntryLocalizationPersistence;
-
-	@Reference
 	protected com.liferay.counter.kernel.service.CounterLocalService
 		counterLocalService;
 
-	@Reference
-	protected com.liferay.portal.kernel.service.ClassNameLocalService
-		classNameLocalService;
-
-	@Reference
-	protected com.liferay.portal.kernel.service.ClassNameService
-		classNameService;
-
-	@Reference
-	protected com.liferay.portal.kernel.service.ResourceLocalService
-		resourceLocalService;
-
-	@Reference
-	protected com.liferay.portal.kernel.service.UserLocalService
-		userLocalService;
-
-	@Reference
-	protected com.liferay.portal.kernel.service.UserService userService;
+	private static final Log _log = LogFactoryUtil.getLog(
+		CommerceTermEntryRelServiceBaseImpl.class);
 
 }

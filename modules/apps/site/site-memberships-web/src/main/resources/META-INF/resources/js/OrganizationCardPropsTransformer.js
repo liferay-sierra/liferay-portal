@@ -12,15 +12,23 @@
  * details.
  */
 
+import {openConfirmModal} from 'frontend-js-web';
+
 const ACTIONS = {
 	deleteGroupOrganizations(itemData) {
-		if (
-			confirm(
-				Liferay.Language.get('are-you-sure-you-want-to-delete-this')
-			)
-		) {
-			submitForm(document.hrefFm, itemData.deleteGroupOrganizationsURL);
-		}
+		openConfirmModal({
+			message: Liferay.Language.get(
+				'are-you-sure-you-want-to-delete-this'
+			),
+			onConfirm: (isConfirmed) => {
+				if (isConfirmed) {
+					submitForm(
+						document.hrefFm,
+						itemData.deleteGroupOrganizationsURL
+					);
+				}
+			},
+		});
 	},
 };
 export default function propsTransformer({
@@ -30,7 +38,7 @@ export default function propsTransformer({
 }) {
 	return {
 		...props,
-		actions: actions.map((item) => {
+		actions: (actions || []).map((item) => {
 			return {
 				...item,
 				onClick(event) {

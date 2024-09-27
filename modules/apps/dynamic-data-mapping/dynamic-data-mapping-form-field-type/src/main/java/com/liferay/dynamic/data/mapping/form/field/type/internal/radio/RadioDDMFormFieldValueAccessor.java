@@ -21,7 +21,6 @@ import com.liferay.dynamic.data.mapping.model.DDMFormFieldOptions;
 import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.model.Value;
 import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
-import com.liferay.portal.kernel.util.HtmlUtil;
 
 import java.util.Locale;
 import java.util.function.IntFunction;
@@ -34,7 +33,6 @@ import org.osgi.service.component.annotations.Component;
  * @author Renato Rego
  */
 @Component(
-	immediate = true,
 	property = "ddm.form.field.type.name=" + DDMFormFieldTypeConstants.RADIO,
 	service = {
 		DDMFormFieldValueAccessor.class, RadioDDMFormFieldValueAccessor.class
@@ -93,7 +91,7 @@ public class RadioDDMFormFieldValueAccessor
 			return optionValue;
 		}
 
-		return HtmlUtil.escape(optionLabel.getString(locale));
+		return optionLabel.getString(locale);
 	}
 
 	private String _getOptionValue(

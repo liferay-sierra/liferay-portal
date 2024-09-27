@@ -21,7 +21,7 @@ import com.liferay.commerce.tax.service.CommerceTaxMethodService;
 import com.liferay.frontend.taglib.servlet.taglib.ScreenNavigationCategory;
 import com.liferay.frontend.taglib.servlet.taglib.ScreenNavigationEntry;
 import com.liferay.frontend.taglib.servlet.taglib.util.JSPRenderer;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
@@ -45,7 +45,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Calvin Keum
  */
 @Component(
-	enabled = false,
 	property = {
 		"screen.navigation.category.order:Integer=20",
 		"screen.navigation.entry.order:Integer=10"
@@ -75,7 +74,7 @@ public class CommerceTaxMethodAvalaraScreenNavigationCategory
 		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
 			"content.Language", locale, getClass());
 
-		return LanguageUtil.get(resourceBundle, ENTRY_KEY);
+		return _language.get(resourceBundle, ENTRY_KEY);
 	}
 
 	@Override
@@ -145,6 +144,9 @@ public class CommerceTaxMethodAvalaraScreenNavigationCategory
 
 	@Reference
 	private JSPRenderer _jspRenderer;
+
+	@Reference
+	private Language _language;
 
 	@Reference(
 		target = "(osgi.web.symbolicname=com.liferay.commerce.avalara.tax.engine.fixed.web)"

@@ -45,7 +45,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pavel Savinov
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + LayoutAdminPortletKeys.GROUP_PAGES,
 	service = PortletDataHandler.class
 )
@@ -245,11 +244,6 @@ public class GroupPagesPortletDataHandler extends BasePortletDataHandler {
 		layoutPageTemplateEntryExportActionableDynamicQuery.performCount();
 	}
 
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
-	protected void setModuleServiceLifecycle(
-		ModuleServiceLifecycle moduleServiceLifecycle) {
-	}
-
 	@Reference(
 		target = "(model.class.name=com.liferay.layout.page.template.model.LayoutPageTemplateCollection)",
 		unbind = "-"
@@ -263,6 +257,9 @@ public class GroupPagesPortletDataHandler extends BasePortletDataHandler {
 	)
 	private StagedModelRepository<LayoutPageTemplateEntry>
 		_layoutPageTemplateEntryStagedModelRepository;
+
+	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
+	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
 	@Reference
 	private PortletDataHandlerHelper _portletDataHandlerHelper;

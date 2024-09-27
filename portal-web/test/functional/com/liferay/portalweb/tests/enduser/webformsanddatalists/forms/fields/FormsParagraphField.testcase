@@ -3,7 +3,7 @@ definition {
 
 	property custom.properties = "minifier.enabled=true";
 	property osgi.module.configuration.file.names = "com.liferay.frontend.js.loader.modules.extender.internal.configuration.Details.config";
-	property osgi.module.configurations = "waitTimeout=&quot;15&quot;";
+	property osgi.module.configurations = "waitTimeout=\"15\"";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Forms";
@@ -95,13 +95,13 @@ definition {
 
 		Form.closeSidebar();
 
-		Form.save();
+		Form.publishForm();
 
 		ProductMenu.gotoPortlet(
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "Form Page");
+		PagesAdmin.addPage(pageName = "Form Page");
 
 		Navigator.gotoPage(pageName = "Form Page");
 
@@ -424,8 +424,6 @@ definition {
 
 		Form.save();
 
-		Alert.viewSuccessMessageText(successMessage = "Your request completed successfully.");
-
 		AssertElementPresent(
 			key_formattingStyle = "h2",
 			locator1 = "FormFields#PARAGRAPH_TEXT_VALUE_STYLE",
@@ -446,11 +444,9 @@ definition {
 
 		SelectFrameTop();
 
-		FormPortlet.waitFormRenderer(text = "Save");
+		DataEngine.waitForAutoSave();
 
-		Form.save();
-
-		Alert.viewSuccessMessageText(successMessage = "Your request completed successfully.");
+		Button.clickPublish();
 
 		FormsAdminNavigator.gotoBack();
 
@@ -466,6 +462,7 @@ definition {
 	@priority = "5"
 	test CannotBeSavedOrPublishedWithoutBodyText {
 		property portal.acceptance = "true";
+		property portal.upstream = "quarantine";
 
 		FormsAdmin.addForm();
 
@@ -571,7 +568,7 @@ definition {
 
 		Form.save();
 
-		AssertElementPresent(locator1 = "Message#SUCCESS");
+		Alert.viewSuccessMessage();
 
 		ProductMenu.gotoPortlet(
 			category = "Content & Data",
@@ -628,8 +625,6 @@ definition {
 	@description = "Verify that an Image can be uploaded to the Body Text"
 	@priority = "5"
 	test CanSupportImages {
-		property test.name.skip.portal.instance = "FormsParagraphField#CanSupportImages";
-
 		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
@@ -648,14 +643,20 @@ definition {
 
 		Form.save();
 
-		Alert.viewSuccessMessageText(successMessage = "Your request completed successfully.");
-
 		FormsAdminNavigator.gotoBack();
 
 		FormsAdminNavigator.gotoEditFormByName(formName = "Form 1");
 
 		AssertElementPresent(
-			key_imageName = "Document_1",
+			key_imageName = "document_1",
+			locator1 = "AdaptiveMedia#IMAGE_VARIANT_SOURCE_URL");
+
+		Form.publishForm();
+
+		FormsAdminNavigator.gotoPublishedForm();
+
+		AssertElementPresent(
+			key_imageName = "document_1",
 			locator1 = "AdaptiveMedia#IMAGE_VARIANT_SOURCE_URL");
 	}
 
@@ -688,7 +689,7 @@ definition {
 
 		Form.save();
 
-		AssertElementPresent(locator1 = "Message#SUCCESS");
+		Alert.viewSuccessMessage();
 
 		ProductMenu.gotoPortlet(
 			category = "Content & Data",
@@ -731,7 +732,7 @@ definition {
 
 		Form.save();
 
-		AssertElementPresent(locator1 = "Message#SUCCESS");
+		Alert.viewSuccessMessage();
 
 		Click(locator1 = "Icon#BACK");
 
@@ -783,11 +784,9 @@ definition {
 
 		SelectFrameTop();
 
-		FormPortlet.waitFormRenderer(text = "Save");
+		DataEngine.waitForAutoSave();
 
-		Form.save();
-
-		Alert.viewSuccessMessageText(successMessage = "Your request completed successfully.");
+		Button.clickPublish();
 
 		FormsAdminNavigator.gotoBack();
 

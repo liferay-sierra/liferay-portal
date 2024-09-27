@@ -40,7 +40,7 @@ import com.liferay.portal.search.searcher.SearchResponseBuilder;
 import com.liferay.portal.search.searcher.Searcher;
 import com.liferay.portal.search.summary.SummaryBuilderFactory;
 import com.liferay.portal.search.web.constants.SearchPortletParameterNames;
-import com.liferay.portal.search.web.internal.facet.SearchFacetTracker;
+import com.liferay.portal.search.web.internal.facet.SearchFacetRegistry;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.portlet.portletconfiguration.util.ConfigurationRenderRequest;
 
@@ -58,9 +58,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 
 /**
  * @author André de Oliveira
@@ -74,8 +72,6 @@ public class SearchDisplayContextTest {
 
 	@Before
 	public void setUp() throws Exception {
-		MockitoAnnotations.initMocks(this);
-
 		themeDisplay = _createThemeDisplay();
 
 		_setUpHttpServletRequest();
@@ -115,36 +111,24 @@ public class SearchDisplayContextTest {
 		_assertSearchKeywords(StringPool.DOUBLE_SPACE, StringPool.BLANK);
 	}
 
-	@Mock
-	protected HttpServletRequest httpServletRequest;
-
+	protected HttpServletRequest httpServletRequest = Mockito.mock(
+		HttpServletRequest.class);
 	protected PortletPreferences portletPreferences =
 		new MockPortletPreferences();
-
-	@Mock
-	protected PortletURLFactory portletURLFactory;
-
-	@Mock
-	protected RenderRequest renderRequest;
-
-	@Mock
-	protected SearchContextFactory searchContextFactory;
-
-	@Mock
-	protected Searcher searcher;
-
+	protected PortletURLFactory portletURLFactory = Mockito.mock(
+		PortletURLFactory.class);
+	protected RenderRequest renderRequest = Mockito.mock(RenderRequest.class);
+	protected SearchContextFactory searchContextFactory = Mockito.mock(
+		SearchContextFactory.class);
+	protected Searcher searcher = Mockito.mock(Searcher.class);
 	protected SearchRequestBuilderFactory searchRequestBuilderFactory =
 		new SearchRequestBuilderFactoryImpl();
-
-	@Mock
-	protected SearchResponse searchResponse;
-
-	@Mock
-	protected SearchResponseBuilder searchResponseBuilder;
-
-	@Mock
-	protected SearchResponseBuilderFactory searchResponseBuilderFactory;
-
+	protected SearchResponse searchResponse = Mockito.mock(
+		SearchResponse.class);
+	protected SearchResponseBuilder searchResponseBuilder = Mockito.mock(
+		SearchResponseBuilder.class);
+	protected SearchResponseBuilderFactory searchResponseBuilderFactory =
+		Mockito.mock(SearchResponseBuilderFactory.class);
 	protected ThemeDisplay themeDisplay;
 
 	private void _assertSearchKeywords(
@@ -185,7 +169,7 @@ public class SearchDisplayContextTest {
 		Assert.assertNull(searchDisplayContext.getSearchContainer());
 		Assert.assertNull(searchDisplayContext.getSearchContext());
 
-		Mockito.verifyZeroInteractions(searcher);
+		Mockito.verifyNoMoreInteractions(searcher);
 	}
 
 	private JSONArray _createJSONArray() {
@@ -273,7 +257,7 @@ public class SearchDisplayContextTest {
 			Mockito.mock(Html.class), Mockito.mock(Language.class), searcher,
 			Mockito.mock(IndexSearchPropsValues.class), portletURLFactory,
 			Mockito.mock(SummaryBuilderFactory.class), searchContextFactory,
-			searchRequestBuilderFactory, new SearchFacetTracker());
+			searchRequestBuilderFactory, new SearchFacetRegistry());
 	}
 
 	private ThemeDisplay _createThemeDisplay() throws Exception {

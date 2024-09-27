@@ -1,9 +1,11 @@
 @component-name = "portal-document-management-ee"
 definition {
 
+	// Stop running on release until ISIT-32385 fixed
+
 	property cmis.repository.type = "sharepoint2010";
 	property custom.properties = "session.store.password=true${line.separator}company.security.auth.type=screenName";
-	property osgi.app.includes = "sharepoint-soap";
+	property osgi.modules.includes = "sharepoint-soap";
 	property portal.release = "false";
 	property portal.upstream = "true";
 	property test.run.environment = "EE";
@@ -106,8 +108,6 @@ definition {
 			dmDocumentFile = "Document_3.txt",
 			dmDocumentTitle = "Document_3.txt");
 
-		Pause(locator1 = "5000");
-
 		DMDocument.checkoutCP(
 			dmDocumentTitle = "Document_3.txt",
 			dmRepositoryName = "true");
@@ -124,8 +124,6 @@ definition {
 
 		DMNavigator.gotoDocumentCP(dmDocumentTitle = "Document_3.txt");
 
-		Pause(locator1 = "5000");
-
 		DMDocument.viewCheckedoutCP(dmRepositoryName = "true");
 
 		DMDocument.checkinCP(dmRepositoryName = "true");
@@ -137,8 +135,6 @@ definition {
 			portlet = "Documents and Media");
 
 		DMRepository.gotoCP(dmRepositoryName = "Sharepoint Repository Name");
-
-		Pause(locator1 = "5000");
 
 		var key_dmDocumentTitle = "Document_3.txt";
 
@@ -257,6 +253,12 @@ definition {
 			portlet = "Documents and Media");
 
 		DMRepository.gotoCP(dmRepositoryName = "Sharepoint Repository Name");
+
+		LexiconEntry.changeDisplayStyle(displayStyle = "list");
+
+		DMDocument.selectDocuments(dmDocumentTitle = "Document_3.doc");
+
+		AssertElementPresent(locator1 = "Icon#EDIT_TAGS_DISABLED");
 
 		DMDocument.editCP(
 			dmDocumentFileEdit = "Document_2.jpg",
@@ -465,6 +467,8 @@ definition {
 	@refactorneeded
 	test SearchDocumentViaHome {
 		property test.name.skip.portal.instance = "CPSharepoint#SearchDocumentViaHome";
+
+		DMRepository.viewNoDownloadItem(dmRepositoryName = "Sharepoint Repository Name");
 
 		DMRepository.gotoCP(dmRepositoryName = "Sharepoint Repository Name");
 

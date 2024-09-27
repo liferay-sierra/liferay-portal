@@ -27,9 +27,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 
 /**
  * @author Adam Brandizzi
@@ -43,8 +41,6 @@ public class ProxyConfigTest {
 
 	@Before
 	public void setUp() {
-		MockitoAnnotations.initMocks(this);
-
 		_systemProperties = new Properties(System.getProperties());
 	}
 
@@ -86,12 +82,6 @@ public class ProxyConfigTest {
 		String networkAddress = "http://domain:9200";
 
 		Mockito.when(
-			_http.getDomain(networkAddress)
-		).thenReturn(
-			domain
-		);
-
-		Mockito.when(
 			_http.isNonProxyHost(domain)
 		).thenReturn(
 			Objects.equals(domain, "nonProxyHostDomain")
@@ -114,12 +104,6 @@ public class ProxyConfigTest {
 
 		String domain = "domain";
 		String networkAddress = "http://domain:9200";
-
-		Mockito.when(
-			_http.getDomain(networkAddress)
-		).thenReturn(
-			domain
-		);
 
 		Mockito.when(
 			_http.isNonProxyHost(domain)
@@ -160,9 +144,7 @@ public class ProxyConfigTest {
 		Assert.assertFalse(proxyConfig.shouldApplyConfig());
 	}
 
-	@Mock
-	private Http _http;
-
+	private final Http _http = Mockito.mock(Http.class);
 	private Properties _systemProperties;
 
 }

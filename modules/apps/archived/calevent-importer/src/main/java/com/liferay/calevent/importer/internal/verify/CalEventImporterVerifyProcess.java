@@ -56,7 +56,7 @@ import com.liferay.portal.kernel.cal.TZSRecurrence;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.NoSuchUserException;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
@@ -78,11 +78,11 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.LoggingTimer;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.verify.VerifyProcess;
 import com.liferay.ratings.kernel.model.RatingsEntry;
@@ -392,7 +392,6 @@ public class CalEventImporterVerifyProcess extends VerifyProcess {
 
 		ratingsStats.setClassNameId(
 			_classNameLocalService.getClassNameId(className));
-
 		ratingsStats.setClassPK(classPK);
 		ratingsStats.setTotalEntries(totalEntries);
 		ratingsStats.setTotalScore(totalScore);
@@ -453,7 +452,7 @@ public class CalEventImporterVerifyProcess extends VerifyProcess {
 		TZSRecurrence tzsRecurrence = null;
 
 		try {
-			tzsRecurrence = (TZSRecurrence)JSONFactoryUtil.deserialize(
+			tzsRecurrence = (TZSRecurrence)_jsonFactory.deserialize(
 				originalRecurrence);
 		}
 		catch (IllegalStateException illegalStateException) {
@@ -671,7 +670,7 @@ public class CalEventImporterVerifyProcess extends VerifyProcess {
 				userId, userGroup.getGroupId(),
 				_classNameLocalService.getClassNameId(User.class), userId, null,
 				null,
-				LocalizationUtil.populateLocalizationMap(
+				_localization.populateLocalizationMap(
 					nameMap,
 					LocaleUtil.toLanguageId(LocaleUtil.getSiteDefault()),
 					groupId),
@@ -708,7 +707,7 @@ public class CalEventImporterVerifyProcess extends VerifyProcess {
 		return _calendarResourceLocalService.addCalendarResource(
 			userId, groupId, _classNameLocalService.getClassNameId(Group.class),
 			groupId, null, null,
-			LocalizationUtil.populateLocalizationMap(
+			_localization.populateLocalizationMap(
 				nameMap, LocaleUtil.toLanguageId(LocaleUtil.getSiteDefault()),
 				groupId),
 			descriptionMap, true, serviceContext);
@@ -1114,7 +1113,6 @@ public class CalEventImporterVerifyProcess extends VerifyProcess {
 
 		for (ExpandoValue expandoValue : expandoValues) {
 			expandoValue.setClassNameId(calendarBookingClassNameId);
-
 			expandoValue.setClassPK(calendarBookingId);
 
 			_expandoValueLocalService.updateExpandoValue(expandoValue);
@@ -1135,7 +1133,7 @@ public class CalEventImporterVerifyProcess extends VerifyProcess {
 			mbDiscussion.getThreadId(), calendarBookingId);
 
 		_addMBDiscussion(
-			PortalUUIDUtil.generate(), _counterLocalService.increment(),
+			_portalUUID.generate(), _counterLocalService.increment(),
 			mbDiscussion.getGroupId(), mbDiscussion.getCompanyId(),
 			mbDiscussion.getUserId(), mbDiscussion.getUserName(),
 			mbDiscussion.getCreateDate(), mbDiscussion.getModifiedDate(),
@@ -1168,7 +1166,7 @@ public class CalEventImporterVerifyProcess extends VerifyProcess {
 		messageId = _counterLocalService.increment();
 
 		_addMBMessage(
-			PortalUUIDUtil.generate(), messageId, mbMessage.getGroupId(),
+			_portalUUID.generate(), messageId, mbMessage.getGroupId(),
 			mbMessage.getCompanyId(), mbMessage.getUserId(),
 			mbMessage.getUserName(), mbMessage.getCreateDate(),
 			mbMessage.getModifiedDate(),
@@ -1195,9 +1193,8 @@ public class CalEventImporterVerifyProcess extends VerifyProcess {
 	private long _importMBThread(long threadId, long calendarBookingId)
 		throws Exception {
 
-		MBThread mbThread = _mbThreadLocalService.fetchMBThread(threadId);
-
-		return _importMBThread(mbThread, calendarBookingId);
+		return _importMBThread(
+			_mbThreadLocalService.fetchMBThread(threadId), calendarBookingId);
 	}
 
 	private long _importMBThread(MBThread mbThread, long calendarBookingId)
@@ -1206,7 +1203,7 @@ public class CalEventImporterVerifyProcess extends VerifyProcess {
 		long threadId = _counterLocalService.increment();
 
 		_addMBThread(
-			PortalUUIDUtil.generate(), threadId, mbThread.getGroupId(),
+			_portalUUID.generate(), threadId, mbThread.getGroupId(),
 			mbThread.getCompanyId(), mbThread.getUserId(),
 			mbThread.getUserName(), mbThread.getCreateDate(),
 			mbThread.getModifiedDate(), mbThread.getCategoryId(), 0,
@@ -1429,7 +1426,13 @@ public class CalEventImporterVerifyProcess extends VerifyProcess {
 	@Reference
 	private GroupLocalService _groupLocalService;
 
+	@Reference
+	private JSONFactory _jsonFactory;
+
 	private JSONSerializer _jsonSerializer;
+
+	@Reference
+	private Localization _localization;
 
 	@Reference
 	private MBDiscussionLocalService _mbDiscussionLocalService;
@@ -1439,6 +1442,9 @@ public class CalEventImporterVerifyProcess extends VerifyProcess {
 
 	@Reference
 	private MBThreadLocalService _mbThreadLocalService;
+
+	@Reference
+	private PortalUUID _portalUUID;
 
 	@Reference
 	private RatingsEntryLocalService _ratingsEntryLocalService;

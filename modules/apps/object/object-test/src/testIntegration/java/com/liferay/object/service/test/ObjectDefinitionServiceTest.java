@@ -16,13 +16,14 @@ package com.liferay.object.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.object.constants.ObjectDefinitionConstants;
+import com.liferay.object.constants.ObjectFieldConstants;
+import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectDefinitionService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.util.LocalizedMapUtil;
-import com.liferay.object.util.ObjectFieldUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
@@ -34,6 +35,7 @@ import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DataGuard;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -63,12 +65,11 @@ public class ObjectDefinitionServiceTest {
 
 	@Before
 	public void setUp() throws Exception {
-		_defaultUser = _userLocalService.getDefaultUser(
-			TestPropsValues.getCompanyId());
+		_adminUser = TestPropsValues.getUser();
 		_originalName = PrincipalThreadLocal.getName();
 		_originalPermissionChecker =
 			PermissionThreadLocal.getPermissionChecker();
-		_user = TestPropsValues.getUser();
+		_user = UserTestUtil.addUser();
 	}
 
 	@After
@@ -81,7 +82,7 @@ public class ObjectDefinitionServiceTest {
 	@Test
 	public void testAddCustomObjectDefinition() throws Exception {
 		try {
-			_testAddCustomObjectDefinition(_defaultUser);
+			_testAddCustomObjectDefinition(_user);
 
 			Assert.fail();
 		}
@@ -90,17 +91,17 @@ public class ObjectDefinitionServiceTest {
 
 			Assert.assertTrue(
 				message.contains(
-					"User " + _defaultUser.getUserId() +
+					"User " + _user.getUserId() +
 						" must have ADD_OBJECT_DEFINITION permission for"));
 		}
 
-		_testAddCustomObjectDefinition(_user);
+		_testAddCustomObjectDefinition(_adminUser);
 	}
 
 	@Test
 	public void testDeleteObjectDefinition() throws Exception {
 		try {
-			_testDeleteObjectDefinition(_user, _defaultUser);
+			_testDeleteObjectDefinition(_adminUser, _user);
 
 			Assert.fail();
 		}
@@ -109,18 +110,18 @@ public class ObjectDefinitionServiceTest {
 
 			Assert.assertTrue(
 				message.contains(
-					"User " + _defaultUser.getUserId() +
+					"User " + _user.getUserId() +
 						" must have DELETE permission for"));
 		}
 
-		_testDeleteObjectDefinition(_defaultUser, _defaultUser);
+		_testDeleteObjectDefinition(_adminUser, _adminUser);
 		_testDeleteObjectDefinition(_user, _user);
 	}
 
 	@Test
 	public void testGetObjectDefinition() throws Exception {
 		try {
-			_testGetObjectDefinition(_user, _defaultUser);
+			_testGetObjectDefinition(_adminUser, _user);
 
 			Assert.fail();
 		}
@@ -129,18 +130,18 @@ public class ObjectDefinitionServiceTest {
 
 			Assert.assertTrue(
 				message.contains(
-					"User " + _defaultUser.getUserId() +
+					"User " + _user.getUserId() +
 						" must have VIEW permission for"));
 		}
 
-		_testGetObjectDefinition(_defaultUser, _defaultUser);
+		_testGetObjectDefinition(_adminUser, _adminUser);
 		_testGetObjectDefinition(_user, _user);
 	}
 
 	@Test
 	public void testPublishCustomObjectDefinition() throws Exception {
 		try {
-			_testPublishCustomObjectDefinition(_defaultUser);
+			_testPublishCustomObjectDefinition(_user);
 
 			Assert.fail();
 		}
@@ -149,17 +150,17 @@ public class ObjectDefinitionServiceTest {
 
 			Assert.assertTrue(
 				message.contains(
-					"User " + _defaultUser.getUserId() +
+					"User " + _user.getUserId() +
 						" must have PUBLISH_OBJECT_DEFINITION permission for"));
 		}
 
-		_testPublishCustomObjectDefinition(_user);
+		_testPublishCustomObjectDefinition(_adminUser);
 	}
 
 	@Test
 	public void testUpdateCustomObjectDefinition() throws Exception {
 		try {
-			_testUpdateCustomObjectDefinition(_user, _defaultUser);
+			_testUpdateCustomObjectDefinition(_adminUser, _user);
 
 			Assert.fail();
 		}
@@ -168,18 +169,18 @@ public class ObjectDefinitionServiceTest {
 
 			Assert.assertTrue(
 				message.contains(
-					"User " + _defaultUser.getUserId() +
+					"User " + _user.getUserId() +
 						" must have UPDATE permission for"));
 		}
 
-		_testUpdateCustomObjectDefinition(_defaultUser, _defaultUser);
+		_testUpdateCustomObjectDefinition(_adminUser, _adminUser);
 		_testUpdateCustomObjectDefinition(_user, _user);
 	}
 
 	@Test
 	public void testUpdateTitleObjectFieldId() throws Exception {
 		try {
-			_testUpdateTitleObjectFieldId(_user, _defaultUser);
+			_testUpdateTitleObjectFieldId(_adminUser, _user);
 
 			Assert.fail();
 		}
@@ -188,11 +189,11 @@ public class ObjectDefinitionServiceTest {
 
 			Assert.assertTrue(
 				message.contains(
-					"User " + _defaultUser.getUserId() +
+					"User " + _user.getUserId() +
 						" must have UPDATE permission for"));
 		}
 
-		_testUpdateTitleObjectFieldId(_defaultUser, _defaultUser);
+		_testUpdateTitleObjectFieldId(_adminUser, _adminUser);
 		_testUpdateTitleObjectFieldId(_user, _user);
 	}
 
@@ -215,10 +216,12 @@ public class ObjectDefinitionServiceTest {
 			"A" + RandomTestUtil.randomString(), null, null,
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 			ObjectDefinitionConstants.SCOPE_COMPANY,
+			ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT,
 			Arrays.asList(
 				ObjectFieldUtil.createObjectField(
-					"Text", "String", RandomTestUtil.randomString(),
-					StringUtil.randomId())));
+					ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+					ObjectFieldConstants.DB_TYPE_STRING,
+					RandomTestUtil.randomString(), StringUtil.randomId())));
 	}
 
 	private void _setUser(User user) {
@@ -242,9 +245,12 @@ public class ObjectDefinitionServiceTest {
 					LocalizedMapUtil.getLocalizedMap(
 						RandomTestUtil.randomString()),
 					ObjectDefinitionConstants.SCOPE_COMPANY,
+					ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT,
 					Arrays.asList(
 						ObjectFieldUtil.createObjectField(
-							"Text", "String", RandomTestUtil.randomString(),
+							ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+							ObjectFieldConstants.DB_TYPE_STRING,
+							RandomTestUtil.randomString(),
 							StringUtil.randomId())));
 
 			objectDefinition =
@@ -320,9 +326,12 @@ public class ObjectDefinitionServiceTest {
 					LocalizedMapUtil.getLocalizedMap(
 						RandomTestUtil.randomString()),
 					ObjectDefinitionConstants.SCOPE_COMPANY,
+					ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT,
 					Arrays.asList(
 						ObjectFieldUtil.createObjectField(
-							"Text", "String", RandomTestUtil.randomString(),
+							ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+							ObjectFieldConstants.DB_TYPE_STRING,
+							RandomTestUtil.randomString(),
 							StringUtil.randomId())));
 
 			objectDefinition =
@@ -354,15 +363,18 @@ public class ObjectDefinitionServiceTest {
 					LocalizedMapUtil.getLocalizedMap(
 						RandomTestUtil.randomString()),
 					ObjectDefinitionConstants.SCOPE_COMPANY,
+					ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT,
 					Arrays.asList(
 						ObjectFieldUtil.createObjectField(
-							"Text", "String", RandomTestUtil.randomString(),
+							ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+							ObjectFieldConstants.DB_TYPE_STRING,
+							RandomTestUtil.randomString(),
 							StringUtil.randomId())));
 
 			objectDefinition =
 				_objectDefinitionService.updateCustomObjectDefinition(
-					objectDefinition.getObjectDefinitionId(), 0, 0,
-					objectDefinition.isActive(),
+					null, objectDefinition.getObjectDefinitionId(), 0, 0, 0,
+					false, objectDefinition.isActive(), true, false, false,
 					LocalizedMapUtil.getLocalizedMap("Able"), "Able", null,
 					null, false, LocalizedMapUtil.getLocalizedMap("Ables"),
 					objectDefinition.getScope());
@@ -392,19 +404,25 @@ public class ObjectDefinitionServiceTest {
 					LocalizedMapUtil.getLocalizedMap(
 						RandomTestUtil.randomString()),
 					ObjectDefinitionConstants.SCOPE_COMPANY,
+					ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT,
 					Arrays.asList(
 						ObjectFieldUtil.createObjectField(
-							"Text", "String", RandomTestUtil.randomString(),
+							ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+							ObjectFieldConstants.DB_TYPE_STRING,
+							RandomTestUtil.randomString(),
 							StringUtil.randomId())));
 
 			ObjectField objectField =
 				_objectFieldLocalService.addCustomObjectField(
-					ownerUser.getUserId(), 0,
-					objectDefinition.getObjectDefinitionId(), "Text", "String",
-					false, false, null,
+					null, ownerUser.getUserId(), 0,
+					objectDefinition.getObjectDefinitionId(),
+					ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+					ObjectFieldConstants.DB_TYPE_STRING, null, false, false,
+					null,
 					LocalizedMapUtil.getLocalizedMap(
 						RandomTestUtil.randomString()),
-					StringUtil.randomId(), false, Collections.emptyList());
+					StringUtil.randomId(), false, false,
+					Collections.emptyList());
 
 			objectDefinition =
 				_objectDefinitionService.updateTitleObjectFieldId(
@@ -419,7 +437,7 @@ public class ObjectDefinitionServiceTest {
 		}
 	}
 
-	private User _defaultUser;
+	private User _adminUser;
 
 	@Inject
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;

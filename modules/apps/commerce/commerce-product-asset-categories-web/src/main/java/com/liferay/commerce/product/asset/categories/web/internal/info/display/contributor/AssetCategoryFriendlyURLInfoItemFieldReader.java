@@ -37,7 +37,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Jürgen Kappler
  */
-@Component(enabled = false, service = InfoItemFieldReader.class)
+@Component(service = InfoItemFieldReader.class)
 public class AssetCategoryFriendlyURLInfoItemFieldReader
 	implements InfoItemFieldReader<AssetCategory> {
 
@@ -46,6 +46,8 @@ public class AssetCategoryFriendlyURLInfoItemFieldReader
 		return InfoField.builder(
 		).infoFieldType(
 			URLInfoFieldType.INSTANCE
+		).namespace(
+			AssetCategory.class.getSimpleName()
 		).name(
 			"friendlyURL"
 		).labelInfoLocalizedValue(

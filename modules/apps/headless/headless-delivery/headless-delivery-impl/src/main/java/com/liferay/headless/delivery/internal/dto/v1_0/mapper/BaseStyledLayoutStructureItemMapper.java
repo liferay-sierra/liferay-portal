@@ -24,7 +24,7 @@ import com.liferay.headless.delivery.dto.v1_0.Mapping;
 import com.liferay.headless.delivery.internal.dto.v1_0.mapper.util.FragmentMappedValueUtil;
 import com.liferay.info.field.InfoFieldValue;
 import com.liferay.info.item.ClassPKInfoItemIdentifier;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFieldValuesProvider;
 import com.liferay.info.item.provider.InfoItemObjectProvider;
 import com.liferay.layout.responsive.ViewportSize;
@@ -113,11 +113,11 @@ public abstract class BaseStyledLayoutStructureItemMapper
 		}
 
 		InfoItemFieldValuesProvider<Object> infoItemFieldValuesProvider =
-			infoItemServiceTracker.getFirstInfoItemService(
+			infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFieldValuesProvider.class, className);
 
 		InfoItemObjectProvider<Object> infoItemObjectProvider =
-			infoItemServiceTracker.getFirstInfoItemService(
+			infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemObjectProvider.class, className);
 
 		if ((infoItemFieldValuesProvider == null) ||
@@ -263,7 +263,7 @@ public abstract class BaseStyledLayoutStructureItemMapper
 	}
 
 	@Reference
-	protected InfoItemServiceTracker infoItemServiceTracker;
+	protected InfoItemServiceRegistry infoItemServiceRegistry;
 
 	@Reference
 	protected Portal portal;
@@ -347,6 +347,21 @@ public abstract class BaseStyledLayoutStructureItemMapper
 				setFragmentViewportStyle(
 					() -> new FragmentViewportStyle() {
 						{
+							backgroundColor = styleJSONObject.getString(
+								"backgroundColor", null);
+							borderColor = styleJSONObject.getString(
+								"borderColor", null);
+							borderRadius = styleJSONObject.getString(
+								"borderRadius", null);
+							borderWidth = styleJSONObject.getString(
+								"borderWidth", null);
+							fontFamily = styleJSONObject.getString(
+								"fontFamily", null);
+							fontSize = styleJSONObject.getString(
+								"fontSize", null);
+							fontWeight = styleJSONObject.getString(
+								"fontWeight", null);
+							height = styleJSONObject.getString("height", null);
 							marginBottom = styleJSONObject.getString(
 								"marginBottom", null);
 							marginLeft = styleJSONObject.getString(
@@ -355,6 +370,18 @@ public abstract class BaseStyledLayoutStructureItemMapper
 								"marginRight", null);
 							marginTop = styleJSONObject.getString(
 								"marginTop", null);
+							maxHeight = styleJSONObject.getString(
+								"maxHeight", null);
+							maxWidth = styleJSONObject.getString(
+								"maxWidth", null);
+							minHeight = styleJSONObject.getString(
+								"minHeight", null);
+							minWidth = styleJSONObject.getString(
+								"minWidth", null);
+							opacity = styleJSONObject.getString(
+								"opacity", null);
+							overflow = styleJSONObject.getString(
+								"overflow", null);
 							paddingBottom = styleJSONObject.getString(
 								"paddingBottom", null);
 							paddingLeft = styleJSONObject.getString(
@@ -363,8 +390,12 @@ public abstract class BaseStyledLayoutStructureItemMapper
 								"paddingRight", null);
 							paddingTop = styleJSONObject.getString(
 								"paddingTop", null);
+							shadow = styleJSONObject.getString("shadow", null);
 							textAlign = styleJSONObject.getString(
 								"textAlign", null);
+							textColor = styleJSONObject.getString(
+								"textColor", null);
+							width = styleJSONObject.getString("width", null);
 
 							setHidden(
 								() -> {

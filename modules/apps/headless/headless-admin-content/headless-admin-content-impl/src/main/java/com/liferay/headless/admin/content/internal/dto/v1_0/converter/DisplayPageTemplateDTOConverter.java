@@ -19,7 +19,7 @@ import com.liferay.headless.admin.content.internal.dto.v1_0.util.CreatorUtil;
 import com.liferay.headless.admin.content.internal.dto.v1_0.util.CustomFieldsUtil;
 import com.liferay.headless.admin.content.internal.dto.v1_0.util.DisplayPageTemplateSettingsUtil;
 import com.liferay.headless.delivery.dto.v1_0.PageDefinition;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
@@ -80,7 +80,7 @@ public class DisplayPageTemplateDTOConverter
 				displayPageTemplateSettings =
 					DisplayPageTemplateSettingsUtil.
 						getDisplayPageTemplateSettings(
-							dtoConverterContext, _infoItemServiceTracker,
+							dtoConverterContext, _infoItemServiceRegistry,
 							layout, layoutPageTemplateEntry, _portal);
 				markedAsDefault = layoutPageTemplateEntry.isDefaultTemplate();
 				siteId = layout.getGroupId();
@@ -115,7 +115,8 @@ public class DisplayPageTemplateDTOConverter
 						}
 
 						LayoutStructure layoutStructure = LayoutStructure.of(
-							layoutPageTemplateStructure.getData(0L));
+							layoutPageTemplateStructure.
+								getDefaultSegmentsExperienceData());
 
 						return dtoConverter.toDTO(
 							dtoConverterContext, layoutStructure);
@@ -125,7 +126,7 @@ public class DisplayPageTemplateDTOConverter
 	}
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;

@@ -17,13 +17,14 @@ package com.liferay.portal.db.partition.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.db.partition.DBPartitionUtil;
-import com.liferay.portal.db.partition.test.util.BaseDBPartitionTestCase;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.util.PortalInstances;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -44,16 +45,16 @@ public class DBPartitionTest extends BaseDBPartitionTestCase {
 
 		createControlTable(TEST_CONTROL_TABLE_NAME);
 
-		addDBPartition();
+		addDBPartitions();
 
-		insertCompanyAndDefaultUser();
+		insertPartitionRequiredData();
 	}
 
 	@AfterClass
 	public static void tearDownClass() throws Exception {
-		deleteCompanyAndDefaultUser();
+		deletePartitionRequiredData();
 
-		dropSchema();
+		removeDBPartitions(false);
 
 		dropTable(TEST_CONTROL_TABLE_NAME);
 
@@ -205,16 +206,15 @@ public class DBPartitionTest extends BaseDBPartitionTestCase {
 	public class DBPartitionUpgradeProcess extends UpgradeProcess {
 
 		public long[] getCompanyIds() {
-			return _companyIds;
+			return ArrayUtil.toArray(_companyIds.toArray(new Long[0]));
 		}
 
 		@Override
 		protected void doUpgrade() throws Exception {
-			_companyIds = ArrayUtil.append(
-				_companyIds, CompanyThreadLocal.getCompanyId());
+			_companyIds.add(CompanyThreadLocal.getCompanyId());
 		}
 
-		private long[] _companyIds = new long[0];
+		private volatile List<Long> _companyIds = new CopyOnWriteArrayList<>();
 
 	}
 

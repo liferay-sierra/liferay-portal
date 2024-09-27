@@ -18,12 +18,13 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.object.admin.rest.dto.v1_0.ObjectDefinition;
 import com.liferay.object.admin.rest.resource.v1_0.ObjectDefinitionResource;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
-import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCResourceCommand;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletActionRequest;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletActionResponse;
 import com.liferay.portal.kernel.test.portlet.MockLiferayResourceRequest;
@@ -43,15 +44,15 @@ import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 
-import java.io.ByteArrayOutputStream;
-
 import java.util.List;
 
-import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
 
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -70,6 +71,12 @@ public class ExportImportObjectDefinitionTest {
 
 	@Test
 	public void testExportImportObjectDefinition() throws Exception {
+		PermissionChecker permissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(TestPropsValues.getUser()));
+
 		ObjectDefinition objectDefinition = _importObjectDefinition();
 
 		MockLiferayResourceResponse mockLiferayResourceResponse =
@@ -79,23 +86,20 @@ public class ExportImportObjectDefinitionTest {
 			_createMockLiferayResourceRequest(objectDefinition.getId()),
 			mockLiferayResourceResponse);
 
-		ByteArrayOutputStream byteArrayOutputStream =
-			(ByteArrayOutputStream)
-				mockLiferayResourceResponse.getPortletOutputStream();
-
 		Class<?> clazz = getClass();
 
-		String json = StringUtil.read(
-			clazz.getResourceAsStream("dependencies/object_definition.json"));
-
-		Assert.assertTrue(
-			JSONUtil.equals(
-				JSONFactoryUtil.createJSONObject(json),
-				JSONFactoryUtil.createJSONObject(
-					byteArrayOutputStream.toString())));
+		JSONAssert.assertEquals(
+			StringUtil.read(
+				clazz.getResourceAsStream(
+					"dependencies/object_definition.json")),
+			String.valueOf(
+				mockLiferayResourceResponse.getPortletOutputStream()),
+			JSONCompareMode.STRICT_ORDER);
 
 		_objectDefinitionResource.deleteObjectDefinition(
 			objectDefinition.getId());
+
+		PermissionThreadLocal.setPermissionChecker(permissionChecker);
 	}
 
 	private MockLiferayPortletActionRequest
@@ -197,14 +201,14 @@ public class ExportImportObjectDefinitionTest {
 			new MockLiferayPortletActionResponse());
 
 		ObjectDefinitionResource.Builder builder =
-			ObjectDefinitionResource.builder();
+			_objectDefinitionResourceFactory.create();
 
-		_objectDefinitionResource = builder.user(
+		ObjectDefinitionResource objectDefinitionResource = builder.user(
 			TestPropsValues.getUser()
 		).build();
 
 		Page<ObjectDefinition> page =
-			_objectDefinitionResource.getObjectDefinitionsPage(
+			objectDefinitionResource.getObjectDefinitionsPage(
 				"ImportedObjectDefinition", null, null, Pagination.of(1, 1),
 				null);
 
@@ -228,5 +232,8 @@ public class ExportImportObjectDefinitionTest {
 
 	@Inject
 	private ObjectDefinitionResource _objectDefinitionResource;
+
+	@Inject
+	private ObjectDefinitionResource.Factory _objectDefinitionResourceFactory;
 
 }

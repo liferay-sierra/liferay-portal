@@ -18,20 +18,22 @@ import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTy
 import com.liferay.dynamic.data.mapping.storage.constants.FieldConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.field.business.type.ObjectFieldBusinessType;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.object.field.render.ObjectFieldRenderingContext;
+import com.liferay.object.model.ObjectField;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
+import com.liferay.portal.vulcan.extension.PropertyDefinition;
 
 import java.util.Locale;
 import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Marcela Cunha
  */
 @Component(
-	immediate = true,
 	property = "object.field.business.type.key=" + ObjectFieldConstants.BUSINESS_TYPE_LONG_INTEGER,
 	service = {
 		LongIntegerObjectFieldBusinessType.class, ObjectFieldBusinessType.class
@@ -52,18 +54,12 @@ public class LongIntegerObjectFieldBusinessType
 
 	@Override
 	public String getDescription(Locale locale) {
-		return LanguageUtil.get(
-			ResourceBundleUtil.getModuleAndPortalResourceBundle(
-				locale, getClass()),
-			"add-a-long-integer-up-to-19-digits");
+		return _language.get(locale, "add-a-long-integer-up-to-16-digits");
 	}
 
 	@Override
 	public String getLabel(Locale locale) {
-		return LanguageUtil.get(
-			ResourceBundleUtil.getModuleAndPortalResourceBundle(
-				locale, getClass()),
-			"long-integer");
+		return _language.get(locale, "long-integer");
 	}
 
 	@Override
@@ -72,10 +68,21 @@ public class LongIntegerObjectFieldBusinessType
 	}
 
 	@Override
-	public Map<String, Object> getProperties() {
+	public Map<String, Object> getProperties(
+		ObjectField objectField,
+		ObjectFieldRenderingContext objectFieldRenderingContext) {
+
 		return HashMapBuilder.<String, Object>put(
 			FieldConstants.DATA_TYPE, FieldConstants.INTEGER
 		).build();
 	}
+
+	@Override
+	public PropertyDefinition.PropertyType getPropertyType() {
+		return PropertyDefinition.PropertyType.LONG;
+	}
+
+	@Reference
+	private Language _language;
 
 }

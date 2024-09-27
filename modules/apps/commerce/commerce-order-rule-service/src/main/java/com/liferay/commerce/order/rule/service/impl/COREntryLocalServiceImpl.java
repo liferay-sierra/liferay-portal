@@ -40,12 +40,14 @@ import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.WorkflowInstanceLinkLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
@@ -67,7 +69,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	property = "model.class.name=com.liferay.commerce.order.rule.model.COREntry",
 	service = AopService.class
 )
@@ -91,7 +92,7 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 
 		corEntry.setExternalReferenceCode(externalReferenceCode);
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		corEntry.setCompanyId(user.getCompanyId());
 		corEntry.setUserId(user.getUserId());
@@ -115,18 +116,13 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 		}
 
 		corEntry.setExpirationDate(expirationDate);
-
 		corEntry.setName(name);
 		corEntry.setPriority(priority);
 		corEntry.setType(type);
-
-		UnicodeProperties typeSettingsUnicodeProperties =
+		corEntry.setTypeSettingsUnicodeProperties(
 			UnicodePropertiesBuilder.fastLoad(
 				typeSettings
-			).build();
-
-		corEntry.setTypeSettingsUnicodeProperties(
-			typeSettingsUnicodeProperties);
+			).build());
 
 		Date date = new Date();
 
@@ -142,7 +138,7 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 
 		corEntry = corEntryPersistence.update(corEntry);
 
-		resourceLocalService.addModelResources(corEntry, serviceContext);
+		_resourceLocalService.addModelResources(corEntry, serviceContext);
 
 		return _startWorkflowInstance(
 			user.getUserId(), corEntry, serviceContext);
@@ -160,7 +156,7 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 	public COREntry deleteCOREntry(COREntry corEntry) throws PortalException {
 		corEntryPersistence.remove(corEntry);
 
-		resourceLocalService.deleteResource(
+		_resourceLocalService.deleteResource(
 			corEntry.getCompanyId(), COREntry.class.getName(),
 			ResourceConstants.SCOPE_INDIVIDUAL, corEntry.getCOREntryId());
 
@@ -190,7 +186,7 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 			_getGroupByStep(
 				accountEntryId, null, companyId, commerceChannelId,
 				commerceOrderTypeId,
-				DSLQueryFactoryUtil.selectDistinct(COREntryTable.INSTANCE)
+				DSLQueryFactoryUtil.select(COREntryTable.INSTANCE)
 			).orderBy(
 				COREntryTable.INSTANCE.type.descending(),
 				COREntryTable.INSTANCE.priority.descending()
@@ -204,7 +200,7 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 		return dslQuery(
 			_getGroupByStep(
 				accountEntryId, null, companyId, commerceChannelId, null,
-				DSLQueryFactoryUtil.selectDistinct(COREntryTable.INSTANCE)
+				DSLQueryFactoryUtil.select(COREntryTable.INSTANCE)
 			).orderBy(
 				COREntryTable.INSTANCE.type.descending(),
 				COREntryTable.INSTANCE.priority.descending()
@@ -218,7 +214,7 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 		return dslQuery(
 			_getGroupByStep(
 				accountEntryId, null, companyId, null, commerceOrderTypeId,
-				DSLQueryFactoryUtil.selectDistinct(COREntryTable.INSTANCE)
+				DSLQueryFactoryUtil.select(COREntryTable.INSTANCE)
 			).orderBy(
 				COREntryTable.INSTANCE.type.descending(),
 				COREntryTable.INSTANCE.priority.descending()
@@ -232,7 +228,7 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 		return dslQuery(
 			_getGroupByStep(
 				accountEntryId, null, companyId, null, null,
-				DSLQueryFactoryUtil.selectDistinct(COREntryTable.INSTANCE)
+				DSLQueryFactoryUtil.select(COREntryTable.INSTANCE)
 			).orderBy(
 				COREntryTable.INSTANCE.type.descending(),
 				COREntryTable.INSTANCE.priority.descending()
@@ -249,7 +245,7 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 			_getGroupByStep(
 				null, accountGroupIds, companyId, commerceChannelId,
 				commerceOrderTypeId,
-				DSLQueryFactoryUtil.selectDistinct(COREntryTable.INSTANCE)
+				DSLQueryFactoryUtil.select(COREntryTable.INSTANCE)
 			).orderBy(
 				COREntryTable.INSTANCE.type.descending(),
 				COREntryTable.INSTANCE.priority.descending()
@@ -263,7 +259,7 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 		return dslQuery(
 			_getGroupByStep(
 				null, accountGroupIds, companyId, commerceChannelId, null,
-				DSLQueryFactoryUtil.selectDistinct(COREntryTable.INSTANCE)
+				DSLQueryFactoryUtil.select(COREntryTable.INSTANCE)
 			).orderBy(
 				COREntryTable.INSTANCE.type.descending(),
 				COREntryTable.INSTANCE.priority.descending()
@@ -277,7 +273,7 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 		return dslQuery(
 			_getGroupByStep(
 				null, accountGroupIds, companyId, null, commerceOrderTypeId,
-				DSLQueryFactoryUtil.selectDistinct(COREntryTable.INSTANCE)
+				DSLQueryFactoryUtil.select(COREntryTable.INSTANCE)
 			).orderBy(
 				COREntryTable.INSTANCE.type.descending(),
 				COREntryTable.INSTANCE.priority.descending()
@@ -291,7 +287,7 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 		return dslQuery(
 			_getGroupByStep(
 				null, accountGroupIds, companyId, null, null,
-				DSLQueryFactoryUtil.selectDistinct(COREntryTable.INSTANCE)
+				DSLQueryFactoryUtil.select(COREntryTable.INSTANCE)
 			).orderBy(
 				COREntryTable.INSTANCE.type.descending(),
 				COREntryTable.INSTANCE.priority.descending()
@@ -305,7 +301,7 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 		return dslQuery(
 			_getGroupByStep(
 				null, null, companyId, commerceChannelId, commerceOrderTypeId,
-				DSLQueryFactoryUtil.selectDistinct(COREntryTable.INSTANCE)
+				DSLQueryFactoryUtil.select(COREntryTable.INSTANCE)
 			).orderBy(
 				COREntryTable.INSTANCE.type.descending(),
 				COREntryTable.INSTANCE.priority.descending()
@@ -319,7 +315,7 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 		return dslQuery(
 			_getGroupByStep(
 				null, null, companyId, commerceChannelId, null,
-				DSLQueryFactoryUtil.selectDistinct(COREntryTable.INSTANCE)
+				DSLQueryFactoryUtil.select(COREntryTable.INSTANCE)
 			).orderBy(
 				COREntryTable.INSTANCE.type.descending(),
 				COREntryTable.INSTANCE.priority.descending()
@@ -333,7 +329,7 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 		return dslQuery(
 			_getGroupByStep(
 				null, null, companyId, null, commerceOrderTypeId,
-				DSLQueryFactoryUtil.selectDistinct(COREntryTable.INSTANCE)
+				DSLQueryFactoryUtil.select(COREntryTable.INSTANCE)
 			).orderBy(
 				COREntryTable.INSTANCE.type.descending(),
 				COREntryTable.INSTANCE.priority.descending()
@@ -368,7 +364,7 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 		return dslQuery(
 			_getGroupByStep(
 				null, null, companyId, null, null,
-				DSLQueryFactoryUtil.selectDistinct(COREntryTable.INSTANCE)
+				DSLQueryFactoryUtil.select(COREntryTable.INSTANCE)
 			).orderBy(
 				COREntryTable.INSTANCE.type.descending(),
 				COREntryTable.INSTANCE.priority.descending()
@@ -392,7 +388,7 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 		corEntry.setActive(active);
 		corEntry.setDescription(description);
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		corEntry.setDisplayDate(
 			_portal.getDate(
@@ -410,17 +406,12 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 		}
 
 		corEntry.setExpirationDate(expirationDate);
-
 		corEntry.setName(name);
 		corEntry.setPriority(priority);
-
-		UnicodeProperties typeSettingsUnicodeProperties =
+		corEntry.setTypeSettingsUnicodeProperties(
 			UnicodePropertiesBuilder.fastLoad(
 				typeSettings
-			).build();
-
-		corEntry.setTypeSettingsUnicodeProperties(
-			typeSettingsUnicodeProperties);
+			).build());
 
 		Date date = new Date();
 
@@ -487,7 +478,7 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 
 		corEntry.setStatus(status);
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		corEntry.setStatusByUserId(user.getUserId());
 		corEntry.setStatusByUserName(user.getFullName());
@@ -642,7 +633,7 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 		Column<COREntryRelTable, Long> corEntryIdColumn) {
 
 		return classNameIdColumn.eq(
-			classNameLocalService.getClassNameId(className)
+			_classNameLocalService.getClassNameId(className)
 		).and(
 			corEntryIdColumn.eq(COREntryTable.INSTANCE.COREntryId)
 		);
@@ -664,10 +655,19 @@ public class COREntryLocalServiceImpl extends COREntryLocalServiceBaseImpl {
 		COREntryLocalServiceImpl.class);
 
 	@Reference
+	private ClassNameLocalService _classNameLocalService;
+
+	@Reference
 	private COREntryRelLocalService _corEntryRelLocalService;
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private ResourceLocalService _resourceLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 	@Reference
 	private WorkflowInstanceLinkLocalService _workflowInstanceLinkLocalService;

@@ -63,7 +63,7 @@ import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -83,15 +83,15 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.UserNotificationEventLocalService;
 import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
 import com.liferay.portal.kernel.trash.TrashHandler;
+import com.liferay.portal.kernel.trash.TrashHandlerRegistryUtil;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HtmlEscapableObject;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StreamUtil;
@@ -154,7 +154,7 @@ public class JournalArticleStagedModelDataHandler
 			return;
 		}
 
-		JSONObject extraDataJSONObject = JSONFactoryUtil.createJSONObject(
+		JSONObject extraDataJSONObject = _jsonFactory.createJSONObject(
 			extraData);
 
 		if (Validator.isNotNull(extraData) && extraDataJSONObject.has("uuid")) {
@@ -365,11 +365,10 @@ public class JournalArticleStagedModelDataHandler
 						RANGE_FROM_LAST_PUBLISH_DATE_CHANGESET_NAME);
 
 			if (changesetCollection != null) {
-				long classNameId = _classNameLocalService.getClassNameId(
-					JournalArticleResource.class);
-
 				_changesetEntryLocalService.deleteEntry(
-					changesetCollection.getChangesetCollectionId(), classNameId,
+					changesetCollection.getChangesetCollectionId(),
+					_classNameLocalService.getClassNameId(
+						JournalArticleResource.class),
 					article.getResourcePrimKey());
 			}
 		}
@@ -511,10 +510,10 @@ public class JournalArticleStagedModelDataHandler
 			ExportImportPathUtil.getModelPath(article, "journal-content-path"),
 			content);
 
-		long defaultUserId = _userLocalService.getDefaultUserId(
-			article.getCompanyId());
+		if (_isPreloadedArticle(
+				_userLocalService.getDefaultUserId(article.getCompanyId()),
+				article)) {
 
-		if (_isPreloadedArticle(defaultUserId, article)) {
 			articleElement.addAttribute("preloaded", "true");
 		}
 
@@ -869,7 +868,7 @@ public class JournalArticleStagedModelDataHandler
 
 			friendlyURLMap.forEach(
 				(locale, url) -> friendlyURLMap.replace(
-					locale, _http.decodeURL(url)));
+					locale, HttpComponentsUtil.decodeURL(url)));
 
 			String articleURL = null;
 
@@ -888,10 +887,6 @@ public class JournalArticleStagedModelDataHandler
 			}
 
 			JournalArticle importedArticle = null;
-
-			// Used when importing LARs with journal schemas under 1.1.0
-
-			_setLegacyValues(article);
 
 			if (portletDataContext.isDataStrategyMirror()) {
 				serviceContext.setUuid(article.getUuid());
@@ -1160,7 +1155,8 @@ public class JournalArticleStagedModelDataHandler
 			return;
 		}
 
-		TrashHandler trashHandler = existingArticle.getTrashHandler();
+		TrashHandler trashHandler = TrashHandlerRegistryUtil.getTrashHandler(
+			JournalArticle.class.getName());
 
 		if (trashHandler.isRestorable(existingArticle.getResourcePrimKey())) {
 			trashHandler.restoreTrashEntry(
@@ -1207,59 +1203,6 @@ public class JournalArticleStagedModelDataHandler
 			AssetDisplayPageEntry.class.getName(),
 			FriendlyURLEntry.class.getName(), Layout.class.getName()
 		};
-	}
-
-	@Reference(unbind = "-")
-	protected void setConfigurationProvider(
-		ConfigurationProvider configurationProvider) {
-
-		_configurationProvider = configurationProvider;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMStructureLocalService(
-		DDMStructureLocalService ddmStructureLocalService) {
-
-		_ddmStructureLocalService = ddmStructureLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMTemplateLocalService(
-		DDMTemplateLocalService ddmTemplateLocalService) {
-
-		_ddmTemplateLocalService = ddmTemplateLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setImageLocalService(ImageLocalService imageLocalService) {
-		_imageLocalService = imageLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setJournalArticleLocalService(
-		JournalArticleLocalService journalArticleLocalService) {
-
-		_journalArticleLocalService = journalArticleLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setJournalArticleResourceLocalService(
-		JournalArticleResourceLocalService journalArticleResourceLocalService) {
-
-		_journalArticleResourceLocalService =
-			journalArticleResourceLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setJournalCreationStrategy(
-		JournalCreationStrategy journalCreationStrategy) {
-
-		_journalCreationStrategy = journalCreationStrategy;
-	}
-
-	@Reference(unbind = "-")
-	protected void setUserLocalService(UserLocalService userLocalService) {
-		_userLocalService = userLocalService;
 	}
 
 	private void _exportAssetDisplayPage(
@@ -1579,7 +1522,7 @@ public class JournalArticleStagedModelDataHandler
 				userNotificationEvent -> {
 					userNotificationEvent.setDelivered(true);
 
-					JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
+					JSONObject jsonObject = _jsonFactory.createJSONObject(
 						userNotificationEvent.getPayload());
 
 					SubscriptionSender subscriptionSender =
@@ -1593,7 +1536,7 @@ public class JournalArticleStagedModelDataHandler
 						userNotificationEvent.getCompanyId());
 
 					Map<String, HashMap<String, Object>> contextMap =
-						(Map)JSONFactoryUtil.looseDeserialize(
+						(Map)_jsonFactory.looseDeserialize(
 							String.valueOf(jsonObject.get("context")));
 
 					String articleURL = JournalUtil.getJournalControlPanelLink(
@@ -1654,7 +1597,7 @@ public class JournalArticleStagedModelDataHandler
 					subscriptionSender.setHtmlFormat(true);
 
 					Map<String, String> localizedJsonBodyMap =
-						(Map)JSONFactoryUtil.looseDeserialize(
+						(Map)_jsonFactory.looseDeserialize(
 							String.valueOf(jsonObject.get("localizedBodyMap")));
 
 					Map<Locale, String> localizedBodyMap = new HashMap<>();
@@ -1670,7 +1613,7 @@ public class JournalArticleStagedModelDataHandler
 					subscriptionSender.setLocalizedBodyMap(localizedBodyMap);
 
 					Map<String, String> localizedJsonSubjectMap =
-						(Map)JSONFactoryUtil.looseDeserialize(
+						(Map)_jsonFactory.looseDeserialize(
 							String.valueOf(
 								jsonObject.get("localizedSubjectMap")));
 
@@ -1719,28 +1662,6 @@ public class JournalArticleStagedModelDataHandler
 						article.getArticleId(),
 					exception);
 			}
-		}
-	}
-
-	/**
-	 * @deprecated As of Judson (7.1.x), only used for backwards compatibility
-	 *             with LARs that use journal schema under 1.1.0
-	 */
-	@Deprecated
-	private void _setLegacyValues(JournalArticle article) {
-		if (MapUtil.isEmpty(article.getTitleMap()) &&
-			Validator.isNotNull(article.getLegacyTitle())) {
-
-			article.setTitleMap(
-				LocalizationUtil.getLocalizationMap(article.getLegacyTitle()));
-		}
-
-		if (MapUtil.isEmpty(article.getDescriptionMap()) &&
-			Validator.isNotNull(article.getLegacyDescription())) {
-
-			article.setDescriptionMap(
-				LocalizationUtil.getLocalizationMap(
-					article.getLegacyDescription()));
 		}
 	}
 
@@ -1809,8 +1730,13 @@ public class JournalArticleStagedModelDataHandler
 	@Reference
 	private ClassNameLocalService _classNameLocalService;
 
+	@Reference
 	private ConfigurationProvider _configurationProvider;
+
+	@Reference
 	private DDMStructureLocalService _ddmStructureLocalService;
+
+	@Reference
 	private DDMTemplateLocalService _ddmTemplateLocalService;
 
 	@Reference(target = "(content.processor.type=DLReferences)")
@@ -1824,8 +1750,6 @@ public class JournalArticleStagedModelDataHandler
 	private GroupLocalService _groupLocalService;
 
 	@Reference
-	private Http _http;
-
 	private ImageLocalService _imageLocalService;
 
 	@Reference(
@@ -1836,14 +1760,23 @@ public class JournalArticleStagedModelDataHandler
 	private volatile ExportImportContentProcessor<String>
 		_journalArticleExportImportContentProcessor;
 
+	@Reference
 	private JournalArticleLocalService _journalArticleLocalService;
+
+	@Reference
 	private JournalArticleResourceLocalService
 		_journalArticleResourceLocalService;
+
+	@Reference
 	private JournalCreationStrategy _journalCreationStrategy;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Portal _portal;
 
+	@Reference
 	private UserLocalService _userLocalService;
 
 	@Reference

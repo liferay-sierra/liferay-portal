@@ -61,6 +61,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>DISCARD_CHANGE_BUTTON</td>
+	<td>//div[contains(@class,'autofit-section')]//a[contains(.,'Discard Change')]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>DISPLAY_CONTENT_VALUE_IN_PRODUCTION</td>
 	<td>//td[contains(@class,'publications-render-view-content') and contains(.,'${key_contentValueInProduction}')]</td>
 	<td></td>
@@ -78,6 +83,11 @@
 <tr>
 	<td>FIELD_VALUE_IN_PUBLICATION</td>
 	<td>//label[contains(.,'${key_fieldName}')]//following-sibling::input[contains(@value,'${key_fieldValueInPublication}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>PAGE_VIEWPORT_PREVIEW</td>
+	<td>//td[contains(@class,'publications-render-view-content')]//iframe[contains(@src,'${key_pageURL}')]</td>
 	<td></td>
 </tr>
 </tbody>

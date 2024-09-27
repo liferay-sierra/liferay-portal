@@ -15,7 +15,8 @@
 package com.liferay.style.book.web.internal.portlet.action;
 
 import com.liferay.fragment.constants.FragmentEntryLinkConstants;
-import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
+import com.liferay.fragment.contributor.FragmentCollectionContributorRegistry;
+import com.liferay.fragment.entry.processor.constants.FragmentEntryProcessorConstants;
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.renderer.DefaultFragmentRendererContext;
@@ -23,7 +24,7 @@ import com.liferay.fragment.renderer.FragmentRendererController;
 import com.liferay.fragment.service.FragmentEntryLinkLocalService;
 import com.liferay.fragment.service.FragmentEntryLocalService;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.portlet.PortletResponseUtil;
@@ -35,7 +36,7 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 import com.liferay.style.book.constants.StyleBookPortletKeys;
 
 import java.io.ByteArrayInputStream;
@@ -83,22 +84,25 @@ public class RenderFragmentEntryLinkMVCResourceCommand
 		fragmentEntryLink.setHtml(fragmentEntry.getHtml());
 		fragmentEntryLink.setJs(fragmentEntry.getJs());
 		fragmentEntryLink.setConfiguration(fragmentEntry.getConfiguration());
-		fragmentEntryLink.setNamespace(PortalUUIDUtil.generate());
+		fragmentEntryLink.setNamespace(_portalUUID.generate());
 
 		String configurationValues = ParamUtil.get(
 			resourceRequest, "configurationValues", StringPool.BLANK);
 
 		if (Validator.isNotNull(configurationValues)) {
 			JSONObject configurationValuesJSONObject =
-				JSONFactoryUtil.createJSONObject(configurationValues);
+				_jsonFactory.createJSONObject(configurationValues);
 
 			JSONObject editableValuesJSONObject = JSONUtil.put(
-				_KEY_FREEMARKER_FRAGMENT_ENTRY_PROCESSOR,
+				FragmentEntryProcessorConstants.
+					KEY_FREEMARKER_FRAGMENT_ENTRY_PROCESSOR,
 				configurationValuesJSONObject);
 
 			fragmentEntryLink.setEditableValues(
 				editableValuesJSONObject.toString());
 		}
+
+		fragmentEntryLink.setType(fragmentEntry.getType());
 
 		DefaultFragmentRendererContext defaultFragmentRendererContext =
 			new DefaultFragmentRendererContext(fragmentEntryLink);
@@ -150,20 +154,16 @@ public class RenderFragmentEntryLinkMVCResourceCommand
 
 		if (fragmentEntry == null) {
 			fragmentEntry =
-				_fragmentCollectionContributorTracker.getFragmentEntry(
+				_fragmentCollectionContributorRegistry.getFragmentEntry(
 					fragmentEntryKey);
 		}
 
 		return fragmentEntry;
 	}
 
-	private static final String _KEY_FREEMARKER_FRAGMENT_ENTRY_PROCESSOR =
-		"com.liferay.fragment.entry.processor.freemarker." +
-			"FreeMarkerFragmentEntryProcessor";
-
 	@Reference
-	private FragmentCollectionContributorTracker
-		_fragmentCollectionContributorTracker;
+	private FragmentCollectionContributorRegistry
+		_fragmentCollectionContributorRegistry;
 
 	@Reference
 	private FragmentEntryLinkLocalService _fragmentEntryLinkLocalService;
@@ -175,6 +175,12 @@ public class RenderFragmentEntryLinkMVCResourceCommand
 	private FragmentRendererController _fragmentRendererController;
 
 	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
 	private Portal _portal;
+
+	@Reference
+	private PortalUUID _portalUUID;
 
 }

@@ -29,10 +29,10 @@ import com.liferay.portal.kernel.exception.NoSuchRepositoryException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.image.ImageBag;
 import com.liferay.portal.kernel.image.ImageTool;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
@@ -115,9 +115,18 @@ public class UploadImageMVCActionCommand extends BaseMVCActionCommand {
 
 		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
 
-		long maxFileSize = _getMaxFileSize(actionRequest);
+		long maxFileSize = UploadImageUtil.getMaxFileSize(actionRequest);
 
 		try {
+			UploadPortletRequest uploadPortletRequest =
+				_portal.getUploadPortletRequest(actionRequest);
+
+			File file = uploadPortletRequest.getFile("fileName");
+
+			if (file.length() > maxFileSize) {
+				throw new FileSizeException(maxFileSize);
+			}
+
 			UploadException uploadException =
 				(UploadException)actionRequest.getAttribute(
 					WebKeys.UPLOAD_EXCEPTION);
@@ -155,10 +164,6 @@ public class UploadImageMVCActionCommand extends BaseMVCActionCommand {
 
 				if (imageUploaded) {
 					fileEntry = _saveTempImageFileEntry(actionRequest);
-
-					if (fileEntry.getSize() > maxFileSize) {
-						throw new FileSizeException();
-					}
 				}
 
 				SessionMessages.add(actionRequest, "imageUploaded", fileEntry);
@@ -178,11 +183,11 @@ public class UploadImageMVCActionCommand extends BaseMVCActionCommand {
 		UploadPortletRequest uploadPortletRequest =
 			_portal.getUploadPortletRequest(portletRequest);
 
+		File file = uploadPortletRequest.getFile("fileName");
+
 		String contentType = uploadPortletRequest.getContentType("fileName");
 
 		String fileName = uploadPortletRequest.getFileName("fileName");
-
-		File file = uploadPortletRequest.getFile("fileName");
 
 		String mimeType = MimeTypesUtil.getContentType(file, fileName);
 
@@ -216,28 +221,6 @@ public class UploadImageMVCActionCommand extends BaseMVCActionCommand {
 			contentType);
 	}
 
-	private long _getMaxFileSize(ActionRequest actionRequest) {
-		String currentLogoURL = actionRequest.getParameter("currentLogoURL");
-
-		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
-		if (StringUtil.startsWith(
-				currentLogoURL,
-				themeDisplay.getPathImage() + "/user_female_portrait") ||
-			StringUtil.startsWith(
-				currentLogoURL,
-				themeDisplay.getPathImage() + "/user_male_portrait") ||
-			StringUtil.startsWith(
-				currentLogoURL,
-				themeDisplay.getPathImage() + "/user_portrait")) {
-
-			return _userFileUploadsConfiguration.imageMaxSize();
-		}
-
-		return ParamUtil.getLong(actionRequest, "maxFileSize");
-	}
-
 	private String _getTempImageFileName(PortletRequest portletRequest) {
 		return ParamUtil.getString(portletRequest, "tempImageFileName");
 	}
@@ -258,7 +241,9 @@ public class UploadImageMVCActionCommand extends BaseMVCActionCommand {
 				 exception instanceof ImageTypeException ||
 				 exception instanceof NoSuchFileException ||
 				 exception instanceof UploadException ||
-				 exception instanceof UploadRequestSizeException) {
+				 exception instanceof UploadRequestSizeException ||
+				 (exception.getCause() instanceof ImageTypeException) ||
+				 (exception.getCause() instanceof UploadRequestSizeException)) {
 
 			if (cmd.equals(Constants.ADD_TEMP)) {
 				hideDefaultErrorMessage(actionRequest);
@@ -291,10 +276,12 @@ public class UploadImageMVCActionCommand extends BaseMVCActionCommand {
 					errorMessage = themeDisplay.translate(
 						"please-enter-a-file-with-a-valid-file-size-no-" +
 							"larger-than-x",
-						LanguageUtil.formatStorageSize(
+						_language.formatStorageSize(
 							maxFileSize, themeDisplay.getLocale()));
 				}
-				else if (exception instanceof ImageTypeException) {
+				else if ((exception instanceof ImageTypeException) ||
+						 (exception.getCause() instanceof ImageTypeException)) {
+
 					errorMessage = themeDisplay.translate(
 						"please-enter-a-file-with-a-valid-file-type");
 				}
@@ -305,10 +292,13 @@ public class UploadImageMVCActionCommand extends BaseMVCActionCommand {
 						"an-unexpected-error-occurred-while-uploading-your-" +
 							"file");
 				}
-				else if (exception instanceof UploadRequestSizeException) {
+				else if ((exception instanceof UploadRequestSizeException) ||
+						 (exception.getCause() instanceof
+							 UploadRequestSizeException)) {
+
 					errorMessage = themeDisplay.translate(
 						"request-is-larger-than-x-and-could-not-be-processed",
-						LanguageUtil.formatStorageSize(
+						_language.formatStorageSize(
 							_uploadServletRequestConfigurationHelper.
 								getMaxSize(),
 							themeDisplay.getLocale()));
@@ -348,7 +338,7 @@ public class UploadImageMVCActionCommand extends BaseMVCActionCommand {
 					actionRequest, "cropRegion");
 
 				if (Validator.isNotNull(cropRegionJSON)) {
-					JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
+					JSONObject jsonObject = _jsonFactory.createJSONObject(
 						cropRegionJSON);
 
 					int height = jsonObject.getInt("height");
@@ -422,6 +412,12 @@ public class UploadImageMVCActionCommand extends BaseMVCActionCommand {
 
 	@Reference
 	private ImageTool _imageTool;
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

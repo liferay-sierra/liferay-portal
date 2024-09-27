@@ -20,16 +20,16 @@ import com.liferay.application.list.constants.PanelCategoryKeys;
 import com.liferay.application.list.display.context.logic.PanelCategoryHelper;
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.service.DepotEntryLocalService;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.permission.GroupPermission;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -41,12 +41,13 @@ import javax.portlet.PortletURL;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * @author Julio Camarero
  */
-@Component(immediate = true, service = GroupURLProvider.class)
+@Component(service = GroupURLProvider.class)
 public class GroupURLProvider {
 
 	public String getGroupAdministrationURL(
@@ -123,13 +124,15 @@ public class GroupURLProvider {
 					SiteWebKeys.GROUP_URL_PROVIDER_CONTROL_PANEL)));
 
 		if (Validator.isNotNull(groupDisplayURL)) {
-			return _http.removeParameter(groupDisplayURL, "p_p_id");
+			return HttpComponentsUtil.removeParameter(
+				groupDisplayURL, "p_p_id");
 		}
 
 		groupDisplayURL = group.getDisplayURL(themeDisplay, true);
 
 		if (Validator.isNotNull(groupDisplayURL)) {
-			return _http.removeParameter(groupDisplayURL, "p_p_id");
+			return HttpComponentsUtil.removeParameter(
+				groupDisplayURL, "p_p_id");
 		}
 
 		if (includeStagingGroup && group.hasStagingGroup()) {
@@ -149,18 +152,6 @@ public class GroupURLProvider {
 		}
 
 		return getGroupAdministrationURL(group, portletRequest);
-	}
-
-	@Reference(unbind = "-")
-	protected void setPanelAppRegistry(PanelAppRegistry panelAppRegistry) {
-		_panelAppRegistry = panelAppRegistry;
-	}
-
-	@Reference(unbind = "-")
-	protected void setPanelCategoryRegistry(
-		PanelCategoryRegistry panelCategoryRegistry) {
-
-		_panelCategoryRegistry = panelCategoryRegistry;
 	}
 
 	private String _getDepotDashboardGroupURL(
@@ -202,6 +193,7 @@ public class GroupURLProvider {
 
 	@Reference(
 		cardinality = ReferenceCardinality.OPTIONAL,
+		policy = ReferencePolicy.DYNAMIC,
 		policyOption = ReferencePolicyOption.GREEDY
 	)
 	private volatile DepotEntryLocalService _depotEntryLocalService;
@@ -210,9 +202,9 @@ public class GroupURLProvider {
 	private GroupPermission _groupPermission;
 
 	@Reference
-	private Http _http;
-
 	private PanelAppRegistry _panelAppRegistry;
+
+	@Reference
 	private PanelCategoryRegistry _panelCategoryRegistry;
 
 	@Reference

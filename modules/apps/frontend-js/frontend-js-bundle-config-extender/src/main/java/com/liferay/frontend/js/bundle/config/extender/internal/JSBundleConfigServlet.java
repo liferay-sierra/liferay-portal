@@ -90,13 +90,13 @@ public class JSBundleConfigServlet extends HttpServlet {
 
 		PrintWriter printWriter = new PrintWriter(servletOutputStream, true);
 
-		Collection<JSBundleConfigTracker.JSConfig> jsConfigs =
-			_jsBundleConfigTracker.getJSConfigs();
+		Collection<JSBundleConfigRegistry.JSConfig> jsConfigs =
+			_jsBundleConfigRegistry.getJSConfigs();
 
 		if (!jsConfigs.isEmpty()) {
 			printWriter.print("(function(){");
 
-			for (JSBundleConfigTracker.JSConfig jsConfig : jsConfigs) {
+			for (JSBundleConfigRegistry.JSConfig jsConfig : jsConfigs) {
 				URL url = jsConfig.getURL();
 
 				try (InputStream inputStream = url.openStream()) {
@@ -128,18 +128,13 @@ public class JSBundleConfigServlet extends HttpServlet {
 		printWriter.close();
 	}
 
-	@Reference(unbind = "-")
-	protected void setJSBundleConfigTracker(
-		JSBundleConfigTracker jsBundleConfigTracker) {
-
-		_jsBundleConfigTracker = jsBundleConfigTracker;
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		JSBundleConfigServlet.class);
 
 	private volatile ComponentContext _componentContext;
-	private JSBundleConfigTracker _jsBundleConfigTracker;
+
+	@Reference
+	private JSBundleConfigRegistry _jsBundleConfigRegistry;
 
 	@Reference
 	private Portal _portal;

@@ -59,6 +59,8 @@ components:
                     type: integer
                 type:
                     enum: [business, guest, person]
+            required:
+                - name
             type: object
         AccountBrief:
             description:
@@ -268,6 +270,11 @@ components:
                         The most recent time any of the organization's fields changed.
                     format: date-time
                     readOnly: true
+                    type: string
+                externalReferenceCode:
+                    # @review
+                    description:
+                        The optional external key of this organization.
                     type: string
                 id:
                     description:
@@ -487,6 +494,10 @@ components:
                         The address's ID.
                     format: int64
                     type: integer
+                name:
+                    description:
+                        The address's name.
+                    type: string
                 postalCode:
                     description:
                         The address's postal code (e.g., zip code).
@@ -701,6 +712,12 @@ components:
                     additionalProperties:
                         type: string
                     type: object
+                descriptiveName:
+                    type: string
+                descriptiveName_i18n:
+                    additionalProperties:
+                        type: string
+                    type: object
                 friendlyUrlPath:
                     type: string
                 id:
@@ -728,6 +745,16 @@ components:
             description:
                 Represents a site's basic information.
             properties:
+                descriptiveName:
+                    description:
+                        The site's descriptive name.
+                    readOnly: true
+                    type: string
+                descriptiveName_i18n:
+                    additionalProperties:
+                        type: string
+                    readOnly: true
+                    type: object
                 id:
                     description:
                         The site's ID.
@@ -799,6 +826,12 @@ components:
                         The user's date of birth, in ISO 8601 format.
                     format: date-time
                     type: string
+                currentPassword:
+                    description:
+                        The user's current password. Used to authenticate a user when they attempt to update their own
+                        password.
+                    type: string
+                    writeOnly: true
                 customFields:
                     items:
                         $ref: "#/components/schemas/CustomField"
@@ -966,6 +999,13 @@ components:
                                 $ref: "#/components/schemas/WebUrl"
                             type: array
                     type: object
+                userGroupBriefs:
+                    description:
+                        A list of the user's userGroups.
+                    items:
+                        $ref: "#/components/schemas/UserGroupBrief"
+                    readOnly: true
+                    type: array
             type: object
         UserGroup:
             properties:
@@ -993,6 +1033,19 @@ components:
             required:
                 - name
             type: object
+        UserGroupBrief:
+            description:
+                Represents a UserGroup's basic information.
+            properties:
+                description:
+                    type: string
+                id:
+                    format: int64
+                    readOnly: true
+                    type: integer
+                name:
+                    type: string
+            type: object
         WebUrl:
             description:
                 Represents a URL to an external site. This is modeled internally as a `WebSite`.
@@ -1018,7 +1071,7 @@ components:
 info:
     description:
         "A Java client JAR is available for use with the group ID 'com.liferay', artifact ID
-        'com.liferay.headless.admin.user.client', and version '4.0.19'."
+        'com.liferay.headless.admin.user.client', and version '4.0.32'."
     license:
         name: "Apache 2.0"
         url: "http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -1343,6 +1396,10 @@ paths:
                   schema:
                       type: string
                 - in: query
+                  name: filter
+                  schema:
+                      type: string
+                - in: query
                   name: page
                   schema:
                       type: integer
@@ -1456,6 +1513,87 @@ paths:
                         application/json: {}
                         application/xml: {}
             tags: ["AccountRole"]
+    "/accounts/by-external-reference-code/{externalReferenceCode}/organizations":
+        get:
+            description:
+                Retrieves the account's organizations. Results can be paginated, filtered, searched, and sorted.
+            parameters:
+                - in: path
+                  name: externalReferenceCode
+                  required: true
+                  schema:
+                      type: string
+                - in: query
+                  name: filter
+                  schema:
+                      type: string
+                - in: query
+                  name: page
+                  schema:
+                      type: integer
+                - in: query
+                  name: pageSize
+                  schema:
+                      type: integer
+                - in: query
+                  name: search
+                  schema:
+                      type: string
+                - in: query
+                  name: sort
+                  schema:
+                      type: string
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/Organization"
+                                type: array
+                        application/xml:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/Organization"
+                                type: array
+            tags: ["Organization"]
+    "/accounts/by-external-reference-code/{externalReferenceCode}/organizations/{organizationId}":
+        delete:
+            parameters:
+                - in: path
+                  name: externalReferenceCode
+                  required: true
+                  schema:
+                      type: string
+                - in: path
+                  name: organizationId
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                204:
+                    content:
+                        application/json: {}
+                        application/xml: {}
+            tags: ["Organization"]
+        post:
+            parameters:
+                - in: path
+                  name: externalReferenceCode
+                  required: true
+                  schema:
+                      type: string
+                - in: path
+                  name: organizationId
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                204:
+                    content:
+                        application/json: {}
+                        application/xml: {}
+            tags: ["Organization"]
     "/accounts/by-external-reference-code/{externalReferenceCode}/user-accounts":
         get:
             # @review
@@ -1801,6 +1939,10 @@ paths:
                   schema:
                       type: string
                 - in: query
+                  name: filter
+                  schema:
+                      type: string
+                - in: query
                   name: page
                   schema:
                       type: integer
@@ -1919,6 +2061,116 @@ paths:
                         application/json: {}
                         application/xml: {}
             tags: ["AccountRole"]
+    "/accounts/{accountId}/organizations":
+        get:
+            description:
+                Retrieves the account's organizations. Results can be paginated, filtered, searched, and sorted.
+            parameters:
+                - in: path
+                  name: accountId
+                  required: true
+                  schema:
+                      format: int64
+                      type: integer
+                - in: query
+                  name: filter
+                  schema:
+                      type: string
+                - in: query
+                  name: page
+                  schema:
+                      type: integer
+                - in: query
+                  name: pageSize
+                  schema:
+                      type: integer
+                - in: query
+                  name: search
+                  schema:
+                      type: string
+                - in: query
+                  name: sort
+                  schema:
+                      type: string
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/Organization"
+                                type: array
+                        application/xml:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/Organization"
+                                type: array
+            tags: ["Organization"]
+    "/accounts/{accountId}/organizations/{organizationId}":
+        delete:
+            parameters:
+                - in: path
+                  name: accountId
+                  required: true
+                  schema:
+                      format: int64
+                      type: integer
+                - in: path
+                  name: organizationId
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                204:
+                    content:
+                        application/json: {}
+                        application/xml: {}
+            tags: ["Organization"]
+        post:
+            parameters:
+                - in: path
+                  name: accountId
+                  required: true
+                  schema:
+                      format: int64
+                      type: integer
+                - in: path
+                  name: organizationId
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                204:
+                    content:
+                        application/json: {}
+                        application/xml: {}
+            tags: ["Organization"]
+    "/accounts/{accountId}/postal-addresses":
+        get:
+            description:
+                Retrieves the account's postal addresses.
+            operationId: getAccountPostalAddressesPage
+            parameters:
+                - in: path
+                  name: accountId
+                  required: true
+                  schema:
+                      format: int64
+                      type: integer
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/PostalAddress"
+                                type: array
+                        application/xml:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/PostalAddress"
+                                type: array
+            tags: ["PostalAddress"]
     "/accounts/{accountId}/user-accounts":
         get:
             # @review
@@ -2195,6 +2447,7 @@ paths:
                                 items:
                                     $ref: "#/components/schemas/Site"
                                 type: array
+            tags: ["Site"]
     "/my-user-account/subscriptions":
         get:
             operationId: getMyUserAccountSubscriptionsPage
@@ -2327,6 +2580,104 @@ paths:
                                 $ref: "#/components/schemas/Organization"
                     description:
                         "Organizations successfully created"
+            tags: ["Organization"]
+    "/organizations/by-external-reference-code/{externalReferenceCode}":
+        delete:
+            # @review
+            description:
+                Deletes an organization.
+            parameters:
+                - in: path
+                  name: externalReferenceCode
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                204:
+                    content:
+                        application/json: {}
+                        application/xml: {}
+            tags: ["Organization"]
+        get:
+            parameters:
+                - in: path
+                  name: externalReferenceCode
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Organization"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/Organization"
+            tags: ["Organization"]
+        patch:
+            # @review
+            description:
+                Updates the organization with information sent in the request body. Only the provided fields are
+                updated.
+            parameters:
+                - in: path
+                  name: externalReferenceCode
+                  required: true
+                  schema:
+                      type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/Organization"
+                    application/xml:
+                        schema:
+                            $ref: "#/components/schemas/Organization"
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Organization"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/Organization"
+                    # @review
+                    description:
+                        "Organization successfully updated"
+            tags: ["Organization"]
+        put:
+            # @review
+            description:
+                Replaces the organization with information sent in the request body. Any missing fields are deleted
+                unless they are required.
+            parameters:
+                - in: path
+                  name: externalReferenceCode
+                  required: true
+                  schema:
+                      type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/Organization"
+                    application/xml:
+                        schema:
+                            $ref: "#/components/schemas/Organization"
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Organization"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/Organization"
+                    # @review
+                    description:
+                        "Organization successfully replaced"
             tags: ["Organization"]
     "/organizations/move-accounts/{sourceOrganizationId}/{targetOrganizationId}":
         patch:
@@ -3121,6 +3472,10 @@ paths:
                   name: pageSize
                   schema:
                       type: integer
+                - in: query
+                  name: search
+                  schema:
+                      type: string
             responses:
                 200:
                     content:
@@ -3380,6 +3735,7 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/Site"
+            tags: ["Site"]
     "/sites/{siteId}":
         get:
             operationId: getSite
@@ -3399,6 +3755,7 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/Site"
+            tags: ["Site"]
     "/sites/{siteId}/segments":
         get:
             description:
@@ -3821,6 +4178,32 @@ paths:
                                     $ref: "#/components/schemas/PostalAddress"
                                 type: array
             tags: ["PostalAddress"]
+    "/user-accounts/{userAccountId}/user-groups":
+        get:
+            description:
+                Retrieves the user's user groups.
+            operationId: getUserUserGroups
+            parameters:
+                - in: path
+                  name: userAccountId
+                  required: true
+                  schema:
+                      format: int64
+                      type: integer
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/UserGroup"
+                                type: array
+                        application/xml:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/UserGroup"
+                                type: array
+            tags: ["UserGroup"]
     "/user-accounts/{userAccountId}/web-urls":
         get:
             description:

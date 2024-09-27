@@ -46,8 +46,14 @@ boolean discontinued = BeanParamUtil.getBoolean(cpInstance, request, "discontinu
 	<liferay-ui:error exception="<%= CommerceUndefinedBasePriceListException.class %>" message="there-is-no-base-price-list-associated-with-the-current-sku" />
 	<liferay-ui:error exception="<%= CPDefinitionIgnoreSKUCombinationsException.class %>" message="only-one-sku-can-be-approved" />
 	<liferay-ui:error exception="<%= CPInstanceJsonException.class %>" message="there-is-already-one-sku-with-the-selected-options" />
+
+	<liferay-ui:error exception="<%= CPInstanceMaxPriceValueException.class %>">
+		<liferay-ui:message arguments="<%= CommercePriceConstants.PRICE_VALUE_MAX %>" key="price-max-value-is-x" />
+	</liferay-ui:error>
+
 	<liferay-ui:error exception="<%= CPInstanceReplacementCPInstanceUuidException.class %>" message="please-enter-a-valid-replacement" />
 	<liferay-ui:error exception="<%= CPInstanceSkuException.class %>" message="please-enter-a-valid-sku" />
+	<liferay-ui:error exception="<%= DuplicateCPInstanceException.class %>" message="there-is-already-one-sku-with-the-external-reference-code" />
 
 	<commerce-ui:panel
 		title='<%= LanguageUtil.get(request, "details") %>'
@@ -55,6 +61,8 @@ boolean discontinued = BeanParamUtil.getBoolean(cpInstance, request, "discontinu
 		<div class="row">
 			<div class="col-6">
 				<aui:input bean="<%= cpInstance %>" model="<%= CPInstance.class %>" name="sku" />
+
+				<aui:input bean="<%= cpInstance %>" model="<%= CPInstance.class %>" name="externalReferenceCode" />
 
 				<c:if test="<%= !cpDefinition.isIgnoreSKUCombinations() %>">
 					<c:choose>
@@ -111,21 +119,24 @@ boolean discontinued = BeanParamUtil.getBoolean(cpInstance, request, "discontinu
 		<div class="row">
 			<div class="col-4">
 				<aui:input label="base-price" name="price" suffix="<%= HtmlUtil.escape(commerceCurrencyCode) %>" type="text" value="<%= cpInstanceDisplayContext.getPrice() %>">
-					<aui:validator name="min">0</aui:validator>
+					<aui:validator name="min"><%= CommercePriceConstants.PRICE_VALUE_MIN %></aui:validator>
+					<aui:validator name="max"><%= CommercePriceConstants.PRICE_VALUE_MAX %></aui:validator>
 					<aui:validator name="number" />
 				</aui:input>
 			</div>
 
 			<div class="col-4">
-				<aui:input label="sale-price" name="promoPrice" suffix="<%= HtmlUtil.escape(commerceCurrencyCode) %>" type="text" value="<%= cpInstanceDisplayContext.getPromoPrice() %>">
-					<aui:validator name="min">0</aui:validator>
+				<aui:input label="promotion-price" name="promoPrice" suffix="<%= HtmlUtil.escape(commerceCurrencyCode) %>" type="text" value="<%= cpInstanceDisplayContext.getPromoPrice() %>">
+					<aui:validator name="min"><%= CommercePriceConstants.PRICE_VALUE_MIN %></aui:validator>
+					<aui:validator name="max"><%= CommercePriceConstants.PRICE_VALUE_MAX %></aui:validator>
 					<aui:validator name="number" />
 				</aui:input>
 			</div>
 
 			<div class="col-4">
 				<aui:input name="cost" suffix="<%= HtmlUtil.escape(commerceCurrencyCode) %>" type="text" value="<%= (cpInstance == null) ? StringPool.BLANK : cpInstanceDisplayContext.round(cpInstance.getCost()) %>">
-					<aui:validator name="min">0</aui:validator>
+					<aui:validator name="min"><%= CommercePriceConstants.PRICE_VALUE_MIN %></aui:validator>
+					<aui:validator name="max"><%= CommercePriceConstants.PRICE_VALUE_MAX %></aui:validator>
 					<aui:validator name="number" />
 				</aui:input>
 			</div>
@@ -206,7 +217,7 @@ boolean discontinued = BeanParamUtil.getBoolean(cpInstance, request, "discontinu
 		%>
 
 		<div class="<%= replacementAutocompleteWrapperCssClasses %>" id="<portlet:namespace />replacementAutocompleteWrapper">
-			<label class="control-label" for="replacementCPInstanceId"><%= LanguageUtil.get(request, "replacement") %></label>
+			<label class="control-label" for="replacementCPInstanceId"><liferay-ui:message key="replacement" /></label>
 
 			<div id="autocomplete-root"></div>
 		</div>

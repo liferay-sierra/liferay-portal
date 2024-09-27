@@ -28,10 +28,21 @@ import javax.servlet.jsp.JspException;
 public class DropdownMenuTag extends ButtonTag {
 
 	@Override
+	public int doEndTag() throws JspException {
+		if (_empty) {
+			return EVAL_PAGE;
+		}
+
+		return super.doEndTag();
+	}
+
+	@Override
 	public int doStartTag() throws JspException {
 		setAttributeNamespace(_ATTRIBUTE_NAMESPACE);
 
-		if (DropdownItemListUtil.isEmpty(_dropdownItems)) {
+		_empty = DropdownItemListUtil.isEmpty(_dropdownItems);
+
+		if (_empty) {
 			return SKIP_BODY;
 		}
 
@@ -42,8 +53,16 @@ public class DropdownMenuTag extends ButtonTag {
 		return _dropdownItems;
 	}
 
+	public Map<String, String> getMenuProps() {
+		return _menuProps;
+	}
+
 	public void setDropdownItems(List<DropdownItem> dropdownItems) {
 		_dropdownItems = dropdownItems;
+	}
+
+	public void setMenuProps(Map<String, String> menuProps) {
+		_menuProps = menuProps;
 	}
 
 	@Override
@@ -52,6 +71,8 @@ public class DropdownMenuTag extends ButtonTag {
 
 		_buttonType = null;
 		_dropdownItems = null;
+		_empty = null;
+		_menuProps = null;
 	}
 
 	@Override
@@ -60,12 +81,13 @@ public class DropdownMenuTag extends ButtonTag {
 			return null;
 		}
 
-		return "frontend-taglib-clay/DropdownMenu";
+		return "{DropdownMenu} from frontend-taglib-clay";
 	}
 
 	@Override
 	protected Map<String, Object> prepareProps(Map<String, Object> props) {
 		props.put("items", _dropdownItems);
+		props.put("menuProps", _menuProps);
 
 		return super.prepareProps(props);
 	}
@@ -74,5 +96,7 @@ public class DropdownMenuTag extends ButtonTag {
 
 	private String _buttonType;
 	private List<DropdownItem> _dropdownItems;
+	private Boolean _empty;
+	private Map<String, String> _menuProps;
 
 }

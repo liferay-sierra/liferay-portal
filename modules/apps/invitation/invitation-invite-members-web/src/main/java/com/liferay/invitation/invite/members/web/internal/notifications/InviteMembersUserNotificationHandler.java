@@ -17,10 +17,9 @@ package com.liferay.invitation.invite.members.web.internal.notifications;
 import com.liferay.invitation.invite.members.constants.InviteMembersPortletKeys;
 import com.liferay.invitation.invite.members.model.MemberRequest;
 import com.liferay.invitation.invite.members.service.MemberRequestLocalService;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -31,6 +30,7 @@ import com.liferay.portal.kernel.model.UserNotificationEvent;
 import com.liferay.portal.kernel.notifications.BaseUserNotificationHandler;
 import com.liferay.portal.kernel.notifications.UserNotificationHandler;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
@@ -51,7 +51,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Jonathan Lee
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + InviteMembersPortletKeys.INVITE_MEMBERS,
 	service = UserNotificationHandler.class
 )
@@ -69,7 +68,7 @@ public class InviteMembersUserNotificationHandler
 			ServiceContext serviceContext)
 		throws Exception {
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
+		JSONObject jsonObject = _jsonFactory.createJSONObject(
 			userNotificationEvent.getPayload());
 
 		long memberRequestId = jsonObject.getLong("classPK");
@@ -161,30 +160,6 @@ public class InviteMembersUserNotificationHandler
 		return StringPool.BLANK;
 	}
 
-	@Reference(unbind = "-")
-	protected void setGroupLocalService(GroupLocalService groupLocalService) {
-		_groupLocalService = groupLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setMemberRequestLocalService(
-		MemberRequestLocalService memberRequestLocalService) {
-
-		_memberRequestLocalService = memberRequestLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setUserLocalService(UserLocalService userLocalService) {
-		_userLocalService = userLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setUserNotificationEventLocalService(
-		UserNotificationEventLocalService userNotificationEventLocalService) {
-
-		_userNotificationEventLocalService = userNotificationEventLocalService;
-	}
-
 	private String _getSiteDescriptiveName(
 			long groupId, ServiceContext serviceContext)
 		throws Exception {
@@ -197,13 +172,10 @@ public class InviteMembersUserNotificationHandler
 
 		if (group.hasPublicLayouts()) {
 			sb.append(" href=\"");
-
-			String groupFriendlyURL = _portal.getGroupFriendlyURL(
-				group.getPublicLayoutSet(), serviceContext.getThemeDisplay(),
-				false, false);
-
-			sb.append(groupFriendlyURL);
-
+			sb.append(
+				_portal.getGroupFriendlyURL(
+					group.getPublicLayoutSet(),
+					serviceContext.getThemeDisplay(), false, false));
 			sb.append("\">");
 		}
 		else {
@@ -249,13 +221,22 @@ public class InviteMembersUserNotificationHandler
 	private static final Log _log = LogFactoryUtil.getLog(
 		InviteMembersUserNotificationHandler.class);
 
+	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
 	private MemberRequestLocalService _memberRequestLocalService;
 
 	@Reference
 	private Portal _portal;
 
+	@Reference
 	private UserLocalService _userLocalService;
+
+	@Reference
 	private UserNotificationEventLocalService
 		_userNotificationEventLocalService;
 

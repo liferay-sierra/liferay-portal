@@ -14,23 +14,36 @@
 
 package com.liferay.batch.planner.web.internal.helper;
 
-import com.liferay.batch.engine.constants.BatchEngineImportTaskConstants;
+import com.liferay.batch.planner.constants.BatchPlannerPolicyConstants;
 import com.liferay.batch.planner.model.BatchPlannerMapping;
 import com.liferay.batch.planner.model.BatchPlannerPlan;
+import com.liferay.batch.planner.model.BatchPlannerPolicy;
+import com.liferay.batch.planner.service.BatchPlannerMappingLocalService;
 import com.liferay.batch.planner.service.BatchPlannerMappingService;
 import com.liferay.batch.planner.service.BatchPlannerPlanService;
+import com.liferay.batch.planner.service.BatchPlannerPolicyLocalService;
 import com.liferay.batch.planner.service.BatchPlannerPolicyService;
 import com.liferay.batch.planner.service.persistence.BatchPlannerMappingUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+
+import java.io.File;
+
+import java.net.URI;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import javax.portlet.PortletRequest;
 
@@ -44,29 +57,25 @@ import org.osgi.service.component.annotations.Reference;
 public class BatchPlannerPlanHelper {
 
 	public BatchPlannerPlan addExportBatchPlannerPlan(
-			PortletRequest portletRequest)
+			PortletRequest portletRequest, String name)
 		throws Exception {
 
 		String externalType = ParamUtil.getString(
 			portletRequest, "externalType");
-		String internalClassName = ParamUtil.getString(
-			portletRequest, "internalClassName");
-		String name = ParamUtil.getString(portletRequest, "name");
-		String taskItemDelegateName = ParamUtil.getString(
-			portletRequest, "taskItemDelegateName");
+		String internalClassName = _resolveInternalClassName(
+			ParamUtil.getString(portletRequest, "internalClassName"));
+		String taskItemDelegateName = _resolveTaskItemDelegateName(
+			ParamUtil.getString(portletRequest, "internalClassName"),
+			ParamUtil.getString(portletRequest, "taskItemDelegateName"));
 		boolean template = ParamUtil.getBoolean(portletRequest, "template");
 
 		BatchPlannerPlan batchPlannerPlan =
 			_batchPlannerPlanService.addBatchPlannerPlan(
 				true, externalType, StringPool.SLASH, internalClassName, name,
-				taskItemDelegateName, template);
+				0, taskItemDelegateName, template);
 
-		_batchPlannerPolicyService.addBatchPlannerPolicy(
-			batchPlannerPlan.getBatchPlannerPlanId(), "containsHeaders",
-			_getCheckboxValue(portletRequest, "containsHeaders"));
-		_batchPlannerPolicyService.addBatchPlannerPolicy(
-			batchPlannerPlan.getBatchPlannerPlanId(), "headlessEndpoint",
-			ParamUtil.getString(portletRequest, "headlessEndpoint"));
+		_addBatchPlannerPolicies(
+			batchPlannerPlan.getBatchPlannerPlanId(), portletRequest);
 
 		List<BatchPlannerMapping> batchPlannerMappings =
 			_getExportBatchPlannerMappings(portletRequest);
@@ -83,35 +92,33 @@ public class BatchPlannerPlanHelper {
 	}
 
 	public BatchPlannerPlan addImportBatchPlannerPlan(
-			PortletRequest portletRequest, String importFileURI)
-		throws PortalException {
+			PortletRequest portletRequest, String name, String importFileURI)
+		throws Exception {
 
 		String externalType = ParamUtil.getString(
 			portletRequest, "externalType", "CSV");
-		String internalClassName = ParamUtil.getString(
-			portletRequest, "internalClassName");
-		String name = ParamUtil.getString(portletRequest, "name");
-		String taskItemDelegateName = ParamUtil.getString(
-			portletRequest, "taskItemDelegateName");
+		String internalClassName = _resolveInternalClassName(
+			ParamUtil.getString(portletRequest, "internalClassName"));
+		String taskItemDelegateName = _resolveTaskItemDelegateName(
+			ParamUtil.getString(portletRequest, "internalClassName"),
+			ParamUtil.getString(portletRequest, "taskItemDelegateName"));
 		boolean template = ParamUtil.getBoolean(portletRequest, "template");
+
+		int size = 0;
+
+		if (!template) {
+			File file = new File(new URI(importFileURI));
+
+			size = (int)file.length();
+		}
 
 		BatchPlannerPlan batchPlannerPlan =
 			_batchPlannerPlanService.addBatchPlannerPlan(
 				false, externalType, importFileURI, internalClassName, name,
-				taskItemDelegateName, template);
+				size, taskItemDelegateName, template);
 
-		_batchPlannerPolicyService.addBatchPlannerPolicy(
-			batchPlannerPlan.getBatchPlannerPlanId(), "containsHeaders",
-			_getCheckboxValue(portletRequest, "containsHeaders"));
-		_batchPlannerPolicyService.addBatchPlannerPolicy(
-			batchPlannerPlan.getBatchPlannerPlanId(), "headlessEndpoint",
-			ParamUtil.getString(portletRequest, "headlessEndpoint"));
-		_batchPlannerPolicyService.addBatchPlannerPolicy(
-			batchPlannerPlan.getBatchPlannerPlanId(), "importStrategy",
-			ParamUtil.getString(
-				portletRequest, "importStrategy",
-				BatchEngineImportTaskConstants.
-					IMPORT_STRATEGY_STRING_ON_ERROR_FAIL));
+		_addBatchPlannerPolicies(
+			batchPlannerPlan.getBatchPlannerPlanId(), portletRequest);
 
 		List<BatchPlannerMapping> batchPlannerMappings =
 			_getImportBatchPlannerMappings(portletRequest);
@@ -125,6 +132,31 @@ public class BatchPlannerPlanHelper {
 		}
 
 		return batchPlannerPlan;
+	}
+
+	public BatchPlannerPlan copyBatchPlannerPlan(
+			long userId, long batchPlannerPlanId, String externalURL,
+			String name)
+		throws Exception {
+
+		User user = _userLocalService.fetchUser(userId);
+
+		PermissionChecker permissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(user));
+
+		if (!externalURL.startsWith("file://")) {
+			externalURL = "file://" + externalURL;
+		}
+
+		try {
+			return _copyBatchPlannerPlan(batchPlannerPlanId, externalURL, name);
+		}
+		finally {
+			PermissionThreadLocal.setPermissionChecker(permissionChecker);
+		}
 	}
 
 	public BatchPlannerPlan updateExportBatchPlannerPlan(
@@ -143,6 +175,83 @@ public class BatchPlannerPlanHelper {
 			portletRequest, _getImportBatchPlannerMappings(portletRequest));
 	}
 
+	private void _addBatchPlannerPolicies(
+			long batchPlannerPlanId, PortletRequest portletRequest)
+		throws Exception {
+
+		for (Map.Entry<String, String> entry :
+				BatchPlannerPolicyConstants.nameTypes.entrySet()) {
+
+			String name = entry.getKey();
+
+			String value = ParamUtil.getString(portletRequest, name);
+
+			if (Objects.equals(entry.getValue(), "checkbox")) {
+				value = _getCheckboxValue(portletRequest, name);
+			}
+
+			if (Validator.isNull(value)) {
+				continue;
+			}
+
+			_batchPlannerPolicyService.addBatchPlannerPolicy(
+				batchPlannerPlanId, name, value);
+		}
+	}
+
+	private BatchPlannerPlan _copyBatchPlannerPlan(
+			long batchPlannerPlanId, String externalURL, String name)
+		throws Exception {
+
+		BatchPlannerPlan templateBatchPlannerPlan =
+			_batchPlannerPlanService.fetchBatchPlannerPlan(batchPlannerPlanId);
+
+		if ((templateBatchPlannerPlan == null) ||
+			!templateBatchPlannerPlan.isTemplate()) {
+
+			throw new IllegalArgumentException(
+				"Bbatch planner plan " + batchPlannerPlanId +
+					" is not a template");
+		}
+
+		File file = new File(new URI(externalURL));
+
+		BatchPlannerPlan batchPlannerPlan =
+			_batchPlannerPlanService.addBatchPlannerPlan(
+				templateBatchPlannerPlan.isExport(),
+				templateBatchPlannerPlan.getExternalType(), externalURL,
+				templateBatchPlannerPlan.getInternalClassName(), name,
+				(int)file.length(), null, false);
+
+		List<BatchPlannerMapping> batchPlannerMappings =
+			_batchPlannerMappingService.getBatchPlannerMappings(
+				templateBatchPlannerPlan.getBatchPlannerPlanId());
+
+		for (BatchPlannerMapping batchPlannerMapping : batchPlannerMappings) {
+			_batchPlannerMappingLocalService.addBatchPlannerMapping(
+				batchPlannerPlan.getUserId(),
+				batchPlannerPlan.getBatchPlannerPlanId(),
+				batchPlannerMapping.getExternalFieldName(),
+				batchPlannerMapping.getExternalFieldType(),
+				batchPlannerMapping.getInternalFieldName(),
+				batchPlannerMapping.getInternalFieldType(),
+				batchPlannerMapping.getScript());
+		}
+
+		List<BatchPlannerPolicy> batchPlannerPolicies =
+			_batchPlannerPolicyService.getBatchPlannerPolicies(
+				templateBatchPlannerPlan.getBatchPlannerPlanId());
+
+		for (BatchPlannerPolicy batchPlannerPolicy : batchPlannerPolicies) {
+			_batchPlannerPolicyLocalService.addBatchPlannerPolicy(
+				batchPlannerPlan.getUserId(),
+				batchPlannerPlan.getBatchPlannerPlanId(),
+				batchPlannerPolicy.getName(), batchPlannerPolicy.getValue());
+		}
+
+		return batchPlannerPlan;
+	}
+
 	private String _getCheckboxValue(
 		PortletRequest portletRequest, String name) {
 
@@ -158,7 +267,8 @@ public class BatchPlannerPlanHelper {
 	private List<BatchPlannerMapping> _getExportBatchPlannerMappings(
 		PortletRequest portletRequest) {
 
-		String[] fieldNames = portletRequest.getParameterValues("fieldName");
+		String[] fieldNames = ParamUtil.getStringValues(
+			portletRequest, "fieldName");
 
 		if (fieldNames == null) {
 			return Collections.emptyList();
@@ -196,14 +306,20 @@ public class BatchPlannerPlanHelper {
 				continue;
 			}
 
-			String suffix = StringUtil.extractLast(
-				parameterName, StringPool.UNDERLINE);
+			String suffix = parameterName.substring(
+				"externalFieldName_".length());
 
-			if (Validator.isNull(
+			String internalFieldName = ParamUtil.getString(
+				portletRequest, "internalFieldName_" + suffix);
+
+			if (Validator.isNull(internalFieldName) &&
+				parameterName.contains("properties_") &&
+				Validator.isNotNull(
 					ParamUtil.getString(
-						portletRequest, "internalFieldName_" + suffix))) {
+						portletRequest,
+						"internalFieldName_properties_" + suffix))) {
 
-				continue;
+				internalFieldName = suffix;
 			}
 
 			BatchPlannerMapping batchPlannerMapping =
@@ -211,14 +327,34 @@ public class BatchPlannerPlanHelper {
 
 			batchPlannerMapping.setExternalFieldName(
 				ParamUtil.getString(portletRequest, parameterName));
-			batchPlannerMapping.setInternalFieldName(
-				ParamUtil.getString(
-					portletRequest, "internalFieldName_" + suffix));
+			batchPlannerMapping.setInternalFieldName(internalFieldName);
 
 			batchPlannerMappings.add(batchPlannerMapping);
 		}
 
 		return batchPlannerMappings;
+	}
+
+	private String _resolveInternalClassName(String internalClassName) {
+		int index = internalClassName.indexOf(StringPool.POUND);
+
+		if (index < 0) {
+			return internalClassName;
+		}
+
+		return internalClassName.substring(0, index);
+	}
+
+	private String _resolveTaskItemDelegateName(
+		String internalClassName, String taskItemDelegateName) {
+
+		int index = internalClassName.indexOf(StringPool.POUND);
+
+		if (index < 0) {
+			return taskItemDelegateName;
+		}
+
+		return internalClassName.substring(index + 1);
 	}
 
 	private BatchPlannerPlan _updateBatchPlannerPlan(
@@ -239,12 +375,7 @@ public class BatchPlannerPlanHelper {
 			_batchPlannerPlanService.updateBatchPlannerPlan(
 				batchPlannerPlanId, externalType, internalClassName, name);
 
-		_batchPlannerPolicyService.updateBatchPlannerPolicy(
-			batchPlannerPlanId, "containsHeaders",
-			_getCheckboxValue(portletRequest, "containsHeaders"));
-		_batchPlannerPolicyService.updateBatchPlannerPolicy(
-			batchPlannerPlanId, "headlessEndpoint",
-			ParamUtil.getString(portletRequest, "headlessEndpoint"));
+		_updateBatchPlannerPolicies(batchPlannerPlanId, portletRequest);
 
 		_batchPlannerMappingService.deleteBatchPlannerMappings(
 			batchPlannerPlanId);
@@ -259,6 +390,47 @@ public class BatchPlannerPlanHelper {
 		return batchPlannerPlan;
 	}
 
+	private void _updateBatchPlannerPolicies(
+			long batchPlannerPlanId, PortletRequest portletRequest)
+		throws PortalException {
+
+		for (Map.Entry<String, String> entry :
+				BatchPlannerPolicyConstants.nameTypes.entrySet()) {
+
+			String name = entry.getKey();
+
+			String value = ParamUtil.getString(portletRequest, name);
+
+			if (Objects.equals(entry.getValue(), "checkbox")) {
+				value = _getCheckboxValue(portletRequest, name);
+			}
+
+			BatchPlannerPolicy batchPlannerPolicy =
+				_batchPlannerPolicyLocalService.fetchBatchPlannerPolicy(
+					batchPlannerPlanId, name);
+
+			if (Validator.isNull(value) && (batchPlannerPolicy != null)) {
+				_batchPlannerPolicyService.deleteBatchPlannerPolicy(
+					batchPlannerPlanId, name);
+
+				continue;
+			}
+
+			if (batchPlannerPolicy != null) {
+				_batchPlannerPolicyService.updateBatchPlannerPolicy(
+					batchPlannerPlanId, name, value);
+
+				continue;
+			}
+
+			_batchPlannerPolicyService.addBatchPlannerPolicy(
+				batchPlannerPlanId, name, value);
+		}
+	}
+
+	@Reference
+	private BatchPlannerMappingLocalService _batchPlannerMappingLocalService;
+
 	@Reference
 	private BatchPlannerMappingService _batchPlannerMappingService;
 
@@ -266,6 +438,12 @@ public class BatchPlannerPlanHelper {
 	private BatchPlannerPlanService _batchPlannerPlanService;
 
 	@Reference
+	private BatchPlannerPolicyLocalService _batchPlannerPolicyLocalService;
+
+	@Reference
 	private BatchPlannerPolicyService _batchPlannerPolicyService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

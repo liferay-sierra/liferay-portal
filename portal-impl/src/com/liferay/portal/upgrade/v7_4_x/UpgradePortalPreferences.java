@@ -21,6 +21,8 @@ import com.liferay.portal.kernel.dao.jdbc.AutoBatchPreparedStatementUtil;
 import com.liferay.portal.kernel.model.PortalPreferenceValue;
 import com.liferay.portal.kernel.model.PortletConstants;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
+import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
+import com.liferay.portal.kernel.upgrade.UpgradeStep;
 import com.liferay.portal.model.impl.PortalPreferenceValueImpl;
 import com.liferay.portlet.PortletPreferencesFactoryImpl;
 import com.liferay.portlet.Preference;
@@ -48,7 +50,7 @@ public class UpgradePortalPreferences extends UpgradeProcess {
 			SQLTransformer.transform(
 				StringBundler.concat(
 					"select portalPreferencesId, preferences from ",
-					"PortalPreferences where CAST_CLOB_TEXT(preferences) != '",
+					"PortalPreferences where preferences not like '",
 					PortletConstants.DEFAULT_PREFERENCES,
 					"' and preferences is not null")),
 			resultSet -> new Object[] {
@@ -62,8 +64,14 @@ public class UpgradePortalPreferences extends UpgradeProcess {
 				_upgradePortalPreferences(portalPreferencesId, preferences);
 			},
 			null);
+	}
 
-		alterTableDropColumn("PortalPreferences", "preferences");
+	@Override
+	protected UpgradeStep[] getPostUpgradeSteps() {
+		return new UpgradeStep[] {
+			UpgradeProcessFactory.dropColumns(
+				"PortalPreferences", "preferences")
+		};
 	}
 
 	private void _upgradePortalPreferences(
@@ -83,12 +91,12 @@ public class UpgradePortalPreferences extends UpgradeProcess {
 
 		try (PreparedStatement preparedStatement =
 				AutoBatchPreparedStatementUtil.autoBatch(
-					connection.prepareStatement(
-						StringBundler.concat(
-							"insert into PortalPreferenceValue (mvccVersion, ",
-							"portalPreferenceValueId, portalPreferencesId, ",
-							"index_, key_, largeValue, namespace, smallValue) ",
-							"values (0, ?, ?, ?, ?, ?, ?, ?)")))) {
+					connection,
+					StringBundler.concat(
+						"insert into PortalPreferenceValue (mvccVersion, ",
+						"portalPreferenceValueId, portalPreferencesId, ",
+						"index_, key_, largeValue, namespace, smallValue) ",
+						"values (0, ?, ?, ?, ?, ?, ?, ?)"))) {
 
 			for (Preference preference : preferenceMap.values()) {
 				String namespace = null;

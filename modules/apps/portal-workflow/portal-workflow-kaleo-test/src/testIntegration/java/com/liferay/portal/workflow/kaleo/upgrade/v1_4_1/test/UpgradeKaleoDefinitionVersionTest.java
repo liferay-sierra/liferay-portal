@@ -225,11 +225,6 @@ public class UpgradeKaleoDefinitionVersionTest {
 					}
 				}
 
-				@Override
-				public void registerInitialUpgradeSteps(
-					UpgradeStep... upgradeSteps) {
-				}
-
 			});
 	}
 
@@ -248,7 +243,7 @@ public class UpgradeKaleoDefinitionVersionTest {
 	private Timestamp _timestamp;
 
 	@Inject(
-		filter = "component.name=com.liferay.portal.workflow.kaleo.internal.upgrade.KaleoServiceUpgrade"
+		filter = "component.name=com.liferay.portal.workflow.kaleo.internal.upgrade.registry.KaleoServiceUpgradeStepRegistrator"
 	)
 	private UpgradeStepRegistrator _upgradeStepRegistrator;
 

@@ -10,6 +10,52 @@
  */
 
 /**
+ * Formats locale from default pattern with underscore to pattern with
+ * dashes (BCP47).
+ *
+ * Example:
+ * formatLocaleWithDashes("en_US")
+ * => "en-US"
+ *
+ * @param {string} locale Language identifier
+ * @returns {string}
+ */
+export function formatLocaleWithDashes(locale) {
+	return locale.replaceAll('_', '-');
+}
+
+/**
+ * Formats locale from pattern with dashes (BCP47) to default pattern
+ * with underscore.
+ *
+ * Example:
+ * formatLocaleWithUnderscore("en-US")
+ * => "en_US"
+ *
+ * @param {string} locale Language identifier
+ * @returns {string}
+ */
+export function formatLocaleWithUnderscores(locale) {
+	return locale.replaceAll('-', '_');
+}
+
+/**
+ * Converts some of the more unique regional locales that differ from
+ * the expected format.
+ *
+ * @param {string} locale Language identifier
+ * @returns {string}
+ */
+export function transformLocale(locale) {
+	const languages = {
+		'zh-Hans-CN': 'zh-CN',
+		'zh-Hant-TW': 'zh-TW',
+	};
+
+	return languages[locale] || locale;
+}
+
+/**
  * Function to return a new object with renamed keys.
  *
  * Example:
@@ -69,8 +115,50 @@ export function sub(langKey, args, join = true) {
 }
 
 /**
- * Used for getting the element title and description. Titles and descriptions
- * handle both string `'title'` and a localized object `{'en_US': 'Title'}`.
+ * Returns localized information used to link to a resource, like Liferay Learn
+ * articles. The json object `learnMessages` contains the messages and urls.
+ *
+ * Example:
+ * getLocalizedLearnMessageObject("general", {
+ *	"general": {
+ *		"en_US": {
+ *			"message": "Tell me more",
+ *			"url": "https://learn.liferay.com/"
+ *		}
+ *	}
+ * })
+ * => {
+ *			"message": "Tell me more",
+ *			"url": "https://learn.liferay.com/"
+ *		}
+ *
+ * @param {string} resourceKey Identifies which resource to render
+ * @param {Object} learnMessages Contains the messages and urls
+ * @param {string} [locale=Liferay.ThemeDisplay.getLanguageId()]
+ * @param {string} [defaultLocale=Liferay.ThemeDisplay.getDefaultLanguageId()]
+ * @return {Object}
+ */
+export function getLocalizedLearnMessageObject(
+	resourceKey,
+	learnMessages = {},
+	locale = Liferay.ThemeDisplay.getLanguageId(),
+	defaultLocale = Liferay.ThemeDisplay.getDefaultLanguageId()
+) {
+	const keyObject = learnMessages[resourceKey] || {en_US: {}};
+
+	return (
+		keyObject[locale] ||
+		keyObject[defaultLocale] ||
+		keyObject[Object.keys(keyObject)[0]]
+	);
+}
+
+/**
+ * Used for getting the blueprint or element title and description. Titles
+ * and descriptions handle both string `'title'` and a localized object
+ * `{'en_US': 'Title'}`. This also accommodates for when elements
+ * have titles and descriptions that use the BCP 47 language code,
+ * such as `{'en-US': 'Title'}`.
  * @param {string|Object} value
  * @param {string} locale
  */
@@ -81,13 +169,25 @@ export function getLocalizedText(value, locale) {
 	else if (value[locale]) {
 		return value[locale];
 	}
+	else if (value[formatLocaleWithDashes(locale)]) {
+		return value[formatLocaleWithDashes(locale)];
+	}
 	else if (typeof value === 'string' || value instanceof String) {
 		return value;
 	}
 	else if (value[Liferay.ThemeDisplay.getDefaultLanguageId()]) {
 		return value[Liferay.ThemeDisplay.getDefaultLanguageId()];
 	}
-	else if (Object.keys(value).length > 0) {
+	else if (
+		value[
+			formatLocaleWithDashes(Liferay.ThemeDisplay.getDefaultLanguageId())
+		]
+	) {
+		return value[
+			formatLocaleWithDashes(Liferay.ThemeDisplay.getDefaultLanguageId())
+		];
+	}
+	else if (Object.keys(value).length) {
 		return value[Object.keys(value)[0]];
 	}
 

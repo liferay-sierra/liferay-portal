@@ -61,9 +61,8 @@ page import="com.liferay.portal.kernel.util.Validator" %><%@
 page import="com.liferay.portal.kernel.util.WebKeys" %><%@
 page import="com.liferay.portal.kernel.workflow.WorkflowConstants" %>
 
-<%@ page import="java.util.Locale" %>
-
-<%@ page import="org.apache.commons.lang.StringUtils" %>
+<%@ page import="java.util.Locale" %><%@
+page import="java.util.Map" %>
 
 <liferay-frontend:defineObjects />
 

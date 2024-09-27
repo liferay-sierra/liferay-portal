@@ -14,7 +14,6 @@
 
 package com.liferay.portal.workflow.instance.tracker.web.internal.url.provider;
 
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.bean.BeanProperties;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -23,6 +22,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.WorkflowInstanceLink;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.WorkflowInstanceLinkLocalService;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.workflow.instance.tracker.url.provider.WorkflowInstanceTrackerURLProvider;
@@ -38,7 +38,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Feliphe Marinho
  */
-@Component(immediate = true, service = WorkflowInstanceTrackerURLProvider.class)
+@Component(service = WorkflowInstanceTrackerURLProvider.class)
 public class WorkflowInstanceTrackerURLProviderImpl
 	implements WorkflowInstanceTrackerURLProvider {
 
@@ -68,8 +68,7 @@ public class WorkflowInstanceTrackerURLProviderImpl
 				}
 				catch (PortalException portalException) {
 					if (_log.isDebugEnabled()) {
-						_log.debug(
-							portalException.getMessage(), portalException);
+						_log.debug(portalException);
 					}
 				}
 

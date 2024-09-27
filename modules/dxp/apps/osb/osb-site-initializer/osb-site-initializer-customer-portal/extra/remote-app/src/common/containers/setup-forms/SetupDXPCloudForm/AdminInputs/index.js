@@ -9,37 +9,14 @@
  * distribution rights of the Software.
  */
 
-import {useLazyQuery} from '@apollo/client';
 import ClayForm, {ClayInput} from '@clayui/form';
-import {useEffect, useState} from 'react';
+import i18n from '../../../../I18n';
 import {Input} from '../../../../components';
-import useDebounce from '../../../../hooks/useDebounce';
-import {getBannedEmailDomains} from '../../../../services/liferay/graphql/queries';
+import useBannedDomains from '../../../../hooks/useBannedDomains';
 import {isValidEmail} from '../../../../utils/validations.form';
 
 const AdminInputs = ({admin, id}) => {
-	const debouncedEmail = useDebounce(admin?.email, 500);
-	const [bannedDomain, setBannedDomain] = useState(debouncedEmail);
-
-	const [fetchBannedDomain, {data}] = useLazyQuery(getBannedEmailDomains);
-	const bannedDomainsItems = data?.c?.bannedEmailDomains?.items;
-
-	useEffect(() => {
-		const emailDomain = debouncedEmail.split('@')[1];
-
-		if (emailDomain) {
-			fetchBannedDomain({
-				variables: {
-					filter: `domain eq '${emailDomain}'`,
-				},
-			});
-
-			if (bannedDomainsItems?.length) {
-				setBannedDomain(bannedDomainsItems[0].domain);
-			}
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [bannedDomainsItems, debouncedEmail]);
+	const bannedDomains = useBannedDomains(admin?.email, 500);
 
 	return (
 		<ClayForm.Group className="mb-0 pb-1">
@@ -47,18 +24,18 @@ const AdminInputs = ({admin, id}) => {
 
 			<Input
 				groupStyle="pt-1"
-				label="DXP Cloud System Admin's Email Address"
+				label={i18n.translate('system-admin-s-email-address')}
 				name={`dxp.admins[${id}].email`}
 				placeholder="email@example.com"
 				required
 				type="email"
-				validations={[(value) => isValidEmail(value, bannedDomain)]}
+				validations={[(value) => isValidEmail(value, bannedDomains)]}
 			/>
 
 			<ClayInput.Group className="mb-0">
 				<ClayInput.GroupItem className="m-0">
 					<Input
-						label="System Admin’s First Name"
+						label={i18n.translate('system-admin-s-first-name')}
 						name={`dxp.admins[${id}].firstName`}
 						required
 						type="text"
@@ -67,7 +44,7 @@ const AdminInputs = ({admin, id}) => {
 
 				<ClayInput.GroupItem className="m-0">
 					<Input
-						label="System Admin’s Last Name"
+						label={i18n.translate('system-admin-s-last-name')}
 						name={`dxp.admins[${id}].lastName`}
 						required
 						type="text"
@@ -77,7 +54,7 @@ const AdminInputs = ({admin, id}) => {
 
 			<Input
 				groupStyle="mb-0"
-				label="System Admin’s Github Username"
+				label={i18n.translate('system-admin-s-github-username')}
 				name={`dxp.admins[${id}].github`}
 				required
 				type="text"

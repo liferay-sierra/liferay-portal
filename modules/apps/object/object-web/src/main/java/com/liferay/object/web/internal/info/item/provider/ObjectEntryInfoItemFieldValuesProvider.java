@@ -17,12 +17,7 @@ package com.liferay.object.web.internal.info.item.provider;
 import com.liferay.asset.display.page.portlet.AssetDisplayPageFriendlyURLProvider;
 import com.liferay.info.field.InfoField;
 import com.liferay.info.field.InfoFieldValue;
-import com.liferay.info.field.type.BooleanInfoFieldType;
-import com.liferay.info.field.type.DateInfoFieldType;
 import com.liferay.info.field.type.ImageInfoFieldType;
-import com.liferay.info.field.type.InfoFieldType;
-import com.liferay.info.field.type.NumberInfoFieldType;
-import com.liferay.info.field.type.TextInfoFieldType;
 import com.liferay.info.item.InfoItemFieldValues;
 import com.liferay.info.item.InfoItemReference;
 import com.liferay.info.item.field.reader.InfoItemFieldReaderFieldSetProvider;
@@ -31,13 +26,19 @@ import com.liferay.info.localized.InfoLocalizedValue;
 import com.liferay.info.type.WebImage;
 import com.liferay.list.type.model.ListTypeEntry;
 import com.liferay.list.type.service.ListTypeEntryLocalService;
+import com.liferay.object.constants.ObjectFieldConstants;
+import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.model.ObjectField;
+import com.liferay.object.rest.manager.v1_0.ObjectEntryManager;
+import com.liferay.object.rest.manager.v1_0.ObjectEntryManagerRegistry;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.web.internal.info.item.ObjectEntryInfoItemFields;
+import com.liferay.object.web.internal.util.ObjectFieldDBTypeUtil;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.User;
@@ -45,9 +46,12 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.vulcan.util.TransformUtil;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.template.info.item.provider.TemplateInfoItemFieldSetProvider;
 
 import java.io.Serializable;
@@ -55,6 +59,7 @@ import java.io.Serializable;
 import java.text.Format;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -71,7 +76,9 @@ public class ObjectEntryInfoItemFieldValuesProvider
 		InfoItemFieldReaderFieldSetProvider infoItemFieldReaderFieldSetProvider,
 		JSONFactory jsonFactory,
 		ListTypeEntryLocalService listTypeEntryLocalService,
+		ObjectDefinition objectDefinition,
 		ObjectEntryLocalService objectEntryLocalService,
+		ObjectEntryManagerRegistry objectEntryManagerRegistry,
 		ObjectFieldLocalService objectFieldLocalService,
 		TemplateInfoItemFieldSetProvider templateInfoItemFieldSetProvider,
 		UserLocalService userLocalService) {
@@ -82,7 +89,9 @@ public class ObjectEntryInfoItemFieldValuesProvider
 			infoItemFieldReaderFieldSetProvider;
 		_jsonFactory = jsonFactory;
 		_listTypeEntryLocalService = listTypeEntryLocalService;
+		_objectDefinition = objectDefinition;
 		_objectEntryLocalService = objectEntryLocalService;
+		_objectEntryManagerRegistry = objectEntryManagerRegistry;
 		_objectFieldLocalService = objectFieldLocalService;
 		_templateInfoItemFieldSetProvider = templateInfoItemFieldSetProvider;
 		_userLocalService = userLocalService;
@@ -92,117 +101,182 @@ public class ObjectEntryInfoItemFieldValuesProvider
 	public InfoItemFieldValues getInfoItemFieldValues(ObjectEntry objectEntry) {
 		return InfoItemFieldValues.builder(
 		).infoFieldValues(
-			_getObjectEntryInfoFieldValues(objectEntry)
+			_getInfoFieldValues(objectEntry)
 		).infoFieldValues(
 			_infoItemFieldReaderFieldSetProvider.getInfoFieldValues(
-				ObjectEntry.class.getName(), objectEntry)
+				objectEntry.getModelClassName(), objectEntry)
 		).infoFieldValues(
 			_templateInfoItemFieldSetProvider.getInfoFieldValues(
 				objectEntry.getModelClassName(), objectEntry)
 		).infoItemReference(
 			new InfoItemReference(
-				ObjectEntry.class.getName(), objectEntry.getObjectEntryId())
+				objectEntry.getModelClassName(), objectEntry.getObjectEntryId())
 		).build();
 	}
 
 	private String _getDisplayPageURL(
 			ObjectEntry objectEntry, ThemeDisplay themeDisplay)
-		throws PortalException {
+		throws Exception {
 
 		return _assetDisplayPageFriendlyURLProvider.getFriendlyURL(
 			objectEntry.getModelClassName(), objectEntry.getObjectEntryId(),
 			themeDisplay);
 	}
 
-	private InfoFieldType _getInfoFieldType(ObjectField objectField) {
-		if (Validator.isNotNull(objectField.getRelationshipType())) {
-			return TextInfoFieldType.INSTANCE;
-		}
-		else if (Objects.equals(objectField.getDBType(), "Boolean")) {
-			return BooleanInfoFieldType.INSTANCE;
-		}
-		else if (Objects.equals(objectField.getDBType(), "BigDecimal") ||
-				 Objects.equals(objectField.getDBType(), "Double") ||
-				 Objects.equals(objectField.getDBType(), "Integer") ||
-				 Objects.equals(objectField.getDBType(), "Long")) {
-
-			return NumberInfoFieldType.INSTANCE;
-		}
-		else if (Objects.equals(objectField.getDBType(), "Blob")) {
-			return ImageInfoFieldType.INSTANCE;
-		}
-		else if (Objects.equals(objectField.getDBType(), "Date")) {
-			return DateInfoFieldType.INSTANCE;
-		}
-		else if (Objects.equals(objectField.getDBType(), "String")) {
-			return TextInfoFieldType.INSTANCE;
-		}
-
-		return TextInfoFieldType.INSTANCE;
-	}
-
-	private List<InfoFieldValue<Object>> _getObjectEntryInfoFieldValues(
+	private List<InfoFieldValue<Object>> _getInfoFieldValues(
 		ObjectEntry objectEntry) {
 
 		try {
-			List<InfoFieldValue<Object>> objectEntryFieldValues =
-				new ArrayList<>();
-
-			objectEntryFieldValues.add(
-				new InfoFieldValue<>(
-					ObjectEntryInfoItemFields.createDateInfoField,
-					objectEntry.getCreateDate()));
-			objectEntryFieldValues.add(
-				new InfoFieldValue<>(
-					ObjectEntryInfoItemFields.modifiedDateInfoField,
-					objectEntry.getModifiedDate()));
-			objectEntryFieldValues.add(
-				new InfoFieldValue<>(
-					ObjectEntryInfoItemFields.publishDateInfoField,
-					objectEntry.getLastPublishDate()));
-			objectEntryFieldValues.add(
-				new InfoFieldValue<>(
-					ObjectEntryInfoItemFields.userNameInfoField,
-					objectEntry.getUserName()));
-			objectEntryFieldValues.add(
-				new InfoFieldValue<>(
-					ObjectEntryInfoItemFields.userProfileImageInfoField,
-					_getWebImage(objectEntry.getUserId())));
-
-			ThemeDisplay themeDisplay = _getThemeDisplay();
-
-			if (themeDisplay != null) {
-				objectEntryFieldValues.add(
-					new InfoFieldValue<>(
-						ObjectEntryInfoItemFields.displayPageURLInfoField,
-						_getDisplayPageURL(objectEntry, themeDisplay)));
+			if (_objectDefinition.isDefaultStorageType()) {
+				return _getInfoFieldValuesByDefaultStorageType(objectEntry);
 			}
 
-			Map<String, Serializable> values = objectEntry.getValues();
-
-			objectEntryFieldValues.addAll(
-				TransformUtil.transform(
-					_objectFieldLocalService.getObjectFields(
-						objectEntry.getObjectDefinitionId()),
-					objectField -> new InfoFieldValue<>(
-						InfoField.builder(
-						).infoFieldType(
-							_getInfoFieldType(objectField)
-						).name(
-							objectField.getName()
-						).labelInfoLocalizedValue(
-							InfoLocalizedValue.<String>builder(
-							).values(
-								objectField.getLabelMap()
-							).build()
-						).build(),
-						_getValue(objectField, values))));
-
-			return objectEntryFieldValues;
+			return _getInfoFieldValuesByObjectEntryManager(objectEntry);
 		}
-		catch (PortalException portalException) {
-			throw new RuntimeException(portalException);
+		catch (Exception exception) {
+			return ReflectionUtil.throwException(exception);
 		}
+	}
+
+	private List<InfoFieldValue<Object>>
+			_getInfoFieldValuesByDefaultStorageType(ObjectEntry objectEntry)
+		throws Exception {
+
+		List<InfoFieldValue<Object>> objectEntryFieldValues = new ArrayList<>();
+
+		objectEntryFieldValues.add(
+			new InfoFieldValue<>(
+				ObjectEntryInfoItemFields.authorInfoField,
+				objectEntry.getUserName()));
+		objectEntryFieldValues.add(
+			new InfoFieldValue<>(
+				ObjectEntryInfoItemFields.createDateInfoField,
+				objectEntry.getCreateDate()));
+		objectEntryFieldValues.add(
+			new InfoFieldValue<>(
+				ObjectEntryInfoItemFields.externalReferenceCodeInfoField,
+				objectEntry.getExternalReferenceCode()));
+		objectEntryFieldValues.add(
+			new InfoFieldValue<>(
+				ObjectEntryInfoItemFields.modifiedDateInfoField,
+				objectEntry.getModifiedDate()));
+		objectEntryFieldValues.add(
+			new InfoFieldValue<>(
+				ObjectEntryInfoItemFields.objectEntryIdInfoField,
+				objectEntry.getObjectEntryId()));
+		objectEntryFieldValues.add(
+			new InfoFieldValue<>(
+				ObjectEntryInfoItemFields.publishDateInfoField,
+				objectEntry.getLastPublishDate()));
+		objectEntryFieldValues.add(
+			new InfoFieldValue<>(
+				ObjectEntryInfoItemFields.statusInfoField,
+				WorkflowConstants.getStatusLabel(objectEntry.getStatus())));
+		objectEntryFieldValues.add(
+			new InfoFieldValue<>(
+				ObjectEntryInfoItemFields.userProfileImageInfoField,
+				_getWebImage(objectEntry.getUserId())));
+
+		ThemeDisplay themeDisplay = _getThemeDisplay();
+
+		if (themeDisplay != null) {
+			objectEntryFieldValues.add(
+				new InfoFieldValue<>(
+					ObjectEntryInfoItemFields.displayPageURLInfoField,
+					_getDisplayPageURL(objectEntry, themeDisplay)));
+		}
+
+		Map<String, Serializable> values = objectEntry.getValues();
+
+		objectEntryFieldValues.addAll(
+			TransformUtil.transform(
+				_objectFieldLocalService.getObjectFields(
+					objectEntry.getObjectDefinitionId()),
+				objectField -> new InfoFieldValue<>(
+					InfoField.builder(
+					).infoFieldType(
+						ObjectFieldDBTypeUtil.getInfoFieldType(objectField)
+					).namespace(
+						ObjectField.class.getSimpleName()
+					).name(
+						objectField.getName()
+					).labelInfoLocalizedValue(
+						InfoLocalizedValue.<String>builder(
+						).values(
+							objectField.getLabelMap()
+						).build()
+					).build(),
+					_getValue(objectField, values))));
+
+		return objectEntryFieldValues;
+	}
+
+	private List<InfoFieldValue<Object>>
+			_getInfoFieldValuesByObjectEntryManager(
+				ObjectEntry serviceBuilderObjectEntry)
+		throws Exception {
+
+		ThemeDisplay themeDisplay = _getThemeDisplay();
+
+		if (themeDisplay != null) {
+			return Collections.emptyList();
+		}
+
+		List<InfoFieldValue<Object>> objectEntryFieldValues = new ArrayList<>();
+
+		ObjectEntryManager objectEntryManager =
+			_objectEntryManagerRegistry.getObjectEntryManager(
+				_objectDefinition.getStorageType());
+
+		com.liferay.object.rest.dto.v1_0.ObjectEntry objectEntry =
+			objectEntryManager.getObjectEntry(
+				new DefaultDTOConverterContext(
+					false, null, null, null, null, themeDisplay.getLocale(),
+					null, themeDisplay.getUser()),
+				serviceBuilderObjectEntry.getExternalReferenceCode(),
+				themeDisplay.getCompanyId(), _objectDefinition, null);
+
+		objectEntryFieldValues.add(
+			new InfoFieldValue<>(
+				ObjectEntryInfoItemFields.createDateInfoField,
+				objectEntry.getDateCreated()));
+		objectEntryFieldValues.add(
+			new InfoFieldValue<>(
+				ObjectEntryInfoItemFields.modifiedDateInfoField,
+				objectEntry.getDateModified()));
+		objectEntryFieldValues.add(
+			new InfoFieldValue<>(
+				ObjectEntryInfoItemFields.publishDateInfoField,
+				objectEntry.getDateModified()));
+
+		objectEntryFieldValues.add(
+			new InfoFieldValue<>(
+				ObjectEntryInfoItemFields.displayPageURLInfoField,
+				_getDisplayPageURL(serviceBuilderObjectEntry, themeDisplay)));
+
+		Map<String, Object> properties = objectEntry.getProperties();
+
+		objectEntryFieldValues.addAll(
+			TransformUtil.transform(
+				_objectFieldLocalService.getObjectFields(
+					serviceBuilderObjectEntry.getObjectDefinitionId()),
+				objectField -> new InfoFieldValue<>(
+					InfoField.builder(
+					).infoFieldType(
+						ObjectFieldDBTypeUtil.getInfoFieldType(objectField)
+					).namespace(
+						ObjectField.class.getSimpleName()
+					).name(
+						objectField.getName()
+					).labelInfoLocalizedValue(
+						InfoLocalizedValue.<String>builder(
+						).values(
+							objectField.getLabelMap()
+						).build()
+					).build(),
+					_getValue(objectField, properties))));
+
+		return objectEntryFieldValues;
 	}
 
 	private ThemeDisplay _getThemeDisplay() {
@@ -217,8 +291,8 @@ public class ObjectEntryInfoItemFieldValuesProvider
 	}
 
 	private Object _getValue(
-			ObjectField objectField, Map<String, Serializable> values)
-		throws PortalException {
+			ObjectField objectField, Map<String, ? extends Object> values)
+		throws Exception {
 
 		Object value = values.get(objectField.getName());
 
@@ -233,7 +307,8 @@ public class ObjectEntryInfoItemFieldValuesProvider
 			ServiceContextThreadLocal.getServiceContext();
 
 		if (Objects.equals(
-				_getInfoFieldType(objectField), ImageInfoFieldType.INSTANCE)) {
+				ObjectFieldDBTypeUtil.getInfoFieldType(objectField),
+				ImageInfoFieldType.INSTANCE)) {
 
 			JSONObject jsonObject = _jsonFactory.createJSONObject(
 				new String((byte[])values.get(objectField.getName())));
@@ -250,9 +325,15 @@ public class ObjectEntryInfoItemFieldValuesProvider
 					objectField.getListTypeDefinitionId(),
 					(String)values.get(objectField.getName()));
 
+			if (listTypeEntry == null) {
+				return StringPool.BLANK;
+			}
+
 			return listTypeEntry.getName(serviceContext.getLocale());
 		}
-		else if (Validator.isNotNull(objectField.getRelationshipType())) {
+		else if (Validator.isNotNull(objectField.getRelationshipType()) &&
+				 (GetterUtil.getLong(value) > 0)) {
+
 			ObjectEntry objectEntry = _objectEntryLocalService.fetchObjectEntry(
 				(Long)values.get(objectField.getName()));
 
@@ -260,17 +341,25 @@ public class ObjectEntryInfoItemFieldValuesProvider
 				return objectEntry.getTitleValue();
 			}
 		}
-		else if (Objects.equals(objectField.getDBType(), "Date")) {
+		else if (Objects.equals(
+					objectField.getDBType(),
+					ObjectFieldConstants.DB_TYPE_DATE)) {
+
 			Format dateFormat = FastDateFormatFactoryUtil.getDate(
 				serviceContext.getLocale());
 
-			return dateFormat.format((Date)values.get(objectField.getName()));
+			Object dateValue = values.get(objectField.getName());
+
+			Date date = DateUtil.parseDate(
+				"yyyy-MM-dd", dateValue.toString(), serviceContext.getLocale());
+
+			return dateFormat.format(date);
 		}
 
 		return values.get(objectField.getName());
 	}
 
-	private WebImage _getWebImage(long userId) throws PortalException {
+	private WebImage _getWebImage(long userId) throws Exception {
 		User user = _userLocalService.fetchUser(userId);
 
 		if (user == null) {
@@ -296,7 +385,9 @@ public class ObjectEntryInfoItemFieldValuesProvider
 		_infoItemFieldReaderFieldSetProvider;
 	private final JSONFactory _jsonFactory;
 	private final ListTypeEntryLocalService _listTypeEntryLocalService;
+	private final ObjectDefinition _objectDefinition;
 	private final ObjectEntryLocalService _objectEntryLocalService;
+	private final ObjectEntryManagerRegistry _objectEntryManagerRegistry;
 	private final ObjectFieldLocalService _objectFieldLocalService;
 	private final TemplateInfoItemFieldSetProvider
 		_templateInfoItemFieldSetProvider;

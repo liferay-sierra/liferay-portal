@@ -40,7 +40,7 @@ import com.liferay.commerce.service.CommerceOrderService;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Organization;
@@ -57,7 +57,7 @@ import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.webserver.WebServerServletTokenUtil;
+import com.liferay.portal.kernel.webserver.WebServerServletToken;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.util.ArrayList;
@@ -87,7 +87,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alessio Antonio Rendina
  */
-@Component(enabled = false, service = CommerceAccountResource.class)
+@Component(service = CommerceAccountResource.class)
 public class CommerceAccountResource {
 
 	public AccountList getAccountList(
@@ -311,7 +311,7 @@ public class CommerceAccountResource {
 	private String _getLogoThumbnailSrc(long logoId, String imagePath) {
 		return StringBundler.concat(
 			imagePath, "/organization_logo?img_id=", logoId, "&t=",
-			WebServerServletTokenUtil.getToken(logoId));
+			_webServerServletToken.getToken(logoId));
 	}
 
 	private String _getOrderLinkURL(
@@ -359,10 +359,9 @@ public class CommerceAccountResource {
 		for (CommerceOrder commerceOrder : userCommerceOrders) {
 			Date modifiedDate = commerceOrder.getModifiedDate();
 
-			String modifiedDateTimeDescription =
-				LanguageUtil.getTimeDescription(
-					httpServletRequest,
-					System.currentTimeMillis() - modifiedDate.getTime(), true);
+			String modifiedDateTimeDescription = _language.getTimeDescription(
+				httpServletRequest,
+				System.currentTimeMillis() - modifiedDate.getTime(), true);
 
 			orders.add(
 				new Order(
@@ -370,7 +369,7 @@ public class CommerceAccountResource {
 					commerceOrder.getCommerceAccountId(),
 					commerceOrder.getCommerceAccountName(),
 					commerceOrder.getPurchaseOrderNumber(),
-					LanguageUtil.format(
+					_language.format(
 						httpServletRequest, "x-ago",
 						modifiedDateTimeDescription),
 					WorkflowConstants.getStatusLabel(commerceOrder.getStatus()),
@@ -481,6 +480,9 @@ public class CommerceAccountResource {
 	private CommerceOrderService _commerceOrderService;
 
 	@Reference
+	private Language _language;
+
+	@Reference
 	private OrganizationLocalService _organizationLocalService;
 
 	@Reference
@@ -488,5 +490,8 @@ public class CommerceAccountResource {
 
 	@Reference
 	private UserLocalService _userLocalService;
+
+	@Reference
+	private WebServerServletToken _webServerServletToken;
 
 }

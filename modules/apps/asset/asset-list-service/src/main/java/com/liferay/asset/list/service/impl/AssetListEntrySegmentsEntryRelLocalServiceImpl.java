@@ -19,6 +19,8 @@ import com.liferay.asset.list.service.base.AssetListEntrySegmentsEntryRelLocalSe
 import com.liferay.asset.list.service.persistence.AssetListEntryAssetEntryRelPersistence;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -64,12 +66,11 @@ public class AssetListEntrySegmentsEntryRelLocalServiceImpl
 		assetListEntrySegmentsEntryRel.setCreateDate(new Date());
 		assetListEntrySegmentsEntryRel.setModifiedDate(new Date());
 		assetListEntrySegmentsEntryRel.setAssetListEntryId(assetListEntryId);
-		assetListEntrySegmentsEntryRel.setSegmentsEntryId(segmentsEntryId);
-		assetListEntrySegmentsEntryRel.setTypeSettings(typeSettings);
-
 		assetListEntrySegmentsEntryRel.setPriority(
 			assetListEntrySegmentsEntryRelPersistence.countByAssetListEntryId(
 				assetListEntryId));
+		assetListEntrySegmentsEntryRel.setSegmentsEntryId(segmentsEntryId);
+		assetListEntrySegmentsEntryRel.setTypeSettings(typeSettings);
 
 		return assetListEntrySegmentsEntryRelPersistence.update(
 			assetListEntrySegmentsEntryRel);
@@ -209,7 +210,7 @@ public class AssetListEntrySegmentsEntryRelLocalServiceImpl
 						variationsPriority[priority]);
 			}
 			catch (PortalException portalException) {
-				portalException.printStackTrace();
+				_log.error(portalException);
 			}
 
 			assetListEntrySegmentsEntryRel.setPriority(priority);
@@ -218,6 +219,9 @@ public class AssetListEntrySegmentsEntryRelLocalServiceImpl
 				assetListEntrySegmentsEntryRel);
 		}
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		AssetListEntrySegmentsEntryRelLocalServiceImpl.class);
 
 	@Reference
 	private AssetListEntryAssetEntryRelPersistence

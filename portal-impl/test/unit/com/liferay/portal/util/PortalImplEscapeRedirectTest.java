@@ -116,6 +116,13 @@ public class PortalImplEscapeRedirectTest {
 		Assert.assertNull(_portalImpl.escapeRedirect(":@liferay.com"));
 		Assert.assertNull(_portalImpl.escapeRedirect("http:/web"));
 		Assert.assertNull(_portalImpl.escapeRedirect("http:web"));
+		Assert.assertNull(
+			_portalImpl.escapeRedirect("https://google.com\uFFFD@localhost"));
+	}
+
+	@Test
+	public void testEscapeRedirectWithEscapingSequenceCharacter() {
+		Assert.assertNull(_portalImpl.escapeRedirect("\t//example.com"));
 	}
 
 	@Test

@@ -15,12 +15,17 @@
 package com.liferay.commerce.product.content.web.internal.helper;
 
 import com.liferay.adaptive.media.image.html.AMImageHTMLTagFactory;
+import com.liferay.commerce.constants.CPDefinitionInventoryConstants;
 import com.liferay.commerce.constants.CommerceWebKeys;
 import com.liferay.commerce.context.CommerceContext;
 import com.liferay.commerce.inventory.CommerceInventoryChecker;
+import com.liferay.commerce.inventory.model.CommerceInventoryReplenishmentItem;
+import com.liferay.commerce.inventory.service.CommerceInventoryReplenishmentItemLocalService;
+import com.liferay.commerce.inventory.util.comparator.CommerceInventoryReplenishmentItemAvailabilityDateComparator;
 import com.liferay.commerce.media.CommerceCatalogDefaultImage;
 import com.liferay.commerce.media.CommerceMediaProvider;
 import com.liferay.commerce.media.CommerceMediaResolver;
+import com.liferay.commerce.model.CPDefinitionInventory;
 import com.liferay.commerce.product.catalog.CPCatalogEntry;
 import com.liferay.commerce.product.catalog.CPSku;
 import com.liferay.commerce.product.constants.CPAttachmentFileEntryConstants;
@@ -31,8 +36,8 @@ import com.liferay.commerce.product.content.render.CPContentRenderer;
 import com.liferay.commerce.product.content.render.CPContentRendererRegistry;
 import com.liferay.commerce.product.content.util.CPContentHelper;
 import com.liferay.commerce.product.content.util.CPMedia;
-import com.liferay.commerce.product.content.web.internal.util.AdaptiveMediaCPMediaImpl;
 import com.liferay.commerce.product.content.web.internal.util.CPMediaImpl;
+import com.liferay.commerce.product.content.web.internal.util.CPMediaUtil;
 import com.liferay.commerce.product.ddm.DDMHelper;
 import com.liferay.commerce.product.model.CPAttachmentFileEntry;
 import com.liferay.commerce.product.model.CPDefinition;
@@ -54,37 +59,42 @@ import com.liferay.commerce.product.service.CPInstanceOptionValueRelLocalService
 import com.liferay.commerce.product.service.CPOptionCategoryLocalService;
 import com.liferay.commerce.product.service.CProductLocalService;
 import com.liferay.commerce.product.type.CPType;
-import com.liferay.commerce.product.type.CPTypeServicesTracker;
+import com.liferay.commerce.product.type.CPTypeRegistry;
 import com.liferay.commerce.product.util.CPContentContributor;
 import com.liferay.commerce.product.util.CPContentContributorRegistry;
 import com.liferay.commerce.product.util.CPDefinitionHelper;
 import com.liferay.commerce.product.util.CPInstanceHelper;
+import com.liferay.commerce.service.CPDefinitionInventoryLocalService;
 import com.liferay.commerce.util.CommerceUtil;
 import com.liferay.commerce.wish.list.model.CommerceWishList;
 import com.liferay.commerce.wish.list.service.CommerceWishListItemService;
 import com.liferay.commerce.wish.list.service.CommerceWishListService;
-import com.liferay.petra.string.StringBundler;
+import com.liferay.document.library.kernel.model.DLFileEntry;
+import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileVersion;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portlet.documentlibrary.lar.FileEntryUtil;
 
-import java.util.ArrayList;
+import java.text.Format;
+
 import java.util.List;
 import java.util.Map;
 
@@ -103,7 +113,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  * @author Ivica Cardic
  */
-@Component(enabled = false, immediate = true, service = CPContentHelper.class)
+@Component(immediate = true, service = CPContentHelper.class)
 public class CPContentHelperImpl implements CPContentHelper {
 
 	@Override
@@ -158,7 +168,7 @@ public class CPContentHelperImpl implements CPContentHelper {
 				long cpDefinitionId, long cpOptionCategoryId)
 		throws PortalException {
 
-		return _cpCatalogEntrySpecificationOptionValueLocalService.
+		return _cpDefinitionSpecificationOptionValueLocalService.
 			getCPDefinitionSpecificationOptionValues(
 				cpDefinitionId, cpOptionCategoryId);
 	}
@@ -266,6 +276,40 @@ public class CPContentHelperImpl implements CPContentHelper {
 	}
 
 	@Override
+	public String getCPDefinitionCDNURL(
+			long cpDefinitionId, HttpServletRequest httpServletRequest)
+		throws Exception {
+
+		CPDefinition cpDefinition = _cpDefinitionLocalService.fetchCPDefinition(
+			cpDefinitionId);
+
+		if (cpDefinition == null) {
+			return StringPool.BLANK;
+		}
+
+		List<CPAttachmentFileEntry> cpAttachmentFileEntries =
+			cpDefinition.getCPAttachmentFileEntries(
+				CPAttachmentFileEntryConstants.TYPE_IMAGE,
+				WorkflowConstants.STATUS_APPROVED);
+
+		if (cpAttachmentFileEntries.isEmpty()) {
+			return cpDefinition.getDefaultImageThumbnailSrc(
+				CommerceUtil.getCommerceAccountId(
+					(CommerceContext)httpServletRequest.getAttribute(
+						CommerceWebKeys.COMMERCE_CONTEXT)));
+		}
+
+		CPAttachmentFileEntry cpAttachmentFileEntry =
+			cpAttachmentFileEntries.get(0);
+
+		if (!cpAttachmentFileEntry.isCDNEnabled()) {
+			return StringPool.BLANK;
+		}
+
+		return cpAttachmentFileEntry.getCDNURL();
+	}
+
+	@Override
 	public FileVersion getCPDefinitionImageFileVersion(
 			long cpDefinitionId, HttpServletRequest httpServletRequest)
 		throws Exception {
@@ -307,7 +351,7 @@ public class CPContentHelperImpl implements CPContentHelper {
 			getCPDefinitionSpecificationOptionValues(long cpDefinitionId)
 		throws PortalException {
 
-		return _cpCatalogEntrySpecificationOptionValueLocalService.
+		return _cpDefinitionSpecificationOptionValueLocalService.
 			getCPDefinitionSpecificationOptionValues(
 				cpDefinitionId,
 				CPOptionCategoryConstants.DEFAULT_CP_OPTION_CATEGORY_ID);
@@ -318,29 +362,11 @@ public class CPContentHelperImpl implements CPContentHelper {
 			long cpDefinitionId, ThemeDisplay themeDisplay)
 		throws PortalException {
 
-		List<CPMedia> cpMedias = new ArrayList<>();
-
-		List<CPAttachmentFileEntry> cpAttachmentFileEntries =
-			_cpAttachmentFileEntryLocalService.getCPAttachmentFileEntries(
-				_portal.getClassNameId(CPDefinition.class), cpDefinitionId,
-				CPAttachmentFileEntryConstants.TYPE_OTHER,
-				WorkflowConstants.STATUS_APPROVED, QueryUtil.ALL_POS,
-				QueryUtil.ALL_POS);
-
-		for (CPAttachmentFileEntry cpAttachmentFileEntry :
-				cpAttachmentFileEntries) {
-
-			HttpServletRequest httpServletRequest = themeDisplay.getRequest();
-
-			cpMedias.add(
-				new CPMediaImpl(
-					CommerceUtil.getCommerceAccountId(
-						(CommerceContext)httpServletRequest.getAttribute(
-							CommerceWebKeys.COMMERCE_CONTEXT)),
-					cpAttachmentFileEntry, themeDisplay));
-		}
-
-		return cpMedias;
+		return CPMediaUtil.getAttachmentCPMedias(
+			_portal.getClassNameId(CPDefinition.class.getName()),
+			cpDefinitionId, _cpAttachmentFileEntryLocalService,
+			_dlFileEntryLocalService, _dlFileEntryModelResourcePermission,
+			themeDisplay);
 	}
 
 	@Override
@@ -351,7 +377,7 @@ public class CPContentHelperImpl implements CPContentHelper {
 
 	@Override
 	public List<CPType> getCPTypes() {
-		return _cpTypeServicesTracker.getCPTypes();
+		return _cpTypeRegistry.getCPTypes();
 	}
 
 	@Override
@@ -416,59 +442,15 @@ public class CPContentHelperImpl implements CPContentHelper {
 			long cpDefinitionId, ThemeDisplay themeDisplay)
 		throws PortalException {
 
-		HttpServletRequest httpServletRequest = themeDisplay.getRequest();
+		CPDefinition cpDefinition = _cpDefinitionLocalService.getCPDefinition(
+			cpDefinitionId);
 
-		long commerceAccountId = CommerceUtil.getCommerceAccountId(
-			(CommerceContext)httpServletRequest.getAttribute(
-				CommerceWebKeys.COMMERCE_CONTEXT));
-
-		List<CPMedia> cpMedias = new ArrayList<>();
-
-		List<CPAttachmentFileEntry> cpAttachmentFileEntries =
-			_cpAttachmentFileEntryLocalService.getCPAttachmentFileEntries(
-				_portal.getClassNameId(CPDefinition.class), cpDefinitionId,
-				CPAttachmentFileEntryConstants.TYPE_IMAGE,
-				WorkflowConstants.STATUS_APPROVED, QueryUtil.ALL_POS,
-				QueryUtil.ALL_POS);
-
-		for (CPAttachmentFileEntry cpAttachmentFileEntry :
-				cpAttachmentFileEntries) {
-
-			String url = _commerceMediaResolver.getURL(
-				commerceAccountId,
-				cpAttachmentFileEntry.getCPAttachmentFileEntryId());
-
-			FileEntry fileEntry = cpAttachmentFileEntry.fetchFileEntry();
-
-			String originalImgTag = StringBundler.concat(
-				"<img class=\"product-img\" src=\"", url, "\" />");
-
-			String adaptiveMediaImageHTMLTag = _amImageHTMLTagFactory.create(
-				originalImgTag, fileEntry);
-
-			cpMedias.add(
-				new AdaptiveMediaCPMediaImpl(
-					adaptiveMediaImageHTMLTag, commerceAccountId,
-					cpAttachmentFileEntry, themeDisplay));
-		}
-
-		if (cpMedias.isEmpty()) {
-			CPDefinition cpDefinition =
-				_cpDefinitionLocalService.getCPDefinition(cpDefinitionId);
-
-			FileEntry fileEntry = FileEntryUtil.fetchByPrimaryKey(
-				_catalogCommerceMediaDefaultImage.getDefaultCatalogFileEntryId(
-					cpDefinition.getGroupId()));
-
-			if (fileEntry != null) {
-				cpMedias.add(new CPMediaImpl(fileEntry, themeDisplay));
-			}
-			else {
-				cpMedias.add(new CPMediaImpl(themeDisplay.getCompanyGroupId()));
-			}
-		}
-
-		return cpMedias;
+		return CPMediaUtil.getImageCPMedias(
+			_amImageHTMLTagFactory,
+			_portal.getClassNameId(CPDefinition.class.getName()),
+			cpDefinition.getCPDefinitionId(), _commerceCatalogDefaultImage,
+			_commerceMediaResolver, _cpAttachmentFileEntryLocalService,
+			cpDefinition.getGroupId(), themeDisplay);
 	}
 
 	@Override
@@ -478,6 +460,47 @@ public class CPContentHelperImpl implements CPContentHelper {
 		CPMedia cpMedia = new CPMediaImpl(fileEntry, themeDisplay);
 
 		return cpMedia.getURL();
+	}
+
+	@Override
+	public String getIncomingQuantityLabel(
+			HttpServletRequest httpServletRequest, String sku)
+		throws PortalException {
+
+		CommerceInventoryReplenishmentItem commerceInventoryReplenishmentItem =
+			_commerceInventoryReplenishmentItemLocalService.
+				fetchCommerceInventoryReplenishmentItem(
+					_portal.getCompanyId(httpServletRequest), sku,
+					new CommerceInventoryReplenishmentItemAvailabilityDateComparator());
+
+		if (commerceInventoryReplenishmentItem == null) {
+			return StringPool.BLANK;
+		}
+
+		User user = _portal.getUser(httpServletRequest);
+
+		Format dateFormat = FastDateFormatFactoryUtil.getDate(
+			user.getLocale(), user.getTimeZone());
+
+		return _language.format(
+			httpServletRequest, "incoming-date-quantity-x-x-items",
+			new Object[] {
+				dateFormat.format(
+					commerceInventoryReplenishmentItem.getAvailabilityDate()),
+				commerceInventoryReplenishmentItem.getQuantity()
+			});
+	}
+
+	public int getMinOrderQuantity(long cpDefinitionId) {
+		CPDefinitionInventory cpDefinitionInventory =
+			_cpDefinitionInventoryLocalService.
+				fetchCPDefinitionInventoryByCPDefinitionId(cpDefinitionId);
+
+		if (cpDefinitionInventory == null) {
+			return CPDefinitionInventoryConstants.DEFAULT_MIN_ORDER_QUANTITY;
+		}
+
+		return cpDefinitionInventory.getMinOrderQuantity();
 	}
 
 	@Override
@@ -535,7 +558,7 @@ public class CPContentHelperImpl implements CPContentHelper {
 			return StringPool.BLANK;
 		}
 
-		return LanguageUtil.format(
+		return _language.format(
 			httpServletRequest, "stock-quantity-x",
 			stockQuantityJSONObject.getString(
 				CPContentContributorConstants.STOCK_QUANTITY_NAME));
@@ -605,7 +628,7 @@ public class CPContentHelperImpl implements CPContentHelper {
 
 		List<CPDefinitionSpecificationOptionValue>
 			cpDefinitionSpecificationOptionValues =
-				_cpCatalogEntrySpecificationOptionValueLocalService.
+				_cpDefinitionSpecificationOptionValueLocalService.
 					getCPDefinitionSpecificationOptionValues(
 						cpDefinitionId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
 						null);
@@ -752,7 +775,7 @@ public class CPContentHelperImpl implements CPContentHelper {
 			cpCatalogEntry.isIgnoreSKUCombinations(), renderRequest,
 			renderResponse,
 			_filterByInventoryAvailability(
-				_cpInstanceHelper.getCPDefinitionOptionRelsMap(
+				_cpInstanceHelper.getCPDefinitionOptionValueRelsMap(
 					cpCatalogEntry.getCPDefinitionId(), false, true)));
 	}
 
@@ -805,13 +828,17 @@ public class CPContentHelperImpl implements CPContentHelper {
 	private AMImageHTMLTagFactory _amImageHTMLTagFactory;
 
 	@Reference
-	private CommerceCatalogDefaultImage _catalogCommerceMediaDefaultImage;
+	private CommerceCatalogDefaultImage _commerceCatalogDefaultImage;
 
 	@Reference(
 		target = "(commerce.inventory.checker.target=CPDefinitionOptionValueRel)"
 	)
 	private CommerceInventoryChecker<CPDefinitionOptionValueRel>
 		_commerceInventoryChecker;
+
+	@Reference
+	private CommerceInventoryReplenishmentItemLocalService
+		_commerceInventoryReplenishmentItemLocalService;
 
 	@Reference
 	private CommerceMediaProvider _commerceMediaProvider;
@@ -833,10 +860,6 @@ public class CPContentHelperImpl implements CPContentHelper {
 		_cpAttachmentFileEntryLocalService;
 
 	@Reference
-	private CPDefinitionSpecificationOptionValueLocalService
-		_cpCatalogEntrySpecificationOptionValueLocalService;
-
-	@Reference
 	private CPContentContributorRegistry _cpContentContributorRegistry;
 
 	@Reference
@@ -844,6 +867,10 @@ public class CPContentHelperImpl implements CPContentHelper {
 
 	@Reference
 	private CPDefinitionHelper _cpDefinitionHelper;
+
+	@Reference
+	private CPDefinitionInventoryLocalService
+		_cpDefinitionInventoryLocalService;
 
 	@Reference
 	private CPDefinitionLocalService _cpDefinitionLocalService;
@@ -855,6 +882,10 @@ public class CPContentHelperImpl implements CPContentHelper {
 	@Reference
 	private CPDefinitionOptionValueRelLocalService
 		_cpDefinitionOptionValueRelLocalService;
+
+	@Reference
+	private CPDefinitionSpecificationOptionValueLocalService
+		_cpDefinitionSpecificationOptionValueLocalService;
 
 	@Reference
 	private CPInstanceHelper _cpInstanceHelper;
@@ -879,10 +910,22 @@ public class CPContentHelperImpl implements CPContentHelper {
 	private CProductLocalService _cProductLocalService;
 
 	@Reference
-	private CPTypeServicesTracker _cpTypeServicesTracker;
+	private CPTypeRegistry _cpTypeRegistry;
 
 	@Reference
 	private DDMHelper _ddmHelper;
+
+	@Reference
+	private DLFileEntryLocalService _dlFileEntryLocalService;
+
+	@Reference(
+		target = "(model.class.name=com.liferay.document.library.kernel.model.DLFileEntry)"
+	)
+	private ModelResourcePermission<DLFileEntry>
+		_dlFileEntryModelResourcePermission;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

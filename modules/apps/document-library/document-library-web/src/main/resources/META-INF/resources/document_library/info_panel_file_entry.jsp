@@ -58,7 +58,11 @@ long assetClassPK = DLAssetHelperUtil.getAssetClassPK(fileEntry, fileVersion);
 			</clay:content-section>
 		</clay:content-col>
 
-		<c:if test="<%= !hideActions %>">
+		<%
+		DLPortletInstanceSettingsHelper dlPortletInstanceSettingsHelper = new DLPortletInstanceSettingsHelper(dlRequestHelper);
+		%>
+
+		<c:if test="<%= !hideActions && dlPortletInstanceSettingsHelper.isShowActions() %>">
 			<clay:content-col>
 				<ul class="autofit-padded-no-gutters autofit-row">
 					<li class="autofit-col">
@@ -145,7 +149,7 @@ long assetClassPK = DLAssetHelperUtil.getAssetClassPK(fileEntry, fileVersion);
 
 									<c:choose>
 										<c:when test="<%= conversions.length > 0 %>">
-											<div class="btn-group-item" data-analytics-file-entry-id="<%= String.valueOf(fileEntry.getFileEntryId()) %>">
+											<div class="btn-group-item" data-analytics-file-entry-id="<%= String.valueOf(fileEntry.getFileEntryId()) %>" data-analytics-file-entry-title="<%= String.valueOf(fileEntry.getTitle()) %>" data-analytics-file-entry-version="<%= String.valueOf(fileEntry.getVersion()) %>">
 												<clay:dropdown-menu
 													dropdownItems='<%=
 														new JSPDropdownItemList(pageContext) {
@@ -154,6 +158,10 @@ long assetClassPK = DLAssetHelperUtil.getAssetClassPK(fileEntry, fileVersion);
 
 																Map<String, Object> data = HashMapBuilder.<String, Object>put(
 																	"analytics-file-entry-id", String.valueOf(fileEntry.getFileEntryId())
+																).put(
+																	"analytics-file-entry-title", String.valueOf(fileEntry.getTitle())
+																).put(
+																	"analytics-file-entry-version", String.valueOf(fileEntry.getVersion())
 																).build();
 
 																add(
@@ -193,6 +201,8 @@ long assetClassPK = DLAssetHelperUtil.getAssetClassPK(fileEntry, fileVersion);
 											<div class="btn-group-item">
 												<clay:link
 													data-analytics-file-entry-id="<%= fileEntry.getFileEntryId() %>"
+													data-analytics-file-entry-title="<%= fileEntry.getTitle() %>"
+													data-analytics-file-entry-version="<%= fileEntry.getVersion() %>"
 													displayType="primary"
 													href="<%= DLURLHelperUtil.getDownloadURL(fileEntry, fileVersion, themeDisplay, StringPool.BLANK, false, true) %>"
 													label="download"
@@ -205,7 +215,7 @@ long assetClassPK = DLAssetHelperUtil.getAssetClassPK(fileEntry, fileVersion);
 									</c:choose>
 								</c:when>
 								<c:otherwise>
-									<div class="btn-group-item" data-analytics-file-entry-id="<%= String.valueOf(fileEntry.getFileEntryId()) %>">
+									<div class="btn-group-item" data-analytics-file-entry-id="<%= String.valueOf(fileEntry.getFileEntryId()) %>" data-analytics-file-entry-title="<%= String.valueOf(fileEntry.getTitle()) %>" data-analytics-file-entry-version="<%= String.valueOf(fileEntry.getVersion()) %>">
 										<clay:link
 											displayType="primary"
 											href="<%= DLURLHelperUtil.getDownloadURL(fileEntry, fileVersion, themeDisplay, StringPool.BLANK, false, true) %>"
@@ -233,11 +243,20 @@ long assetClassPK = DLAssetHelperUtil.getAssetClassPK(fileEntry, fileVersion);
 				<div class="sidebar-section">
 
 					<%
-					boolean isLatestVersion = fileVersion.equals(fileEntry.getLatestFileVersion());
+					DLViewFileEntryDisplayContext dlViewFileEntryDisplayContext = (DLViewFileEntryDisplayContext)request.getAttribute(DLViewFileEntryDisplayContext.class.getName());
+
+					boolean latestVersion = false;
+
+					if (dlViewFileEntryDisplayContext != null) {
+						latestVersion = fileVersion.equals(dlViewFileEntryDisplayContext.getFileVersion());
+					}
+					else {
+						latestVersion = fileVersion.equals(fileEntry.getLatestFileVersion());
+					}
 
 					String urlLabel = null;
 
-					if (isLatestVersion) {
+					if (latestVersion) {
 						urlLabel = LanguageUtil.get(resourceBundle, "latest-version-url");
 					}
 					else {
@@ -252,7 +271,7 @@ long assetClassPK = DLAssetHelperUtil.getAssetClassPK(fileEntry, fileVersion);
 
 						<div class="input-group input-group-sm">
 							<div class="input-group-item input-group-prepend">
-								<input class="form-control" id="<%= urlInputId %>" readonly value="<%= DLURLHelperUtil.getPreviewURL(fileEntry, fileVersion, themeDisplay, StringPool.BLANK, !isLatestVersion, true) %>" />
+								<input class="form-control" id="<%= urlInputId %>" readonly value="<%= DLURLHelperUtil.getPreviewURL(fileEntry, fileVersion, themeDisplay, StringPool.BLANK, !latestVersion, true) %>" />
 							</div>
 
 							<span class="input-group-append input-group-item input-group-item-shrink">
@@ -267,7 +286,7 @@ long assetClassPK = DLAssetHelperUtil.getAssetClassPK(fileEntry, fileVersion);
 						</div>
 					</div>
 
-					<c:if test="<%= portletDisplay.isWebDAVEnabled() && fileEntry.isSupportsSocial() && isLatestVersion %>">
+					<c:if test="<%= portletDisplay.isWebDAVEnabled() && fileEntry.isSupportsSocial() && latestVersion %>">
 
 						<%
 						String webDavURLInputId = liferayPortletResponse.getNamespace() + "webDavURLInput";
@@ -467,7 +486,7 @@ long assetClassPK = DLAssetHelperUtil.getAssetClassPK(fileEntry, fileVersion);
 									cssClass="metadata"
 									defaultState="closed"
 									extended="<%= true %>"
-									id='<%= "documentLibraryMetadataPanel_" + fileEntry.getFileEntryId() %>'
+									id='<%= "documentLibraryMetadataPanel_" + ddmStructure.getStructureId() + StringPool.UNDERLINE + fileEntry.getFileEntryId() %>'
 									markupView="lexicon"
 									persistState="<%= true %>"
 									title="<%= HtmlUtil.escape(ddmStructure.getName(locale)) %>"
@@ -533,7 +552,7 @@ long assetClassPK = DLAssetHelperUtil.getAssetClassPK(fileEntry, fileVersion);
 								collapsible="<%= true %>"
 								cssClass="lfr-asset-metadata panel-unstyled"
 								defaultState="closed"
-								id='<%= "documentLibraryMetadataPanel_" + fileEntry.getFileEntryId() %>'
+								id='<%= "documentLibraryMetadataPanel_" + ddmStructure.getStructureId() + StringPool.UNDERLINE + fileEntry.getFileEntryId() %>'
 								markupView="lexicon"
 								persistState="<%= true %>"
 								title='<%= "metadata." + ddmStructure.getStructureKey() %>'

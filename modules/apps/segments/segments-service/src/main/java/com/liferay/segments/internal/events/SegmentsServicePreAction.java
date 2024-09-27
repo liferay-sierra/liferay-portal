@@ -14,7 +14,6 @@
 
 package com.liferay.segments.internal.events;
 
-import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.events.Action;
 import com.liferay.portal.kernel.events.ActionException;
 import com.liferay.portal.kernel.events.LifecycleAction;
@@ -24,26 +23,23 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.segments.SegmentsEntryRetriever;
-import com.liferay.segments.configuration.SegmentsConfiguration;
-import com.liferay.segments.constants.SegmentsExperienceConstants;
+import com.liferay.segments.configuration.provider.SegmentsConfigurationProvider;
 import com.liferay.segments.constants.SegmentsWebKeys;
 import com.liferay.segments.context.RequestContextMapper;
+import com.liferay.segments.model.SegmentsExperience;
 import com.liferay.segments.processor.SegmentsExperienceRequestProcessorRegistry;
+import com.liferay.segments.service.SegmentsExperienceLocalService;
 
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceRegistration;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 
 /**
@@ -51,7 +47,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.segments.configuration.SegmentsConfiguration",
-	service = {}
+	property = "key=servlet.service.events.pre", service = LifecycleAction.class
 )
 public class SegmentsServicePreAction extends Action {
 
@@ -62,33 +58,16 @@ public class SegmentsServicePreAction extends Action {
 		throws ActionException {
 
 		try {
+			if (!_segmentsConfigurationProvider.isSegmentationEnabled(
+					_portal.getCompanyId(httpServletRequest))) {
+
+				return;
+			}
+
 			_run(httpServletRequest, httpServletResponse);
 		}
 		catch (Exception exception) {
 			throw new ActionException(exception);
-		}
-	}
-
-	@Activate
-	protected void activate(
-		BundleContext bundleContext, Map<String, Object> properties) {
-
-		SegmentsConfiguration segmentsConfiguration =
-			ConfigurableUtil.createConfigurable(
-				SegmentsConfiguration.class, properties);
-
-		if (segmentsConfiguration.segmentationEnabled()) {
-			_serviceRegistration = bundleContext.registerService(
-				LifecycleAction.class, this,
-				MapUtil.singletonDictionary(
-					"key", "servlet.service.events.pre"));
-		}
-	}
-
-	@Deactivate
-	protected void deactivate() {
-		if (_serviceRegistration != null) {
-			_serviceRegistration.unregister();
 		}
 	}
 
@@ -104,19 +83,42 @@ public class SegmentsServicePreAction extends Action {
 						httpServletRequest, httpServletResponse, groupId,
 						classNameId, classPK);
 
-			if (segmentsExperienceIds.length > 0) {
-				long[] segmentsEntryIds =
-					_segmentsEntryRetriever.getSegmentsEntryIds(
-						groupId, userId,
-						_requestContextMapper.map(httpServletRequest));
+			Set<Long> segmentsExperienceIdsSegmentsEntryIds = new HashSet<>();
 
-				return ArrayUtil.append(
-					_segmentsExperienceRequestProcessorRegistry.
-						getSegmentsExperienceIds(
-							httpServletRequest, httpServletResponse, groupId,
-							classNameId, classPK, segmentsEntryIds),
-					SegmentsExperienceConstants.ID_DEFAULT);
+			for (long segmentsExperienceId : segmentsExperienceIds) {
+				SegmentsExperience segmentsExperience =
+					_segmentsExperienceLocalService.fetchSegmentsExperience(
+						segmentsExperienceId);
+
+				segmentsExperienceIdsSegmentsEntryIds.add(
+					segmentsExperience.getSegmentsEntryId());
 			}
+
+			long[] cachedSegmentsEntryIds =
+				(long[])httpServletRequest.getAttribute(
+					SegmentsWebKeys.SEGMENTS_ENTRY_IDS);
+
+			long[] segmentsEntryIds = null;
+
+			if (cachedSegmentsEntryIds != null) {
+				segmentsEntryIds = cachedSegmentsEntryIds;
+			}
+			else {
+				segmentsEntryIds = _segmentsEntryRetriever.getSegmentsEntryIds(
+					groupId, userId,
+					_requestContextMapper.map(httpServletRequest),
+					ArrayUtil.toArray(
+						segmentsExperienceIdsSegmentsEntryIds.toArray(
+							new Long[0])));
+			}
+
+			httpServletRequest.setAttribute(
+				SegmentsWebKeys.SEGMENTS_ENTRY_IDS, segmentsEntryIds);
+
+			return _segmentsExperienceRequestProcessorRegistry.
+				getSegmentsExperienceIds(
+					httpServletRequest, httpServletResponse, groupId,
+					classNameId, classPK, segmentsEntryIds);
 		}
 		catch (PortalException portalException) {
 			if (_log.isWarnEnabled()) {
@@ -124,7 +126,10 @@ public class SegmentsServicePreAction extends Action {
 			}
 		}
 
-		return new long[] {SegmentsExperienceConstants.ID_DEFAULT};
+		return new long[] {
+			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
+				classPK)
+		};
 	}
 
 	private void _run(
@@ -141,8 +146,8 @@ public class SegmentsServicePreAction extends Action {
 
 		Layout layout = themeDisplay.getLayout();
 
-		if ((layout == null) || !layout.isTypeContent() ||
-			layout.isTypeControlPanel()) {
+		if ((layout == null) || layout.isTypeControlPanel() ||
+			(!layout.isTypeAssetDisplay() && !layout.isTypeContent())) {
 
 			return;
 		}
@@ -166,12 +171,16 @@ public class SegmentsServicePreAction extends Action {
 	private RequestContextMapper _requestContextMapper;
 
 	@Reference
+	private SegmentsConfigurationProvider _segmentsConfigurationProvider;
+
+	@Reference
 	private volatile SegmentsEntryRetriever _segmentsEntryRetriever;
+
+	@Reference
+	private SegmentsExperienceLocalService _segmentsExperienceLocalService;
 
 	@Reference
 	private SegmentsExperienceRequestProcessorRegistry
 		_segmentsExperienceRequestProcessorRegistry;
-
-	private ServiceRegistration<LifecycleAction> _serviceRegistration;
 
 }

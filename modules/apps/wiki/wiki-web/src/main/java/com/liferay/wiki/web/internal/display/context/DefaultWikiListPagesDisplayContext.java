@@ -17,7 +17,7 @@ package com.liferay.wiki.web.internal.display.context;
 import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.service.AssetEntryServiceUtil;
 import com.liferay.asset.kernel.service.persistence.AssetEntryQuery;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
@@ -29,6 +29,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
@@ -50,7 +51,6 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.vulcan.util.TransformUtil;
 import com.liferay.subscription.service.SubscriptionLocalServiceUtil;
 import com.liferay.taglib.search.ResultRow;
 import com.liferay.taglib.security.PermissionsURLTag;
@@ -379,33 +379,18 @@ public class DefaultWikiListPagesDisplayContext
 					page.getNodeId(), page.getTitle()));
 		}
 		else if (navigation.equals("incoming-links")) {
-			List<WikiPage> links = WikiPageLocalServiceUtil.getIncomingLinks(
-				page.getNodeId(), page.getTitle());
-
 			searchContainer.setResultsAndTotal(
-				() -> ListUtil.subList(
-					links, searchContainer.getStart(),
-					searchContainer.getEnd()),
-				links.size());
+				WikiPageLocalServiceUtil.getIncomingLinks(
+					page.getNodeId(), page.getTitle()));
 		}
 		else if (navigation.equals("orphan-pages")) {
-			List<WikiPage> orphans = WikiPageServiceUtil.getOrphans(_wikiNode);
-
 			searchContainer.setResultsAndTotal(
-				() -> ListUtil.subList(
-					orphans, searchContainer.getStart(),
-					searchContainer.getEnd()),
-				orphans.size());
+				WikiPageServiceUtil.getOrphans(_wikiNode));
 		}
 		else if (navigation.equals("outgoing-links")) {
-			List<WikiPage> links = WikiPageLocalServiceUtil.getOutgoingLinks(
-				page.getNodeId(), page.getTitle());
-
 			searchContainer.setResultsAndTotal(
-				() -> ListUtil.subList(
-					links, searchContainer.getStart(),
-					searchContainer.getEnd()),
-				links.size());
+				WikiPageLocalServiceUtil.getOutgoingLinks(
+					page.getNodeId(), page.getTitle()));
 		}
 		else if (navigation.equals("recent-changes")) {
 			searchContainer.setResultsAndTotal(

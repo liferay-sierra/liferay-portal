@@ -16,7 +16,6 @@ package com.liferay.depot.web.internal.display.context;
 
 import com.liferay.depot.constants.DepotRolesConstants;
 import com.liferay.depot.model.DepotEntry;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
@@ -28,6 +27,7 @@ import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserGroupRole;
 import com.liferay.portal.kernel.model.role.RoleConstants;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.membershippolicy.SiteMembershipPolicyUtil;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
@@ -180,16 +180,9 @@ public class DepotAdminSelectRoleDisplayContext {
 				_getPortletURL(_renderRequest, _renderResponse, _user));
 
 			groupSearch.setEmptyResultsMessage("no-asset-libraries-were-found");
-
-			GroupSearchTerms groupSearchTerms =
-				(GroupSearchTerms)groupSearch.getSearchTerms();
-
-			List<Group> groups = _getDepotGroups(groupSearchTerms);
-
 			groupSearch.setResultsAndTotal(
-				() -> ListUtil.subList(
-					groups, groupSearch.getStart(), groupSearch.getEnd()),
-				groups.size());
+				_getDepotGroups(
+					(GroupSearchTerms)groupSearch.getSearchTerms()));
 
 			_groupSearch = groupSearch;
 
@@ -339,12 +332,7 @@ public class DepotAdminSelectRoleDisplayContext {
 				roles = _filterGroupRoles(roles);
 			}
 
-			List<Role> filteredRoles = roles;
-
-			roleSearch.setResultsAndTotal(
-				() -> ListUtil.subList(
-					filteredRoles, roleSearch.getStart(), roleSearch.getEnd()),
-				filteredRoles.size());
+			roleSearch.setResultsAndTotal(roles);
 
 			_roleSearch = roleSearch;
 

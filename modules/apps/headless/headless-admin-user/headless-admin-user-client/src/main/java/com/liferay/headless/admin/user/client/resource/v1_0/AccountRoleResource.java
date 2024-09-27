@@ -77,14 +77,14 @@ public interface AccountRoleResource {
 		throws Exception;
 
 	public Page<AccountRole> getAccountAccountRolesByExternalReferenceCodePage(
-			String externalReferenceCode, String keywords,
+			String externalReferenceCode, String keywords, String filterString,
 			Pagination pagination, String sortString)
 		throws Exception;
 
 	public HttpInvoker.HttpResponse
 			getAccountAccountRolesByExternalReferenceCodePageHttpResponse(
 				String externalReferenceCode, String keywords,
-				Pagination pagination, String sortString)
+				String filterString, Pagination pagination, String sortString)
 		throws Exception;
 
 	public AccountRole postAccountAccountRoleByExternalReferenceCode(
@@ -131,13 +131,13 @@ public interface AccountRoleResource {
 		throws Exception;
 
 	public Page<AccountRole> getAccountAccountRolesPage(
-			Long accountId, String keywords, Pagination pagination,
-			String sortString)
+			Long accountId, String keywords, String filterString,
+			Pagination pagination, String sortString)
 		throws Exception;
 
 	public HttpInvoker.HttpResponse getAccountAccountRolesPageHttpResponse(
-			Long accountId, String keywords, Pagination pagination,
-			String sortString)
+			Long accountId, String keywords, String filterString,
+			Pagination pagination, String sortString)
 		throws Exception;
 
 	public AccountRole postAccountAccountRole(
@@ -187,6 +187,12 @@ public interface AccountRoleResource {
 			return new AccountRoleResourceImpl(this);
 		}
 
+		public Builder contextPath(String contextPath) {
+			_contextPath = contextPath;
+
+			return this;
+		}
+
 		public Builder endpoint(String host, int port, String scheme) {
 			_host = host;
 			_port = port;
@@ -232,6 +238,7 @@ public interface AccountRoleResource {
 		private Builder() {
 		}
 
+		private String _contextPath = "";
 		private Map<String, String> _headers = new LinkedHashMap<>();
 		private String _host = "localhost";
 		private Locale _locale;
@@ -322,7 +329,7 @@ public interface AccountRoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-admin-user/v1.0/accounts/by-external-reference-code/{accountExternalReferenceCode}/account-roles/{accountRoleId}/user-accounts/by-external-reference-code/{userAccountExternalReferenceCode}");
 
 			httpInvoker.path(
@@ -415,7 +422,7 @@ public interface AccountRoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-admin-user/v1.0/accounts/by-external-reference-code/{accountExternalReferenceCode}/account-roles/{accountRoleId}/user-accounts/by-external-reference-code/{userAccountExternalReferenceCode}");
 
 			httpInvoker.path(
@@ -508,7 +515,7 @@ public interface AccountRoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-admin-user/v1.0/accounts/by-external-reference-code/{accountExternalReferenceCode}/user-accounts/by-external-reference-code/{userAccountExternalReferenceCode}/account-roles");
 
 			httpInvoker.path(
@@ -526,12 +533,14 @@ public interface AccountRoleResource {
 		public Page<AccountRole>
 				getAccountAccountRolesByExternalReferenceCodePage(
 					String externalReferenceCode, String keywords,
-					Pagination pagination, String sortString)
+					String filterString, Pagination pagination,
+					String sortString)
 			throws Exception {
 
 			HttpInvoker.HttpResponse httpResponse =
 				getAccountAccountRolesByExternalReferenceCodePageHttpResponse(
-					externalReferenceCode, keywords, pagination, sortString);
+					externalReferenceCode, keywords, filterString, pagination,
+					sortString);
 
 			String content = httpResponse.getContent();
 
@@ -573,7 +582,8 @@ public interface AccountRoleResource {
 		public HttpInvoker.HttpResponse
 				getAccountAccountRolesByExternalReferenceCodePageHttpResponse(
 					String externalReferenceCode, String keywords,
-					Pagination pagination, String sortString)
+					String filterString, Pagination pagination,
+					String sortString)
 			throws Exception {
 
 			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
@@ -601,6 +611,10 @@ public interface AccountRoleResource {
 				httpInvoker.parameter("keywords", String.valueOf(keywords));
 			}
 
+			if (filterString != null) {
+				httpInvoker.parameter("filter", filterString);
+			}
+
 			if (pagination != null) {
 				httpInvoker.parameter(
 					"page", String.valueOf(pagination.getPage()));
@@ -614,7 +628,7 @@ public interface AccountRoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-admin-user/v1.0/accounts/by-external-reference-code/{externalReferenceCode}/account-roles");
 
 			httpInvoker.path("externalReferenceCode", externalReferenceCode);
@@ -700,7 +714,7 @@ public interface AccountRoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-admin-user/v1.0/accounts/by-external-reference-code/{externalReferenceCode}/account-roles");
 
 			httpInvoker.path("externalReferenceCode", externalReferenceCode);
@@ -787,7 +801,7 @@ public interface AccountRoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-admin-user/v1.0/accounts/by-external-reference-code/{externalReferenceCode}/account-roles/{accountRoleId}/user-accounts/by-email-address/{emailAddress}");
 
 			httpInvoker.path("externalReferenceCode", externalReferenceCode);
@@ -876,7 +890,7 @@ public interface AccountRoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-admin-user/v1.0/accounts/by-external-reference-code/{externalReferenceCode}/account-roles/{accountRoleId}/user-accounts/by-email-address/{emailAddress}");
 
 			httpInvoker.path("externalReferenceCode", externalReferenceCode);
@@ -963,7 +977,7 @@ public interface AccountRoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-admin-user/v1.0/accounts/by-external-reference-code/{externalReferenceCode}/user-accounts/by-email-address/{emailAddress}/account-roles");
 
 			httpInvoker.path("externalReferenceCode", externalReferenceCode);
@@ -976,13 +990,13 @@ public interface AccountRoleResource {
 		}
 
 		public Page<AccountRole> getAccountAccountRolesPage(
-				Long accountId, String keywords, Pagination pagination,
-				String sortString)
+				Long accountId, String keywords, String filterString,
+				Pagination pagination, String sortString)
 			throws Exception {
 
 			HttpInvoker.HttpResponse httpResponse =
 				getAccountAccountRolesPageHttpResponse(
-					accountId, keywords, pagination, sortString);
+					accountId, keywords, filterString, pagination, sortString);
 
 			String content = httpResponse.getContent();
 
@@ -1022,8 +1036,8 @@ public interface AccountRoleResource {
 		}
 
 		public HttpInvoker.HttpResponse getAccountAccountRolesPageHttpResponse(
-				Long accountId, String keywords, Pagination pagination,
-				String sortString)
+				Long accountId, String keywords, String filterString,
+				Pagination pagination, String sortString)
 			throws Exception {
 
 			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
@@ -1051,6 +1065,10 @@ public interface AccountRoleResource {
 				httpInvoker.parameter("keywords", String.valueOf(keywords));
 			}
 
+			if (filterString != null) {
+				httpInvoker.parameter("filter", filterString);
+			}
+
 			if (pagination != null) {
 				httpInvoker.parameter(
 					"page", String.valueOf(pagination.getPage()));
@@ -1064,7 +1082,7 @@ public interface AccountRoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-admin-user/v1.0/accounts/{accountId}/account-roles");
 
 			httpInvoker.path("accountId", accountId);
@@ -1148,7 +1166,7 @@ public interface AccountRoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-admin-user/v1.0/accounts/{accountId}/account-roles");
 
 			httpInvoker.path("accountId", accountId);
@@ -1227,7 +1245,7 @@ public interface AccountRoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-admin-user/v1.0/accounts/{accountId}/account-roles/batch");
 
 			httpInvoker.path("accountId", accountId);
@@ -1311,7 +1329,7 @@ public interface AccountRoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-admin-user/v1.0/accounts/{accountId}/account-roles/{accountRoleId}/user-accounts/{userAccountId}");
 
 			httpInvoker.path("accountId", accountId);
@@ -1397,7 +1415,7 @@ public interface AccountRoleResource {
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port +
+					_builder._port + _builder._contextPath +
 						"/o/headless-admin-user/v1.0/accounts/{accountId}/account-roles/{accountRoleId}/user-accounts/{userAccountId}");
 
 			httpInvoker.path("accountId", accountId);

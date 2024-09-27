@@ -34,13 +34,8 @@ SchedulerResponseDisplayContext schedulerResponseDisplayContext = (SchedulerResp
 				className="com.liferay.portal.kernel.scheduler.messaging.SchedulerResponse"
 				modelVar="schedulerResponse"
 			>
-				<liferay-ui:search-container-column-jsp
-					cssClass="entry-action-column"
-					path="/scheduler_response_action.jsp"
-				/>
-
 				<liferay-ui:search-container-column-text
-					cssClass="important table-cell-expand"
+					cssClass="font-weight-bold important table-cell-expand"
 					name="name"
 				>
 					<liferay-ui:message key="<%= schedulerResponseDisplayContext.getSimpleName(schedulerResponse.getJobName()) %>" />
@@ -54,12 +49,13 @@ SchedulerResponseDisplayContext schedulerResponseDisplayContext = (SchedulerResp
 				/>
 
 				<liferay-ui:search-container-column-text
+					cssClass="table-cell-ws-nowrap"
 					name="next-fire-date"
 					value="<%= schedulerResponseDisplayContext.getNextFireDateString(schedulerResponse) %>"
 				/>
 
 				<liferay-ui:search-container-column-text
-					cssClass="important table-cell-ws-nowrap"
+					cssClass="font-weight-bold important table-cell-ws-nowrap"
 					name="status"
 				>
 
@@ -67,14 +63,19 @@ SchedulerResponseDisplayContext schedulerResponseDisplayContext = (SchedulerResp
 					TriggerState triggerState = schedulerResponseDisplayContext.getTriggerState(schedulerResponse);
 					%>
 
-					<h6 class="<%= (triggerState == TriggerState.NORMAL) ? "text-success" : "text-info" %>">
+					<span class="<%= (triggerState == TriggerState.NORMAL) ? "label label-success" : "label label-info" %>">
 						<liferay-ui:message key="<%= triggerState.toString() %>" />
-					</h6>
+					</span>
 				</liferay-ui:search-container-column-text>
 
 				<liferay-ui:search-container-column-jsp
 					cssClass="table-cell-ws-nowrap"
 					path="/scheduler_response_buttons.jsp"
+				/>
+
+				<liferay-ui:search-container-column-jsp
+					cssClass="entry-action-column"
+					path="/scheduler_response_action.jsp"
 				/>
 			</liferay-ui:search-container-row>
 

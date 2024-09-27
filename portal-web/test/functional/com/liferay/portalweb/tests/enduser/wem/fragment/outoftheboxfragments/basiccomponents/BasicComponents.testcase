@@ -74,13 +74,13 @@ definition {
 
 			PageEditor.gotoStyle(fragmentName = "Button");
 
-			PageEditor.configureFragment(alignment = "Center");
+			PageEditor.configureFragment(alignment = "Align Center");
 		}
 
 		task ("View the Button styles") {
 			PageEditor.viewFragmentStyle(
 				alignment = "center",
-				fragmentName = "button",
+				fragmentName = "Button",
 				size = "lg",
 				type = "link");
 		}
@@ -194,7 +194,7 @@ definition {
 			PageEditor.gotoStyle(fragmentName = "Card");
 
 			PageEditor.configureFragment(
-				alignment = "Center",
+				alignment = "Align Center",
 				borderRadius = "Border Radius Small",
 				boxShadow = "Box Shadow Large",
 				marginBottom = "5");
@@ -205,7 +205,7 @@ definition {
 				alignment = "center",
 				borderRadius = "border-radius-sm",
 				boxShadow = "box-shadow-lg",
-				fragmentName = "card",
+				fragmentName = "Card",
 				imageSize = "100",
 				marginBottom = "5");
 		}
@@ -231,9 +231,11 @@ definition {
 		}
 	}
 
-	@description = "This is a test for LPS-98241 and LPS-115224. The user could configure the Heading fragment in page editor."
-	@priority = "4"
+	@description = "This is a test for LPS-98241, LPS-115224 and LPS-141412. The user could configure the Heading fragment in page editor."
+	@priority = "5"
 	test ConfigureBasicComponentHeading {
+		property portal.acceptance = "true";
+
 		task ("Add a Heading fragment to page") {
 			ContentPagesNavigator.openEditContentPage(
 				pageName = "Test Page Name",
@@ -248,7 +250,15 @@ definition {
 			PageEditor.gotoStyle(fragmentName = "Heading");
 
 			PageEditor.configureFragment(
-				alignment = "Right",
+				alignment = "Align Right",
+				marginBottom = "2",
+				marginLeft = "2",
+				marginRight = "2",
+				marginTop = "2",
+				paddingBottom = "2",
+				paddingLeft = "2",
+				paddingRight = "2",
+				paddingTop = "2",
 				textColor = "Blockquote Small Color");
 
 			PageEditor.gotoConfiguration(fragmentName = "Heading");
@@ -259,11 +269,19 @@ definition {
 		task ("View the Heading styles in page editor") {
 			PageEditor.viewFragmentStyle(
 				alignment = "right",
-				fragmentName = "heading",
+				fragmentName = "Heading",
 				headingLevel = "h2",
+				marginBottom = "2",
+				marginLeft = "2",
+				marginRight = "2",
+				marginTop = "2",
+				paddingBottom = "2",
+				paddingLeft = "2",
+				paddingRight = "2",
+				paddingTop = "2",
 				textColor = "blockquote-small-color");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("View the Heading styles at view mode") {
@@ -271,12 +289,15 @@ definition {
 				pageName = "Test Page Name",
 				siteName = "Test Site Name");
 
-			AssertVisible(locator1 = "//div[contains(@class,'text-right')][//h2[contains(@class,'component-heading')]]");
+			ContentPages.viewFragmentCommonStyle(
+				fragmentName = "heading",
+				styleName = "textAlign",
+				styleValue = "right");
 
-			AssertCssValue(
-				locator1 = "//div[contains(@class,'text-right')][//h2[contains(@class,'component-heading')]]",
-				locator2 = "color",
-				value1 = "rgba(107, 108, 126, 1)");
+			ContentPages.viewFragmentCommonStyle(
+				fragmentName = "heading",
+				styleName = "color",
+				styleValue = "blockquote-small-color");
 		}
 
 		task ("Remove the Heading") {
@@ -302,7 +323,7 @@ definition {
 		}
 	}
 
-	@description = "This is a test for LPS-98241 and LPS-128667. The user could configure the Image fragment in page editor."
+	@description = "This is a test for LPS-98241, LPS-128667 and LPS-158084. The user could configure the Image fragment in page editor."
 	@priority = "5"
 	@uitest
 	test ConfigureBasicComponentImage {
@@ -318,6 +339,18 @@ definition {
 				fragmentName = "Image");
 		}
 
+		task ("Select editable field of Image fragment") {
+			PageEditor.clickEditableField(
+				fragmentName = "Image",
+				id = "image-square");
+		}
+
+		task ("View the help information") {
+			Tooltip.viewHelpInformation(
+				header = "Image Description",
+				info = "This value is used as ALT text.");
+		}
+
 		task ("Configure the Image") {
 			PageEditor.gotoConfiguration(fragmentName = "Image");
 
@@ -326,14 +359,14 @@ definition {
 			PageEditor.gotoStyle(fragmentName = "Image");
 
 			PageEditor.configureFragment(
-				alignment = "Center",
+				alignment = "Align Center",
 				marginBottom = "2");
 		}
 
 		task ("View the Image styles") {
 			PageEditor.viewFragmentStyle(
 				alignment = "center",
-				fragmentName = "image",
+				fragmentName = "Image",
 				imageSize = "0",
 				marginBottom = "2");
 		}
@@ -359,7 +392,7 @@ definition {
 			PageEditor.viewFragmentEditableImage(
 				id = "image-square",
 				imageDescription = "",
-				imageFileName = "Document_1.jpg");
+				imageFileName = "document_1-jpg");
 		}
 
 		task ("Directly select another Image in Image fragment") {
@@ -373,7 +406,7 @@ definition {
 			PageEditor.viewFragmentEditableImage(
 				id = "image-square",
 				imageDescription = "",
-				imageFileName = "Document_2.jpg");
+				imageFileName = "document_2-jpg");
 		}
 
 		task ("Clear the selection") {
@@ -426,14 +459,14 @@ definition {
 			PageEditor.gotoStyle(fragmentName = "Paragraph");
 
 			PageEditor.configureFragment(
-				alignment = "Right",
+				alignment = "Align Right",
 				textColor = "Warning");
 		}
 
 		task ("View the Paragraph styles") {
 			PageEditor.viewFragmentStyle(
 				alignment = "right",
-				fragmentName = "paragraph",
+				fragmentName = "Paragraph",
 				textColor = "warning");
 		}
 
@@ -443,7 +476,7 @@ definition {
 
 		task ("View the Text Color of Paragraph") {
 			PageEditor.viewFragmentStyle(
-				fragmentName = "paragraph",
+				fragmentName = "Paragraph",
 				textColor = "success");
 		}
 
@@ -461,11 +494,11 @@ definition {
 				value1 = "rgba(39, 40, 51, 1)");
 		}
 
-		task ("View the Default is shown in Text Color field") {
+		task ("View the Inherited value is shown in Text Color field") {
 			AssertTextEquals(
-				key_text = "Text Color",
-				locator1 = "TextInput#ANY",
-				value1 = "Default");
+				key_fieldLabel = "Text Color",
+				locator1 = "Button#COLOR_PICKER",
+				value1 = "#272833");
 		}
 
 		task ("Remove the Paragraph") {
@@ -515,7 +548,7 @@ definition {
 			PageEditor.viewFragmentStyle(
 				borderColor = "gray-100",
 				bottomSpacing = "1",
-				fragmentName = "separator",
+				fragmentName = "Separator",
 				separatorColor = "danger");
 		}
 

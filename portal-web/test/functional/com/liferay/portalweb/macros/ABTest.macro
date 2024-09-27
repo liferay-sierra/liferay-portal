@@ -156,6 +156,10 @@ definition {
 		if (IsNotVisible(locator1 = "ABTest#AB_TEST_SIDE_BAR")) {
 			Click(locator1 = "ABTest#AB_TEST_BUTTON");
 		}
+
+		while (IsNotVisible(locator1 = "ABTest#AB_TEST_SIDE_BAR")) {
+			WaitForElementPresent(locator1 = "ABTest#AB_TEST_SIDE_BAR");
+		}
 	}
 
 	macro runTest {
@@ -194,6 +198,14 @@ definition {
 			value1 = "${status}");
 	}
 
+	macro switchVariant {
+		ABTest.openABTestPanel();
+
+		Click(
+			key_variantName = "${variantName}",
+			locator1 = "ABTest#VARIANT_TITLE");
+	}
+
 	macro takeElementID {
 		if (!(isSet(key_index))) {
 			var key_index = "1";
@@ -206,6 +218,7 @@ definition {
 		Click(locator1 = "ABTest#SELECT_CLICKABLE_ELEMENT");
 
 		var idelement = selenium.getAttribute("//div[contains(@class,'text-truncate')]@title");
+
 		var idelement = StringUtil.substring("${idelement}", "1", "19");
 
 		Click(locator1 = "ABTest#X_BUTTON_TARGET_ID_ELEMENT");

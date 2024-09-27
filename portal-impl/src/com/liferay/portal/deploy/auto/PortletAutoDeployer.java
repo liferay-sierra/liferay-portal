@@ -47,9 +47,6 @@ import java.util.List;
 public class PortletAutoDeployer
 	extends BaseAutoDeployer implements AutoDeployer {
 
-	public static final String JSF_STANDARD =
-		"javax.portlet.faces.GenericFacesPortlet";
-
 	public PortletAutoDeployer() {
 		super(Plugin.TYPE_PORTLET);
 
@@ -117,38 +114,7 @@ public class PortletAutoDeployer
 		updatePortletXML(portletXML);
 
 		sb.append(getServletContent(portletXML, webXML));
-
-		String extraContent = super.getExtraContent(
-			webXmlVersion, srcFile, displayName);
-
-		sb.append(extraContent);
-
-		return sb.toString();
-	}
-
-	@Override
-	public String getExtraFiltersContent(double webXmlVersion, File srcFile)
-		throws Exception {
-
-		StringBundler sb = new StringBundler(4);
-
-		String extraFiltersContent = super.getExtraFiltersContent(
-			webXmlVersion, srcFile);
-
-		sb.append(extraFiltersContent);
-
-		// Ignore filters
-
-		sb.append(getIgnoreFiltersContent(srcFile));
-
-		// Speed filters
-
-		sb.append(getSpeedFiltersContent(srcFile));
-
-		// Servlet context include filters
-
-		sb.append(
-			getServletContextIncludeFiltersContent(webXmlVersion, srcFile));
+		sb.append(super.getExtraContent(webXmlVersion, srcFile, displayName));
 
 		return sb.toString();
 	}

@@ -48,7 +48,7 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 
 import java.io.Serializable;
 
@@ -204,7 +204,7 @@ public class MBMailingListPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<MBMailingList>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (MBMailingList mbMailingList : list) {
@@ -595,7 +595,7 @@ public class MBMailingListPersistenceImpl
 
 			finderArgs = new Object[] {uuid};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -731,7 +731,7 @@ public class MBMailingListPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = finderCache.getResult(
-				_finderPathFetchByUUID_G, finderArgs);
+				_finderPathFetchByUUID_G, finderArgs, this);
 		}
 
 		if (result instanceof MBMailingList) {
@@ -851,7 +851,7 @@ public class MBMailingListPersistenceImpl
 
 			finderArgs = new Object[] {uuid, groupId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1023,7 +1023,7 @@ public class MBMailingListPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<MBMailingList>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (MBMailingList mbMailingList : list) {
@@ -1448,7 +1448,7 @@ public class MBMailingListPersistenceImpl
 
 			finderArgs = new Object[] {uuid, companyId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1610,7 +1610,7 @@ public class MBMailingListPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<MBMailingList>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (MBMailingList mbMailingList : list) {
@@ -1978,7 +1978,7 @@ public class MBMailingListPersistenceImpl
 
 			finderArgs = new Object[] {active};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2097,7 +2097,8 @@ public class MBMailingListPersistenceImpl
 		Object result = null;
 
 		if (useFinderCache && productionMode) {
-			result = finderCache.getResult(_finderPathFetchByG_C, finderArgs);
+			result = finderCache.getResult(
+				_finderPathFetchByG_C, finderArgs, this);
 		}
 
 		if (result instanceof MBMailingList) {
@@ -2204,7 +2205,7 @@ public class MBMailingListPersistenceImpl
 
 			finderArgs = new Object[] {groupId, categoryId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2405,7 +2406,7 @@ public class MBMailingListPersistenceImpl
 		mbMailingList.setNew(true);
 		mbMailingList.setPrimaryKey(mailingListId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		mbMailingList.setUuid(uuid);
 
@@ -2526,7 +2527,7 @@ public class MBMailingListPersistenceImpl
 			(MBMailingListModelImpl)mbMailingList;
 
 		if (Validator.isNull(mbMailingList.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			mbMailingList.setUuid(uuid);
 		}
@@ -2651,7 +2652,9 @@ public class MBMailingListPersistenceImpl
 	 */
 	@Override
 	public MBMailingList fetchByPrimaryKey(Serializable primaryKey) {
-		if (ctPersistenceHelper.isProductionMode(MBMailingList.class)) {
+		if (ctPersistenceHelper.isProductionMode(
+				MBMailingList.class, primaryKey)) {
+
 			return super.fetchByPrimaryKey(primaryKey);
 		}
 
@@ -2870,7 +2873,7 @@ public class MBMailingListPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<MBMailingList>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -2946,7 +2949,7 @@ public class MBMailingListPersistenceImpl
 
 		if (productionMode) {
 			count = (Long)finderCache.getResult(
-				_finderPathCountAll, FINDER_ARGS_EMPTY);
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 		}
 
 		if (count == null) {
@@ -3266,7 +3269,6 @@ public class MBMailingListPersistenceImpl
 	}
 
 	@Reference
-	private MBMailingListModelArgumentsResolver
-		_mbMailingListModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

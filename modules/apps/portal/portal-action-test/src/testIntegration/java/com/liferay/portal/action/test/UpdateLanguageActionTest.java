@@ -42,6 +42,7 @@ import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.TreeMapBuilder;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -113,7 +114,7 @@ public class UpdateLanguageActionTest {
 	public void setUp() throws Exception {
 		_group = GroupTestUtil.addGroup();
 
-		_layout = LayoutTestUtil.addLayout(
+		_layout = LayoutTestUtil.addTypePortletLayout(
 			_group.getGroupId(), false,
 			HashMapBuilder.put(
 				_defaultLocale, "Page in Default Locale"
@@ -188,7 +189,10 @@ public class UpdateLanguageActionTest {
 
 		LayoutSet layoutSet = _layout.getLayoutSet();
 
-		layoutSet.setVirtualHostname(_VIRTUAL_HOSTNAME);
+		layoutSet.setVirtualHostnames(
+			TreeMapBuilder.put(
+				_VIRTUAL_HOSTNAME, StringPool.BLANK
+			).build());
 
 		themeDisplay.setI18nLanguageId(_sourceUKLocale.getLanguage());
 		themeDisplay.setI18nPath("/" + _sourceUKLocale.getLanguage());
@@ -274,10 +278,10 @@ public class UpdateLanguageActionTest {
 
 		mockHttpServletRequest.setParameter("redirect", url);
 
-		String redirect = updateLanguageAction.getRedirect(
-			mockHttpServletRequest, themeDisplay, _targetLocale);
-
-		Assert.assertEquals(expectedRedirect, redirect);
+		Assert.assertEquals(
+			expectedRedirect,
+			updateLanguageAction.getRedirect(
+				mockHttpServletRequest, themeDisplay, _targetLocale));
 	}
 
 	private String _getFriendlyURLSeparatorPart(Locale locale)

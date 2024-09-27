@@ -29,12 +29,12 @@ import {
 import {useDispatch, useSelector} from '../../contexts/StoreContext';
 import selectCanUpdateItemConfiguration from '../../selectors/selectCanUpdateItemConfiguration';
 import selectCanUpdatePageStructure from '../../selectors/selectCanUpdatePageStructure';
-import selectSegmentsExperienceId from '../../selectors/selectSegmentsExperienceId';
 import resizeColumns from '../../thunks/resizeColumns';
 import {
 	NotDraggableArea,
 	useSetCanDrag,
 } from '../../utils/drag-and-drop/useDragAndDrop';
+import getLayoutDataItemTopperUniqueClassName from '../../utils/getLayoutDataItemTopperUniqueClassName';
 import {getResponsiveColumnSize} from '../../utils/getResponsiveColumnSize';
 import {getResponsiveConfig} from '../../utils/getResponsiveConfig';
 import isItemEmpty from '../../utils/isItemEmpty';
@@ -80,7 +80,6 @@ const ColumnWithControls = React.forwardRef(({children, item}, ref) => {
 	const globalContext = useGlobalContext();
 	const isActive = useIsActive();
 	const resizing = useResizing();
-	const segmentsExperienceId = useSelector(selectSegmentsExperienceId);
 	const setCanDrag = useSetCanDrag();
 	const setResizing = useSetResizing();
 	const setNextColumnSizes = useSetNextColumnSizes();
@@ -168,7 +167,6 @@ const ColumnWithControls = React.forwardRef(({children, item}, ref) => {
 					resizeColumns({
 						layoutData: nextLayoutData,
 						rowItemId: parentItem.itemId,
-						segmentsExperienceId,
 					})
 				).then(() => {
 					setNextColumnSizes(null);
@@ -182,7 +180,6 @@ const ColumnWithControls = React.forwardRef(({children, item}, ref) => {
 			dispatch,
 			layoutData,
 			parentItem,
-			segmentsExperienceId,
 			selectedViewportSize,
 			setCanDrag,
 			setNextColumnSizes,
@@ -431,7 +428,10 @@ const ColumnWithControls = React.forwardRef(({children, item}, ref) => {
 	);
 
 	return (
-		<TopperEmpty item={item}>
+		<TopperEmpty
+			className={getLayoutDataItemTopperUniqueClassName(item.itemId)}
+			item={item}
+		>
 			<Column
 				className={classNames('page-editor__col', {
 					'empty': isItemEmpty(

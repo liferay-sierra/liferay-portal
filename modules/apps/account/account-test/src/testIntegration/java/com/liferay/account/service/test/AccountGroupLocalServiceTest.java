@@ -14,6 +14,7 @@
 
 package com.liferay.account.service.test;
 
+import com.liferay.account.exception.AccountGroupNameException;
 import com.liferay.account.exception.DefaultAccountGroupException;
 import com.liferay.account.model.AccountEntry;
 import com.liferay.account.model.AccountGroup;
@@ -34,7 +35,6 @@ import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.ListUtil;
-import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -66,6 +66,35 @@ public class AccountGroupLocalServiceTest {
 	@BeforeClass
 	public static void setUpClass() throws Exception {
 		_company = CompanyTestUtil.addCompany();
+	}
+
+	@Test
+	public void testAccountGroupName() throws Exception {
+		try {
+			_accountGroupLocalService.addAccountGroup(
+				TestPropsValues.getUserId(), null, "");
+
+			Assert.fail();
+		}
+		catch (AccountGroupNameException accountGroupNameException) {
+			String message = accountGroupNameException.getMessage();
+
+			Assert.assertTrue(message.contains("Name is null"));
+		}
+
+		AccountGroup accountGroup = _addAccountGroup();
+
+		try {
+			_accountGroupLocalService.updateAccountGroup(
+				accountGroup.getUserId(), null, "");
+
+			Assert.fail();
+		}
+		catch (AccountGroupNameException accountGroupNameException) {
+			String message = accountGroupNameException.getMessage();
+
+			Assert.assertTrue(message.contains("Name is null"));
+		}
 	}
 
 	@Test
@@ -144,13 +173,10 @@ public class AccountGroupLocalServiceTest {
 		_addAccountGroup();
 		_addAccountGroup();
 
-		OrderByComparator<AccountGroup> orderByComparator =
-			OrderByComparatorFactoryUtil.create("AccountGroup", "name", true);
-
 		List<AccountGroup> expectedAccountGroups =
 			_accountGroupLocalService.getAccountGroups(
 				TestPropsValues.getCompanyId(), QueryUtil.ALL_POS,
-				QueryUtil.ALL_POS, orderByComparator);
+				QueryUtil.ALL_POS, null);
 
 		expectedAccountGroups = ListUtil.filter(
 			expectedAccountGroups,
@@ -159,12 +185,13 @@ public class AccountGroupLocalServiceTest {
 		BaseModelSearchResult<AccountGroup> baseModelSearchResult =
 			_accountGroupLocalService.searchAccountGroups(
 				TestPropsValues.getCompanyId(), null, QueryUtil.ALL_POS,
-				QueryUtil.ALL_POS, orderByComparator);
+				QueryUtil.ALL_POS, null);
 
 		Assert.assertEquals(
 			expectedAccountGroups.size(), baseModelSearchResult.getLength());
-		Assert.assertEquals(
-			expectedAccountGroups, baseModelSearchResult.getBaseModels());
+		Assert.assertTrue(
+			expectedAccountGroups.containsAll(
+				baseModelSearchResult.getBaseModels()));
 	}
 
 	@Test

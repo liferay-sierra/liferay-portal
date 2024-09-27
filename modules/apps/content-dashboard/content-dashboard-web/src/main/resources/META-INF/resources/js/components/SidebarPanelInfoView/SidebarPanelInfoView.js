@@ -12,289 +12,272 @@
  * details.
  */
 
+import ClayAlert from '@clayui/alert';
 import ClayIcon from '@clayui/icon';
 import ClayLabel from '@clayui/label';
-import ClayPanel from '@clayui/panel';
+import ClayLayout from '@clayui/layout';
 import ClaySticker from '@clayui/sticker';
+import ClayTabs from '@clayui/tabs';
 import classnames from 'classnames';
-import React from 'react';
+import {getSessionValue} from 'frontend-js-web';
+import PropTypes from 'prop-types';
+import React, {useCallback, useLayoutEffect, useState} from 'react';
 
-import Sidebar from '../Sidebar';
-import CollapsibleSection from './CollapsibleSection';
-import DocumentPreview from './DocumentPreview';
-import FileUrlCopyButton from './FileUrlCopyButton';
-import ItemLanguages from './ItemLanguages';
-import ItemVocabularies from './ItemVocabularies';
 import {
-	getCategoriesCountFromVocabularies,
-	groupVocabulariesBy,
-} from './utils/taxonomiesUtils';
+	DEFAULT_ACTIVE_PANEL_TAB,
+	TABS_STATE_SESSION_KEY,
+} from '../../utils/constants';
+import Sidebar from '../Sidebar';
+import DetailsContent from './DetailsContent';
+import ManageCollaborators from './ManageCollaborators';
+import Subscribe from './Subscribe';
+import VersionsContent from './VersionsContent';
 
-const formatDate = (date, languageTag) => {
-	return (
-		date &&
-		languageTag &&
-		Intl.DateTimeFormat(languageTag, {
-			day: 'numeric',
-			hour: 'numeric',
-			hour12: true,
-			minute: 'numeric',
-			month: 'short',
-			year: 'numeric',
-		}).format(new Date(date))
+const useInitialActiveTabState = (singlePageApplicationEnabled) => {
+	const [activeTab, setActiveTab] = useState(
+		singlePageApplicationEnabled ? null : DEFAULT_ACTIVE_PANEL_TAB
 	);
+
+	useLayoutEffect(() => {
+		if (singlePageApplicationEnabled) {
+			getSessionValue(TABS_STATE_SESSION_KEY).then((value) => {
+				const parsedValue = parseInt(value, 10);
+				const safeValue = isNaN(parsedValue)
+					? DEFAULT_ACTIVE_PANEL_TAB
+					: parsedValue;
+
+				setActiveTab(safeValue);
+			});
+		}
+	}, [singlePageApplicationEnabled]);
+
+	return [activeTab, setActiveTab];
 };
 
 const SidebarPanelInfoView = ({
-	className,
 	classPK,
 	createDate,
-	data = {},
+	description,
+	downloadURL,
+	getItemVersionsURL,
 	languageTag = 'en',
+	latestVersions = [],
 	modifiedDate,
 	specificFields = {},
+	subscribe,
 	subType,
 	tags = [],
 	title,
+	type,
+	preview,
+	fetchSharingButtonURL,
+	fetchSharingCollaboratorsURL,
+	singlePageApplicationEnabled,
 	user,
-	versions = [],
 	viewURLs = [],
 	vocabularies = {},
 }) => {
+	const [activeTabKeyValue, setActiveTabKeyValue] = useInitialActiveTabState(
+		singlePageApplicationEnabled
+	);
+
+	const showTabs = !!getItemVersionsURL;
+
+	const [error, setError] = useState(false);
+
 	const stickerColor = parseInt(user.userId, 10) % 10;
 
-	const [publicVocabularies, internalVocabularies] = groupVocabulariesBy({
-		array: Object.values(vocabularies),
-		key: 'isPublic',
-		value: true,
-	});
+	const handleError = useCallback(() => {
+		setError(true);
+	}, []);
 
-	const internalCategoriesCount = getCategoriesCountFromVocabularies(
-		internalVocabularies
-	);
+	const handleTabClick = (tab) => {
+		setActiveTabKeyValue(tab);
 
-	const publicCategoriesCount = getCategoriesCountFromVocabularies(
-		publicVocabularies
-	);
-
-	const {
-		description,
-		downloadURL,
-		extension,
-		fileName,
-		previewImageURL,
-		previewURL,
-		size,
-		viewURL,
-	} = specificFields;
-
-	const itemDates = [
-		{
-			text: formatDate(data['display-date']?.value, languageTag),
-			title: Liferay.Language.get('display-date'),
-		},
-		{
-			text: formatDate(createDate, languageTag),
-			title: Liferay.Language.get('creation-date'),
-		},
-		{
-			text: formatDate(modifiedDate, languageTag),
-			title: Liferay.Language.get('modified-date'),
-		},
-		{
-			text: formatDate(data['expiration-date']?.value, languageTag),
-			title: Liferay.Language.get('expiration-date'),
-		},
-		{
-			text: formatDate(data['review-date']?.value, languageTag),
-			title: Liferay.Language.get('review-date'),
-		},
-		{
-			text: classPK,
-			title: Liferay.Language.get('id'),
-		},
-	];
-
-	const isADocument =
-		className === 'com.liferay.portal.kernel.repository.model.FileEntry';
-
-	const documentIsAFile =
-		isADocument &&
-		!!downloadURL &&
-		!!extension &&
-		parseInt(size?.split(' ')[0], 10) > 0;
-
-	const documentUsesPreview = !!previewImageURL || documentIsAFile;
-
-	const showTaxonomies =
-		!!internalCategoriesCount || !!publicCategoriesCount || !!tags?.length;
+		if (singlePageApplicationEnabled) {
+			Liferay.Util.Session.set(TABS_STATE_SESSION_KEY, tab);
+		}
+	};
 
 	return (
 		<>
-			<Sidebar.Header title={title} />
+			<Sidebar.Header
+				actionsSlot={subscribe && <Subscribe {...subscribe} />}
+				title={title}
+			>
+				<ClayLayout.ContentRow>
+					<div>
+						{error && (
+							<ClayAlert
+								className="mb-3"
+								displayType="warning"
+								onClose={() => {
+									setError(false);
+								}}
+								variant="stripe"
+							>
+								{Liferay.Language.get(
+									'there-was-a-problem-retrieving-data-please-try-reloading-the-page'
+								)}
+							</ClayAlert>
+						)}
+
+						<div className="sidebar-section sidebar-section--compress">
+							<p
+								className="c-mb-1 text-secondary"
+								data-qa-id="assetTypeInfo"
+							>
+								{subType ? `${type} - ${subType}` : `${type}`}
+							</p>
+
+							{latestVersions.map((latestVersion) => (
+								<div
+									className="c-mt-2"
+									key={latestVersion.version}
+								>
+									<ClayLabel displayType="info">
+										{Liferay.Language.get('version') + ' '}
+
+										{latestVersion.version}
+									</ClayLabel>
+
+									<ClayLabel
+										displayType={latestVersion.statusStyle}
+									>
+										{latestVersion.statusLabel}
+									</ClayLabel>
+								</div>
+							))}
+						</div>
+
+						<div className="sidebar-section">
+							{fetchSharingCollaboratorsURL ? (
+								<ManageCollaborators
+									fetchSharingCollaboratorsURL={
+										fetchSharingCollaboratorsURL
+									}
+									onError={handleError}
+								/>
+							) : (
+								<>
+									<ClaySticker
+										className={classnames(
+											'sticker-user-icon',
+											{
+												[`user-icon-color-${stickerColor}`]: !user.url,
+											}
+										)}
+										shape="circle"
+									>
+										{user.url ? (
+											<img
+												alt={`${user.name}.`}
+												className="sticker-img"
+												src={user.url}
+											/>
+										) : (
+											<ClayIcon symbol="user" />
+										)}
+									</ClaySticker>
+									<span className="c-ml-2 text-secondary">
+										{user.name}
+									</span>
+								</>
+							)}
+						</div>
+
+						<div className="mb-0 sidebar-section">
+							{showTabs && activeTabKeyValue !== null && (
+								<ClayTabs modern>
+									<ClayTabs.Item
+										active={activeTabKeyValue === 0}
+										innerProps={{
+											'aria-controls': 'details',
+										}}
+										onClick={() => handleTabClick(0)}
+									>
+										{Liferay.Language.get('details')}
+									</ClayTabs.Item>
+
+									<ClayTabs.Item
+										active={activeTabKeyValue === 1}
+										innerProps={{
+											'aria-controls': 'versions',
+										}}
+										onClick={() => handleTabClick(1)}
+									>
+										{Liferay.Language.get('versions')}
+									</ClayTabs.Item>
+								</ClayTabs>
+							)}
+						</div>
+					</div>
+				</ClayLayout.ContentRow>
+			</Sidebar.Header>
 
 			<Sidebar.Body>
-				<div className="sidebar-section sidebar-section--compress">
-					{documentIsAFile && (
-						<>
-							<div className="c-mt-1">
-								<FileUrlCopyButton url={previewURL} />
-							</div>
-							<p className="c-mb-1 text-secondary">{fileName}</p>
-						</>
-					)}
-
-					<p className="c-mb-1 text-secondary">{subType}</p>
-
-					{versions.map((version) => (
-						<div className="c-mt-2" key={version.version}>
-							<ClayLabel displayType="info">
-								{Liferay.Language.get('version') + ' '}
-
-								{version.version}
-							</ClayLabel>
-
-							<ClayLabel displayType={version.statusStyle}>
-								{version.statusLabel}
-							</ClayLabel>
-						</div>
-					))}
-				</div>
-
-				<div className="sidebar-dl sidebar-section">
-					<ClaySticker
-						className={classnames('sticker-user-icon', {
-							[`user-icon-color-${stickerColor}`]: !user.url,
-						})}
-						shape="circle"
-					>
-						{user.url ? (
-							<img
-								alt={`${user.name}.`}
-								className="sticker-img"
-								src={user.url}
+				<div>
+					<ClayTabs.Content activeIndex={activeTabKeyValue} fade>
+						<ClayTabs.TabPane aria-labelledby="tab-1">
+							<DetailsContent
+								classPK={classPK}
+								createDate={createDate}
+								description={description}
+								downloadURL={downloadURL}
+								fetchSharingButtonURL={fetchSharingButtonURL}
+								languageTag={languageTag}
+								modifiedDate={modifiedDate}
+								preview={preview}
+								specificFields={specificFields}
+								tags={tags}
+								title={title}
+								viewURLs={viewURLs}
+								vocabularies={vocabularies}
 							/>
-						) : (
-							<ClayIcon symbol="user" />
-						)}
-					</ClaySticker>
+						</ClayTabs.TabPane>
 
-					<span className="c-ml-2 text-secondary">{user.name}</span>
+						{showTabs && (
+							<ClayTabs.TabPane aria-labelledby="tab-2">
+								<VersionsContent
+									active={activeTabKeyValue === 1}
+									getItemVersionsURL={getItemVersionsURL}
+									languageTag={languageTag}
+									onError={handleError}
+								/>
+							</ClayTabs.TabPane>
+						)}
+					</ClayTabs.Content>
 				</div>
-
-				{documentUsesPreview && (
-					<DocumentPreview
-						documentSrc={previewImageURL}
-						documentTitle={title}
-						downloadURL={downloadURL}
-						isFile={documentIsAFile}
-						viewURL={viewURL}
-					/>
-				)}
-
-				{description && (
-					<div className="sidebar-section">
-						<h5 className="c-mb-1 font-weight-semi-bold">
-							{Liferay.Language.get('description')}
-						</h5>
-
-						<p className="text-secondary">{description}</p>
-					</div>
-				)}
-
-				<ClayPanel.Group className="panel-group-flush panel-group-sm">
-					{showTaxonomies && (
-						<CollapsibleSection
-							expanded={true}
-							title={Liferay.Language.get('categorization')}
-						>
-							{!!publicCategoriesCount && (
-								<ItemVocabularies
-									title={Liferay.Language.get(
-										'public-categories'
-									)}
-									vocabularies={publicVocabularies}
-								/>
-							)}
-
-							{!!internalCategoriesCount && (
-								<ItemVocabularies
-									cssClassNames="c-mt-4"
-									title={Liferay.Language.get(
-										'internal-categories'
-									)}
-									vocabularies={internalVocabularies}
-								/>
-							)}
-
-							{!!tags.length && (
-								<div className="c-mb-4 sidebar-dl sidebar-section">
-									<h5 className="c-mb-1 font-weight-semi-bold">
-										{Liferay.Language.get('tags')}
-									</h5>
-
-									<p>
-										{tags.map((tag) => (
-											<ClayLabel
-												className="c-mb-2 c-mr-2"
-												displayType="secondary"
-												key={tag}
-												large
-											>
-												{tag}
-											</ClayLabel>
-										))}
-									</p>
-								</div>
-							)}
-						</CollapsibleSection>
-					)}
-
-					<CollapsibleSection title={Liferay.Language.get('details')}>
-						{documentIsAFile && (
-							<div className="sidebar-section">
-								<h5 className="c-mb-1 font-weight-semi-bold">
-									{Liferay.Language.get('extension')}
-								</h5>
-
-								<p className="text-secondary">{extension}</p>
-
-								<h5 className="c-mb-1 font-weight-semi-bold">
-									{Liferay.Language.get('size')}
-								</h5>
-
-								<p className="text-secondary">{size}</p>
-							</div>
-						)}
-
-						{!!itemDates.length &&
-							itemDates.map(
-								({text, title}) =>
-									text &&
-									title && (
-										<div
-											className="c-mb-4 sidebar-dl sidebar-section"
-											key={title}
-										>
-											<h5 className="c-mb-1 font-weight-semi-bold">
-												{title}
-											</h5>
-
-											<p className="text-secondary">
-												{text}
-											</p>
-										</div>
-									)
-							)}
-
-						{!!viewURLs.length && !isADocument && (
-							<ItemLanguages urls={viewURLs} />
-						)}
-					</CollapsibleSection>
-				</ClayPanel.Group>
 			</Sidebar.Body>
 		</>
 	);
+};
+
+SidebarPanelInfoView.defaultProps = {
+	description: '',
+	languageTag: 'en-US',
+	propTypes: [],
+	vocabularies: {},
+};
+
+SidebarPanelInfoView.propTypes = {
+	classPK: PropTypes.string.isRequired,
+	createDate: PropTypes.string.isRequired,
+	description: PropTypes.string,
+	fetchSharingButtonURL: PropTypes.string,
+	fetchSharingCollaboratorsURL: PropTypes.string,
+	getItemVersionsURL: PropTypes.string,
+	latestVersions: PropTypes.array.isRequired,
+	modifiedDate: PropTypes.string.isRequired,
+	preview: PropTypes.object,
+	singlePageApplicationEnabled: PropTypes.bool.isRequired,
+	specificFields: PropTypes.object.isRequired,
+	subType: PropTypes.string.isRequired,
+	tags: PropTypes.array,
+	title: PropTypes.string.isRequired,
+	user: PropTypes.object.isRequired,
+	viewURLs: PropTypes.array.isRequired,
+	vocabularies: PropTypes.object,
 };
 
 export default SidebarPanelInfoView;

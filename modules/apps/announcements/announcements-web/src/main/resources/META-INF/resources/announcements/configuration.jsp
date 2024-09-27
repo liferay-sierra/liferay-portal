@@ -259,9 +259,7 @@ announcementsPortletInstanceConfiguration = ParameterMapUtil.setParameterMap(Ann
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button type="submit" />
-
-		<aui:button type="cancel" />
+		<liferay-frontend:edit-form-buttons />
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>
 
@@ -371,7 +369,7 @@ announcementsPortletInstanceConfiguration = ParameterMapUtil.setParameterMap(Ann
 			if (currentScopeGroupIds && selectedScopeGroupIds) {
 				selectedScopeGroupIds.setAttribute(
 					'value',
-					Liferay.Util.listSelect(currentScopeGroupIds)
+					Liferay.Util.getSelectedOptionValues(currentScopeGroupIds)
 				);
 			}
 
@@ -385,7 +383,9 @@ announcementsPortletInstanceConfiguration = ParameterMapUtil.setParameterMap(Ann
 			if (currentScopeOrganizationIds && selectedScopeOrganizationIds) {
 				selectedScopeOrganizationIds.setAttribute(
 					'value',
-					Liferay.Util.listSelect(currentScopeOrganizationIds)
+					Liferay.Util.getSelectedOptionValues(
+						currentScopeOrganizationIds
+					)
 				);
 			}
 
@@ -399,7 +399,7 @@ announcementsPortletInstanceConfiguration = ParameterMapUtil.setParameterMap(Ann
 			if (currentScopeRoleIds && selectedScopeRoleIds) {
 				selectedScopeRoleIds.setAttribute(
 					'value',
-					Liferay.Util.listSelect(currentScopeRoleIds)
+					Liferay.Util.getSelectedOptionValues(currentScopeRoleIds)
 				);
 			}
 
@@ -413,7 +413,7 @@ announcementsPortletInstanceConfiguration = ParameterMapUtil.setParameterMap(Ann
 			if (currentScopeUserGroupIds && selectedScopeUserGroupIds) {
 				selectedScopeUserGroupIds.setAttribute(
 					'value',
-					Liferay.Util.listSelect(currentScopeUserGroupIds)
+					Liferay.Util.getSelectedOptionValues(currentScopeUserGroupIds)
 				);
 			}
 

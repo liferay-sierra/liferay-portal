@@ -3,7 +3,7 @@ definition {
 
 	property custom.properties = "minifier.enabled=true";
 	property osgi.module.configuration.file.names = "com.liferay.frontend.js.loader.modules.extender.internal.configuration.Details.config";
-	property osgi.module.configurations = "waitTimeout=&quot;15&quot;";
+	property osgi.module.configurations = "waitTimeout=\"15\"";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Forms";
@@ -41,6 +41,7 @@ definition {
 	test AddFormInGlobal {
 		property portal.acceptance = "true";
 		property portal.upstream = "true";
+		property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
 		property test.name.skip.portal.instance = "Forms#AddFormInGlobal";
 		property testray.component.names = "Training";
 
@@ -70,7 +71,7 @@ definition {
 
 		Form.closeSidebar();
 
-		Form.save();
+		Form.publishForm();
 
 		ProductMenu.gotoPortlet(
 			category = "Content & Data",
@@ -165,7 +166,7 @@ definition {
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "Form Page");
+		PagesAdmin.addPage(pageName = "Form Page");
 
 		ProductMenu.gotoPortlet(
 			category = "People",
@@ -251,7 +252,7 @@ definition {
 
 		Form.addTextField(fieldPositionNumber = "0");
 
-		Pause(locator1 = "60000");
+		WaitForElementPresent(locator1 = "Form#SAVE_NOTIFICATION");
 
 		Form.viewSaveNotification();
 
@@ -301,6 +302,8 @@ definition {
 
 		Form.closeSidebar();
 
+		// Pausing 60 seconds to check no autosave due to changing the default autosave interval. See LPS-159468
+
 		Pause(locator1 = "60000");
 
 		FormsAdminNavigator.gotoBack();
@@ -316,6 +319,8 @@ definition {
 		Form.editFieldLabelMetal(fieldValue = "Text Field Will Be Saved");
 
 		Form.closeSidebar();
+
+		// Pausing 120 seconds due to autosave interval set to two minutes. LPS-159468
 
 		Pause(locator1 = "120000");
 
@@ -381,6 +386,45 @@ definition {
 			fieldName = "Text");
 	}
 
+	@description = "LPS-163705 - Verify if you can add an expiration date to the form."
+	@priority = "5"
+	test CanAddExpirationDate {
+		property portal.acceptance = "true";
+		property portal.upstream = "true";
+
+		FormsAdmin.addForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.addTextField(fieldPositionNumber = "0");
+
+		FormsAdminNavigator.gotoSettings();
+
+		Form.gotoSubmissionsTab();
+
+		AssertElementPresent(locator1 = "Form#EXPIRATION_DATE_DISABLED");
+
+		Click(locator1 = "Form#NEVER_EXPIRE");
+
+		FormViewBuilder.editDate(
+			fieldName = "Date",
+			fieldValue = "01/01/2001");
+
+		AssertElementPresent(
+			key_feedbackMessage = "Please enter a valid expiration date. Only future dates are accepted.",
+			locator1 = "Form#FEEDBACK_MESSAGE");
+
+		FormViewBuilder.editDate(
+			fieldName = "Date",
+			fieldValue = "01/01/2100");
+
+		Click(locator1 = "FormFields#DATE_CALENDAR");
+
+		Form.save();
+
+		Alert.viewSuccessMessageText(successMessage = "Your request completed successfully.");
+	}
+
 	@description = "Verify that a Form can be created"
 	@priority = "5"
 	test CanBeCreated {
@@ -437,7 +481,7 @@ definition {
 			fieldPositionNumber = "0",
 			fieldType = "Text");
 
-		Pause(locator1 = "60000");
+		WaitForElementPresent(locator1 = "Form#SAVE_NOTIFICATION");
 
 		Form.viewSaveNotification();
 
@@ -890,13 +934,13 @@ definition {
 
 		Form.closeSidebar();
 
-		Form.save();
+		Form.publishForm();
 
 		ProductMenu.gotoPortlet(
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "Form Page");
+		PagesAdmin.addPage(pageName = "Form Page");
 
 		Navigator.gotoPage(pageName = "Form Page");
 
@@ -965,6 +1009,92 @@ definition {
 			fieldValue = "1/1/16");
 	}
 
+	@description = "Verify that the back button on the forms view entries page works correctly without creating new forms."
+	@priority = "4"
+	test CheckBackButtonViewEntries {
+		property portal.acceptance = "true";
+		property portal.upstream = "true";
+
+		FormsAdmin.addForm();
+
+		Form.editName(formName = "Test");
+
+		Form.gotoAddField(
+			fieldPositionNumber = "0",
+			fieldType = "Single Selection");
+
+		Form.publishForm();
+
+		FormsAdminNavigator.gotoBack();
+
+		Form.duplicate(formName = "Test");
+
+		FormsAdmin.viewForm(
+			formDescription = "",
+			formName = "Test");
+
+		FormsAdmin.viewForm(
+			formDescription = "",
+			formName = "Copy of Test");
+
+		FormsAdminNavigator.gotoViewEntries(formName = "Copy of Test");
+
+		FormsAdminNavigator.gotoBack();
+
+		FormsAdmin.viewForm(
+			formDescription = "",
+			formName = "Test");
+
+		FormsAdmin.viewForm(
+			formDescription = "",
+			formName = "Copy of Test");
+	}
+
+	@description = "Verify if an unpublished form becomes unavailable on the page"
+	@priority = "4"
+	test CheckUnpublishedFormUnavailableOnPage {
+		property portal.acceptance = "true";
+		property portal.upstream = "true";
+
+		FormsAdmin.addForm();
+
+		Form.editName(formName = "Test Form");
+
+		Form.gotoAddField(
+			fieldPositionNumber = "0",
+			fieldType = "Single Selection");
+
+		Form.save();
+
+		AssertElementPresent(
+			key_value = "Share",
+			locator1 = "Form#ANY_DISABLED_BUTTON");
+
+		Navigator.openURL();
+
+		ProductMenu.gotoPortlet(
+			category = "Site Builder",
+			portlet = "Pages");
+
+		PagesAdmin.addPage(pageName = "Form Page");
+
+		Navigator.gotoPage(pageName = "Form Page");
+
+		Portlet.addPG(
+			pageName = "Form Page",
+			portletName = "Form");
+
+		FormPortletNavigator.gotoSelectForm();
+
+		FormPortletConfiguration.selectForm(formName = "Test Form");
+
+		PortletEntry.save();
+
+		Navigator.gotoPage(pageName = "Form Page");
+
+		Alert.viewWarningSpecific(warningMessage = "This form is not available or it was not published.");
+	}
+
 	@description = "LPS-69214 - Verify that a confirmation appears when attempting to leave a Form without saving."
 	@priority = "3"
 	test ConfirmationAppearsWhenLeavingFormWithoutSaving {
@@ -998,6 +1128,7 @@ definition {
 	@description = "Verify that Data Provider can retreive data for guest users"
 	@priority = "5"
 	test DataProviderCanRetrieveDataForGuestUser {
+		property portal.acceptance = "false";
 		property portal.upstream = "true";
 		property test.name.skip.portal.instance = "FormsDataProvider#DataProviderCanRetrieveDataForGuestUser";
 
@@ -1005,11 +1136,7 @@ definition {
 
 		FormsAdminNavigator.enableLocalNetworkDataProvider();
 
-		Navigator.openURL();
-
-		ProductMenu.gotoPortlet(
-			category = "Content & Data",
-			portlet = "Forms");
+		FormsAdmin.openFormsAdmin(siteURLKey = "guest");
 
 		Navigator.gotoNavItem(navItem = "Data Providers");
 
@@ -1190,8 +1317,9 @@ definition {
 	@description = "This is a use case for LPS-50757."
 	@priority = "4"
 	test EditAllFormFieldsTypesUsedBySystemSettings {
-		property portal.acceptance = "true";
-		property portal.upstream = "true";
+		property portal.acceptance = "quarantine";
+		property portal.release = "quarantine";
+		property portal.upstream = "quarantine";
 		property test.name.skip.portal.instance = "Forms#EditAllFormFieldsTypesUsedBySystemSettings";
 
 		Navigator.openURL();
@@ -1369,6 +1497,8 @@ definition {
 			configurationCategory = "Infrastructure",
 			configurationName = "JavaScript Loader",
 			configurationScope = "System Scope");
+
+		Refresh();
 
 		for (var fieldName : list "applyVersioning,exposeGlobal") {
 			FormFields.viewCheckboxNotChecked(fieldName = "${fieldName}");
@@ -1659,6 +1789,72 @@ definition {
 		Form.viewPageEmptyField(pageIndex = "0");
 	}
 
+	@description = "LPS-111551 - As a Forms admin, I want to reorder my form pages"
+	@priority = "4"
+	test ReorderPagesAndVerifyFields {
+		FormsAdmin.addForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.editPageTitle(
+			formPageName = "Page A",
+			formTitleNumber = "1");
+
+		Form.addTextField(fieldPositionNumber = "0");
+
+		var fieldTextField = FormFields.getFieldName();
+
+		Form.editFieldLabelMetal(fieldValue = "Text Field 1");
+
+		Form.closeSidebar();
+
+		Form.addPage(formAddNewPageNumber = "1");
+
+		Form.editPageTitle(
+			formPageName = "Page B",
+			formTitleNumber = "2");
+
+		Form.addTextField(
+			fieldPositionNumber = "0",
+			formPageNumber = "1");
+
+		Form.editFieldLabelMetal(fieldValue = "Text Field 2");
+
+		Form.closeSidebar();
+
+		Form.movePageDown(formPageName = "Page A");
+
+		Form.viewButtonPageDisabled(
+			formPageName = "Page A",
+			pageMove = "Down");
+
+		Form.viewButtonPageDownEnabled(formPageName = "Page B");
+
+		Form.viewButtonPageUpEnabled(formPageName = "Page A");
+
+		Form.viewReorderPageAndVerifyField(
+			fieldName = "Text Field 2",
+			fieldPositionNumber = "0",
+			formPageNumber = "0");
+
+		Form.viewReorderPageAndVerifyField(
+			fieldName = "Text Field 1",
+			fieldPositionNumber = "0",
+			formPageNumber = "1");
+
+		Form.movePageUp(formPageName = "Page A");
+
+		Form.viewReorderPageAndVerifyField(
+			fieldName = "Text Field 1",
+			fieldPositionNumber = "0",
+			formPageNumber = "0");
+
+		Form.viewReorderPageAndVerifyField(
+			fieldName = "Text Field 2",
+			fieldPositionNumber = "0",
+			formPageNumber = "1");
+	}
+
 	@description = "This is a use case for LPS-59336."
 	@priority = "4"
 	test SearchFormRecordMultipleEntries {
@@ -1682,13 +1878,13 @@ definition {
 
 		Form.closeSidebar();
 
-		Form.save();
+		Form.publishForm();
 
 		ProductMenu.gotoPortlet(
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "Form Page");
+		PagesAdmin.addPage(pageName = "Form Page");
 
 		Navigator.gotoPage(pageName = "Form Page");
 
@@ -1759,6 +1955,7 @@ definition {
 	@priority = "5"
 	test ShouldHaveAtLeastOneField {
 		property portal.acceptance = "true";
+		property portal.upstream = "quarantine";
 
 		FormsAdmin.addForm();
 
@@ -1843,13 +2040,13 @@ definition {
 
 		Form.closeSidebar();
 
-		Form.save();
+		Form.publishForm();
 
 		ProductMenu.gotoPortlet(
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "Form Page");
+		PagesAdmin.addPage(pageName = "Form Page");
 
 		Navigator.gotoPage(pageName = "Form Page");
 
@@ -1985,7 +2182,6 @@ definition {
 		AssertAlertNotPresent();
 
 		var actualScript = '''<script>alert(123)</script>''';
-
 		var escapedScript = '''&lt;script&gt;alert(123)&lt;/script&gt;''';
 
 		AssertHTMLSourceTextNotPresent(value1 = "${actualScript}");
@@ -2108,9 +2304,11 @@ definition {
 
 		Form.addTextField(fieldPositionNumber = "0");
 
-		Pause(locator1 = "60000");
+		WaitForElementPresent(locator1 = "Form#SAVE_NOTIFICATION");
 
-		Form.viewSaveNotification();
+		// Pausing 60 seconds due to autosave interval set to one minute. See LPS-159468
+
+		Pause(locator1 = "60000");
 
 		FormsAdminNavigator.gotoBack();
 

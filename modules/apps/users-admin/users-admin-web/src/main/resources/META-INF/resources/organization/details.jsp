@@ -53,10 +53,10 @@ if (organization != null) {
 			<c:when test="<%= PropsValues.FIELD_ENABLE_COM_LIFERAY_PORTAL_KERNEL_MODEL_ORGANIZATION_STATUS %>">
 				<liferay-ui:error key="<%= NoSuchListTypeException.class.getName() + Organization.class.getName() + ListTypeConstants.ORGANIZATION_STATUS %>" message="please-select-a-type" />
 
-				<aui:select label="status" listType="<%= ListTypeConstants.ORGANIZATION_STATUS %>" listTypeFieldName="statusId" name="statusId" showEmptyOption="<%= true %>" />
+				<aui:select label="status" listType="<%= ListTypeConstants.ORGANIZATION_STATUS %>" listTypeFieldName="statusListTypeId" name="statusListTypeId" showEmptyOption="<%= true %>" />
 			</c:when>
 			<c:otherwise>
-				<aui:input name="statusId" type="hidden" value="<%= (organization != null) ? organization.getStatusId() : ListTypeConstants.ORGANIZATION_STATUS_DEFAULT %>" />
+				<aui:input name="statusId" type="hidden" value="<%= (organization != null) ? organization.getStatusListTypeId() : ListTypeConstants.ORGANIZATION_STATUS_DEFAULT %>" />
 			</c:otherwise>
 		</c:choose>
 
@@ -99,49 +99,47 @@ if (organization != null) {
 		md="5"
 	>
 		<div align="middle">
-			<c:if test="<%= organization != null %>">
+			<c:choose>
+				<c:when test="<%= organization != null %>">
+					<label class="control-label"></label>
 
-				<%
-				long logoId = organization.getLogoId();
-
-				UserFileUploadsConfiguration userFileUploadsConfiguration = (UserFileUploadsConfiguration)request.getAttribute(UserFileUploadsConfiguration.class.getName());
-				%>
-
-				<label class="control-label"></label>
-
-				<liferay-ui:logo-selector
-					currentLogoURL="<%= organization.getLogoURL() %>"
-					defaultLogo="<%= logoId == 0 %>"
-					defaultLogoURL='<%= themeDisplay.getPathImage() + "/organization_logo?img_id=0" %>'
-					logoDisplaySelector=".organization-logo"
-					maxFileSize="<%= userFileUploadsConfiguration.imageMaxSize() %>"
-					tempImageFileName="<%= String.valueOf(groupId) %>"
-				/>
-			</c:if>
+					<liferay-ui:logo-selector
+						currentLogoURL="<%= organization.getLogoURL() %>"
+						defaultLogo="<%= organization.getLogoId() == 0 %>"
+						defaultLogoURL='<%= themeDisplay.getPathImage() + "/organization_logo?img_id=0" %>'
+						logoDisplaySelector=".organization-logo"
+						tempImageFileName="<%= String.valueOf(groupId) %>"
+					/>
+				</c:when>
+				<c:otherwise>
+					<liferay-ui:logo-selector
+						currentLogoURL='<%= themeDisplay.getPathImage() + "/organization_logo?img_id=0" %>'
+						defaultLogo="<%= true %>"
+						defaultLogoURL='<%= themeDisplay.getPathImage() + "/organization_logo?img_id=0" %>'
+						logoDisplaySelector=".organization-logo"
+						tempImageFileName="0"
+					/>
+				</c:otherwise>
+			</c:choose>
 		</div>
 	</clay:col>
 </clay:row>
 
-<script>
-	new Liferay.DynamicSelect([
-		{
-			select: '<portlet:namespace />countryId',
-			selectData: Liferay.Address.getCountries,
-			selectDesc: 'nameCurrentValue',
-			selectId: 'countryId',
-			selectSort: '<%= true %>',
-			selectVal: '<%= countryId %>',
-		},
-		{
-			select: '<portlet:namespace />regionId',
-			selectData: Liferay.Address.getRegions,
-			selectDesc: 'name',
-			selectDisableOnEmpty: true,
-			selectId: 'regionId',
-			selectVal: '<%= regionId %>',
-		},
-	]);
-</script>
+<liferay-frontend:component
+	componentId="CountryRegionDynamicSelect"
+	context='<%=
+		HashMapBuilder.<String, Object>put(
+			"countrySelect", portletDisplay.getNamespace() + "countryId"
+		).put(
+			"countrySelectVal", countryId
+		).put(
+			"regionSelect", portletDisplay.getNamespace() + "regionId"
+		).put(
+			"regionSelectVal", regionId
+		).build()
+	%>'
+	module="js/CountryRegionDynamicSelect"
+/>
 
 <c:if test="<%= organization == null %>">
 	<aui:script sandbox="<%= true %>">

@@ -485,12 +485,11 @@ public class DDLRecordSearchTest {
 	}
 
 	protected boolean isExactPhraseQueryImplementedForSearchEngine() {
-		SearchEngine searchEngine = SearchEngineHelperUtil.getSearchEngine(
-			SearchEngineHelperUtil.getDefaultSearchEngineId());
+		SearchEngine searchEngine = SearchEngineHelperUtil.getSearchEngine();
 
 		String vendor = searchEngine.getVendor();
 
-		if (vendor.equals("Elasticsearch")) {
+		if (vendor.equals("Elasticsearch") || vendor.equals("Solr")) {
 			return false;
 		}
 

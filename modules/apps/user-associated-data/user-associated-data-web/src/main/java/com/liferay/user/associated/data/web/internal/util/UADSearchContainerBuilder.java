@@ -14,7 +14,7 @@
 
 package com.liferay.user.associated.data.web.internal.util;
 
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.search.DisplayTerms;
 import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
@@ -26,6 +26,7 @@ import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
 import com.liferay.portal.kernel.portlet.SearchOrderByUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
@@ -64,7 +65,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Samuel Trong Tran
  */
-@Component(immediate = true, service = UADSearchContainerBuilder.class)
+@Component(service = UADSearchContainerBuilder.class)
 public class UADSearchContainerBuilder {
 
 	public SearchContainer<UADEntity<?>>
@@ -325,7 +326,7 @@ public class UADSearchContainerBuilder {
 			SearchContainer.DEFAULT_DELTA, currentURL, null,
 			"no-entities-remain-of-this-type", null);
 
-		searchContainer.setId("UADEntities_" + StringUtil.randomId());
+		searchContainer.setId("uadEntities_" + StringUtil.randomId());
 		searchContainer.setOrderableHeaders(
 			new LinkedHashMap<String, String>() {
 				{
@@ -340,7 +341,7 @@ public class UADSearchContainerBuilder {
 
 		String orderByCol = SearchOrderByUtil.getOrderByCol(
 			renderRequest, UserAssociatedDataPortletKeys.USER_ASSOCIATED_DATA,
-			null);
+			StringPool.BLANK);
 
 		if (!ArrayUtil.contains(sortingFieldNames, orderByCol)) {
 			orderByCol = defaultOrderByCol;

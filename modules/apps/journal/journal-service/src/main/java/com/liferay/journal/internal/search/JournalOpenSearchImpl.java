@@ -21,7 +21,7 @@ import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.model.JournalContentSearch;
 import com.liferay.journal.service.JournalArticleService;
 import com.liferay.journal.service.JournalContentSearchLocalService;
-import com.liferay.petra.string.StringBundler;
+import com.liferay.journal.util.JournalHelper;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.search.Document;
@@ -33,7 +33,6 @@ import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
-import com.liferay.portal.kernel.service.LayoutSetLocalService;
 import com.liferay.portal.kernel.service.permission.LayoutPermissionUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Portal;
@@ -87,15 +86,9 @@ public class JournalOpenSearchImpl extends HitsOpenSearchImpl {
 			groupId, articleId);
 
 		if (Validator.isNotNull(article.getLayoutUuid())) {
-			String groupFriendlyURL = _portal.getGroupFriendlyURL(
-				_layoutSetLocalService.getLayoutSet(
-					article.getGroupId(), false),
-				themeDisplay, false, false);
-
-			return StringBundler.concat(
-				groupFriendlyURL,
-				JournalArticleConstants.CANONICAL_URL_SEPARATOR,
-				article.getUrlTitle());
+			return _journalHelper.createURLPattern(
+				article, themeDisplay.getLocale(), false,
+				JournalArticleConstants.CANONICAL_URL_SEPARATOR, themeDisplay);
 		}
 
 		Layout layout = themeDisplay.getLayout();
@@ -138,46 +131,6 @@ public class JournalOpenSearchImpl extends HitsOpenSearchImpl {
 		return portletURL.toString();
 	}
 
-	@Reference(unbind = "-")
-	protected void setAssetEntryLocalService(
-		AssetEntryLocalService assetEntryLocalService) {
-
-		_assetEntryLocalService = assetEntryLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setGroupLocalService(GroupLocalService groupLocalService) {
-		_groupLocalService = groupLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setJournalArticleService(
-		JournalArticleService journalArticleService) {
-
-		_journalArticleService = journalArticleService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setJournalContentSearchLocalService(
-		JournalContentSearchLocalService journalContentSearchLocalService) {
-
-		_journalContentSearchLocalService = journalContentSearchLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setLayoutLocalService(
-		LayoutLocalService layoutLocalService) {
-
-		_layoutLocalService = layoutLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setLayoutSetLocalService(
-		LayoutSetLocalService layoutSetLocalService) {
-
-		_layoutSetLocalService = layoutSetLocalService;
-	}
-
 	private String _getLayoutURL(ThemeDisplay themeDisplay, String articleId)
 		throws Exception {
 
@@ -212,12 +165,23 @@ public class JournalOpenSearchImpl extends HitsOpenSearchImpl {
 		return null;
 	}
 
+	@Reference
 	private AssetEntryLocalService _assetEntryLocalService;
+
+	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
 	private JournalArticleService _journalArticleService;
+
+	@Reference
 	private JournalContentSearchLocalService _journalContentSearchLocalService;
+
+	@Reference
+	private JournalHelper _journalHelper;
+
+	@Reference
 	private LayoutLocalService _layoutLocalService;
-	private LayoutSetLocalService _layoutSetLocalService;
 
 	@Reference
 	private Portal _portal;

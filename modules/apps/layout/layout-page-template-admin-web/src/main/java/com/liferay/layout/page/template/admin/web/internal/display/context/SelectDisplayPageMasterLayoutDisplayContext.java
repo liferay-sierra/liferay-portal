@@ -14,10 +14,9 @@
 
 package com.liferay.layout.page.template.admin.web.internal.display.context;
 
-import com.liferay.info.constants.InfoDisplayWebKeys;
 import com.liferay.info.item.InfoItemClassDetails;
 import com.liferay.info.item.InfoItemFormVariation;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFormVariationsProvider;
 import com.liferay.info.localized.InfoLocalizedValue;
 import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
@@ -51,9 +50,9 @@ public class SelectDisplayPageMasterLayoutDisplayContext {
 
 		_httpServletRequest = httpServletRequest;
 
-		_infoItemServiceTracker =
-			(InfoItemServiceTracker)httpServletRequest.getAttribute(
-				InfoDisplayWebKeys.INFO_ITEM_SERVICE_TRACKER);
+		_infoItemServiceRegistry =
+			(InfoItemServiceRegistry)httpServletRequest.getAttribute(
+				InfoItemServiceRegistry.class.getName());
 		_themeDisplay = (ThemeDisplay)httpServletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 	}
@@ -62,8 +61,10 @@ public class SelectDisplayPageMasterLayoutDisplayContext {
 		JSONArray mappingTypesJSONArray = JSONFactoryUtil.createJSONArray();
 
 		for (InfoItemClassDetails infoItemClassDetails :
-				_infoItemServiceTracker.getInfoItemClassDetails(
-					DisplayPageInfoItemCapability.KEY)) {
+				_infoItemServiceRegistry.getInfoItemClassDetails(
+					_themeDisplay.getScopeGroupId(),
+					DisplayPageInfoItemCapability.KEY,
+					_themeDisplay.getPermissionChecker())) {
 
 			mappingTypesJSONArray.put(
 				JSONUtil.put(
@@ -113,7 +114,7 @@ public class SelectDisplayPageMasterLayoutDisplayContext {
 		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
 
 		InfoItemFormVariationsProvider<?> infoItemFormVariationsProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFormVariationsProvider.class,
 				infoItemClassDetails.getClassName());
 
@@ -147,7 +148,7 @@ public class SelectDisplayPageMasterLayoutDisplayContext {
 	}
 
 	private final HttpServletRequest _httpServletRequest;
-	private final InfoItemServiceTracker _infoItemServiceTracker;
+	private final InfoItemServiceRegistry _infoItemServiceRegistry;
 	private final ThemeDisplay _themeDisplay;
 
 }

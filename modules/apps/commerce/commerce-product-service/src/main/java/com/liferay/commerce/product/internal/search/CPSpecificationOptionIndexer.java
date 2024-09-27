@@ -33,7 +33,7 @@ import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.Summary;
 import com.liferay.portal.kernel.search.filter.BooleanFilter;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
@@ -51,7 +51,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alessio Antonio Rendina
  */
-@Component(enabled = false, immediate = true, service = Indexer.class)
+@Component(immediate = true, service = Indexer.class)
 public class CPSpecificationOptionIndexer
 	extends BaseIndexer<CPSpecificationOption> {
 
@@ -146,27 +146,25 @@ public class CPSpecificationOptionIndexer
 			_cpOptionCategoryLocalService.fetchCPOptionCategory(
 				cpSpecificationOption.getCPOptionCategoryId());
 
-		String[] languageIds = LocalizationUtil.getAvailableLanguageIds(
+		String[] languageIds = _localization.getAvailableLanguageIds(
 			cpSpecificationOption.getTitle());
 
 		for (String languageId : languageIds) {
 			String title = cpSpecificationOption.getTitle(languageId);
 
 			document.addText(
-				LocalizationUtil.getLocalizedName(Field.TITLE, languageId),
-				title);
+				_localization.getLocalizedName(Field.TITLE, languageId), title);
 
 			String description = cpSpecificationOption.getDescription(
 				languageId);
 
 			document.addText(
-				LocalizationUtil.getLocalizedName(
-					Field.DESCRIPTION, languageId),
+				_localization.getLocalizedName(Field.DESCRIPTION, languageId),
 				description);
 
 			if (cpOptionCategory != null) {
 				document.addText(
-					LocalizationUtil.getLocalizedName(
+					_localization.getLocalizedName(
 						CPField.CP_OPTION_CATEGORY_TITLE, languageId),
 					cpOptionCategory.getTitle(languageId));
 
@@ -207,8 +205,8 @@ public class CPSpecificationOptionIndexer
 		throws Exception {
 
 		_indexWriterHelper.updateDocument(
-			getSearchEngineId(), cpSpecificationOption.getCompanyId(),
-			getDocument(cpSpecificationOption), isCommitImmediately());
+			cpSpecificationOption.getCompanyId(),
+			getDocument(cpSpecificationOption));
 	}
 
 	@Override
@@ -251,7 +249,6 @@ public class CPSpecificationOptionIndexer
 					}
 				}
 			});
-		indexableActionableDynamicQuery.setSearchEngineId(getSearchEngineId());
 
 		indexableActionableDynamicQuery.performActions();
 	}
@@ -268,5 +265,8 @@ public class CPSpecificationOptionIndexer
 
 	@Reference
 	private IndexWriterHelper _indexWriterHelper;
+
+	@Reference
+	private Localization _localization;
 
 }

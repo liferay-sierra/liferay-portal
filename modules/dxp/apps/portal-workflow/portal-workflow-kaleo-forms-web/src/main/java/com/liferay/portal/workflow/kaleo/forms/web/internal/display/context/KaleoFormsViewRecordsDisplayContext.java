@@ -29,7 +29,6 @@ import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.NavigationItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.NavigationItemListBuilder;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.search.DisplayTerms;
 import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
@@ -39,12 +38,14 @@ import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
 import com.liferay.portal.kernel.portlet.SearchOrderByUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.SearchContextFactory;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.HtmlParser;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -75,13 +76,14 @@ import javax.servlet.http.HttpServletRequest;
 public class KaleoFormsViewRecordsDisplayContext {
 
 	public KaleoFormsViewRecordsDisplayContext(
-			RenderRequest renderRequest, RenderResponse renderResponse,
-			DDLRecordLocalService ddlRecordLocalService)
+			DDLRecordLocalService ddlRecordLocalService, HtmlParser htmlParser,
+			RenderRequest renderRequest, RenderResponse renderResponse)
 		throws PortalException {
 
+		_ddlRecordLocalService = ddlRecordLocalService;
+		_htmlParser = htmlParser;
 		_renderRequest = renderRequest;
 		_renderResponse = renderResponse;
-		_ddlRecordLocalService = ddlRecordLocalService;
 
 		_kaleoProcess = (KaleoProcess)_renderRequest.getAttribute(
 			KaleoFormsWebKeys.KALEO_PROCESS);
@@ -264,7 +266,7 @@ public class KaleoFormsViewRecordsDisplayContext {
 				ThemeDisplay themeDisplay = _getThemeDisplay();
 
 				navigationItem.setLabel(
-					HtmlUtil.extractText(
+					_htmlParser.extractText(
 						_kaleoProcess.getName(themeDisplay.getLocale())));
 			}
 		).build();
@@ -559,6 +561,7 @@ public class KaleoFormsViewRecordsDisplayContext {
 	private final DDLRecordLocalService _ddlRecordLocalService;
 	private final DDLRecordSet _ddlRecordSet;
 	private List<DDMFormField> _ddmFormFields;
+	private final HtmlParser _htmlParser;
 	private final KaleoFormsAdminRequestHelper _kaleoFormsAdminRequestHelper;
 	private final KaleoProcess _kaleoProcess;
 	private String _orderByCol;

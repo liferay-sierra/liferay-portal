@@ -57,7 +57,7 @@ if (print) {
 	viewFullContentURL.setParameter("viewMode", Constants.PRINT);
 }
 
-String viewInContextURL = assetRenderer.getURLViewInContext(liferayPortletRequest, liferayPortletResponse, HttpUtil.setParameter(viewFullContentURL.toString(), "redirect", currentURL));
+String viewInContextURL = assetRenderer.getURLViewInContext(liferayPortletRequest, liferayPortletResponse, HttpComponentsUtil.setParameter(viewFullContentURL.toString(), "redirect", currentURL));
 
 Map<String, Object> fragmentsEditorData = HashMapBuilder.<String, Object>put(
 	"fragments-editor-item-id", PortalUtil.getClassNameId(assetRenderer.getClassName()) + "-" + assetRenderer.getClassPK()
@@ -270,7 +270,7 @@ Map<String, Object> fragmentsEditorData = HashMapBuilder.<String, Object>put(
 	%>
 
 	<c:if test="<%= showContextLink || showRatings || assetPublisherDisplayContext.isEnableFlags() || assetPublisherDisplayContext.isEnablePrint() || Validator.isNotNull(assetPublisherDisplayContext.getSocialBookmarksTypes()) %>">
-		<div class="separator"><!-- --></div>
+		<hr class="separator" />
 
 		<clay:content-row
 			cssClass="asset-details"
@@ -323,14 +323,20 @@ Map<String, Object> fragmentsEditorData = HashMapBuilder.<String, Object>put(
 				<clay:content-col
 					cssClass="component-subtitle mr-3 print-action"
 				>
+
+					<%
+					String label = LanguageUtil.format(request, "print-x", HtmlUtil.escape(title));
+					%>
+
 					<c:choose>
 						<c:when test="<%= print %>">
-							<liferay-ui:icon
+							<clay:button
+								aria-label="<%= label %>"
+								cssClass="btn btn-outline-borderless btn-outline-secondary btn-sm lfr-portal-tooltip "
+								displayType="secondary"
 								icon="print"
-								linkCssClass="btn btn-monospaced btn-outline-borderless btn-outline-secondary btn-sm"
-								markupView="lexicon"
-								message='<%= LanguageUtil.format(request, "print-x-x", new Object[] {"hide-accessible", HtmlUtil.escape(title)}, false) %>'
-								url="javascript:print();"
+								onClick="javascript:print();"
+								type="button"
 							/>
 
 							<aui:script>
@@ -343,12 +349,13 @@ Map<String, Object> fragmentsEditorData = HashMapBuilder.<String, Object>put(
 							String id = assetEntry.getEntryId() + StringUtil.randomId();
 							%>
 
-							<liferay-ui:icon
+							<clay:button
+								aria-label="<%= label %>"
+								cssClass="btn btn-outline-borderless btn-outline-secondary btn-sm lfr-portal-tooltip"
+								displayType="secondary"
 								icon="print"
-								linkCssClass="btn btn-monospaced btn-outline-borderless btn-outline-secondary btn-sm"
-								markupView="lexicon"
-								message='<%= LanguageUtil.format(request, "print-x-x", new Object[] {"hide-accessible", HtmlUtil.escape(title)}, false) %>'
-								url='<%= "javascript:" + liferayPortletResponse.getNamespace() + "printPage_" + id + "();" %>'
+								onClick='<%= "javascript:" + liferayPortletResponse.getNamespace() + "printPage_" + id + "();" %>'
+								type="button"
 							/>
 
 							<aui:script>
@@ -390,7 +397,7 @@ Map<String, Object> fragmentsEditorData = HashMapBuilder.<String, Object>put(
 						target="_blank"
 						title="<%= title %>"
 						types="<%= assetPublisherDisplayContext.getSocialBookmarksTypes() %>"
-						urlImpl="<%= viewFullContentURL %>"
+						url="<%= assetPublisherHelper.getAssetSocialURL(liferayPortletRequest, liferayPortletResponse, assetEntry) %>"
 					/>
 				</clay:content-col>
 			</c:if>
@@ -403,7 +410,7 @@ Map<String, Object> fragmentsEditorData = HashMapBuilder.<String, Object>put(
 	%>
 
 	<c:if test="<%= showConversions || showLocalization %>">
-		<div class="separator"><!-- --></div>
+		<hr class="separator" />
 
 		<clay:content-row
 			cssClass="asset-details"

@@ -37,7 +37,9 @@ import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.Summary;
 import com.liferay.portal.kernel.search.filter.BooleanFilter;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.Html;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -55,7 +57,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alessio Antonio Rendina
  */
-@Component(enabled = false, immediate = true, service = Indexer.class)
+@Component(immediate = true, service = Indexer.class)
 public class CPDisplayLayoutIndexer extends BaseIndexer<CPDisplayLayout> {
 
 	public static final String CLASS_NAME = CPDisplayLayout.class.getName();
@@ -150,12 +152,25 @@ public class CPDisplayLayoutIndexer extends BaseIndexer<CPDisplayLayout> {
 				_assetCategoryLocalService.getAssetCategory(
 					cpDisplayLayout.getClassPK());
 
+			String[] availableLanguageIds =
+				_localization.getAvailableLanguageIds(
+					assetCategory.getDescription());
+
+			for (String availableLanguageId : availableLanguageIds) {
+				document.addText(
+					_localization.getLocalizedName(
+						Field.DESCRIPTION, availableLanguageId),
+					_html.stripHtml(
+						assetCategory.getDescription(availableLanguageId)));
+			}
+
 			Locale siteDefaultLocale = _portal.getSiteDefaultLocale(
 				assetCategory.getGroupId());
 
-			addLocalizedField(
-				document, Field.DESCRIPTION, siteDefaultLocale,
-				assetCategory.getDescriptionMap());
+			document.addText(
+				Field.DESCRIPTION,
+				_html.stripHtml(
+					assetCategory.getDescription(siteDefaultLocale)));
 
 			document.addText(Field.NAME, assetCategory.getName());
 
@@ -189,8 +204,7 @@ public class CPDisplayLayoutIndexer extends BaseIndexer<CPDisplayLayout> {
 	@Override
 	protected void doReindex(CPDisplayLayout cpDisplayLayout) throws Exception {
 		_indexWriterHelper.updateDocument(
-			getSearchEngineId(), cpDisplayLayout.getCompanyId(),
-			getDocument(cpDisplayLayout), isCommitImmediately());
+			cpDisplayLayout.getCompanyId(), getDocument(cpDisplayLayout));
 	}
 
 	@Override
@@ -225,7 +239,6 @@ public class CPDisplayLayoutIndexer extends BaseIndexer<CPDisplayLayout> {
 					}
 				}
 			});
-		indexableActionableDynamicQuery.setSearchEngineId(getSearchEngineId());
 
 		indexableActionableDynamicQuery.performActions();
 	}
@@ -243,7 +256,13 @@ public class CPDisplayLayoutIndexer extends BaseIndexer<CPDisplayLayout> {
 	private CPDisplayLayoutLocalService _cpDisplayLayoutLocalService;
 
 	@Reference
+	private Html _html;
+
+	@Reference
 	private IndexWriterHelper _indexWriterHelper;
+
+	@Reference
+	private Localization _localization;
 
 	@Reference
 	private Portal _portal;

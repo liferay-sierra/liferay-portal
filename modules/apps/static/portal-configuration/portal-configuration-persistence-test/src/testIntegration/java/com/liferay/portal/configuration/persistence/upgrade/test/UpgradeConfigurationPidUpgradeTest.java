@@ -90,11 +90,6 @@ public class UpgradeConfigurationPidUpgradeTest {
 					}
 				}
 
-				@Override
-				public void registerInitialUpgradeSteps(
-					UpgradeStep... upgradeSteps) {
-				}
-
 			});
 	}
 
@@ -317,7 +312,7 @@ public class UpgradeConfigurationPidUpgradeTest {
 	private static UpgradeProcess _upgradeConfigurationPidUpgradeProcess;
 
 	@Inject(
-		filter = "component.name=com.liferay.portal.configuration.persistence.internal.upgrade.ConfigurationPersistenceUpgrade"
+		filter = "component.name=com.liferay.portal.configuration.persistence.internal.upgrade.registry.ConfigurationPersistenceUpgradeStepRegistrator"
 	)
 	private static UpgradeStepRegistrator _upgradeStepRegistrator;
 

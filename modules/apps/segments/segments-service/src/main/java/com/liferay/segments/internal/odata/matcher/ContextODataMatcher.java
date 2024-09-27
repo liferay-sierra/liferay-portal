@@ -22,6 +22,7 @@ import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.Filter;
 import com.liferay.portal.odata.filter.FilterParser;
+import com.liferay.portal.odata.filter.FilterParserProvider;
 import com.liferay.portal.odata.filter.InvalidFilterException;
 import com.liferay.segments.context.Context;
 import com.liferay.segments.internal.odata.entity.ContextEntityModel;
@@ -38,7 +39,6 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
  * @author Eduardo García
  */
 @Component(
-	immediate = true,
 	property = "target.class.name=com.liferay.segments.context.Context",
 	service = ODataMatcher.class
 )
@@ -57,28 +57,6 @@ public class ContextODataMatcher implements ODataMatcher<Context> {
 			throw new PortalException(
 				"Unable to match filter: " + exception.getMessage(), exception);
 		}
-	}
-
-	@Reference(
-		policy = ReferencePolicy.DYNAMIC,
-		policyOption = ReferencePolicyOption.GREEDY,
-		target = "(entity.model.name=" + ContextEntityModel.NAME + ")",
-		unbind = "unbindFilterParser"
-	)
-	public void setFilterParser(FilterParser filterParser) {
-		if (_log.isInfoEnabled()) {
-			_log.info("Binding " + filterParser);
-		}
-
-		_filterParser = filterParser;
-	}
-
-	public void unbindFilterParser(FilterParser filterParser) {
-		if (_log.isInfoEnabled()) {
-			_log.info("Unbinding " + filterParser);
-		}
-
-		_filterParser = null;
 	}
 
 	@Reference(
@@ -106,7 +84,9 @@ public class ContextODataMatcher implements ODataMatcher<Context> {
 	private Predicate<Context> _getPredicate(String filterString)
 		throws Exception {
 
-		Filter filter = new Filter(_filterParser.parse(filterString));
+		FilterParser filterParser = _filterParserProvider.provide(_entityModel);
+
+		Filter filter = new Filter(filterParser.parse(filterString));
 
 		try {
 			return _expressionConvert.convert(
@@ -126,6 +106,7 @@ public class ContextODataMatcher implements ODataMatcher<Context> {
 	@Reference(target = "(result.class.name=java.util.function.Predicate)")
 	private ExpressionConvert<Predicate<Context>> _expressionConvert;
 
-	private FilterParser _filterParser;
+	@Reference
+	private FilterParserProvider _filterParserProvider;
 
 }

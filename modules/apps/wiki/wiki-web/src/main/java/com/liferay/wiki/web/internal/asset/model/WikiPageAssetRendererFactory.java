@@ -24,13 +24,13 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.LiferayPortletURL;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.util.HtmlParser;
 import com.liferay.trash.TrashHelper;
 import com.liferay.wiki.constants.WikiPortletKeys;
 import com.liferay.wiki.engine.WikiEngineRenderer;
 import com.liferay.wiki.exception.NoSuchPageException;
 import com.liferay.wiki.model.WikiPage;
 import com.liferay.wiki.service.WikiPageLocalService;
-import com.liferay.wiki.service.WikiPageResourceLocalService;
 import com.liferay.wiki.web.internal.security.permission.resource.WikiPagePermission;
 
 import javax.portlet.PortletRequest;
@@ -96,7 +96,7 @@ public class WikiPageAssetRendererFactory
 		}
 
 		WikiPageAssetRenderer wikiPageAssetRenderer = new WikiPageAssetRenderer(
-			page, _wikiEngineRenderer, _trashHelper);
+			_htmlParser, _trashHelper, _wikiEngineRenderer, page);
 
 		wikiPageAssetRenderer.setAssetDisplayPageFriendlyURLProvider(
 			_assetDisplayPageFriendlyURLProvider);
@@ -158,6 +158,9 @@ public class WikiPageAssetRendererFactory
 	private AssetDisplayPageFriendlyURLProvider
 		_assetDisplayPageFriendlyURLProvider;
 
+	@Reference
+	private HtmlParser _htmlParser;
+
 	@Reference(target = "(osgi.web.symbolicname=com.liferay.wiki.web)")
 	private ServletContext _servletContext;
 
@@ -169,8 +172,5 @@ public class WikiPageAssetRendererFactory
 
 	@Reference
 	private WikiPageLocalService _wikiPageLocalService;
-
-	@Reference
-	private WikiPageResourceLocalService _wikiPageResourceLocalService;
 
 }

@@ -333,15 +333,26 @@ public class JournalArticleServiceUtil {
 			Map<java.util.Locale, String> titleMap,
 			Map<java.util.Locale, String> descriptionMap, String content,
 			String ddmStructureKey, String ddmTemplateKey, String layoutUuid,
-			boolean indexable, boolean smallImage, String smallImageURL,
-			java.io.File smallImageFile,
+			int displayDateMonth, int displayDateDay, int displayDateYear,
+			int displayDateHour, int displayDateMinute, int expirationDateMonth,
+			int expirationDateDay, int expirationDateYear,
+			int expirationDateHour, int expirationDateMinute,
+			boolean neverExpire, int reviewDateMonth, int reviewDateDay,
+			int reviewDateYear, int reviewDateHour, int reviewDateMinute,
+			boolean neverReview, boolean indexable, boolean smallImage,
+			String smallImageURL, java.io.File smallImageFile,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws PortalException {
 
 		return getService().addArticleDefaultValues(
 			groupId, classNameId, classPK, titleMap, descriptionMap, content,
-			ddmStructureKey, ddmTemplateKey, layoutUuid, indexable, smallImage,
-			smallImageURL, smallImageFile, serviceContext);
+			ddmStructureKey, ddmTemplateKey, layoutUuid, displayDateMonth,
+			displayDateDay, displayDateYear, displayDateHour, displayDateMinute,
+			expirationDateMonth, expirationDateDay, expirationDateYear,
+			expirationDateHour, expirationDateMinute, neverExpire,
+			reviewDateMonth, reviewDateDay, reviewDateYear, reviewDateHour,
+			reviewDateMinute, neverReview, indexable, smallImage, smallImageURL,
+			smallImageFile, serviceContext);
 	}
 
 	/**
@@ -644,6 +655,14 @@ public class JournalArticleServiceUtil {
 
 		return getService().getArticles(
 			groupId, folderId, locale, start, end, orderByComparator);
+	}
+
+	public static List<JournalArticle> getArticlesByArticleId(
+		long groupId, String articleId, int status, int start, int end,
+		OrderByComparator<JournalArticle> orderByComparator) {
+
+		return getService().getArticlesByArticleId(
+			groupId, articleId, status, start, end, orderByComparator);
 	}
 
 	/**
@@ -977,6 +996,13 @@ public class JournalArticleServiceUtil {
 		long groupId, String articleId) {
 
 		return getService().getArticlesCountByArticleId(groupId, articleId);
+	}
+
+	public static int getArticlesCountByArticleId(
+		long groupId, String articleId, int status) {
+
+		return getService().getArticlesCountByArticleId(
+			groupId, articleId, status);
 	}
 
 	/**
@@ -2381,15 +2407,26 @@ public class JournalArticleServiceUtil {
 			Map<java.util.Locale, String> titleMap,
 			Map<java.util.Locale, String> descriptionMap, String content,
 			String ddmStructureKey, String ddmTemplateKey, String layoutUuid,
-			boolean indexable, boolean smallImage, String smallImageURL,
-			java.io.File smallImageFile,
+			int displayDateMonth, int displayDateDay, int displayDateYear,
+			int displayDateHour, int displayDateMinute, int expirationDateMonth,
+			int expirationDateDay, int expirationDateYear,
+			int expirationDateHour, int expirationDateMinute,
+			boolean neverExpire, int reviewDateMonth, int reviewDateDay,
+			int reviewDateYear, int reviewDateHour, int reviewDateMinute,
+			boolean neverReview, boolean indexable, boolean smallImage,
+			String smallImageURL, java.io.File smallImageFile,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws PortalException {
 
 		return getService().updateArticleDefaultValues(
 			groupId, articleId, titleMap, descriptionMap, content,
-			ddmStructureKey, ddmTemplateKey, layoutUuid, indexable, smallImage,
-			smallImageURL, smallImageFile, serviceContext);
+			ddmStructureKey, ddmTemplateKey, layoutUuid, displayDateMonth,
+			displayDateDay, displayDateYear, displayDateHour, displayDateMinute,
+			expirationDateMonth, expirationDateDay, expirationDateYear,
+			expirationDateHour, expirationDateMinute, neverExpire,
+			reviewDateMonth, reviewDateDay, reviewDateYear, reviewDateHour,
+			reviewDateMinute, neverReview, indexable, smallImage, smallImageURL,
+			smallImageFile, serviceContext);
 	}
 
 	/**

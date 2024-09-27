@@ -37,11 +37,11 @@ import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.storage.Field;
 import com.liferay.dynamic.data.mapping.storage.Fields;
 import com.liferay.dynamic.data.mapping.util.DDMUtil;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.item.selector.ItemSelector;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.NoSuchGroupException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -56,7 +56,7 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -121,7 +121,8 @@ import org.osgi.service.component.annotations.Reference;
 		"javax.portlet.supported-public-render-parameter=categoryId",
 		"javax.portlet.supported-public-render-parameter=resetCur",
 		"javax.portlet.supported-public-render-parameter=tag",
-		"javax.portlet.supported-public-render-parameter=tags"
+		"javax.portlet.supported-public-render-parameter=tags",
+		"javax.portlet.version=3.0"
 	},
 	service = {AssetPublisherPortlet.class, Portlet.class}
 )
@@ -174,7 +175,7 @@ public class AssetPublisherPortlet extends MVCPortlet {
 			Serializable fieldValue = field.getValue(
 				themeDisplay.getLocale(), 0);
 
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+			JSONObject jsonObject = jsonFactory.createJSONObject();
 
 			if (fieldValue != null) {
 				jsonObject.put("success", true);
@@ -257,14 +258,14 @@ public class AssetPublisherPortlet extends MVCPortlet {
 
 		String currentURL = portal.getCurrentURL(resourceRequest);
 
-		String cacheability = httpUtil.getParameter(
+		String cacheability = HttpComponentsUtil.getParameter(
 			currentURL, "p_p_cacheability", false);
 
 		if (cacheability.equals(ResourceURL.FULL)) {
 			HttpServletResponse httpServletResponse =
 				portal.getHttpServletResponse(resourceResponse);
 
-			String redirectURL = httpUtil.removeParameter(
+			String redirectURL = HttpComponentsUtil.removeParameter(
 				currentURL, "p_p_cacheability");
 
 			httpServletResponse.sendRedirect(redirectURL);
@@ -287,7 +288,7 @@ public class AssetPublisherPortlet extends MVCPortlet {
 					assetPublisherCustomizerRegistry.
 						getAssetPublisherCustomizer(rootPortletId),
 					assetPublisherHelper, assetPublisherWebConfiguration,
-					assetPublisherWebHelper, infoItemServiceTracker,
+					assetPublisherWebHelper, infoItemServiceRegistry,
 					itemSelector, resourceRequest, resourceResponse,
 					resourceRequest.getPreferences(), requestContextMapper,
 					segmentsEntryRetriever);
@@ -386,7 +387,7 @@ public class AssetPublisherPortlet extends MVCPortlet {
 					assetPublisherCustomizerRegistry.
 						getAssetPublisherCustomizer(rootPortletId),
 					assetPublisherHelper, assetPublisherWebConfiguration,
-					assetPublisherWebHelper, infoItemServiceTracker,
+					assetPublisherWebHelper, infoItemServiceRegistry,
 					itemSelector, renderRequest, renderResponse,
 					renderRequest.getPreferences(), requestContextMapper,
 					segmentsEntryRetriever);
@@ -398,7 +399,6 @@ public class AssetPublisherPortlet extends MVCPortlet {
 			renderRequest.setAttribute(
 				AssetPublisherWebKeys.ASSET_PUBLISHER_HELPER,
 				assetPublisherHelper);
-
 			renderRequest.setAttribute(
 				WebKeys.SINGLE_PAGE_APPLICATION_CLEAR_CACHE, Boolean.TRUE);
 		}
@@ -454,13 +454,13 @@ public class AssetPublisherPortlet extends MVCPortlet {
 	protected AssetRSSHelper assetRSSHelper;
 
 	@Reference
-	protected HttpUtil httpUtil;
-
-	@Reference
-	protected InfoItemServiceTracker infoItemServiceTracker;
+	protected InfoItemServiceRegistry infoItemServiceRegistry;
 
 	@Reference
 	protected ItemSelector itemSelector;
+
+	@Reference
+	protected JSONFactory jsonFactory;
 
 	@Reference
 	protected Portal portal;

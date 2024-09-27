@@ -15,14 +15,14 @@
 import ClayAlert from '@clayui/alert';
 import React from 'react';
 
-import AddNewTabButton from './AddNewTabButton';
+import {AddNewTabButton} from './AddNewTabButton';
 import ObjectLayoutTabs from './ObjectLayoutTabs';
 
 import './LayoutScreen.scss';
 
-const LayoutScreen: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
+export default function LayoutScreen() {
 	return (
-		<div className="layout-tab">
+		<div className="lfr-objects__side-panel-content-container">
 			<ClayAlert
 				displayType="info"
 				title={`${Liferay.Language.get('info')}:`}
@@ -37,6 +37,4 @@ const LayoutScreen: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
 			<ObjectLayoutTabs />
 		</div>
 	);
-};
-
-export default LayoutScreen;
+}

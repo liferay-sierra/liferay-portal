@@ -66,7 +66,7 @@ public class OrganizationServiceUtil {
 	 * @param type the organization's type
 	 * @param regionId the primary key of the organization's region
 	 * @param countryId the primary key of the organization's country
-	 * @param statusId the organization's workflow status
+	 * @param statusListTypeId the organization's workflow status
 	 * @param comments the comments about the organization
 	 * @param site whether the organization is to be associated with a main
 	 site
@@ -82,7 +82,8 @@ public class OrganizationServiceUtil {
 	 */
 	public static Organization addOrganization(
 			long parentOrganizationId, String name, String type, long regionId,
-			long countryId, long statusId, String comments, boolean site,
+			long countryId, long statusListTypeId, String comments,
+			boolean site,
 			List<com.liferay.portal.kernel.model.Address> addresses,
 			List<com.liferay.portal.kernel.model.EmailAddress> emailAddresses,
 			List<com.liferay.portal.kernel.model.OrgLabor> orgLabors,
@@ -92,9 +93,9 @@ public class OrganizationServiceUtil {
 		throws PortalException {
 
 		return getService().addOrganization(
-			parentOrganizationId, name, type, regionId, countryId, statusId,
-			comments, site, addresses, emailAddresses, orgLabors, phones,
-			websites, serviceContext);
+			parentOrganizationId, name, type, regionId, countryId,
+			statusListTypeId, comments, site, addresses, emailAddresses,
+			orgLabors, phones, websites, serviceContext);
 	}
 
 	/**
@@ -111,7 +112,7 @@ public class OrganizationServiceUtil {
 	 * @param type the organization's type
 	 * @param regionId the primary key of the organization's region
 	 * @param countryId the primary key of the organization's country
-	 * @param statusId the organization's workflow status
+	 * @param statusListTypeId the organization's workflow status
 	 * @param comments the comments about the organization
 	 * @param site whether the organization is to be associated with a main
 	 site
@@ -122,13 +123,13 @@ public class OrganizationServiceUtil {
 	 */
 	public static Organization addOrganization(
 			long parentOrganizationId, String name, String type, long regionId,
-			long countryId, long statusId, String comments, boolean site,
-			ServiceContext serviceContext)
+			long countryId, long statusListTypeId, String comments,
+			boolean site, ServiceContext serviceContext)
 		throws PortalException {
 
 		return getService().addOrganization(
-			parentOrganizationId, name, type, regionId, countryId, statusId,
-			comments, site, serviceContext);
+			parentOrganizationId, name, type, regionId, countryId,
+			statusListTypeId, comments, site, serviceContext);
 	}
 
 	public static com.liferay.portal.kernel.model.User
@@ -139,6 +140,26 @@ public class OrganizationServiceUtil {
 
 		return getService().addOrganizationUserByEmailAddress(
 			emailAddress, organizationId, serviceContext);
+	}
+
+	public static Organization addOrUpdateOrganization(
+			String externalReferenceCode, long parentOrganizationId,
+			String name, String type, long regionId, long countryId,
+			long statusListTypeId, String comments, boolean hasLogo,
+			byte[] logoBytes, boolean site,
+			List<com.liferay.portal.kernel.model.Address> addresses,
+			List<com.liferay.portal.kernel.model.EmailAddress> emailAddresses,
+			List<com.liferay.portal.kernel.model.OrgLabor> orgLabors,
+			List<com.liferay.portal.kernel.model.Phone> phones,
+			List<com.liferay.portal.kernel.model.Website> websites,
+			ServiceContext serviceContext)
+		throws PortalException {
+
+		return getService().addOrUpdateOrganization(
+			externalReferenceCode, parentOrganizationId, name, type, regionId,
+			countryId, statusListTypeId, comments, hasLogo, logoBytes, site,
+			addresses, emailAddresses, orgLabors, phones, websites,
+			serviceContext);
 	}
 
 	/**
@@ -225,6 +246,14 @@ public class OrganizationServiceUtil {
 		throws PortalException {
 
 		return getService().getOrganization(organizationId);
+	}
+
+	public static Organization getOrganizationByExternalReferenceCode(
+			long companyId, String externalReferenceCode)
+		throws PortalException {
+
+		return getService().getOrganizationByExternalReferenceCode(
+			companyId, externalReferenceCode);
 	}
 
 	/**
@@ -384,6 +413,12 @@ public class OrganizationServiceUtil {
 			passwordPolicyId, organizationIds);
 	}
 
+	public static Organization updateLogo(long organizationId, byte[] logoBytes)
+		throws PortalException {
+
+		return getService().updateLogo(organizationId, logoBytes);
+	}
+
 	/**
 	 * Updates the organization with additional parameters.
 	 *
@@ -394,7 +429,7 @@ public class OrganizationServiceUtil {
 	 * @param type the organization's type
 	 * @param regionId the primary key of the organization's region
 	 * @param countryId the primary key of the organization's country
-	 * @param statusId the organization's workflow status
+	 * @param statusListTypeId the organization's workflow status
 	 * @param comments the comments about the organization
 	 * @param hasLogo if the organization has a custom logo
 	 * @param logoBytes the new logo image data
@@ -413,7 +448,7 @@ public class OrganizationServiceUtil {
 	 */
 	public static Organization updateOrganization(
 			long organizationId, long parentOrganizationId, String name,
-			String type, long regionId, long countryId, long statusId,
+			String type, long regionId, long countryId, long statusListTypeId,
 			String comments, boolean hasLogo, byte[] logoBytes, boolean site,
 			List<com.liferay.portal.kernel.model.Address> addresses,
 			List<com.liferay.portal.kernel.model.EmailAddress> emailAddresses,
@@ -425,8 +460,9 @@ public class OrganizationServiceUtil {
 
 		return getService().updateOrganization(
 			organizationId, parentOrganizationId, name, type, regionId,
-			countryId, statusId, comments, hasLogo, logoBytes, site, addresses,
-			emailAddresses, orgLabors, phones, websites, serviceContext);
+			countryId, statusListTypeId, comments, hasLogo, logoBytes, site,
+			addresses, emailAddresses, orgLabors, phones, websites,
+			serviceContext);
 	}
 
 	/**
@@ -439,7 +475,7 @@ public class OrganizationServiceUtil {
 	 * @param type the organization's type
 	 * @param regionId the primary key of the organization's region
 	 * @param countryId the primary key of the organization's country
-	 * @param statusId the organization's workflow status
+	 * @param statusListTypeId the organization's workflow status
 	 * @param comments the comments about the organization
 	 * @param site whether the organization is to be associated with a main
 	 site
@@ -451,13 +487,13 @@ public class OrganizationServiceUtil {
 	 */
 	public static Organization updateOrganization(
 			long organizationId, long parentOrganizationId, String name,
-			String type, long regionId, long countryId, long statusId,
+			String type, long regionId, long countryId, long statusListTypeId,
 			String comments, boolean site, ServiceContext serviceContext)
 		throws PortalException {
 
 		return getService().updateOrganization(
 			organizationId, parentOrganizationId, name, type, regionId,
-			countryId, statusId, comments, site, serviceContext);
+			countryId, statusListTypeId, comments, site, serviceContext);
 	}
 
 	public static OrganizationService getService() {

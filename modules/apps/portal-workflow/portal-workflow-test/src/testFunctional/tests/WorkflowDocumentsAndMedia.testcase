@@ -98,25 +98,15 @@ definition {
 
 	@priority = "5"
 	test ApproveInDMFolderCustomWorkflow {
+		property portal.upstream = "quarantine";
 		property test.name.skip.portal.instance = "WorkflowDocumentsAndMedia#ApproveInDMFolderCustomWorkflow";
+		property test.run.environment = "EE";
 
 		var siteName = TestCase.getSiteName(siteName = "${siteName}");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		JSONOrganization.addOrganization(organizationName = "Space Program Academy of Continuing Education");
 
-		Organization.addCP(
-			orgName = "Space Program Academy of Continuing Education",
-			orgType = "Organization");
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
-
-		UsersAndOrganizationsNavigator.gotoOrganizations();
+		Organization.openOrganizationsAdmin();
 
 		Organization.addSiteCP(orgName = "Space Program Academy of Continuing Education");
 
@@ -168,9 +158,15 @@ definition {
 			panel = "Applications",
 			portlet = "Process Builder");
 
-		Workflow.uploadDefinition(
-			workflowDefinitionFile = "advanced-governors-review-workflow-definition.xml",
-			workflowDefinitionTitle = "Quarterly Reports Review Process");
+		Workflow.addNewDefinition(workflowDefinitionTitle = "Quarterly Reports Review Process");
+
+		ProcessBuilderKaleoDesignerReact.uploadDefinition(workflowDefinitionFile = "advanced-governors-review-workflow-definition.xml");
+
+		ProcessBuilderKaleoDesignerReact.diagramSourceSwitchView();
+
+		Button.clickPublish();
+
+		Navigator.gotoBack();
 
 		Workflow.viewDefinition(
 			workflowDefinitionName = "Quarterly Reports Review Process",
@@ -388,7 +384,6 @@ definition {
 	@priority = "3"
 	test CanShareAFile {
 		var siteName = TestCase.getSiteName(siteName = "${siteName}");
-
 		var user = "DXP";
 
 		ProductMenu.gotoPortlet(
@@ -447,6 +442,8 @@ definition {
 
 	@priority = "4"
 	test ConfigureFolderWorkflow {
+		property portal.upstream = "quarantine";
+
 		var siteName = TestCase.getSiteName(siteName = "${siteName}");
 
 		ProductMenu.gotoPortlet(
@@ -747,7 +744,6 @@ definition {
 	@priority = "3"
 	test StatusBecomeDraftAfterCheckout {
 		var siteName = TestCase.getSiteName(siteName = "${siteName}");
-
 		var documentTitle = "Document_1";
 
 		ProductMenu.gotoPortlet(
@@ -797,6 +793,8 @@ definition {
 	@description = "This is a test for LRQA-69301. Verify the status is changed to pending after a checkout is cancelled"
 	@priority = "3"
 	test StatusPendingAfterCheckoutCancel {
+		property portal.upstream = "quarantine";
+
 		ProductMenu.gotoPortlet(
 			category = "Content & Data",
 			panel = "Site Administration",

@@ -23,7 +23,9 @@ import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
+import com.liferay.portal.vulcan.batch.engine.resource.VulcanBatchEngineImportTaskResource;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 
@@ -54,34 +56,33 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface WarehouseResource {
 
-	public static Builder builder() {
-		return FactoryHolder.factory.create();
-	}
-
-	public Response deleteWarehousByExternalReferenceCode(
-			String externalReferenceCode)
-		throws Exception;
-
-	public Warehouse getWarehousByExternalReferenceCode(
-			String externalReferenceCode)
-		throws Exception;
-
-	public Response patchWarehousByExternalReferenceCode(
-			String externalReferenceCode, Warehouse warehouse)
-		throws Exception;
-
-	public Response deleteWarehousId(Long id) throws Exception;
-
-	public Warehouse getWarehousId(Long id) throws Exception;
-
-	public Response patchWarehousId(Long id, Warehouse warehouse)
-		throws Exception;
-
 	public Page<Warehouse> getWarehousesPage(
 			Filter filter, Pagination pagination, Sort[] sorts)
 		throws Exception;
 
-	public Warehouse postWarehous(Warehouse warehouse) throws Exception;
+	public Warehouse postWarehouse(Warehouse warehouse) throws Exception;
+
+	public Response postWarehouseBatch(String callbackURL, Object object)
+		throws Exception;
+
+	public void deleteWarehouseByExternalReferenceCode(
+			String externalReferenceCode)
+		throws Exception;
+
+	public Warehouse getWarehouseByExternalReferenceCode(
+			String externalReferenceCode)
+		throws Exception;
+
+	public Response patchWarehouseByExternalReferenceCode(
+			String externalReferenceCode, Warehouse warehouse)
+		throws Exception;
+
+	public void deleteWarehouseId(Long id) throws Exception;
+
+	public Warehouse getWarehouseId(Long id) throws Exception;
+
+	public Response patchWarehouseId(Long id, Warehouse warehouse)
+		throws Exception;
 
 	public default void setContextAcceptLanguage(
 		AcceptLanguage contextAcceptLanguage) {
@@ -120,6 +121,12 @@ public interface WarehouseResource {
 
 	public void setRoleLocalService(RoleLocalService roleLocalService);
 
+	public void setSortParserProvider(SortParserProvider sortParserProvider);
+
+	public void setVulcanBatchEngineImportTaskResource(
+		VulcanBatchEngineImportTaskResource
+			vulcanBatchEngineImportTaskResource);
+
 	public default Filter toFilter(String filterString) {
 		return toFilter(
 			filterString, Collections.<String, List<String>>emptyMap());
@@ -131,10 +138,8 @@ public interface WarehouseResource {
 		return null;
 	}
 
-	public static class FactoryHolder {
-
-		public static volatile Factory factory;
-
+	public default Sort[] toSorts(String sortsString) {
+		return new Sort[0];
 	}
 
 	@ProviderType

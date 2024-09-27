@@ -120,12 +120,10 @@ public class DLFileEntryImpl extends DLFileEntryBaseImpl {
 					ddmStructure.getStructureId(), fileVersionId);
 
 			if (dlFileEntryMetadata != null) {
-				DDMFormValues ddmFormValues =
-					StorageEngineManagerUtil.getDDMFormValues(
-						dlFileEntryMetadata.getDDMStorageId());
-
 				ddmFormValuesMap.put(
-					ddmStructure.getStructureKey(), ddmFormValues);
+					ddmStructure.getStructureKey(),
+					StorageEngineManagerUtil.getDDMFormValues(
+						dlFileEntryMetadata.getDDMStorageId()));
 			}
 		}
 
@@ -200,6 +198,12 @@ public class DLFileEntryImpl extends DLFileEntryBaseImpl {
 	public List<DLFileVersion> getFileVersions(int status) {
 		return DLFileVersionLocalServiceUtil.getFileVersions(
 			getFileEntryId(), status);
+	}
+
+	@Override
+	public List<DLFileVersion> getFileVersions(int status, int start, int end) {
+		return DLFileVersionLocalServiceUtil.getFileVersions(
+			getFileEntryId(), status, start, end);
 	}
 
 	@Override

@@ -34,7 +34,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Máté Thurzó
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + StagingBarPortletKeys.STAGING_BAR,
 		"mvc.command.name=/staging_bar/merge_layout_set_branch"
@@ -74,13 +73,7 @@ public class MergeLayoutSetBranchMVCActionCommand extends BaseMVCActionCommand {
 		}
 	}
 
-	@Reference(unbind = "-")
-	protected void setLayoutSetBranchService(
-		LayoutSetBranchService layoutSetBranchService) {
-
-		_layoutSetBranchService = layoutSetBranchService;
-	}
-
+	@Reference
 	private LayoutSetBranchService _layoutSetBranchService;
 
 }

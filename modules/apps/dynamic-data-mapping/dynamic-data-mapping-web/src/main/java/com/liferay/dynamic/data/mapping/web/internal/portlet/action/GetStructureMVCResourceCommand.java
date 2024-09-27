@@ -33,7 +33,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Leonardo Barros
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + DDMPortletKeys.DYNAMIC_DATA_MAPPING,
 		"mvc.command.name=/dynamic_data_mapping/get_structure"
@@ -58,13 +57,7 @@ public class GetStructureMVCResourceCommand extends BaseMVCResourceCommand {
 			ContentTypes.APPLICATION_JSON);
 	}
 
-	@Reference(unbind = "-")
-	protected void setDDMStructureService(
-		DDMStructureService ddmStructureService) {
-
-		_ddmStructureService = ddmStructureService;
-	}
-
+	@Reference
 	private DDMStructureService _ddmStructureService;
 
 }

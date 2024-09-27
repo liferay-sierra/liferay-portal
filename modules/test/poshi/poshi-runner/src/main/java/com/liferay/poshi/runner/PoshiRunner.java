@@ -21,6 +21,7 @@ import com.liferay.poshi.core.PoshiStackTraceUtil;
 import com.liferay.poshi.core.PoshiValidation;
 import com.liferay.poshi.core.PoshiVariablesUtil;
 import com.liferay.poshi.core.util.FileUtil;
+import com.liferay.poshi.core.util.GetterUtil;
 import com.liferay.poshi.core.util.PropsValues;
 import com.liferay.poshi.runner.logger.PoshiLogger;
 import com.liferay.poshi.runner.logger.SummaryLogger;
@@ -37,6 +38,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.dom4j.Element;
 
@@ -102,7 +104,9 @@ public class PoshiRunner {
 		List<String> testNames = Arrays.asList(
 			PropsValues.TEST_NAME.split("\\s*,\\s*"));
 
-		PoshiContext.readFiles();
+		PoshiContext.readFiles(false);
+
+		PoshiValidation.validate();
 
 		for (String testName : testNames) {
 			PoshiValidation.validate(testName);
@@ -180,7 +184,15 @@ public class PoshiRunner {
 
 			SummaryLogger.startRunning();
 
-			SeleniumUtil.startSelenium();
+			Properties properties =
+				PoshiContext.getNamespacedClassCommandNameProperties(
+					_testNamespacedClassCommandName);
+
+			if (!GetterUtil.getBoolean(
+					properties.getProperty("disable-webdriver"))) {
+
+				SeleniumUtil.startSelenium();
+			}
 
 			_runSetUp();
 		}
@@ -189,16 +201,10 @@ public class PoshiRunner {
 
 			throw webDriverException;
 		}
-		catch (Exception exception) {
+		catch (Throwable throwable) {
 			LiferaySeleniumUtil.printJavaProcessStacktrace();
 
-			PoshiStackTraceUtil.printStackTrace(exception.getMessage());
-
-			PoshiStackTraceUtil.emptyStackTrace();
-
-			exception.printStackTrace();
-
-			throw exception;
+			throw _getException(throwable);
 		}
 	}
 
@@ -213,10 +219,10 @@ public class PoshiRunner {
 				_runTearDown();
 			}
 		}
-		catch (Exception exception) {
-			PoshiStackTraceUtil.printStackTrace(exception.getMessage());
+		catch (Throwable throwable) {
+			Exception exception = _getException(throwable);
 
-			PoshiStackTraceUtil.emptyStackTrace();
+			exception.printStackTrace();
 		}
 		finally {
 			if (PropsValues.PROXY_SERVER_ENABLED) {
@@ -257,12 +263,10 @@ public class PoshiRunner {
 
 			LiferaySeleniumUtil.assertNoPoshiWarnings();
 		}
-		catch (Exception exception) {
+		catch (Throwable throwable) {
 			LiferaySeleniumUtil.printJavaProcessStacktrace();
 
-			PoshiStackTraceUtil.printStackTrace(exception.getMessage());
-
-			PoshiStackTraceUtil.emptyStackTrace();
+			Exception exception = _getException(throwable);
 
 			exception.printStackTrace();
 
@@ -272,6 +276,19 @@ public class PoshiRunner {
 
 	@Rule
 	public RetryTestRule retryTestRule = new RetryTestRule();
+
+	private Exception _getException(Throwable throwable) {
+		String poshiStackTrace = PoshiStackTraceUtil.getStackTrace(
+			throwable.getMessage());
+
+		PoshiStackTraceUtil.emptyStackTrace();
+
+		Exception exception = new Exception(poshiStackTrace);
+
+		exception.setStackTrace(throwable.getStackTrace());
+
+		return exception;
+	}
 
 	private void _runCommand() throws Exception {
 		_poshiLogger.logNamespacedClassCommandName(

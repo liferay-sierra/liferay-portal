@@ -14,41 +14,35 @@
 
 package com.liferay.object.web.internal.object.definitions.portlet.action;
 
-import com.liferay.object.admin.rest.dto.v1_0.ObjectAction;
 import com.liferay.object.admin.rest.dto.v1_0.ObjectDefinition;
-import com.liferay.object.admin.rest.dto.v1_0.ObjectField;
-import com.liferay.object.admin.rest.dto.v1_0.ObjectLayout;
-import com.liferay.object.admin.rest.dto.v1_0.ObjectView;
-import com.liferay.object.admin.rest.resource.v1_0.ObjectActionResource;
 import com.liferay.object.admin.rest.resource.v1_0.ObjectDefinitionResource;
-import com.liferay.object.admin.rest.resource.v1_0.ObjectLayoutResource;
-import com.liferay.object.admin.rest.resource.v1_0.ObjectViewResource;
 import com.liferay.object.constants.ObjectPortletKeys;
 import com.liferay.object.exception.ObjectDefinitionNameException;
-import com.liferay.object.web.internal.object.definitions.portlet.action.util.ExportImportObjectDefinitiontUtil;
-import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
-import com.liferay.portal.kernel.servlet.SessionErrors;
-import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
 import com.liferay.portal.kernel.util.FileUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.upload.UploadPortletRequestImpl;
-
-import java.util.Objects;
+import com.liferay.portal.util.PropsUtil;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
+
+import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -58,7 +52,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Gabriel Albuquerque
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + ObjectPortletKeys.OBJECT_DEFINITIONS,
 		"mvc.command.name=/object_definitions/import_object_definition"
@@ -75,37 +68,39 @@ public class ImportObjectDefinitionMVCActionCommand
 
 		try {
 			_importObjectDefinition(actionRequest);
-
-			SessionMessages.add(
-				actionRequest, "importObjectDefinitionSuccessMessage");
-
-			hideDefaultSuccessMessage(actionRequest);
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
 				_log.debug(exception);
 			}
 
-			if (exception instanceof
-					ObjectDefinitionNameException.
-						MustBeginWithUpperCaseLetter ||
-				exception instanceof
-					ObjectDefinitionNameException.MustNotBeDuplicate ||
-				exception instanceof
-					ObjectDefinitionNameException.
-						MustOnlyContainLettersAndDigits) {
+			HttpServletResponse httpServletResponse =
+				_portal.getHttpServletResponse(actionResponse);
 
-				SessionErrors.add(actionRequest, exception.getClass());
+			httpServletResponse.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+
+			if (exception instanceof ObjectDefinitionNameException) {
+				Class<?> clazz = exception.getClass();
+
+				JSONPortletResponseUtil.writeJSON(
+					actionRequest, actionResponse,
+					JSONUtil.put(
+						"type",
+						"ObjectDefinitionNameException." +
+							clazz.getSimpleName()));
 			}
 			else {
-				SessionErrors.add(
-					actionRequest, "importObjectDefinitionErrorMessage");
+				JSONPortletResponseUtil.writeJSON(
+					actionRequest, actionResponse,
+					JSONUtil.put(
+						"title",
+						_language.get(
+							_portal.getHttpServletRequest(actionRequest),
+							"the-structure-was-not-successfully-imported")));
 			}
-
-			hideDefaultErrorMessage(actionRequest);
 		}
 
-		sendRedirect(actionRequest, actionResponse);
+		hideDefaultSuccessMessage(actionRequest);
 	}
 
 	private UploadPortletRequest _getUploadPortletRequest(
@@ -120,25 +115,6 @@ public class ImportObjectDefinitionMVCActionCommand
 			liferayPortletRequest,
 			_portal.getPortletNamespace(
 				liferayPortletRequest.getPortletName()));
-	}
-
-	private void _importObjectActions(
-			ObjectDefinition objectDefinition,
-			ObjectDefinition postObjectDefinition, ThemeDisplay themeDisplay)
-		throws Exception {
-
-		ObjectActionResource.Builder objectActionResourcedBuilder =
-			_objectActionResourceFactory.create();
-
-		ObjectActionResource objectActionResource =
-			objectActionResourcedBuilder.user(
-				themeDisplay.getUser()
-			).build();
-
-		for (ObjectAction objectAction : objectDefinition.getObjectActions()) {
-			objectActionResource.postObjectDefinitionObjectAction(
-				postObjectDefinition.getId(), objectAction);
-		}
 	}
 
 	private void _importObjectDefinition(ActionRequest actionRequest)
@@ -160,136 +136,40 @@ public class ImportObjectDefinitionMVCActionCommand
 		String objectDefinitionJSON = FileUtil.read(
 			uploadPortletRequest.getFile("objectDefinitionJSON"));
 
-		JSONObject objectDefinitionJSONObject =
-			JSONFactoryUtil.createJSONObject(objectDefinitionJSON);
-
-		ExportImportObjectDefinitiontUtil.apply(
-			objectDefinitionJSONObject,
-			objectLayoutColumnJSONObject -> {
-				objectLayoutColumnJSONObject.remove("objectFieldName");
-
-				return objectLayoutColumnJSONObject;
-			});
-
-		String titleObjectFieldName = (String)objectDefinitionJSONObject.get(
-			"titleObjectFieldName");
-
-		objectDefinitionJSONObject.remove("titleObjectFieldName");
+		JSONObject objectDefinitionJSONObject = _jsonFactory.createJSONObject(
+			objectDefinitionJSON);
 
 		ObjectDefinition objectDefinition = ObjectDefinition.toDTO(
 			objectDefinitionJSONObject.toString());
 
+		objectDefinition.setActive(false);
 		objectDefinition.setName(ParamUtil.getString(actionRequest, "name"));
 
-		ObjectDefinition postObjectDefinition =
-			objectDefinitionResource.postObjectDefinition(objectDefinition);
+		ObjectDefinition putObjectDefinition =
+			objectDefinitionResource.putObjectDefinitionByExternalReferenceCode(
+				objectDefinition.getExternalReferenceCode(), objectDefinition);
 
-		for (ObjectField objectField : postObjectDefinition.getObjectFields()) {
-			if (Objects.equals(objectField.getName(), titleObjectFieldName)) {
-				postObjectDefinition.setTitleObjectFieldId(objectField.getId());
+		putObjectDefinition.setPortlet(objectDefinition.getPortlet());
 
-				break;
-			}
+		if (!GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-135430"))) {
+			putObjectDefinition.setStorageType(StringPool.BLANK);
 		}
-
-		postObjectDefinition.setPortlet(objectDefinition.getPortlet());
 
 		objectDefinitionResource.putObjectDefinition(
-			postObjectDefinition.getId(), postObjectDefinition);
-
-		_importObjectActions(
-			objectDefinition, postObjectDefinition, themeDisplay);
-
-		objectDefinitionJSONObject = JSONFactoryUtil.createJSONObject(
-			objectDefinitionJSON);
-
-		_importObjectLayouts(
-			objectDefinitionJSONObject, postObjectDefinition, themeDisplay);
-
-		_importObjectViews(
-			objectDefinition, postObjectDefinition, themeDisplay);
-	}
-
-	private void _importObjectLayouts(
-			JSONObject objectDefinitionJSONObject,
-			ObjectDefinition postObjectDefinition, ThemeDisplay themeDisplay)
-		throws Exception {
-
-		ObjectLayoutResource.Builder builder =
-			_objectLayoutResourceFactory.create();
-
-		ObjectLayoutResource objectLayoutResource = builder.user(
-			themeDisplay.getUser()
-		).build();
-
-		ExportImportObjectDefinitiontUtil.apply(
-			objectDefinitionJSONObject,
-			objectLayoutColumnJSONObject -> {
-				for (ObjectField objectField :
-						postObjectDefinition.getObjectFields()) {
-
-					if (StringUtil.equals(
-							objectField.getName(),
-							objectLayoutColumnJSONObject.getString(
-								"objectFieldName"))) {
-
-						objectLayoutColumnJSONObject.put(
-							"objectFieldId", objectField.getId());
-
-						break;
-					}
-				}
-
-				objectLayoutColumnJSONObject.remove("objectFieldName");
-
-				return objectLayoutColumnJSONObject;
-			});
-
-		JSONArray objectLayoutsJSONArray =
-			(JSONArray)objectDefinitionJSONObject.get("objectLayouts");
-
-		for (int i = 0; i < objectLayoutsJSONArray.length(); i++) {
-			JSONObject objectLayoutJSONObject =
-				(JSONObject)objectLayoutsJSONArray.get(i);
-
-			objectLayoutResource.postObjectDefinitionObjectLayout(
-				postObjectDefinition.getId(),
-				ObjectLayout.toDTO(objectLayoutJSONObject.toString()));
-		}
-	}
-
-	private void _importObjectViews(
-			ObjectDefinition objectDefinition,
-			ObjectDefinition postObjectDefinition, ThemeDisplay themeDisplay)
-		throws Exception {
-
-		ObjectViewResource.Builder objectViewResourcedBuilder =
-			_objectViewResourceFactory.create();
-
-		ObjectViewResource objectViewResource = objectViewResourcedBuilder.user(
-			themeDisplay.getUser()
-		).build();
-
-		for (ObjectView objectView : objectDefinition.getObjectViews()) {
-			objectViewResource.postObjectDefinitionObjectView(
-				postObjectDefinition.getId(), objectView);
-		}
+			putObjectDefinition.getId(), putObjectDefinition);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ImportObjectDefinitionMVCActionCommand.class);
 
 	@Reference
-	private ObjectActionResource.Factory _objectActionResourceFactory;
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private ObjectDefinitionResource.Factory _objectDefinitionResourceFactory;
-
-	@Reference
-	private ObjectLayoutResource.Factory _objectLayoutResourceFactory;
-
-	@Reference
-	private ObjectViewResource.Factory _objectViewResourceFactory;
 
 	@Reference
 	private Portal _portal;

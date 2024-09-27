@@ -20,13 +20,13 @@ import com.liferay.commerce.product.model.CPInstanceOptionValueRel;
 import com.liferay.commerce.product.service.CPInstanceService;
 import com.liferay.commerce.product.util.CPInstanceHelper;
 import com.liferay.headless.commerce.admin.catalog.dto.v1_0.Sku;
+import com.liferay.headless.commerce.admin.catalog.dto.v1_0.SkuOption;
 import com.liferay.headless.commerce.core.util.LanguageUtils;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -35,7 +35,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	property = "dto.class.name=com.liferay.commerce.product.model.CPInstance",
 	service = {DTOConverter.class, SkuDTOConverter.class}
 )
@@ -81,29 +80,34 @@ public class SkuDTOConverter implements DTOConverter<CPInstance, Sku> {
 				weight = cpInstance.getWeight();
 				width = cpInstance.getWidth();
 
-				setOptions(
+				setSkuOptions(
 					() -> {
-						Map<String, String> options = new HashMap<>();
+						List<SkuOption> skuOptions = new ArrayList<>();
 
 						List<CPInstanceOptionValueRel>
 							cpInstanceOptionValueRels =
 								_cpInstanceHelper.
 									getCPInstanceCPInstanceOptionValueRels(
-										cpInstance.getCPDefinitionId());
+										cpInstance.getCPInstanceId());
 
 						for (CPInstanceOptionValueRel cpInstanceOptionValueRel :
 								cpInstanceOptionValueRels) {
 
-							options.put(
-								String.valueOf(
-									cpInstanceOptionValueRel.
-										getCPDefinitionOptionRelId()),
-								String.valueOf(
-									cpInstanceOptionValueRel.
-										getCPDefinitionOptionValueRelId()));
+							SkuOption skuOption = new SkuOption() {
+								{
+									key =
+										cpInstanceOptionValueRel.
+											getCPDefinitionOptionRelId();
+									value =
+										cpInstanceOptionValueRel.
+											getCPDefinitionOptionValueRelId();
+								}
+							};
+
+							skuOptions.add(skuOption);
 						}
 
-						return options;
+						return skuOptions.toArray(new SkuOption[0]);
 					});
 
 				setReplacementSkuId(

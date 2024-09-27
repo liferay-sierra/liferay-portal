@@ -18,7 +18,7 @@ import com.liferay.commerce.product.type.virtual.model.CPDefinitionVirtualSettin
 import com.liferay.commerce.product.type.virtual.web.internal.servlet.taglib.ui.constants.CPDefinitionVirtualSettingFormNavigatorConstants;
 import com.liferay.frontend.taglib.form.navigator.BaseJSPFormNavigatorEntry;
 import com.liferay.frontend.taglib.form.navigator.FormNavigatorEntry;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 
 import java.io.IOException;
 
@@ -37,7 +37,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, property = "form.navigator.entry.order:Integer=70",
+	property = "form.navigator.entry.order:Integer=70",
 	service = FormNavigatorEntry.class
 )
 public class CPDefinitionVirtualSettingDetailsTermsOfUseFormNavigatorEntry
@@ -62,7 +62,12 @@ public class CPDefinitionVirtualSettingDetailsTermsOfUseFormNavigatorEntry
 
 	@Override
 	public String getLabel(Locale locale) {
-		return LanguageUtil.get(locale, "terms-of-use");
+		return _language.get(locale, "terms-of-use");
+	}
+
+	@Override
+	public ServletContext getServletContext() {
+		return _cpDefinitionVirtualSettingServletContext;
 	}
 
 	@Override
@@ -92,5 +97,8 @@ public class CPDefinitionVirtualSettingDetailsTermsOfUseFormNavigatorEntry
 		target = "(osgi.web.symbolicname=com.liferay.commerce.product.type.virtual.web)"
 	)
 	private ServletContext _cpDefinitionVirtualSettingServletContext;
+
+	@Reference
+	private Language _language;
 
 }

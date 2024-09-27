@@ -88,7 +88,7 @@ public class DefaultFacetTranslator implements FacetTranslator {
 			);
 		}
 
-		if (!ListUtil.isEmpty(postFilterQueryBuilders)) {
+		if (ListUtil.isNotEmpty(postFilterQueryBuilders)) {
 			searchSourceBuilder.postFilter(
 				_getPostFilter(postFilterQueryBuilders));
 		}
@@ -104,20 +104,6 @@ public class DefaultFacetTranslator implements FacetTranslator {
 		}
 
 		return aggregationBuilder;
-	}
-
-	@Reference(service = CompositeFacetProcessor.class, unbind = "-")
-	protected void setFacetProcessor(
-		FacetProcessor<SearchRequestBuilder> facetProcessor) {
-
-		_facetProcessor = facetProcessor;
-	}
-
-	@Reference(target = "(search.engine.impl=Elasticsearch)", unbind = "-")
-	protected void setFilterTranslator(
-		FilterTranslator<QueryBuilder> filterTranslator) {
-
-		_filterTranslator = filterTranslator;
 	}
 
 	private FacetProcessorContext _getFacetProcessorContext(
@@ -168,7 +154,10 @@ public class DefaultFacetTranslator implements FacetTranslator {
 		return Optional.of(queryBuilder);
 	}
 
+	@Reference(service = CompositeFacetProcessor.class)
 	private FacetProcessor<SearchRequestBuilder> _facetProcessor;
+
+	@Reference(target = "(search.engine.impl=Elasticsearch)")
 	private FilterTranslator<QueryBuilder> _filterTranslator;
 
 }

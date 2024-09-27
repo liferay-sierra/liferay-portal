@@ -15,6 +15,7 @@
 package com.liferay.configuration.admin.web.internal.portlet.action;
 
 import com.liferay.configuration.admin.constants.ConfigurationAdminPortletKeys;
+import com.liferay.configuration.admin.exportimport.ConfigurationExportImportProcessor;
 import com.liferay.configuration.admin.web.internal.display.context.ConfigurationScopeDisplayContext;
 import com.liferay.configuration.admin.web.internal.display.context.ConfigurationScopeDisplayContextFactory;
 import com.liferay.configuration.admin.web.internal.exporter.ConfigurationExporter;
@@ -28,12 +29,15 @@ import com.liferay.portal.kernel.portlet.PortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCResourceCommand;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ContentTypes;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.zip.ZipWriter;
-import com.liferay.portal.kernel.zip.ZipWriterFactoryUtil;
+import com.liferay.portal.kernel.zip.ZipWriterFactory;
 import com.liferay.portal.util.PropsValues;
 
 import java.io.FileInputStream;
@@ -42,7 +46,7 @@ import java.io.Serializable;
 import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
+import java.util.Objects;
 
 import javax.portlet.PortletException;
 import javax.portlet.ResourceRequest;
@@ -60,7 +64,6 @@ import org.osgi.service.metatype.AttributeDefinition;
  * @author Raymond Augé
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + ConfigurationAdminPortletKeys.INSTANCE_SETTINGS,
 		"javax.portlet.name=" + ConfigurationAdminPortletKeys.SITE_SETTINGS,
@@ -98,12 +101,12 @@ public class ExportConfigurationMVCResourceCommand
 		return false;
 	}
 
-	protected Properties getProperties(
+	protected Dictionary<String, Object> getProperties(
 			String languageId, String factoryPid, String pid, Scope scope,
 			Serializable scopePK)
 		throws Exception {
 
-		Properties properties = new Properties();
+		Dictionary<String, Object> properties = new HashMapDictionary<>();
 
 		Map<String, ConfigurationModel> configurationModels =
 			_configurationModelRetriever.getConfigurationModels(
@@ -156,6 +159,13 @@ public class ExportConfigurationMVCResourceCommand
 
 		if (!Scope.SYSTEM.equals(scope)) {
 			properties.put(scope.getPropertyKey(), scopePK);
+
+			if (GetterUtil.getBoolean(
+					PropsUtil.get("feature.flag.LPS-155284"))) {
+
+				_configurationExportImportProcessor.prepareForExport(
+					pid, properties);
+			}
 		}
 
 		return properties;
@@ -170,7 +180,7 @@ public class ExportConfigurationMVCResourceCommand
 
 		String languageId = themeDisplay.getLanguageId();
 
-		ZipWriter zipWriter = ZipWriterFactoryUtil.getZipWriter();
+		ZipWriter zipWriter = _zipWriterFactory.getZipWriter();
 
 		ConfigurationScopeDisplayContext configurationScopeDisplayContext =
 			ConfigurationScopeDisplayContextFactory.create(resourceRequest);
@@ -223,7 +233,20 @@ public class ExportConfigurationMVCResourceCommand
 			}
 		}
 
-		String fileName = "liferay-system-settings.zip";
+		String fileName = "liferay-site-settings.zip";
+
+		if (Objects.equals(
+				ConfigurationAdminPortletKeys.INSTANCE_SETTINGS,
+				themeDisplay.getPpid())) {
+
+			fileName = "liferay-instance-settings.zip";
+		}
+		else if (Objects.equals(
+					ConfigurationAdminPortletKeys.SYSTEM_SETTINGS,
+					themeDisplay.getPpid())) {
+
+			fileName = "liferay-system-settings.zip";
+		}
 
 		PortletResponseUtil.sendFile(
 			resourceRequest, resourceResponse, fileName,
@@ -240,7 +263,7 @@ public class ExportConfigurationMVCResourceCommand
 
 		String languageId = themeDisplay.getLanguageId();
 
-		ZipWriter zipWriter = ZipWriterFactoryUtil.getZipWriter();
+		ZipWriter zipWriter = _zipWriterFactory.getZipWriter();
 
 		String factoryPid = ParamUtil.getString(resourceRequest, "factoryPid");
 
@@ -319,11 +342,17 @@ public class ExportConfigurationMVCResourceCommand
 		if (Validator.isNotNull(factoryPid) && !factoryPid.equals(pid)) {
 			String factoryInstanceId = pid.substring(factoryPid.length() + 1);
 
-			if (factoryInstanceId.startsWith("scoped")) {
+			if (factoryInstanceId.startsWith("scoped.")) {
 				factoryPid = factoryPid + ".scoped";
 
 				factoryInstanceId = StringUtil.removeSubstring(
 					factoryInstanceId, "scoped.");
+			}
+			else if (factoryInstanceId.startsWith("scoped~")) {
+				factoryPid = factoryPid + ".scoped";
+
+				factoryInstanceId = StringUtil.removeSubstring(
+					factoryInstanceId, "scoped~");
 			}
 
 			fileName = factoryPid + StringPool.TILDE + factoryInstanceId;
@@ -332,7 +361,14 @@ public class ExportConfigurationMVCResourceCommand
 		return fileName + ".config";
 	}
 
+	@Reference
+	private ConfigurationExportImportProcessor
+		_configurationExportImportProcessor;
+
 	@Reference(target = "(filter.visibility=*)")
 	private ConfigurationModelRetriever _configurationModelRetriever;
+
+	@Reference
+	private ZipWriterFactory _zipWriterFactory;
 
 }

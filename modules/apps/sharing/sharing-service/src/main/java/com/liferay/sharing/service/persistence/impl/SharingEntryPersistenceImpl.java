@@ -38,7 +38,7 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 import com.liferay.sharing.exception.NoSuchEntryException;
 import com.liferay.sharing.model.SharingEntry;
 import com.liferay.sharing.model.SharingEntryTable;
@@ -196,7 +196,7 @@ public class SharingEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<SharingEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SharingEntry sharingEntry : list) {
@@ -576,7 +576,7 @@ public class SharingEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -706,7 +706,7 @@ public class SharingEntryPersistenceImpl
 
 		if (useFinderCache) {
 			result = finderCache.getResult(
-				_finderPathFetchByUUID_G, finderArgs);
+				_finderPathFetchByUUID_G, finderArgs, this);
 		}
 
 		if (result instanceof SharingEntry) {
@@ -817,7 +817,7 @@ public class SharingEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid, groupId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -983,7 +983,7 @@ public class SharingEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<SharingEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SharingEntry sharingEntry : list) {
@@ -1397,7 +1397,7 @@ public class SharingEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid, companyId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -1552,7 +1552,7 @@ public class SharingEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<SharingEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SharingEntry sharingEntry : list) {
@@ -1910,7 +1910,7 @@ public class SharingEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {groupId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -2043,7 +2043,7 @@ public class SharingEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<SharingEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SharingEntry sharingEntry : list) {
@@ -2400,7 +2400,7 @@ public class SharingEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {userId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -2536,7 +2536,7 @@ public class SharingEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<SharingEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SharingEntry sharingEntry : list) {
@@ -2894,7 +2894,7 @@ public class SharingEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {toUserId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -3022,7 +3022,7 @@ public class SharingEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<SharingEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SharingEntry sharingEntry : list) {
@@ -3412,7 +3412,7 @@ public class SharingEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {_getTime(expirationDate)};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -3571,7 +3571,7 @@ public class SharingEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<SharingEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SharingEntry sharingEntry : list) {
@@ -3960,7 +3960,7 @@ public class SharingEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {userId, classNameId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -4110,7 +4110,7 @@ public class SharingEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<SharingEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SharingEntry sharingEntry : list) {
@@ -4499,7 +4499,7 @@ public class SharingEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {toUserId, classNameId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -4649,7 +4649,7 @@ public class SharingEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<SharingEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SharingEntry sharingEntry : list) {
@@ -5038,7 +5038,7 @@ public class SharingEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {classNameId, classPK};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -5169,7 +5169,7 @@ public class SharingEntryPersistenceImpl
 
 		if (useFinderCache) {
 			result = finderCache.getResult(
-				_finderPathFetchByTU_C_C, finderArgs);
+				_finderPathFetchByTU_C_C, finderArgs, this);
 		}
 
 		if (result instanceof SharingEntry) {
@@ -5276,7 +5276,7 @@ public class SharingEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {toUserId, classNameId, classPK};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -5472,7 +5472,7 @@ public class SharingEntryPersistenceImpl
 		sharingEntry.setNew(true);
 		sharingEntry.setPrimaryKey(sharingEntryId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		sharingEntry.setUuid(uuid);
 
@@ -5591,7 +5591,7 @@ public class SharingEntryPersistenceImpl
 			(SharingEntryModelImpl)sharingEntry;
 
 		if (Validator.isNull(sharingEntry.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			sharingEntry.setUuid(uuid);
 		}
@@ -5786,7 +5786,7 @@ public class SharingEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<SharingEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -5856,7 +5856,7 @@ public class SharingEntryPersistenceImpl
 	@Override
 	public int countAll() {
 		Long count = (Long)finderCache.getResult(
-			_finderPathCountAll, FINDER_ARGS_EMPTY);
+			_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -6209,7 +6209,6 @@ public class SharingEntryPersistenceImpl
 	}
 
 	@Reference
-	private SharingEntryModelArgumentsResolver
-		_sharingEntryModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

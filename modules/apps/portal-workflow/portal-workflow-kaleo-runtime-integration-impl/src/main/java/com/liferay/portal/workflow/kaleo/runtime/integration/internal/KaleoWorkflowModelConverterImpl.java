@@ -71,7 +71,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Shuyang Zhou
  */
-@Component(immediate = true, service = KaleoWorkflowModelConverter.class)
+@Component(service = KaleoWorkflowModelConverter.class)
 public class KaleoWorkflowModelConverterImpl
 	implements KaleoWorkflowModelConverter {
 
@@ -116,8 +116,23 @@ public class KaleoWorkflowModelConverterImpl
 		}
 
 		defaultWorkflowDefinition.setContent(content);
-		defaultWorkflowDefinition.setCreateDate(
-			kaleoDefinition.getCreateDate());
+
+		try {
+			KaleoDefinitionVersion firstKaleoDefinitionVersion =
+				_kaleoDefinitionVersionLocalService.
+					getFirstKaleoDefinitionVersion(
+						kaleoDefinition.getCompanyId(),
+						kaleoDefinition.getName());
+
+			defaultWorkflowDefinition.setCreateDate(
+				firstKaleoDefinitionVersion.getCreateDate());
+		}
+		catch (PortalException portalException) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(portalException);
+			}
+		}
+
 		defaultWorkflowDefinition.setDescription(
 			kaleoDefinition.getDescription());
 		defaultWorkflowDefinition.setModifiedDate(
@@ -243,7 +258,7 @@ public class KaleoWorkflowModelConverterImpl
 			new DefaultWorkflowInstance();
 
 		defaultWorkflowInstance.setActive(kaleoInstance.isActive());
-		defaultWorkflowInstance.setCurrentNodeNames(
+		defaultWorkflowInstance.setCurrentWorkflowNodes(
 			Stream.of(
 				_kaleoInstanceTokenLocalService.getKaleoInstanceTokens(
 					kaleoInstance.getKaleoInstanceId())
@@ -259,7 +274,7 @@ public class KaleoWorkflowModelConverterImpl
 				kaleoNode -> !Objects.equals(
 					kaleoNode.getType(), NodeType.FORK.name())
 			).map(
-				KaleoNode::getName
+				this::_toWorkflowNode
 			).collect(
 				Collectors.toList()
 			));
@@ -292,8 +307,8 @@ public class KaleoWorkflowModelConverterImpl
 		defaultWorkflowLog.setAuditUserId(kaleoLog.getUserId());
 		defaultWorkflowLog.setComment(kaleoLog.getComment());
 		defaultWorkflowLog.setCreateDate(kaleoLog.getCreateDate());
-		defaultWorkflowLog.setPreviousState(
-			kaleoLog.getPreviousKaleoNodeName());
+		defaultWorkflowLog.setPreviousWorkflowNode(
+			_getWorkflowNode(kaleoLog.getPreviousKaleoNodeId()));
 
 		long previousAssigneeClassPK = kaleoLog.getPreviousAssigneeClassPK();
 
@@ -323,7 +338,8 @@ public class KaleoWorkflowModelConverterImpl
 			}
 		}
 
-		defaultWorkflowLog.setState(kaleoLog.getKaleoNodeName());
+		defaultWorkflowLog.setCurrentWorkflowNode(
+			_getWorkflowNode(kaleoLog.getKaleoClassPK()));
 		defaultWorkflowLog.setType(KaleoLogUtil.convert(kaleoLog.getType()));
 		defaultWorkflowLog.setWorkflowLogId(kaleoLog.getKaleoLogId());
 		defaultWorkflowLog.setWorkflowTaskId(
@@ -350,6 +366,11 @@ public class KaleoWorkflowModelConverterImpl
 		defaultWorkflowTask.setDescription(kaleoTask.getDescription());
 
 		defaultWorkflowTask.setDueDate(kaleoTaskInstanceToken.getDueDate());
+
+		KaleoNode kaleoNode = kaleoTask.getKaleoNode();
+
+		defaultWorkflowTask.setLabelMap(kaleoNode.getLabelMap());
+
 		defaultWorkflowTask.setName(kaleoTask.getName());
 
 		if (workflowContext != null) {
@@ -360,6 +381,8 @@ public class KaleoWorkflowModelConverterImpl
 				WorkflowContextUtil.convert(
 					kaleoTaskInstanceToken.getWorkflowContext()));
 		}
+
+		defaultWorkflowTask.setUserName(kaleoTaskInstanceToken.getUserName());
 
 		KaleoDefinitionVersion kaleoDefinitionVersion =
 			_kaleoDefinitionVersionLocalService.getKaleoDefinitionVersion(
@@ -402,6 +425,24 @@ public class KaleoWorkflowModelConverterImpl
 		return versionParts[0];
 	}
 
+	private WorkflowNode _getWorkflowNode(long kaleoNodeId) {
+		if (kaleoNodeId == 0) {
+			return null;
+		}
+
+		try {
+			return _toWorkflowNode(
+				_kaleoNodeLocalService.getKaleoNode(kaleoNodeId));
+		}
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(portalException);
+			}
+		}
+
+		return null;
+	}
+
 	private List<WorkflowNode> _getWorkflowNodes(
 		long kaleoDefinitionVersionId) {
 
@@ -411,29 +452,7 @@ public class KaleoWorkflowModelConverterImpl
 		).flatMap(
 			List::stream
 		).map(
-			kaleoNode -> {
-				DefaultWorkflowNode defaultWorkflowNode =
-					new DefaultWorkflowNode();
-
-				defaultWorkflowNode.setLabelMap(kaleoNode.getLabelMap());
-				defaultWorkflowNode.setName(kaleoNode.getName());
-
-				WorkflowNode.Type workflowNodeType = WorkflowNode.Type.valueOf(
-					kaleoNode.getType());
-
-				if (Objects.equals(workflowNodeType, WorkflowNode.Type.STATE)) {
-					if (kaleoNode.isInitial()) {
-						workflowNodeType = WorkflowNode.Type.INITIAL_STATE;
-					}
-					else if (kaleoNode.isTerminal()) {
-						workflowNodeType = WorkflowNode.Type.TERMINAL_STATE;
-					}
-				}
-
-				defaultWorkflowNode.setType(workflowNodeType);
-
-				return defaultWorkflowNode;
-			}
+			this::_toWorkflowNode
 		).collect(
 			Collectors.toList()
 		);
@@ -466,6 +485,29 @@ public class KaleoWorkflowModelConverterImpl
 		).collect(
 			Collectors.toList()
 		);
+	}
+
+	private WorkflowNode _toWorkflowNode(KaleoNode kaleoNode) {
+		DefaultWorkflowNode defaultWorkflowNode = new DefaultWorkflowNode();
+
+		defaultWorkflowNode.setLabelMap(kaleoNode.getLabelMap());
+		defaultWorkflowNode.setName(kaleoNode.getName());
+
+		WorkflowNode.Type workflowNodeType = WorkflowNode.Type.valueOf(
+			kaleoNode.getType());
+
+		if (Objects.equals(workflowNodeType, WorkflowNode.Type.STATE)) {
+			if (kaleoNode.isInitial()) {
+				workflowNodeType = WorkflowNode.Type.INITIAL_STATE;
+			}
+			else if (kaleoNode.isTerminal()) {
+				workflowNodeType = WorkflowNode.Type.TERMINAL_STATE;
+			}
+		}
+
+		defaultWorkflowNode.setType(workflowNodeType);
+
+		return defaultWorkflowNode;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

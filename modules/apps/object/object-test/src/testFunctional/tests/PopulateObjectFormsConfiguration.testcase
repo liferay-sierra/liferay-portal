@@ -12,13 +12,12 @@ definition {
 	}
 
 	tearDown {
+		ObjectAdmin.deleteAllCustomObjectsViaAPI();
+
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
 		if ("${testPortalInstance}" == "true") {
 			PortalInstances.tearDownCP();
-		}
-		else {
-			ObjectAdmin.deleteAllCustomObjectsViaAPI();
 		}
 	}
 
@@ -28,9 +27,9 @@ definition {
 		property portal.acceptance = "true";
 
 		ObjectAdmin.addObjectViaAPI(
-			labelName = "Custom Object",
-			objectName = "CustomObject",
-			pluralLabelName = "Custom Objects");
+			labelName = "Custom Object 303",
+			objectName = "CustomObject303",
+			pluralLabelName = "Custom Objects 303");
 
 		ObjectAdmin.addObjectFieldViaAPI(
 			fieldBusinessType = "Text",
@@ -38,9 +37,9 @@ definition {
 			fieldName = "customObjectField",
 			fieldType = "String",
 			isRequired = "false",
-			objectName = "CustomObject");
+			objectName = "CustomObject303");
 
-		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject");
+		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject303");
 
 		PopulateObjectFormsConfiguration.openForm();
 
@@ -52,7 +51,7 @@ definition {
 
 		PopulateObjectFormsConfiguration.selectObject(label = "Object");
 
-		PopulateObjectFormsConfiguration.selectCustomObject(label = "Custom Object");
+		PopulateObjectFormsConfiguration.selectCustomObject(label = "Custom Object 303");
 
 		Form.gotoAddField(fieldType = "Text");
 
@@ -65,9 +64,9 @@ definition {
 	@priority = "4"
 	test CannotMapWithDifferentFieldTypes {
 		ObjectAdmin.addObjectViaAPI(
-			labelName = "Custom Object",
-			objectName = "CustomObject",
-			pluralLabelName = "Custom Objects");
+			labelName = "Custom Object 304",
+			objectName = "CustomObject304",
+			pluralLabelName = "Custom Objects 304");
 
 		ObjectAdmin.addObjectFieldViaAPI(
 			fieldBusinessType = "Date",
@@ -75,9 +74,9 @@ definition {
 			fieldName = "date",
 			fieldType = "Date",
 			isRequired = "false",
-			objectName = "CustomObject");
+			objectName = "CustomObject304");
 
-		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject");
+		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject304");
 
 		PopulateObjectFormsConfiguration.openForm();
 
@@ -87,7 +86,7 @@ definition {
 
 		PopulateObjectFormsConfiguration.selectObject(label = "Object");
 
-		PopulateObjectFormsConfiguration.selectCustomObject(label = "Custom Object");
+		PopulateObjectFormsConfiguration.selectCustomObject(label = "Custom Object 304");
 
 		Form.gotoAddField(fieldType = "Text");
 
@@ -98,9 +97,9 @@ definition {
 	@priority = "4"
 	test CannotMapWithDifferentFieldTypesForFieldGroup {
 		ObjectAdmin.addObjectViaAPI(
-			labelName = "Custom Object",
-			objectName = "CustomObject",
-			pluralLabelName = "Custom Objects");
+			labelName = "Custom Object 305",
+			objectName = "CustomObject305",
+			pluralLabelName = "Custom Objects 305");
 
 		ObjectAdmin.addObjectFieldViaAPI(
 			fieldBusinessType = "Date",
@@ -108,9 +107,9 @@ definition {
 			fieldName = "date",
 			fieldType = "Date",
 			isRequired = "false",
-			objectName = "CustomObject");
+			objectName = "CustomObject305");
 
-		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject");
+		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject305");
 
 		PopulateObjectFormsConfiguration.openForm();
 
@@ -120,7 +119,7 @@ definition {
 
 		PopulateObjectFormsConfiguration.selectObject(label = "Object");
 
-		PopulateObjectFormsConfiguration.selectCustomObject(label = "Custom Object");
+		PopulateObjectFormsConfiguration.selectCustomObject(label = "Custom Object 305");
 
 		Form.gotoAddField(fieldType = "Numeric");
 
@@ -140,9 +139,9 @@ definition {
 		property portal.acceptance = "true";
 
 		ObjectAdmin.addObjectViaAPI(
-			labelName = "Custom Object",
-			objectName = "CustomObject",
-			pluralLabelName = "Custom Objects");
+			labelName = "Custom Object 306",
+			objectName = "CustomObject306",
+			pluralLabelName = "Custom Objects 306");
 
 		ObjectAdmin.addObjectFieldViaAPI(
 			fieldBusinessType = "Text",
@@ -150,7 +149,7 @@ definition {
 			fieldName = "text",
 			fieldType = "String",
 			isRequired = "true",
-			objectName = "CustomObject");
+			objectName = "CustomObject306");
 
 		ObjectAdmin.addObjectFieldViaAPI(
 			fieldBusinessType = "Date",
@@ -158,9 +157,9 @@ definition {
 			fieldName = "date",
 			fieldType = "Date",
 			isRequired = "false",
-			objectName = "CustomObject");
+			objectName = "CustomObject306");
 
-		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject");
+		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject306");
 
 		PopulateObjectFormsConfiguration.openForm();
 
@@ -170,7 +169,7 @@ definition {
 
 		PopulateObjectFormsConfiguration.selectObject(label = "Object");
 
-		PopulateObjectFormsConfiguration.selectCustomObject(label = "Custom Object");
+		PopulateObjectFormsConfiguration.selectCustomObject(label = "Custom Object 306");
 
 		Form.gotoAddField(fieldType = "Date");
 
@@ -196,9 +195,9 @@ definition {
 	@priority = "4"
 	test CannotPublishWhenRequiredFieldNotMappedForFieldGroup {
 		ObjectAdmin.addObjectViaAPI(
-			labelName = "Custom Object",
-			objectName = "CustomObject",
-			pluralLabelName = "Custom Objects");
+			labelName = "Custom Object 307",
+			objectName = "CustomObject307",
+			pluralLabelName = "Custom Objects 307");
 
 		ObjectAdmin.addObjectFieldViaAPI(
 			fieldBusinessType = "Text",
@@ -206,7 +205,7 @@ definition {
 			fieldName = "text",
 			fieldType = "String",
 			isRequired = "true",
-			objectName = "CustomObject");
+			objectName = "CustomObject307");
 
 		ObjectAdmin.addObjectFieldViaAPI(
 			fieldBusinessType = "Date",
@@ -214,7 +213,7 @@ definition {
 			fieldName = "date",
 			fieldType = "Date",
 			isRequired = "false",
-			objectName = "CustomObject");
+			objectName = "CustomObject307");
 
 		ObjectAdmin.addObjectFieldViaAPI(
 			fieldBusinessType = "Integer",
@@ -222,9 +221,9 @@ definition {
 			fieldName = "integer",
 			fieldType = "Integer",
 			isRequired = "false",
-			objectName = "CustomObject");
+			objectName = "CustomObject307");
 
-		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject");
+		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject307");
 
 		PopulateObjectFormsConfiguration.openForm();
 
@@ -234,7 +233,7 @@ definition {
 
 		PopulateObjectFormsConfiguration.selectObject(label = "Object");
 
-		PopulateObjectFormsConfiguration.selectCustomObject(label = "Custom Object");
+		PopulateObjectFormsConfiguration.selectCustomObject(label = "Custom Object 307");
 
 		Form.gotoAddField(fieldType = "Date");
 
@@ -274,9 +273,9 @@ definition {
 		property portal.acceptance = "true";
 
 		ObjectAdmin.addObjectViaAPI(
-			labelName = "Custom Object",
-			objectName = "CustomObject",
-			pluralLabelName = "Custom Objects");
+			labelName = "Custom Object 308",
+			objectName = "CustomObject308",
+			pluralLabelName = "Custom Objects 308");
 
 		ObjectAdmin.addObjectFieldViaAPI(
 			fieldBusinessType = "Text",
@@ -284,9 +283,9 @@ definition {
 			fieldName = "customObjectField",
 			fieldType = "String",
 			isRequired = "false",
-			objectName = "CustomObject");
+			objectName = "CustomObject308");
 
-		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject");
+		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject308");
 
 		PopulateObjectFormsConfiguration.openForm();
 
@@ -296,7 +295,7 @@ definition {
 
 		PopulateObjectFormsConfiguration.selectObject(label = "Object");
 
-		PopulateObjectFormsConfiguration.selectCustomObject(label = "Custom Object");
+		PopulateObjectFormsConfiguration.selectCustomObject(label = "Custom Object 308");
 
 		Form.gotoAddField(fieldType = "Text");
 
@@ -322,9 +321,9 @@ definition {
 		property portal.acceptance = "true";
 
 		ObjectAdmin.addObjectViaAPI(
-			labelName = "Custom Object",
-			objectName = "CustomObject",
-			pluralLabelName = "Custom Objects");
+			labelName = "Custom Object 309",
+			objectName = "CustomObject309",
+			pluralLabelName = "Custom Objects 309");
 
 		ObjectAdmin.addObjectFieldViaAPI(
 			fieldBusinessType = "Date",
@@ -332,9 +331,9 @@ definition {
 			fieldName = "date",
 			fieldType = "Date",
 			isRequired = "false",
-			objectName = "CustomObject");
+			objectName = "CustomObject309");
 
-		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject");
+		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject309");
 
 		PopulateObjectFormsConfiguration.openForm();
 
@@ -344,7 +343,7 @@ definition {
 
 		PopulateObjectFormsConfiguration.selectObject(label = "Object");
 
-		PopulateObjectFormsConfiguration.selectCustomObject(label = "Custom Object");
+		PopulateObjectFormsConfiguration.selectCustomObject(label = "Custom Object 309");
 
 		Form.gotoAddField(fieldType = "Date");
 
@@ -373,9 +372,9 @@ definition {
 	@priority = "4"
 	test CannotViewFormsEntries {
 		ObjectAdmin.addObjectViaAPI(
-			labelName = "Custom Object",
-			objectName = "CustomObject",
-			pluralLabelName = "Custom Objects");
+			labelName = "Custom Object 310",
+			objectName = "CustomObject310",
+			pluralLabelName = "Custom Objects 310");
 
 		ObjectAdmin.addObjectFieldViaAPI(
 			fieldBusinessType = "Text",
@@ -383,9 +382,9 @@ definition {
 			fieldName = "customObjectField",
 			fieldType = "String",
 			isRequired = "false",
-			objectName = "CustomObject");
+			objectName = "CustomObject310");
 
-		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject");
+		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject310");
 
 		PopulateObjectFormsConfiguration.openForm();
 
@@ -397,7 +396,7 @@ definition {
 
 		PopulateObjectFormsConfiguration.selectObject(label = "Object");
 
-		PopulateObjectFormsConfiguration.selectCustomObject(label = "Custom Object");
+		PopulateObjectFormsConfiguration.selectCustomObject(label = "Custom Object 310");
 
 		Form.gotoAddField(fieldType = "Text");
 
@@ -422,9 +421,9 @@ definition {
 		property portal.acceptance = "true";
 
 		ObjectAdmin.addObjectViaAPI(
-			labelName = "Custom Object",
-			objectName = "CustomObject",
-			pluralLabelName = "Custom Objects");
+			labelName = "Custom Object 311",
+			objectName = "CustomObject311",
+			pluralLabelName = "Custom Objects 311");
 
 		ObjectAdmin.addObjectFieldViaAPI(
 			fieldBusinessType = "Text",
@@ -432,9 +431,9 @@ definition {
 			fieldName = "customObjectField",
 			fieldType = "String",
 			isRequired = "false",
-			objectName = "CustomObject");
+			objectName = "CustomObject311");
 
-		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject");
+		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject311");
 
 		PopulateObjectFormsConfiguration.openForm();
 
@@ -446,16 +445,16 @@ definition {
 
 		PopulateObjectFormsConfiguration.selectObject(label = "Object");
 
-		PopulateObjectFormsConfiguration.viewDisplaySelectOption(label = "Custom Object");
+		PopulateObjectFormsConfiguration.viewDisplaySelectOption(label = "Custom Object 311");
 	}
 
 	@description = "LPS-136456 - Verify that the Repeatable option is not available on a form when it is mapped to an object"
 	@priority = "4"
 	test RepeatableOptionNotAvailable {
 		ObjectAdmin.addObjectViaAPI(
-			labelName = "Custom Object",
-			objectName = "CustomObject",
-			pluralLabelName = "Custom Objects");
+			labelName = "Custom Object 312",
+			objectName = "CustomObject312",
+			pluralLabelName = "Custom Objects 312");
 
 		ObjectAdmin.addObjectFieldViaAPI(
 			fieldBusinessType = "Text",
@@ -463,9 +462,9 @@ definition {
 			fieldName = "customObjectField",
 			fieldType = "String",
 			isRequired = "false",
-			objectName = "CustomObject");
+			objectName = "CustomObject312");
 
-		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject");
+		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject312");
 
 		Navigator.openURL();
 
@@ -479,7 +478,7 @@ definition {
 
 		PopulateObjectFormsConfiguration.selectObject(label = "Object");
 
-		PopulateObjectFormsConfiguration.selectCustomObject(label = "Custom Object");
+		PopulateObjectFormsConfiguration.selectCustomObject(label = "Custom Object 312");
 
 		Form.gotoAddField(fieldType = "Text");
 
@@ -494,9 +493,9 @@ definition {
 	@priority = "4"
 	test SearchableOptionNotAvailable {
 		ObjectAdmin.addObjectViaAPI(
-			labelName = "Custom Object",
-			objectName = "CustomObject",
-			pluralLabelName = "Custom Objects");
+			labelName = "Custom Object 313",
+			objectName = "CustomObject313",
+			pluralLabelName = "Custom Objects 313");
 
 		ObjectAdmin.addObjectFieldViaAPI(
 			fieldBusinessType = "Text",
@@ -504,9 +503,9 @@ definition {
 			fieldName = "customObjectField",
 			fieldType = "String",
 			isRequired = "false",
-			objectName = "CustomObject");
+			objectName = "CustomObject313");
 
-		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject");
+		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject313");
 
 		PopulateObjectFormsConfiguration.openForm();
 
@@ -518,7 +517,7 @@ definition {
 
 		PopulateObjectFormsConfiguration.selectObject(label = "Object");
 
-		PopulateObjectFormsConfiguration.selectCustomObject(label = "Custom Object");
+		PopulateObjectFormsConfiguration.selectCustomObject(label = "Custom Object 313");
 
 		Form.gotoAddField(fieldType = "Text");
 

@@ -22,7 +22,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
-import com.liferay.portal.kernel.service.permission.OrganizationPermissionUtil;
+import com.liferay.portal.kernel.service.permission.OrganizationPermission;
 
 import java.util.Locale;
 
@@ -33,7 +33,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Drew Brokke
  */
 @Component(
-	immediate = true,
 	property = {
 		"account.control.panel.category.wrapper=true",
 		"panel.category.key=" + PanelCategoryKeys.ROOT,
@@ -63,7 +62,7 @@ public class ControlPanelCategoryWrapper extends BasePanelCategory {
 
 		User user = permissionChecker.getUser();
 
-		if (OrganizationPermissionUtil.contains(
+		if (_organizationPermission.contains(
 				permissionChecker, user.getOrganizationIds(true),
 				AccountActionKeys.MANAGE_ACCOUNTS)) {
 
@@ -72,6 +71,9 @@ public class ControlPanelCategoryWrapper extends BasePanelCategory {
 
 		return false;
 	}
+
+	@Reference
+	private OrganizationPermission _organizationPermission;
 
 	@Reference(
 		target = "(&(panel.category.key=" + PanelCategoryKeys.ROOT + ")(!(account.control.panel.category.wrapper=*)))"

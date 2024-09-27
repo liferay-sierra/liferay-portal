@@ -14,15 +14,13 @@
 
 package com.liferay.content.dashboard.web.internal.portlet.action.test;
 
-/**
- * @author Yurena Cabrera
- */
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.content.dashboard.web.test.util.ContentDashboardTestUtil;
 import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLAppLocalServiceUtil;
 import com.liferay.document.library.kernel.service.DLFileEntryLocalServiceUtil;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.model.PortletApp;
@@ -38,7 +36,6 @@ import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.model.impl.PortletAppImpl;
 import com.liferay.portal.model.impl.PortletImpl;
@@ -46,9 +43,16 @@ import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
 import java.util.Date;
+
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -76,7 +80,7 @@ public class GetContentDashboardItemsXlsMVCResourceCommandTest {
 	public void setUp() throws Exception {
 		_group = GroupTestUtil.addGroup(
 			TestPropsValues.getCompanyId(), TestPropsValues.getUserId(), 0,
-			"MyScope");
+			"Test Site");
 	}
 
 	@Test
@@ -86,13 +90,19 @@ public class GetContentDashboardItemsXlsMVCResourceCommandTest {
 		System.setProperty("user.name", "test");
 
 		try {
+			ServiceContext serviceContext =
+				ServiceContextTestUtil.getServiceContext(_group.getGroupId());
+
+			serviceContext.setCreateDate(new Date(1630509375000L));
+
+			ServiceContextThreadLocal.pushServiceContext(serviceContext);
+
 			Date date = new Date(150000);
 
 			FileEntry fileEntry = DLAppLocalServiceUtil.addFileEntry(
 				"Site", TestPropsValues.getUserId(), _group.getGroupId(),
 				DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, "fileName.pdf",
-				"application/pdf", new byte[0], date, date,
-				ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+				"application/pdf", new byte[0], date, date, serviceContext);
 
 			DLFileEntry dlFileEntry = (DLFileEntry)fileEntry.getModel();
 
@@ -100,15 +110,71 @@ public class GetContentDashboardItemsXlsMVCResourceCommandTest {
 
 			DLFileEntryLocalServiceUtil.updateDLFileEntry(dlFileEntry);
 
+			Class<?> clazz = getClass();
+
+			ClassLoader classLoader = clazz.getClassLoader();
+
 			ByteArrayOutputStream byteArrayOutputStream = _serveResource(
 				FileEntry.class.getName(), _group.getGroupId());
 
-			Assert.assertArrayEquals(
-				FileUtil.getBytes(getClass(), "dependencies/expected.xls"),
-				byteArrayOutputStream.toByteArray());
+			_assertWorkbooks(
+				new HSSFWorkbook(
+					classLoader.getResourceAsStream(
+						"com/liferay/content/dashboard/web/internal/portlet" +
+							"/action/test/dependencies/expected.xls")),
+				new HSSFWorkbook(
+					new ByteArrayInputStream(
+						byteArrayOutputStream.toByteArray())));
 		}
 		finally {
+			ServiceContextThreadLocal.popServiceContext();
+
 			System.setProperty("user.name", originalUserName);
+		}
+	}
+
+	private void _assertWorkbooks(
+		Workbook expectedWorkbook, Workbook actualWorkbook) {
+
+		Assert.assertEquals(
+			expectedWorkbook.getNumberOfSheets(),
+			actualWorkbook.getNumberOfSheets());
+
+		Sheet expectedWorkbookSheet = expectedWorkbook.getSheetAt(0);
+		Sheet actualWorkbookSheet = actualWorkbook.getSheetAt(0);
+
+		Assert.assertEquals(
+			expectedWorkbookSheet.getLastRowNum(),
+			actualWorkbookSheet.getLastRowNum());
+
+		Row firstWorkbookRow = expectedWorkbookSheet.getRow(0);
+
+		for (int i = 0; i <= expectedWorkbookSheet.getLastRowNum(); i++) {
+			Row expectedWorkbookRow = expectedWorkbookSheet.getRow(i);
+			Row actualWorkbookRow = actualWorkbookSheet.getRow(i);
+
+			for (short j = 0; j < firstWorkbookRow.getLastCellNum(); j++) {
+				String expectedWorkbookCellValue = StringPool.BLANK;
+
+				Cell expectedWorkbookCell = expectedWorkbookRow.getCell(j);
+
+				if (expectedWorkbookCell != null) {
+					expectedWorkbookCellValue =
+						expectedWorkbookCell.getStringCellValue();
+				}
+
+				String actualWorkbookCellValue = StringPool.BLANK;
+
+				Cell actualWorkbookCell = actualWorkbookRow.getCell(j);
+
+				if (actualWorkbookCell != null) {
+					actualWorkbookCellValue =
+						actualWorkbookCell.getStringCellValue();
+				}
+
+				Assert.assertEquals(
+					expectedWorkbookCellValue, actualWorkbookCellValue);
+			}
 		}
 	}
 
@@ -130,17 +196,18 @@ public class GetContentDashboardItemsXlsMVCResourceCommandTest {
 		mockHttpServletRequest.setAttribute(
 			WebKeys.THEME_DISPLAY, themeDisplay);
 
+		mockHttpServletRequest.setParameter("scopeId", String.valueOf(groupId));
+
 		serviceContext.setRequest(mockHttpServletRequest);
 
 		try {
 			ServiceContextThreadLocal.pushServiceContext(serviceContext);
 
 			MockLiferayResourceRequest mockLiferayResourceRequest =
-				new MockLiferayResourceRequest();
+				new MockLiferayResourceRequest(mockHttpServletRequest);
 
 			mockLiferayResourceRequest.setAttribute(
 				WebKeys.THEME_DISPLAY, themeDisplay);
-
 			mockLiferayResourceRequest.setParameter(
 				"groupId", String.valueOf(groupId));
 			mockLiferayResourceRequest.setParameter("className", className);

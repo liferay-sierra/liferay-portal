@@ -40,7 +40,7 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 import com.liferay.reading.time.exception.NoSuchEntryException;
 import com.liferay.reading.time.model.ReadingTimeEntry;
 import com.liferay.reading.time.model.ReadingTimeEntryTable;
@@ -204,7 +204,7 @@ public class ReadingTimeEntryPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<ReadingTimeEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (ReadingTimeEntry readingTimeEntry : list) {
@@ -598,7 +598,7 @@ public class ReadingTimeEntryPersistenceImpl
 
 			finderArgs = new Object[] {uuid};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -734,7 +734,7 @@ public class ReadingTimeEntryPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = finderCache.getResult(
-				_finderPathFetchByUUID_G, finderArgs);
+				_finderPathFetchByUUID_G, finderArgs, this);
 		}
 
 		if (result instanceof ReadingTimeEntry) {
@@ -854,7 +854,7 @@ public class ReadingTimeEntryPersistenceImpl
 
 			finderArgs = new Object[] {uuid, groupId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1026,7 +1026,7 @@ public class ReadingTimeEntryPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<ReadingTimeEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (ReadingTimeEntry readingTimeEntry : list) {
@@ -1452,7 +1452,7 @@ public class ReadingTimeEntryPersistenceImpl
 
 			finderArgs = new Object[] {uuid, companyId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1602,7 +1602,8 @@ public class ReadingTimeEntryPersistenceImpl
 		Object result = null;
 
 		if (useFinderCache && productionMode) {
-			result = finderCache.getResult(_finderPathFetchByG_C_C, finderArgs);
+			result = finderCache.getResult(
+				_finderPathFetchByG_C_C, finderArgs, this);
 		}
 
 		if (result instanceof ReadingTimeEntry) {
@@ -1718,7 +1719,7 @@ public class ReadingTimeEntryPersistenceImpl
 
 			finderArgs = new Object[] {groupId, classNameId, classPK};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1931,7 +1932,7 @@ public class ReadingTimeEntryPersistenceImpl
 		readingTimeEntry.setNew(true);
 		readingTimeEntry.setPrimaryKey(readingTimeEntryId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		readingTimeEntry.setUuid(uuid);
 
@@ -2053,7 +2054,7 @@ public class ReadingTimeEntryPersistenceImpl
 			(ReadingTimeEntryModelImpl)readingTimeEntry;
 
 		if (Validator.isNull(readingTimeEntry.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			readingTimeEntry.setUuid(uuid);
 		}
@@ -2180,7 +2181,9 @@ public class ReadingTimeEntryPersistenceImpl
 	 */
 	@Override
 	public ReadingTimeEntry fetchByPrimaryKey(Serializable primaryKey) {
-		if (ctPersistenceHelper.isProductionMode(ReadingTimeEntry.class)) {
+		if (ctPersistenceHelper.isProductionMode(
+				ReadingTimeEntry.class, primaryKey)) {
+
 			return super.fetchByPrimaryKey(primaryKey);
 		}
 
@@ -2400,7 +2403,7 @@ public class ReadingTimeEntryPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<ReadingTimeEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -2476,7 +2479,7 @@ public class ReadingTimeEntryPersistenceImpl
 
 		if (productionMode) {
 			count = (Long)finderCache.getResult(
-				_finderPathCountAll, FINDER_ARGS_EMPTY);
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 		}
 
 		if (count == null) {
@@ -2769,7 +2772,6 @@ public class ReadingTimeEntryPersistenceImpl
 	}
 
 	@Reference
-	private ReadingTimeEntryModelArgumentsResolver
-		_readingTimeEntryModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

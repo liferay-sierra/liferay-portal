@@ -20,7 +20,6 @@ import com.liferay.frontend.data.set.view.table.BaseTableFDSView;
 import com.liferay.frontend.data.set.view.table.FDSTableSchema;
 import com.liferay.frontend.data.set.view.table.FDSTableSchemaBuilder;
 import com.liferay.frontend.data.set.view.table.FDSTableSchemaBuilderFactory;
-import com.liferay.frontend.data.set.view.table.FDSTableSchemaField;
 import com.liferay.petra.string.StringPool;
 
 import java.util.Locale;
@@ -32,7 +31,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Riccardo Alberti
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "frontend.data.set.name=" + CommercePricingFDSNames.PRICE_MODIFIER_PRODUCT_DEFINITIONS,
 	service = FDSView.class
 )
@@ -44,18 +42,15 @@ public class CommercePriceModifierCPDefinitionTableFDSView
 		FDSTableSchemaBuilder fdsTableSchemaBuilder =
 			_fdsTableSchemaBuilderFactory.create();
 
-		FDSTableSchemaField imageField =
-			fdsTableSchemaBuilder.addFDSTableSchemaField(
-				"product.thumbnail", StringPool.BLANK);
-
-		imageField.setContentRenderer("image");
-
-		fdsTableSchemaBuilder.addFDSTableSchemaField(
-			"product.name.LANG", "name");
-
-		fdsTableSchemaBuilder.addFDSTableSchemaField("product.sku", "sku");
-
-		return fdsTableSchemaBuilder.build();
+		return fdsTableSchemaBuilder.add(
+			"product.thumbnail", StringPool.BLANK,
+			fdsTableSchemaField -> fdsTableSchemaField.setContentRenderer(
+				"image")
+		).add(
+			"product.name.LANG", "name"
+		).add(
+			"product.sku", "sku"
+		).build();
 	}
 
 	@Reference

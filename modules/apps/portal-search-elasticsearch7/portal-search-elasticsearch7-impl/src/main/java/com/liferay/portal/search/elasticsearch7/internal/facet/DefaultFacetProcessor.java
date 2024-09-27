@@ -23,6 +23,8 @@ import java.util.Optional;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.BucketOrder;
+import org.elasticsearch.search.aggregations.bucket.terms.IncludeExclude;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 
 import org.osgi.service.component.annotations.Component;
@@ -49,11 +51,20 @@ public class DefaultFacetProcessor
 
 		JSONObject dataJSONObject = facetConfiguration.getData();
 
+		String include = dataJSONObject.getString("include", null);
+
+		if (include != null) {
+			termsAggregationBuilder.includeExclude(
+				new IncludeExclude(include, null));
+		}
+
 		int minDocCount = dataJSONObject.getInt("frequencyThreshold");
 
 		if (minDocCount > 0) {
 			termsAggregationBuilder.minDocCount(minDocCount);
 		}
+
+		termsAggregationBuilder.order(BucketOrder.count(false));
 
 		int size = dataJSONObject.getInt("maxTerms");
 

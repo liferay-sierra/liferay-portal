@@ -42,7 +42,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Eduardo García
  */
-@Component(immediate = true, service = SegmentsEntryProviderRegistry.class)
+@Component(service = SegmentsEntryProviderRegistry.class)
 public class SegmentsEntryProviderRegistryImpl
 	implements SegmentsEntryProviderRegistry {
 
@@ -117,21 +117,24 @@ public class SegmentsEntryProviderRegistryImpl
 
 	@Override
 	public long[] getSegmentsEntryIds(
-			long groupId, String className, long classPK, Context context)
+			long groupId, String className, long classPK, Context context,
+			long[] segmentEntryIds)
 		throws PortalException {
 
-		long[] segmentsEntryIds = new long[0];
+		long[] finalSegmentsEntryIds = new long[0];
 
 		for (SegmentsEntryProvider segmentsEntryProvider :
 				_serviceTrackerList) {
 
-			segmentsEntryIds = ArrayUtil.append(
-				segmentsEntryIds,
+			finalSegmentsEntryIds = ArrayUtil.append(
+				finalSegmentsEntryIds,
 				segmentsEntryProvider.getSegmentsEntryIds(
-					groupId, className, classPK, context, segmentsEntryIds));
+					groupId, className, classPK, context, segmentEntryIds,
+					finalSegmentsEntryIds));
 		}
 
-		Set<Long> segmentsEntryIdsSet = SetUtil.fromArray(segmentsEntryIds);
+		Set<Long> segmentsEntryIdsSet = SetUtil.fromArray(
+			finalSegmentsEntryIds);
 
 		return ArrayUtil.toLongArray(segmentsEntryIdsSet);
 	}

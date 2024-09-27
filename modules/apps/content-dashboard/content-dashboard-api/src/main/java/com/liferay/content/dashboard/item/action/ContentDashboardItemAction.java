@@ -33,9 +33,14 @@ public interface ContentDashboardItemAction {
 
 	public String getURL(Locale locale);
 
+	public default boolean isDisabled() {
+		return false;
+	}
+
 	public enum Type {
 
-		DELETE, DOWNLOAD, EDIT, PREVIEW, PREVIEW_IMAGE, VIEW, VIEW_IN_PANEL
+		DELETE, DOWNLOAD, EDIT, PREVIEW, PREVIEW_IMAGE, SHARING_BUTTON,
+		SHARING_COLLABORATORS, SUBSCRIBE, UNSUBSCRIBE, VIEW, VIEW_IN_PANEL
 
 	}
 

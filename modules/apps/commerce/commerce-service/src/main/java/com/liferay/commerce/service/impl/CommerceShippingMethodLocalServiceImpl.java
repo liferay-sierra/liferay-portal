@@ -18,17 +18,19 @@ import com.liferay.commerce.exception.CommerceShippingMethodEngineKeyException;
 import com.liferay.commerce.exception.CommerceShippingMethodNameException;
 import com.liferay.commerce.model.CommerceAddressRestriction;
 import com.liferay.commerce.model.CommerceShippingMethod;
+import com.liferay.commerce.service.CommerceAddressRestrictionLocalService;
 import com.liferay.commerce.service.base.CommerceShippingMethodLocalServiceBaseImpl;
+import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ImageLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.spring.extender.service.ServiceReference;
 
 import java.io.File;
 
@@ -37,10 +39,17 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+
 /**
  * @author Andrea Di Giorgi
  * @author Alessio Antonio Rendina
  */
+@Component(
+	property = "model.class.name=com.liferay.commerce.model.CommerceShippingMethod",
+	service = AopService.class
+)
 public class CommerceShippingMethodLocalServiceImpl
 	extends CommerceShippingMethodLocalServiceBaseImpl {
 
@@ -50,7 +59,7 @@ public class CommerceShippingMethodLocalServiceImpl
 			long countryId)
 		throws PortalException {
 
-		return commerceAddressRestrictionLocalService.
+		return _commerceAddressRestrictionLocalService.
 			addCommerceAddressRestriction(
 				userId, groupId, CommerceShippingMethod.class.getName(),
 				commerceShippingMethodId, countryId);
@@ -74,19 +83,20 @@ public class CommerceShippingMethodLocalServiceImpl
 	@Override
 	public CommerceShippingMethod addCommerceShippingMethod(
 			long userId, long groupId, Map<Locale, String> nameMap,
-			Map<Locale, String> descriptionMap, File imageFile,
-			String engineKey, double priority, boolean active)
+			Map<Locale, String> descriptionMap, boolean active,
+			String engineKey, File imageFile, double priority,
+			String trackingURL)
 		throws PortalException {
 
 		// Commerce shipping method
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		if ((imageFile != null) && !imageFile.exists()) {
 			imageFile = null;
 		}
 
-		validate(nameMap, engineKey);
+		_validate(nameMap, engineKey);
 
 		long commerceShippingMethodId = counterLocalService.increment();
 
@@ -104,9 +114,10 @@ public class CommerceShippingMethodLocalServiceImpl
 			commerceShippingMethod.setImageId(counterLocalService.increment());
 		}
 
+		commerceShippingMethod.setActive(active);
 		commerceShippingMethod.setEngineKey(engineKey);
 		commerceShippingMethod.setPriority(priority);
-		commerceShippingMethod.setActive(active);
+		commerceShippingMethod.setTrackingURL(trackingURL);
 
 		commerceShippingMethod = commerceShippingMethodPersistence.update(
 			commerceShippingMethod);
@@ -127,8 +138,8 @@ public class CommerceShippingMethodLocalServiceImpl
 			long commerceAddressRestrictionId)
 		throws PortalException {
 
-		commerceAddressRestrictionLocalService.deleteCommerceAddressRestriction(
-			commerceAddressRestrictionId);
+		_commerceAddressRestrictionLocalService.
+			deleteCommerceAddressRestriction(commerceAddressRestrictionId);
 	}
 
 	@Override
@@ -149,7 +160,7 @@ public class CommerceShippingMethodLocalServiceImpl
 
 		// Commerce address restrictions
 
-		commerceAddressRestrictionLocalService.
+		_commerceAddressRestrictionLocalService.
 			deleteCommerceAddressRestrictions(
 				CommerceShippingMethod.class.getName(),
 				commerceShippingMethod.getCommerceShippingMethodId());
@@ -197,7 +208,7 @@ public class CommerceShippingMethodLocalServiceImpl
 		long commerceShippingMethodId, int start, int end,
 		OrderByComparator<CommerceAddressRestriction> orderByComparator) {
 
-		return commerceAddressRestrictionLocalService.
+		return _commerceAddressRestrictionLocalService.
 			getCommerceAddressRestrictions(
 				CommerceShippingMethod.class.getName(),
 				commerceShippingMethodId, start, end, orderByComparator);
@@ -207,7 +218,7 @@ public class CommerceShippingMethodLocalServiceImpl
 	public int getCommerceAddressRestrictionsCount(
 		long commerceShippingMethodId) {
 
-		return commerceAddressRestrictionLocalService.
+		return _commerceAddressRestrictionLocalService.
 			getCommerceAddressRestrictionsCount(
 				CommerceShippingMethod.class.getName(),
 				commerceShippingMethodId);
@@ -215,16 +226,20 @@ public class CommerceShippingMethodLocalServiceImpl
 
 	@Override
 	public List<CommerceShippingMethod> getCommerceShippingMethods(
-		long groupId) {
+		long groupId, boolean active, int start, int end,
+		OrderByComparator<CommerceShippingMethod> orderByComparator) {
 
-		return commerceShippingMethodPersistence.findByGroupId(groupId);
+		return commerceShippingMethodPersistence.findByG_A(
+			groupId, active, start, end, orderByComparator);
 	}
 
 	@Override
 	public List<CommerceShippingMethod> getCommerceShippingMethods(
-		long groupId, boolean active) {
+		long groupId, int start, int end,
+		OrderByComparator<CommerceShippingMethod> orderByComparator) {
 
-		return commerceShippingMethodPersistence.findByG_A(groupId, active);
+		return commerceShippingMethodPersistence.findByGroupId(
+			groupId, start, end, orderByComparator);
 	}
 
 	@Override
@@ -241,7 +256,7 @@ public class CommerceShippingMethodLocalServiceImpl
 				commerceShippingMethods) {
 
 			boolean restricted =
-				commerceAddressRestrictionLocalService.
+				_commerceAddressRestrictionLocalService.
 					isCommerceAddressRestricted(
 						CommerceShippingMethod.class.getName(),
 						commerceShippingMethod.getCommerceShippingMethodId(),
@@ -253,6 +268,11 @@ public class CommerceShippingMethodLocalServiceImpl
 		}
 
 		return filteredCommerceShippingMethods;
+	}
+
+	@Override
+	public int getCommerceShippingMethodsCount(long groupId) {
+		return commerceShippingMethodPersistence.countByGroupId(groupId);
 	}
 
 	@Override
@@ -277,8 +297,8 @@ public class CommerceShippingMethodLocalServiceImpl
 	@Override
 	public CommerceShippingMethod updateCommerceShippingMethod(
 			long commerceShippingMethodId, Map<Locale, String> nameMap,
-			Map<Locale, String> descriptionMap, File imageFile, double priority,
-			boolean active)
+			Map<Locale, String> descriptionMap, boolean active, File imageFile,
+			double priority, String trackingURL)
 		throws PortalException {
 
 		// Commerce shipping method
@@ -298,8 +318,9 @@ public class CommerceShippingMethodLocalServiceImpl
 			commerceShippingMethod.setImageId(counterLocalService.increment());
 		}
 
-		commerceShippingMethod.setPriority(priority);
 		commerceShippingMethod.setActive(active);
+		commerceShippingMethod.setPriority(priority);
+		commerceShippingMethod.setTrackingURL(trackingURL);
 
 		commerceShippingMethod = commerceShippingMethodPersistence.update(
 			commerceShippingMethod);
@@ -314,7 +335,7 @@ public class CommerceShippingMethodLocalServiceImpl
 		return commerceShippingMethod;
 	}
 
-	protected void validate(Map<Locale, String> nameMap, String engineKey)
+	private void _validate(Map<Locale, String> nameMap, String engineKey)
 		throws PortalException {
 
 		Locale locale = LocaleUtil.getSiteDefault();
@@ -330,7 +351,14 @@ public class CommerceShippingMethodLocalServiceImpl
 		}
 	}
 
-	@ServiceReference(type = ImageLocalService.class)
+	@Reference
+	private CommerceAddressRestrictionLocalService
+		_commerceAddressRestrictionLocalService;
+
+	@Reference
 	private ImageLocalService _imageLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

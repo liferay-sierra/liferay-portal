@@ -42,11 +42,16 @@ public class ObjectViewServiceUtil {
 	public static ObjectView addObjectView(
 			long objectDefinitionId, boolean defaultObjectView,
 			Map<java.util.Locale, String> nameMap,
-			List<com.liferay.object.model.ObjectViewColumn> objectViewColumns)
+			List<com.liferay.object.model.ObjectViewColumn> objectViewColumns,
+			List<com.liferay.object.model.ObjectViewFilterColumn>
+				objectViewFilterColumns,
+			List<com.liferay.object.model.ObjectViewSortColumn>
+				objectViewSortColumns)
 		throws PortalException {
 
 		return getService().addObjectView(
-			objectDefinitionId, defaultObjectView, nameMap, objectViewColumns);
+			objectDefinitionId, defaultObjectView, nameMap, objectViewColumns,
+			objectViewFilterColumns, objectViewSortColumns);
 	}
 
 	public static ObjectView deleteObjectView(long objectViewId)
@@ -73,11 +78,16 @@ public class ObjectViewServiceUtil {
 	public static ObjectView updateObjectView(
 			long objectViewId, boolean defaultObjectView,
 			Map<java.util.Locale, String> nameMap,
-			List<com.liferay.object.model.ObjectViewColumn> objectViewColumns)
+			List<com.liferay.object.model.ObjectViewColumn> objectViewColumns,
+			List<com.liferay.object.model.ObjectViewFilterColumn>
+				objectViewFilterColumns,
+			List<com.liferay.object.model.ObjectViewSortColumn>
+				objectViewSortColumns)
 		throws PortalException {
 
 		return getService().updateObjectView(
-			objectViewId, defaultObjectView, nameMap, objectViewColumns);
+			objectViewId, defaultObjectView, nameMap, objectViewColumns,
+			objectViewFilterColumns, objectViewSortColumns);
 	}
 
 	public static ObjectViewService getService() {

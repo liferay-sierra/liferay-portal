@@ -37,7 +37,6 @@ import com.liferay.exportimport.kernel.lar.PortletDataHandlerKeys;
 import com.liferay.exportimport.kernel.lar.PortletDataHandlerStatusMessageSenderUtil;
 import com.liferay.exportimport.kernel.lar.StagedModelDataHandlerUtil;
 import com.liferay.exportimport.kernel.lar.StagedModelType;
-import com.liferay.exportimport.kernel.lar.UserIdStrategy;
 import com.liferay.exportimport.kernel.lifecycle.ExportImportLifecycleManager;
 import com.liferay.exportimport.kernel.lifecycle.constants.ExportImportLifecycleConstants;
 import com.liferay.exportimport.kernel.model.ExportImportConfiguration;
@@ -52,7 +51,7 @@ import com.liferay.portal.kernel.exception.NoSuchLayoutPrototypeException;
 import com.liferay.portal.kernel.exception.NoSuchLayoutSetPrototypeException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
@@ -87,10 +86,10 @@ import com.liferay.portal.kernel.xml.Node;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.kernel.xml.XPath;
 import com.liferay.portal.kernel.zip.ZipReader;
-import com.liferay.portal.kernel.zip.ZipReaderFactoryUtil;
+import com.liferay.portal.kernel.zip.ZipReaderFactory;
 import com.liferay.segments.model.SegmentsExperience;
 import com.liferay.site.model.adapter.StagedGroup;
-import com.liferay.sites.kernel.util.SitesUtil;
+import com.liferay.sites.kernel.util.Sites;
 
 import java.io.File;
 import java.io.Serializable;
@@ -99,7 +98,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -125,7 +123,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Zsolt Berentey
  */
 @Component(
-	immediate = true,
 	property = "model.class.name=com.liferay.portal.kernel.model.Layout",
 	service = {ExportImportController.class, LayoutImportController.class}
 )
@@ -156,7 +153,7 @@ public class LayoutImportController implements ImportController {
 			LayoutSet layoutSet = _layoutSetLocalService.getLayoutSet(
 				targetGroupId, privateLayout);
 
-			zipReader = ZipReaderFactoryUtil.getZipReader(file);
+			zipReader = _zipReaderFactory.getZipReader(file);
 
 			validateFile(
 				layoutSet.getCompanyId(), targetGroupId, parameterMap,
@@ -269,7 +266,7 @@ public class LayoutImportController implements ImportController {
 			LayoutSet layoutSet = _layoutSetLocalService.getLayoutSet(
 				targetGroupId, privateLayout);
 
-			zipReader = ZipReaderFactoryUtil.getZipReader(file);
+			zipReader = _zipReaderFactory.getZipReader(file);
 
 			validateFile(
 				layoutSet.getCompanyId(), targetGroupId, parameterMap,
@@ -338,6 +335,10 @@ public class LayoutImportController implements ImportController {
 			long layoutId = GetterUtil.getLong(
 				portletElement.attributeValue("layout-id"));
 
+			if (layoutId != 0) {
+				continue;
+			}
+
 			long plid = LayoutConstants.DEFAULT_PLID;
 
 			Layout layout = layouts.get(layoutId);
@@ -373,13 +374,12 @@ public class LayoutImportController implements ImportController {
 		String userIdStrategyString = MapUtil.getString(
 			parameterMap, PortletDataHandlerKeys.USER_ID_STRATEGY);
 
-		UserIdStrategy userIdStrategy = _exportImportHelper.getUserIdStrategy(
-			userId, userIdStrategyString);
-
 		PortletDataContext portletDataContext =
 			_portletDataContextFactory.createImportPortletDataContext(
 				group.getCompanyId(), targetGroupId, parameterMap,
-				userIdStrategy, ZipReaderFactoryUtil.getZipReader(file));
+				_exportImportHelper.getUserIdStrategy(
+					userId, userIdStrategyString),
+				_zipReaderFactory.getZipReader(file));
 
 		portletDataContext.setExportImportProcessId(
 			String.valueOf(
@@ -452,13 +452,6 @@ public class LayoutImportController implements ImportController {
 			new StagedModelType(SegmentsExperience.class, Layout.class));
 		portletDataContext.addDeletionSystemEventStagedModelTypes(
 			new StagedModelType(StagedAssetLink.class));
-	}
-
-	@Reference(unbind = "-")
-	protected void setConfigurationProvider(
-		ConfigurationProvider configurationProvider) {
-
-		_configurationProvider = configurationProvider;
 	}
 
 	protected void validateFile(
@@ -652,22 +645,20 @@ public class LayoutImportController implements ImportController {
 
 		// Available locales
 
-		List<Locale> sourceAvailableLocales = Arrays.asList(
-			LocaleUtil.fromLanguageIds(
-				StringUtil.split(
-					headerElement.attributeValue("available-locales"))));
+		String[] sourceAvailableLanguageIds = StringUtil.split(
+			headerElement.attributeValue("available-locales"));
 
-		for (Locale sourceAvailableLocale : sourceAvailableLocales) {
-			if (!LanguageUtil.isAvailableLocale(
-					groupId, sourceAvailableLocale)) {
+		for (String sourceAvailableLanguageId : sourceAvailableLanguageIds) {
+			if (!_language.isAvailableLocale(
+					groupId, sourceAvailableLanguageId)) {
 
 				LocaleException localeException = new LocaleException(
 					LocaleException.TYPE_EXPORT_IMPORT);
 
-				localeException.setSourceAvailableLocales(
-					sourceAvailableLocales);
+				localeException.setSourceAvailableLanguageIds(
+					Arrays.asList(sourceAvailableLanguageIds));
 				localeException.setTargetAvailableLocales(
-					LanguageUtil.getAvailableLocales(groupId));
+					_language.getAvailableLocales(groupId));
 
 				throw localeException;
 			}
@@ -1026,7 +1017,7 @@ public class LayoutImportController implements ImportController {
 					continue;
 				}
 
-				if (SitesUtil.isLayoutModifiedSinceLastMerge(layout)) {
+				if (_sites.isLayoutModifiedSinceLastMerge(layout)) {
 					modifiedLayouts.add(layout);
 
 					continue;
@@ -1343,7 +1334,9 @@ public class LayoutImportController implements ImportController {
 	private static final Log _log = LogFactoryUtil.getLog(
 		LayoutImportController.class);
 
+	@Reference
 	private ConfigurationProvider _configurationProvider;
+
 	private final DeletionSystemEventImporter _deletionSystemEventImporter =
 		DeletionSystemEventImporter.getInstance();
 
@@ -1355,6 +1348,9 @@ public class LayoutImportController implements ImportController {
 
 	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;
@@ -1384,6 +1380,12 @@ public class LayoutImportController implements ImportController {
 	private PortletLocalService _portletLocalService;
 
 	@Reference
+	private Sites _sites;
+
+	@Reference
 	private Staging _staging;
+
+	@Reference
+	private ZipReaderFactory _zipReaderFactory;
 
 }

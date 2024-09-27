@@ -16,11 +16,11 @@ package com.liferay.journal.internal.search.spi.model.index.contributor;
 
 import com.liferay.journal.model.JournalFolder;
 import com.liferay.petra.string.CharPool;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.search.spi.model.index.contributor.ModelDocumentContributor;
 import com.liferay.trash.TrashHelper;
@@ -55,19 +55,23 @@ public class JournalFolderModelDocumentContributor
 		}
 
 		for (Locale locale :
-				LanguageUtil.getAvailableLocales(journalFolder.getGroupId())) {
+				_language.getAvailableLocales(journalFolder.getGroupId())) {
 
 			String languageId = LocaleUtil.toLanguageId(locale);
 
 			document.addText(
-				LocalizationUtil.getLocalizedName(
-					Field.DESCRIPTION, languageId),
+				_localization.getLocalizedName(Field.DESCRIPTION, languageId),
 				journalFolder.getDescription());
 			document.addText(
-				LocalizationUtil.getLocalizedName(Field.TITLE, languageId),
-				title);
+				_localization.getLocalizedName(Field.TITLE, languageId), title);
 		}
 	}
+
+	@Reference
+	private Language _language;
+
+	@Reference
+	private Localization _localization;
 
 	@Reference
 	private TrashHelper _trashHelper;

@@ -32,15 +32,20 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
+import com.liferay.portal.workflow.metrics.rest.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.portal.workflow.metrics.rest.resource.v1_0.ProcessVersionResource;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -58,7 +61,10 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @author Rafael Praxedes
  * @generated
  */
-@Component(immediate = true, service = ProcessVersionResource.Factory.class)
+@Component(
+	property = "resource.locator.key=/portal-workflow-metrics/v1.0/ProcessVersion",
+	service = ProcessVersionResource.Factory.class
+)
 @Generated("")
 public class ProcessVersionResourceFactoryImpl
 	implements ProcessVersionResource.Factory {
@@ -73,9 +79,7 @@ public class ProcessVersionResourceFactoryImpl
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (ProcessVersionResource)ProxyUtil.newProxyInstance(
-					ProcessVersionResource.class.getClassLoader(),
-					new Class<?>[] {ProcessVersionResource.class},
+				return _processVersionResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -134,14 +138,32 @@ public class ProcessVersionResourceFactoryImpl
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		ProcessVersionResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, ProcessVersionResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		ProcessVersionResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			ProcessVersionResource.class.getClassLoader(),
+			ProcessVersionResource.class);
+
+		try {
+			Constructor<ProcessVersionResource> constructor =
+				(Constructor<ProcessVersionResource>)proxyClass.getConstructor(
+					InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -164,7 +186,7 @@ public class ProcessVersionResourceFactoryImpl
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		ProcessVersionResource processVersionResource =
@@ -189,6 +211,7 @@ public class ProcessVersionResourceFactoryImpl
 		processVersionResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		processVersionResource.setRoleLocalService(_roleLocalService);
+		processVersionResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(processVersionResource, arguments);
@@ -204,6 +227,10 @@ public class ProcessVersionResourceFactoryImpl
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, ProcessVersionResource>
+		_processVersionResourceProxyProviderFunction =
+			_getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -226,9 +253,6 @@ public class ProcessVersionResourceFactoryImpl
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -237,6 +261,9 @@ public class ProcessVersionResourceFactoryImpl
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

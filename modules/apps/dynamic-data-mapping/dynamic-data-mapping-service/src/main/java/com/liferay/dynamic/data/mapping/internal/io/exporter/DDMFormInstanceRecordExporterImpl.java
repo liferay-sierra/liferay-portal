@@ -15,15 +15,15 @@
 package com.liferay.dynamic.data.mapping.internal.io.exporter;
 
 import com.liferay.dynamic.data.mapping.exception.FormInstanceRecordExporterException;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueRenderer;
 import com.liferay.dynamic.data.mapping.io.exporter.DDMFormInstanceRecordExporter;
 import com.liferay.dynamic.data.mapping.io.exporter.DDMFormInstanceRecordExporterRequest;
 import com.liferay.dynamic.data.mapping.io.exporter.DDMFormInstanceRecordExporterResponse;
 import com.liferay.dynamic.data.mapping.io.exporter.DDMFormInstanceRecordWriter;
+import com.liferay.dynamic.data.mapping.io.exporter.DDMFormInstanceRecordWriterRegistry;
 import com.liferay.dynamic.data.mapping.io.exporter.DDMFormInstanceRecordWriterRequest;
 import com.liferay.dynamic.data.mapping.io.exporter.DDMFormInstanceRecordWriterResponse;
-import com.liferay.dynamic.data.mapping.io.exporter.DDMFormInstanceRecordWriterTracker;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMFormInstanceRecord;
@@ -38,9 +38,9 @@ import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.dynamic.data.mapping.util.comparator.FormInstanceVersionVersionComparator;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
-import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.Html;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
@@ -65,7 +65,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Leonardo Barros
  */
-@Component(immediate = true, service = DDMFormInstanceRecordExporter.class)
+@Component(service = DDMFormInstanceRecordExporter.class)
 public class DDMFormInstanceRecordExporterImpl
 	implements DDMFormInstanceRecordExporter {
 
@@ -128,14 +128,12 @@ public class DDMFormInstanceRecordExporterImpl
 					localizedValue.getString(locale));
 			});
 
+		ddmFormFieldsLabel.put(_KEY_AUTHOR, _language.get(locale, _KEY_AUTHOR));
 		ddmFormFieldsLabel.put(
-			_KEY_AUTHOR, LanguageUtil.get(locale, _KEY_AUTHOR));
+			_KEY_LANGUAGE_ID, _language.get(locale, "default-language"));
 		ddmFormFieldsLabel.put(
-			_KEY_LANGUAGE_ID, LanguageUtil.get(locale, "default-language"));
-		ddmFormFieldsLabel.put(
-			_KEY_MODIFIED_DATE, LanguageUtil.get(locale, "modified-date"));
-		ddmFormFieldsLabel.put(
-			_KEY_STATUS, LanguageUtil.get(locale, _KEY_STATUS));
+			_KEY_MODIFIED_DATE, _language.get(locale, "modified-date"));
+		ddmFormFieldsLabel.put(_KEY_STATUS, _language.get(locale, _KEY_STATUS));
 
 		return ddmFormFieldsLabel;
 	}
@@ -149,12 +147,12 @@ public class DDMFormInstanceRecordExporterImpl
 			ddmFormField.getFieldReference());
 
 		DDMFormFieldValueRenderer ddmFormFieldValueRenderer =
-			ddmFormFieldTypeServicesTracker.getDDMFormFieldValueRenderer(
+			ddmFormFieldTypeServicesRegistry.getDDMFormFieldValueRenderer(
 				ddmFormField.getType());
 
 		Stream<DDMFormFieldValue> stream = ddmFormFieldValues.stream();
 
-		return HtmlUtil.extractText(
+		return _html.unescape(
 			StringUtil.merge(
 				stream.map(
 					ddmForFieldValue -> ddmFormFieldValueRenderer.render(
@@ -258,8 +256,7 @@ public class DDMFormInstanceRecordExporterImpl
 	}
 
 	protected String getStatusMessage(int status, Locale locale) {
-		return LanguageUtil.get(
-			locale, WorkflowConstants.getStatusLabel(status));
+		return _language.get(locale, WorkflowConstants.getStatusLabel(status));
 	}
 
 	protected List<DDMStructureVersion> getStructureVersions(
@@ -292,7 +289,7 @@ public class DDMFormInstanceRecordExporterImpl
 		throws Exception {
 
 		DDMFormInstanceRecordWriter ddmFormInstanceRecordWriter =
-			ddmFormInstanceRecordWriterTracker.getDDMFormInstanceRecordWriter(
+			ddmFormInstanceRecordWriterRegistry.getDDMFormInstanceRecordWriter(
 				type);
 
 		DDMFormInstanceRecordWriterRequest.Builder builder =
@@ -311,15 +308,15 @@ public class DDMFormInstanceRecordExporterImpl
 	}
 
 	@Reference
-	protected DDMFormFieldTypeServicesTracker ddmFormFieldTypeServicesTracker;
+	protected DDMFormFieldTypeServicesRegistry ddmFormFieldTypeServicesRegistry;
 
 	@Reference
 	protected DDMFormInstanceRecordLocalService
 		ddmFormInstanceRecordLocalService;
 
 	@Reference
-	protected DDMFormInstanceRecordWriterTracker
-		ddmFormInstanceRecordWriterTracker;
+	protected DDMFormInstanceRecordWriterRegistry
+		ddmFormInstanceRecordWriterRegistry;
 
 	@Reference
 	protected DDMFormInstanceVersionLocalService
@@ -332,5 +329,11 @@ public class DDMFormInstanceRecordExporterImpl
 	private static final String _KEY_MODIFIED_DATE = "modifiedDate";
 
 	private static final String _KEY_STATUS = "status";
+
+	@Reference
+	private Html _html;
+
+	@Reference
+	private Language _language;
 
 }

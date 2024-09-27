@@ -17,11 +17,11 @@ package com.liferay.announcements.web.internal.portlet.configuration.icon;
 import com.liferay.announcements.constants.AnnouncementsPortletKeys;
 import com.liferay.announcements.kernel.model.AnnouncementsEntry;
 import com.liferay.announcements.web.internal.portlet.action.ActionUtil;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.configuration.icon.BasePortletConfigurationIcon;
 import com.liferay.portal.kernel.portlet.configuration.icon.PortletConfigurationIcon;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
@@ -52,8 +52,7 @@ public class DeleteEntryPortletConfigurationIcon
 
 	@Override
 	public String getMessage(PortletRequest portletRequest) {
-		return LanguageUtil.get(
-			getResourceBundle(getLocale(portletRequest)), "delete");
+		return _language.get(getLocale(portletRequest), "delete");
 	}
 
 	@Override
@@ -111,10 +110,8 @@ public class DeleteEntryPortletConfigurationIcon
 		}
 	}
 
-	@Override
-	public boolean isToolTip() {
-		return false;
-	}
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

@@ -35,11 +35,9 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pei-Jung Lan
  */
 @Component(
-	immediate = true,
 	property = {
 		"com.liferay.portlet.display-category=category.accounts",
 		"com.liferay.portlet.preferences-owned-by-group=true",
-		"com.liferay.portlet.single-page-application=false",
 		"com.liferay.portlet.use-default-template=true",
 		"javax.portlet.display-name=Account Management",
 		"javax.portlet.expiration-cache=0",
@@ -47,7 +45,8 @@ import org.osgi.service.component.annotations.Reference;
 		"javax.portlet.init-param.view-template=/account_entries_admin/view.jsp",
 		"javax.portlet.name=" + AccountPortletKeys.ACCOUNT_ENTRIES_MANAGEMENT,
 		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=administrator,power-user,user"
+		"javax.portlet.security-role-ref=administrator,power-user,user",
+		"javax.portlet.version=3.0"
 	},
 	service = Portlet.class
 )

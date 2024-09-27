@@ -36,7 +36,7 @@ import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.rest.dto.v1_0.ObjectEntry;
 import com.liferay.object.rest.manager.v1_0.ObjectEntryManager;
-import com.liferay.object.scope.ObjectScopeProviderRegistry;
+import com.liferay.object.rest.manager.v1_0.ObjectEntryManagerRegistry;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryService;
 import com.liferay.object.service.ObjectFieldLocalService;
@@ -81,7 +81,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Gabriel Albuquerque
  */
 @Component(
-	immediate = true, property = "ddm.storage.adapter.type=object",
+	property = "ddm.storage.adapter.type=object",
 	service = DDMStorageAdapter.class
 )
 public class ObjectDDMStorageAdapter implements DDMStorageAdapter {
@@ -97,13 +97,17 @@ public class ObjectDDMStorageAdapter implements DDMStorageAdapter {
 			ObjectDefinition objectDefinition = _fetchObjectDefinition(
 				objectEntryId);
 
-			ObjectEntry objectEntry = _objectEntryManager.fetchObjectEntry(
+			ObjectEntryManager objectEntryManager =
+				_objectEntryManagerRegistry.getObjectEntryManager(
+					objectDefinition.getStorageType());
+
+			ObjectEntry objectEntry = objectEntryManager.fetchObjectEntry(
 				_getDTOConverterContext(
 					null, null, LocaleUtil.getSiteDefault()),
 				objectDefinition, objectEntryId);
 
 			if (objectEntry != null) {
-				_objectEntryManager.deleteObjectEntry(
+				objectEntryManager.deleteObjectEntry(
 					objectDefinition, objectEntry.getId());
 			}
 
@@ -128,10 +132,14 @@ public class ObjectDDMStorageAdapter implements DDMStorageAdapter {
 			ObjectDefinition objectDefinition = _fetchObjectDefinition(
 				objectEntryId);
 
+			ObjectEntryManager objectEntryManager =
+				_objectEntryManagerRegistry.getObjectEntryManager(
+					objectDefinition.getStorageType());
+
 			return DDMStorageAdapterGetResponse.Builder.newBuilder(
 				_getDDMFormValues(
 					ddmForm,
-					_objectEntryManager.getObjectEntry(
+					objectEntryManager.getObjectEntry(
 						_getDTOConverterContext(
 							objectEntryId, null, ddmForm.getDefaultLocale()),
 						objectDefinition, objectEntryId))
@@ -163,13 +171,17 @@ public class ObjectDDMStorageAdapter implements DDMStorageAdapter {
 				_objectDefinitionLocalService.getObjectDefinition(
 					objectDefinitionId);
 
-			ObjectEntry addObjectEntry = _objectEntryManager.addObjectEntry(
+			ObjectEntryManager objectEntryManager =
+				_objectEntryManagerRegistry.getObjectEntryManager(
+					objectDefinition.getStorageType());
+
+			ObjectEntry addObjectEntry = objectEntryManager.addObjectEntry(
 				_getDTOConverterContext(null, user, ddmForm.getDefaultLocale()),
 				objectDefinition,
 				new ObjectEntry() {
 					{
 						properties = _getObjectEntryProperties(
-							ddmForm.getDDMFormFieldsReferencesMap(true),
+							ddmForm.getDDMFormFieldsMap(true),
 							ddmFormValues.getDDMFormFieldValues(),
 							_objectFieldLocalService.getObjectFields(
 								objectDefinitionId));
@@ -312,6 +324,17 @@ public class ObjectDDMStorageAdapter implements DDMStorageAdapter {
 			objectFields);
 
 		for (DDMFormFieldValue ddmFormFieldValue : ddmFormFieldValues) {
+			DDMFormField ddmFormField = ddmFormFieldsMap.get(
+				ddmFormFieldValue.getName());
+
+			if (ddmFormField.isTransient() &&
+				!StringUtil.equals(
+					ddmFormField.getType(),
+					DDMFormFieldTypeConstants.FIELDSET)) {
+
+				continue;
+			}
+
 			if (StringUtil.equals(
 					ddmFormFieldValue.getType(),
 					DDMFormFieldTypeConstants.FIELDSET)) {
@@ -461,24 +484,34 @@ public class ObjectDDMStorageAdapter implements DDMStorageAdapter {
 
 			return String.valueOf(
 				_getValue(
-					value.getDefaultLocale(),
+					ddmFormFieldValue, value.getDefaultLocale(),
 					objectFieldDBTypes.get(objectFieldName),
 					values.get(value.getDefaultLocale())));
 		}
 	}
 
 	private Object _getValue(
-			Locale locale, String objectFieldDBType, String value)
-		throws ParseException {
+			DDMFormFieldValue ddmFormFieldValue, Locale locale,
+			String objectFieldDBType, String value)
+		throws JSONException, ParseException {
 
-		if (Objects.equals(objectFieldDBType, "BigDecimal")) {
-			return GetterUtil.get(value, BigDecimal.ZERO);
+		if (StringUtil.equals(
+				ddmFormFieldValue.getType(),
+				DDMFormFieldTypeConstants.DOCUMENT_LIBRARY)) {
+
+			JSONObject fileEntryValueJSONObject = _jsonFactory.createJSONObject(
+				value);
+
+			return fileEntryValueJSONObject.getString("fileEntryId");
 		}
-		else if (Objects.equals(objectFieldDBType, "Blob")) {
-			return value.getBytes();
-		}
-		else if (Objects.equals(objectFieldDBType, "Boolean")) {
-			return GetterUtil.getBoolean(value);
+		else if (Objects.equals(objectFieldDBType, "BigDecimal")) {
+			if (value.isEmpty()) {
+				return GetterUtil.DEFAULT_DOUBLE;
+			}
+
+			NumberFormat numberFormat = NumberFormat.getInstance(locale);
+
+			return GetterUtil.get(numberFormat.parse(value), BigDecimal.ZERO);
 		}
 		else if (Objects.equals(objectFieldDBType, "Double")) {
 			if (value.isEmpty()) {
@@ -488,12 +521,6 @@ public class ObjectDDMStorageAdapter implements DDMStorageAdapter {
 			NumberFormat numberFormat = NumberFormat.getInstance(locale);
 
 			return GetterUtil.getDouble(numberFormat.parse(value));
-		}
-		else if (Objects.equals(objectFieldDBType, "Integer")) {
-			return GetterUtil.getInteger(value);
-		}
-		else if (Objects.equals(objectFieldDBType, "Long")) {
-			return GetterUtil.getLong(value);
 		}
 		else {
 			return value;
@@ -522,16 +549,13 @@ public class ObjectDDMStorageAdapter implements DDMStorageAdapter {
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;
 
 	@Reference
-	private ObjectEntryManager _objectEntryManager;
+	private ObjectEntryManagerRegistry _objectEntryManagerRegistry;
 
 	@Reference
 	private ObjectEntryService _objectEntryService;
 
 	@Reference
 	private ObjectFieldLocalService _objectFieldLocalService;
-
-	@Reference
-	private ObjectScopeProviderRegistry _objectScopeProviderRegistry;
 
 	@Reference
 	private UserLocalService _userLocalService;

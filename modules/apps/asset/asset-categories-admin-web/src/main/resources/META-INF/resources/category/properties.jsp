@@ -74,8 +74,8 @@ portletDisplay.setURLBack(redirect);
 renderResponse.setTitle(category.getTitle(locale));
 %>
 
-<portlet:actionURL name="editProperties" var="editPropertiesURL">
-	<portlet:param name="mvcPath" value="/edit_category.jsp" />
+<portlet:actionURL name="/asset_categories_admin/edit_asset_category_properties" var="editPropertiesURL">
+	<portlet:param name="mvcPath" value="/edit_asset_category.jsp" />
 	<portlet:param name="screenNavigationCategoryKey" value='<%= ParamUtil.getString(request, "screenNavigationCategoryKey") %>' />
 	<portlet:param name="vocabularyId" value="<%= String.valueOf(vocabularyId) %>" />
 </portlet:actionURL>
@@ -126,9 +126,9 @@ renderResponse.setTitle(category.getTitle(locale));
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button type="submit" />
-
-		<aui:button href="<%= redirect %>" type="cancel" />
+		<liferay-frontend:edit-form-buttons
+			redirect="<%= redirect %>"
+		/>
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>
 

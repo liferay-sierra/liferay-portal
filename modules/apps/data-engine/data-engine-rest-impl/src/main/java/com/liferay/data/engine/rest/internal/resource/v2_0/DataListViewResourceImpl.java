@@ -19,7 +19,6 @@ import com.liferay.data.engine.field.type.util.LocalizedValueUtil;
 import com.liferay.data.engine.model.DEDataDefinitionFieldLink;
 import com.liferay.data.engine.model.DEDataListView;
 import com.liferay.data.engine.rest.dto.v2_0.DataListView;
-import com.liferay.data.engine.rest.internal.content.type.DataDefinitionContentTypeTracker;
 import com.liferay.data.engine.rest.internal.odata.entity.v2_0.DataDefinitionEntityModel;
 import com.liferay.data.engine.rest.internal.security.permission.resource.DataDefinitionModelResourcePermission;
 import com.liferay.data.engine.rest.resource.v2_0.DataListViewResource;
@@ -34,10 +33,9 @@ import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.json.JSONFactory;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
@@ -53,7 +51,6 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
-import com.liferay.portal.vulcan.resource.EntityModelResource;
 import com.liferay.portal.vulcan.util.SearchUtil;
 
 import java.util.Arrays;
@@ -81,8 +78,7 @@ import org.osgi.service.component.annotations.ServiceScope;
 	scope = ServiceScope.PROTOTYPE, service = DataListViewResource.class
 )
 @CTAware
-public class DataListViewResourceImpl
-	extends BaseDataListViewResourceImpl implements EntityModelResource {
+public class DataListViewResourceImpl extends BaseDataListViewResourceImpl {
 
 	@Override
 	public void deleteDataDefinitionDataListView(Long dataDefinitionId)
@@ -115,7 +111,7 @@ public class DataListViewResourceImpl
 
 		if (pagination.getPageSize() > 250) {
 			throw new BadRequestException(
-				LanguageUtil.format(
+				_language.format(
 					contextAcceptLanguage.getPreferredLocale(),
 					"page-size-is-greater-than-x", 250));
 		}
@@ -359,7 +355,7 @@ public class DataListViewResourceImpl
 	}
 
 	private String _toJSON(Map<String, Object> appliedFilters) {
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+		JSONObject jsonObject = _jsonFactory.createJSONObject();
 
 		if (MapUtil.isEmpty(appliedFilters)) {
 			return jsonObject.toString();
@@ -375,7 +371,7 @@ public class DataListViewResourceImpl
 	private Map<String, Object> _toMap(String json) throws Exception {
 		Map<String, Object> map = new HashMap<>();
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(json);
+		JSONObject jsonObject = _jsonFactory.createJSONObject(json);
 
 		Set<String> keySet = jsonObject.keySet();
 
@@ -419,9 +415,6 @@ public class DataListViewResourceImpl
 		new DataDefinitionEntityModel();
 
 	@Reference
-	private DataDefinitionContentTypeTracker _dataDefinitionContentTypeTracker;
-
-	@Reference
 	private DataDefinitionModelResourcePermission
 		_dataDefinitionModelResourcePermission;
 
@@ -437,6 +430,9 @@ public class DataListViewResourceImpl
 
 	@Reference
 	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

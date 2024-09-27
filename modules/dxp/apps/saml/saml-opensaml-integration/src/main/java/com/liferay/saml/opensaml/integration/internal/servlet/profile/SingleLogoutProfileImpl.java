@@ -15,7 +15,7 @@
 package com.liferay.saml.opensaml.integration.internal.servlet.profile;
 
 import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.cookies.CookiesManagerUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -29,12 +29,10 @@ import com.liferay.portal.kernel.servlet.HttpMethods;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saml.constants.SamlWebKeys;
 import com.liferay.saml.opensaml.integration.internal.binding.SamlBinding;
-import com.liferay.saml.opensaml.integration.internal.metadata.MetadataManager;
 import com.liferay.saml.opensaml.integration.internal.util.OpenSamlUtil;
 import com.liferay.saml.opensaml.integration.internal.util.SamlUtil;
 import com.liferay.saml.persistence.model.SamlIdpSpSession;
@@ -45,9 +43,7 @@ import com.liferay.saml.persistence.service.SamlIdpSpConnectionLocalService;
 import com.liferay.saml.persistence.service.SamlIdpSpSessionLocalService;
 import com.liferay.saml.persistence.service.SamlIdpSsoSessionLocalService;
 import com.liferay.saml.persistence.service.SamlPeerBindingLocalService;
-import com.liferay.saml.persistence.service.SamlSpSessionLocalService;
 import com.liferay.saml.runtime.SamlException;
-import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
 import com.liferay.saml.runtime.exception.UnsolicitedLogoutResponseException;
 import com.liferay.saml.runtime.exception.UnsupportedBindingException;
 import com.liferay.saml.runtime.servlet.profile.SingleLogoutProfile;
@@ -321,37 +317,12 @@ public class SingleLogoutProfileImpl
 		}
 	}
 
-	@Override
-	@Reference(unbind = "-")
-	public void setIdentifierGenerationStrategyFactory(
-		IdentifierGenerationStrategyFactory
-			identifierGenerationStrategyFactory) {
-
-		super.setIdentifierGenerationStrategyFactory(
-			identifierGenerationStrategyFactory);
-	}
-
-	@Override
-	@Reference(unbind = "-")
-	public void setMetadataManager(MetadataManager metadataManager) {
-		super.setMetadataManager(metadataManager);
-	}
-
 	@Reference(
 		cardinality = ReferenceCardinality.AT_LEAST_ONE,
 		policyOption = ReferencePolicyOption.GREEDY
 	)
 	public void setSamlBinding(SamlBinding samlBinding) {
 		addSamlBinding(samlBinding);
-	}
-
-	@Override
-	@Reference(unbind = "-")
-	public void setSamlProviderConfigurationHelper(
-		SamlProviderConfigurationHelper samlProviderConfigurationHelper) {
-
-		super.setSamlProviderConfigurationHelper(
-			samlProviderConfigurationHelper);
 	}
 
 	@Override
@@ -368,13 +339,14 @@ public class SingleLogoutProfileImpl
 
 			samlSpSessionLocalService.deleteSamlSpSession(samlSpSession);
 
-			addCookie(
+			CookiesManagerUtil.deleteCookies(
+				CookiesManagerUtil.getDomain(httpServletRequest),
 				httpServletRequest, httpServletResponse,
-				SamlWebKeys.SAML_SP_SESSION_KEY, StringPool.BLANK, 0);
+				SamlWebKeys.SAML_SP_SESSION_KEY);
 		}
 		catch (SystemException systemException) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(systemException.getMessage(), systemException);
+				_log.debug(systemException);
 			}
 			else {
 				_log.error(systemException);
@@ -413,7 +385,7 @@ public class SingleLogoutProfileImpl
 			}
 			catch (SystemException systemException) {
 				if (_log.isDebugEnabled()) {
-					_log.debug(systemException.getMessage(), systemException);
+					_log.debug(systemException);
 				}
 				else {
 					_log.error(systemException);
@@ -421,9 +393,10 @@ public class SingleLogoutProfileImpl
 			}
 		}
 
-		addCookie(
+		CookiesManagerUtil.deleteCookies(
+			CookiesManagerUtil.getDomain(httpServletRequest),
 			httpServletRequest, httpServletResponse,
-			SamlWebKeys.SAML_SSO_SESSION_ID, StringPool.BLANK, 0);
+			SamlWebKeys.SAML_SSO_SESSION_ID);
 	}
 
 	protected void performIdpSpLogout(
@@ -588,10 +561,8 @@ public class SingleLogoutProfileImpl
 		String binding = singleLogoutService.getBinding();
 
 		if (binding.equals(SAMLConstants.SAML2_SOAP11_BINDING_URI)) {
-			String statusCode = _sendSyncLogoutRequest(
-				messageContext, samlSloContext);
-
-			samlSloRequestInfo.setStatusCode(statusCode);
+			samlSloRequestInfo.setStatusCode(
+				_sendSyncLogoutRequest(messageContext, samlSloContext));
 
 			httpServletRequest.setAttribute(
 				SamlWebKeys.SAML_SLO_REQUEST_INFO,
@@ -683,15 +654,12 @@ public class SingleLogoutProfileImpl
 			idpSSODescriptor);
 
 		logoutRequest.setIssuer(issuer);
-
-		NameID nameID = OpenSamlUtil.buildNameId(
-			samlPeerBinding.getSamlNameIdFormat(),
-			samlPeerBinding.getSamlNameIdNameQualifier(),
-			samlPeerBinding.getSamlNameIdSpNameQualifier(),
-			samlPeerBinding.getSamlNameIdValue());
-
-		logoutRequest.setNameID(nameID);
-
+		logoutRequest.setNameID(
+			OpenSamlUtil.buildNameId(
+				samlPeerBinding.getSamlNameIdFormat(),
+				samlPeerBinding.getSamlNameIdNameQualifier(),
+				samlPeerBinding.getSamlNameIdSpNameQualifier(),
+				samlPeerBinding.getSamlNameIdValue()));
 		logoutRequest.setVersion(SAMLVersion.VERSION_20);
 
 		_addSessionIndex(logoutRequest, samlSpSession.getSessionIndex());
@@ -703,58 +671,6 @@ public class SingleLogoutProfileImpl
 		samlPeerEndpointSubcontext.setEndpoint(singleLogoutService);
 
 		sendSamlMessage(messageContext, httpServletResponse);
-	}
-
-	@Reference(unbind = "-")
-	protected void setPortal(Portal portal) {
-		super.portal = portal;
-	}
-
-	@Reference(unbind = "-")
-	protected void setSamlHttpRequestUtil(
-		SamlHttpRequestUtil samlHttpRequestUtil) {
-
-		_samlHttpRequestUtil = samlHttpRequestUtil;
-	}
-
-	@Reference(unbind = "-")
-	protected void setSamlIdpSpConnectionLocalService(
-		SamlIdpSpConnectionLocalService samlIdpSpConnectionLocalService) {
-
-		_samlIdpSpConnectionLocalService = samlIdpSpConnectionLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setSamlIdpSpSessionLocalService(
-		SamlIdpSpSessionLocalService samlIdpSpSessionLocalService) {
-
-		_samlIdpSpSessionLocalService = samlIdpSpSessionLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setSamlIdpSsoSessionLocalService(
-		SamlIdpSsoSessionLocalService samlIdpSsoSessionLocalService) {
-
-		_samlIdpSsoSessionLocalService = samlIdpSsoSessionLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setSamlPeerBindingLocalService(
-		SamlPeerBindingLocalService samlPeerBindingLocalService) {
-
-		_samlPeerBindingLocalService = samlPeerBindingLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setSamlSpSessionLocalService(
-		SamlSpSessionLocalService samlSpSessionLocalService) {
-
-		super.samlSpSessionLocalService = samlSpSessionLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setUserLocalService(UserLocalService userLocalService) {
-		_userLocalService = userLocalService;
 	}
 
 	private void _addSessionIndex(
@@ -1141,10 +1057,8 @@ public class SingleLogoutProfileImpl
 		SAMLSelfEntityContext samlSelfEntityContext =
 			messageContext.getSubcontext(SAMLSelfEntityContext.class);
 
-		Issuer issuer = OpenSamlUtil.buildIssuer(
-			samlSelfEntityContext.getEntityId());
-
-		logoutResponse.setIssuer(issuer);
+		logoutResponse.setIssuer(
+			OpenSamlUtil.buildIssuer(samlSelfEntityContext.getEntityId()));
 
 		StatusCode statusCode = OpenSamlUtil.buildStatusCode(statusCodeURI);
 
@@ -1225,10 +1139,8 @@ public class SingleLogoutProfileImpl
 		SAMLSelfEntityContext samlSelfEntityContext =
 			messageContext.getSubcontext(SAMLSelfEntityContext.class);
 
-		Issuer issuer = OpenSamlUtil.buildIssuer(
-			samlSelfEntityContext.getEntityId());
-
-		logoutRequest.setIssuer(issuer);
+		logoutRequest.setIssuer(
+			OpenSamlUtil.buildIssuer(samlSelfEntityContext.getEntityId()));
 
 		SAMLSubjectNameIdentifierContext samlSubjectNameIdentifierContext =
 			messageContext.getSubcontext(
@@ -1328,10 +1240,8 @@ public class SingleLogoutProfileImpl
 		SAMLSelfEntityContext samlSelfEntityContext =
 			messageContext.getSubcontext(SAMLSelfEntityContext.class);
 
-		Issuer issuer = OpenSamlUtil.buildIssuer(
-			samlSelfEntityContext.getEntityId());
-
-		logoutResponse.setIssuer(issuer);
+		logoutResponse.setIssuer(
+			OpenSamlUtil.buildIssuer(samlSelfEntityContext.getEntityId()));
 
 		StatusCode statusCode = OpenSamlUtil.buildStatusCode(statusCodeURI);
 
@@ -1397,10 +1307,8 @@ public class SingleLogoutProfileImpl
 		SAMLSelfEntityContext samlSelfEntityContext =
 			messageContext.getSubcontext(SAMLSelfEntityContext.class);
 
-		Issuer issuer = OpenSamlUtil.buildIssuer(
-			samlSelfEntityContext.getEntityId());
-
-		logoutRequest.setIssuer(issuer);
+		logoutRequest.setIssuer(
+			OpenSamlUtil.buildIssuer(samlSelfEntityContext.getEntityId()));
 
 		SAMLSubjectNameIdentifierContext samlSubjectNameIdentifierContext =
 			messageContext.getSubcontext(
@@ -1509,11 +1417,22 @@ public class SingleLogoutProfileImpl
 	@Reference
 	private HttpClient _httpClient;
 
+	@Reference
 	private SamlHttpRequestUtil _samlHttpRequestUtil;
+
+	@Reference
 	private SamlIdpSpConnectionLocalService _samlIdpSpConnectionLocalService;
+
+	@Reference
 	private SamlIdpSpSessionLocalService _samlIdpSpSessionLocalService;
+
+	@Reference
 	private SamlIdpSsoSessionLocalService _samlIdpSsoSessionLocalService;
+
+	@Reference
 	private SamlPeerBindingLocalService _samlPeerBindingLocalService;
+
+	@Reference
 	private UserLocalService _userLocalService;
 
 }

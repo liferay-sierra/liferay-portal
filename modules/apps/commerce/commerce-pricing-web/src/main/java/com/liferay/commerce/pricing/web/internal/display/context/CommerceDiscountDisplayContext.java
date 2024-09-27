@@ -30,11 +30,10 @@ import com.liferay.commerce.frontend.model.HeaderActionModel;
 import com.liferay.commerce.percentage.PercentageFormatter;
 import com.liferay.commerce.pricing.constants.CommercePricingPortletKeys;
 import com.liferay.commerce.pricing.model.CommercePricingClass;
-import com.liferay.commerce.pricing.web.internal.servlet.taglib.ui.constants.CommerceDiscountScreenNavigationConstants;
+import com.liferay.commerce.pricing.web.internal.constants.CommerceDiscountScreenNavigationConstants;
 import com.liferay.commerce.product.model.CPDefinition;
 import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
@@ -43,6 +42,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
@@ -284,7 +284,7 @@ public class CommerceDiscountDisplayContext extends BasePricingDisplayContext {
 					httpServletRequest, CPDefinition.class.getName(),
 					PortletProvider.Action.MANAGE)
 			).setMVCRenderCommandName(
-				"/cp_definitions/edit_cp_instance"
+				"/cp_definitions/edit_cp_definition"
 			).setRedirect(
 				commercePricingRequestHelper.getCurrentURL()
 			).setParameter(
@@ -292,7 +292,7 @@ public class CommerceDiscountDisplayContext extends BasePricingDisplayContext {
 			).setParameter(
 				"cpInstanceId", "{sku.id}"
 			).setParameter(
-				"screenNavigationCategoryKey", "details"
+				"screenNavigationCategoryKey", "skus"
 			).buildString(),
 			false);
 	}
@@ -533,13 +533,11 @@ public class CommerceDiscountDisplayContext extends BasePricingDisplayContext {
 			_commerceCurrencyLocalService.fetchPrimaryCommerceCurrency(
 				commercePricingRequestHelper.getCompanyId());
 
-		String localizedPercentage =
+		return StringUtil.removeSubstring(
 			_percentageFormatter.getLocalizedPercentage(
 				locale, commerceCurrency.getMaxFractionDigits(),
-				commerceCurrency.getMinFractionDigits(), percentage);
-
-		return StringUtil.removeSubstring(
-			localizedPercentage, StringPool.PERCENT);
+				commerceCurrency.getMinFractionDigits(), percentage),
+			StringPool.PERCENT);
 	}
 
 	public PortletURL getPortletDiscountRuleURL() {

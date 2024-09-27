@@ -15,6 +15,7 @@
 package com.liferay.search.experiences.internal.blueprint.search.request.body.contributor;
 
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TimeZoneUtil;
 import com.liferay.portal.search.searcher.SearchRequestBuilder;
 import com.liferay.search.experiences.internal.blueprint.parameter.SXPParameterData;
@@ -39,6 +40,22 @@ public class GeneralSXPSearchRequestBodyContributor
 			return;
 		}
 
+		if (generalConfiguration.getClauseContributorsExcludes() != null) {
+			searchRequestBuilder.withSearchContext(
+				searchContext -> searchContext.setAttribute(
+					"search.full.query.clause.contributors.excludes",
+					StringUtil.merge(
+						generalConfiguration.getClauseContributorsExcludes())));
+		}
+
+		if (generalConfiguration.getClauseContributorsIncludes() != null) {
+			searchRequestBuilder.withSearchContext(
+				searchContext -> searchContext.setAttribute(
+					"search.full.query.clause.contributors.includes",
+					StringUtil.merge(
+						generalConfiguration.getClauseContributorsIncludes())));
+		}
+
 		if (generalConfiguration.getEmptySearchEnabled() != null) {
 			searchRequestBuilder.emptySearchEnabled(
 				generalConfiguration.getEmptySearchEnabled());
@@ -59,6 +76,8 @@ public class GeneralSXPSearchRequestBodyContributor
 		}
 
 		if (generalConfiguration.getSearchableAssetTypes() != null) {
+			searchRequestBuilder.entryClassNames(
+				generalConfiguration.getSearchableAssetTypes());
 			searchRequestBuilder.modelIndexerClassNames(
 				generalConfiguration.getSearchableAssetTypes());
 		}

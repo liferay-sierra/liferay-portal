@@ -103,6 +103,10 @@ public class UpdateLanguageAction implements Action {
 				getRedirect(httpServletRequest, themeDisplay, locale));
 		}
 		catch (IllegalArgumentException | NoSuchLayoutException exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			httpServletResponse.sendError(
 				HttpServletResponse.SC_BAD_REQUEST,
 				httpServletRequest.getRequestURI());
@@ -191,10 +195,10 @@ public class UpdateLanguageAction implements Action {
 			layoutURL = layoutURL.substring(0, friendlyURLSeparatorIndex);
 		}
 
+		Locale currentLocale = themeDisplay.getLocale();
+
 		if (themeDisplay.isI18n()) {
 			String i18nPath = themeDisplay.getI18nPath();
-
-			Locale currentLocale = themeDisplay.getLocale();
 
 			String currentLocalePath =
 				StringPool.SLASH + currentLocale.toLanguageTag();
@@ -207,7 +211,9 @@ public class UpdateLanguageAction implements Action {
 			}
 		}
 
-		if (layoutURL.startsWith(themeDisplay.getPathMain())) {
+		if (!Validator.isBlank(themeDisplay.getPathMain()) &&
+			layoutURL.startsWith(themeDisplay.getPathMain())) {
+
 			redirect = layoutURL;
 		}
 		else if (isFriendlyURLResolver(layoutURL) ||
@@ -217,7 +223,7 @@ public class UpdateLanguageAction implements Action {
 		}
 		else if (layoutURL.equals(StringPool.SLASH) ||
 				 isGroupFriendlyURL(
-					 layout.getGroup(), layout, layoutURL, locale)) {
+					 layout.getGroup(), layout, layoutURL, currentLocale)) {
 
 			if (PropsValues.LOCALE_PREPEND_FRIENDLY_URL_STYLE == 0) {
 				redirect = layoutURL;

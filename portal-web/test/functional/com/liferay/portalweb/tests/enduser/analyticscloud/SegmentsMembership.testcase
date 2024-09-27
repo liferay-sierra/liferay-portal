@@ -1,6 +1,8 @@
 @component-name = "portal-analytics-cloud"
 definition {
 
+	property analytics.cloud.release = "true";
+	property analytics.cloud.upstream = "true";
 	property custom.properties = "jsonws.web.service.paths.excludes=";
 	property portal.release = "false";
 	property portal.upstream = "true";
@@ -55,6 +57,8 @@ definition {
 	tearDown {
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
+		ACUtils.tearDownAC();
+
 		ACUtils.tearDownDXP();
 
 		if ("${testPortalInstance}" == "true") {
@@ -63,16 +67,13 @@ definition {
 		else {
 			JSONGroup.deleteGroupByName(groupName = "Site Name");
 		}
-
-		JSONUser.tearDownNonAdminUsers();
-
-		ACUtils.tearDownAC();
 	}
 
 	@description = "Feature ID: Legacy | Automation ID: LRAC-8523 | Test Summary: Assert segment membership list shows all known individuals"
 	@priority = "4"
 	test AssertSegmentMembershipListShowsAllKnownIndividuals {
-		property portal.upstream = "quarantine";
+		property analytics.cloud.upstream = "false";
+		property test.name.skip.portal.instance = "SegmentsMembership#AssertSegmentMembershipListShowsAllKnownIndividuals";
 
 		var emailList = "user1@liferay.com,user2@liferay.com,user3@liferay.com";
 		var nameList = "user1 user1,user2 user2,user3 user3";
@@ -124,7 +125,8 @@ definition {
 	@description = "Feature ID: Legacy | Automation ID: LRAC-8512 | Test Summary: Segment membership list is searchable"
 	@priority = "5"
 	test CanSearchMembershipList {
-		property portal.upstream = "quarantine";
+		property analytics.cloud.upstream = "false";
+		property test.name.skip.portal.instance = "SegmentsMembership#CanSearchMembershipList";
 
 		var emailList = "user1@liferay.com,user2@liferay.com,user3@liferay.com";
 		var nameList = "user1 user1,user2 user2,user3 user3";
@@ -177,11 +179,105 @@ definition {
 		}
 	}
 
+	@description = "Bug: LRAC-8091 | Automation ID: LRAC-10582 | Test Summary: Dynamic segment is updating membership number"
+	@priority = "4"
+	test CanUpdateNumberOfMembersForDynamicSegment {
+		property analytics.cloud.upstream = "false";
+		property test.name.skip.portal.instance = "SegmentsMembership#CanUpdateNumberOfMembersForDynamicSegment";
+
+		var nameList1 = "user2 user2,user3 user3";
+		var nameList2 = "user1 user1,user2 user2";
+		var emailList = "user2@liferay.com,user3@liferay.com";
+
+		task ("View the blogs page") {
+			ACUtils.navigateToSitePageWithUser(
+				actionType = "View Blog",
+				documentTitleList = "Blogs AC Title",
+				emailList = "user1@liferay.com",
+				pageName = "AC Page",
+				siteName = "Site Name");
+		}
+
+		task ("Interact with other users in DXP") {
+			ACUtils.navigateToSitePageWithUser(
+				emailList = "${emailList}",
+				pageName = "AC Page",
+				siteName = "Site Name");
+		}
+
+		task ("Close sessions") {
+			ACUtils.closeAllSessionsAndWait();
+		}
+
+		task ("Switch to new property in AC") {
+			ACUtils.launchAC();
+
+			ACProperties.switchProperty(propertyName = "${assignedPropertyName}");
+		}
+
+		task ("Create a new dynamic segment") {
+			ACNavigation.goToSegments();
+
+			ACSegments.createDynamicSegment();
+
+			ACUtils.setItemName(itemName = "Dynamic Segment Test");
+
+			ACSegments.addSegmentField(segmentField = "Viewed Blog");
+
+			ACSegments.editWebBehaviorCriterion(
+				activitiesOption = "has not",
+				indexField = "1",
+				occurenceNumber = "1",
+				searchTerm = "Blogs AC Title",
+				timeOption = "since",
+				timePeriod = "Last 30 days");
+
+			ACSegments.saveSegment();
+		}
+
+		task ("View members of segment") {
+			ACNavigation.switchTab(tabName = "Membership");
+
+			ACUtils.viewNameList(nameList = "${nameList1}");
+		}
+
+		task ("Go to DXP and login with user2") {
+			ACUtils.launchDXP(userEmailAddress = "user2@liferay.com");
+		}
+
+		task ("View the blogs page") {
+			ACUtils.navigateToSitePage(
+				actionType = "View Blog",
+				documentTitleList = "Blogs AC Title",
+				pageName = "AC Page",
+				siteName = "Site Name");
+		}
+
+		task ("Close sessions") {
+			ACUtils.closeAllSessionsAndWait();
+		}
+
+		task ("Go to AC and navigate to segment") {
+			ACUtils.launchAC();
+
+			ACNavigation.goToSegments();
+		}
+
+		task ("View members of segment") {
+			ACSegments.accessSegment(segmentName = "Dynamic Segment Test");
+
+			ACNavigation.switchTab(tabName = "Membership");
+
+			ACUtils.viewNameList(nameList = "user3 user3");
+
+			ACUtils.viewNameListIsNotPresent(nameList = "${nameList2}");
+		}
+	}
+
 	@description = "Feature ID: Legacy | Automation ID: LRAC-8524 | Test Summary: No change on segment profile selected point"
 	@ignore = "true"
 	@priority = "3"
 	test NoChangeOnSegmentProfileSelectedPoint {
-		property portal.upstream = "quarantine";
 
 		// AC Refactor: Segment data takes time to appear.
 		// AC Refactor ticket: LRAC-9260
@@ -248,7 +344,8 @@ definition {
 	@description = "Feature ID: Legacy | Automation ID: LRAC-8513 | Test Summary: Order the Segment Profile Membership List"
 	@priority = "3"
 	test OrderSegmentProfileMembershipList {
-		property portal.upstream = "quarantine";
+		property analytics.cloud.upstream = "false";
+		property test.name.skip.portal.instance = "SegmentsMembership#OrderSegmentProfileMembershipList";
 
 		var emailList = "user1@liferay.com,user2@liferay.com,user3@liferay.com";
 		var nameList = "user1 user1,user2 user2,user3 user3";
@@ -330,7 +427,8 @@ definition {
 	@description = "Feature ID: Legacy | Automation ID: LRAC-8519 | Test Summary: Search a Dynamic Segment's Membership Preview Modal"
 	@priority = "3"
 	test SearchDynamicSegmentsMembershipPreviewModal {
-		property portal.upstream = "quarantine";
+		property analytics.cloud.upstream = "false";
+		property test.name.skip.portal.instance = "SegmentsMembership#SearchDynamicSegmentsMembershipPreviewModal";
 
 		var emailList = "user1@liferay.com,user2@liferay.com,user3@liferay.com";
 		var nameList = "user1 user1,user2 user2,user3 user3";
@@ -387,7 +485,6 @@ definition {
 	@ignore = "true"
 	@priority = "4"
 	test SegmentMembershipGraphExistAndShowsMembers {
-		property portal.upstream = "quarantine";
 
 		// AC Refactor: Segment data takes time to appear.
 		// AC Refactor ticket: LRAC-9258
@@ -455,7 +552,6 @@ definition {
 	@ignore = "true"
 	@priority = "3"
 	test SelectedSegmentMembershipPointCanClearDateSelection {
-		property portal.upstream = "quarantine";
 
 		// AC Refactor: Segment data takes time to appear.
 		// AC Refactor ticket: LRAC-9257
@@ -528,7 +624,6 @@ definition {
 	@ignore = "true"
 	@priority = "3"
 	test SelectPointOnMembershipShowsIndividualsAddedOrRemoved {
-		property portal.upstream = "quarantine";
 
 		// AC Refactor: Segment data takes time to appear.
 		// AC Refactor ticket: LRAC-9261
@@ -601,7 +696,6 @@ definition {
 	@ignore = "true"
 	@priority = "5"
 	test ViewMembershipGraphShowsIncreaseOrDecreaseMembers {
-		property portal.upstream = "quarantine";
 
 		// AC Refactor: Segment data takes time to appear.
 		// AC Refactor ticket: LRAC-9252
@@ -676,7 +770,6 @@ definition {
 	@ignore = "true"
 	@priority = "5"
 	test ViewMembershipShowsKnownAnonymousTotalMembers {
-		property portal.upstream = "quarantine";
 
 		// AC Refactor: Segment data takes time to appear.
 		// AC Refactor ticket: LRAC-9251

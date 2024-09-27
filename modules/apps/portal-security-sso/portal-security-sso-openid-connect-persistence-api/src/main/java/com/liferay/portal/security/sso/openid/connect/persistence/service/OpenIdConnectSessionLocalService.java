@@ -34,6 +34,7 @@ import com.liferay.portal.security.sso.openid.connect.persistence.model.OpenIdCo
 
 import java.io.Serializable;
 
+import java.util.Date;
 import java.util.List;
 
 import org.osgi.annotation.versioning.ProviderType;
@@ -124,7 +125,8 @@ public interface OpenIdConnectSessionLocalService
 
 	public void deleteOpenIdConnectSessions(long userId);
 
-	public void deleteOpenIdConnectSessions(String configurationPid);
+	public void deleteOpenIdConnectSessions(
+		long companyId, String authServerWellKnownURI, String clientId);
 
 	/**
 	 * @throws PortalException
@@ -211,7 +213,12 @@ public interface OpenIdConnectSessionLocalService
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public OpenIdConnectSession fetchOpenIdConnectSession(
-		long userId, String configurationPid);
+		long userId, String authServerWellKnownURI, String clientId);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<OpenIdConnectSession>
+		getAccessTokenExpirationDateOpenIdConnectSessions(
+			Date ltAccessTokenExpirationDate, int start, int end);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ActionableDynamicQuery getActionableDynamicQuery();

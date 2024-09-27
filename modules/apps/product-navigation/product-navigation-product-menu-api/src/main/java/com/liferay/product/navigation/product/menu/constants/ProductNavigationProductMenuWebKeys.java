@@ -15,13 +15,18 @@
 package com.liferay.product.navigation.product.menu.constants;
 
 /**
- * @author     Julio Camarero
- * @deprecated As of Mueller (7.2.x), with no direct replacement
+ * @author Rubén Pulido
  */
-@Deprecated
 public class ProductNavigationProductMenuWebKeys {
 
-	public static final String PRODUCT_NAVIGATION_PRODUCT_MENU_STATE =
-		"com.liferay.product.navigation.product.menu.web_productMenuState";
+	public static final String PAGE_TYPE_SELECTED_OPTION =
+		"PAGE_TYPE_SELECTED_OPTION";
+
+	public static final String PRIVATE_LAYOUT = "PRIVATE_LAYOUT";
+
+	public static final String PUBLIC_LAYOUT = "PUBLIC_LAYOUT";
+
+	public static final String RETURN_LAYOUTS_AS_ARRAY =
+		"RETURN_LAYOUTS_AS_ARRAY";
 
 }

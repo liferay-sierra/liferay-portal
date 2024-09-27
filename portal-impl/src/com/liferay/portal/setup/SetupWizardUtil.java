@@ -40,15 +40,20 @@ import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.util.PortalInstances;
+import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
 
 import java.io.IOException;
 
 import java.sql.Connection;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -149,21 +154,8 @@ public class SetupWizardUtil {
 		CompanyLocalServiceUtil.updateDisplay(
 			PortalInstances.getDefaultCompanyId(), languageId, timeZoneId);
 
-		HttpSession httpSession = httpServletRequest.getSession();
-
-		httpSession.setAttribute(WebKeys.LOCALE, locale);
-		httpSession.setAttribute(
-			WebKeys.SETUP_WIZARD_DEFAULT_LOCALE, languageId);
-
-		LanguageUtil.updateCookie(
-			httpServletRequest, httpServletResponse, locale);
-
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)httpServletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
-
-		themeDisplay.setLanguageId(languageId);
-		themeDisplay.setLocale(locale);
+		_updateLanguage(
+			httpServletRequest, httpServletResponse, languageId, locale);
 	}
 
 	public static void updateSetup(
@@ -185,12 +177,11 @@ public class SetupWizardUtil {
 
 		_processOtherProperties(httpServletRequest, unicodeProperties);
 
-		updateLanguage(httpServletRequest, httpServletResponse);
-
 		unicodeProperties.put(
 			PropsKeys.SETUP_WIZARD_ENABLED, Boolean.FALSE.toString());
 
-		_updateCompany(httpServletRequest, unicodeProperties);
+		_updateCompany(
+			httpServletRequest, httpServletResponse, unicodeProperties);
 
 		_updateAdminUser(
 			httpServletRequest, httpServletResponse, unicodeProperties);
@@ -305,8 +296,12 @@ public class SetupWizardUtil {
 			String password, String jndiName)
 		throws Exception {
 
-		if (Validator.isNull(jndiName)) {
-			Class.forName(driverClassName);
+		if (!DriverClassNamesHolder.contains(driverClassName)) {
+			throw new Exception(
+				StringBundler.concat(
+					driverClassName,
+					" is not a specified in the portal property \"",
+					PropsKeys.SETUP_DATABASE_DRIVER_CLASS_NAME, "\""));
 		}
 
 		DataSource dataSource = null;
@@ -408,6 +403,7 @@ public class SetupWizardUtil {
 
 	private static void _updateCompany(
 			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse,
 			UnicodeProperties unicodeProperties)
 		throws Exception {
 
@@ -416,6 +412,10 @@ public class SetupWizardUtil {
 
 		String languageId = ParamUtil.getString(
 			httpServletRequest, "companyLocale", getDefaultLanguageId());
+
+		_updateLanguage(
+			httpServletRequest, httpServletResponse, languageId,
+			LocaleUtil.fromLanguageId(languageId));
 
 		PropsValues.COMPANY_DEFAULT_LOCALE = languageId;
 
@@ -469,6 +469,28 @@ public class SetupWizardUtil {
 		themeDisplay.setCompany(CompanyLocalServiceUtil.updateCompany(company));
 	}
 
+	private static void _updateLanguage(
+		HttpServletRequest httpServletRequest,
+		HttpServletResponse httpServletResponse, String languageId,
+		Locale locale) {
+
+		HttpSession httpSession = httpServletRequest.getSession();
+
+		httpSession.setAttribute(WebKeys.LOCALE, locale);
+		httpSession.setAttribute(
+			WebKeys.SETUP_WIZARD_DEFAULT_LOCALE, languageId);
+
+		LanguageUtil.updateCookie(
+			httpServletRequest, httpServletResponse, locale);
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
+		themeDisplay.setLanguageId(languageId);
+		themeDisplay.setLocale(locale);
+	}
+
 	private static boolean _writePropertiesFile(
 		UnicodeProperties unicodeProperties) {
 
@@ -497,5 +519,28 @@ public class SetupWizardUtil {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		SetupWizardUtil.class);
+
+	private static class DriverClassNamesHolder {
+
+		public static boolean contains(String driverClassName) {
+			return _driverClassNames.contains(driverClassName);
+		}
+
+		private static void _add(Object object) {
+			_driverClassNames.add(String.valueOf(object));
+		}
+
+		private static final Set<String> _driverClassNames = new HashSet<>();
+
+		static {
+			Properties properties = PropsUtil.getProperties(
+				PropsKeys.SETUP_DATABASE_DRIVER_CLASS_NAME, true);
+
+			Collection<Object> values = properties.values();
+
+			values.forEach(DriverClassNamesHolder::_add);
+		}
+
+	}
 
 }

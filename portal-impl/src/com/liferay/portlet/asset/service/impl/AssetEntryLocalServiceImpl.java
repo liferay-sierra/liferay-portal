@@ -52,6 +52,7 @@ import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.social.SocialActivityManagerUtil;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
@@ -60,6 +61,7 @@ import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.RenderLayoutContentThreadLocal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.view.count.ViewCountManagerUtil;
@@ -236,12 +238,11 @@ public class AssetEntryLocalServiceImpl extends AssetEntryLocalServiceBaseImpl {
 		int start, int end, String orderByCol1, String orderByCol2,
 		String orderByType1, String orderByType2) {
 
-		AssetEntryQuery assetEntryQuery = getAssetEntryQuery(
-			groupIds, classNameIds, classTypeIds, keywords, userName, title,
-			description, listable, advancedSearch, andOperator, start, end,
-			orderByCol1, orderByCol2, orderByType1, orderByType2);
-
-		return getEntries(assetEntryQuery);
+		return getEntries(
+			getAssetEntryQuery(
+				groupIds, classNameIds, classTypeIds, keywords, userName, title,
+				description, listable, advancedSearch, andOperator, start, end,
+				orderByCol1, orderByCol2, orderByType1, orderByType2));
 	}
 
 	@Override
@@ -252,12 +253,11 @@ public class AssetEntryLocalServiceImpl extends AssetEntryLocalServiceBaseImpl {
 		String orderByCol1, String orderByCol2, String orderByType1,
 		String orderByType2) {
 
-		AssetEntryQuery assetEntryQuery = getAssetEntryQuery(
-			groupIds, classNameIds, keywords, userName, title, description,
-			listable, advancedSearch, andOperator, start, end, orderByCol1,
-			orderByCol2, orderByType1, orderByType2);
-
-		return getEntries(assetEntryQuery);
+		return getEntries(
+			getAssetEntryQuery(
+				groupIds, classNameIds, keywords, userName, title, description,
+				listable, advancedSearch, andOperator, start, end, orderByCol1,
+				orderByCol2, orderByType1, orderByType2));
 	}
 
 	@Override
@@ -271,12 +271,11 @@ public class AssetEntryLocalServiceImpl extends AssetEntryLocalServiceBaseImpl {
 		String keywords, String userName, String title, String description,
 		Boolean listable, boolean advancedSearch, boolean andOperator) {
 
-		AssetEntryQuery assetEntryQuery = getAssetEntryQuery(
-			groupIds, classNameIds, classTypeIds, keywords, userName, title,
-			description, listable, advancedSearch, andOperator,
-			QueryUtil.ALL_POS, QueryUtil.ALL_POS, null, null, null, null);
-
-		return getEntriesCount(assetEntryQuery);
+		return getEntriesCount(
+			getAssetEntryQuery(
+				groupIds, classNameIds, classTypeIds, keywords, userName, title,
+				description, listable, advancedSearch, andOperator,
+				QueryUtil.ALL_POS, QueryUtil.ALL_POS, null, null, null, null));
 	}
 
 	@Override
@@ -439,6 +438,10 @@ public class AssetEntryLocalServiceImpl extends AssetEntryLocalServiceBaseImpl {
 	@Override
 	public void incrementViewCounter(long userId, AssetEntry assetEntry)
 		throws PortalException {
+
+		if (RenderLayoutContentThreadLocal.isRenderLayoutContent()) {
+			return;
+		}
 
 		User user = _userLocalService.getUser(userId);
 
@@ -751,6 +754,26 @@ public class AssetEntryLocalServiceImpl extends AssetEntryLocalServiceBaseImpl {
 			int height, int width, Double priority)
 		throws PortalException {
 
+		return updateEntry(
+			userId, groupId, createDate, modifiedDate, className, classPK,
+			classUuid, classTypeId, categoryIds, tagNames, listable, visible,
+			startDate, endDate, publishDate, expirationDate, mimeType, title,
+			description, summary, url, layoutUuid, height, width, priority,
+			null);
+	}
+
+	@Override
+	public AssetEntry updateEntry(
+			long userId, long groupId, Date createDate, Date modifiedDate,
+			String className, long classPK, String classUuid, long classTypeId,
+			long[] categoryIds, String[] tagNames, boolean listable,
+			boolean visible, Date startDate, Date endDate, Date publishDate,
+			Date expirationDate, String mimeType, String title,
+			String description, String summary, String url, String layoutUuid,
+			int height, int width, Double priority,
+			ServiceContext serviceContext)
+		throws PortalException {
+
 		// Entry
 
 		long classNameId = _classNameLocalService.getClassNameId(className);
@@ -896,7 +919,9 @@ public class AssetEntryLocalServiceImpl extends AssetEntryLocalServiceBaseImpl {
 
 		// Indexer
 
-		reindex(entry);
+		if ((serviceContext == null) || serviceContext.isIndexingEnabled()) {
+			reindex(entry);
+		}
 
 		return entry;
 	}
@@ -1070,7 +1095,7 @@ public class AssetEntryLocalServiceImpl extends AssetEntryLocalServiceBaseImpl {
 
 		searchContext.setAttribute("status", statuses);
 
-		if (classTypeId > 0) {
+		if (classTypeId >= 0) {
 			searchContext.setClassTypeIds(new long[] {classTypeId});
 		}
 
@@ -1329,7 +1354,7 @@ public class AssetEntryLocalServiceImpl extends AssetEntryLocalServiceBaseImpl {
 		List<AssetEntryValidator> generalAssetEntryValidators =
 			_assetEntryValidatorServiceTrackerMap.getService("*");
 
-		if (!ListUtil.isEmpty(generalAssetEntryValidators)) {
+		if (ListUtil.isNotEmpty(generalAssetEntryValidators)) {
 			assetEntryValidators.addAll(generalAssetEntryValidators);
 		}
 
@@ -1337,7 +1362,7 @@ public class AssetEntryLocalServiceImpl extends AssetEntryLocalServiceBaseImpl {
 			List<AssetEntryValidator> classNameAssetEntryValidators =
 				_assetEntryValidatorServiceTrackerMap.getService(className);
 
-			if (!ListUtil.isEmpty(classNameAssetEntryValidators)) {
+			if (ListUtil.isNotEmpty(classNameAssetEntryValidators)) {
 				assetEntryValidators.addAll(classNameAssetEntryValidators);
 			}
 		}

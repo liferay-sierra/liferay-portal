@@ -29,14 +29,15 @@ CommerceWishListDisplayContext commerceWishListDisplayContext = (CommerceWishLis
 			<portlet:param name="redirect" value="<%= currentURL %>" />
 		</portlet:actionURL>
 
-		<liferay-frontend:add-menu
-			inline="<%= true %>"
-		>
-			<liferay-frontend:add-menu-item
-				title='<%= LanguageUtil.get(request, "add-wish-list") %>'
-				url="<%= addCommerceWishListActionURL %>"
-			/>
-		</liferay-frontend:add-menu>
+		<liferay-ui:icon
+			icon="plus"
+			label="<%= false %>"
+			linkCssClass="btn btn-monospaced btn-primary"
+			markupView="lexicon"
+			message="add-wish-list"
+			toolTip="<%= true %>"
+			url="<%= addCommerceWishListActionURL %>"
+		/>
 	</div>
 </div>
 
@@ -58,7 +59,7 @@ CommerceWishListDisplayContext commerceWishListDisplayContext = (CommerceWishLis
 				modelVar="commerceWishList"
 			>
 				<liferay-ui:search-container-column-text
-					cssClass="important table-cell-expand"
+					cssClass="font-weight-bold important table-cell-expand"
 					href="<%= commerceWishListDisplayContext.getRowURL(commerceWishList.getCommerceWishListId()) %>"
 					name="name"
 					value="<%= HtmlUtil.escape(commerceWishList.getName()) %>"

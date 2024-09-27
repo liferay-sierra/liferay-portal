@@ -22,6 +22,7 @@ import com.liferay.commerce.inventory.model.CommerceInventoryWarehouseItem;
 import com.liferay.commerce.inventory.service.CommerceInventoryAuditLocalService;
 import com.liferay.commerce.inventory.service.CommerceInventoryBookedQuantityLocalService;
 import com.liferay.commerce.inventory.service.CommerceInventoryWarehouseItemLocalService;
+import com.liferay.commerce.inventory.service.CommerceInventoryWarehouseItemService;
 import com.liferay.commerce.inventory.type.CommerceInventoryAuditType;
 import com.liferay.commerce.inventory.type.CommerceInventoryAuditTypeRegistry;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -42,9 +43,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  * @author Ivica Cardic
  */
-@Component(
-	enabled = false, immediate = true, service = CommerceInventoryEngine.class
-)
+@Component(immediate = true, service = CommerceInventoryEngine.class)
 public class CommerceInventoryEngineImpl implements CommerceInventoryEngine {
 
 	@Override
@@ -127,7 +126,7 @@ public class CommerceInventoryEngineImpl implements CommerceInventoryEngine {
 		long companyId, long commerceChannelGroupId, String sku) {
 
 		int stockQuantity =
-			_commerceInventoryWarehouseItemLocalService.getStockQuantity(
+			_commerceInventoryWarehouseItemService.getStockQuantity(
 				companyId, commerceChannelGroupId, sku);
 
 		int commerceBookedQuantity =
@@ -140,7 +139,7 @@ public class CommerceInventoryEngineImpl implements CommerceInventoryEngine {
 	@Override
 	public int getStockQuantity(long companyId, String sku) {
 		int stockQuantity =
-			_commerceInventoryWarehouseItemLocalService.getStockQuantity(
+			_commerceInventoryWarehouseItemService.getStockQuantity(
 				companyId, sku);
 
 		int commerceBookedQuantity =
@@ -183,7 +182,7 @@ public class CommerceInventoryEngineImpl implements CommerceInventoryEngine {
 					commerceInventoryWarehouseItem.getMvccVersion());
 		}
 		catch (MVCCException mvccException) {
-			_log.error(mvccException.getMessage(), mvccException);
+			_log.error(mvccException);
 
 			throw mvccException;
 		}
@@ -235,5 +234,9 @@ public class CommerceInventoryEngineImpl implements CommerceInventoryEngine {
 	@Reference
 	private CommerceInventoryWarehouseItemLocalService
 		_commerceInventoryWarehouseItemLocalService;
+
+	@Reference
+	private CommerceInventoryWarehouseItemService
+		_commerceInventoryWarehouseItemService;
 
 }

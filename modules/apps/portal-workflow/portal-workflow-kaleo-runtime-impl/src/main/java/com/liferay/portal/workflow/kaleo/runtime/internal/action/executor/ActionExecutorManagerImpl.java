@@ -38,7 +38,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 /**
  * @author Leonardo Barros
  */
-@Component(immediate = true, service = ActionExecutorManager.class)
+@Component(service = ActionExecutorManager.class)
 public class ActionExecutorManagerImpl implements ActionExecutorManager {
 
 	@Override
@@ -77,10 +77,10 @@ public class ActionExecutorManagerImpl implements ActionExecutorManager {
 			value, new String[] {String.valueOf(value)});
 
 		for (String language : languages) {
-			String actionExecutorKey = _getActionExecutorKey(
-				language, ClassUtil.getClassName(actionExecutor));
-
-			_actionExecutors.put(actionExecutorKey, actionExecutor);
+			_actionExecutors.put(
+				_getActionExecutorKey(
+					language, ClassUtil.getClassName(actionExecutor)),
+				actionExecutor);
 		}
 	}
 
@@ -96,10 +96,9 @@ public class ActionExecutorManagerImpl implements ActionExecutorManager {
 			value, new String[] {String.valueOf(value)});
 
 		for (String language : languages) {
-			String actionExecutorKey = _getActionExecutorKey(
-				language, ClassUtil.getClassName(actionExecutor));
-
-			_actionExecutors.remove(actionExecutorKey);
+			_actionExecutors.remove(
+				_getActionExecutorKey(
+					language, ClassUtil.getClassName(actionExecutor)));
 		}
 	}
 

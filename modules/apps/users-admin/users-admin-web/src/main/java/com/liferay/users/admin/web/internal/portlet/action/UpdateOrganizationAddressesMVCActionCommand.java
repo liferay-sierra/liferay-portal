@@ -28,15 +28,13 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.OrganizationService;
-import com.liferay.portal.kernel.service.permission.OrganizationPermissionUtil;
+import com.liferay.portal.kernel.service.permission.OrganizationPermission;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.users.admin.constants.UsersAdminPortletKeys;
 import com.liferay.users.admin.kernel.util.UsersAdmin;
-import com.liferay.users.admin.kernel.util.UsersAdminUtil;
 
 import java.util.List;
 
@@ -50,7 +48,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Samuel Trong Tran
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + UsersAdminPortletKeys.MY_ORGANIZATIONS,
 		"javax.portlet.name=" + UsersAdminPortletKeys.USERS_ADMIN,
@@ -105,12 +102,12 @@ public class UpdateOrganizationAddressesMVCActionCommand
 		long organizationId = ParamUtil.getLong(
 			actionRequest, "organizationId");
 
-		OrganizationPermissionUtil.check(
+		_organizationPermission.check(
 			themeDisplay.getPermissionChecker(),
 			_organizationService.getOrganization(organizationId),
 			ActionKeys.UPDATE);
 
-		List<Address> addresses = UsersAdminUtil.getAddresses(actionRequest);
+		List<Address> addresses = _usersAdmin.getAddresses(actionRequest);
 
 		if (addresses != null) {
 			_usersAdmin.updateAddresses(
@@ -119,10 +116,10 @@ public class UpdateOrganizationAddressesMVCActionCommand
 	}
 
 	@Reference
-	private OrganizationService _organizationService;
+	private OrganizationPermission _organizationPermission;
 
 	@Reference
-	private Portal _portal;
+	private OrganizationService _organizationService;
 
 	@Reference
 	private UsersAdmin _usersAdmin;

@@ -21,6 +21,7 @@ import com.liferay.object.admin.rest.client.dto.v1_0.ObjectLayoutColumn;
 import com.liferay.object.admin.rest.client.dto.v1_0.ObjectLayoutRow;
 import com.liferay.object.admin.rest.client.dto.v1_0.ObjectLayoutTab;
 import com.liferay.object.constants.ObjectDefinitionConstants;
+import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectDefinitionLocalService;
@@ -57,12 +58,15 @@ public class ObjectLayoutResourceTest extends BaseObjectLayoutResourceTestCase {
 				LocalizedMapUtil.getLocalizedMap(value), value, null, null,
 				LocalizedMapUtil.getLocalizedMap(value),
 				ObjectDefinitionConstants.SCOPE_COMPANY,
+				ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT,
 				Collections.emptyList());
 
 		_objectField = _objectFieldLocalService.addCustomObjectField(
-			TestPropsValues.getUserId(), 0,
-			_objectDefinition.getObjectDefinitionId(), "Text", "String", false,
-			false, null, LocalizedMapUtil.getLocalizedMap("Able"), "able", true,
+			null, TestPropsValues.getUserId(), 0,
+			_objectDefinition.getObjectDefinitionId(),
+			ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+			ObjectFieldConstants.DB_TYPE_STRING, null, false, false, null,
+			LocalizedMapUtil.getLocalizedMap("Able"), "able", true, false,
 			Collections.emptyList());
 	}
 
@@ -154,6 +158,7 @@ public class ObjectLayoutResourceTest extends BaseObjectLayoutResourceTestCase {
 					_randomObjectLayoutRow()
 				};
 				priority = RandomTestUtil.randomInt();
+				type = Type.REGULAR;
 			}
 		};
 	}
@@ -161,7 +166,7 @@ public class ObjectLayoutResourceTest extends BaseObjectLayoutResourceTestCase {
 	private ObjectLayoutColumn _randomObjectLayoutColumn() {
 		return new ObjectLayoutColumn() {
 			{
-				objectFieldId = _objectField.getObjectFieldId();
+				objectFieldName = _objectField.getName();
 				priority = RandomTestUtil.randomInt();
 				size = RandomTestUtil.randomInt(1, 12);
 			}

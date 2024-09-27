@@ -60,6 +60,12 @@ public interface FreeMarkerEngineConfiguration {
 	)
 	public int resourceModificationCheck();
 
+	@Meta.AD(
+		deflt = "true", name = "include-navigation-items-in-the-context",
+		required = false
+	)
+	public boolean includeNavItemsInTheContext();
+
 	@Meta.AD(name = "allowed-classes", required = false)
 	public String[] allowedClasses();
 
@@ -76,7 +82,7 @@ public interface FreeMarkerEngineConfiguration {
 	public String[] restrictedMethods();
 
 	@Meta.AD(
-		deflt = "httpUtilUnsafe|objectUtil|serviceLocator|staticFieldGetter|staticUtil|utilLocator",
+		deflt = "httpUtilUnsafe|objectUtil|serviceLocator|staticFieldGetter|staticUtil",
 		name = "restricted-variables", required = false
 	)
 	public String[] restrictedVariables();

@@ -17,10 +17,12 @@ package com.liferay.portal.search.elasticsearch7.internal.index;
 import com.liferay.portal.json.JSONFactoryImpl;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.search.elasticsearch7.internal.connection.ElasticsearchClientResolver;
 import com.liferay.portal.search.elasticsearch7.internal.connection.ElasticsearchConnectionFixture;
 import com.liferay.portal.search.elasticsearch7.internal.util.ResourceUtil;
+import com.liferay.portal.search.index.IndexNameBuilder;
 import com.liferay.portal.search.test.util.AssertUtils;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
@@ -86,12 +88,11 @@ public class ElasticsearchIndexInformationTest {
 	public void testGetFieldMappings() throws Exception {
 		_companyIndexFactoryFixture.createIndices();
 
-		String fieldMappings = _elasticsearchIndexInformation.getFieldMappings(
-			_companyIndexFactoryFixture.getIndexName());
-
 		AssertUtils.assertEquals(
 			"", _loadJSONObject(testName.getMethodName()),
-			_jsonFactory.createJSONObject(fieldMappings));
+			_jsonFactory.createJSONObject(
+				_elasticsearchIndexInformation.getFieldMappings(
+					_companyIndexFactoryFixture.getIndexName())));
 	}
 
 	@Test
@@ -106,10 +107,6 @@ public class ElasticsearchIndexInformationTest {
 	@Rule
 	public TestName testName = new TestName();
 
-	private static String _getIndexNameBuilder(long companyId) {
-		return "test-" + companyId;
-	}
-
 	private CompanyIndexFactoryFixture _createCompanyIndexFactoryFixture(
 		ElasticsearchClientResolver elasticsearchClientResolver) {
 
@@ -120,13 +117,21 @@ public class ElasticsearchIndexInformationTest {
 	private ElasticsearchIndexInformation _createElasticsearchIndexInformation(
 		ElasticsearchClientResolver elasticsearchClientResolver) {
 
-		return new ElasticsearchIndexInformation() {
-			{
-				setElasticsearchClientResolver(elasticsearchClientResolver);
-				setIndexNameBuilder(
-					ElasticsearchIndexInformationTest::_getIndexNameBuilder);
-			}
-		};
+		ElasticsearchIndexInformation elasticsearchIndexInformation =
+			new ElasticsearchIndexInformation();
+
+		ReflectionTestUtil.setFieldValue(
+			elasticsearchIndexInformation, "_elasticsearchClientResolver",
+			elasticsearchClientResolver);
+		ReflectionTestUtil.setFieldValue(
+			elasticsearchIndexInformation, "_indexNameBuilder",
+			(IndexNameBuilder)companyId -> _getIndexNameBuilder(companyId));
+
+		return elasticsearchIndexInformation;
+	}
+
+	private String _getIndexNameBuilder(long companyId) {
+		return "test-" + companyId;
 	}
 
 	private JSONObject _loadJSONObject(String suffix) throws Exception {

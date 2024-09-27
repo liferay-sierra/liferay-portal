@@ -30,7 +30,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Daniel Kocsis
  */
 @Component(
-	immediate = true,
 	property = "destination.name=" + DestinationNames.EXPORT_IMPORT_LIFECYCLE_EVENT_ASYNC,
 	service = MessageListener.class
 )
@@ -46,10 +45,8 @@ public class AsyncExportImportLifecycleMessageListener
 	}
 
 	@Reference(
-		target = "(destination.name=" + DestinationNames.EXPORT_IMPORT_LIFECYCLE_EVENT_ASYNC + ")",
-		unbind = "-"
+		target = "(destination.name=" + DestinationNames.EXPORT_IMPORT_LIFECYCLE_EVENT_ASYNC + ")"
 	)
-	protected void setDestination(Destination destination) {
-	}
+	private Destination _destination;
 
 }

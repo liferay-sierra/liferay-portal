@@ -1,10 +1,10 @@
-@component-name = "portal-core-infrastructure-portal-services-ee"
+@component-name = "portal-security"
 definition {
 
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property test.run.environment = "EE";
-	property testray.main.component.name = "Auditing";
+	property testray.main.component.name = "Audit";
 	property testray.testcase.product.edition = "EE";
 
 	setUp {
@@ -373,7 +373,7 @@ definition {
 			panel = "Control Panel",
 			portlet = "Roles");
 
-		Role.deleteCP(roleTitle = "Role1 Name");
+		LexiconEntry.delete(rowEntry = "Role1 Name");
 
 		ApplicationsMenu.gotoPortlet(
 			category = "Security",
@@ -393,8 +393,8 @@ definition {
 	@description = "This test Audit can capture events when user login, logout, login fail, view pages, and event details contain the correct info."
 	@priority = "4"
 	test CanCaptureEventsAboutUserLoginLogoutLoginFailAndViewPages {
-		property test.name.skip.portal.instance = "AuditPortlet#CanCaptureEventsAboutUserLoginLogoutLoginFailAndViewPages";
 		property custom.properties = "audit.message.com.liferay.portal.kernel.model.Layout.VIEW=true";
+		property test.name.skip.portal.instance = "AuditPortlet#CanCaptureEventsAboutUserLoginLogoutLoginFailAndViewPages";
 
 		ApplicationsMenu.gotoPortlet(
 			category = "Security",
@@ -402,7 +402,7 @@ definition {
 			portlet = "Audit");
 
 		Audit.viewAuditDetails(
-			additionalInformation = "None",
+			additionalInformation = "",
 			clientIp = "127.0.0.1",
 			key_resourceAction = "LOGIN",
 			key_resourceName = "User",
@@ -418,7 +418,7 @@ definition {
 			portlet = "Audit");
 
 		Audit.viewAuditDetails(
-			additionalInformation = "None",
+			additionalInformation = "",
 			clientIp = "127.0.0.1",
 			key_resourceAction = "VIEW",
 			key_resourceName = "Layout",
@@ -438,7 +438,7 @@ definition {
 			portlet = "Audit");
 
 		Audit.viewAuditDetails(
-			additionalInformation = "None",
+			additionalInformation = "",
 			clientIp = "127.0.0.1",
 			key_resourceAction = "LOGOUT",
 			key_resourceName = "User",
@@ -486,10 +486,6 @@ definition {
 			key_resourceName = "User",
 			locator1 = "AuditReports#REPORTS_TABLE_RESOURCE_ACTION",
 			value1 = "LOGIN");
-
-		Navigator.openURL();
-
-		Pause(locator1 = "3000");
 
 		ApplicationsMenu.gotoPortlet(
 			category = "Security",

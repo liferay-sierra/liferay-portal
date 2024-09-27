@@ -53,7 +53,7 @@ import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.vulcan.resource.EntityModelResource;
 
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import java.text.DateFormat;
 
@@ -62,9 +62,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -72,8 +74,6 @@ import javax.annotation.Generated;
 
 import javax.ws.rs.core.MultivaluedHashMap;
 
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.beanutils.BeanUtilsBean;
 import org.apache.commons.lang.time.DateUtils;
 
 import org.junit.After;
@@ -187,10 +187,15 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 
 		ObjectDefinition objectDefinition = randomObjectDefinition();
 
+		objectDefinition.setAccountEntryRestrictedObjectFieldName(regex);
+		objectDefinition.setExternalReferenceCode(regex);
 		objectDefinition.setName(regex);
 		objectDefinition.setPanelAppOrder(regex);
 		objectDefinition.setPanelCategoryKey(regex);
+		objectDefinition.setRestContextPath(regex);
 		objectDefinition.setScope(regex);
+		objectDefinition.setStorageType(regex);
+		objectDefinition.setTitleObjectFieldName(regex);
 
 		String json = ObjectDefinitionSerDes.toJSON(objectDefinition);
 
@@ -198,10 +203,16 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 
 		objectDefinition = ObjectDefinitionSerDes.toDTO(json);
 
+		Assert.assertEquals(
+			regex, objectDefinition.getAccountEntryRestrictedObjectFieldName());
+		Assert.assertEquals(regex, objectDefinition.getExternalReferenceCode());
 		Assert.assertEquals(regex, objectDefinition.getName());
 		Assert.assertEquals(regex, objectDefinition.getPanelAppOrder());
 		Assert.assertEquals(regex, objectDefinition.getPanelCategoryKey());
+		Assert.assertEquals(regex, objectDefinition.getRestContextPath());
 		Assert.assertEquals(regex, objectDefinition.getScope());
+		Assert.assertEquals(regex, objectDefinition.getStorageType());
+		Assert.assertEquals(regex, objectDefinition.getTitleObjectFieldName());
 	}
 
 	@Test
@@ -259,6 +270,39 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				objectDefinitionResource.getObjectDefinitionsPage(
 					null, null,
 					getFilterString(entityField, "between", objectDefinition1),
+					Pagination.of(1, 2), null);
+
+			assertEquals(
+				Collections.singletonList(objectDefinition1),
+				(List<ObjectDefinition>)page.getItems());
+		}
+	}
+
+	@Test
+	public void testGetObjectDefinitionsPageWithFilterDoubleEquals()
+		throws Exception {
+
+		List<EntityField> entityFields = getEntityFields(
+			EntityField.Type.DOUBLE);
+
+		if (entityFields.isEmpty()) {
+			return;
+		}
+
+		ObjectDefinition objectDefinition1 =
+			testGetObjectDefinitionsPage_addObjectDefinition(
+				randomObjectDefinition());
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		ObjectDefinition objectDefinition2 =
+			testGetObjectDefinitionsPage_addObjectDefinition(
+				randomObjectDefinition());
+
+		for (EntityField entityField : entityFields) {
+			Page<ObjectDefinition> page =
+				objectDefinitionResource.getObjectDefinitionsPage(
+					null, null,
+					getFilterString(entityField, "eq", objectDefinition1),
 					Pagination.of(1, 2), null);
 
 			assertEquals(
@@ -362,9 +406,21 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 		testGetObjectDefinitionsPageWithSort(
 			EntityField.Type.DATE_TIME,
 			(entityField, objectDefinition1, objectDefinition2) -> {
-				BeanUtils.setProperty(
+				BeanTestUtil.setProperty(
 					objectDefinition1, entityField.getName(),
 					DateUtils.addMinutes(new Date(), -2));
+			});
+	}
+
+	@Test
+	public void testGetObjectDefinitionsPageWithSortDouble() throws Exception {
+		testGetObjectDefinitionsPageWithSort(
+			EntityField.Type.DOUBLE,
+			(entityField, objectDefinition1, objectDefinition2) -> {
+				BeanTestUtil.setProperty(
+					objectDefinition1, entityField.getName(), 0.1);
+				BeanTestUtil.setProperty(
+					objectDefinition2, entityField.getName(), 0.5);
 			});
 	}
 
@@ -373,9 +429,9 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 		testGetObjectDefinitionsPageWithSort(
 			EntityField.Type.INTEGER,
 			(entityField, objectDefinition1, objectDefinition2) -> {
-				BeanUtils.setProperty(
+				BeanTestUtil.setProperty(
 					objectDefinition1, entityField.getName(), 0);
-				BeanUtils.setProperty(
+				BeanTestUtil.setProperty(
 					objectDefinition2, entityField.getName(), 1);
 			});
 	}
@@ -389,27 +445,27 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 
 				String entityFieldName = entityField.getName();
 
-				java.lang.reflect.Method method = clazz.getMethod(
+				Method method = clazz.getMethod(
 					"get" + StringUtil.upperCaseFirstLetter(entityFieldName));
 
 				Class<?> returnType = method.getReturnType();
 
 				if (returnType.isAssignableFrom(Map.class)) {
-					BeanUtils.setProperty(
+					BeanTestUtil.setProperty(
 						objectDefinition1, entityFieldName,
 						Collections.singletonMap("Aaa", "Aaa"));
-					BeanUtils.setProperty(
+					BeanTestUtil.setProperty(
 						objectDefinition2, entityFieldName,
 						Collections.singletonMap("Bbb", "Bbb"));
 				}
 				else if (entityFieldName.contains("email")) {
-					BeanUtils.setProperty(
+					BeanTestUtil.setProperty(
 						objectDefinition1, entityFieldName,
 						"aaa" +
 							StringUtil.toLowerCase(
 								RandomTestUtil.randomString()) +
 									"@liferay.com");
-					BeanUtils.setProperty(
+					BeanTestUtil.setProperty(
 						objectDefinition2, entityFieldName,
 						"bbb" +
 							StringUtil.toLowerCase(
@@ -417,12 +473,12 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 									"@liferay.com");
 				}
 				else {
-					BeanUtils.setProperty(
+					BeanTestUtil.setProperty(
 						objectDefinition1, entityFieldName,
 						"aaa" +
 							StringUtil.toLowerCase(
 								RandomTestUtil.randomString()));
-					BeanUtils.setProperty(
+					BeanTestUtil.setProperty(
 						objectDefinition2, entityFieldName,
 						"bbb" +
 							StringUtil.toLowerCase(
@@ -507,9 +563,9 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 		long totalCount = objectDefinitionsJSONObject.getLong("totalCount");
 
 		ObjectDefinition objectDefinition1 =
-			testGraphQLObjectDefinition_addObjectDefinition();
+			testGraphQLGetObjectDefinitionsPage_addObjectDefinition();
 		ObjectDefinition objectDefinition2 =
-			testGraphQLObjectDefinition_addObjectDefinition();
+			testGraphQLGetObjectDefinitionsPage_addObjectDefinition();
 
 		objectDefinitionsJSONObject = JSONUtil.getValueAsJSONObject(
 			invokeGraphQLQuery(graphQLField), "JSONObject/data",
@@ -530,6 +586,13 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 					objectDefinitionsJSONObject.getString("items"))));
 	}
 
+	protected ObjectDefinition
+			testGraphQLGetObjectDefinitionsPage_addObjectDefinition()
+		throws Exception {
+
+		return testGraphQLObjectDefinition_addObjectDefinition();
+	}
+
 	@Test
 	public void testPostObjectDefinition() throws Exception {
 		ObjectDefinition randomObjectDefinition = randomObjectDefinition();
@@ -544,6 +607,152 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 
 	protected ObjectDefinition testPostObjectDefinition_addObjectDefinition(
 			ObjectDefinition objectDefinition)
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGetObjectDefinitionByExternalReferenceCode()
+		throws Exception {
+
+		ObjectDefinition postObjectDefinition =
+			testGetObjectDefinitionByExternalReferenceCode_addObjectDefinition();
+
+		ObjectDefinition getObjectDefinition =
+			objectDefinitionResource.getObjectDefinitionByExternalReferenceCode(
+				postObjectDefinition.getExternalReferenceCode());
+
+		assertEquals(postObjectDefinition, getObjectDefinition);
+		assertValid(getObjectDefinition);
+	}
+
+	protected ObjectDefinition
+			testGetObjectDefinitionByExternalReferenceCode_addObjectDefinition()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGraphQLGetObjectDefinitionByExternalReferenceCode()
+		throws Exception {
+
+		ObjectDefinition objectDefinition =
+			testGraphQLGetObjectDefinitionByExternalReferenceCode_addObjectDefinition();
+
+		Assert.assertTrue(
+			equals(
+				objectDefinition,
+				ObjectDefinitionSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"objectDefinitionByExternalReferenceCode",
+								new HashMap<String, Object>() {
+									{
+										put(
+											"externalReferenceCode",
+											"\"" +
+												objectDefinition.
+													getExternalReferenceCode() +
+														"\"");
+									}
+								},
+								getGraphQLFields())),
+						"JSONObject/data",
+						"Object/objectDefinitionByExternalReferenceCode"))));
+	}
+
+	@Test
+	public void testGraphQLGetObjectDefinitionByExternalReferenceCodeNotFound()
+		throws Exception {
+
+		String irrelevantExternalReferenceCode =
+			"\"" + RandomTestUtil.randomString() + "\"";
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"objectDefinitionByExternalReferenceCode",
+						new HashMap<String, Object>() {
+							{
+								put(
+									"externalReferenceCode",
+									irrelevantExternalReferenceCode);
+							}
+						},
+						getGraphQLFields())),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+	}
+
+	protected ObjectDefinition
+			testGraphQLGetObjectDefinitionByExternalReferenceCode_addObjectDefinition()
+		throws Exception {
+
+		return testGraphQLObjectDefinition_addObjectDefinition();
+	}
+
+	@Test
+	public void testPutObjectDefinitionByExternalReferenceCode()
+		throws Exception {
+
+		ObjectDefinition postObjectDefinition =
+			testPutObjectDefinitionByExternalReferenceCode_addObjectDefinition();
+
+		ObjectDefinition randomObjectDefinition = randomObjectDefinition();
+
+		ObjectDefinition putObjectDefinition =
+			objectDefinitionResource.putObjectDefinitionByExternalReferenceCode(
+				postObjectDefinition.getExternalReferenceCode(),
+				randomObjectDefinition);
+
+		assertEquals(randomObjectDefinition, putObjectDefinition);
+		assertValid(putObjectDefinition);
+
+		ObjectDefinition getObjectDefinition =
+			objectDefinitionResource.getObjectDefinitionByExternalReferenceCode(
+				putObjectDefinition.getExternalReferenceCode());
+
+		assertEquals(randomObjectDefinition, getObjectDefinition);
+		assertValid(getObjectDefinition);
+
+		ObjectDefinition newObjectDefinition =
+			testPutObjectDefinitionByExternalReferenceCode_createObjectDefinition();
+
+		putObjectDefinition =
+			objectDefinitionResource.putObjectDefinitionByExternalReferenceCode(
+				newObjectDefinition.getExternalReferenceCode(),
+				newObjectDefinition);
+
+		assertEquals(newObjectDefinition, putObjectDefinition);
+		assertValid(putObjectDefinition);
+
+		getObjectDefinition =
+			objectDefinitionResource.getObjectDefinitionByExternalReferenceCode(
+				putObjectDefinition.getExternalReferenceCode());
+
+		assertEquals(newObjectDefinition, getObjectDefinition);
+
+		Assert.assertEquals(
+			newObjectDefinition.getExternalReferenceCode(),
+			putObjectDefinition.getExternalReferenceCode());
+	}
+
+	protected ObjectDefinition
+			testPutObjectDefinitionByExternalReferenceCode_createObjectDefinition()
+		throws Exception {
+
+		return randomObjectDefinition();
+	}
+
+	protected ObjectDefinition
+			testPutObjectDefinitionByExternalReferenceCode_addObjectDefinition()
 		throws Exception {
 
 		throw new UnsupportedOperationException(
@@ -580,7 +789,7 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 	@Test
 	public void testGraphQLDeleteObjectDefinition() throws Exception {
 		ObjectDefinition objectDefinition =
-			testGraphQLObjectDefinition_addObjectDefinition();
+			testGraphQLDeleteObjectDefinition_addObjectDefinition();
 
 		Assert.assertTrue(
 			JSONUtil.getValueAsBoolean(
@@ -595,7 +804,6 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 							}
 						})),
 				"JSONObject/data", "Object/deleteObjectDefinition"));
-
 		JSONArray errorsJSONArray = JSONUtil.getValueAsJSONArray(
 			invokeGraphQLQuery(
 				new GraphQLField(
@@ -609,6 +817,13 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 			"JSONArray/errors");
 
 		Assert.assertTrue(errorsJSONArray.length() > 0);
+	}
+
+	protected ObjectDefinition
+			testGraphQLDeleteObjectDefinition_addObjectDefinition()
+		throws Exception {
+
+		return testGraphQLObjectDefinition_addObjectDefinition();
 	}
 
 	@Test
@@ -634,7 +849,7 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 	@Test
 	public void testGraphQLGetObjectDefinition() throws Exception {
 		ObjectDefinition objectDefinition =
-			testGraphQLObjectDefinition_addObjectDefinition();
+			testGraphQLGetObjectDefinition_addObjectDefinition();
 
 		Assert.assertTrue(
 			equals(
@@ -677,6 +892,13 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				"Object/code"));
 	}
 
+	protected ObjectDefinition
+			testGraphQLGetObjectDefinition_addObjectDefinition()
+		throws Exception {
+
+		return testGraphQLObjectDefinition_addObjectDefinition();
+	}
+
 	@Test
 	public void testPatchObjectDefinition() throws Exception {
 		ObjectDefinition postObjectDefinition =
@@ -693,8 +915,8 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 		ObjectDefinition expectedPatchObjectDefinition =
 			postObjectDefinition.clone();
 
-		_beanUtilsBean.copyProperties(
-			expectedPatchObjectDefinition, randomPatchObjectDefinition);
+		BeanTestUtil.copyProperties(
+			randomPatchObjectDefinition, expectedPatchObjectDefinition);
 
 		ObjectDefinition getObjectDefinition =
 			objectDefinitionResource.getObjectDefinition(
@@ -870,6 +1092,29 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 		for (String additionalAssertFieldName :
 				getAdditionalAssertFieldNames()) {
 
+			if (Objects.equals(
+					"accountEntryRestricted", additionalAssertFieldName)) {
+
+				if (objectDefinition.getAccountEntryRestricted() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"accountEntryRestrictedObjectFieldName",
+					additionalAssertFieldName)) {
+
+				if (objectDefinition.
+						getAccountEntryRestrictedObjectFieldName() == null) {
+
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("actions", additionalAssertFieldName)) {
 				if (objectDefinition.getActions() == null) {
 					valid = false;
@@ -880,6 +1125,44 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 
 			if (Objects.equals("active", additionalAssertFieldName)) {
 				if (objectDefinition.getActive() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"enableCategorization", additionalAssertFieldName)) {
+
+				if (objectDefinition.getEnableCategorization() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("enableComments", additionalAssertFieldName)) {
+				if (objectDefinition.getEnableComments() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"enableObjectEntryHistory", additionalAssertFieldName)) {
+
+				if (objectDefinition.getEnableObjectEntryHistory() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"externalReferenceCode", additionalAssertFieldName)) {
+
+				if (objectDefinition.getExternalReferenceCode() == null) {
 					valid = false;
 				}
 
@@ -960,6 +1243,16 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals(
+					"parameterRequired", additionalAssertFieldName)) {
+
+				if (objectDefinition.getParameterRequired() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("pluralLabel", additionalAssertFieldName)) {
 				if (objectDefinition.getPluralLabel() == null) {
 					valid = false;
@@ -970,6 +1263,14 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 
 			if (Objects.equals("portlet", additionalAssertFieldName)) {
 				if (objectDefinition.getPortlet() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("restContextPath", additionalAssertFieldName)) {
+				if (objectDefinition.getRestContextPath() == null) {
 					valid = false;
 				}
 
@@ -992,6 +1293,14 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("storageType", additionalAssertFieldName)) {
+				if (objectDefinition.getStorageType() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("system", additionalAssertFieldName)) {
 				if (objectDefinition.getSystem() == null) {
 					valid = false;
@@ -1001,9 +1310,9 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 			}
 
 			if (Objects.equals(
-					"titleObjectFieldId", additionalAssertFieldName)) {
+					"titleObjectFieldName", additionalAssertFieldName)) {
 
-				if (objectDefinition.getTitleObjectFieldId() == null) {
+				if (objectDefinition.getTitleObjectFieldName() == null) {
 					valid = false;
 				}
 
@@ -1105,6 +1414,35 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 		for (String additionalAssertFieldName :
 				getAdditionalAssertFieldNames()) {
 
+			if (Objects.equals(
+					"accountEntryRestricted", additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						objectDefinition1.getAccountEntryRestricted(),
+						objectDefinition2.getAccountEntryRestricted())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"accountEntryRestrictedObjectFieldName",
+					additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						objectDefinition1.
+							getAccountEntryRestrictedObjectFieldName(),
+						objectDefinition2.
+							getAccountEntryRestrictedObjectFieldName())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("actions", additionalAssertFieldName)) {
 				if (!equals(
 						(Map)objectDefinition1.getActions(),
@@ -1142,6 +1480,56 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				if (!Objects.deepEquals(
 						objectDefinition1.getDateModified(),
 						objectDefinition2.getDateModified())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"enableCategorization", additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						objectDefinition1.getEnableCategorization(),
+						objectDefinition2.getEnableCategorization())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("enableComments", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						objectDefinition1.getEnableComments(),
+						objectDefinition2.getEnableComments())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"enableObjectEntryHistory", additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						objectDefinition1.getEnableObjectEntryHistory(),
+						objectDefinition2.getEnableObjectEntryHistory())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"externalReferenceCode", additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						objectDefinition1.getExternalReferenceCode(),
+						objectDefinition2.getExternalReferenceCode())) {
 
 					return false;
 				}
@@ -1260,6 +1648,19 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals(
+					"parameterRequired", additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						objectDefinition1.getParameterRequired(),
+						objectDefinition2.getParameterRequired())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("pluralLabel", additionalAssertFieldName)) {
 				if (!equals(
 						(Map)objectDefinition1.getPluralLabel(),
@@ -1275,6 +1676,17 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				if (!Objects.deepEquals(
 						objectDefinition1.getPortlet(),
 						objectDefinition2.getPortlet())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("restContextPath", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						objectDefinition1.getRestContextPath(),
+						objectDefinition2.getRestContextPath())) {
 
 					return false;
 				}
@@ -1304,6 +1716,17 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("storageType", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						objectDefinition1.getStorageType(),
+						objectDefinition2.getStorageType())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("system", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						objectDefinition1.getSystem(),
@@ -1316,11 +1739,11 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 			}
 
 			if (Objects.equals(
-					"titleObjectFieldId", additionalAssertFieldName)) {
+					"titleObjectFieldName", additionalAssertFieldName)) {
 
 				if (!Objects.deepEquals(
-						objectDefinition1.getTitleObjectFieldId(),
-						objectDefinition2.getTitleObjectFieldId())) {
+						objectDefinition1.getTitleObjectFieldName(),
+						objectDefinition2.getTitleObjectFieldName())) {
 
 					return false;
 				}
@@ -1426,6 +1849,22 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 		sb.append(operator);
 		sb.append(" ");
 
+		if (entityFieldName.equals("accountEntryRestricted")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("accountEntryRestrictedObjectFieldName")) {
+			sb.append("'");
+			sb.append(
+				String.valueOf(
+					objectDefinition.
+						getAccountEntryRestrictedObjectFieldName()));
+			sb.append("'");
+
+			return sb.toString();
+		}
+
 		if (entityFieldName.equals("actions")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
@@ -1504,6 +1943,30 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 			return sb.toString();
 		}
 
+		if (entityFieldName.equals("enableCategorization")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("enableComments")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("enableObjectEntryHistory")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("externalReferenceCode")) {
+			sb.append("'");
+			sb.append(
+				String.valueOf(objectDefinition.getExternalReferenceCode()));
+			sb.append("'");
+
+			return sb.toString();
+		}
+
 		if (entityFieldName.equals("id")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
@@ -1563,6 +2026,11 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 			return sb.toString();
 		}
 
+		if (entityFieldName.equals("parameterRequired")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
 		if (entityFieldName.equals("pluralLabel")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
@@ -1571,6 +2039,14 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 		if (entityFieldName.equals("portlet")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("restContextPath")) {
+			sb.append("'");
+			sb.append(String.valueOf(objectDefinition.getRestContextPath()));
+			sb.append("'");
+
+			return sb.toString();
 		}
 
 		if (entityFieldName.equals("scope")) {
@@ -1586,14 +2062,26 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				"Invalid entity field " + entityFieldName);
 		}
 
+		if (entityFieldName.equals("storageType")) {
+			sb.append("'");
+			sb.append(String.valueOf(objectDefinition.getStorageType()));
+			sb.append("'");
+
+			return sb.toString();
+		}
+
 		if (entityFieldName.equals("system")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}
 
-		if (entityFieldName.equals("titleObjectFieldId")) {
-			throw new IllegalArgumentException(
-				"Invalid entity field " + entityFieldName);
+		if (entityFieldName.equals("titleObjectFieldName")) {
+			sb.append("'");
+			sb.append(
+				String.valueOf(objectDefinition.getTitleObjectFieldName()));
+			sb.append("'");
+
+			return sb.toString();
 		}
 
 		throw new IllegalArgumentException(
@@ -1640,19 +2128,33 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 	protected ObjectDefinition randomObjectDefinition() throws Exception {
 		return new ObjectDefinition() {
 			{
+				accountEntryRestricted = RandomTestUtil.randomBoolean();
+				accountEntryRestrictedObjectFieldName = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				active = RandomTestUtil.randomBoolean();
 				dateCreated = RandomTestUtil.nextDate();
 				dateModified = RandomTestUtil.nextDate();
+				enableCategorization = RandomTestUtil.randomBoolean();
+				enableComments = RandomTestUtil.randomBoolean();
+				enableObjectEntryHistory = RandomTestUtil.randomBoolean();
+				externalReferenceCode = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				id = RandomTestUtil.randomLong();
 				name = StringUtil.toLowerCase(RandomTestUtil.randomString());
 				panelAppOrder = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
 				panelCategoryKey = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
+				parameterRequired = RandomTestUtil.randomBoolean();
 				portlet = RandomTestUtil.randomBoolean();
+				restContextPath = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				scope = StringUtil.toLowerCase(RandomTestUtil.randomString());
+				storageType = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				system = RandomTestUtil.randomBoolean();
-				titleObjectFieldId = RandomTestUtil.randomLong();
+				titleObjectFieldName = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 			}
 		};
 	}
@@ -1674,6 +2176,115 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 	protected Group irrelevantGroup;
 	protected Company testCompany;
 	protected Group testGroup;
+
+	protected static class BeanTestUtil {
+
+		public static void copyProperties(Object source, Object target)
+			throws Exception {
+
+			Class<?> sourceClass = _getSuperClass(source.getClass());
+
+			Class<?> targetClass = target.getClass();
+
+			for (java.lang.reflect.Field field :
+					sourceClass.getDeclaredFields()) {
+
+				if (field.isSynthetic()) {
+					continue;
+				}
+
+				Method getMethod = _getMethod(
+					sourceClass, field.getName(), "get");
+
+				Method setMethod = _getMethod(
+					targetClass, field.getName(), "set",
+					getMethod.getReturnType());
+
+				setMethod.invoke(target, getMethod.invoke(source));
+			}
+		}
+
+		public static boolean hasProperty(Object bean, String name) {
+			Method setMethod = _getMethod(
+				bean.getClass(), "set" + StringUtil.upperCaseFirstLetter(name));
+
+			if (setMethod != null) {
+				return true;
+			}
+
+			return false;
+		}
+
+		public static void setProperty(Object bean, String name, Object value)
+			throws Exception {
+
+			Class<?> clazz = bean.getClass();
+
+			Method setMethod = _getMethod(
+				clazz, "set" + StringUtil.upperCaseFirstLetter(name));
+
+			if (setMethod == null) {
+				throw new NoSuchMethodException();
+			}
+
+			Class<?>[] parameterTypes = setMethod.getParameterTypes();
+
+			setMethod.invoke(bean, _translateValue(parameterTypes[0], value));
+		}
+
+		private static Method _getMethod(Class<?> clazz, String name) {
+			for (Method method : clazz.getMethods()) {
+				if (name.equals(method.getName()) &&
+					(method.getParameterCount() == 1) &&
+					_parameterTypes.contains(method.getParameterTypes()[0])) {
+
+					return method;
+				}
+			}
+
+			return null;
+		}
+
+		private static Method _getMethod(
+				Class<?> clazz, String fieldName, String prefix,
+				Class<?>... parameterTypes)
+			throws Exception {
+
+			return clazz.getMethod(
+				prefix + StringUtil.upperCaseFirstLetter(fieldName),
+				parameterTypes);
+		}
+
+		private static Class<?> _getSuperClass(Class<?> clazz) {
+			Class<?> superClass = clazz.getSuperclass();
+
+			if ((superClass == null) || (superClass == Object.class)) {
+				return clazz;
+			}
+
+			return superClass;
+		}
+
+		private static Object _translateValue(
+			Class<?> parameterType, Object value) {
+
+			if ((value instanceof Integer) &&
+				parameterType.equals(Long.class)) {
+
+				Integer intValue = (Integer)value;
+
+				return intValue.longValue();
+			}
+
+			return value;
+		}
+
+		private static final Set<Class<?>> _parameterTypes = new HashSet<>(
+			Arrays.asList(
+				Boolean.class, Date.class, Double.class, Integer.class,
+				Long.class, Map.class, String.class));
+
+	}
 
 	protected class GraphQLField {
 
@@ -1749,18 +2360,6 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 	private static final com.liferay.portal.kernel.log.Log _log =
 		LogFactoryUtil.getLog(BaseObjectDefinitionResourceTestCase.class);
 
-	private static BeanUtilsBean _beanUtilsBean = new BeanUtilsBean() {
-
-		@Override
-		public void copyProperty(Object bean, String name, Object value)
-			throws IllegalAccessException, InvocationTargetException {
-
-			if (value != null) {
-				super.copyProperty(bean, name, value);
-			}
-		}
-
-	};
 	private static DateFormat _dateFormat;
 
 	@Inject

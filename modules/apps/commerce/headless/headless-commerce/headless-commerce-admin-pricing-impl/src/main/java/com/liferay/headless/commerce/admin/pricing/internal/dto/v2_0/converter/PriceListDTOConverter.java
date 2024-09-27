@@ -23,13 +23,11 @@ import com.liferay.expando.kernel.model.ExpandoBridge;
 import com.liferay.headless.commerce.admin.pricing.dto.v2_0.PriceList;
 import com.liferay.headless.commerce.admin.pricing.dto.v2_0.Status;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.language.LanguageResources;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
-
-import java.util.ResourceBundle;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -38,7 +36,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	property = "dto.class.name=com.liferay.commerce.price.list.model.CommercePriceList",
 	service = {DTOConverter.class, PriceListDTOConverter.class}
 )
@@ -64,11 +61,9 @@ public class PriceListDTOConverter
 		String priceListStatusLabel = WorkflowConstants.getStatusLabel(
 			commercePriceList.getStatus());
 
-		ResourceBundle resourceBundle = LanguageResources.getResourceBundle(
-			dtoConverterContext.getLocale());
-
-		String priceListStatusLabelI18n = LanguageUtil.get(
-			resourceBundle,
+		String priceListStatusLabelI18n = _language.get(
+			LanguageResources.getResourceBundle(
+				dtoConverterContext.getLocale()),
 			WorkflowConstants.getStatusLabel(commercePriceList.getStatus()));
 
 		ExpandoBridge expandoBridge = commercePriceList.getExpandoBridge();
@@ -149,5 +144,8 @@ public class PriceListDTOConverter
 
 	@Reference
 	private CommercePriceListService _commercePriceListService;
+
+	@Reference
+	private Language _language;
 
 }

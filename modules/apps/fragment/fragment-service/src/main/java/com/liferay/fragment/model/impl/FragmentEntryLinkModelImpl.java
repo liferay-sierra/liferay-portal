@@ -37,7 +37,6 @@ import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 
 import java.sql.Blob;
@@ -85,8 +84,9 @@ public class FragmentEntryLinkModelImpl
 		{"segmentsExperienceId", Types.BIGINT}, {"classNameId", Types.BIGINT},
 		{"classPK", Types.BIGINT}, {"plid", Types.BIGINT}, {"css", Types.CLOB},
 		{"html", Types.CLOB}, {"js", Types.CLOB}, {"configuration", Types.CLOB},
-		{"editableValues", Types.CLOB}, {"namespace", Types.VARCHAR},
-		{"position", Types.INTEGER}, {"rendererKey", Types.VARCHAR},
+		{"deleted", Types.BOOLEAN}, {"editableValues", Types.CLOB},
+		{"namespace", Types.VARCHAR}, {"position", Types.INTEGER},
+		{"rendererKey", Types.VARCHAR}, {"type_", Types.INTEGER},
 		{"lastPropagationDate", Types.TIMESTAMP},
 		{"lastPublishDate", Types.TIMESTAMP}
 	};
@@ -115,16 +115,18 @@ public class FragmentEntryLinkModelImpl
 		TABLE_COLUMNS_MAP.put("html", Types.CLOB);
 		TABLE_COLUMNS_MAP.put("js", Types.CLOB);
 		TABLE_COLUMNS_MAP.put("configuration", Types.CLOB);
+		TABLE_COLUMNS_MAP.put("deleted", Types.BOOLEAN);
 		TABLE_COLUMNS_MAP.put("editableValues", Types.CLOB);
 		TABLE_COLUMNS_MAP.put("namespace", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("position", Types.INTEGER);
 		TABLE_COLUMNS_MAP.put("rendererKey", Types.VARCHAR);
+		TABLE_COLUMNS_MAP.put("type_", Types.INTEGER);
 		TABLE_COLUMNS_MAP.put("lastPropagationDate", Types.TIMESTAMP);
 		TABLE_COLUMNS_MAP.put("lastPublishDate", Types.TIMESTAMP);
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table FragmentEntryLink (mvccVersion LONG default 0 not null,ctCollectionId LONG default 0 not null,uuid_ VARCHAR(75) null,fragmentEntryLinkId LONG not null,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,originalFragmentEntryLinkId LONG,fragmentEntryId LONG,segmentsExperienceId LONG,classNameId LONG,classPK LONG,plid LONG,css TEXT null,html TEXT null,js TEXT null,configuration TEXT null,editableValues TEXT null,namespace VARCHAR(75) null,position INTEGER,rendererKey VARCHAR(200) null,lastPropagationDate DATE null,lastPublishDate DATE null,primary key (fragmentEntryLinkId, ctCollectionId))";
+		"create table FragmentEntryLink (mvccVersion LONG default 0 not null,ctCollectionId LONG default 0 not null,uuid_ VARCHAR(75) null,fragmentEntryLinkId LONG not null,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,originalFragmentEntryLinkId LONG,fragmentEntryId LONG,segmentsExperienceId LONG,classNameId LONG,classPK LONG,plid LONG,css TEXT null,html TEXT null,js TEXT null,configuration TEXT null,deleted BOOLEAN,editableValues TEXT null,namespace VARCHAR(75) null,position INTEGER,rendererKey VARCHAR(200) null,type_ INTEGER,lastPropagationDate DATE null,lastPublishDate DATE null,primary key (fragmentEntryLinkId, ctCollectionId))";
 
 	public static final String TABLE_SQL_DROP = "drop table FragmentEntryLink";
 
@@ -162,50 +164,56 @@ public class FragmentEntryLinkModelImpl
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long FRAGMENTENTRYID_COLUMN_BITMASK = 8L;
+	public static final long DELETED_COLUMN_BITMASK = 8L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long GROUPID_COLUMN_BITMASK = 16L;
+	public static final long FRAGMENTENTRYID_COLUMN_BITMASK = 16L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long ORIGINALFRAGMENTENTRYLINKID_COLUMN_BITMASK = 32L;
+	public static final long GROUPID_COLUMN_BITMASK = 32L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long PLID_COLUMN_BITMASK = 64L;
+	public static final long ORIGINALFRAGMENTENTRYLINKID_COLUMN_BITMASK = 64L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long RENDERERKEY_COLUMN_BITMASK = 128L;
+	public static final long PLID_COLUMN_BITMASK = 128L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long SEGMENTSEXPERIENCEID_COLUMN_BITMASK = 256L;
+	public static final long RENDERERKEY_COLUMN_BITMASK = 256L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long UUID_COLUMN_BITMASK = 512L;
+	public static final long SEGMENTSEXPERIENCEID_COLUMN_BITMASK = 512L;
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
+	 */
+	@Deprecated
+	public static final long UUID_COLUMN_BITMASK = 1024L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
 	 *		#getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long POSITION_COLUMN_BITMASK = 1024L;
+	public static final long POSITION_COLUMN_BITMASK = 2048L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
@@ -304,34 +312,6 @@ public class FragmentEntryLinkModelImpl
 		getAttributeSetterBiConsumers() {
 
 		return _attributeSetterBiConsumers;
-	}
-
-	private static Function<InvocationHandler, FragmentEntryLink>
-		_getProxyProviderFunction() {
-
-		Class<?> proxyClass = ProxyUtil.getProxyClass(
-			FragmentEntryLink.class.getClassLoader(), FragmentEntryLink.class,
-			ModelWrapper.class);
-
-		try {
-			Constructor<FragmentEntryLink> constructor =
-				(Constructor<FragmentEntryLink>)proxyClass.getConstructor(
-					InvocationHandler.class);
-
-			return invocationHandler -> {
-				try {
-					return constructor.newInstance(invocationHandler);
-				}
-				catch (ReflectiveOperationException
-							reflectiveOperationException) {
-
-					throw new InternalError(reflectiveOperationException);
-				}
-			};
-		}
-		catch (NoSuchMethodException noSuchMethodException) {
-			throw new InternalError(noSuchMethodException);
-		}
 	}
 
 	private static final Map<String, Function<FragmentEntryLink, Object>>
@@ -453,6 +433,11 @@ public class FragmentEntryLinkModelImpl
 			"configuration",
 			(BiConsumer<FragmentEntryLink, String>)
 				FragmentEntryLink::setConfiguration);
+		attributeGetterFunctions.put("deleted", FragmentEntryLink::getDeleted);
+		attributeSetterBiConsumers.put(
+			"deleted",
+			(BiConsumer<FragmentEntryLink, Boolean>)
+				FragmentEntryLink::setDeleted);
 		attributeGetterFunctions.put(
 			"editableValues", FragmentEntryLink::getEditableValues);
 		attributeSetterBiConsumers.put(
@@ -477,6 +462,10 @@ public class FragmentEntryLinkModelImpl
 			"rendererKey",
 			(BiConsumer<FragmentEntryLink, String>)
 				FragmentEntryLink::setRendererKey);
+		attributeGetterFunctions.put("type", FragmentEntryLink::getType);
+		attributeSetterBiConsumers.put(
+			"type",
+			(BiConsumer<FragmentEntryLink, Integer>)FragmentEntryLink::setType);
 		attributeGetterFunctions.put(
 			"lastPropagationDate", FragmentEntryLink::getLastPropagationDate);
 		attributeSetterBiConsumers.put(
@@ -958,6 +947,37 @@ public class FragmentEntryLinkModelImpl
 
 	@JSON
 	@Override
+	public boolean getDeleted() {
+		return _deleted;
+	}
+
+	@JSON
+	@Override
+	public boolean isDeleted() {
+		return _deleted;
+	}
+
+	@Override
+	public void setDeleted(boolean deleted) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_deleted = deleted;
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getColumnOriginalValue(String)}
+	 */
+	@Deprecated
+	public boolean getOriginalDeleted() {
+		return GetterUtil.getBoolean(
+			this.<Boolean>getColumnOriginalValue("deleted"));
+	}
+
+	@JSON
+	@Override
 	public String getEditableValues() {
 		if (_editableValues == null) {
 			return "";
@@ -1038,6 +1058,21 @@ public class FragmentEntryLinkModelImpl
 	@Deprecated
 	public String getOriginalRendererKey() {
 		return getColumnOriginalValue("rendererKey");
+	}
+
+	@JSON
+	@Override
+	public int getType() {
+		return _type;
+	}
+
+	@Override
+	public void setType(int type) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_type = type;
 	}
 
 	@JSON
@@ -1156,10 +1191,12 @@ public class FragmentEntryLinkModelImpl
 		fragmentEntryLinkImpl.setHtml(getHtml());
 		fragmentEntryLinkImpl.setJs(getJs());
 		fragmentEntryLinkImpl.setConfiguration(getConfiguration());
+		fragmentEntryLinkImpl.setDeleted(isDeleted());
 		fragmentEntryLinkImpl.setEditableValues(getEditableValues());
 		fragmentEntryLinkImpl.setNamespace(getNamespace());
 		fragmentEntryLinkImpl.setPosition(getPosition());
 		fragmentEntryLinkImpl.setRendererKey(getRendererKey());
+		fragmentEntryLinkImpl.setType(getType());
 		fragmentEntryLinkImpl.setLastPropagationDate(getLastPropagationDate());
 		fragmentEntryLinkImpl.setLastPublishDate(getLastPublishDate());
 
@@ -1212,6 +1249,8 @@ public class FragmentEntryLinkModelImpl
 		fragmentEntryLinkImpl.setJs(this.<String>getColumnOriginalValue("js"));
 		fragmentEntryLinkImpl.setConfiguration(
 			this.<String>getColumnOriginalValue("configuration"));
+		fragmentEntryLinkImpl.setDeleted(
+			this.<Boolean>getColumnOriginalValue("deleted"));
 		fragmentEntryLinkImpl.setEditableValues(
 			this.<String>getColumnOriginalValue("editableValues"));
 		fragmentEntryLinkImpl.setNamespace(
@@ -1220,6 +1259,8 @@ public class FragmentEntryLinkModelImpl
 			this.<Integer>getColumnOriginalValue("position"));
 		fragmentEntryLinkImpl.setRendererKey(
 			this.<String>getColumnOriginalValue("rendererKey"));
+		fragmentEntryLinkImpl.setType(
+			this.<Integer>getColumnOriginalValue("type_"));
 		fragmentEntryLinkImpl.setLastPropagationDate(
 			this.<Date>getColumnOriginalValue("lastPropagationDate"));
 		fragmentEntryLinkImpl.setLastPublishDate(
@@ -1429,6 +1470,8 @@ public class FragmentEntryLinkModelImpl
 			fragmentEntryLinkCacheModel.configuration = null;
 		}
 
+		fragmentEntryLinkCacheModel.deleted = isDeleted();
+
 		fragmentEntryLinkCacheModel.editableValues = getEditableValues();
 
 		String editableValues = fragmentEntryLinkCacheModel.editableValues;
@@ -1454,6 +1497,8 @@ public class FragmentEntryLinkModelImpl
 		if ((rendererKey != null) && (rendererKey.length() == 0)) {
 			fragmentEntryLinkCacheModel.rendererKey = null;
 		}
+
+		fragmentEntryLinkCacheModel.type = getType();
 
 		Date lastPropagationDate = getLastPropagationDate();
 
@@ -1528,41 +1573,12 @@ public class FragmentEntryLinkModelImpl
 		return sb.toString();
 	}
 
-	@Override
-	public String toXmlString() {
-		Map<String, Function<FragmentEntryLink, Object>>
-			attributeGetterFunctions = getAttributeGetterFunctions();
-
-		StringBundler sb = new StringBundler(
-			(5 * attributeGetterFunctions.size()) + 4);
-
-		sb.append("<model><model-name>");
-		sb.append(getModelClassName());
-		sb.append("</model-name>");
-
-		for (Map.Entry<String, Function<FragmentEntryLink, Object>> entry :
-				attributeGetterFunctions.entrySet()) {
-
-			String attributeName = entry.getKey();
-			Function<FragmentEntryLink, Object> attributeGetterFunction =
-				entry.getValue();
-
-			sb.append("<column><column-name>");
-			sb.append(attributeName);
-			sb.append("</column-name><column-value><![CDATA[");
-			sb.append(attributeGetterFunction.apply((FragmentEntryLink)this));
-			sb.append("]]></column-value></column>");
-		}
-
-		sb.append("</model>");
-
-		return sb.toString();
-	}
-
 	private static class EscapedModelProxyProviderFunctionHolder {
 
 		private static final Function<InvocationHandler, FragmentEntryLink>
-			_escapedModelProxyProviderFunction = _getProxyProviderFunction();
+			_escapedModelProxyProviderFunction =
+				ProxyUtil.getProxyProviderFunction(
+					FragmentEntryLink.class, ModelWrapper.class);
 
 	}
 
@@ -1587,10 +1603,12 @@ public class FragmentEntryLinkModelImpl
 	private String _html;
 	private String _js;
 	private String _configuration;
+	private boolean _deleted;
 	private String _editableValues;
 	private String _namespace;
 	private int _position;
 	private String _rendererKey;
+	private int _type;
 	private Date _lastPropagationDate;
 	private Date _lastPublishDate;
 
@@ -1645,10 +1663,12 @@ public class FragmentEntryLinkModelImpl
 		_columnOriginalValues.put("html", _html);
 		_columnOriginalValues.put("js", _js);
 		_columnOriginalValues.put("configuration", _configuration);
+		_columnOriginalValues.put("deleted", _deleted);
 		_columnOriginalValues.put("editableValues", _editableValues);
 		_columnOriginalValues.put("namespace", _namespace);
 		_columnOriginalValues.put("position", _position);
 		_columnOriginalValues.put("rendererKey", _rendererKey);
+		_columnOriginalValues.put("type_", _type);
 		_columnOriginalValues.put("lastPropagationDate", _lastPropagationDate);
 		_columnOriginalValues.put("lastPublishDate", _lastPublishDate);
 	}
@@ -1659,6 +1679,7 @@ public class FragmentEntryLinkModelImpl
 		Map<String, String> attributeNames = new HashMap<>();
 
 		attributeNames.put("uuid_", "uuid");
+		attributeNames.put("type_", "type");
 
 		_attributeNames = Collections.unmodifiableMap(attributeNames);
 	}
@@ -1714,17 +1735,21 @@ public class FragmentEntryLinkModelImpl
 
 		columnBitmasks.put("configuration", 524288L);
 
-		columnBitmasks.put("editableValues", 1048576L);
+		columnBitmasks.put("deleted", 1048576L);
 
-		columnBitmasks.put("namespace", 2097152L);
+		columnBitmasks.put("editableValues", 2097152L);
 
-		columnBitmasks.put("position", 4194304L);
+		columnBitmasks.put("namespace", 4194304L);
 
-		columnBitmasks.put("rendererKey", 8388608L);
+		columnBitmasks.put("position", 8388608L);
 
-		columnBitmasks.put("lastPropagationDate", 16777216L);
+		columnBitmasks.put("rendererKey", 16777216L);
 
-		columnBitmasks.put("lastPublishDate", 33554432L);
+		columnBitmasks.put("type_", 33554432L);
+
+		columnBitmasks.put("lastPropagationDate", 67108864L);
+
+		columnBitmasks.put("lastPublishDate", 134217728L);
 
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}

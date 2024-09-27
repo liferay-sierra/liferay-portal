@@ -51,7 +51,7 @@ renderResponse.setTitle((accountEntryAddressId == 0) ? LanguageUtil.get(request,
 
 		<aui:input name="description" type="textarea" />
 
-		<aui:select label="type" name="addressTypeId">
+		<aui:select label="type" name="addressListTypeId">
 
 			<%
 			String[] types = null;
@@ -66,7 +66,7 @@ renderResponse.setTitle((accountEntryAddressId == 0) ? LanguageUtil.get(request,
 			ListType addressListType = null;
 
 			if (address != null) {
-				addressListType = address.getType();
+				addressListType = address.getListType();
 			}
 
 			for (String type : types) {
@@ -135,29 +135,24 @@ renderResponse.setTitle((accountEntryAddressId == 0) ? LanguageUtil.get(request,
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button type="submit" />
-
-		<aui:button href="<%= backURL %>" type="cancel" />
+		<liferay-frontend:edit-form-buttons
+			redirect="<%= backURL %>"
+		/>
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>
 
-<script>
-	new Liferay.DynamicSelect([
-		{
-			select: '<portlet:namespace />addressCountryId',
-			selectData: Liferay.Address.getCountries,
-			selectDesc: 'nameCurrentValue',
-			selectId: 'countryId',
-			selectSort: '<%= true %>',
-			selectVal: '<%= (address == null) ? 0L : address.getCountryId() %>',
-		},
-		{
-			select: '<portlet:namespace />addressRegionId',
-			selectData: Liferay.Address.getRegions,
-			selectDesc: 'name',
-			selectDisableOnEmpty: '<%= true %>',
-			selectId: 'regionId',
-			selectVal: '<%= (address == null) ? 0L : address.getRegionId() %>',
-		},
-	]);
-</script>
+<liferay-frontend:component
+	componentId="CountryRegionDynamicSelect"
+	context='<%=
+		HashMapBuilder.<String, Object>put(
+			"countrySelect", portletDisplay.getNamespace() + "addressCountryId"
+		).put(
+			"countrySelectVal", (address == null) ? 0L : address.getCountryId()
+		).put(
+			"regionSelect", portletDisplay.getNamespace() + "addressRegionId"
+		).put(
+			"regionSelectVal", (address == null) ? 0L : address.getRegionId()
+		).build()
+		%>'
+	module="account_entries_admin/js/CountryRegionDynamicSelect"
+/>

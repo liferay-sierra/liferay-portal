@@ -26,25 +26,11 @@ import {
 	useSelectItem,
 } from '../../../../../src/main/resources/META-INF/resources/page_editor/app/contexts/ControlsContext';
 import {StoreAPIContextProvider} from '../../../../../src/main/resources/META-INF/resources/page_editor/app/contexts/StoreContext';
+import getLayoutDataItemClassName from '../../../../../src/main/resources/META-INF/resources/page_editor/app/utils/getLayoutDataItemClassName';
+import getLayoutDataItemTopperUniqueClassName from '../../../../../src/main/resources/META-INF/resources/page_editor/app/utils/getLayoutDataItemTopperUniqueClassName';
+import getLayoutDataItemUniqueClassName from '../../../../../src/main/resources/META-INF/resources/page_editor/app/utils/getLayoutDataItemUniqueClassName';
 
-jest.mock(
-	'../../../../../src/main/resources/META-INF/resources/page_editor/app/config',
-	() => ({
-		config: {
-			commonStyles: [
-				{
-					styles: [
-						{
-							defaultValue: 'left',
-							name: 'textAlign',
-						},
-					],
-				},
-			],
-			frontendTokens: {},
-		},
-	})
-);
+const CONTAINER_ID = 'CONTAINER_ID';
 
 const renderContainer = ({
 	activeItemId = 'container',
@@ -55,7 +41,7 @@ const renderContainer = ({
 	const container = {
 		children: [],
 		config: containerConfig,
-		itemId: 'container',
+		itemId: CONTAINER_ID,
 		parentId: null,
 		type: LAYOUT_DATA_ITEM_TYPES.container,
 	};
@@ -75,6 +61,8 @@ const renderContainer = ({
 			<ControlsProvider>
 				<StoreAPIContextProvider
 					getState={() => ({
+						fragmentEntryLinks: {},
+						layoutData,
 						permissions: {
 							LOCKED_SEGMENTS_EXPERIMENT: lockedExperience,
 							UPDATE: hasUpdatePermissions,
@@ -110,31 +98,19 @@ describe('ContainerWithControls', () => {
 		expect(queryByText(baseElement, 'duplicate')).not.toBeInTheDocument();
 	});
 
-	it('does not show the container if it has been hidden by the user', async () => {
-		const {baseElement} = renderContainer({
-			containerConfig: {
-				styles: {
-					display: 'none',
-				},
-			},
+	it('set classes for referencing the item', () => {
+		const {baseElement} = renderContainer();
+
+		const classes = [
+			getLayoutDataItemClassName(LAYOUT_DATA_ITEM_TYPES.container),
+			getLayoutDataItemTopperUniqueClassName(CONTAINER_ID),
+			getLayoutDataItemUniqueClassName(CONTAINER_ID),
+		];
+
+		classes.forEach((className) => {
+			const item = baseElement.querySelector(`.${className}`);
+
+			expect(item).toBeVisible();
 		});
-
-		const container = baseElement.querySelector('.page-editor__container');
-
-		expect(container).not.toBeVisible();
-	});
-
-	it('shows the container if it has not been hidden by the user', async () => {
-		const {baseElement} = renderContainer({
-			containerConfig: {
-				styles: {
-					display: 'block',
-				},
-			},
-		});
-
-		const container = baseElement.querySelector('.page-editor__container');
-
-		expect(container).toBeVisible();
 	});
 });

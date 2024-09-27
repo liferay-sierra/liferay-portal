@@ -35,11 +35,9 @@ import com.liferay.journal.web.internal.asset.model.JournalArticleAssetRenderer;
 import com.liferay.journal.web.internal.util.JournalUtil;
 import com.liferay.layout.model.LayoutClassedModelUsage;
 import com.liferay.layout.service.LayoutClassedModelUsageLocalService;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactory;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
@@ -48,6 +46,7 @@ import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
@@ -56,8 +55,9 @@ import com.liferay.portal.kernel.upload.LiferayFileItemException;
 import com.liferay.portal.kernel.upload.UploadException;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
 import com.liferay.portal.kernel.util.FriendlyURLNormalizer;
-import com.liferay.portal.kernel.util.Http;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Html;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -142,7 +142,7 @@ public class UpdateArticleMVCActionCommand extends BaseMVCActionCommand {
 		String articleId = ParamUtil.getString(
 			uploadPortletRequest, "articleId");
 
-		Map<Locale, String> titleMap = LocalizationUtil.getLocalizationMap(
+		Map<Locale, String> titleMap = _localization.getLocalizationMap(
 			actionRequest, "titleMapAsXML");
 
 		String ddmStructureKey = ParamUtil.getString(
@@ -165,11 +165,10 @@ public class UpdateArticleMVCActionCommand extends BaseMVCActionCommand {
 		String content = _journalConverter.getContent(
 			ddmStructure, fields, groupId);
 
-		Map<Locale, String> descriptionMap =
-			LocalizationUtil.getLocalizationMap(
-				actionRequest, "descriptionMapAsXML");
-		Map<Locale, String> friendlyURLMap =
-			LocalizationUtil.getLocalizationMap(actionRequest, "friendlyURL");
+		Map<Locale, String> descriptionMap = _localization.getLocalizationMap(
+			actionRequest, "descriptionMapAsXML");
+		Map<Locale, String> friendlyURLMap = _localization.getLocalizationMap(
+			actionRequest, "friendlyURL");
 
 		String ddmTemplateKey = ParamUtil.getString(
 			uploadPortletRequest, "ddmTemplateKey");
@@ -296,6 +295,10 @@ public class UpdateArticleMVCActionCommand extends BaseMVCActionCommand {
 
 		String articleURL = ParamUtil.getString(
 			uploadPortletRequest, "articleURL");
+
+		serviceContext.setAttribute(
+			"updateAutoTags",
+			ParamUtil.getBoolean(actionRequest, "updateAutoTags"));
 
 		JournalArticle article = null;
 		String oldUrlTitle = StringPool.BLANK;
@@ -468,11 +471,12 @@ public class UpdateArticleMVCActionCommand extends BaseMVCActionCommand {
 				!currentFriendlyURL.equals(normalizedOriginalFriendlyURL)) {
 
 				messages.add(
-					LanguageUtil.format(
+					_language.format(
 						httpServletRequest, "for-locale-x-x-was-changed-to-x",
 						new Object[] {
 							"<strong>" + locale.getLanguage() + "</strong>",
-							"<strong>" + originalFriendlyURL + "</strong>",
+							"<strong>" + _html.escapeURL(originalFriendlyURL) +
+								"</strong>",
 							"<strong>" + currentFriendlyURL + "</strong>"
 						}));
 			}
@@ -481,7 +485,7 @@ public class UpdateArticleMVCActionCommand extends BaseMVCActionCommand {
 		if (!messages.isEmpty()) {
 			messages.add(
 				0,
-				LanguageUtil.get(
+				_language.get(
 					httpServletRequest,
 					"the-following-friendly-urls-were-changed-to-ensure-" +
 						"uniqueness"));
@@ -548,7 +552,7 @@ public class UpdateArticleMVCActionCommand extends BaseMVCActionCommand {
 		int workflowAction = ParamUtil.getInteger(
 			actionRequest, "workflowAction", WorkflowConstants.ACTION_PUBLISH);
 
-		String portletId = _http.getParameter(
+		String portletId = HttpComponentsUtil.getParameter(
 			redirect, "portletResource", false);
 
 		String namespace = _portal.getPortletNamespace(portletId);
@@ -558,11 +562,11 @@ public class UpdateArticleMVCActionCommand extends BaseMVCActionCommand {
 
 			String oldRedirectParam = namespace + "redirect";
 
-			String oldRedirect = _http.getParameter(
+			String oldRedirect = HttpComponentsUtil.getParameter(
 				redirect, oldRedirectParam, false);
 
 			if (Validator.isNotNull(oldRedirect)) {
-				String newRedirect = _http.decodeURL(oldRedirect);
+				String newRedirect = HttpComponentsUtil.decodeURL(oldRedirect);
 
 				newRedirect = StringUtil.replace(
 					newRedirect, oldUrlTitle, article.getUrlTitle());
@@ -588,10 +592,10 @@ public class UpdateArticleMVCActionCommand extends BaseMVCActionCommand {
 				actionName.equals("/journal/add_article") &&
 				(article != null) && Validator.isNotNull(namespace)) {
 
-				redirect = _http.addParameter(
+				redirect = HttpComponentsUtil.addParameter(
 					redirect, namespace + "className",
 					JournalArticle.class.getName());
-				redirect = _http.addParameter(
+				redirect = HttpComponentsUtil.addParameter(
 					redirect, namespace + "classPK",
 					JournalArticleAssetRenderer.getClassPK(article));
 			}
@@ -652,7 +656,7 @@ public class UpdateArticleMVCActionCommand extends BaseMVCActionCommand {
 	private FriendlyURLNormalizer _friendlyURLNormalizer;
 
 	@Reference
-	private Http _http;
+	private Html _html;
 
 	@Reference
 	private JournalArticleService _journalArticleService;
@@ -667,7 +671,7 @@ public class UpdateArticleMVCActionCommand extends BaseMVCActionCommand {
 	private JournalHelper _journalHelper;
 
 	@Reference
-	private JSONFactory _jsonFactory;
+	private Language _language;
 
 	@Reference
 	private LayoutClassedModelUsageLocalService
@@ -675,6 +679,9 @@ public class UpdateArticleMVCActionCommand extends BaseMVCActionCommand {
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;
+
+	@Reference
+	private Localization _localization;
 
 	@Reference
 	private Portal _portal;

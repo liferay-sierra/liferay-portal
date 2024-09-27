@@ -14,30 +14,37 @@
 
 import ClayButton from '@clayui/button';
 import ClayForm from '@clayui/form';
+import ClayLabel from '@clayui/label';
 import ClayModal from '@clayui/modal';
+import {Observer} from '@clayui/modal/lib/types';
+import {
+	AutoComplete,
+	FormError,
+	stringIncludesQuery,
+	useForm,
+} from '@liferay/object-js-components-web';
 import classNames from 'classnames';
-import React, {useContext, useMemo, useState} from 'react';
+import React, {useMemo, useState} from 'react';
 
-import useForm from '../../../hooks/useForm';
-import AutoComplete from '../../Form/AutoComplete';
-import LayoutContext, {TYPES} from '../context';
+import {TYPES, useLayoutContext} from '../objectLayoutContext';
 import {TObjectField} from '../types';
-import RequiredLabel from './RequiredLabel';
+
+import './ModalAddObjectLayoutField.scss';
 
 const objectFieldSizes = [1, 2, 3];
 
-const defaultLanguageId = Liferay.ThemeDisplay.getDefaultLanguageId();
-
 type TInitialValues = {
-	objectFieldId: number;
+	objectFieldName: string;
 	objectFieldSize: number;
 };
 
-interface IBoxBtnColumnsProps extends React.HTMLAttributes<HTMLElement> {
-	handleChange: any;
+interface IBoxBtnColumnsProps {
+	setValues: (values: Partial<TInitialValues>) => void;
 }
 
-const BoxBtnColumns: React.FC<IBoxBtnColumnsProps> = ({handleChange}) => {
+const defaultLanguageId = Liferay.ThemeDisplay.getDefaultLanguageId();
+
+function BoxBtnColumns({setValues}: IBoxBtnColumnsProps) {
 	const [activeIndex, setActiveIndex] = useState<number>(0);
 
 	return (
@@ -51,13 +58,6 @@ const BoxBtnColumns: React.FC<IBoxBtnColumnsProps> = ({handleChange}) => {
 					);
 				}
 
-				const syntheticEvent = {
-					target: {
-						name: 'objectFieldSize',
-						value: String(objectFieldSize),
-					},
-				} as any;
-
 				return (
 					<button
 						className={classNames('box-btn-columns__btn', {
@@ -67,7 +67,7 @@ const BoxBtnColumns: React.FC<IBoxBtnColumnsProps> = ({handleChange}) => {
 						name="objectFieldSize"
 						onClick={() => {
 							setActiveIndex(objectFieldSizeIndex);
-							handleChange(syntheticEvent);
+							setValues({objectFieldSize});
 						}}
 						type="button"
 						value={objectFieldSize}
@@ -78,39 +78,47 @@ const BoxBtnColumns: React.FC<IBoxBtnColumnsProps> = ({handleChange}) => {
 			})}
 		</div>
 	);
-};
+}
 
-interface IModalAddObjectLayoutFieldProps
-	extends React.HTMLAttributes<HTMLElement> {
+interface IProps extends React.HTMLAttributes<HTMLElement> {
 	boxIndex: number;
-	observer: any;
+	observer: Observer;
 	onClose: () => void;
 	tabIndex: number;
 }
 
-const ModalAddObjectLayoutField: React.FC<IModalAddObjectLayoutFieldProps> = ({
+export default function ModalAddObjectLayoutField({
 	boxIndex,
 	observer,
 	onClose,
 	tabIndex,
-}) => {
-	const [{objectFields}, dispatch] = useContext(LayoutContext);
+}: IProps) {
+	const [{objectFields}, dispatch] = useLayoutContext();
 	const [query, setQuery] = useState<string>('');
 	const [selectedObjectField, setSelectedObjectField] = useState<
 		TObjectField
 	>();
 
+	const [readOnlyField, setReadOnlyField] = useState<ObjectFieldSetting>({
+		name: 'readOnly',
+		value: 'false',
+	});
+
 	const filteredObjectFields = useMemo(() => {
-		return objectFields.filter(({inLayout, label}) => {
-			return label[defaultLanguageId].match(query) && !inLayout;
-		});
+		return objectFields.filter(
+			({inLayout, label}) =>
+				stringIncludesQuery(
+					label[defaultLanguageId] as string,
+					query
+				) && !inLayout
+		);
 	}, [objectFields, query]);
 
-	const onSubmit = (values: any) => {
+	const onSubmit = (values: TInitialValues) => {
 		dispatch({
 			payload: {
 				boxIndex,
-				objectFieldId: values.objectFieldId,
+				objectFieldName: values.objectFieldName,
 				objectFieldSize: 12 / Number(values.objectFieldSize),
 				tabIndex,
 			},
@@ -120,22 +128,22 @@ const ModalAddObjectLayoutField: React.FC<IModalAddObjectLayoutFieldProps> = ({
 		onClose();
 	};
 
-	const onValidate = (values: any) => {
-		const errors: any = {};
+	const onValidate = (values: TInitialValues) => {
+		const errors: FormError<TInitialValues> = {};
 
-		if (!values.objectFieldId) {
-			errors.objectFieldId = Liferay.Language.get('required');
+		if (!values.objectFieldName) {
+			errors.objectFieldName = Liferay.Language.get('required');
 		}
 
 		return errors;
 	};
 
 	const initialValues: TInitialValues = {
-		objectFieldId: 0,
+		objectFieldName: '',
 		objectFieldSize: 1,
 	};
 
-	const {errors, handleChange, handleSubmit} = useForm({
+	const {errors, handleSubmit, setValues} = useForm({
 		initialValues,
 		onSubmit,
 		validate: onValidate,
@@ -151,45 +159,89 @@ const ModalAddObjectLayoutField: React.FC<IModalAddObjectLayoutFieldProps> = ({
 				<ClayModal.Body>
 					<AutoComplete
 						contentRight={
-							<RequiredLabel
-								className="label-inside-custom-select"
-								required={selectedObjectField?.required}
-							/>
+							<>
+								<ClayLabel
+									className="label-inside-custom-select"
+									displayType={
+										selectedObjectField?.required
+											? 'warning'
+											: 'success'
+									}
+								>
+									{selectedObjectField?.required
+										? Liferay.Language.get('mandatory')
+										: Liferay.Language.get('optional')}
+								</ClayLabel>
+
+								{(readOnlyField.value === 'true' ||
+									readOnlyField.value === 'conditional') && (
+									<ClayLabel
+										className="label-inside-custom-select"
+										displayType="secondary"
+									>
+										{Liferay.Language.get('read-only')}
+									</ClayLabel>
+								)}
+							</>
 						}
 						emptyStateMessage={Liferay.Language.get(
 							'there-are-no-fields-for-this-object'
 						)}
-						error={errors.objectFieldId}
+						error={errors.objectFieldName}
 						items={filteredObjectFields}
 						label={Liferay.Language.get('field')}
 						onChangeQuery={setQuery}
-						onSelectItem={(item) => {
-							const syntheticEvent: any = {
-								target: {
-									name: 'objectFieldId',
-									value: item.id,
-								},
-							};
-
+						onSelectItem={(item: ObjectField) => {
+							const readOnlySetting = item.objectFieldSettings?.find(
+								(fieldSetting) =>
+									fieldSetting.name === 'readOnly'
+							);
+							if (readOnlySetting) {
+								setReadOnlyField(readOnlySetting);
+							}
 							setSelectedObjectField(item);
-							handleChange(syntheticEvent);
+							setValues({objectFieldName: item.name});
 						}}
 						query={query}
 						required
 						value={selectedObjectField?.label[defaultLanguageId]}
 					>
-						{({label, required}) => (
+						{({label, objectFieldSettings, required}) => (
 							<div className="d-flex justify-content-between">
-								<div>{label[defaultLanguageId]}</div>
+								<div className="lfr__object-web-layout-modal-add-field-label">
+									{label[defaultLanguageId]}
+								</div>
 
 								<div>
-									<RequiredLabel required={required} />
+									<ClayLabel
+										className="label-inside-custom-select"
+										displayType={
+											required ? 'warning' : 'success'
+										}
+									>
+										{required
+											? Liferay.Language.get('mandatory')
+											: Liferay.Language.get('optional')}
+									</ClayLabel>
+
+									{objectFieldSettings.find(
+										(fieldSetting: ObjectFieldSetting) =>
+											fieldSetting.value === 'true' ||
+											fieldSetting.value === 'conditional'
+									) && (
+										<ClayLabel
+											className="label-inside-custom-select"
+											displayType="secondary"
+										>
+											{Liferay.Language.get('read-only')}
+										</ClayLabel>
+									)}
 								</div>
 							</div>
 						)}
 					</AutoComplete>
 
-					<BoxBtnColumns handleChange={handleChange} />
+					<BoxBtnColumns setValues={setValues} />
 				</ClayModal.Body>
 
 				<ClayModal.Footer
@@ -211,6 +263,4 @@ const ModalAddObjectLayoutField: React.FC<IModalAddObjectLayoutFieldProps> = ({
 			</ClayForm>
 		</ClayModal>
 	);
-};
-
-export default ModalAddObjectLayoutField;
+}

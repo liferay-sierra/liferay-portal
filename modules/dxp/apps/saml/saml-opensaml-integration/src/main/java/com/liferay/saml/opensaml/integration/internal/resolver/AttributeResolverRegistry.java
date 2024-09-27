@@ -38,7 +38,7 @@ public class AttributeResolverRegistry {
 	public AttributeResolver getAttributeResolver(String entityId) {
 		long companyId = CompanyThreadLocal.getCompanyId();
 
-		AttributeResolver attributeResolver = _attributeResolvers.getService(
+		AttributeResolver attributeResolver = _serviceTrackerMap.getService(
 			companyId + "," + entityId);
 
 		if (attributeResolver == null) {
@@ -55,32 +55,26 @@ public class AttributeResolverRegistry {
 		return attributeResolver;
 	}
 
-	@Reference(
-		policyOption = ReferencePolicyOption.GREEDY,
-		target = "(!(companyId=*))", unbind = "-"
-	)
-	public void setDefaultAttributeResolver(
-		AttributeResolver defaultAttributeResolver) {
-
-		_defaultAttributeResolver = defaultAttributeResolver;
-	}
-
 	@Activate
 	protected void activate(BundleContext bundleContext) {
-		_attributeResolvers = ServiceTrackerMapFactory.openSingleValueMap(
+		_serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
 			bundleContext, AttributeResolver.class, "(companyId=*)",
 			new DefaultServiceReferenceMapper(_log));
 	}
 
 	@Deactivate
 	protected void deactivate() {
-		_attributeResolvers.close();
+		_serviceTrackerMap.close();
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		AttributeResolverRegistry.class);
 
-	private ServiceTrackerMap<String, AttributeResolver> _attributeResolvers;
+	@Reference(
+		policyOption = ReferencePolicyOption.GREEDY, target = "(!(companyId=*))"
+	)
 	private AttributeResolver _defaultAttributeResolver;
+
+	private ServiceTrackerMap<String, AttributeResolver> _serviceTrackerMap;
 
 }

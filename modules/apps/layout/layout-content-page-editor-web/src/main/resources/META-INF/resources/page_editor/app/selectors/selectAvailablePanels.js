@@ -23,9 +23,14 @@ export default function selectAvailablePanels(panels) {
 	 * @param {{ permissions: import("../../types/ActionKeys").ActionKeysMap, selectedViewportSize: string }} state
 	 */
 	return function ({permissions, selectedViewportSize}) {
-		const availablePanels = ['comments', 'browser'];
+		const availablePanels = ['browser', 'comments', 'page-content'];
 
-		if (permissions.LOCKED_SEGMENTS_EXPERIMENT || !permissions.UPDATE) {
+		if (
+			permissions.LOCKED_SEGMENTS_EXPERIMENT ||
+			(!permissions.UPDATE &&
+				!permissions.UPDATE_LAYOUT_LIMITED &&
+				!permissions.UPDATE_LAYOUT_BASIC)
+		) {
 			return panels
 				.map((group) =>
 					group.filter((panelId) => availablePanels.includes(panelId))

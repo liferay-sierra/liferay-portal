@@ -33,9 +33,8 @@ import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Constants;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.StringUtil;
 
 import java.math.BigDecimal;
 
@@ -53,7 +52,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = {
 		"javax.portlet.name=" + CommerceCurrencyPortletKeys.COMMERCE_CURRENCY,
 		"mvc.command.name=/commerce_currency/edit_commerce_currency"
@@ -130,10 +129,8 @@ public class EditCommerceCurrencyMVCActionCommand extends BaseMVCActionCommand {
 			};
 		}
 		else {
-			updateCommerceCurrencyExchangeRateIds = StringUtil.split(
-				ParamUtil.getString(
-					actionRequest, "updateCommerceCurrencyExchangeRateIds"),
-				0L);
+			updateCommerceCurrencyExchangeRateIds = ParamUtil.getLongValues(
+				actionRequest, "rowIds");
 		}
 
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
@@ -169,9 +166,8 @@ public class EditCommerceCurrencyMVCActionCommand extends BaseMVCActionCommand {
 			deleteCommerceCurrencyIds = new long[] {commerceCurrencyId};
 		}
 		else {
-			deleteCommerceCurrencyIds = StringUtil.split(
-				ParamUtil.getString(actionRequest, "deleteCommerceCurrencyIds"),
-				0L);
+			deleteCommerceCurrencyIds = ParamUtil.getLongValues(
+				actionRequest, "rowIds");
 		}
 
 		for (long deleteCommerceCurrencyId : deleteCommerceCurrencyIds) {
@@ -221,11 +217,11 @@ public class EditCommerceCurrencyMVCActionCommand extends BaseMVCActionCommand {
 			actionRequest, "commerceCurrencyId");
 
 		String code = ParamUtil.getString(actionRequest, "code");
-		Map<Locale, String> nameMap = LocalizationUtil.getLocalizationMap(
+		Map<Locale, String> nameMap = _localization.getLocalizationMap(
 			actionRequest, "name");
 		String rate = ParamUtil.getString(actionRequest, "rate");
-		Map<Locale, String> formatPatternMap =
-			LocalizationUtil.getLocalizationMap(actionRequest, "formatPattern");
+		Map<Locale, String> formatPatternMap = _localization.getLocalizationMap(
+			actionRequest, "formatPattern");
 
 		String roundingMode = ParamUtil.getString(
 			actionRequest, "roundingMode");
@@ -260,5 +256,8 @@ public class EditCommerceCurrencyMVCActionCommand extends BaseMVCActionCommand {
 
 	@Reference
 	private ConfigurationProvider _configurationProvider;
+
+	@Reference
+	private Localization _localization;
 
 }

@@ -16,21 +16,31 @@ package com.liferay.commerce.payment.service.impl;
 
 import com.liferay.commerce.payment.model.CommercePaymentMethodGroupRel;
 import com.liferay.commerce.payment.model.CommercePaymentMethodGroupRelQualifier;
+import com.liferay.commerce.payment.service.CommercePaymentMethodGroupRelLocalService;
 import com.liferay.commerce.payment.service.base.CommercePaymentMethodGroupRelQualifierServiceBaseImpl;
 import com.liferay.commerce.product.model.CommerceChannel;
 import com.liferay.commerce.product.service.CommerceChannelLocalService;
+import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
-import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionFactory;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.spring.extender.service.ServiceReference;
 
 import java.util.List;
+
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Luca Pellizzon
  */
+@Component(
+	property = {
+		"json.web.service.context.name=commerce",
+		"json.web.service.context.path=CommercePaymentMethodGroupRelQualifier"
+	},
+	service = AopService.class
+)
 public class CommercePaymentMethodGroupRelQualifierServiceImpl
 	extends CommercePaymentMethodGroupRelQualifierServiceBaseImpl {
 
@@ -156,19 +166,6 @@ public class CommercePaymentMethodGroupRelQualifierServiceImpl
 	@Override
 	public List<CommercePaymentMethodGroupRelQualifier>
 			getCommercePaymentMethodGroupRelQualifiers(
-				long commercePaymentMethodGroupRelId)
-		throws PortalException {
-
-		_checkCommerceChannel(commercePaymentMethodGroupRelId);
-
-		return commercePaymentMethodGroupRelQualifierLocalService.
-			getCommercePaymentMethodGroupRelQualifiers(
-				commercePaymentMethodGroupRelId);
-	}
-
-	@Override
-	public List<CommercePaymentMethodGroupRelQualifier>
-			getCommercePaymentMethodGroupRelQualifiers(
 				long commercePaymentMethodGroupRelId, int start, int end,
 				OrderByComparator<CommercePaymentMethodGroupRelQualifier>
 					orderByComparator)
@@ -179,6 +176,19 @@ public class CommercePaymentMethodGroupRelQualifierServiceImpl
 		return commercePaymentMethodGroupRelQualifierLocalService.
 			getCommercePaymentMethodGroupRelQualifiers(
 				commercePaymentMethodGroupRelId, start, end, orderByComparator);
+	}
+
+	@Override
+	public List<CommercePaymentMethodGroupRelQualifier>
+			getCommercePaymentMethodGroupRelQualifiers(
+				String className, long commercePaymentMethodGroupRelId)
+		throws PortalException {
+
+		_checkCommerceChannel(commercePaymentMethodGroupRelId);
+
+		return commercePaymentMethodGroupRelQualifierLocalService.
+			getCommercePaymentMethodGroupRelQualifiers(
+				className, commercePaymentMethodGroupRelId);
 	}
 
 	@Override
@@ -223,7 +233,7 @@ public class CommercePaymentMethodGroupRelQualifierServiceImpl
 		throws PortalException {
 
 		CommercePaymentMethodGroupRel commercePaymentMethodGroupRel =
-			commercePaymentMethodGroupRelLocalService.
+			_commercePaymentMethodGroupRelLocalService.
 				getCommercePaymentMethodGroupRel(
 					commercePaymentMethodGroupRelId);
 
@@ -235,14 +245,17 @@ public class CommercePaymentMethodGroupRelQualifierServiceImpl
 			getPermissionChecker(), commerceChannel, ActionKeys.UPDATE);
 	}
 
-	private static volatile ModelResourcePermission<CommerceChannel>
-		_commerceChannelModelResourcePermission =
-			ModelResourcePermissionFactory.getInstance(
-				CommercePaymentMethodGroupRelQualifierServiceImpl.class,
-				"_commerceChannelModelResourcePermission",
-				CommerceChannel.class);
-
-	@ServiceReference(type = CommerceChannelLocalService.class)
+	@Reference
 	private CommerceChannelLocalService _commerceChannelLocalService;
+
+	@Reference(
+		target = "(model.class.name=com.liferay.commerce.product.model.CommerceChannel)"
+	)
+	private ModelResourcePermission<CommerceChannel>
+		_commerceChannelModelResourcePermission;
+
+	@Reference
+	private CommercePaymentMethodGroupRelLocalService
+		_commercePaymentMethodGroupRelLocalService;
 
 }

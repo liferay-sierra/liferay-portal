@@ -16,7 +16,7 @@ package com.liferay.portal.search.elasticsearch7.internal.information;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -25,7 +25,6 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.search.elasticsearch7.configuration.ElasticsearchConnectionConfiguration;
-import com.liferay.portal.search.elasticsearch7.internal.ElasticsearchSearchEngine;
 import com.liferay.portal.search.elasticsearch7.internal.configuration.ElasticsearchConfigurationWrapper;
 import com.liferay.portal.search.elasticsearch7.internal.configuration.OperationModeResolver;
 import com.liferay.portal.search.elasticsearch7.internal.connection.ElasticsearchConnection;
@@ -161,7 +160,7 @@ public class ElasticsearchSearchEngineInformation
 
 	@Override
 	public String getVendorString() {
-		String vendor = elasticsearchSearchEngine.getVendor();
+		String vendor = "Elasticsearch";
 
 		if (operationModeResolver.isDevelopmentModeEnabled()) {
 			return vendor + " (Sidecar)";
@@ -183,9 +182,6 @@ public class ElasticsearchSearchEngineInformation
 
 	@Reference
 	protected ElasticsearchConnectionManager elasticsearchConnectionManager;
-
-	@Reference
-	protected ElasticsearchSearchEngine elasticsearchSearchEngine;
 
 	@Reference
 	protected NodeInformationBuilderFactory nodeInformationBuilderFactory;
@@ -361,7 +357,7 @@ public class ElasticsearchSearchEngineInformation
 
 		String responseBody = EntityUtils.toString(response.getEntity());
 
-		JSONObject responseJSONObject = JSONFactoryUtil.createJSONObject(
+		JSONObject responseJSONObject = _jsonFactory.createJSONObject(
 			responseBody);
 
 		String clusterName = GetterUtil.getString(
@@ -410,5 +406,8 @@ public class ElasticsearchSearchEngineInformation
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ElasticsearchSearchEngineInformation.class);
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 }

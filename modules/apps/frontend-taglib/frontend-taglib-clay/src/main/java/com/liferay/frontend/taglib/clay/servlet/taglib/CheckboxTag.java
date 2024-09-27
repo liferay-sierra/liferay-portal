@@ -114,7 +114,7 @@ public class CheckboxTag extends BaseContainerTag {
 
 	@Override
 	protected String getHydratedModuleName() {
-		return "frontend-taglib-clay/Checkbox";
+		return "{Checkbox} from frontend-taglib-clay";
 	}
 
 	@Override
@@ -129,7 +129,10 @@ public class CheckboxTag extends BaseContainerTag {
 		}
 
 		props.put("name", _name);
-		props.put("value", _value);
+
+		if (Validator.isNotNull(_value)) {
+			props.put("value", _value);
+		}
 
 		return super.prepareProps(props);
 	}

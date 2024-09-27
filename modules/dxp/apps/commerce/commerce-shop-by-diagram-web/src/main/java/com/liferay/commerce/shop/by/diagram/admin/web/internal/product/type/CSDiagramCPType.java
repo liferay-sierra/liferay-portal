@@ -15,23 +15,18 @@
 package com.liferay.commerce.shop.by.diagram.admin.web.internal.product.type;
 
 import com.liferay.commerce.product.type.CPType;
-import com.liferay.commerce.shop.by.diagram.configuration.CSDiagramCPTypeConfiguration;
 import com.liferay.commerce.shop.by.diagram.constants.CSDiagramCPTypeConstants;
 import com.liferay.commerce.shop.by.diagram.service.CSDiagramEntryLocalService;
 import com.liferay.commerce.shop.by.diagram.service.CSDiagramPinLocalService;
 import com.liferay.commerce.shop.by.diagram.service.CSDiagramSettingLocalService;
-import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 
 import java.util.Locale;
-import java.util.Map;
 import java.util.ResourceBundle;
 
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
 /**
@@ -40,7 +35,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.commerce.shop.by.diagram.configuration.CSDiagramCPTypeConfiguration",
-	enabled = false, immediate = true,
+	immediate = true,
 	property = {
 		"commerce.product.type.display.order:Integer=20",
 		"commerce.product.type.name=" + CSDiagramCPTypeConstants.NAME
@@ -64,17 +59,12 @@ public class CSDiagramCPType implements CPType {
 		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
 			"content.Language", locale, getClass());
 
-		return LanguageUtil.get(resourceBundle, CSDiagramCPTypeConstants.NAME);
+		return _language.get(resourceBundle, CSDiagramCPTypeConstants.NAME);
 	}
 
 	@Override
 	public String getName() {
 		return CSDiagramCPTypeConstants.NAME;
-	}
-
-	@Override
-	public boolean isActive() {
-		return _csDiagramCPTypeConfiguration.enabled();
 	}
 
 	@Override
@@ -107,15 +97,6 @@ public class CSDiagramCPType implements CPType {
 		return false;
 	}
 
-	@Activate
-	@Modified
-	protected void activate(Map<String, Object> properties) {
-		_csDiagramCPTypeConfiguration = ConfigurableUtil.createConfigurable(
-			CSDiagramCPTypeConfiguration.class, properties);
-	}
-
-	private volatile CSDiagramCPTypeConfiguration _csDiagramCPTypeConfiguration;
-
 	@Reference
 	private CSDiagramEntryLocalService _csDiagramEntryLocalService;
 
@@ -124,5 +105,8 @@ public class CSDiagramCPType implements CPType {
 
 	@Reference
 	private CSDiagramSettingLocalService _csDiagramSettingLocalService;
+
+	@Reference
+	private Language _language;
 
 }

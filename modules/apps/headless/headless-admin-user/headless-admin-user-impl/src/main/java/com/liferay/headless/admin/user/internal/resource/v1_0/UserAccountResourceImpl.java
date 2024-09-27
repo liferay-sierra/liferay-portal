@@ -27,7 +27,6 @@ import com.liferay.headless.admin.user.dto.v1_0.UserAccount;
 import com.liferay.headless.admin.user.dto.v1_0.UserAccountContactInformation;
 import com.liferay.headless.admin.user.internal.dto.v1_0.converter.AccountResourceDTOConverter;
 import com.liferay.headless.admin.user.internal.dto.v1_0.converter.OrganizationResourceDTOConverter;
-import com.liferay.headless.admin.user.internal.dto.v1_0.converter.UserAccountResourceDTOConverter;
 import com.liferay.headless.admin.user.internal.dto.v1_0.converter.UserResourceDTOConverter;
 import com.liferay.headless.admin.user.internal.dto.v1_0.util.CustomFieldsUtil;
 import com.liferay.headless.admin.user.internal.dto.v1_0.util.ServiceBuilderAddressUtil;
@@ -43,11 +42,17 @@ import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.captcha.CaptchaSettings;
+import com.liferay.portal.kernel.cookies.CookiesManagerUtil;
+import com.liferay.portal.kernel.cookies.constants.CookiesConstants;
+import com.liferay.portal.kernel.exception.UserLockoutException;
+import com.liferay.portal.kernel.exception.UserPasswordException;
 import com.liferay.portal.kernel.model.Address;
+import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Contact;
 import com.liferay.portal.kernel.model.EmailAddress;
 import com.liferay.portal.kernel.model.ListTypeConstants;
 import com.liferay.portal.kernel.model.Organization;
+import com.liferay.portal.kernel.model.PasswordPolicy;
 import com.liferay.portal.kernel.model.Phone;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.Website;
@@ -58,7 +63,11 @@ import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.BooleanFilter;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.search.filter.TermFilter;
+import com.liferay.portal.kernel.security.auth.Authenticator;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.auth.session.AuthenticatedSessionManager;
+import com.liferay.portal.kernel.security.auth.session.AuthenticatedSessionManagerUtil;
+import com.liferay.portal.kernel.security.ldap.LDAPSettingsUtil;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
@@ -66,6 +75,7 @@ import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.ContactLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.service.UserGroupRoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.UserService;
@@ -73,6 +83,7 @@ import com.liferay.portal.kernel.util.CalendarFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TextFormatter;
@@ -86,7 +97,7 @@ import com.liferay.portal.vulcan.fields.NestedFieldSupport;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.portal.vulcan.util.SearchUtil;
-import com.liferay.users.admin.kernel.util.UsersAdminUtil;
+import com.liferay.users.admin.kernel.util.UsersAdmin;
 
 import java.util.Arrays;
 import java.util.Calendar;
@@ -99,10 +110,15 @@ import java.util.Optional;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.service.component.annotations.ServiceScope;
 
 /**
@@ -408,20 +424,21 @@ public class UserAccountResourceImpl
 				contextAcceptLanguage.getPreferredLocale(),
 				userAccount.getGivenName(), userAccount.getAdditionalName(),
 				userAccount.getFamilyName(), _getPrefixId(userAccount),
-				_getSuffixId(userAccount), userAccount.getJobTitle());
+				_getSuffixId(userAccount), userAccount.getJobTitle(),
+				ServiceContextFactory.getInstance(contextHttpServletRequest));
 
 		User user = accountEntryUserRel.getUser();
 
-		UsersAdminUtil.updateAddresses(
+		_usersAdmin.updateAddresses(
 			Contact.class.getName(), user.getContactId(),
 			_getAddresses(userAccount));
-		UsersAdminUtil.updateEmailAddresses(
+		_usersAdmin.updateEmailAddresses(
 			Contact.class.getName(), user.getContactId(),
 			_getServiceBuilderEmailAddresses(userAccount));
-		UsersAdminUtil.updatePhones(
+		_usersAdmin.updatePhones(
 			Contact.class.getName(), user.getContactId(),
 			_getServiceBuilderPhones(userAccount));
-		UsersAdminUtil.updateWebsites(
+		_usersAdmin.updateWebsites(
 			Contact.class.getName(), user.getContactId(),
 			_getWebsites(userAccount));
 
@@ -451,8 +468,8 @@ public class UserAccountResourceImpl
 				user.getScreenName(), user.getEmailAddress(), false, null,
 				user.getLanguageId(), user.getTimeZoneId(), user.getGreeting(),
 				user.getComments(), user.getFirstName(), user.getMiddleName(),
-				user.getLastName(), contact.getPrefixId(),
-				contact.getSuffixId(), user.isMale(),
+				user.getLastName(), contact.getPrefixListTypeId(),
+				contact.getSuffixListTypeId(), user.isMale(),
 				_getBirthdayMonth(userAccount), _getBirthdayDay(userAccount),
 				_getBirthdayYear(userAccount), sms, facebook, jabber, skype,
 				twitter, user.getJobTitle(), user.getGroupIds(),
@@ -596,16 +613,16 @@ public class UserAccountResourceImpl
 			PermissionThreadLocal.setPermissionChecker(
 				_permissionCheckerFactory.create(user));
 
-			UsersAdminUtil.updateAddresses(
+			_usersAdmin.updateAddresses(
 				Contact.class.getName(), user.getContactId(),
 				_getAddresses(userAccount));
-			UsersAdminUtil.updateEmailAddresses(
+			_usersAdmin.updateEmailAddresses(
 				Contact.class.getName(), user.getContactId(),
 				_getServiceBuilderEmailAddresses(userAccount));
-			UsersAdminUtil.updatePhones(
+			_usersAdmin.updatePhones(
 				Contact.class.getName(), user.getContactId(),
 				_getServiceBuilderPhones(userAccount));
-			UsersAdminUtil.updateWebsites(
+			_usersAdmin.updateWebsites(
 				Contact.class.getName(), user.getContactId(),
 				_getWebsites(userAccount));
 		}
@@ -703,6 +720,9 @@ public class UserAccountResourceImpl
 			organizationIds = longStream.toArray();
 		}
 
+		_updatePassword(
+			user, userAccount.getCurrentPassword(), userAccount.getPassword());
+
 		return _toUserAccount(
 			_userService.updateUser(
 				userAccountId, null, null, null, false, null, null,
@@ -737,11 +757,16 @@ public class UserAccountResourceImpl
 			String externalReferenceCode, UserAccount userAccount)
 		throws Exception {
 
-		boolean autoPassword = false;
+		boolean autoPassword = true;
 		String password = userAccount.getPassword();
 
-		if (Validator.isNull(password)) {
-			autoPassword = true;
+		if (Validator.isNotNull(password)) {
+			autoPassword = false;
+
+			_checkCurrentPassword(
+				_userLocalService.fetchUserByExternalReferenceCode(
+					contextCompany.getCompanyId(), externalReferenceCode),
+				userAccount.getCurrentPassword());
 		}
 
 		User user = _userService.addOrUpdateUser(
@@ -863,6 +888,42 @@ public class UserAccountResourceImpl
 			).ifPresent(
 				existingUserAccount::setCustomFields
 			);
+		}
+	}
+
+	private void _checkCurrentPassword(User user, String currentPassword)
+		throws Exception {
+
+		if ((user == null) || (contextUser.getUserId() != user.getUserId())) {
+			return;
+		}
+
+		if (Validator.isNull(currentPassword)) {
+			throw new UserPasswordException.MustMatchCurrentPassword(
+				user.getUserId());
+		}
+
+		int authResult = _userLocalService.authenticateByUserId(
+			contextCompany.getCompanyId(), user.getUserId(), currentPassword,
+			new HashMap<>(), new HashMap<>(), new HashMap<>());
+
+		if (authResult == Authenticator.FAILURE) {
+			if (user.isLockout()) {
+				HttpServletRequest originalHttpServletRequest =
+					_portal.getOriginalServletRequest(
+						contextHttpServletRequest);
+				HttpServletResponse httpServletResponse =
+					contextHttpServletResponse;
+
+				AuthenticatedSessionManagerUtil.logout(
+					originalHttpServletRequest, httpServletResponse);
+
+				throw new UserLockoutException.PasswordPolicyLockout(
+					user, user.getPasswordPolicy());
+			}
+
+			throw new UserPasswordException.MustMatchCurrentPassword(
+				user.getUserId());
 		}
 	}
 
@@ -1080,6 +1141,23 @@ public class UserAccountResourceImpl
 		);
 	}
 
+	private boolean _isPasswordResetRequired(User user) throws Exception {
+		PasswordPolicy passwordPolicy = user.getPasswordPolicy();
+
+		boolean ldapPasswordPolicyEnabled =
+			LDAPSettingsUtil.isPasswordPolicyEnabled(user.getCompanyId());
+
+		if ((user.getLastLoginDate() == null) &&
+			(((passwordPolicy == null) && !ldapPasswordPolicyEnabled) ||
+			 ((passwordPolicy != null) && passwordPolicy.isChangeable() &&
+			  passwordPolicy.isChangeRequired()))) {
+
+			return true;
+		}
+
+		return false;
+	}
+
 	private UserAccount _toUserAccount(
 			Map<String, Map<String, String>> actions, long userId)
 		throws Exception {
@@ -1097,13 +1175,53 @@ public class UserAccountResourceImpl
 			_getDTOConverterContext(user.getUserId()), user);
 	}
 
+	private void _updatePassword(
+			User user, String currentPassword, String password)
+		throws Exception {
+
+		if ((user == null) || Validator.isNull(password)) {
+			return;
+		}
+
+		_checkCurrentPassword(user, currentPassword);
+
+		_userService.updatePassword(
+			user.getUserId(), password, password,
+			_isPasswordResetRequired(user));
+
+		String cookie = CookiesManagerUtil.getCookieValue(
+			CookiesConstants.NAME_JSESSIONID, contextHttpServletRequest, false);
+
+		if ((contextUser.getUserId() == user.getUserId()) && (cookie != null)) {
+			String login = null;
+
+			String authType = contextCompany.getAuthType();
+
+			if (authType.equals(CompanyConstants.AUTH_TYPE_EA)) {
+				login = user.getEmailAddress();
+			}
+			else if (authType.equals(CompanyConstants.AUTH_TYPE_SN)) {
+				login = user.getScreenName();
+			}
+			else if (authType.equals(CompanyConstants.AUTH_TYPE_ID)) {
+				login = String.valueOf(user.getUserId());
+			}
+
+			_authenticatedSessionManager.login(
+				contextHttpServletRequest, contextHttpServletResponse, login,
+				password, false, null);
+		}
+	}
+
 	private static final EntityModel _entityModel =
 		new UserAccountEntityModel();
 
 	@Reference(
+		policy = ReferencePolicy.DYNAMIC,
+		policyOption = ReferencePolicyOption.GREEDY,
 		target = "(model.class.name=com.liferay.account.model.AccountEntry)"
 	)
-	private ModelResourcePermission<AccountEntry>
+	private volatile ModelResourcePermission<AccountEntry>
 		_accountEntryModelResourcePermission;
 
 	@Reference
@@ -1121,6 +1239,9 @@ public class UserAccountResourceImpl
 	@Reference
 	private AnnouncementsDeliveryLocalService
 		_announcementsDeliveryLocalService;
+
+	@Reference
+	private AuthenticatedSessionManager _authenticatedSessionManager;
 
 	@Reference
 	private CaptchaSettings _captchaSettings;
@@ -1144,7 +1265,7 @@ public class UserAccountResourceImpl
 	private PermissionCheckerFactory _permissionCheckerFactory;
 
 	@Reference
-	private UserAccountResourceDTOConverter _userAccountResourceDTOConverter;
+	private Portal _portal;
 
 	@Reference
 	private UserGroupRoleLocalService _userGroupRoleLocalService;
@@ -1159,6 +1280,9 @@ public class UserAccountResourceImpl
 
 	@Reference
 	private UserResourceDTOConverter _userResourceDTOConverter;
+
+	@Reference
+	private UsersAdmin _usersAdmin;
 
 	@Reference
 	private UserService _userService;

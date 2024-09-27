@@ -36,7 +36,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Luca Pellizzon
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = {
 		"javax.portlet.name=" + CommercePortletKeys.COMMERCE_CHECKOUT,
 		"mvc.command.name=/commerce_checkout/checkout_redirect"
@@ -50,11 +50,9 @@ public class CheckoutRedirectMVCRenderCommand implements MVCRenderCommand {
 			RenderRequest renderRequest, RenderResponse renderResponse)
 		throws PortletException {
 
-		HttpServletRequest httpServletRequest = _portal.getHttpServletRequest(
-			renderRequest);
-
 		HttpServletRequest originalHttpServletRequest =
-			_portal.getOriginalServletRequest(httpServletRequest);
+			_portal.getOriginalServletRequest(
+				_portal.getHttpServletRequest(renderRequest));
 
 		HttpServletResponse originalHttpServletResponse =
 			_portal.getHttpServletResponse(renderResponse);
@@ -77,7 +75,7 @@ public class CheckoutRedirectMVCRenderCommand implements MVCRenderCommand {
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(exception.getMessage(), exception);
+				_log.debug(exception);
 			}
 		}
 

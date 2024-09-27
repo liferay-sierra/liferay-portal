@@ -14,7 +14,6 @@
 
 package com.liferay.portlet.usersadmin.util;
 
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.configuration.Filter;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -31,6 +30,7 @@ import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.model.UserGroupRole;
 import com.liferay.portal.kernel.model.Website;
 import com.liferay.portal.kernel.model.role.RoleConstants;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Hits;
@@ -483,30 +483,33 @@ public class UsersAdminImpl implements UsersAdmin {
 			actionRequest, "addressPrimary");
 
 		for (int addressesIndex : addressesIndexes) {
+			long countryId = ParamUtil.getLong(
+				actionRequest, "addressCountryId" + addressesIndex);
+			String city = ParamUtil.getString(
+				actionRequest, "addressCity" + addressesIndex);
 			String street1 = ParamUtil.getString(
 				actionRequest, "addressStreet1_" + addressesIndex);
 			String street2 = ParamUtil.getString(
 				actionRequest, "addressStreet2_" + addressesIndex);
 			String street3 = ParamUtil.getString(
 				actionRequest, "addressStreet3_" + addressesIndex);
-			String city = ParamUtil.getString(
-				actionRequest, "addressCity" + addressesIndex);
 			String zip = ParamUtil.getString(
 				actionRequest, "addressZip" + addressesIndex);
-			long countryId = ParamUtil.getLong(
-				actionRequest, "addressCountryId" + addressesIndex);
 
-			if (Validator.isNull(street1) && Validator.isNull(street2) &&
-				Validator.isNull(street3) && Validator.isNull(city) &&
-				Validator.isNull(zip) && (countryId == 0)) {
+			if ((countryId == 0) && Validator.isNull(city) &&
+				Validator.isNull(street1) && Validator.isNull(street2) &&
+				Validator.isNull(street3) && Validator.isNull(zip)) {
 
 				continue;
 			}
 
+			long addressId = ParamUtil.getLong(
+				actionRequest, "addressId" + addressesIndex);
+
+			long listTypeId = ParamUtil.getLong(
+				actionRequest, "addressListTypeId" + addressesIndex);
 			long regionId = ParamUtil.getLong(
 				actionRequest, "addressRegionId" + addressesIndex);
-			long typeId = ParamUtil.getLong(
-				actionRequest, "addressTypeId" + addressesIndex);
 			boolean mailing = ParamUtil.getBoolean(
 				actionRequest, "addressMailing" + addressesIndex);
 
@@ -516,14 +519,11 @@ public class UsersAdminImpl implements UsersAdmin {
 				primary = true;
 			}
 
-			long addressId = ParamUtil.getLong(
-				actionRequest, "addressId" + addressesIndex);
-
 			Address address = AddressLocalServiceUtil.createAddress(addressId);
 
 			address.setCountryId(countryId);
+			address.setListTypeId(listTypeId);
 			address.setRegionId(regionId);
-			address.setTypeId(typeId);
 			address.setCity(city);
 			address.setMailing(mailing);
 			address.setPrimary(primary);
@@ -571,8 +571,8 @@ public class UsersAdminImpl implements UsersAdmin {
 				continue;
 			}
 
-			long typeId = ParamUtil.getLong(
-				actionRequest, "emailAddressTypeId" + emailAddressesIndex);
+			long listTypeId = ParamUtil.getLong(
+				actionRequest, "emailAddressListTypeId" + emailAddressesIndex);
 
 			boolean primary = false;
 
@@ -587,7 +587,7 @@ public class UsersAdminImpl implements UsersAdmin {
 				EmailAddressLocalServiceUtil.createEmailAddress(emailAddressId);
 
 			emailAddress.setAddress(address);
-			emailAddress.setTypeId(typeId);
+			emailAddress.setListTypeId(listTypeId);
 			emailAddress.setPrimary(primary);
 
 			emailAddresses.add(emailAddress);
@@ -738,10 +738,10 @@ public class UsersAdminImpl implements UsersAdmin {
 			ParamUtil.getString(actionRequest, "orgLaborsIndexes"), 0);
 
 		for (int orgLaborsIndex : orgLaborsIndexes) {
-			long typeId = ParamUtil.getLong(
-				actionRequest, "orgLaborTypeId" + orgLaborsIndex, -1);
+			long listTypeId = ParamUtil.getLong(
+				actionRequest, "orgLaborListTypeId" + orgLaborsIndex, -1);
 
-			if (typeId == -1) {
+			if (listTypeId == -1) {
 				continue;
 			}
 
@@ -780,7 +780,7 @@ public class UsersAdminImpl implements UsersAdmin {
 			OrgLabor orgLabor = OrgLaborLocalServiceUtil.createOrgLabor(
 				orgLaborId);
 
-			orgLabor.setTypeId(typeId);
+			orgLabor.setListTypeId(listTypeId);
 			orgLabor.setSunOpen(sunOpen);
 			orgLabor.setSunClose(sunClose);
 			orgLabor.setMonOpen(monOpen);
@@ -835,7 +835,7 @@ public class UsersAdminImpl implements UsersAdmin {
 			}
 
 			long typeId = ParamUtil.getLong(
-				actionRequest, "phoneTypeId" + phonesIndex);
+				actionRequest, "phoneListTypeId" + phonesIndex);
 
 			boolean primary = false;
 
@@ -850,7 +850,7 @@ public class UsersAdminImpl implements UsersAdmin {
 
 			phone.setNumber(number);
 			phone.setExtension(extension);
-			phone.setTypeId(typeId);
+			phone.setListTypeId(typeId);
 			phone.setPrimary(primary);
 
 			phones.add(phone);
@@ -1116,8 +1116,8 @@ public class UsersAdminImpl implements UsersAdmin {
 				continue;
 			}
 
-			long typeId = ParamUtil.getLong(
-				actionRequest, "websiteTypeId" + websitesIndex);
+			long listTypeId = ParamUtil.getLong(
+				actionRequest, "websiteListTypeId" + websitesIndex);
 
 			boolean primary = false;
 
@@ -1131,7 +1131,7 @@ public class UsersAdminImpl implements UsersAdmin {
 			Website website = WebsiteLocalServiceUtil.createWebsite(websiteId);
 
 			website.setUrl(url);
-			website.setTypeId(typeId);
+			website.setListTypeId(listTypeId);
 			website.setPrimary(primary);
 
 			websites.add(website);
@@ -1248,14 +1248,14 @@ public class UsersAdminImpl implements UsersAdmin {
 			String zip = address.getZip();
 			long regionId = address.getRegionId();
 			long countryId = address.getCountryId();
-			long typeId = address.getTypeId();
+			long listTypeId = address.getListTypeId();
 			boolean mailing = address.isMailing();
 			boolean primary = address.isPrimary();
 
 			if (addressId <= 0) {
 				address = AddressServiceUtil.addAddress(
 					className, classPK, street1, street2, street3, city, zip,
-					regionId, countryId, typeId, mailing, primary,
+					regionId, countryId, listTypeId, mailing, primary,
 					new ServiceContext());
 
 				addressId = address.getAddressId();
@@ -1263,7 +1263,7 @@ public class UsersAdminImpl implements UsersAdmin {
 			else {
 				AddressServiceUtil.updateAddress(
 					addressId, street1, street2, street3, city, zip, regionId,
-					countryId, typeId, mailing, primary);
+					countryId, listTypeId, mailing, primary);
 			}
 
 			addressIds.add(addressId);
@@ -1289,19 +1289,19 @@ public class UsersAdminImpl implements UsersAdmin {
 			long emailAddressId = emailAddress.getEmailAddressId();
 
 			String address = emailAddress.getAddress();
-			long typeId = emailAddress.getTypeId();
+			long listTypeId = emailAddress.getListTypeId();
 			boolean primary = emailAddress.isPrimary();
 
 			if (emailAddressId <= 0) {
 				emailAddress = EmailAddressServiceUtil.addEmailAddress(
-					className, classPK, address, typeId, primary,
+					className, classPK, address, listTypeId, primary,
 					new ServiceContext());
 
 				emailAddressId = emailAddress.getEmailAddressId();
 			}
 			else {
 				EmailAddressServiceUtil.updateEmailAddress(
-					emailAddressId, address, typeId, primary);
+					emailAddressId, address, listTypeId, primary);
 			}
 
 			emailAddressIds.add(emailAddressId);
@@ -1327,7 +1327,7 @@ public class UsersAdminImpl implements UsersAdmin {
 		for (OrgLabor orgLabor : orgLabors) {
 			long orgLaborId = orgLabor.getOrgLaborId();
 
-			long typeId = orgLabor.getTypeId();
+			long listTypeId = orgLabor.getListTypeId();
 			int sunOpen = orgLabor.getSunOpen();
 			int sunClose = orgLabor.getSunClose();
 			int monOpen = orgLabor.getMonOpen();
@@ -1345,7 +1345,7 @@ public class UsersAdminImpl implements UsersAdmin {
 
 			if (orgLaborId <= 0) {
 				orgLabor = OrgLaborServiceUtil.addOrgLabor(
-					classPK, typeId, sunOpen, sunClose, monOpen, monClose,
+					classPK, listTypeId, sunOpen, sunClose, monOpen, monClose,
 					tueOpen, tueClose, wedOpen, wedClose, thuOpen, thuClose,
 					friOpen, friClose, satOpen, satClose);
 
@@ -1353,9 +1353,9 @@ public class UsersAdminImpl implements UsersAdmin {
 			}
 			else {
 				OrgLaborServiceUtil.updateOrgLabor(
-					orgLaborId, typeId, sunOpen, sunClose, monOpen, monClose,
-					tueOpen, tueClose, wedOpen, wedClose, thuOpen, thuClose,
-					friOpen, friClose, satOpen, satClose);
+					orgLaborId, listTypeId, sunOpen, sunClose, monOpen,
+					monClose, tueOpen, tueClose, wedOpen, wedClose, thuOpen,
+					thuClose, friOpen, friClose, satOpen, satClose);
 			}
 
 			orgLaborsIds.add(orgLaborId);
@@ -1381,19 +1381,19 @@ public class UsersAdminImpl implements UsersAdmin {
 
 			String number = phone.getNumber();
 			String extension = phone.getExtension();
-			long typeId = phone.getTypeId();
+			long listTypeId = phone.getListTypeId();
 			boolean primary = phone.isPrimary();
 
 			if (phoneId <= 0) {
 				phone = PhoneServiceUtil.addPhone(
-					className, classPK, number, extension, typeId, primary,
+					className, classPK, number, extension, listTypeId, primary,
 					new ServiceContext());
 
 				phoneId = phone.getPhoneId();
 			}
 			else {
 				PhoneServiceUtil.updatePhone(
-					phoneId, number, extension, typeId, primary);
+					phoneId, number, extension, listTypeId, primary);
 			}
 
 			phoneIds.add(phoneId);
@@ -1419,19 +1419,19 @@ public class UsersAdminImpl implements UsersAdmin {
 			long websiteId = website.getWebsiteId();
 
 			String url = website.getUrl();
-			long typeId = website.getTypeId();
+			long listTypeId = website.getListTypeId();
 			boolean primary = website.isPrimary();
 
 			if (websiteId <= 0) {
 				website = WebsiteServiceUtil.addWebsite(
-					className, classPK, url, typeId, primary,
+					className, classPK, url, listTypeId, primary,
 					new ServiceContext());
 
 				websiteId = website.getWebsiteId();
 			}
 			else {
 				WebsiteServiceUtil.updateWebsite(
-					websiteId, url, typeId, primary);
+					websiteId, url, listTypeId, primary);
 			}
 
 			websiteIds.add(websiteId);

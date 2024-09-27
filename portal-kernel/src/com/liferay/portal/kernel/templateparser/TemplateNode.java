@@ -111,6 +111,31 @@ public class TemplateNode extends LinkedHashMap<String, Object> {
 		_siblingTemplateNodes.add(templateNode);
 	}
 
+	@Override
+	public Object clone() {
+		TemplateNode templateNode = new TemplateNode(
+			_themeDisplay, getName(), getData(), getType(), getAttributes());
+
+		for (Map.Entry<String, TemplateNode> entry :
+				_childTemplateNodes.entrySet()) {
+
+			templateNode.appendChild(entry.getValue());
+		}
+
+		templateNode.appendOptions(getOptions());
+		templateNode.appendOptionsMap(getOptionsMap());
+
+		for (TemplateNode siblingTemplateNode : _siblingTemplateNodes) {
+			templateNode.appendSibling(siblingTemplateNode);
+		}
+
+		for (Map.Entry<String, Object> entry : entrySet()) {
+			templateNode.put(entry.getKey(), entry.getValue());
+		}
+
+		return templateNode;
+	}
+
 	public String getAttribute(String name) {
 		Map<String, String> attributes = getAttributes();
 
@@ -136,8 +161,11 @@ public class TemplateNode extends LinkedHashMap<String, Object> {
 	public String getData() {
 		String type = getType();
 
-		if (type.equals("ddm-decimal") || type.equals("ddm-number") ||
-			type.equals("numeric")) {
+		if (type.equals("color") || type.equals("ddm-color")) {
+			return _getColorData();
+		}
+		else if (type.equals("ddm-decimal") || type.equals("ddm-number") ||
+				 type.equals("numeric")) {
 
 			return _getNumericData();
 		}
@@ -222,7 +250,7 @@ public class TemplateNode extends LinkedHashMap<String, Object> {
 				return StringPool.BLANK;
 			}
 
-			return PortalUtil.getLayoutFriendlyURL(layout, _themeDisplay);
+			return PortalUtil.getLayoutRelativeURL(layout, _themeDisplay);
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
@@ -231,6 +259,16 @@ public class TemplateNode extends LinkedHashMap<String, Object> {
 
 			return StringPool.BLANK;
 		}
+	}
+
+	private String _getColorData() {
+		String data = (String)get("data");
+
+		if (data.startsWith(StringPool.POUND)) {
+			return data;
+		}
+
+		return StringPool.POUND + data;
 	}
 
 	private String _getDDMJournalArticleFriendlyURL() {
@@ -338,7 +376,7 @@ public class TemplateNode extends LinkedHashMap<String, Object> {
 				"longitude", jsonObject.get("lng")
 			);
 
-			return jsonObject.toJSONString();
+			return jsonObject.toString();
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
@@ -401,7 +439,7 @@ public class TemplateNode extends LinkedHashMap<String, Object> {
 				"uuid", assetRenderer.getUuid()
 			);
 
-			return jsonObject.toJSONString();
+			return jsonObject.toString();
 		}
 		catch (JSONException jsonException) {
 			if (_log.isDebugEnabled()) {

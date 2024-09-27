@@ -14,6 +14,7 @@
 
 package com.liferay.headless.admin.content.internal.resource.v1_0.factory;
 
+import com.liferay.headless.admin.content.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.headless.admin.content.resource.v1_0.PageDefinitionResource;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -33,14 +34,18 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -58,7 +61,10 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @author Javier Gamarra
  * @generated
  */
-@Component(immediate = true, service = PageDefinitionResource.Factory.class)
+@Component(
+	property = "resource.locator.key=/headless-admin-content/v1.0/PageDefinition",
+	service = PageDefinitionResource.Factory.class
+)
 @Generated("")
 public class PageDefinitionResourceFactoryImpl
 	implements PageDefinitionResource.Factory {
@@ -73,9 +79,7 @@ public class PageDefinitionResourceFactoryImpl
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (PageDefinitionResource)ProxyUtil.newProxyInstance(
-					PageDefinitionResource.class.getClassLoader(),
-					new Class<?>[] {PageDefinitionResource.class},
+				return _pageDefinitionResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -134,14 +138,32 @@ public class PageDefinitionResourceFactoryImpl
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		PageDefinitionResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, PageDefinitionResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		PageDefinitionResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			PageDefinitionResource.class.getClassLoader(),
+			PageDefinitionResource.class);
+
+		try {
+			Constructor<PageDefinitionResource> constructor =
+				(Constructor<PageDefinitionResource>)proxyClass.getConstructor(
+					InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -164,7 +186,7 @@ public class PageDefinitionResourceFactoryImpl
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		PageDefinitionResource pageDefinitionResource =
@@ -189,6 +211,7 @@ public class PageDefinitionResourceFactoryImpl
 		pageDefinitionResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		pageDefinitionResource.setRoleLocalService(_roleLocalService);
+		pageDefinitionResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(pageDefinitionResource, arguments);
@@ -204,6 +227,10 @@ public class PageDefinitionResourceFactoryImpl
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, PageDefinitionResource>
+		_pageDefinitionResourceProxyProviderFunction =
+			_getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -226,9 +253,6 @@ public class PageDefinitionResourceFactoryImpl
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -237,6 +261,9 @@ public class PageDefinitionResourceFactoryImpl
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

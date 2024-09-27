@@ -29,7 +29,6 @@ import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.util.Locale;
@@ -45,7 +44,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Renato Rego
  */
 @Component(
-	immediate = true,
 	property = "ddm.form.field.type.name=" + DDMFormFieldTypeConstants.SELECT,
 	service = {
 		DDMFormFieldValueAccessor.class, SelectDDMFormFieldValueAccessor.class
@@ -177,7 +175,7 @@ public class SelectDDMFormFieldValueAccessor
 					ddmFormFieldOptions.getOptionLabels(optionValue);
 
 				if (optionLabel != null) {
-					sb.append(HtmlUtil.escape(optionLabel.getString(locale)));
+					sb.append(optionLabel.getString(locale));
 				}
 				else {
 					sb.append(optionValue);

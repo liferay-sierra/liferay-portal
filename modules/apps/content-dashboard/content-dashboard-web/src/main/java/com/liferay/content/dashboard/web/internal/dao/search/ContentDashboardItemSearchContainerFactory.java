@@ -16,13 +16,13 @@ package com.liferay.content.dashboard.web.internal.dao.search;
 
 import com.liferay.asset.kernel.service.AssetCategoryLocalService;
 import com.liferay.asset.kernel.service.AssetVocabularyLocalService;
+import com.liferay.content.dashboard.item.ContentDashboardItem;
+import com.liferay.content.dashboard.item.ContentDashboardItemFactory;
 import com.liferay.content.dashboard.web.internal.constants.ContentDashboardPortletKeys;
-import com.liferay.content.dashboard.web.internal.item.ContentDashboardItem;
-import com.liferay.content.dashboard.web.internal.item.ContentDashboardItemFactory;
-import com.liferay.content.dashboard.web.internal.item.ContentDashboardItemFactoryTracker;
+import com.liferay.content.dashboard.web.internal.item.ContentDashboardItemFactoryRegistry;
 import com.liferay.content.dashboard.web.internal.search.request.ContentDashboardSearchContextBuilder;
 import com.liferay.content.dashboard.web.internal.searcher.ContentDashboardSearchRequestBuilderFactory;
-import com.liferay.content.dashboard.web.internal.util.ContentDashboardSearchClassNameUtil;
+import com.liferay.info.search.InfoSearchClassMapperRegistry;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
@@ -43,7 +43,6 @@ import com.liferay.portal.search.searcher.Searcher;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -59,16 +58,18 @@ public class ContentDashboardItemSearchContainerFactory {
 	public static ContentDashboardItemSearchContainerFactory getInstance(
 		AssetCategoryLocalService assetCategoryLocalService,
 		AssetVocabularyLocalService assetVocabularyLocalService,
-		ContentDashboardItemFactoryTracker contentDashboardItemFactoryTracker,
+		ContentDashboardItemFactoryRegistry contentDashboardItemFactoryRegistry,
 		ContentDashboardSearchRequestBuilderFactory
 			contentDashboardSearchRequestBuilderFactory,
+		InfoSearchClassMapperRegistry infoSearchClassMapperRegistry,
 		Portal portal, PortletRequest portletRequest,
 		PortletResponse portletResponse, Searcher searcher) {
 
 		return new ContentDashboardItemSearchContainerFactory(
 			assetCategoryLocalService, assetVocabularyLocalService,
-			contentDashboardItemFactoryTracker,
-			contentDashboardSearchRequestBuilderFactory, portal, portletRequest,
+			contentDashboardItemFactoryRegistry,
+			contentDashboardSearchRequestBuilderFactory,
+			infoSearchClassMapperRegistry, portal, portletRequest,
 			portletResponse, searcher);
 	}
 
@@ -83,30 +84,23 @@ public class ContentDashboardItemSearchContainerFactory {
 			searchContainer.getStart());
 	}
 
-	public SearchContainer<ContentDashboardItem<?>> createWithAllResults()
-		throws PortletException {
-
-		SearchContainer<ContentDashboardItem<?>> searchContainer =
-			_getContentDashboardItemSearchContainer();
-
-		return _create(-1, searchContainer, -1);
-	}
-
 	private ContentDashboardItemSearchContainerFactory(
 		AssetCategoryLocalService assetCategoryLocalService,
 		AssetVocabularyLocalService assetVocabularyLocalService,
-		ContentDashboardItemFactoryTracker contentDashboardItemFactoryTracker,
+		ContentDashboardItemFactoryRegistry contentDashboardItemFactoryRegistry,
 		ContentDashboardSearchRequestBuilderFactory
 			contentDashboardSearchRequestBuilderFactory,
+		InfoSearchClassMapperRegistry infoSearchClassMapperRegistry,
 		Portal portal, PortletRequest portletRequest,
 		PortletResponse portletResponse, Searcher searcher) {
 
 		_assetCategoryLocalService = assetCategoryLocalService;
 		_assetVocabularyLocalService = assetVocabularyLocalService;
-		_contentDashboardItemFactoryTracker =
-			contentDashboardItemFactoryTracker;
+		_contentDashboardItemFactoryRegistry =
+			contentDashboardItemFactoryRegistry;
 		_contentDashboardSearchRequestBuilderFactory =
 			contentDashboardSearchRequestBuilderFactory;
+		_infoSearchClassMapperRegistry = infoSearchClassMapperRegistry;
 		_portal = portal;
 		_portletRequest = portletRequest;
 		_portletResponse = portletResponse;
@@ -134,11 +128,9 @@ public class ContentDashboardItemSearchContainerFactory {
 		Stream<Document> stream = documents.stream();
 
 		return stream.map(
-			this::_toContentDashboardItemOptional
+			this::_toContentDashboardItem
 		).filter(
-			Optional::isPresent
-		).map(
-			Optional::get
+			Objects::nonNull
 		).collect(
 			Collectors.toList()
 		);
@@ -233,35 +225,32 @@ public class ContentDashboardItemSearchContainerFactory {
 		return new Sort(Field.MODIFIED_DATE, Sort.LONG_TYPE, !orderByAsc);
 	}
 
-	private Optional<ContentDashboardItem<?>> _toContentDashboardItemOptional(
+	private ContentDashboardItem<?> _toContentDashboardItem(
 		ContentDashboardItemFactory<?> contentDashboardItemFactory,
 		Document document) {
 
 		try {
-			return Optional.of(
-				contentDashboardItemFactory.create(
-					GetterUtil.getLong(document.get(Field.ENTRY_CLASS_PK))));
+			return contentDashboardItemFactory.create(
+				GetterUtil.getLong(document.get(Field.ENTRY_CLASS_PK)));
 		}
 		catch (PortalException portalException) {
 			_log.error(portalException);
 
-			return Optional.empty();
+			return null;
 		}
 	}
 
-	private Optional<ContentDashboardItem<?>> _toContentDashboardItemOptional(
-		Document document) {
+	private ContentDashboardItem<?> _toContentDashboardItem(Document document) {
+		ContentDashboardItemFactory<?> contentDashboardItemFactory =
+			_contentDashboardItemFactoryRegistry.getContentDashboardItemFactory(
+				_infoSearchClassMapperRegistry.getClassName(
+					document.get(Field.ENTRY_CLASS_NAME)));
 
-		Optional<ContentDashboardItemFactory<?>>
-			contentDashboardItemFactoryOptional =
-				_contentDashboardItemFactoryTracker.
-					getContentDashboardItemFactoryOptional(
-						ContentDashboardSearchClassNameUtil.getClassName(
-							document.get(Field.ENTRY_CLASS_NAME)));
+		if (contentDashboardItemFactory == null) {
+			return null;
+		}
 
-		return contentDashboardItemFactoryOptional.flatMap(
-			contentDashboardItemFactory -> _toContentDashboardItemOptional(
-				contentDashboardItemFactory, document));
+		return _toContentDashboardItem(contentDashboardItemFactory, document);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
@@ -269,10 +258,11 @@ public class ContentDashboardItemSearchContainerFactory {
 
 	private final AssetCategoryLocalService _assetCategoryLocalService;
 	private final AssetVocabularyLocalService _assetVocabularyLocalService;
-	private final ContentDashboardItemFactoryTracker
-		_contentDashboardItemFactoryTracker;
+	private final ContentDashboardItemFactoryRegistry
+		_contentDashboardItemFactoryRegistry;
 	private final ContentDashboardSearchRequestBuilderFactory
 		_contentDashboardSearchRequestBuilderFactory;
+	private final InfoSearchClassMapperRegistry _infoSearchClassMapperRegistry;
 	private final Locale _locale;
 	private String _orderByCol;
 	private String _orderByType;

@@ -20,12 +20,14 @@ import com.liferay.asset.kernel.service.AssetTagService;
 import com.liferay.commerce.account.model.CommerceAccountGroup;
 import com.liferay.commerce.account.service.CommerceAccountGroupRelService;
 import com.liferay.commerce.account.service.CommerceAccountGroupService;
+import com.liferay.commerce.product.configuration.CProductVersionConfiguration;
 import com.liferay.commerce.product.constants.CPAttachmentFileEntryConstants;
 import com.liferay.commerce.product.exception.NoSuchCPDefinitionException;
 import com.liferay.commerce.product.exception.NoSuchCatalogException;
 import com.liferay.commerce.product.model.CPAttachmentFileEntry;
 import com.liferay.commerce.product.model.CPDefinition;
 import com.liferay.commerce.product.model.CPDefinitionOptionRel;
+import com.liferay.commerce.product.model.CProduct;
 import com.liferay.commerce.product.model.CommerceCatalog;
 import com.liferay.commerce.product.model.CommerceChannel;
 import com.liferay.commerce.product.service.CPAttachmentFileEntryService;
@@ -37,16 +39,19 @@ import com.liferay.commerce.product.service.CPDefinitionSpecificationOptionValue
 import com.liferay.commerce.product.service.CPInstanceService;
 import com.liferay.commerce.product.service.CPOptionService;
 import com.liferay.commerce.product.service.CPSpecificationOptionService;
+import com.liferay.commerce.product.service.CProductLocalService;
 import com.liferay.commerce.product.service.CommerceCatalogLocalService;
 import com.liferay.commerce.product.service.CommerceChannelRelService;
 import com.liferay.commerce.product.service.CommerceChannelService;
 import com.liferay.commerce.product.type.CPType;
-import com.liferay.commerce.product.type.CPTypeServicesTracker;
+import com.liferay.commerce.product.type.CPTypeRegistry;
 import com.liferay.commerce.service.CPDefinitionInventoryService;
 import com.liferay.commerce.shop.by.diagram.constants.CSDiagramCPTypeConstants;
 import com.liferay.commerce.shop.by.diagram.service.CSDiagramEntryService;
 import com.liferay.commerce.shop.by.diagram.service.CSDiagramPinService;
 import com.liferay.commerce.shop.by.diagram.service.CSDiagramSettingService;
+import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
+import com.liferay.expando.kernel.service.ExpandoTableLocalService;
 import com.liferay.headless.commerce.admin.catalog.dto.v1_0.Attachment;
 import com.liferay.headless.commerce.admin.catalog.dto.v1_0.Category;
 import com.liferay.headless.commerce.admin.catalog.dto.v1_0.Diagram;
@@ -87,27 +92,33 @@ import com.liferay.headless.commerce.core.util.DateConfig;
 import com.liferay.headless.commerce.core.util.ExpandoUtil;
 import com.liferay.headless.commerce.core.util.LanguageUtils;
 import com.liferay.headless.commerce.core.util.ServiceContextHelper;
+import com.liferay.headless.common.spi.odata.entity.EntityFieldsUtil;
+import com.liferay.portal.kernel.change.tracking.CTAware;
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.settings.SystemSettingsLocator;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.odata.entity.EntityModel;
+import com.liferay.portal.search.expando.ExpandoBridgeIndexer;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
-import com.liferay.portal.vulcan.resource.EntityModelResource;
 import com.liferay.upload.UniqueFileNameProvider;
 
 import java.io.Serializable;
@@ -116,6 +127,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -135,12 +147,11 @@ import org.osgi.service.component.annotations.ServiceScope;
  * @author Igor Beslic
  */
 @Component(
-	enabled = false,
 	properties = "OSGI-INF/liferay/rest/v1_0/product.properties",
 	scope = ServiceScope.PROTOTYPE, service = ProductResource.class
 )
-public class ProductResourceImpl
-	extends BaseProductResourceImpl implements EntityModelResource {
+@CTAware
+public class ProductResourceImpl extends BaseProductResourceImpl {
 
 	@Override
 	public void delete(
@@ -153,7 +164,7 @@ public class ProductResourceImpl
 	}
 
 	@Override
-	public Response deleteProduct(Long id) throws Exception {
+	public void deleteProduct(Long id) throws Exception {
 		CPDefinition cpDefinition =
 			_cpDefinitionService.fetchCPDefinitionByCProductId(id);
 
@@ -164,14 +175,10 @@ public class ProductResourceImpl
 
 		_cpDefinitionService.deleteCPDefinition(
 			cpDefinition.getCPDefinitionId());
-
-		Response.ResponseBuilder responseBuilder = Response.ok();
-
-		return responseBuilder.build();
 	}
 
 	@Override
-	public Response deleteProductByExternalReferenceCode(
+	public void deleteProductByExternalReferenceCode(
 			String externalReferenceCode)
 		throws Exception {
 
@@ -188,15 +195,51 @@ public class ProductResourceImpl
 
 		_cpDefinitionService.deleteCPDefinition(
 			cpDefinition.getCPDefinitionId());
-
-		Response.ResponseBuilder responseBuilder = Response.ok();
-
-		return responseBuilder.build();
 	}
 
 	@Override
-	public EntityModel getEntityModel(MultivaluedMap multivaluedMap) {
-		return _entityModel;
+	public void deleteProductByExternalReferenceCodeByVersion(
+			String externalReferenceCode, Integer version)
+		throws Exception {
+
+		CProduct cProduct =
+			_cProductLocalService.fetchCProductByExternalReferenceCode(
+				contextCompany.getCompanyId(), externalReferenceCode);
+
+		if (cProduct == null) {
+			throw new NoSuchCPDefinitionException(
+				"Unable to find product with external reference code " +
+					externalReferenceCode);
+		}
+
+		CPDefinition cpDefinition =
+			_cpDefinitionService.getCProductCPDefinition(
+				cProduct.getCProductId(), version);
+
+		_cpDefinitionService.deleteCPDefinition(
+			cpDefinition.getCPDefinitionId());
+	}
+
+	@Override
+	public void deleteProductByVersion(Long id, Integer version)
+		throws Exception {
+
+		CPDefinition cpDefinition =
+			_cpDefinitionService.getCProductCPDefinition(id, version);
+
+		_cpDefinitionService.deleteCPDefinition(
+			cpDefinition.getCPDefinitionId());
+	}
+
+	@Override
+	public EntityModel getEntityModel(MultivaluedMap multivaluedMap)
+		throws Exception {
+
+		return new ProductEntityModel(
+			EntityFieldsUtil.getEntityFields(
+				_portal.getClassNameId(CPDefinition.class.getName()),
+				contextCompany.getCompanyId(), _expandoBridgeIndexer,
+				_expandoColumnLocalService, _expandoTableLocalService));
 	}
 
 	@Override
@@ -227,6 +270,38 @@ public class ProductResourceImpl
 				"Unable to find product with external reference code " +
 					externalReferenceCode);
 		}
+
+		return _toProduct(cpDefinition.getCPDefinitionId());
+	}
+
+	@Override
+	public Product getProductByExternalReferenceCodeByVersion(
+			String externalReferenceCode, Integer version)
+		throws Exception {
+
+		CProduct cProduct =
+			_cProductLocalService.fetchCProductByExternalReferenceCode(
+				contextCompany.getCompanyId(), externalReferenceCode);
+
+		if (cProduct == null) {
+			throw new NoSuchCPDefinitionException(
+				"Unable to find product with external reference code " +
+					externalReferenceCode);
+		}
+
+		CPDefinition cpDefinition =
+			_cpDefinitionService.getCProductCPDefinition(
+				cProduct.getCProductId(), version);
+
+		return _toProduct(cpDefinition.getCPDefinitionId());
+	}
+
+	@Override
+	public Product getProductByVersion(Long id, Integer version)
+		throws Exception {
+
+		CPDefinition cpDefinition =
+			_cpDefinitionService.getCProductCPDefinition(id, version);
 
 		return _toProduct(cpDefinition.getCPDefinitionId());
 	}
@@ -282,6 +357,16 @@ public class ProductResourceImpl
 					externalReferenceCode);
 		}
 
+		ServiceContext serviceContext = _serviceContextHelper.getServiceContext(
+			cpDefinition.getGroupId());
+
+		int productStatus = GetterUtil.getInteger(product.getProductStatus());
+
+		if (productStatus == WorkflowConstants.STATUS_DRAFT) {
+			serviceContext.setWorkflowAction(
+				WorkflowConstants.ACTION_SAVE_DRAFT);
+		}
+
 		_updateProduct(cpDefinition, product);
 
 		Response.ResponseBuilder responseBuilder = Response.ok();
@@ -325,7 +410,8 @@ public class ProductResourceImpl
 		}
 
 		cpDefinition = _cpDefinitionService.copyCPDefinition(
-			cpDefinition.getCPDefinitionId(), commerceCatalog.getGroupId());
+			cpDefinition.getCPDefinitionId(), commerceCatalog.getGroupId(),
+			WorkflowConstants.STATUS_DRAFT);
 
 		return _toProduct(cpDefinition.getCPDefinitionId());
 	}
@@ -347,8 +433,10 @@ public class ProductResourceImpl
 				catalogId);
 		}
 
-		cpDefinition = _cpDefinitionService.copyCPDefinition(
-			cpDefinition.getCPDefinitionId(), commerceCatalog.getGroupId());
+		cpDefinition = _cpDefinitionService.cloneCPDefinition(
+			cpDefinition.getCPDefinitionId(), commerceCatalog.getGroupId(),
+			_serviceContextHelper.getServiceContext(
+				commerceCatalog.getGroupId()));
 
 		return _toProduct(cpDefinition.getCPDefinitionId());
 	}
@@ -419,11 +507,10 @@ public class ProductResourceImpl
 				ArrayUtil.toLongArray(assetCategoryIds));
 		}
 		else if (cpDefinition != null) {
-			long[] assetCategoryIds = _assetCategoryLocalService.getCategoryIds(
-				cpDefinition.getModelClassName(),
-				cpDefinition.getCPDefinitionId());
-
-			serviceContext.setAssetCategoryIds(assetCategoryIds);
+			serviceContext.setAssetCategoryIds(
+				_assetCategoryLocalService.getCategoryIds(
+					cpDefinition.getModelClassName(),
+					cpDefinition.getCPDefinitionId()));
 		}
 
 		Map<String, String> nameMap = product.getName();
@@ -446,20 +533,56 @@ public class ProductResourceImpl
 				cpDefinition.getDescriptionMap());
 		}
 
+		Map<String, String> urlTitleMap = product.getUrls();
+
+		if ((cpDefinition != null) && (urlTitleMap == null)) {
+			urlTitleMap = LanguageUtils.getLanguageIdMap(
+				cpDefinition.getUrlTitleMap());
+		}
+
+		Map<String, String> metaTitleMap = product.getMetaTitle();
+
+		if ((cpDefinition != null) && (metaTitleMap == null)) {
+			metaTitleMap = LanguageUtils.getLanguageIdMap(
+				cpDefinition.getMetaTitleMap());
+		}
+
+		Map<String, String> metaDescriptionMap = product.getMetaDescription();
+
+		if ((cpDefinition != null) && (metaDescriptionMap == null)) {
+			metaDescriptionMap = LanguageUtils.getLanguageIdMap(
+				cpDefinition.getMetaDescriptionMap());
+		}
+
+		Map<String, String> metaKeywordsMap = product.getMetaKeyword();
+
+		if ((cpDefinition != null) && (metaKeywordsMap == null)) {
+			metaKeywordsMap = LanguageUtils.getLanguageIdMap(
+				cpDefinition.getMetaKeywordsMap());
+		}
+
 		boolean ignoreSKUCombinations = true;
 
 		if (cpDefinition != null) {
 			ignoreSKUCombinations = cpDefinition.isIgnoreSKUCombinations();
 		}
 
+		int productStatus = GetterUtil.getInteger(product.getProductStatus());
+
+		if (productStatus != WorkflowConstants.STATUS_APPROVED) {
+			serviceContext.setWorkflowAction(
+				WorkflowConstants.ACTION_SAVE_DRAFT);
+		}
+
 		cpDefinition = _cpDefinitionService.addOrUpdateCPDefinition(
 			product.getExternalReferenceCode(), commerceCatalog.getGroupId(),
 			LanguageUtils.getLocalizedMap(nameMap),
 			LanguageUtils.getLocalizedMap(shortDescriptionMap),
-			LanguageUtils.getLocalizedMap(descriptionMap), null,
-			LanguageUtils.getLocalizedMap(product.getMetaTitle()),
-			LanguageUtils.getLocalizedMap(product.getMetaDescription()),
-			LanguageUtils.getLocalizedMap(product.getMetaKeyword()),
+			LanguageUtils.getLocalizedMap(descriptionMap),
+			LanguageUtils.getLocalizedMap(urlTitleMap),
+			LanguageUtils.getLocalizedMap(metaTitleMap),
+			LanguageUtils.getLocalizedMap(metaDescriptionMap),
+			LanguageUtils.getLocalizedMap(metaKeywordsMap),
 			product.getProductType(), ignoreSKUCombinations,
 			GetterUtil.getBoolean(shippingConfiguration.getShippable(), true),
 			GetterUtil.getBoolean(
@@ -486,7 +609,7 @@ public class ProductResourceImpl
 				subscriptionConfiguration.getSubscriptionTypeAsString()),
 			null,
 			GetterUtil.getLong(subscriptionConfiguration.getNumberOfLength()),
-			serviceContext);
+			productStatus, serviceContext);
 
 		if ((product.getActive() != null) && !product.getActive()) {
 			Map<String, Serializable> workflowContext = new HashMap<>();
@@ -542,6 +665,45 @@ public class ProductResourceImpl
 		).toArray(
 			String[]::new
 		);
+	}
+
+	private CPDefinition _getCPDefinition(
+			CPDefinition cpDefinition, ServiceContext serviceContext)
+		throws Exception {
+
+		if (!cpDefinition.isDraft() &&
+			(serviceContext.getWorkflowAction() ==
+				WorkflowConstants.ACTION_SAVE_DRAFT)) {
+
+			CProductVersionConfiguration cProductVersionConfiguration =
+				_configurationProvider.getConfiguration(
+					CProductVersionConfiguration.class,
+					new SystemSettingsLocator(
+						CProductVersionConfiguration.class.getName()));
+
+			if (cProductVersionConfiguration.enabled()) {
+				List<CPDefinition> cProductCPDefinitions =
+					_cpDefinitionService.getCProductCPDefinitions(
+						cpDefinition.getCProductId(),
+						WorkflowConstants.STATUS_DRAFT, QueryUtil.ALL_POS,
+						QueryUtil.ALL_POS);
+
+				for (CPDefinition cProductCPDefinition :
+						cProductCPDefinitions) {
+
+					_cpDefinitionService.updateStatus(
+						cProductCPDefinition.getCPDefinitionId(),
+						WorkflowConstants.STATUS_INCOMPLETE, serviceContext,
+						Collections.emptyMap());
+				}
+
+				cpDefinition = _cpDefinitionService.copyCPDefinition(
+					cpDefinition.getCPDefinitionId(), cpDefinition.getGroupId(),
+					WorkflowConstants.STATUS_DRAFT);
+			}
+		}
+
+		return cpDefinition;
 	}
 
 	private Map<String, Serializable> _getExpandoBridgeAttributes(
@@ -918,7 +1080,7 @@ public class ProductResourceImpl
 
 		// Diagram
 
-		CPType cpType = _cpTypeServicesTracker.getCPType(
+		CPType cpType = _cpTypeRegistry.getCPType(
 			cpDefinition.getProductTypeName());
 
 		if ((cpType != null) &&
@@ -977,6 +1139,15 @@ public class ProductResourceImpl
 		ServiceContext serviceContext = _serviceContextHelper.getServiceContext(
 			cpDefinition.getGroupId());
 
+		int productStatus = GetterUtil.getInteger(product.getProductStatus());
+
+		if (productStatus == WorkflowConstants.STATUS_DRAFT) {
+			serviceContext.setWorkflowAction(
+				WorkflowConstants.ACTION_SAVE_DRAFT);
+		}
+
+		cpDefinition = _getCPDefinition(cpDefinition, serviceContext);
+
 		String[] assetTags = product.getTags();
 
 		if (product.getTags() == null) {
@@ -1007,11 +1178,10 @@ public class ProductResourceImpl
 		Category[] categories = product.getCategories();
 
 		if (categories == null) {
-			long[] assetCategoryIds = _assetCategoryLocalService.getCategoryIds(
-				cpDefinition.getModelClassName(),
-				cpDefinition.getCPDefinitionId());
-
-			serviceContext.setAssetCategoryIds(assetCategoryIds);
+			serviceContext.setAssetCategoryIds(
+				_assetCategoryLocalService.getCategoryIds(
+					cpDefinition.getModelClassName(),
+					cpDefinition.getCPDefinitionId()));
 		}
 		else {
 			List<Long> assetCategoryIds = new ArrayList<>();
@@ -1046,14 +1216,43 @@ public class ProductResourceImpl
 				cpDefinition.getDescriptionMap());
 		}
 
+		Map<String, String> urlTitleMap = product.getUrls();
+
+		if ((cpDefinition != null) && (urlTitleMap == null)) {
+			urlTitleMap = LanguageUtils.getLanguageIdMap(
+				cpDefinition.getUrlTitleMap());
+		}
+
+		Map<String, String> metaTitleMap = product.getMetaTitle();
+
+		if ((cpDefinition != null) && (metaTitleMap == null)) {
+			metaTitleMap = LanguageUtils.getLanguageIdMap(
+				cpDefinition.getMetaTitleMap());
+		}
+
+		Map<String, String> metaDescriptionMap = product.getMetaDescription();
+
+		if ((cpDefinition != null) && (metaDescriptionMap == null)) {
+			metaDescriptionMap = LanguageUtils.getLanguageIdMap(
+				cpDefinition.getMetaDescriptionMap());
+		}
+
+		Map<String, String> metaKeywordsMap = product.getMetaKeyword();
+
+		if ((cpDefinition != null) && (metaKeywordsMap == null)) {
+			metaKeywordsMap = LanguageUtils.getLanguageIdMap(
+				cpDefinition.getMetaKeywordsMap());
+		}
+
 		cpDefinition = _cpDefinitionService.updateCPDefinition(
 			cpDefinition.getCPDefinitionId(),
 			LanguageUtils.getLocalizedMap(nameMap),
 			LanguageUtils.getLocalizedMap(shortDescriptionMap),
 			LanguageUtils.getLocalizedMap(descriptionMap),
-			cpDefinition.getUrlTitleMap(), cpDefinition.getMetaTitleMap(),
-			cpDefinition.getMetaDescriptionMap(),
-			cpDefinition.getMetaKeywordsMap(),
+			LanguageUtils.getLocalizedMap(urlTitleMap),
+			LanguageUtils.getLocalizedMap(metaTitleMap),
+			LanguageUtils.getLocalizedMap(metaDescriptionMap),
+			LanguageUtils.getLocalizedMap(metaKeywordsMap),
 			cpDefinition.isIgnoreSKUCombinations(),
 			cpDefinition.getDDMStructureKey(), true,
 			displayDateConfig.getMonth(), displayDateConfig.getDay(),
@@ -1112,6 +1311,9 @@ public class ProductResourceImpl
 	private CommerceChannelService _commerceChannelService;
 
 	@Reference
+	private ConfigurationProvider _configurationProvider;
+
+	@Reference
 	private CPAttachmentFileEntryService _cpAttachmentFileEntryService;
 
 	@Reference
@@ -1147,10 +1349,13 @@ public class ProductResourceImpl
 	private CPOptionService _cpOptionService;
 
 	@Reference
+	private CProductLocalService _cProductLocalService;
+
+	@Reference
 	private CPSpecificationOptionService _cpSpecificationOptionService;
 
 	@Reference
-	private CPTypeServicesTracker _cpTypeServicesTracker;
+	private CPTypeRegistry _cpTypeRegistry;
 
 	@Reference
 	private CSDiagramEntryService _csDiagramEntryService;
@@ -1164,7 +1369,17 @@ public class ProductResourceImpl
 	@Reference
 	private DTOConverterRegistry _dtoConverterRegistry;
 
-	private final EntityModel _entityModel = new ProductEntityModel();
+	@Reference
+	private ExpandoBridgeIndexer _expandoBridgeIndexer;
+
+	@Reference
+	private ExpandoColumnLocalService _expandoColumnLocalService;
+
+	@Reference
+	private ExpandoTableLocalService _expandoTableLocalService;
+
+	@Reference
+	private Portal _portal;
 
 	@Reference
 	private ProductDTOConverter _productDTOConverter;

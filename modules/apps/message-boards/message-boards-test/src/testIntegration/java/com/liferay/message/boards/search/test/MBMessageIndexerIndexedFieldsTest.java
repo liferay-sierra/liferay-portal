@@ -20,14 +20,15 @@ import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.message.boards.model.MBCategory;
 import com.liferay.message.boards.model.MBMessage;
 import com.liferay.message.boards.model.MBThread;
+import com.liferay.message.boards.service.MBMessageLocalService;
 import com.liferay.petra.string.CharPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.parsers.bbcode.BBCodeTranslatorUtil;
-import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Field;
+import com.liferay.portal.kernel.search.SearchEngineHelper;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
@@ -35,10 +36,13 @@ import com.liferay.portal.kernel.test.rule.Sync;
 import com.liferay.portal.kernel.test.rule.SynchronousDestinationTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.HtmlParser;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.LocalizationUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.search.legacy.searcher.SearchRequestBuilderFactory;
+import com.liferay.portal.search.searcher.SearchResponse;
 import com.liferay.portal.search.test.util.FieldValuesAssert;
 import com.liferay.portal.search.test.util.IndexedFieldsFixture;
 import com.liferay.portal.search.test.util.IndexerFixture;
@@ -94,13 +98,12 @@ public class MBMessageIndexerIndexedFieldsTest {
 		MBMessage mbMessage = mbMessageFixture.createMBMessageWithCategory(
 			searchTerm);
 
-		Document document = mbMessageIndexerFixture.searchOnlyOne(
-			searchTerm, locale);
-
-		indexedFieldsFixture.postProcessDocument(document);
+		SearchResponse searchResponse =
+			mbMessageIndexerFixture.searchOnlyOneSearchResponse(
+				searchTerm, locale);
 
 		FieldValuesAssert.assertFieldValues(
-			_expectedFieldValues(mbMessage), document, searchTerm);
+			_expectedFieldValues(mbMessage), searchResponse);
 	}
 
 	@Rule
@@ -108,7 +111,7 @@ public class MBMessageIndexerIndexedFieldsTest {
 
 	protected void setUpIndexedFieldsFixture() {
 		indexedFieldsFixture = new IndexedFieldsFixture(
-			resourcePermissionLocalService);
+			resourcePermissionLocalService, searchEngineHelper);
 	}
 
 	protected void setUpMBMessageFixture() throws PortalException {
@@ -122,7 +125,8 @@ public class MBMessageIndexerIndexedFieldsTest {
 	}
 
 	protected void setUpMBMessageIndexerFixture() {
-		mbMessageIndexerFixture = new IndexerFixture<>(MBMessage.class);
+		mbMessageIndexerFixture = new IndexerFixture<>(
+			MBMessage.class, _searchRequestBuilderFactory);
 	}
 
 	protected void setUpUserSearchFixture() throws Exception {
@@ -146,6 +150,9 @@ public class MBMessageIndexerIndexedFieldsTest {
 
 	@Inject
 	protected ResourcePermissionLocalService resourcePermissionLocalService;
+
+	@Inject
+	protected SearchEngineHelper searchEngineHelper;
 
 	protected UserSearchFixture userSearchFixture;
 
@@ -186,13 +193,23 @@ public class MBMessageIndexerIndexedFieldsTest {
 		).put(
 			"answer_String_sortable", "false"
 		).put(
+			"answered", "false"
+		).put(
 			"assetEntryId_sortable", String.valueOf(_getAssetEntryId(mbMessage))
+		).put(
+			"childMessagesCount",
+			String.valueOf(
+				_mbMessageLocalService.getChildMessagesCount(
+					mbMessage.getMessageId(),
+					WorkflowConstants.STATUS_APPROVED))
 		).put(
 			"discussion", "false"
 		).put(
 			"parentMessageId", String.valueOf(mbMessage.getParentMessageId())
 		).put(
 			"question", "false"
+		).put(
+			"statusByUserId", String.valueOf(mbMessage.getStatusByUserId())
 		).put(
 			"threadId", String.valueOf(mbMessage.getThreadId())
 		).put(
@@ -293,7 +310,7 @@ public class MBMessageIndexerIndexedFieldsTest {
 			content = BBCodeTranslatorUtil.getHTML(content);
 		}
 
-		return HtmlUtil.extractText(content);
+		return _htmlParser.extractText(content);
 	}
 
 	@Inject
@@ -304,14 +321,23 @@ public class MBMessageIndexerIndexedFieldsTest {
 	@DeleteAfterTestRun
 	private List<Group> _groups;
 
+	@Inject
+	private HtmlParser _htmlParser;
+
 	@DeleteAfterTestRun
 	private List<MBCategory> _mbCategories;
+
+	@Inject
+	private MBMessageLocalService _mbMessageLocalService;
 
 	@DeleteAfterTestRun
 	private List<MBMessage> _mbMessages;
 
 	@DeleteAfterTestRun
 	private List<MBThread> _mbThreads;
+
+	@Inject
+	private SearchRequestBuilderFactory _searchRequestBuilderFactory;
 
 	private User _user;
 

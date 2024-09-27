@@ -31,13 +31,15 @@ import com.liferay.asset.list.web.internal.servlet.taglib.util.ListItemsActionDr
 import com.liferay.asset.util.AssetRendererFactoryClassProvider;
 import com.liferay.document.library.kernel.service.DLAppService;
 import com.liferay.dynamic.data.mapping.util.DDMIndexer;
-import com.liferay.info.display.url.provider.InfoEditURLProviderTracker;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.display.url.provider.InfoEditURLProviderRegistry;
+import com.liferay.info.item.InfoItemServiceRegistry;
+import com.liferay.info.search.InfoSearchClassMapperRegistry;
 import com.liferay.item.selector.ItemSelector;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
+import com.liferay.segments.configuration.provider.SegmentsConfigurationProvider;
 
 import java.io.IOException;
 
@@ -69,7 +71,8 @@ import org.osgi.service.component.annotations.Reference;
 		"javax.portlet.init-param.view-template=/view.jsp",
 		"javax.portlet.name=" + AssetListPortletKeys.ASSET_LIST,
 		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=administrator"
+		"javax.portlet.security-role-ref=administrator",
+		"javax.portlet.version=3.0"
 	},
 	service = Portlet.class
 )
@@ -98,24 +101,26 @@ public class AssetListPortlet extends MVCPortlet {
 		renderRequest.setAttribute(
 			AssetListWebKeys.EDIT_ASSET_LIST_DISPLAY_CONTEXT,
 			new EditAssetListDisplayContext(
-				_assetRendererFactoryClassProvider, _itemSelector,
-				renderRequest, renderResponse,
+				_assetRendererFactoryClassProvider,
+				_infoSearchClassMapperRegistry, _itemSelector, renderRequest,
+				renderResponse, _segmentsConfigurationProvider,
 				_getUnicodeProperties(assetListDisplayContext)));
 		renderRequest.setAttribute(
 			AssetListWebKeys.INFO_COLLECTION_PROVIDER_DISPLAY_CONTEXT,
 			new InfoCollectionProviderDisplayContext(
-				_infoItemServiceTracker, renderRequest, renderResponse));
+				_infoItemServiceRegistry, renderRequest, renderResponse));
 		renderRequest.setAttribute(
 			AssetListWebKeys.INFO_COLLECTION_PROVIDER_ITEMS_DISPLAY_CONTEXT,
 			new InfoCollectionProviderItemsDisplayContext(
-				_infoItemServiceTracker, renderRequest, renderResponse));
+				_infoItemServiceRegistry, renderRequest, renderResponse));
 		renderRequest.setAttribute(
 			AssetListWebKeys.ITEM_SELECTOR, _itemSelector);
 		renderRequest.setAttribute(
 			AssetListWebKeys.LIST_ITEMS_ACTION_DROPDOWN_ITEMS,
 			new ListItemsActionDropdownItems(
 				_assetDisplayPageFriendlyURLProvider, _dlAppService,
-				_infoEditURLProviderTracker, _infoItemServiceTracker,
+				_infoEditURLProviderRegistry, _infoItemServiceRegistry,
+				_infoSearchClassMapperRegistry,
 				_portal.getHttpServletRequest(renderRequest)));
 		renderRequest.setAttribute(
 			AssetListWebKeys.SELECT_STRUCTURE_FIELD_DISPLAY_CONTEXT,
@@ -172,15 +177,21 @@ public class AssetListPortlet extends MVCPortlet {
 	private DLAppService _dlAppService;
 
 	@Reference
-	private InfoEditURLProviderTracker _infoEditURLProviderTracker;
+	private InfoEditURLProviderRegistry _infoEditURLProviderRegistry;
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
+
+	@Reference
+	private InfoSearchClassMapperRegistry _infoSearchClassMapperRegistry;
 
 	@Reference
 	private ItemSelector _itemSelector;
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private SegmentsConfigurationProvider _segmentsConfigurationProvider;
 
 }

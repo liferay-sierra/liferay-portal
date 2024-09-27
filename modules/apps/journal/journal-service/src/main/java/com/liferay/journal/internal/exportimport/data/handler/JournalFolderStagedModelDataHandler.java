@@ -31,9 +31,9 @@ import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.trash.TrashHandler;
+import com.liferay.portal.kernel.trash.TrashHandlerRegistryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
@@ -160,7 +160,7 @@ public class JournalFolderStagedModelDataHandler
 
 		Map<Long, Long> journalFolderIds =
 			(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
-				Folder.class);
+				JournalFolder.class);
 
 		journalFolderIds.put(folderId, existingJournalFolder.getFolderId());
 	}
@@ -197,8 +197,9 @@ public class JournalFolderStagedModelDataHandler
 				serviceContext.setUuid(folder.getUuid());
 
 				importedFolder = _journalFolderLocalService.addFolder(
-					userId, groupId, parentFolderId, name,
-					folder.getDescription(), serviceContext);
+					folder.getExternalReferenceCode(), userId, groupId,
+					parentFolderId, name, folder.getDescription(),
+					serviceContext);
 			}
 			else {
 				String name = _journalFolderLocalService.getUniqueFolderName(
@@ -216,8 +217,8 @@ public class JournalFolderStagedModelDataHandler
 				null, groupId, parentFolderId, folder.getName(), 2);
 
 			importedFolder = _journalFolderLocalService.addFolder(
-				userId, groupId, parentFolderId, name, folder.getDescription(),
-				serviceContext);
+				folder.getExternalReferenceCode(), userId, groupId,
+				parentFolderId, name, folder.getDescription(), serviceContext);
 		}
 
 		importedFolder.setRestrictionType(folder.getRestrictionType());
@@ -242,27 +243,14 @@ public class JournalFolderStagedModelDataHandler
 			return;
 		}
 
-		TrashHandler trashHandler = existingFolder.getTrashHandler();
+		TrashHandler trashHandler = TrashHandlerRegistryUtil.getTrashHandler(
+			JournalFolder.class.getName());
 
 		if (trashHandler.isRestorable(existingFolder.getFolderId())) {
 			trashHandler.restoreTrashEntry(
 				portletDataContext.getUserId(folder.getUserUuid()),
 				existingFolder.getFolderId());
 		}
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMStructureLocalService(
-		DDMStructureLocalService ddmStructureLocalService) {
-
-		_ddmStructureLocalService = ddmStructureLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setJournalFolderLocalService(
-		JournalFolderLocalService journalFolderLocalService) {
-
-		_journalFolderLocalService = journalFolderLocalService;
 	}
 
 	private void _exportFolderDDMStructures(
@@ -335,7 +323,10 @@ public class JournalFolderStagedModelDataHandler
 	private static final Log _log = LogFactoryUtil.getLog(
 		JournalFolderStagedModelDataHandler.class);
 
+	@Reference
 	private DDMStructureLocalService _ddmStructureLocalService;
+
+	@Reference
 	private JournalFolderLocalService _journalFolderLocalService;
 
 }

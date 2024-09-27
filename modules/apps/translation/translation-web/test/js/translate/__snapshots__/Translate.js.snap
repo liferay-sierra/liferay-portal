@@ -38,7 +38,7 @@ exports[`Translate renders with auto-translate disabled 1`] = `
           class="tbar-nav"
         >
           <li
-            class="tbar-item tbar-item-expand"
+            class="tbar-item"
           >
             <div
               class="languages-selector autofit-row autofit-row-center"
@@ -55,6 +55,9 @@ exports[`Translate renders with auto-translate disabled 1`] = `
                   class="dropdown"
                 >
                   <button
+                    aria-controls="clay-dropdown-menu-21"
+                    aria-expanded="false"
+                    aria-haspopup="true"
                     class="dropdown-toggle btn btn-monospaced btn-sm btn-secondary"
                     style=""
                     type="button"
@@ -91,6 +94,9 @@ exports[`Translate renders with auto-translate disabled 1`] = `
                   class="dropdown"
                 >
                   <button
+                    aria-controls="clay-dropdown-menu-22"
+                    aria-expanded="false"
+                    aria-haspopup="true"
                     class="dropdown-toggle btn btn-monospaced btn-sm btn-secondary"
                     style=""
                     type="button"
@@ -118,45 +124,41 @@ exports[`Translate renders with auto-translate disabled 1`] = `
             </div>
           </li>
           <li
-            class="tbar-item"
+            class="align-items-end tbar-item tbar-item-expand"
           >
             <div
-              class="tbar-section text-right"
+              class="btn-group"
+              role="group"
             >
               <div
-                class="btn-group"
-                role="group"
+                class="btn-group-item"
               >
-                <div
-                  class="btn-group-item"
+                <a
+                  class="btn btn-sm btn-secondary"
+                  href="http://redirect-url"
                 >
-                  <a
-                    class="btn btn-sm btn-secondary"
-                    href="http://redirect-url"
-                  >
-                    cancel
-                  </a>
-                </div>
-                <div
-                  class="btn-group-item"
+                  cancel
+                </a>
+              </div>
+              <div
+                class="btn-group-item"
+              >
+                <button
+                  class="btn btn-sm btn-secondary"
+                  type="submit"
                 >
-                  <button
-                    class="btn btn-sm btn-secondary"
-                    type="submit"
-                  >
-                    Save as Draft
-                  </button>
-                </div>
-                <div
-                  class="btn-group-item"
+                  Save as Draft
+                </button>
+              </div>
+              <div
+                class="btn-group-item"
+              >
+                <button
+                  class="btn btn-sm btn-primary"
+                  type="submit"
                 >
-                  <button
-                    class="btn btn-sm btn-primary"
-                    type="submit"
-                  >
-                    Publish
-                  </button>
-                </div>
+                  Publish
+                </button>
               </div>
             </div>
           </li>
@@ -188,7 +190,7 @@ exports[`Translate renders with auto-translate disabled 1`] = `
             >
               en-US
             </span>
-            <div
+            <hr
               class="separator"
             />
           </div>
@@ -208,7 +210,7 @@ exports[`Translate renders with auto-translate disabled 1`] = `
             >
               es-ES
             </span>
-            <div
+            <hr
               class="separator"
             />
           </div>
@@ -627,6 +629,9 @@ exports[`Translate renders with auto-translate enabled 1`] = `
                   class="dropdown"
                 >
                   <button
+                    aria-controls="clay-dropdown-menu-1"
+                    aria-expanded="false"
+                    aria-haspopup="true"
                     class="dropdown-toggle btn btn-monospaced btn-sm btn-secondary"
                     style=""
                     type="button"
@@ -663,6 +668,9 @@ exports[`Translate renders with auto-translate enabled 1`] = `
                   class="dropdown"
                 >
                   <button
+                    aria-controls="clay-dropdown-menu-2"
+                    aria-expanded="false"
+                    aria-haspopup="true"
                     class="dropdown-toggle btn btn-monospaced btn-sm btn-secondary"
                     style=""
                     type="button"
@@ -692,56 +700,60 @@ exports[`Translate renders with auto-translate enabled 1`] = `
           <li
             class="tbar-item"
           >
-            <button
-              class="btn btn-sm btn-secondary"
-              type="button"
-            >
-              auto-translate
-            </button>
-          </li>
-          <li
-            class="tbar-item tbar-item-expand text-left"
-          />
-          <li
-            class="tbar-item"
-          >
             <div
-              class="tbar-section text-right"
+              class="autofit-row autofit-padded-no-gutters-y autofit-row-center"
             >
               <div
-                class="btn-group"
-                role="group"
+                class="autofit-col"
               >
-                <div
-                  class="btn-group-item"
+                <button
+                  class="btn btn-sm btn-secondary"
+                  type="button"
                 >
-                  <a
-                    class="btn btn-sm btn-secondary"
-                    href="http://redirect-url"
-                  >
-                    cancel
-                  </a>
-                </div>
-                <div
-                  class="btn-group-item"
+                  auto-translate
+                </button>
+              </div>
+              <div
+                class="autotranslate-feedback autofit-col"
+              />
+            </div>
+          </li>
+          <li
+            class="align-items-end tbar-item tbar-item-expand"
+          >
+            <div
+              class="btn-group"
+              role="group"
+            >
+              <div
+                class="btn-group-item"
+              >
+                <a
+                  class="btn btn-sm btn-secondary"
+                  href="http://redirect-url"
                 >
-                  <button
-                    class="btn btn-sm btn-secondary"
-                    type="submit"
-                  >
-                    Save as Draft
-                  </button>
-                </div>
-                <div
-                  class="btn-group-item"
+                  cancel
+                </a>
+              </div>
+              <div
+                class="btn-group-item"
+              >
+                <button
+                  class="btn btn-sm btn-secondary"
+                  type="submit"
                 >
-                  <button
-                    class="btn btn-sm btn-primary"
-                    type="submit"
-                  >
-                    Publish
-                  </button>
-                </div>
+                  Save as Draft
+                </button>
+              </div>
+              <div
+                class="btn-group-item"
+              >
+                <button
+                  class="btn btn-sm btn-primary"
+                  type="submit"
+                >
+                  Publish
+                </button>
               </div>
             </div>
           </li>
@@ -773,7 +785,7 @@ exports[`Translate renders with auto-translate enabled 1`] = `
             >
               en-US
             </span>
-            <div
+            <hr
               class="separator"
             />
           </div>
@@ -793,7 +805,7 @@ exports[`Translate renders with auto-translate enabled 1`] = `
             >
               es-ES
             </span>
-            <div
+            <hr
               class="separator"
             />
           </div>
@@ -886,7 +898,7 @@ exports[`Translate renders with auto-translate enabled 1`] = `
           >
             <button
               class="btn btn-monospaced btn-secondary"
-              title="auto-translate-x-field-Title"
+              title="auto-translate-Title-field"
               type="button"
             >
               <svg
@@ -900,7 +912,7 @@ exports[`Translate renders with auto-translate enabled 1`] = `
               <span
                 class="sr-only"
               >
-                auto-translate-x-field-Title
+                auto-translate-Title-field
               </span>
             </button>
           </div>
@@ -968,7 +980,7 @@ exports[`Translate renders with auto-translate enabled 1`] = `
           >
             <button
               class="btn btn-monospaced btn-secondary"
-              title="auto-translate-x-field-Description"
+              title="auto-translate-Description-field"
               type="button"
             >
               <svg
@@ -982,7 +994,7 @@ exports[`Translate renders with auto-translate enabled 1`] = `
               <span
                 class="sr-only"
               >
-                auto-translate-x-field-Description
+                auto-translate-Description-field
               </span>
             </button>
           </div>
@@ -1072,7 +1084,7 @@ exports[`Translate renders with auto-translate enabled 1`] = `
           >
             <button
               class="btn btn-monospaced btn-secondary"
-              title="auto-translate-x-field-Content"
+              title="auto-translate-Content-field"
               type="button"
             >
               <svg
@@ -1086,7 +1098,7 @@ exports[`Translate renders with auto-translate enabled 1`] = `
               <span
                 class="sr-only"
               >
-                auto-translate-x-field-Content
+                auto-translate-Content-field
               </span>
             </button>
           </div>
@@ -1154,7 +1166,7 @@ exports[`Translate renders with auto-translate enabled 1`] = `
           >
             <button
               class="btn btn-monospaced btn-secondary"
-              title="auto-translate-x-field-Content"
+              title="auto-translate-Content-field"
               type="button"
             >
               <svg
@@ -1168,7 +1180,7 @@ exports[`Translate renders with auto-translate enabled 1`] = `
               <span
                 class="sr-only"
               >
-                auto-translate-x-field-Content
+                auto-translate-Content-field
               </span>
             </button>
           </div>
@@ -1236,7 +1248,7 @@ exports[`Translate renders with auto-translate enabled 1`] = `
           >
             <button
               class="btn btn-monospaced btn-secondary"
-              title="auto-translate-x-field-Content"
+              title="auto-translate-Content-field"
               type="button"
             >
               <svg
@@ -1250,7 +1262,7 @@ exports[`Translate renders with auto-translate enabled 1`] = `
               <span
                 class="sr-only"
               >
-                auto-translate-x-field-Content
+                auto-translate-Content-field
               </span>
             </button>
           </div>
@@ -1318,7 +1330,7 @@ exports[`Translate renders with auto-translate enabled 1`] = `
           >
             <button
               class="btn btn-monospaced btn-secondary"
-              title="auto-translate-x-field-Content"
+              title="auto-translate-Content-field"
               type="button"
             >
               <svg
@@ -1332,7 +1344,7 @@ exports[`Translate renders with auto-translate enabled 1`] = `
               <span
                 class="sr-only"
               >
-                auto-translate-x-field-Content
+                auto-translate-Content-field
               </span>
             </button>
           </div>
@@ -1384,7 +1396,7 @@ exports[`Translate renders with experiences selector 1`] = `
             class="tbar-item"
           >
             <div
-              class="autofit-row autofit-row-center"
+              class="experience-selector autofit-row autofit-row-center"
             >
               <div
                 class="autofit-col"
@@ -1400,7 +1412,7 @@ exports[`Translate renders with experiences selector 1`] = `
                 class="autofit-col"
               >
                 <select
-                  class="form-control"
+                  class="form-control form-control-sm"
                   id="experience-selector"
                 >
                   <option
@@ -1435,6 +1447,9 @@ exports[`Translate renders with experiences selector 1`] = `
                   class="dropdown"
                 >
                   <button
+                    aria-controls="clay-dropdown-menu-3"
+                    aria-expanded="false"
+                    aria-haspopup="true"
                     class="dropdown-toggle btn btn-monospaced btn-sm btn-secondary"
                     style=""
                     type="button"
@@ -1471,6 +1486,9 @@ exports[`Translate renders with experiences selector 1`] = `
                   class="dropdown"
                 >
                   <button
+                    aria-controls="clay-dropdown-menu-4"
+                    aria-expanded="false"
+                    aria-haspopup="true"
                     class="dropdown-toggle btn btn-monospaced btn-sm btn-secondary"
                     style=""
                     type="button"
@@ -1500,56 +1518,60 @@ exports[`Translate renders with experiences selector 1`] = `
           <li
             class="tbar-item"
           >
-            <button
-              class="btn btn-sm btn-secondary"
-              type="button"
-            >
-              auto-translate
-            </button>
-          </li>
-          <li
-            class="tbar-item tbar-item-expand text-left"
-          />
-          <li
-            class="tbar-item"
-          >
             <div
-              class="tbar-section text-right"
+              class="autofit-row autofit-padded-no-gutters-y autofit-row-center"
             >
               <div
-                class="btn-group"
-                role="group"
+                class="autofit-col"
               >
-                <div
-                  class="btn-group-item"
+                <button
+                  class="btn btn-sm btn-secondary"
+                  type="button"
                 >
-                  <a
-                    class="btn btn-sm btn-secondary"
-                    href="http://redirect-url"
-                  >
-                    cancel
-                  </a>
-                </div>
-                <div
-                  class="btn-group-item"
+                  auto-translate
+                </button>
+              </div>
+              <div
+                class="autotranslate-feedback autofit-col"
+              />
+            </div>
+          </li>
+          <li
+            class="align-items-end tbar-item tbar-item-expand"
+          >
+            <div
+              class="btn-group"
+              role="group"
+            >
+              <div
+                class="btn-group-item"
+              >
+                <a
+                  class="btn btn-sm btn-secondary"
+                  href="http://redirect-url"
                 >
-                  <button
-                    class="btn btn-sm btn-secondary"
-                    type="submit"
-                  >
-                    Save as Draft
-                  </button>
-                </div>
-                <div
-                  class="btn-group-item"
+                  cancel
+                </a>
+              </div>
+              <div
+                class="btn-group-item"
+              >
+                <button
+                  class="btn btn-sm btn-secondary"
+                  type="submit"
                 >
-                  <button
-                    class="btn btn-sm btn-primary"
-                    type="submit"
-                  >
-                    Publish
-                  </button>
-                </div>
+                  Save as Draft
+                </button>
+              </div>
+              <div
+                class="btn-group-item"
+              >
+                <button
+                  class="btn btn-sm btn-primary"
+                  type="submit"
+                >
+                  Publish
+                </button>
               </div>
             </div>
           </li>
@@ -1581,7 +1603,7 @@ exports[`Translate renders with experiences selector 1`] = `
             >
               en-US
             </span>
-            <div
+            <hr
               class="separator"
             />
           </div>
@@ -1601,7 +1623,7 @@ exports[`Translate renders with experiences selector 1`] = `
             >
               es-ES
             </span>
-            <div
+            <hr
               class="separator"
             />
           </div>
@@ -1694,7 +1716,7 @@ exports[`Translate renders with experiences selector 1`] = `
           >
             <button
               class="btn btn-monospaced btn-secondary"
-              title="auto-translate-x-field-Title"
+              title="auto-translate-Title-field"
               type="button"
             >
               <svg
@@ -1708,7 +1730,7 @@ exports[`Translate renders with experiences selector 1`] = `
               <span
                 class="sr-only"
               >
-                auto-translate-x-field-Title
+                auto-translate-Title-field
               </span>
             </button>
           </div>
@@ -1776,7 +1798,7 @@ exports[`Translate renders with experiences selector 1`] = `
           >
             <button
               class="btn btn-monospaced btn-secondary"
-              title="auto-translate-x-field-Description"
+              title="auto-translate-Description-field"
               type="button"
             >
               <svg
@@ -1790,7 +1812,7 @@ exports[`Translate renders with experiences selector 1`] = `
               <span
                 class="sr-only"
               >
-                auto-translate-x-field-Description
+                auto-translate-Description-field
               </span>
             </button>
           </div>
@@ -1880,7 +1902,7 @@ exports[`Translate renders with experiences selector 1`] = `
           >
             <button
               class="btn btn-monospaced btn-secondary"
-              title="auto-translate-x-field-Content"
+              title="auto-translate-Content-field"
               type="button"
             >
               <svg
@@ -1894,7 +1916,7 @@ exports[`Translate renders with experiences selector 1`] = `
               <span
                 class="sr-only"
               >
-                auto-translate-x-field-Content
+                auto-translate-Content-field
               </span>
             </button>
           </div>
@@ -1962,7 +1984,7 @@ exports[`Translate renders with experiences selector 1`] = `
           >
             <button
               class="btn btn-monospaced btn-secondary"
-              title="auto-translate-x-field-Content"
+              title="auto-translate-Content-field"
               type="button"
             >
               <svg
@@ -1976,7 +1998,7 @@ exports[`Translate renders with experiences selector 1`] = `
               <span
                 class="sr-only"
               >
-                auto-translate-x-field-Content
+                auto-translate-Content-field
               </span>
             </button>
           </div>
@@ -2044,7 +2066,7 @@ exports[`Translate renders with experiences selector 1`] = `
           >
             <button
               class="btn btn-monospaced btn-secondary"
-              title="auto-translate-x-field-Content"
+              title="auto-translate-Content-field"
               type="button"
             >
               <svg
@@ -2058,7 +2080,7 @@ exports[`Translate renders with experiences selector 1`] = `
               <span
                 class="sr-only"
               >
-                auto-translate-x-field-Content
+                auto-translate-Content-field
               </span>
             </button>
           </div>
@@ -2126,7 +2148,7 @@ exports[`Translate renders with experiences selector 1`] = `
           >
             <button
               class="btn btn-monospaced btn-secondary"
-              title="auto-translate-x-field-Content"
+              title="auto-translate-Content-field"
               type="button"
             >
               <svg
@@ -2140,7 +2162,7 @@ exports[`Translate renders with experiences selector 1`] = `
               <span
                 class="sr-only"
               >
-                auto-translate-x-field-Content
+                auto-translate-Content-field
               </span>
             </button>
           </div>

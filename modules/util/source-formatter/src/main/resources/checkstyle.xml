@@ -200,6 +200,12 @@
 
 		<!-- Custom checks -->
 
+		<module name="com.liferay.source.formatter.checkstyle.check.AccessModifierCheck">
+			<property name="category" value="Bug Prevention" />
+			<property name="description" value="Checks for cases where visibility of methods can be decreased." />
+			<message key="access.modifier.incorrect" value="Access modifier of method ''{0}'' should be private" />
+			<property name="enabled" value="false" />
+		</module>
 		<module name="com.liferay.source.formatter.checkstyle.check.AnonymousClassCheck">
 			<property name="category" value="Bug Prevention" />
 			<property name="description" value="Checks for serialization issue when using anonymous class." />
@@ -274,6 +280,12 @@
 			<property name="enabled" value="false" />
 			<message key="company.local.service.use" value="Use ''CompanyLocalService.{0}'' when iterating over ''{1}''" />
 		</module>
+		<module name="com.liferay.source.formatter.checkstyle.check.ComponentAnnotationCheck">
+			<property name="category" value="Bug Prevention" />
+			<property name="description" value="Performs several checks on classes with @Component annotation." />
+			<message key="configuration.policy.incorrect" value="Always specify ''configurationPolicy = ConfigurationPolicy.REQUIRE'' when a classs extends ''BaseAuthVerifierPipelineConfigurator''" />
+			<message key="osgi.jaxrs.name.incorrect" value="The value of ''osgi.jaxrs.name'' should end with ''{0}''" />
+		</module>
 		<module name="com.liferay.source.formatter.checkstyle.check.ConcatCheck">
 			<property name="category" value="Performance" />
 			<property name="description" value="Checks for correct use of `StringBundler.concat`." />
@@ -300,7 +312,7 @@
 		</module>
 		<module name="com.liferay.source.formatter.checkstyle.check.ConstructorMissingEmptyLineCheck">
 			<property name="category" value="Styling" />
-			<property name="description" value="Checks for line breaks when assiging variables in constructor." />
+			<property name="description" value="Checks for line breaks when assigning variables in constructor." />
 			<message key="empty.line.missing" value="There should be an empty line before line ''{0}''" />
 		</module>
 		<module name="com.liferay.source.formatter.checkstyle.check.ConsumerTypeAnnotationCheck">
@@ -369,6 +381,11 @@
 			<property name="category" value="Styling" />
 			<property name="description" value="Validates messages that are passed to exceptions." />
 			<message key="message.incorrect" value="Incorrect exception message" />
+		</module>
+		<module name="com.liferay.source.formatter.checkstyle.check.ExceptionPrintStackTraceCheck">
+			<property name="category" value="Bug Prevention" />
+			<property name="description" value="Avoid using printStackTrace." />
+			<message key="method.call.avoid" value="Avoid using method ''printStackTrace''" />
 		</module>
 		<module name="com.liferay.source.formatter.checkstyle.check.ExceptionVariableNameCheck">
 			<property name="category" value="Naming Conventions" />
@@ -448,7 +465,8 @@
 			<property name="description" value="Checks for utilization of class `JSONUtil`." />
 			<message key="json.util.put.all.use" value="Use ''JSONUtil.putAll'' instead of chaining on ''JSONUtil.put''" />
 			<message key="json.util.put.use" value="Combine calls ''{0}'' ({1}) and ''{2}'' ({3}) into single call ''{4}''" />
-			<message key="json.util.to.string.use" value="Use ''toString'' instead of ''String.valueOf''" />
+			<message key="json.util.to.string.use.1" value="Use ''toString'' instead of ''String.valueOf''" />
+			<message key="json.util.to.string.use.2" value="Use ''toString'' instead of ''toJSONString''" />
 		</module>
 		<module name="com.liferay.source.formatter.checkstyle.check.LambdaCheck">
 			<property name="category" value="Styling" />
@@ -532,6 +550,7 @@
 			<message key="empty.line.missing.after.method.name" value="There should be an empty line after ''{0}''" />
 			<message key="empty.line.missing.after.variable.definition" value="There should be an empty line after variable definition of type ''{0}''" />
 			<message key="empty.line.missing.after.variable.reference" value="There should be an empty line before line ''{0}'', as we finished referencing variable ''{1}''" />
+			<message key="empty.line.missing.before.method.name" value="There should be an empty line before ''{0}''" />
 			<message key="empty.line.missing.before.variable.assign" value="There should be an empty line before assigning value to variable ''{0}''" />
 			<message key="empty.line.missing.before.variable.use" value="There should be an empty line between assigning and using variable ''{0}''" />
 			<message key="empty.line.missing.line.number" value="There should be an empty line {0} line ''{1}''" />
@@ -638,10 +657,17 @@
 			<property name="description" value="Finds unnecessary branching (`break`, `continue` or `return`) statements." />
 			<message key="branching.statement.redundant" value="Redundant ''{0}'' statement" />
 		</module>
+		<module name="com.liferay.source.formatter.checkstyle.check.RedundantLogCheck">
+			<property name="category" value="Performance" />
+			<property name="description" value="Finds unnecessary logs." />
+			<property name="enabled" value="false" />
+			<message key="log.redundant" value="Redundant log between line ''{0}'' and line ''{1}''." />
+		</module>
 		<module name="com.liferay.source.formatter.checkstyle.check.ReferenceAnnotationCheck">
 			<property name="category" value="Bug Prevention" />
 			<property name="description" value="Performs several checks on classes with @Reference annotation." />
 			<message key="default.unbind.redundant" value="No need to specify default ''unbind'' method. See https://osgi.org/javadoc/r4v43/cmpn/org/osgi/service/component/annotations/Reference.html#unbind()" />
+			<message key="dynamic.policy.missing" value="When using ''cardinality = ReferenceCardinality.OPTIONAL'' and ''policyOption = ReferencePolicyOption.GREEDY'', always use ''policy = ReferencePolicy.DYNAMIC'' as well" />
 			<message key="reference.move" value="Move @Reference from method ''{0}'' to field ''{1}''" />
 			<message key="target.value.incorrect" value="Do not use ''target = {0}''" />
 			<message key="unbind.dynamic.policy.missing" value="Always specify a valid ''unbind'' method when using ''policy = ReferencePolicy.DYNAMIC'' policy. See https://osgi.org/javadoc/r4v43/cmpn/org/osgi/service/component/annotations/Reference.html#unbind()" />
@@ -662,6 +688,11 @@
 			<property name="category" value="Styling" />
 			<property name="description" value="Finds cases of unnecessary semicolon." />
 			<message key="semi.colon.unnecessary" value="Unnecessary semi colon" />
+		</module>
+		<module name="com.liferay.source.formatter.checkstyle.check.ServiceProxyFactoryCheck">
+			<property name="category" value="Bug Prevention" />
+			<property name="description" value="Finds incorrect parameter in method call." />
+			<message key="parameter.incorrect" value="Pass ''{0}'' as the second parameter when calling method ''ServiceProxyFactory.newServiceTrackedInstance''" />
 		</module>
 		<module name="com.liferay.source.formatter.checkstyle.check.SingleStatementClauseCheck">
 			<property name="category" value="Styling" />
@@ -777,7 +808,9 @@
 		<module name="com.liferay.source.formatter.checkstyle.check.UnprocessedExceptionCheck">
 			<property name="category" value="Performance" />
 			<property name="description" value="Finds cases where an `Exception` is swallowed without being processed." />
+			<property name="enabled" value="false" />
 			<message key="exception.unprocessed" value="Unprocessed exception ''{0}'', see LPS-36174" />
+			<message key="missing.debug.log.json.exception" value="Missing debug logging for ''JSONException''" />
 		</module>
 		<module name="com.liferay.source.formatter.checkstyle.check.UnusedMethodCheck">
 			<property name="allowedMethodNames" value="readObject,writeObject" />

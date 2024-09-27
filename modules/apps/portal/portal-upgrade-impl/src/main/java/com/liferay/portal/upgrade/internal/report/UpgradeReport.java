@@ -30,6 +30,7 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.upgrade.PortalUpgradeProcess;
 import com.liferay.portal.upgrade.internal.release.osgi.commands.ReleaseManagerOSGiCommands;
 import com.liferay.portal.util.PropsValues;
@@ -63,6 +64,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.time.StopWatch;
 import org.apache.felix.cm.PersistenceManager;
 
 /**
@@ -71,6 +73,8 @@ import org.apache.felix.cm.PersistenceManager;
 public class UpgradeReport {
 
 	public UpgradeReport() {
+		_stopWatch.start();
+
 		_initialBuildNumber = _getBuildNumber();
 		_initialSchemaVersion = _getSchemaVersion();
 		_initialTableCounts = _getTableCounts();
@@ -109,6 +113,8 @@ public class UpgradeReport {
 		PersistenceManager persistenceManager,
 		ReleaseManagerOSGiCommands releaseManagerOSGiCommands) {
 
+		_stopWatch.stop();
+
 		_persistenceManager = persistenceManager;
 
 		try {
@@ -116,17 +122,18 @@ public class UpgradeReport {
 				_getReportFile(),
 				StringUtil.merge(
 					new String[] {
-						_getDateInfo(), _getPortalVersionsInfo(),
-						_getDialectInfo(), _getPropertiesInfo(),
-						_getDLStorageInfo(), _getDatabaseTablesInfo(),
-						_getUpgradeProcessesInfo(), _getLogEventsInfo("errors"),
+						_getDateInfo(), _getUpgradeTimeInfo(),
+						_getPortalVersionsInfo(), _getDialectInfo(),
+						_getPropertiesInfo(), _getDLStorageInfo(),
+						_getDatabaseTablesInfo(), _getUpgradeProcessesInfo(),
+						_getLogEventsInfo("errors"),
 						_getLogEventsInfo("warnings"),
 						releaseManagerOSGiCommands.check()
 					},
 					StringPool.NEW_LINE + StringPool.NEW_LINE));
 		}
 		catch (IOException ioException) {
-			_log.error("Unable to generate the upgrade report");
+			_log.error("Unable to generate the upgrade report", ioException);
 		}
 	}
 
@@ -144,7 +151,7 @@ public class UpgradeReport {
 		}
 		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
-				_log.warn("Unable to get build number");
+				_log.warn("Unable to get build number", exception);
 			}
 		}
 
@@ -474,7 +481,9 @@ public class UpgradeReport {
 		}
 		catch (IOException ioException) {
 			if (_log.isWarnEnabled()) {
-				_log.warn("Unable to get document library store root dir");
+				_log.warn(
+					"Unable to get document library store root dir",
+					ioException);
 			}
 		}
 
@@ -495,7 +504,7 @@ public class UpgradeReport {
 		}
 		catch (SQLException sqlException) {
 			if (_log.isWarnEnabled()) {
-				_log.warn("Unable to get schema version");
+				_log.warn("Unable to get schema version", sqlException);
 			}
 		}
 
@@ -530,7 +539,8 @@ public class UpgradeReport {
 					catch (SQLException sqlException) {
 						if (_log.isWarnEnabled()) {
 							_log.warn(
-								"Unable to retrieve data from " + tableName);
+								"Unable to retrieve data from " + tableName,
+								sqlException);
 						}
 					}
 				}
@@ -539,6 +549,10 @@ public class UpgradeReport {
 			}
 		}
 		catch (SQLException sqlException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(sqlException);
+			}
+
 			return null;
 		}
 	}
@@ -600,6 +614,12 @@ public class UpgradeReport {
 		return sb.toString();
 	}
 
+	private String _getUpgradeTimeInfo() {
+		return String.format(
+			"Upgrade completed in %s seconds",
+			_stopWatch.getTime() / Time.SECOND);
+	}
+
 	private Map<String, Integer> _sort(Map<String, Integer> map) {
 		Set<Map.Entry<String, Integer>> set = map.entrySet();
 
@@ -646,6 +666,7 @@ public class UpgradeReport {
 	private final Map<String, Integer> _initialTableCounts;
 	private PersistenceManager _persistenceManager;
 	private String _rootDir;
+	private final StopWatch _stopWatch = new StopWatch();
 	private final Map<String, Map<String, Integer>> _warningMessages =
 		new ConcurrentHashMap<>();
 

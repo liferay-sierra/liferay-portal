@@ -28,7 +28,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Pavel Savinov
  */
-@Component(immediate = true, service = StagedModelDataHandler.class)
+@Component(service = StagedModelDataHandler.class)
 public class SiteNavigationMenuStagedModelDataHandler
 	extends BaseStagedModelDataHandler<SiteNavigationMenu> {
 
@@ -107,15 +107,8 @@ public class SiteNavigationMenuStagedModelDataHandler
 	}
 
 	@Reference(
-		target = "(model.class.name=com.liferay.site.navigation.model.SiteNavigationMenu)",
-		unbind = "-"
+		target = "(model.class.name=com.liferay.site.navigation.model.SiteNavigationMenu)"
 	)
-	protected void setStagedModelRepository(
-		StagedModelRepository<SiteNavigationMenu> stagedModelRepository) {
-
-		_stagedModelRepository = stagedModelRepository;
-	}
-
 	private StagedModelRepository<SiteNavigationMenu> _stagedModelRepository;
 
 }

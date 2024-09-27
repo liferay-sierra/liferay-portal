@@ -18,14 +18,13 @@ definition {
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(
+		PagesAdmin.addPage(
 			pageName = "Calendar Page",
 			sitePageType = "Widget Page");
 
 		PagesAdmin.configurePage(
 			columnName = "1 Column",
 			pageName = "Calendar Page",
-			privacy = "Public Pages",
 			sitePageType = "Widget Page");
 
 		Navigator.gotoPage(pageName = "Calendar Page");
@@ -333,13 +332,13 @@ definition {
 
 		Navigator.gotoNavNested(navNested = "Display Settings");
 
-		PortalSettings.configureTimeZone(timeZone = "(UTC -02:00) Brasilia Summer Time");
+		PortalSettings.configureTimeZone(timeZone = "(UTC -02:00) Fernando de Noronha Time");
 
 		Navigator.gotoPage(pageName = "Calendar Page");
 
 		CalendarNavigator.gotoAddMyCalendars();
 
-		Calendar.viewSelectedTimeZone(timeZone = "(UTC -02:00) Brasilia Summer Time");
+		Calendar.viewSelectedTimeZone(timeZone = "(UTC -02:00) Fernando de Noronha Time");
 	}
 
 	@description = "LRQA-71360 - Verify that the name field is required"
@@ -522,6 +521,7 @@ definition {
 		Role.definePermissionCP(
 			permissionDefinitionKey = "SITE_ADMIN_APPLICATIONS_CALENDAR_MANAGE_EVENTS_CHECKBOX",
 			permissionDefinitionValue = "Manage Events",
+			permissionNavigationValue = "Calendar",
 			roleTitle = "Calendar Site Role Name",
 			roleType = "Site");
 
@@ -533,6 +533,7 @@ definition {
 		Role.definePermissionCP(
 			permissionDefinitionKey = "SITE_ADMIN_PAGES_SITE_PAGES_RESOURCE_PERMISSIONS_PAGE_UPDATE_CHECKBOX",
 			permissionDefinitionValue = "Update",
+			permissionNavigationValue = "Pages",
 			roleTitle = "Authenticated",
 			roleUser = "User");
 

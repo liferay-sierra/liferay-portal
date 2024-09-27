@@ -35,7 +35,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marcellus Tavares
  */
-@Component(immediate = true, service = NotificationMessageHelper.class)
+@Component(service = NotificationMessageHelper.class)
 public class NotificationMessageHelper {
 
 	public JSONObject createMessageJSONObject(
@@ -50,6 +50,10 @@ public class NotificationMessageHelper {
 			WorkflowConstants.CONTEXT_COMPANY_ID,
 			String.valueOf(
 				workflowContext.get(WorkflowConstants.CONTEXT_COMPANY_ID))
+		).put(
+			WorkflowConstants.CONTEXT_CT_COLLECTION_ID,
+			String.valueOf(
+				workflowContext.get(WorkflowConstants.CONTEXT_CT_COLLECTION_ID))
 		).put(
 			WorkflowConstants.CONTEXT_ENTRY_CLASS_NAME,
 			(String)workflowContext.get(

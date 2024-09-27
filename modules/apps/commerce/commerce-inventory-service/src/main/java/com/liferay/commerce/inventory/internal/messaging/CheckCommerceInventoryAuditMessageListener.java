@@ -43,8 +43,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.commerce.inventory.configuration.CommerceInventorySystemConfiguration",
-	enabled = false, immediate = true,
-	service = CheckCommerceInventoryAuditMessageListener.class
+	immediate = true, service = CheckCommerceInventoryAuditMessageListener.class
 )
 public class CheckCommerceInventoryAuditMessageListener
 	extends BaseMessageListener {
@@ -89,17 +88,15 @@ public class CheckCommerceInventoryAuditMessageListener
 		_commerceInventoryAuditLocalService.checkCommerceInventoryAudit(date);
 	}
 
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
-	protected void setModuleServiceLifecycle(
-		ModuleServiceLifecycle moduleServiceLifecycle) {
-	}
-
 	@Reference
 	private CommerceInventoryAuditLocalService
 		_commerceInventoryAuditLocalService;
 
 	private CommerceInventorySystemConfiguration
 		_commerceInventorySystemConfiguration;
+
+	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
+	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
 	@Reference
 	private SchedulerEngineHelper _schedulerEngineHelper;

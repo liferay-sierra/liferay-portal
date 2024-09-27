@@ -34,7 +34,6 @@ import org.osgi.service.component.annotations.Component;
  * @author David Arques
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + ContentDashboardPortletKeys.CONTENT_DASHBOARD_ADMIN,
 		"mvc.command.name=/content_dashboard/swap_content_dashboard_configuration"
@@ -58,8 +57,10 @@ public class SwapContentDashboardConfigurationMVCActionCommand
 
 			if (assetVocabularyIds.length == 2) {
 				ArrayUtil.reverse(assetVocabularyIds);
+
 				portletPreferences.setValues(
 					"assetVocabularyIds", assetVocabularyIds);
+
 				portletPreferences.store();
 			}
 

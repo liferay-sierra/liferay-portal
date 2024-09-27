@@ -51,10 +51,12 @@ definition {
 		WaitForPageLoad();
 
 		Click(locator1 = "Button#PLUS");
+
+		SelectFrameTop();
 	}
 
 	macro gotoAddDropdownMenuItem {
-		LexiconEntry.gotoAdd();
+		LexiconEntry.gotoAddNoSelectFrame();
 
 		DropdownMenuItem.click(menuItem = "${menuItem}");
 	}
@@ -63,6 +65,12 @@ definition {
 		LexiconEntry.gotoAdd();
 
 		MenuItem.click(menuItem = "${menuItem}");
+	}
+
+	macro gotoAddNoSelectFrame {
+		WaitForPageLoad();
+
+		Click(locator1 = "Button#PLUS");
 	}
 
 	macro gotoAddReport {
@@ -171,6 +179,14 @@ definition {
 		AssertElementPresent(
 			key_displayStyle = "${displayStyle}",
 			locator1 = "Icon#CURRENT_DISPLAY_STYLE_ACTIVE");
+	}
+
+	macro viewAddMenuItem {
+		LexiconEntry.gotoAdd();
+
+		AssertElementPresent(
+			key_menuItem = "${menuItem}",
+			locator1 = "MenuItem#ANY_MENU_ITEM");
 	}
 
 	macro viewEntryContent {

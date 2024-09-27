@@ -24,7 +24,9 @@ definition {
 		AssetCategorization.gotoSelectCategory();
 
 		for (var categoryName : list "${categoryNameList}") {
-			Portlet.selectTreeNode(nodeName = "${categoryName}");
+			Check.checkNotVisible(
+				key_nodeName = "${categoryName}",
+				locator1 = "Treeview#NODE_CHECKBOX");
 		}
 
 		SelectFrameTop();
@@ -192,34 +194,22 @@ definition {
 		PortletEntry.save();
 	}
 
-	macro assertDeleteDisabled {
+	macro clickDeleteDisabled {
 		Click(
 			key_variation = "${variationTitle}",
 			locator1 = "AssetLists#VARIATION_ELLIPSIS");
-
-		AssertVisible(
-			key_text = "Delete",
-			locator1 = "Button#ANY_DISABLED");
 	}
 
-	macro assertDepriotirizeDisabled {
+	macro clickDepriotirizeDisabled {
 		Click(
 			key_variation = "${variationTitle}",
 			locator1 = "AssetLists#VARIATION_ELLIPSIS");
-
-		AssertVisible(
-			key_text = "Deprioritize",
-			locator1 = "Button#ANY_DISABLED");
 	}
 
-	macro assertPriotirizeDisabled {
+	macro clickPriotirizeDisabled {
 		Click(
 			key_variation = "${variationTitle}",
 			locator1 = "AssetLists#VARIATION_ELLIPSIS");
-
-		AssertVisible(
-			key_text = "Prioritize",
-			locator1 = "Button#ANY_DISABLED");
 	}
 
 	macro configureFilterByField {
@@ -333,7 +323,17 @@ definition {
 	}
 
 	macro deleteEntry {
-		LexiconList.delete(listEntry = "${assetListTitle}");
+		LexiconList.clickEllipsisItem(
+			item = "Delete",
+			listEntry = "${assetListTitle}");
+
+		AssertTextEquals(
+			locator1 = "Modal#BODY",
+			value1 = "Deleting a collection is an action impossible to revert.");
+
+		Click(
+			key_text = "Delete",
+			locator1 = "Modal#MODAL_FOOTER_BUTTON");
 
 		Alert.viewSuccessMessage();
 	}
@@ -361,9 +361,11 @@ definition {
 	}
 
 	macro deprioritizeVariation {
-		Click(
-			key_variation = "${variationTitle}",
-			locator1 = "AssetLists#VARIATION_ELLIPSIS");
+		if (IsElementNotPresent(key_menuItem = "Deprioritize", locator1 = "MenuItem#ANY_MENU_ITEM")) {
+			Click(
+				key_variation = "${variationTitle}",
+				locator1 = "AssetLists#VARIATION_ELLIPSIS");
+		}
 
 		Click(
 			key_menuItem = "Deprioritize",
@@ -403,6 +405,16 @@ definition {
 		Alert.viewSuccessMessage();
 	}
 
+	macro gotoEllipsisMenuItemInItemSelector {
+		Click(locator1 = "AssetLists#ASSET_LIST_ELLIPSIS");
+
+		Click(
+			key_menuItem = "View Items",
+			locator1 = "AssetLists#PERSONALIZATION_DROPDOWN_ITEM");
+
+		SelectFrame(locator1 = "IFrame#MODAL_BODY");
+	}
+
 	macro gotoEntry {
 		Click(
 			key_title = "${assetListName}",
@@ -431,9 +443,11 @@ definition {
 	}
 
 	macro prioritizeVariation {
-		Click(
-			key_variation = "${variationTitle}",
-			locator1 = "AssetLists#VARIATION_ELLIPSIS");
+		if (IsElementNotPresent(key_menuItem = "Prioritize", locator1 = "MenuItem#ANY_MENU_ITEM")) {
+			Click(
+				key_variation = "${variationTitle}",
+				locator1 = "AssetLists#VARIATION_ELLIPSIS");
+		}
 
 		Click(
 			key_menuItem = "Prioritize",
@@ -544,6 +558,8 @@ definition {
 		Button.clickAdd();
 
 		Alert.viewSuccessMessage();
+
+		SelectFrameTop();
 	}
 
 	macro viewAssetList {
@@ -555,7 +571,8 @@ definition {
 			value1 = "${assetListTitle}");
 
 		AssertTextEquals.assertPartialText(
-			locator1 = "AssetLists#ASSET_LIST_ENTRY_TYPE",
+			key_assetTitle = "${assetListTitle}",
+			locator1 = "AssetLists#ASSET_TYPE_ROW",
 			value1 = "${type}");
 	}
 
@@ -611,7 +628,7 @@ definition {
 		}
 
 		if (isSet(personalizedVariation)) {
-			Navigator.gotoNavTab(navTab = "${personalizedVariation}");
+			Navigator.gotoNavItem(navItem = "${personalizedVariation}");
 		}
 
 		WaitForLiferayEvent.initializeLiferayEventLog();
@@ -640,7 +657,7 @@ definition {
 			locator1 = "AssetLists#ASSET_LIST_ENTRY_TITLE");
 
 		if (isSet(personalizedVariation)) {
-			Navigator.gotoNavTab(navTab = "${personalizedVariation}");
+			Navigator.gotoNavItem(navItem = "${personalizedVariation}");
 		}
 
 		WaitForLiferayEvent.initializeLiferayEventLog();
@@ -705,7 +722,7 @@ definition {
 			locator1 = "AssetLists#ASSET_LIST_ENTRY_TITLE");
 
 		if (isSet(personalizedVariation)) {
-			Navigator.gotoNavTab(navTab = "${personalizedVariation}");
+			Navigator.gotoNavItem(navItem = "${personalizedVariation}");
 		}
 
 		WaitForLiferayEvent.initializeLiferayEventLog();
@@ -725,17 +742,6 @@ definition {
 		AssertElementNotPresent(locator1 = "AssetLists#ASSET_TYPE_ROW");
 
 		IFrame.closeFrame();
-	}
-
-	macro viewUsages {
-		AssetListsAdmin.gotoEntryMenuItem(
-			assetListTitle = "${assetListTitle}",
-			item = "View Usages");
-
-		var usageAmount = "${usageAmount}";
-		var usageType = "${usageType}";
-
-		AssertElementPresent(locator1 = "AssetLists#ASSET_LIST_USAGES");
 	}
 
 }

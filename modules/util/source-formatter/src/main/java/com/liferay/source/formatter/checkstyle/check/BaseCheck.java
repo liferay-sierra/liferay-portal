@@ -417,10 +417,10 @@ public abstract class BaseCheck extends AbstractCheck {
 			}
 
 			if (siblingDetailAST.getType() == TokenTypes.IMPORT) {
-				FullIdent importIdent = FullIdent.createFullIdentBelow(
+				FullIdent importFullIdent = FullIdent.createFullIdentBelow(
 					siblingDetailAST);
 
-				importNames.add(importIdent.getText());
+				importNames.add(importFullIdent.getText());
 			}
 			else if (siblingDetailAST.getType() != TokenTypes.STATIC_IMPORT) {
 				return importNames;
@@ -443,6 +443,12 @@ public abstract class BaseCheck extends AbstractCheck {
 
 	protected List<DetailAST> getMethodCalls(
 		DetailAST detailAST, String className, String methodName) {
+
+		return getMethodCalls(detailAST, className, new String[] {methodName});
+	}
+
+	protected List<DetailAST> getMethodCalls(
+		DetailAST detailAST, String className, String[] methodNames) {
 
 		List<DetailAST> list = new ArrayList<>();
 
@@ -468,7 +474,7 @@ public abstract class BaseCheck extends AbstractCheck {
 
 			if (((className == null) ||
 				 methodCallClassName.equals(className)) &&
-				methodCallMethodName.equals(methodName)) {
+				ArrayUtil.contains(methodNames, methodCallMethodName)) {
 
 				list.add(methodCallDetailAST);
 			}
@@ -693,11 +699,11 @@ public abstract class BaseCheck extends AbstractCheck {
 
 		StringBundler sb = new StringBundler();
 
-		FullIdent typeIdent = FullIdent.createFullIdent(childDetailAST);
+		FullIdent typeFullIdent = FullIdent.createFullIdent(childDetailAST);
 
 		if (fullyQualifiedName) {
 			String packageName = JavaSourceUtil.getPackageName(
-				typeIdent.getText(), getPackageName(detailAST),
+				typeFullIdent.getText(), getPackageName(detailAST),
 				getImportNames(detailAST));
 
 			if (Validator.isNotNull(packageName)) {
@@ -706,7 +712,7 @@ public abstract class BaseCheck extends AbstractCheck {
 			}
 		}
 
-		sb.append(typeIdent.getText());
+		sb.append(typeFullIdent.getText());
 
 		if (includeArrayDimension) {
 			for (int i = 0; i < arrayDimension; i++) {

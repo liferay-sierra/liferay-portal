@@ -48,12 +48,16 @@ public class ObjectViewLocalServiceUtil {
 	public static ObjectView addObjectView(
 			long userId, long objectDefinitionId, boolean defaultObjectView,
 			Map<java.util.Locale, String> nameMap,
-			List<com.liferay.object.model.ObjectViewColumn> objectViewColumns)
+			List<com.liferay.object.model.ObjectViewColumn> objectViewColumns,
+			List<com.liferay.object.model.ObjectViewFilterColumn>
+				objectViewFilterColumns,
+			List<com.liferay.object.model.ObjectViewSortColumn>
+				objectViewSortColumns)
 		throws PortalException {
 
 		return getService().addObjectView(
 			userId, objectDefinitionId, defaultObjectView, nameMap,
-			objectViewColumns);
+			objectViewColumns, objectViewFilterColumns, objectViewSortColumns);
 	}
 
 	/**
@@ -119,6 +123,12 @@ public class ObjectViewLocalServiceUtil {
 	 */
 	public static ObjectView deleteObjectView(ObjectView objectView) {
 		return getService().deleteObjectView(objectView);
+	}
+
+	public static void deleteObjectViews(long objectDefinitionId)
+		throws PortalException {
+
+		getService().deleteObjectViews(objectDefinitionId);
 	}
 
 	/**
@@ -216,6 +226,10 @@ public class ObjectViewLocalServiceUtil {
 		return getService().dynamicQueryCount(dynamicQuery, projection);
 	}
 
+	public static ObjectView fetchDefaultObjectView(long objectDefinitionId) {
+		return getService().fetchDefaultObjectView(objectDefinitionId);
+	}
+
 	public static ObjectView fetchObjectView(long objectViewId) {
 		return getService().fetchObjectView(objectViewId);
 	}
@@ -237,10 +251,6 @@ public class ObjectViewLocalServiceUtil {
 		getActionableDynamicQuery() {
 
 		return getService().getActionableDynamicQuery();
-	}
-
-	public static ObjectView getDefaultObjectView(long objectDefinitionId) {
-		return getService().getDefaultObjectView(objectDefinitionId);
 	}
 
 	public static com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery
@@ -332,14 +342,25 @@ public class ObjectViewLocalServiceUtil {
 		return getService().getPersistedModel(primaryKeyObj);
 	}
 
+	public static void unassociateObjectField(
+		com.liferay.object.model.ObjectField objectField) {
+
+		getService().unassociateObjectField(objectField);
+	}
+
 	public static ObjectView updateObjectView(
 			long objectViewId, boolean defaultObjectView,
 			Map<java.util.Locale, String> nameMap,
-			List<com.liferay.object.model.ObjectViewColumn> objectViewColumns)
+			List<com.liferay.object.model.ObjectViewColumn> objectViewColumns,
+			List<com.liferay.object.model.ObjectViewFilterColumn>
+				objectViewFilterColumns,
+			List<com.liferay.object.model.ObjectViewSortColumn>
+				objectViewSortColumns)
 		throws PortalException {
 
 		return getService().updateObjectView(
-			objectViewId, defaultObjectView, nameMap, objectViewColumns);
+			objectViewId, defaultObjectView, nameMap, objectViewColumns,
+			objectViewFilterColumns, objectViewSortColumns);
 	}
 
 	/**

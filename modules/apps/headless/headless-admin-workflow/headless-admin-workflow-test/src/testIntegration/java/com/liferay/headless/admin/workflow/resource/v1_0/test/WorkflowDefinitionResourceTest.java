@@ -124,6 +124,22 @@ public class WorkflowDefinitionResourceTest
 			404,
 			workflowDefinitionResource.getWorkflowDefinitionByNameHttpResponse(
 				workflowDefinition.getName(), 2));
+
+		testPostWorkflowDefinitionDeploy_addWorkflowDefinition(
+			workflowDefinition);
+
+		assertHttpResponseStatusCode(
+			200,
+			workflowDefinitionResource.getWorkflowDefinitionByNameHttpResponse(
+				workflowDefinition.getName(), 2));
+
+		WorkflowDefinition latestWorkflowDefinition =
+			workflowDefinitionResource.getWorkflowDefinitionByName(
+				workflowDefinition.getName(), null);
+
+		Assert.assertEquals(
+			workflowDefinition.getDateCreated(),
+			latestWorkflowDefinition.getDateCreated());
 	}
 
 	@Override
@@ -181,6 +197,36 @@ public class WorkflowDefinitionResourceTest
 
 		assertEquals(randomWorkflowDefinition, postWorkflowDefinition);
 		assertValid(postWorkflowDefinition);
+	}
+
+	@Override
+	@Test
+	public void testPutWorkflowDefinition() throws Exception {
+		WorkflowDefinition postWorkflowDefinition =
+			testPutWorkflowDefinition_addWorkflowDefinition();
+
+		WorkflowDefinition randomWorkflowDefinition =
+			randomWorkflowDefinition();
+
+		randomWorkflowDefinition.setName(postWorkflowDefinition.getName());
+		randomWorkflowDefinition.setVersion("2");
+
+		WorkflowDefinition putWorkflowDefinition =
+			workflowDefinitionResource.putWorkflowDefinition(
+				postWorkflowDefinition.getId(), randomWorkflowDefinition);
+
+		_workflowDefinitions.put(
+			putWorkflowDefinition.getName(), putWorkflowDefinition);
+
+		assertEquals(randomWorkflowDefinition, putWorkflowDefinition);
+		assertValid(putWorkflowDefinition);
+
+		WorkflowDefinition getWorkflowDefinition =
+			workflowDefinitionResource.getWorkflowDefinition(
+				putWorkflowDefinition.getId());
+
+		assertEquals(randomWorkflowDefinition, getWorkflowDefinition);
+		assertValid(getWorkflowDefinition);
 	}
 
 	@Override
@@ -279,6 +325,24 @@ public class WorkflowDefinitionResourceTest
 
 	@Override
 	protected WorkflowDefinition
+			testDeleteWorkflowDefinition_addWorkflowDefinition()
+		throws Exception {
+
+		return testGetWorkflowDefinitionsPage_addWorkflowDefinition(
+			randomWorkflowDefinition());
+	}
+
+	@Override
+	protected WorkflowDefinition
+			testGetWorkflowDefinition_addWorkflowDefinition()
+		throws Exception {
+
+		return testGetWorkflowDefinitionsPage_addWorkflowDefinition(
+			randomWorkflowDefinition());
+	}
+
+	@Override
+	protected WorkflowDefinition
 			testGetWorkflowDefinitionsPage_addWorkflowDefinition(
 				WorkflowDefinition workflowDefinition)
 		throws Exception {
@@ -291,6 +355,24 @@ public class WorkflowDefinitionResourceTest
 			workflowDefinition.getName(), workflowDefinition);
 
 		return workflowDefinition;
+	}
+
+	@Override
+	protected WorkflowDefinition
+			testGraphQLWorkflowDefinition_addWorkflowDefinition()
+		throws Exception {
+
+		return testGetWorkflowDefinition_addWorkflowDefinition();
+	}
+
+	@Override
+	protected WorkflowDefinition
+			testPostWorkflowDefinition_addWorkflowDefinition(
+				WorkflowDefinition workflowDefinition)
+		throws Exception {
+
+		return testGetWorkflowDefinitionsPage_addWorkflowDefinition(
+			workflowDefinition);
 	}
 
 	@Override
@@ -331,9 +413,25 @@ public class WorkflowDefinitionResourceTest
 			workflowDefinition);
 	}
 
+	@Override
+	protected WorkflowDefinition
+			testPutWorkflowDefinition_addWorkflowDefinition()
+		throws Exception {
+
+		return testGetWorkflowDefinition_addWorkflowDefinition();
+	}
+
 	private static void _undeployWorkflowDefinition(
 			String workflowDefinitionName, int workflowDefinitionVersion)
 		throws Exception {
+
+		int workflowDefinitionsCount =
+			_workflowDefinitionManager.getWorkflowDefinitionsCount(
+				TestPropsValues.getCompanyId(), workflowDefinitionName);
+
+		if (workflowDefinitionsCount == 0) {
+			return;
+		}
 
 		_workflowDefinitionManager.updateActive(
 			TestPropsValues.getCompanyId(), TestPropsValues.getUserId(),

@@ -47,7 +47,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marcellus Tavares
  */
 @Component(
-	immediate = true,
 	property = "dynamic.data.mapping.form.builder.context.deserializer.type=formValues",
 	service = DDMFormContextDeserializer.class
 )
@@ -178,15 +177,12 @@ public class DDMFormContextToDDMFormValues
 			return;
 		}
 
-		String type = ddmFormField.getType();
-
 		if (ddmFormField.isLocalizable()) {
-			Value value = getLocalizedValue(
-				fieldJSONObject.getJSONObject("localizedValue"));
-
-			ddmFormFieldValue.setValue(value);
+			ddmFormFieldValue.setValue(
+				getLocalizedValue(
+					fieldJSONObject.getJSONObject("localizedValue")));
 		}
-		else if (Objects.equals(type, "checkbox")) {
+		else if (Objects.equals(ddmFormField.getType(), "checkbox")) {
 			ddmFormFieldValue.setValue(
 				new UnlocalizedValue(
 					String.valueOf(fieldJSONObject.getBoolean("value"))));

@@ -16,6 +16,7 @@ package com.liferay.poshi.runner.selenium;
 
 import com.liferay.poshi.core.util.OSDetector;
 import com.liferay.poshi.core.util.PropsValues;
+import com.liferay.poshi.core.util.Validator;
 
 import java.util.List;
 
@@ -461,11 +462,23 @@ public class RetryWebElementImpl extends RemoteWebElement {
 	private void _clear() {
 		CharSequence controlCharSequence = Keys.CONTROL;
 
-		if (OSDetector.isApple()) {
+		if (OSDetector.isApple() &&
+			!(WebDriverUtil.getWebDriver() instanceof RemoteWebDriver)) {
+
 			controlCharSequence = Keys.COMMAND;
 		}
 
 		_webElement.sendKeys(Keys.chord(controlCharSequence, "a", Keys.DELETE));
+
+		String webElementValue = _webElement.getAttribute("value");
+
+		if (Validator.isNull(webElementValue) || webElementValue.isEmpty()) {
+			return;
+		}
+
+		for (int i = 0; i < webElementValue.length(); i++) {
+			_webElement.sendKeys(Keys.BACK_SPACE);
+		}
 	}
 
 	private void _refreshWebElement(Throwable throwable) {

@@ -17,6 +17,7 @@ package com.liferay.portal.search.tuning.synonyms.web.internal.display.context;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.search.engine.SearchEngineInformation;
 import com.liferay.portal.search.query.Queries;
 import com.liferay.portal.search.sort.Sorts;
 import com.liferay.portal.search.tuning.synonyms.index.name.SynonymSetIndexName;
@@ -36,8 +37,6 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import org.mockito.Matchers;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 
 /**
@@ -51,16 +50,14 @@ public class SynonymsDisplayBuilderTest extends BaseSynonymsWebTestCase {
 		LiferayUnitTestRule.INSTANCE;
 
 	@Before
-	@Override
 	public void setUp() throws Exception {
-		super.setUp();
-
 		setUpPortletPreferencesFactoryUtil();
 
 		_synonymsDisplayBuilder = new SynonymsDisplayBuilder(
 			_documentToSynonymSetTranslatorImpl, _httpServletRequest, _language,
 			portal, _queries, _renderRequest, _renderResponse,
-			searchEngineAdapter, _sorts, _synonymSetIndexNameBuilder);
+			searchEngineAdapter, _searchEngineInformation, _sorts,
+			_synonymSetIndexNameBuilder);
 	}
 
 	@Test
@@ -74,7 +71,7 @@ public class SynonymsDisplayBuilderTest extends BaseSynonymsWebTestCase {
 
 		Mockito.when(
 			_synonymSetIndexNameBuilder.getSynonymSetIndexName(
-				Matchers.anyLong())
+				Mockito.anyLong())
 		).thenReturn(
 			Mockito.mock(SynonymSetIndexName.class)
 		);
@@ -100,28 +97,19 @@ public class SynonymsDisplayBuilderTest extends BaseSynonymsWebTestCase {
 	private final DocumentToSynonymSetTranslatorImpl
 		_documentToSynonymSetTranslatorImpl =
 			new DocumentToSynonymSetTranslatorImpl();
-
-	@Mock
-	private HttpServletRequest _httpServletRequest;
-
-	@Mock
-	private Language _language;
-
-	@Mock
-	private Queries _queries;
-
-	@Mock
-	private RenderRequest _renderRequest;
-
-	@Mock
-	private RenderResponse _renderResponse;
-
-	@Mock
-	private Sorts _sorts;
-
+	private final HttpServletRequest _httpServletRequest = Mockito.mock(
+		HttpServletRequest.class);
+	private final Language _language = Mockito.mock(Language.class);
+	private final Queries _queries = Mockito.mock(Queries.class);
+	private final RenderRequest _renderRequest = Mockito.mock(
+		RenderRequest.class);
+	private final RenderResponse _renderResponse = Mockito.mock(
+		RenderResponse.class);
+	private final SearchEngineInformation _searchEngineInformation =
+		Mockito.mock(SearchEngineInformation.class);
+	private final Sorts _sorts = Mockito.mock(Sorts.class);
 	private SynonymsDisplayBuilder _synonymsDisplayBuilder;
-
-	@Mock
-	private SynonymSetIndexNameBuilder _synonymSetIndexNameBuilder;
+	private final SynonymSetIndexNameBuilder _synonymSetIndexNameBuilder =
+		Mockito.mock(SynonymSetIndexNameBuilder.class);
 
 }

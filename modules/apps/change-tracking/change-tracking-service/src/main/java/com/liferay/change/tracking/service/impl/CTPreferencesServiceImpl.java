@@ -21,7 +21,6 @@ import com.liferay.change.tracking.model.CTCollection;
 import com.liferay.change.tracking.model.CTPreferences;
 import com.liferay.change.tracking.model.CTPreferencesTable;
 import com.liferay.change.tracking.service.CTCollectionLocalService;
-import com.liferay.change.tracking.service.CTPreferencesLocalService;
 import com.liferay.change.tracking.service.base.CTPreferencesServiceBaseImpl;
 import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.portal.aop.AopService;
@@ -29,15 +28,9 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.GroupTable;
-import com.liferay.portal.kernel.model.ResourceConstants;
-import com.liferay.portal.kernel.model.Role;
-import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.GroupLocalService;
-import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
-import com.liferay.portal.kernel.service.RoleLocalService;
-import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.permission.PortletPermission;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
@@ -136,19 +129,7 @@ public class CTPreferencesServiceImpl extends CTPreferencesServiceBaseImpl {
 				}
 			}
 
-			Role role = _roleLocalService.getRole(
-				companyId, RoleConstants.PUBLICATIONS_USER);
-
-			_resourcePermissionLocalService.addResourcePermission(
-				companyId, CTPortletKeys.PUBLICATIONS,
-				ResourceConstants.SCOPE_COMPANY, String.valueOf(companyId),
-				role.getRoleId(), ActionKeys.ACCESS_IN_CONTROL_PANEL);
-			_resourcePermissionLocalService.addResourcePermission(
-				companyId, CTPortletKeys.PUBLICATIONS,
-				ResourceConstants.SCOPE_COMPANY, String.valueOf(companyId),
-				role.getRoleId(), ActionKeys.VIEW);
-
-			return _ctPreferencesLocalService.getCTPreferences(companyId, 0);
+			return ctPreferencesLocalService.getCTPreferences(companyId, 0);
 		}
 
 		for (CTPreferences ctPreferences :
@@ -177,21 +158,9 @@ public class CTPreferencesServiceImpl extends CTPreferencesServiceBaseImpl {
 		_ctCollectionModelResourcePermission;
 
 	@Reference
-	private CTPreferencesLocalService _ctPreferencesLocalService;
-
-	@Reference
 	private GroupLocalService _groupLocalService;
 
 	@Reference
 	private PortletPermission _portletPermission;
-
-	@Reference
-	private ResourcePermissionLocalService _resourcePermissionLocalService;
-
-	@Reference
-	private RoleLocalService _roleLocalService;
-
-	@Reference
-	private UserLocalService _userLocalService;
 
 }

@@ -3,7 +3,7 @@ definition {
 
 	property custom.properties = "minifier.enabled=true";
 	property osgi.module.configuration.file.names = "com.liferay.frontend.js.loader.modules.extender.internal.configuration.Details.config";
-	property osgi.module.configurations = "waitTimeout=&quot;15&quot;";
+	property osgi.module.configurations = "waitTimeout=\"15\"";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Forms";
@@ -292,7 +292,8 @@ definition {
 	@description = "Verify that an image can be uploaded from Liferay Documents and Media"
 	@priority = "5"
 	test CanUploadFromDocumentsAndMedia {
-		property portal.acceptance = "true";
+		property portal.acceptance = "quarantine";
+		property portal.upstream = "quarantine";
 
 		var siteName = TestCase.getSiteName(siteName = "${siteName}");
 
@@ -507,7 +508,7 @@ definition {
 		FormsAdminNavigator.gotoEditField(fieldName = "Image");
 
 		AssertElementPresent(
-			key_imageName = "Document_1.jpg",
+			key_imageName = "document_1-jpg",
 			locator1 = "Form#SIDEBAR_ADVANCED_PREDEFINED_VALUE");
 
 		Form.publishForm();

@@ -12,29 +12,47 @@
  * details.
  */
 
+import {ClayButtonWithIcon} from '@clayui/button';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import React from 'react';
 
-export default function SidebarPanelHeader({padded = true, ...props}) {
+import {switchSidebarPanel} from '../../app/actions/index';
+import {useDispatch, useSelector} from '../../app/contexts/StoreContext';
+
+export default function SidebarPanelHeader({
+	children,
+	iconLeft = null,
+	iconRight = null,
+}) {
+	const dispatch = useDispatch();
+
+	const sidebarPanelId = useSelector((state) => state.sidebar?.panelId);
+
 	return (
-		<h1
-			{...props}
+		<header
 			className={classNames(
-				'page-editor__sidebar__panel-header',
-				'align-items-center',
-				'd-flex',
-				{
-					'light': true,
-					[props.className]: !!props.className,
-					'pt-2': padded,
-					'px-3': padded,
-				}
+				'align-items-center d-flex justify-content-between my-3 pl-3 pr-2 page-editor__sidebar__panel-header'
 			)}
-		/>
+		>
+			{iconLeft}
+
+			<h2 className="flex-grow-1 mb-0 mr-1 text-3">{children}</h2>
+
+			{iconRight}
+
+			<ClayButtonWithIcon
+				displayType="unstyled"
+				onClick={() => {
+					dispatch(switchSidebarPanel({sidebarOpen: false}));
+
+					document
+						.querySelector(`[data-panel-id="${sidebarPanelId}"]`)
+						?.focus();
+				}}
+				small
+				symbol="times"
+				title={Liferay.Language.get('close')}
+			/>
+		</header>
 	);
 }
-
-SidebarPanelHeader.propTypes = {
-	padded: PropTypes.bool,
-};

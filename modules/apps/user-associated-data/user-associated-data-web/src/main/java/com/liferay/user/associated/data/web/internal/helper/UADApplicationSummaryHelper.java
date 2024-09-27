@@ -18,7 +18,6 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ListUtil;
-import com.liferay.portal.kernel.util.Portal;
 import com.liferay.user.associated.data.anonymizer.UADAnonymizer;
 import com.liferay.user.associated.data.display.UADDisplay;
 import com.liferay.user.associated.data.web.internal.constants.UADConstants;
@@ -38,7 +37,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Drew Brokke
  */
-@Component(immediate = true, service = UADApplicationSummaryHelper.class)
+@Component(service = UADApplicationSummaryHelper.class)
 public class UADApplicationSummaryHelper {
 
 	public List<UADAnonymizer<?>> getApplicationUADAnonymizers(
@@ -98,11 +97,9 @@ public class UADApplicationSummaryHelper {
 		UADApplicationSummaryDisplay uadApplicationSummaryDisplay =
 			new UADApplicationSummaryDisplay();
 
-		int count = _getReviewableUADEntitiesCount(
-			uadDisplayStream.stream(), userId, groupIds);
-
-		uadApplicationSummaryDisplay.setCount(count);
-
+		uadApplicationSummaryDisplay.setCount(
+			_getReviewableUADEntitiesCount(
+				uadDisplayStream.stream(), userId, groupIds));
 		uadApplicationSummaryDisplay.setApplicationKey(applicationKey);
 
 		return uadApplicationSummaryDisplay;
@@ -146,7 +143,7 @@ public class UADApplicationSummaryHelper {
 					Collectors.toList()
 				);
 
-			if (!ListUtil.isEmpty(applicationUADDisplays)) {
+			if (ListUtil.isNotEmpty(applicationUADDisplays)) {
 				UADApplicationSummaryDisplay uadApplicationSummaryDisplay =
 					getUADApplicationSummaryDisplay(
 						applicationKey, applicationUADDisplays, userId,
@@ -209,9 +206,6 @@ public class UADApplicationSummaryHelper {
 			uadDisplay -> (int)uadDisplay.searchCount(userId, groupIds, null)
 		).sum();
 	}
-
-	@Reference
-	private Portal _portal;
 
 	@Reference
 	private UADRegistry _uadRegistry;

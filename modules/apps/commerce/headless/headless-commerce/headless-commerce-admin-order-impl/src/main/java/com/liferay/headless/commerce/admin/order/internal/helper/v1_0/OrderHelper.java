@@ -16,7 +16,7 @@ package com.liferay.headless.commerce.admin.order.internal.helper.v1_0;
 
 import com.liferay.commerce.model.CommerceOrder;
 import com.liferay.commerce.product.model.CommerceChannel;
-import com.liferay.commerce.product.service.CommerceChannelService;
+import com.liferay.commerce.product.service.CommerceChannelLocalService;
 import com.liferay.headless.commerce.admin.order.dto.v1_0.Order;
 import com.liferay.headless.commerce.admin.order.internal.dto.v1_0.converter.OrderDTOConverter;
 import com.liferay.petra.function.UnsafeConsumer;
@@ -46,7 +46,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Riccardo Ferrati
  */
-@Component(enabled = false, immediate = true, service = OrderHelper.class)
+@Component(immediate = true, service = OrderHelper.class)
 public class OrderHelper {
 
 	public Page<Order> getOrdersPage(
@@ -66,11 +66,10 @@ public class OrderHelper {
 				public void accept(Object object) throws Exception {
 					SearchContext searchContext = (SearchContext)object;
 
-					searchContext.setCompanyId(companyId);
-
 					searchContext.setAttribute(
 						"useSearchResultPermissionFilter",
 						useSearchResultPermissionFilter);
+					searchContext.setCompanyId(companyId);
 
 					long[] commerceChannelGroupIds =
 						_getCommerceChannelGroupIds(companyId);
@@ -106,8 +105,8 @@ public class OrderHelper {
 	private long[] _getCommerceChannelGroupIds(long companyId)
 		throws Exception {
 
-		List<CommerceChannel> commerceChannels = _commerceChannelService.search(
-			companyId);
+		List<CommerceChannel> commerceChannels =
+			_commerceChannelLocalService.getCommerceChannels(companyId);
 
 		Stream<CommerceChannel> stream = commerceChannels.stream();
 
@@ -117,7 +116,7 @@ public class OrderHelper {
 	}
 
 	@Reference
-	private CommerceChannelService _commerceChannelService;
+	private CommerceChannelLocalService _commerceChannelLocalService;
 
 	@Reference
 	private DTOConverterRegistry _dtoConverterRegistry;

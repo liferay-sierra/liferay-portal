@@ -27,7 +27,6 @@ import com.liferay.asset.kernel.service.AssetVocabularyServiceUtil;
 import com.liferay.exportimport.kernel.staging.permission.StagingPermissionUtil;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
@@ -37,6 +36,7 @@ import com.liferay.portal.kernel.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -87,13 +87,13 @@ public class AssetCategoryActionDropdownItemsProvider {
 								PortletURLBuilder.createRenderURL(
 									_renderResponse
 								).setMVCPath(
-									"/edit_category.jsp"
+									"/edit_asset_category.jsp"
 								).setParameter(
 									"categoryId", category.getCategoryId()
 								).setParameter(
 									"vocabularyId", category.getVocabularyId()
 								).buildString());
-
+							dropdownItem.setIcon("pencil");
 							dropdownItem.setLabel(
 								LanguageUtil.get(_httpServletRequest, "edit"));
 						}
@@ -112,7 +112,7 @@ public class AssetCategoryActionDropdownItemsProvider {
 								PortletURLBuilder.createRenderURL(
 									_renderResponse
 								).setMVCPath(
-									"/edit_category.jsp"
+									"/edit_asset_category.jsp"
 								).setParameter(
 									"parentCategoryId", category.getCategoryId()
 								).setParameter(
@@ -126,6 +126,7 @@ public class AssetCategoryActionDropdownItemsProvider {
 						() -> _getDisplayPageURL(category) != null,
 						dropdownItem -> {
 							dropdownItem.setHref(_getDisplayPageURL(category));
+							dropdownItem.setIcon("view");
 							dropdownItem.setLabel(
 								LanguageUtil.get(
 									_httpServletRequest, "view-display-page"));
@@ -149,9 +150,10 @@ public class AssetCategoryActionDropdownItemsProvider {
 									category.getTitle(
 										_themeDisplay.getLocale())));
 							dropdownItem.putData(
-								"moveCategoryURL",
+								"selectParentCategoryURL",
 								_getSelectCategoryURL(
 									category.getVocabularyId()));
+							dropdownItem.setIcon("move-folder");
 							dropdownItem.setLabel(
 								LanguageUtil.get(_httpServletRequest, "move"));
 						}
@@ -177,6 +179,7 @@ public class AssetCategoryActionDropdownItemsProvider {
 									String.valueOf(category.getCategoryId()),
 									LiferayWindowState.POP_UP.toString(), null,
 									_httpServletRequest));
+							dropdownItem.setIcon("password-policies");
 							dropdownItem.setLabel(
 								LanguageUtil.get(
 									_httpServletRequest, "permissions"));
@@ -197,12 +200,15 @@ public class AssetCategoryActionDropdownItemsProvider {
 								PortletURLBuilder.createActionURL(
 									_renderResponse
 								).setActionName(
-									"deleteCategory"
+									"/asset_categories_admin" +
+										"/delete_asset_category"
 								).setRedirect(
 									_themeDisplay.getURLCurrent()
 								).setParameter(
 									"categoryId", category.getCategoryId()
 								).buildString());
+
+							dropdownItem.setIcon("trash");
 							dropdownItem.setLabel(
 								LanguageUtil.get(
 									_httpServletRequest, "delete"));

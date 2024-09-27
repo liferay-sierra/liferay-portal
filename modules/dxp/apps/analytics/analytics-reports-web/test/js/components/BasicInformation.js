@@ -13,8 +13,13 @@ import {render} from '@testing-library/react';
 import React from 'react';
 
 import BasicInformation from '../../../src/main/resources/META-INF/resources/js/components/BasicInformation';
+import {StoreStateContext} from '../../../src/main/resources/META-INF/resources/js/context/StoreContext';
 
 import '@testing-library/jest-dom/extend-expect';
+
+jest.mock('frontend-js-web', () => ({
+	sub: jest.fn((langKey, arg) => langKey.replace('x', arg)),
+}));
 
 describe('BasicInformation', () => {
 	it('renders author, publish date and title', () => {
@@ -49,13 +54,18 @@ describe('BasicInformation', () => {
 			],
 		};
 
-		const {getByText} = render(<BasicInformation {...testProps} />);
+		const {getByText} = render(
+			<StoreStateContext.Provider value={{languageTag: 'en-US'}}>
+				<BasicInformation {...testProps} />
+			</StoreStateContext.Provider>
+		);
 
 		expect(getByText(testProps.title)).toBeInTheDocument();
 
 		expect(getByText(testProps.canonicalURL)).toBeInTheDocument();
 
 		const formattedPublishDate = 'September 20, 2021';
+
 		expect(
 			getByText('published-on-' + formattedPublishDate)
 		).toBeInTheDocument();

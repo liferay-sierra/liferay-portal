@@ -44,7 +44,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alec Sloan
  */
-@Component(enabled = false, immediate = true, service = Indexer.class)
+@Component(immediate = true, service = Indexer.class)
 public class CommerceShippingFixedOptionIndexer
 	extends BaseIndexer<CommerceShippingFixedOption> {
 
@@ -91,6 +91,7 @@ public class CommerceShippingFixedOptionIndexer
 		addSearchTerm(
 			searchQuery, searchContext, "commerceShippingMethodId", false);
 		addSearchTerm(searchQuery, searchContext, "description", false);
+		addSearchTerm(searchQuery, searchContext, "key", true);
 	}
 
 	@Override
@@ -117,12 +118,13 @@ public class CommerceShippingFixedOptionIndexer
 		Document document = getBaseModelDocument(
 			CLASS_NAME, commerceShippingFixedOption);
 
-		document.addKeyword(Field.NAME, commerceShippingFixedOption.getName());
 		document.addKeyword(
 			Field.DESCRIPTION, commerceShippingFixedOption.getDescription());
+		document.addKeyword(Field.NAME, commerceShippingFixedOption.getName());
 		document.addKeyword(
 			"commerceShippingMethodId",
 			commerceShippingFixedOption.getCommerceShippingMethodId());
+		document.addKeyword("key", commerceShippingFixedOption.getKey());
 
 		if (_log.isDebugEnabled()) {
 			_log.debug(
@@ -148,8 +150,8 @@ public class CommerceShippingFixedOptionIndexer
 		throws Exception {
 
 		_indexWriterHelper.updateDocument(
-			getSearchEngineId(), commerceShippingFixedOption.getCompanyId(),
-			getDocument(commerceShippingFixedOption), isCommitImmediately());
+			commerceShippingFixedOption.getCompanyId(),
+			getDocument(commerceShippingFixedOption));
 	}
 
 	@Override
@@ -208,7 +210,6 @@ public class CommerceShippingFixedOptionIndexer
 					}
 				}
 			});
-		indexableActionableDynamicQuery.setSearchEngineId(getSearchEngineId());
 
 		indexableActionableDynamicQuery.performActions();
 	}

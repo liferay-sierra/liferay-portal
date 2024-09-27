@@ -63,7 +63,7 @@ public class Sku implements Serializable {
 		return ObjectMapperUtil.unsafeReadValue(Sku.class, json);
 	}
 
-	@Schema
+	@Schema(example = "[10, 20, 30, 40]")
 	public String[] getAllowedOrderQuantities() {
 		return allowedOrderQuantities;
 	}
@@ -122,7 +122,7 @@ public class Sku implements Serializable {
 	protected Availability availability;
 
 	@DecimalMin("0")
-	@Schema
+	@Schema(example = "1.1")
 	public Double getDepth() {
 		return depth;
 	}
@@ -150,7 +150,7 @@ public class Sku implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected Double depth;
 
-	@Schema
+	@Schema(example = "2017-07-21")
 	public Date getDisplayDate() {
 		return displayDate;
 	}
@@ -178,7 +178,7 @@ public class Sku implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected Date displayDate;
 
-	@Schema
+	@Schema(example = "2017-08-21")
 	public Date getExpirationDate() {
 		return expirationDate;
 	}
@@ -206,7 +206,7 @@ public class Sku implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected Date expirationDate;
 
-	@Schema
+	@Schema(example = "12341234")
 	public String getGtin() {
 		return gtin;
 	}
@@ -233,7 +233,7 @@ public class Sku implements Serializable {
 	protected String gtin;
 
 	@DecimalMin("0")
-	@Schema
+	@Schema(example = "20.2")
 	public Double getHeight() {
 		return height;
 	}
@@ -262,7 +262,7 @@ public class Sku implements Serializable {
 	protected Double height;
 
 	@DecimalMin("0")
-	@Schema
+	@Schema(example = "30130")
 	public Long getId() {
 		return id;
 	}
@@ -288,7 +288,7 @@ public class Sku implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
 	protected Long id;
 
-	@Schema
+	@Schema(example = "12341234")
 	public String getManufacturerPartNumber() {
 		return manufacturerPartNumber;
 	}
@@ -373,7 +373,7 @@ public class Sku implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected Integer minOrderQuantity;
 
-	@Schema
+	@Schema(example = "true")
 	public Boolean getNeverExpire() {
 		return neverExpire;
 	}
@@ -403,35 +403,6 @@ public class Sku implements Serializable {
 
 	@Schema
 	@Valid
-	public Map<String, String> getOptions() {
-		return options;
-	}
-
-	public void setOptions(Map<String, String> options) {
-		this.options = options;
-	}
-
-	@JsonIgnore
-	public void setOptions(
-		UnsafeSupplier<Map<String, String>, Exception> optionsUnsafeSupplier) {
-
-		try {
-			options = optionsUnsafeSupplier.get();
-		}
-		catch (RuntimeException re) {
-			throw re;
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	@GraphQLField
-	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected Map<String, String> options;
-
-	@Schema
-	@Valid
 	public Price getPrice() {
 		return price;
 	}
@@ -457,7 +428,7 @@ public class Sku implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected Price price;
 
-	@Schema
+	@Schema(example = "true")
 	public Boolean getPublished() {
 		return published;
 	}
@@ -485,7 +456,7 @@ public class Sku implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected Boolean published;
 
-	@Schema
+	@Schema(example = "true")
 	public Boolean getPurchasable() {
 		return purchasable;
 	}
@@ -539,8 +510,37 @@ public class Sku implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected String sku;
 
-	@DecimalMin("0")
 	@Schema
+	@Valid
+	public SkuOption[] getSkuOptions() {
+		return skuOptions;
+	}
+
+	public void setSkuOptions(SkuOption[] skuOptions) {
+		this.skuOptions = skuOptions;
+	}
+
+	@JsonIgnore
+	public void setSkuOptions(
+		UnsafeSupplier<SkuOption[], Exception> skuOptionsUnsafeSupplier) {
+
+		try {
+			skuOptions = skuOptionsUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected SkuOption[] skuOptions;
+
+	@DecimalMin("0")
+	@Schema(example = "1.1")
 	public Double getWeight() {
 		return weight;
 	}
@@ -569,7 +569,7 @@ public class Sku implements Serializable {
 	protected Double weight;
 
 	@DecimalMin("0")
-	@Schema
+	@Schema(example = "20.2")
 	public Double getWidth() {
 		return width;
 	}
@@ -777,16 +777,6 @@ public class Sku implements Serializable {
 			sb.append(neverExpire);
 		}
 
-		if (options != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
-
-			sb.append("\"options\": ");
-
-			sb.append(_toJSON(options));
-		}
-
 		if (price != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -829,6 +819,26 @@ public class Sku implements Serializable {
 			sb.append(_escape(sku));
 
 			sb.append("\"");
+		}
+
+		if (skuOptions != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"skuOptions\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < skuOptions.length; i++) {
+				sb.append(String.valueOf(skuOptions[i]));
+
+				if ((i + 1) < skuOptions.length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
 		}
 
 		if (weight != null) {

@@ -59,7 +59,140 @@ definition {
 		else {
 			JSONUser.tearDownNonAdminUsers();
 
+			JSONRole.deleteRole(roleTitle = "Roles Siterole Name");
+
 			JSONGroup.deleteGroupByName(groupName = "Test Site Name");
+		}
+	}
+
+	@description = "This is a test for LPS-161974. The user with Update permission should be able to add custom value to margin and padding."
+	@priority = "4"
+	test AddCustomValuesToSpacingWithUpdatePermission {
+		task ("Given a new user with update permission has a Heading fragment on content page") {
+			task ("Define the permission of new role") {
+				Permissions.definePermissionViaJSONAPI(
+					resourceAction = "UPDATE",
+					resourceName = "com.liferay.portal.kernel.model.Layout",
+					roleTitle = "Roles Siterole Name",
+					roleType = "site");
+			}
+
+			task ("Assign the site role to new user") {
+				JSONRole.assignSiteRoleToUser(
+					groupName = "Test Site Name",
+					roleTitle = "Roles Siterole Name",
+					userEmailAddress = "userea@liferay.com");
+			}
+
+			task ("Sign in as new user") {
+				User.logoutAndLoginPG(userLoginEmailAddress = "userea@liferay.com");
+			}
+
+			task ("Add a Heading fragment to content page") {
+				ContentPagesNavigator.openEditContentPage(
+					pageName = "Test Content Page Name",
+					siteName = "Test Site Name");
+
+				PageEditor.addFragment(
+					collectionName = "Basic Components",
+					fragmentName = "Heading");
+			}
+		}
+
+		task ("When the new user adds a custom value on Spacing") {
+			PageEditor.gotoStyle(fragmentName = "Heading");
+
+			Click(
+				ariaLabel = "Padding Right",
+				locator1 = "Button#ANY_WITH_ARIA_LABEL");
+
+			PageEditor.configureFragment(
+				fieldLabel = "Padding Right",
+				unit = "%");
+
+			Type(
+				ariaLabel = "Padding Right",
+				locator1 = "TextInput#ANY_WITH_AIRA_LABEL",
+				value1 = "20");
+
+			Click(
+				locator1 = "Dropdown#DROPDOWN_SUBHEADER",
+				subHeader = "Padding Right");
+
+			PageEditor.waitForAutoSave();
+		}
+
+		task ("Then the new user could view the custom value of Spacing") {
+			PageEditor.viewFragmentCommonStyle(
+				fragmentName = "Heading",
+				index = "1",
+				styleName = "paddingRight",
+				styleValue = "20%");
+		}
+	}
+
+	@description = "This is a test for LPS-161974. The user with Update-limited or basic permission should not be able to add custom value to margin and padding."
+	@priority = "4"
+	test CannotAddCustomValuesToSpacingWithLimitedPermission {
+		task ("Given a new user with update-limited and basic permission has a Heading fragment on content page") {
+			task ("Define the permission of new role") {
+				for (var resourceActionIndex : list "UPDATE_LAYOUT_BASIC,UPDATE_LAYOUT_LIMITED") {
+					Permissions.definePermissionViaJSONAPI(
+						resourceAction = "${resourceActionIndex}",
+						resourceName = "com.liferay.portal.kernel.model.Layout",
+						roleTitle = "Roles Siterole Name",
+						roleType = "site");
+				}
+			}
+
+			task ("Assign the site role to new user") {
+				JSONRole.assignSiteRoleToUser(
+					groupName = "Test Site Name",
+					roleTitle = "Roles Siterole Name",
+					userEmailAddress = "userea@liferay.com");
+			}
+
+			task ("Sign in as new user") {
+				User.logoutAndLoginPG(userLoginEmailAddress = "userea@liferay.com");
+			}
+
+			task ("Add a Heading fragment to content page") {
+				ContentPagesNavigator.openEditContentPage(
+					pageName = "Test Content Page Name",
+					siteName = "Test Site Name");
+
+				PageEditor.addFragment(
+					collectionName = "Basic Components",
+					fragmentName = "Heading");
+			}
+		}
+
+		task ("When the new user opens the dropdown menu of Spacing") {
+			PageEditor.gotoStyle(fragmentName = "Heading");
+
+			Click(
+				ariaLabel = "Padding Top",
+				locator1 = "Button#ANY_WITH_ARIA_LABEL");
+		}
+
+		task ("Then the new user should not see the input field for custom values") {
+			AssertElementNotPresent(
+				ariaLabel = "Padding Top",
+				locator1 = "TextInput#ANY_WITH_AIRA_LABEL");
+
+			AssertElementNotPresent(
+				key_fieldLabel = "Padding Top",
+				locator1 = "Dropdown#DROPDOWN_TOGGLE_BUTTON_WITH_LABEL");
+		}
+
+		task ("When the new user selects an existing token on Padding Top of Spacing") {
+			DropdownMenuItem.click(menuItem = "Spacer 3");
+		}
+
+		task ("Then the new user could view the custom value of Spacing") {
+			PageEditor.viewFragmentStyle(
+				fragmentName = "Heading",
+				paddingTop = "3");
 		}
 	}
 
@@ -159,7 +292,7 @@ definition {
 
 			PageEditor.assertFragmentSidebarLoaded();
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Sign in as new user") {
@@ -175,9 +308,7 @@ definition {
 
 			ContentPages.gotoPageEditor();
 
-			PageEditor.gotoTab(tabName = "Browser");
-
-			Navigator.gotoNavTab(navTab = "Page Content");
+			PageEditor.gotoTab(tabName = "Page Content");
 		}
 
 		task ("Assert cannot access to web content editor via Contents panel") {
@@ -227,7 +358,7 @@ definition {
 
 			Permissions.definePermissionViaJSONAPI(
 				resourceAction = "VIEW",
-				resourceName = "com.liferay.layout.seocom.liferay.layout.seo",
+				resourceName = "com.liferay.layout.seo",
 				roleTitle = "Roles Siterole Name",
 				roleType = "site");
 
@@ -262,7 +393,7 @@ definition {
 				collectionName = "Basic Components",
 				fragmentName = "Button");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Add a Heading fragment below the Button") {
@@ -310,11 +441,15 @@ definition {
 		task ("View the Preview Draft action is invisible in Page Tree") {
 			PagesFinder.goToPagesFinder();
 
-			Click.mouseOverClick(
+			MouseOver(
+				key_pageName = "Test Content Page Name",
+				locator1 = "PagesFinder#PAGE_NAME");
+
+			Click.clickNoMouseOver(
 				key_pageName = "Test Content Page Name",
 				locator1 = "PagesFinder#PAGE_ELLIPSIS_ICON");
 
-			MenuItem.viewNotVisible(menuItem = "Preview Draft");
+			MenuItem.viewNotPresent(menuItem = "Preview Draft");
 		}
 	}
 
@@ -360,7 +495,7 @@ definition {
 
 			PageEditor.assertFragmentSidebarLoaded();
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Sign in as new user") {
@@ -376,9 +511,7 @@ definition {
 
 			ContentPages.gotoPageEditor();
 
-			PageEditor.gotoTab(tabName = "Browser");
-
-			Navigator.gotoNavTab(navTab = "Page Content");
+			PageEditor.gotoTab(tabName = "Page Content");
 		}
 
 		task ("View access to blogs entry editor via Contents panel") {
@@ -529,7 +662,7 @@ definition {
 
 			PageEditor.assertFragmentSidebarLoaded();
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Sign in as new user") {
@@ -546,9 +679,7 @@ definition {
 			ContentPages.gotoPageEditor();
 
 			for (var webContentTitle : list "WC WebContent Title 1,WC WebContent Title 2,WC WebContent Title 3") {
-				PageEditor.gotoTab(tabName = "Browser");
-
-				Navigator.gotoNavTab(navTab = "Page Content");
+				PageEditor.gotoTab(tabName = "Page Content");
 
 				LexiconEntry.gotoFragmentPageContentEllipsisMenuItem(
 					menuItem = "Edit",
@@ -665,7 +796,7 @@ definition {
 
 			PageEditor.assertFragmentSidebarLoaded();
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Sign in as new user") {
@@ -696,9 +827,7 @@ definition {
 			ContentPages.gotoPageEditor();
 
 			for (var webContentTitle : list "WC WebContent Title 1,WC WebContent Title 2,WC WebContent Title 3") {
-				PageEditor.gotoTab(tabName = "Browser");
-
-				Navigator.gotoNavTab(navTab = "Page Content");
+				PageEditor.gotoTab(tabName = "Page Content");
 
 				LexiconEntry.gotoFragmentPageContentEllipsisMenuItem(
 					menuItem = "Edit",
@@ -786,7 +915,7 @@ definition {
 				fragmentName = "Paragraph",
 				targetFragmentName = "Web Content Display");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Sign in as new user") {
@@ -801,9 +930,7 @@ definition {
 				siteName = "Test Site Name");
 
 			for (var webContentTitle : list "WC WebContent Title 1,WC WebContent Title 2") {
-				PageEditor.gotoTab(tabName = "Browser");
-
-				Navigator.gotoNavTab(navTab = "Page Content");
+				PageEditor.gotoTab(tabName = "Page Content");
 
 				LexiconEntry.gotoFragmentPageContentEllipsisMenuItem(
 					menuItem = "Edit",
@@ -857,7 +984,7 @@ definition {
 				collectionName = "Basic Components",
 				fragmentName = "Paragraph");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Sign in as new user") {
@@ -895,7 +1022,7 @@ definition {
 
 			PageEditor.waitForAutoSave();
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("View the edited inline content in view mode") {
@@ -918,7 +1045,7 @@ definition {
 
 			IFrame.selectPermissionsFrame();
 
-			Check(
+			Check.checkNotVisible(
 				key_actionName = "UPDATE",
 				key_roleTitle = "site-member",
 				locator1 = "Permissions#PERMISSIONS_MODAL_CHECKBOX");
@@ -945,7 +1072,7 @@ definition {
 		}
 
 		task ("Publish the content page") {
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("View the Paragraph shown on content page at view mode") {
@@ -1018,7 +1145,7 @@ definition {
 
 			PageEditor.waitForAutoSave();
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Sign in as new user") {
@@ -1042,7 +1169,7 @@ definition {
 				index = "1",
 				locator1 = "Fragment#CONTRIBUTED_FRAGMENT_TEXT");
 
-			Pause(locator1 = "3000");
+			WaitForEditable(locator1 = "PageEditorEditableLink#FIELD");
 
 			Select(
 				locator1 = "PageEditorEditableLink#FIELD",
@@ -1050,7 +1177,7 @@ definition {
 
 			PageEditor.waitForAutoSave();
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("View mapped content in view mode") {
@@ -1086,7 +1213,7 @@ definition {
 
 			Permissions.definePermissionViaJSONAPI(
 				resourceAction = "VIEW",
-				resourceName = "com.liferay.layout.seocom.liferay.layout.seo",
+				resourceName = "com.liferay.layout.seo",
 				roleTitle = "Roles Siterole Name",
 				roleType = "site");
 
@@ -1141,7 +1268,46 @@ definition {
 		}
 
 		task ("Publish the page") {
-			PageEditor.clickPublish();
+			PageEditor.publish();
+		}
+	}
+
+	@description = "This is a test for LPS-137155. The page creator can change permissions of content page via header ellipsis icon at edit mode."
+	@priority = "3"
+	test RemoveViewPermissionForGuestViaHeaderEllipsisIcon {
+		task ("Given a page designer has content page") {
+			PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
+
+			PagesAdmin.viewPageItemPresent(pageName = "Test Content Page Name");
+		}
+
+		task ("When the page designer removes view permission of guest role via header ellipsis icon at edit mode") {
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Test Content Page Name",
+				siteName = "Test Site Name");
+
+			LexiconEntry.gotoHeaderMenuItem(menuItem = "Permissions");
+
+			PermissionsInline.addOrRemoveAnyPermissionsFromSpecificRole(
+				addOrRemoveViewPermission = "Remove",
+				permissionsKeyList = "INLINE_PERMISSIONS_VIEW_CHECKBOX",
+				roleTitle = "guest");
+
+			IFrame.closeFrame();
+
+			PageEditor.publish();
+		}
+
+		task ("Then a guest user cannot access to the content page") {
+			User.logoutPG();
+
+			ContentPagesNavigator.openViewContentPage(
+				pageName = "Test Content Page Name",
+				siteName = "Test Site Name");
+
+			AssertTextEquals(
+				locator1 = "Home#ERROR_MESSAGE_ALERT_ERROR",
+				value1 = "Not Found");
 		}
 	}
 
@@ -1225,7 +1391,7 @@ definition {
 
 			PageEditor.assertFragmentSidebarLoaded();
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Sign in as new user") {
@@ -1239,9 +1405,7 @@ definition {
 				pageName = "Test Content Page Name",
 				siteName = "Test Site Name");
 
-			PageEditor.gotoTab(tabName = "Browser");
-
-			Navigator.gotoNavTab(navTab = "Page Content");
+			PageEditor.gotoTab(tabName = "Page Content");
 
 			AssertVisible(
 				key_itemName = "WC WebContent Title",

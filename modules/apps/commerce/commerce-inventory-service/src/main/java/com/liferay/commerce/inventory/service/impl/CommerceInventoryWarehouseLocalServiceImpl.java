@@ -20,11 +20,14 @@ import com.liferay.commerce.inventory.exception.DuplicateCommerceInventoryWareho
 import com.liferay.commerce.inventory.exception.MVCCException;
 import com.liferay.commerce.inventory.internal.search.CommerceInventoryWarehouseIndexer;
 import com.liferay.commerce.inventory.model.CommerceInventoryWarehouse;
+import com.liferay.commerce.inventory.service.CommerceInventoryReplenishmentItemLocalService;
+import com.liferay.commerce.inventory.service.CommerceInventoryWarehouseItemLocalService;
 import com.liferay.commerce.inventory.service.base.CommerceInventoryWarehouseLocalServiceBaseImpl;
 import com.liferay.expando.kernel.service.ExpandoRowLocalService;
+import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.model.GroupConstants;
+import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
@@ -39,92 +42,67 @@ import com.liferay.portal.kernel.search.QueryConfig;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.SearchException;
 import com.liferay.portal.kernel.search.Sort;
+import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.spring.extender.service.ServiceReference;
 
 import java.io.Serializable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Luca Pellizzon
  * @author Alessio Antonio Rendina
  */
+@Component(
+	property = "model.class.name=com.liferay.commerce.inventory.model.CommerceInventoryWarehouse",
+	service = AopService.class
+)
 public class CommerceInventoryWarehouseLocalServiceImpl
 	extends CommerceInventoryWarehouseLocalServiceBaseImpl {
 
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
-	 *             #addCommerceInventoryWarehouse(String,
-	 *             String, String, String, boolean, String, String, String,
-	 *             String, String, String, String, double, double,
-	 *             ServiceContext)}
-	 */
-	@Deprecated
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
 	public CommerceInventoryWarehouse addCommerceInventoryWarehouse(
-			String name, String description, boolean active, String street1,
+			String externalReferenceCode, Map<Locale, String> nameMap,
+			Map<Locale, String> descriptionMap, boolean active, String street1,
 			String street2, String street3, String city, String zip,
 			String commerceRegionCode, String commerceCountryCode,
-			double latitude, double longitude, String externalReferenceCode,
-			ServiceContext serviceContext)
+			double latitude, double longitude, ServiceContext serviceContext)
 		throws PortalException {
 
-		return addCommerceInventoryWarehouse(
-			externalReferenceCode, name, description, active, street1, street2,
-			street3, city, zip, commerceRegionCode, commerceCountryCode,
-			latitude, longitude, serviceContext);
-	}
+		User user = _userLocalService.getUser(serviceContext.getUserId());
 
-	@Indexable(type = IndexableType.REINDEX)
-	@Override
-	public CommerceInventoryWarehouse addCommerceInventoryWarehouse(
-			String externalReferenceCode, String name, String description,
-			boolean active, String street1, String street2, String street3,
-			String city, String zip, String commerceRegionCode,
-			String commerceCountryCode, double latitude, double longitude,
-			ServiceContext serviceContext)
-		throws PortalException {
+		_validateExternalReferenceCode(
+			0, user.getCompanyId(), externalReferenceCode);
 
-		User user = userLocalService.getUser(serviceContext.getUserId());
-
-		if (Validator.isBlank(externalReferenceCode)) {
-			externalReferenceCode = null;
-		}
-		else {
-			CommerceInventoryWarehouse commerceInventoryWarehouse =
-				fetchCommerceInventoryWarehouseByReferenceCode(
-					externalReferenceCode, user.getCompanyId());
-
-			if (commerceInventoryWarehouse != null) {
-				throw new DuplicateCommerceInventoryWarehouseException(
-					"Duplicated externalReferenceCode");
-			}
-		}
-
-		validate(name, active, latitude, longitude);
-
-		long commerceInventoryWarehouseId = counterLocalService.increment();
+		_validateNameMap(nameMap);
+		_validateActive(active, latitude, longitude);
 
 		CommerceInventoryWarehouse commerceInventoryWarehouse =
 			commerceInventoryWarehousePersistence.create(
-				commerceInventoryWarehouseId);
+				counterLocalService.increment());
 
 		commerceInventoryWarehouse.setExternalReferenceCode(
 			externalReferenceCode);
 		commerceInventoryWarehouse.setCompanyId(user.getCompanyId());
 		commerceInventoryWarehouse.setUserId(user.getUserId());
 		commerceInventoryWarehouse.setUserName(user.getFullName());
-		commerceInventoryWarehouse.setName(name);
-		commerceInventoryWarehouse.setDescription(description);
+		commerceInventoryWarehouse.setNameMap(nameMap);
+		commerceInventoryWarehouse.setDescriptionMap(descriptionMap);
 		commerceInventoryWarehouse.setActive(active);
 		commerceInventoryWarehouse.setStreet1(street1);
 		commerceInventoryWarehouse.setStreet2(street2);
@@ -142,13 +120,13 @@ public class CommerceInventoryWarehouseLocalServiceImpl
 			commerceInventoryWarehousePersistence.update(
 				commerceInventoryWarehouse);
 
-		// Resources
+		Company company = _companyLocalService.getCompany(user.getCompanyId());
 
-		resourceLocalService.addResources(
-			user.getCompanyId(), GroupConstants.DEFAULT_LIVE_GROUP_ID,
-			user.getUserId(), CommerceInventoryWarehouse.class.getName(),
+		_resourceLocalService.addResources(
+			user.getCompanyId(), company.getGroupId(), user.getUserId(),
+			CommerceInventoryWarehouse.class.getName(),
 			commerceInventoryWarehouse.getCommerceInventoryWarehouseId(), false,
-			false, false);
+			true, true);
 
 		return commerceInventoryWarehouse;
 	}
@@ -160,23 +138,22 @@ public class CommerceInventoryWarehouseLocalServiceImpl
 			CommerceInventoryWarehouse commerceInventoryWarehouse)
 		throws PortalException {
 
-		commerceInventoryWarehousePersistence.remove(
-			commerceInventoryWarehouse);
+		commerceInventoryWarehouse =
+			commerceInventoryWarehousePersistence.remove(
+				commerceInventoryWarehouse);
 
-		// Commerce warehouse items
-
-		commerceInventoryWarehouseItemLocalService.
+		_commerceInventoryWarehouseItemLocalService.
 			deleteCommerceInventoryWarehouseItems(
 				commerceInventoryWarehouse.getCommerceInventoryWarehouseId());
 
-		// Expando
+		_commerceInventoryReplenishmentItemLocalService.
+			deleteCommerceInventoryReplenishmentItems(
+				commerceInventoryWarehouse.getCommerceInventoryWarehouseId());
 
 		_expandoRowLocalService.deleteRows(
 			commerceInventoryWarehouse.getCommerceInventoryWarehouseId());
 
-		// Resources
-
-		resourceLocalService.deleteResource(
+		_resourceLocalService.deleteResource(
 			commerceInventoryWarehouse, ResourceConstants.SCOPE_INDIVIDUAL);
 
 		return commerceInventoryWarehouse;
@@ -186,10 +163,6 @@ public class CommerceInventoryWarehouseLocalServiceImpl
 	public CommerceInventoryWarehouse
 		fetchCommerceInventoryWarehouseByReferenceCode(
 			String externalReferenceCode, long companyId) {
-
-		if (Validator.isBlank(externalReferenceCode)) {
-			return null;
-		}
 
 		return commerceInventoryWarehousePersistence.fetchByC_ERC(
 			companyId, externalReferenceCode);
@@ -297,12 +270,12 @@ public class CommerceInventoryWarehouseLocalServiceImpl
 			String keywords, int start, int end, Sort sort)
 		throws PortalException {
 
-		SearchContext searchContext = buildSearchContext(
+		SearchContext searchContext = _buildSearchContext(
 			companyId, active, commerceCountryCode, keywords, start, end, sort);
 
 		searchContext.setKeywords(keywords);
 
-		return search(searchContext);
+		return _search(searchContext);
 	}
 
 	@Override
@@ -311,13 +284,13 @@ public class CommerceInventoryWarehouseLocalServiceImpl
 			String keywords)
 		throws PortalException {
 
-		SearchContext searchContext = buildSearchContext(
+		SearchContext searchContext = _buildSearchContext(
 			companyId, active, commerceCountryCode, keywords, QueryUtil.ALL_POS,
 			QueryUtil.ALL_POS, null);
 
 		searchContext.setKeywords(keywords);
 
-		return searchCommerceInventoryWarehousesCount(searchContext);
+		return _searchCommerceInventoryWarehousesCount(searchContext);
 	}
 
 	@Indexable(type = IndexableType.REINDEX)
@@ -330,9 +303,8 @@ public class CommerceInventoryWarehouseLocalServiceImpl
 			commerceInventoryWarehousePersistence.findByPrimaryKey(
 				commerceInventoryWarehouseId);
 
-		validate(
-			commerceInventoryWarehouse.getName(), active,
-			commerceInventoryWarehouse.getLatitude(),
+		_validateActive(
+			active, commerceInventoryWarehouse.getLatitude(),
 			commerceInventoryWarehouse.getLongitude());
 
 		commerceInventoryWarehouse.setActive(active);
@@ -344,14 +316,16 @@ public class CommerceInventoryWarehouseLocalServiceImpl
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
 	public CommerceInventoryWarehouse updateCommerceInventoryWarehouse(
-			long commerceInventoryWarehouseId, String name, String description,
-			boolean active, String street1, String street2, String street3,
-			String city, String zip, String commerceRegionCode,
-			String commerceCountryCode, double latitude, double longitude,
-			long mvccVersion, ServiceContext serviceContext)
+			long commerceInventoryWarehouseId, Map<Locale, String> nameMap,
+			Map<Locale, String> descriptionMap, boolean active, String street1,
+			String street2, String street3, String city, String zip,
+			String commerceRegionCode, String commerceCountryCode,
+			double latitude, double longitude, long mvccVersion,
+			ServiceContext serviceContext)
 		throws PortalException {
 
-		validate(name, active, latitude, longitude);
+		_validateNameMap(nameMap);
+		_validateActive(active, latitude, longitude);
 
 		CommerceInventoryWarehouse commerceInventoryWarehouse =
 			commerceInventoryWarehousePersistence.findByPrimaryKey(
@@ -361,8 +335,8 @@ public class CommerceInventoryWarehouseLocalServiceImpl
 			throw new MVCCException();
 		}
 
-		commerceInventoryWarehouse.setName(name);
-		commerceInventoryWarehouse.setDescription(description);
+		commerceInventoryWarehouse.setNameMap(nameMap);
+		commerceInventoryWarehouse.setDescriptionMap(descriptionMap);
 		commerceInventoryWarehouse.setActive(active);
 		commerceInventoryWarehouse.setStreet1(street1);
 		commerceInventoryWarehouse.setStreet2(street2);
@@ -380,7 +354,25 @@ public class CommerceInventoryWarehouseLocalServiceImpl
 			commerceInventoryWarehouse);
 	}
 
-	protected SearchContext buildSearchContext(
+	@Indexable(type = IndexableType.REINDEX)
+	@Override
+	public CommerceInventoryWarehouse
+			updateCommerceInventoryWarehouseExternalReferenceCode(
+				String externalReferenceCode, long commerceInventoryWarehouseId)
+		throws PortalException {
+
+		CommerceInventoryWarehouse commerceInventoryWarehouse =
+			commerceInventoryWarehousePersistence.findByPrimaryKey(
+				commerceInventoryWarehouseId);
+
+		commerceInventoryWarehouse.setExternalReferenceCode(
+			externalReferenceCode);
+
+		return commerceInventoryWarehousePersistence.update(
+			commerceInventoryWarehouse);
+	}
+
+	private SearchContext _buildSearchContext(
 		long companyId, Boolean active, String commerceCountryCode,
 		String keywords, int start, int end, Sort sort) {
 
@@ -417,7 +409,6 @@ public class CommerceInventoryWarehouseLocalServiceImpl
 					return null;
 				}
 			).build());
-
 		searchContext.setCompanyId(companyId);
 		searchContext.setEnd(end);
 
@@ -435,7 +426,7 @@ public class CommerceInventoryWarehouseLocalServiceImpl
 		return searchContext;
 	}
 
-	protected List<CommerceInventoryWarehouse> getCommerceInventoryWarehouses(
+	private List<CommerceInventoryWarehouse> _getCommerceInventoryWarehouses(
 			Hits hits)
 		throws PortalException {
 
@@ -473,7 +464,7 @@ public class CommerceInventoryWarehouseLocalServiceImpl
 		return commerceInventoryWarehouses;
 	}
 
-	protected List<CommerceInventoryWarehouse> search(
+	private List<CommerceInventoryWarehouse> _search(
 			SearchContext searchContext)
 		throws PortalException {
 
@@ -485,7 +476,7 @@ public class CommerceInventoryWarehouseLocalServiceImpl
 			Hits hits = indexer.search(searchContext, _SELECTED_FIELD_NAMES);
 
 			List<CommerceInventoryWarehouse> commerceInventoryWarehouses =
-				getCommerceInventoryWarehouses(hits);
+				_getCommerceInventoryWarehouses(hits);
 
 			if (commerceInventoryWarehouses != null) {
 				return commerceInventoryWarehouses;
@@ -496,7 +487,7 @@ public class CommerceInventoryWarehouseLocalServiceImpl
 			"Unable to fix the search index after 10 attempts");
 	}
 
-	protected int searchCommerceInventoryWarehousesCount(
+	private int _searchCommerceInventoryWarehousesCount(
 			SearchContext searchContext)
 		throws PortalException {
 
@@ -507,16 +498,46 @@ public class CommerceInventoryWarehouseLocalServiceImpl
 		return GetterUtil.getInteger(indexer.searchCount(searchContext));
 	}
 
-	protected void validate(
-			String name, boolean active, double latitude, double longitude)
+	private void _validateActive(
+			boolean active, double latitude, double longitude)
 		throws PortalException {
-
-		if (Validator.isNull(name)) {
-			throw new CommerceInventoryWarehouseNameException();
-		}
 
 		if (active && (latitude == 0) && (longitude == 0)) {
 			throw new CommerceInventoryWarehouseActiveException();
+		}
+	}
+
+	private void _validateExternalReferenceCode(
+			long commerceInventoryWarehouseId, long companyId,
+			String externalReferenceCode)
+		throws PortalException {
+
+		if (Validator.isNull(externalReferenceCode)) {
+			return;
+		}
+
+		CommerceInventoryWarehouse commerceInventoryWarehouse =
+			commerceInventoryWarehousePersistence.fetchByC_ERC(
+				companyId, externalReferenceCode);
+
+		if (commerceInventoryWarehouse == null) {
+			return;
+		}
+
+		if (commerceInventoryWarehouse.getCommerceInventoryWarehouseId() !=
+				commerceInventoryWarehouseId) {
+
+			throw new DuplicateCommerceInventoryWarehouseException(
+				"There is another commerce inventory with external reference " +
+					"code " + externalReferenceCode);
+		}
+	}
+
+	private void _validateNameMap(Map<Locale, String> nameMap)
+		throws PortalException {
+
+		if ((nameMap == null) || nameMap.isEmpty()) {
+			throw new CommerceInventoryWarehouseNameException();
 		}
 	}
 
@@ -524,7 +545,24 @@ public class CommerceInventoryWarehouseLocalServiceImpl
 		Field.ENTRY_CLASS_PK, Field.COMPANY_ID
 	};
 
-	@ServiceReference(type = ExpandoRowLocalService.class)
+	@Reference
+	private CommerceInventoryReplenishmentItemLocalService
+		_commerceInventoryReplenishmentItemLocalService;
+
+	@Reference
+	private CommerceInventoryWarehouseItemLocalService
+		_commerceInventoryWarehouseItemLocalService;
+
+	@Reference
+	private CompanyLocalService _companyLocalService;
+
+	@Reference
 	private ExpandoRowLocalService _expandoRowLocalService;
+
+	@Reference
+	private ResourceLocalService _resourceLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

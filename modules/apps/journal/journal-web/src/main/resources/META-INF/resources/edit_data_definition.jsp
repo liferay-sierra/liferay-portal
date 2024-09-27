@@ -32,10 +32,12 @@ renderResponse.setTitle((ddmStructure != null) ? LanguageUtil.format(request, "e
 
 DDMForm ddmForm = null;
 long ddmStructureId = 0L;
+String ddmStructureKey = StringPool.BLANK;
 
 if (ddmStructure != null) {
 	ddmForm = ddmStructure.getDDMForm();
 	ddmStructureId = ddmStructure.getStructureId();
+	ddmStructureKey = ddmStructure.getStructureKey();
 }
 
 PortletURL editDDMStructureURL = renderResponse.createActionURL();
@@ -49,11 +51,8 @@ else {
 
 editDDMStructureURL.setParameter("mvcPath", "/edit_data_definition.jsp");
 editDDMStructureURL.setParameter("ddmStructureId", String.valueOf(ddmStructureId));
+editDDMStructureURL.setParameter("structureKey", String.valueOf(ddmStructureKey));
 %>
-
-<liferay-util:html-top>
-	<link href="<%= PortalUtil.getStaticResourceURL(request, PortalUtil.getPathModule() + "/journal-web/css/ddm_form.css") %>" rel="stylesheet" />
-</liferay-util:html-top>
 
 <aui:form action="<%= editDDMStructureURL %>" cssClass="edit-article-form" enctype="multipart/form-data" method="post" name="fm" onSubmit="event.preventDefault();">
 	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
@@ -73,7 +72,7 @@ editDDMStructureURL.setParameter("ddmStructureId", String.valueOf(ddmStructureId
 				</li>
 				<li class="tbar-item">
 					<div class="journal-article-button-row tbar-section text-right">
-						<aui:button cssClass="btn-secondary btn-sm mr-3" href="<%= redirect %>" type="cancel" />
+						<aui:button cssClass="btn-sm mr-3" href="<%= redirect %>" type="cancel" />
 
 						<aui:button cssClass="btn-sm mr-3" id="submitButton" type="submit" value="save" />
 					</div>

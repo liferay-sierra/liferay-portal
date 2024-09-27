@@ -30,7 +30,7 @@ import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.Summary;
 import com.liferay.portal.kernel.search.filter.BooleanFilter;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 
 import java.util.Locale;
 
@@ -43,7 +43,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marco Leo
  */
-@Component(enabled = false, immediate = true, service = Indexer.class)
+@Component(immediate = true, service = Indexer.class)
 public class CPOptionValueIndexer extends BaseIndexer<CPOptionValue> {
 
 	public static final String CLASS_NAME = CPOptionValue.class.getName();
@@ -91,9 +91,9 @@ public class CPOptionValueIndexer extends BaseIndexer<CPOptionValue> {
 		Document document = getBaseModelDocument(CLASS_NAME, cpOptionValue);
 
 		String cpOptionValueDefaultLanguageId =
-			LocalizationUtil.getDefaultLanguageId(cpOptionValue.getName());
+			_localization.getDefaultLanguageId(cpOptionValue.getName());
 
-		String[] languageIds = LocalizationUtil.getAvailableLanguageIds(
+		String[] languageIds = _localization.getAvailableLanguageIds(
 			cpOptionValue.getName());
 
 		for (String languageId : languageIds) {
@@ -105,8 +105,7 @@ public class CPOptionValueIndexer extends BaseIndexer<CPOptionValue> {
 			}
 
 			document.addText(
-				LocalizationUtil.getLocalizedName(Field.NAME, languageId),
-				name);
+				_localization.getLocalizedName(Field.NAME, languageId), name);
 			document.addNumber(Field.PRIORITY, cpOptionValue.getPriority());
 			document.addText(CPField.KEY, cpOptionValue.getKey());
 			document.addText(Field.CONTENT, name);
@@ -137,8 +136,7 @@ public class CPOptionValueIndexer extends BaseIndexer<CPOptionValue> {
 	@Override
 	protected void doReindex(CPOptionValue cpOptionValue) throws Exception {
 		_indexWriterHelper.updateDocument(
-			getSearchEngineId(), cpOptionValue.getCompanyId(),
-			getDocument(cpOptionValue), isCommitImmediately());
+			cpOptionValue.getCompanyId(), getDocument(cpOptionValue));
 	}
 
 	@Override
@@ -173,7 +171,6 @@ public class CPOptionValueIndexer extends BaseIndexer<CPOptionValue> {
 					}
 				}
 			});
-		indexableActionableDynamicQuery.setSearchEngineId(getSearchEngineId());
 
 		indexableActionableDynamicQuery.performActions();
 	}
@@ -186,5 +183,8 @@ public class CPOptionValueIndexer extends BaseIndexer<CPOptionValue> {
 
 	@Reference
 	private IndexWriterHelper _indexWriterHelper;
+
+	@Reference
+	private Localization _localization;
 
 }

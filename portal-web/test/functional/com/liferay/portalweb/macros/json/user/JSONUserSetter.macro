@@ -9,6 +9,7 @@ definition {
 
 		var groupId = JSONGroupAPI._getGroupIdByName(
 			groupName = "${groupName}",
+			parentGroupName = "${parentGroupName}",
 			site = "${site}");
 
 		return "${groupId}";
@@ -95,6 +96,7 @@ definition {
 			creatorEmailAddress = "${creatorEmailAddress}",
 			creatorPassword = "${creatorPassword}",
 			portalInstanceName = "${portalInstanceName}",
+			specificURL = "${specificURL}",
 			userEmailAddress = "${userEmailAddress}");
 
 		return "${userId}";

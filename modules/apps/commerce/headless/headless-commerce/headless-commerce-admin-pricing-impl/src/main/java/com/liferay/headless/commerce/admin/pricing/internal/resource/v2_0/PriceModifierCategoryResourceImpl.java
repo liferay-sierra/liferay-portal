@@ -50,7 +50,6 @@ import org.osgi.service.component.annotations.ServiceScope;
  * @author Riccardo Alberti
  */
 @Component(
-	enabled = false,
 	properties = "OSGI-INF/liferay/rest/v2_0/price-modifier-category.properties",
 	scope = ServiceScope.PROTOTYPE,
 	service = {NestedFieldSupport.class, PriceModifierCategoryResource.class}
@@ -140,9 +139,9 @@ public class PriceModifierCategoryResourceImpl
 
 		CommercePriceModifierRel commercePriceModifierRel =
 			PriceModifierCategoryUtil.addCommercePriceModifierRel(
-				_assetCategoryLocalService, _commercePriceModifierRelService,
-				priceModifierCategory, commercePriceModifier,
-				_serviceContextHelper);
+				contextCompany.getGroupId(), _assetCategoryLocalService,
+				_commercePriceModifierRelService, priceModifierCategory,
+				commercePriceModifier, _serviceContextHelper);
 
 		return _toPriceModifierCategory(
 			commercePriceModifierRel.getCommercePriceModifierRelId());
@@ -155,8 +154,8 @@ public class PriceModifierCategoryResourceImpl
 
 		CommercePriceModifierRel commercePriceModifierRel =
 			PriceModifierCategoryUtil.addCommercePriceModifierRel(
-				_assetCategoryLocalService, _commercePriceModifierRelService,
-				priceModifierCategory,
+				contextCompany.getGroupId(), _assetCategoryLocalService,
+				_commercePriceModifierRelService, priceModifierCategory,
 				_commercePriceModifierService.getCommercePriceModifier(id),
 				_serviceContextHelper);
 

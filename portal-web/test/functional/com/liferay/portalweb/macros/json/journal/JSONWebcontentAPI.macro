@@ -24,6 +24,7 @@ definition {
 		var curl = '''
 			${portalURL}/api/jsonws/journal.journalfolder/add-folder \
 				-u ${userEmailAddress}:${userPassword} \
+				-d externalReferenceCode='' \
 				-d groupId=${groupId} \
 				-d parentFolderId=${parentFolderId} \
 				-d name=${folderName} \
@@ -87,7 +88,6 @@ definition {
 		var groupId = JSONCategorySetter.setGroupId(
 			groupName = "${groupName}",
 			site = "${site}");
-
 		var portalURL = JSONCompany.getPortalURL();
 
 		var curl = '''
@@ -96,6 +96,7 @@ definition {
 				-d groupId=${groupId} \
 				-d "urlTitle=${urlTitle}"
 		''';
+
 		var articleId = JSONCurlUtil.post("${curl}", "$.[?(@['urlTitle'] == '${urlTitle}')]['articleId']");
 
 		return "${articleId}";
@@ -112,6 +113,7 @@ definition {
 				-u test@liferay.com:test \
 				-d groupId=${groupId}
 		''';
+
 		var folderId = JSONCurlUtil.post("${curl}", "$.[?(@['name'] == '${folderName}')]['folderId']");
 
 		if ("${folderId}" == "") {
@@ -122,11 +124,32 @@ definition {
 		}
 	}
 
+	@summary = "Helper function to get the 'uuid' for the folder '${folderName}'"
+	macro _getFolderUuidByFolderName {
+		Variables.assertDefined(parameterList = "${groupId},${folderName}");
+
+		var portalURL = JSONCompany.getPortalURL();
+
+		var curl = '''
+			${portalURL}/api/jsonws/journal.journalfolder/get-folders \
+				-u test@liferay.com:test \
+				-d groupId=${groupId}
+		''';
+
+		var folderUuid = JSONCurlUtil.post("${curl}", "$.[?(@['name'] == '${folderName}')]['uuid']");
+
+		if ("${folderUuid}" == "") {
+			fail("FAIL. Cannot find folder.");
+		}
+		else {
+			return "${folderUuid}";
+		}
+	}
+
 	macro _getResourcePrimKeyByURLTitle {
 		Variables.assertDefined(parameterList = "${groupName},${urlTitle}");
 
 		var groupId = JSONCategorySetter.setGroupId(groupName = "${groupName}");
-
 		var portalURL = JSONCompany.getPortalURL();
 
 		var curl = '''
@@ -135,6 +158,7 @@ definition {
 				-d groupId=${groupId} \
 				-d urlTitle=${urlTitle}
 		''';
+
 		var resourcePrimKey = JSONCurlUtil.post("${curl}", "$.[?(@['urlTitle'] == '${urlTitle}')]['resourcePrimKey']");
 
 		return "${resourcePrimKey}";

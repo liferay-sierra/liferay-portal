@@ -14,27 +14,31 @@
 
 package com.liferay.layout.taglib.internal.display.context;
 
-import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.fragment.collection.filter.constants.FragmentCollectionFilterConstants;
 import com.liferay.fragment.constants.FragmentConfigurationFieldDataType;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.service.FragmentEntryLinkLocalServiceUtil;
 import com.liferay.fragment.util.configuration.FragmentEntryConfigurationParser;
 import com.liferay.info.constants.InfoDisplayWebKeys;
+import com.liferay.info.exception.NoSuchInfoItemException;
 import com.liferay.info.filter.InfoFilter;
 import com.liferay.info.filter.InfoFilterProvider;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemIdentifier;
+import com.liferay.info.item.InfoItemReference;
+import com.liferay.info.item.InfoItemServiceRegistry;
+import com.liferay.info.item.provider.InfoItemObjectProvider;
 import com.liferay.info.list.renderer.InfoListRenderer;
-import com.liferay.info.list.renderer.InfoListRendererTracker;
-import com.liferay.info.pagination.Pagination;
+import com.liferay.info.list.renderer.InfoListRendererRegistry;
 import com.liferay.layout.display.page.LayoutDisplayPageProvider;
-import com.liferay.layout.display.page.LayoutDisplayPageProviderTracker;
+import com.liferay.layout.display.page.LayoutDisplayPageProviderRegistry;
+import com.liferay.layout.helper.CollectionPaginationHelper;
 import com.liferay.layout.list.retriever.DefaultLayoutListRetrieverContext;
 import com.liferay.layout.list.retriever.LayoutListRetriever;
-import com.liferay.layout.list.retriever.LayoutListRetrieverTracker;
+import com.liferay.layout.list.retriever.LayoutListRetrieverRegistry;
 import com.liferay.layout.list.retriever.ListObjectReference;
 import com.liferay.layout.list.retriever.ListObjectReferenceFactory;
-import com.liferay.layout.list.retriever.ListObjectReferenceFactoryTracker;
+import com.liferay.layout.list.retriever.ListObjectReferenceFactoryRegistry;
+import com.liferay.layout.taglib.internal.info.search.InfoSearchClassMapperRegistryUtil;
 import com.liferay.layout.taglib.internal.servlet.ServletContextUtil;
 import com.liferay.layout.util.structure.CollectionStyledLayoutStructureItem;
 import com.liferay.petra.string.CharPool;
@@ -43,7 +47,8 @@ import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -61,11 +66,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Eudaldo Alonso
@@ -74,21 +77,15 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 
 	public static final String PAGE_NUMBER_PARAM_PREFIX = "page_number_";
 
-	public static final String PAGINATION_TYPE_NUMERIC = "numeric";
-
-	public static final String PAGINATION_TYPE_SIMPLE = "simple";
-
 	public RenderCollectionLayoutStructureItemDisplayContext(
 		CollectionStyledLayoutStructureItem collectionStyledLayoutStructureItem,
-		HttpServletRequest httpServletRequest,
-		HttpServletResponse httpServletResponse) {
+		HttpServletRequest httpServletRequest) {
 
 		_collectionStyledLayoutStructureItem =
 			collectionStyledLayoutStructureItem;
 		_httpServletRequest = httpServletRequest;
-		_httpServletResponse = httpServletResponse;
 
-		_themeDisplay = (ThemeDisplay)_httpServletRequest.getAttribute(
+		_themeDisplay = (ThemeDisplay)httpServletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 	}
 
@@ -123,42 +120,18 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 			_getDefaultLayoutListRetrieverContext(
 				layoutListRetriever, listObjectReference);
 
-		int end = _collectionStyledLayoutStructureItem.getNumberOfItems();
-		int start = 0;
-
-		String paginationType =
-			_collectionStyledLayoutStructureItem.getPaginationType();
-
-		if (Objects.equals(paginationType, PAGINATION_TYPE_NUMERIC) ||
-			Objects.equals(paginationType, PAGINATION_TYPE_SIMPLE)) {
-
-			int maxNumberOfItems =
-				_collectionStyledLayoutStructureItem.getNumberOfItems();
-
-			if (_collectionStyledLayoutStructureItem.isShowAllItems()) {
-				maxNumberOfItems = getCollectionCount();
-			}
-
-			int numberOfItemsPerPage =
-				_collectionStyledLayoutStructureItem.getNumberOfItemsPerPage();
-
-			if (numberOfItemsPerPage >
-					PropsValues.SEARCH_CONTAINER_PAGE_MAX_DELTA) {
-
-				numberOfItemsPerPage =
-					PropsValues.SEARCH_CONTAINER_PAGE_MAX_DELTA;
-			}
-
-			end = Math.min(
-				Math.min(
-					getActivePage() * numberOfItemsPerPage, maxNumberOfItems),
-				getCollectionCount());
-
-			start = (getActivePage() - 1) * numberOfItemsPerPage;
-		}
+		CollectionPaginationHelper collectionPaginationHelper =
+			ServletContextUtil.getCollectionPaginationHelper();
 
 		defaultLayoutListRetrieverContext.setPagination(
-			Pagination.of(end, start));
+			collectionPaginationHelper.getPagination(
+				getActivePage(), getCollectionCount(),
+				_collectionStyledLayoutStructureItem.isDisplayAllPages(),
+				_collectionStyledLayoutStructureItem.isDisplayAllItems(),
+				_collectionStyledLayoutStructureItem.getNumberOfItems(),
+				_collectionStyledLayoutStructureItem.getNumberOfItemsPerPage(),
+				_collectionStyledLayoutStructureItem.getNumberOfPages(),
+				_collectionStyledLayoutStructureItem.getPaginationType()));
 
 		return layoutListRetriever.getList(
 			listObjectReference, defaultLayoutListRetrieverContext);
@@ -224,17 +197,13 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 			return null;
 		}
 
-		LayoutDisplayPageProviderTracker layoutDisplayPageProviderTracker =
-			ServletContextUtil.getLayoutDisplayPageProviderTracker();
+		LayoutDisplayPageProviderRegistry layoutDisplayPageProviderRegistry =
+			ServletContextUtil.getLayoutDisplayPageProviderRegistry();
 
-		String className = listObjectReference.getItemType();
-
-		if (Objects.equals(className, DLFileEntry.class.getName())) {
-			className = FileEntry.class.getName();
-		}
-
-		return layoutDisplayPageProviderTracker.
-			getLayoutDisplayPageProviderByClassName(className);
+		return layoutDisplayPageProviderRegistry.
+			getLayoutDisplayPageProviderByClassName(
+				InfoSearchClassMapperRegistryUtil.getClassName(
+					listObjectReference.getItemType()));
 	}
 
 	public InfoListRenderer<?> getInfoListRenderer() {
@@ -244,10 +213,10 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 			return null;
 		}
 
-		InfoListRendererTracker infoListRendererTracker =
-			ServletContextUtil.getInfoListRendererTracker();
+		InfoListRendererRegistry infoListRendererRegistry =
+			ServletContextUtil.getInfoListRendererRegistry();
 
-		return infoListRendererTracker.getInfoListRenderer(
+		return infoListRendererRegistry.getInfoListRenderer(
 			_collectionStyledLayoutStructureItem.getListStyle());
 	}
 
@@ -257,8 +226,7 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 		}
 
 		_maxNumberOfItemsPerPage = Math.min(
-			getCollectionCount(),
-			_collectionStyledLayoutStructureItem.getNumberOfItemsPerPage());
+			getCollectionCount(), _getNumberOfItemsPerPage());
 
 		return _maxNumberOfItemsPerPage;
 	}
@@ -270,15 +238,14 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 
 		int numberOfItemsToDisplay = getTotalNumberOfItems();
 
-		if (Validator.isNotNull(
-				_collectionStyledLayoutStructureItem.getPaginationType()) &&
-			!Objects.equals(
-				_collectionStyledLayoutStructureItem.getPaginationType(),
-				"none")) {
+		CollectionPaginationHelper collectionPaginationHelper =
+			ServletContextUtil.getCollectionPaginationHelper();
+
+		if (collectionPaginationHelper.isPaginationEnabled(
+				_collectionStyledLayoutStructureItem.getPaginationType())) {
 
 			numberOfItemsToDisplay = Math.min(
-				numberOfItemsToDisplay,
-				_collectionStyledLayoutStructureItem.getNumberOfItemsPerPage());
+				numberOfItemsToDisplay, _getNumberOfItemsPerPage());
 		}
 
 		_numberOfItemsToDisplay = numberOfItemsToDisplay;
@@ -291,17 +258,7 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 			return _numberOfPages;
 		}
 
-		int maxNumberOfItems = Math.min(
-			getCollectionCount(),
-			_collectionStyledLayoutStructureItem.getNumberOfItems());
-
-		if (_collectionStyledLayoutStructureItem.isShowAllItems()) {
-			maxNumberOfItems = getCollectionCount();
-		}
-
-		_numberOfPages = (int)Math.ceil(
-			(double)maxNumberOfItems /
-				_collectionStyledLayoutStructureItem.getNumberOfItemsPerPage());
+		_numberOfPages = _getNumberOfPages();
 
 		return _numberOfPages;
 	}
@@ -317,15 +274,14 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 
 		int numberOfItemsToDisplay = getTotalNumberOfItems();
 
-		if (Validator.isNotNull(
-				_collectionStyledLayoutStructureItem.getPaginationType()) &&
-			!Objects.equals(
-				_collectionStyledLayoutStructureItem.getPaginationType(),
-				"none")) {
+		CollectionPaginationHelper collectionPaginationHelper =
+			ServletContextUtil.getCollectionPaginationHelper();
+
+		if (collectionPaginationHelper.isPaginationEnabled(
+				_collectionStyledLayoutStructureItem.getPaginationType())) {
 
 			numberOfItemsToDisplay = Math.min(
-				numberOfItemsToDisplay,
-				_collectionStyledLayoutStructureItem.getNumberOfItemsPerPage());
+				numberOfItemsToDisplay, _getNumberOfItemsPerPage());
 		}
 
 		_numberOfRows = (int)Math.ceil(
@@ -350,20 +306,17 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 	}
 
 	public int getTotalNumberOfItems() {
-		if ((Objects.equals(
-				_collectionStyledLayoutStructureItem.getPaginationType(),
-				PAGINATION_TYPE_NUMERIC) ||
-			 Objects.equals(
-				 _collectionStyledLayoutStructureItem.getPaginationType(),
-				 PAGINATION_TYPE_SIMPLE)) &&
-			_collectionStyledLayoutStructureItem.isShowAllItems()) {
+		CollectionPaginationHelper collectionPaginationHelper =
+			ServletContextUtil.getCollectionPaginationHelper();
 
-			return getCollectionCount();
-		}
-
-		return Math.min(
+		return collectionPaginationHelper.getTotalNumberOfItems(
 			getCollectionCount(),
-			_collectionStyledLayoutStructureItem.getNumberOfItems());
+			_collectionStyledLayoutStructureItem.isDisplayAllPages(),
+			_collectionStyledLayoutStructureItem.isDisplayAllItems(),
+			_collectionStyledLayoutStructureItem.getNumberOfItems(),
+			_collectionStyledLayoutStructureItem.getNumberOfItemsPerPage(),
+			_collectionStyledLayoutStructureItem.getNumberOfPages(),
+			_collectionStyledLayoutStructureItem.getPaginationType());
 	}
 
 	private Map<String, String[]> _getConfiguration() {
@@ -401,6 +354,38 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 		return configuration;
 	}
 
+	private Object _getContextObject() {
+		InfoItemReference infoItemReference =
+			(InfoItemReference)_httpServletRequest.getAttribute(
+				InfoDisplayWebKeys.INFO_ITEM_REFERENCE);
+
+		if (infoItemReference == null) {
+			return null;
+		}
+
+		InfoItemIdentifier infoItemIdentifier =
+			infoItemReference.getInfoItemIdentifier();
+
+		InfoItemServiceRegistry infoItemServiceRegistry =
+			ServletContextUtil.getInfoItemServiceRegistry();
+
+		InfoItemObjectProvider<Object> infoItemObjectProvider =
+			infoItemServiceRegistry.getFirstInfoItemService(
+				InfoItemObjectProvider.class, infoItemReference.getClassName(),
+				infoItemIdentifier.getInfoItemServiceFilter());
+
+		try {
+			return infoItemObjectProvider.getInfoItem(infoItemIdentifier);
+		}
+		catch (NoSuchInfoItemException noSuchInfoItemException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchInfoItemException);
+			}
+		}
+
+		return null;
+	}
+
 	private DefaultLayoutListRetrieverContext
 		_getDefaultLayoutListRetrieverContext(
 			LayoutListRetriever<?, ListObjectReference> layoutListRetriever,
@@ -412,15 +397,12 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 		defaultLayoutListRetrieverContext.setConfiguration(_getConfiguration());
 		defaultLayoutListRetrieverContext.setContextObject(
 			Optional.ofNullable(
-				_httpServletRequest.getAttribute(
-					InfoDisplayWebKeys.INFO_LIST_DISPLAY_OBJECT)
+				_getContextObject()
 			).orElse(
 				_httpServletRequest.getAttribute(InfoDisplayWebKeys.INFO_ITEM)
 			));
 		defaultLayoutListRetrieverContext.setInfoFilters(
 			_getInfoFilters(layoutListRetriever, listObjectReference));
-		defaultLayoutListRetrieverContext.setHttpServletRequest(
-			_httpServletRequest);
 		defaultLayoutListRetrieverContext.setSegmentsEntryIds(
 			_getSegmentsEntryIds());
 
@@ -493,8 +475,8 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 
 		Map<String, InfoFilter> infoFilters = new HashMap<>();
 
-		InfoItemServiceTracker infoItemServiceTracker =
-			ServletContextUtil.getInfoItemServiceTracker();
+		InfoItemServiceRegistry infoItemServiceRegistry =
+			ServletContextUtil.getInfoItemServiceRegistry();
 
 		Map<String, String[]> filterValues = _getFilterValues();
 
@@ -505,7 +487,7 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 			Class<?> clazz = infoFilter.getClass();
 
 			InfoFilterProvider<?> infoFilterProvider =
-				infoItemServiceTracker.getFirstInfoItemService(
+				infoItemServiceRegistry.getFirstInfoItemService(
 					InfoFilterProvider.class, clazz.getName());
 
 			infoFilters.put(
@@ -527,12 +509,12 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 			return null;
 		}
 
-		LayoutListRetrieverTracker layoutListRetrieverTracker =
-			ServletContextUtil.getLayoutListRetrieverTracker();
+		LayoutListRetrieverRegistry layoutListRetrieverRegistry =
+			ServletContextUtil.getLayoutListRetrieverRegistry();
 
 		LayoutListRetriever<?, ListObjectReference> layoutListRetriever =
 			(LayoutListRetriever<?, ListObjectReference>)
-				layoutListRetrieverTracker.getLayoutListRetriever(
+				layoutListRetrieverRegistry.getLayoutListRetriever(
 					collectionJSONObject.getString("type"));
 
 		if (layoutListRetriever == null) {
@@ -552,23 +534,23 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 			return null;
 		}
 
-		LayoutListRetrieverTracker layoutListRetrieverTracker =
-			ServletContextUtil.getLayoutListRetrieverTracker();
+		LayoutListRetrieverRegistry layoutListRetrieverRegistry =
+			ServletContextUtil.getLayoutListRetrieverRegistry();
 
 		String type = collectionJSONObject.getString("type");
 
 		LayoutListRetriever<?, ?> layoutListRetriever =
-			layoutListRetrieverTracker.getLayoutListRetriever(type);
+			layoutListRetrieverRegistry.getLayoutListRetriever(type);
 
 		if (layoutListRetriever == null) {
 			return null;
 		}
 
-		ListObjectReferenceFactoryTracker listObjectReferenceFactoryTracker =
-			ServletContextUtil.getListObjectReferenceFactoryTracker();
+		ListObjectReferenceFactoryRegistry listObjectReferenceFactoryRegistry =
+			ServletContextUtil.getListObjectReferenceFactoryRegistry();
 
 		ListObjectReferenceFactory<?> listObjectReferenceFactory =
-			listObjectReferenceFactoryTracker.getListObjectReference(type);
+			listObjectReferenceFactoryRegistry.getListObjectReference(type);
 
 		if (listObjectReferenceFactory == null) {
 			return null;
@@ -576,6 +558,39 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 
 		return listObjectReferenceFactory.getListObjectReference(
 			collectionJSONObject);
+	}
+
+	private int _getNumberOfItemsPerPage() {
+		int numberOfItemsPerPage =
+			_collectionStyledLayoutStructureItem.getNumberOfItemsPerPage();
+
+		if ((numberOfItemsPerPage <= 0) ||
+			(numberOfItemsPerPage >
+				PropsValues.SEARCH_CONTAINER_PAGE_MAX_DELTA)) {
+
+			numberOfItemsPerPage = PropsValues.SEARCH_CONTAINER_PAGE_MAX_DELTA;
+		}
+
+		return numberOfItemsPerPage;
+	}
+
+	private int _getNumberOfPages() {
+		int numberOfItemsPerPage = _getNumberOfItemsPerPage();
+
+		int maxNumberOfItems = getCollectionCount();
+
+		if (_collectionStyledLayoutStructureItem.getNumberOfPages() > 0) {
+			maxNumberOfItems = Math.min(
+				getCollectionCount(),
+				_collectionStyledLayoutStructureItem.getNumberOfPages() *
+					numberOfItemsPerPage);
+		}
+
+		if (_collectionStyledLayoutStructureItem.isDisplayAllPages()) {
+			maxNumberOfItems = getCollectionCount();
+		}
+
+		return (int)Math.ceil((double)maxNumberOfItems / numberOfItemsPerPage);
 	}
 
 	private long[] _getSegmentsEntryIds() {
@@ -596,13 +611,15 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 		return _segmentsEntryIds;
 	}
 
+	private static final Log _log = LogFactoryUtil.getLog(
+		RenderCollectionLayoutStructureItemDisplayContext.class);
+
 	private Integer _activePage;
 	private Integer _collectionCount;
 	private String _collectionItemType;
 	private final CollectionStyledLayoutStructureItem
 		_collectionStyledLayoutStructureItem;
 	private final HttpServletRequest _httpServletRequest;
-	private final HttpServletResponse _httpServletResponse;
 	private Integer _maxNumberOfItemsPerPage;
 	private Integer _numberOfItemsToDisplay;
 	private Integer _numberOfPages;

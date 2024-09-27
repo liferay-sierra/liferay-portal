@@ -28,6 +28,37 @@ definition {
 		}
 	}
 
+	@description = "This is a test for LPS-75936. The admin user should access to product menu on page with Full Page Application type."
+	@priority = "5"
+	test AccessToProductMenuOnFullPageApplicationPageAsAdmin {
+		task ("Given an admin user has a page with Full Page Application type") {
+			JSONLayout.addPublicLayout(
+				groupName = "Test Site Name",
+				layoutName = "Test Page Name",
+				type = "full_page_application");
+		}
+
+		task ("When the admin user signs out via URL") {
+			var portalURL = PropsUtil.get("portal.url");
+
+			Navigator.openSpecificURL(url = "${portalURL}/c/portal/logout");
+		}
+
+		task ("Then the admin user could access to product menu after sign in") {
+			Navigator.gotoSitePage(
+				pageName = "Test Page Name",
+				siteName = "Test Site name");
+
+			User.signInPG(userEmailAddress = "test@liferay.com");
+
+			ProductMenuHelper.openProductMenu();
+
+			AssertElementNotPresent(
+				locator1 = "Portlet#ERROR",
+				value1 = "You do not have the roles required to access this portlet.");
+		}
+	}
+
 	@description = "The user can add a blogs entry and message boards via collaboration panel page."
 	@priority = "3"
 	@uitest
@@ -35,7 +66,7 @@ definition {
 		task ("Add a panel page with collaboration component") {
 			PagesAdmin.openPagesAdmin(siteURLKey = "Test Site Name");
 
-			PagesAdmin.addPublicPage(
+			PagesAdmin.addPage(
 				componentName = "Collaboration",
 				pageName = "Test Page Name",
 				sitePageType = "Panel");
@@ -112,14 +143,13 @@ definition {
 	@priority = "5"
 	@uitest
 	test ConfigureEmbeddedAndPanelPage {
-		property osgi.app.includes = "bookmarks";
 		property portal.acceptance = "true";
 		property testray.component.names = "Training";
 
 		task ("Add an embedded page") {
 			PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
 
-			PagesAdmin.addPublicPage(
+			PagesAdmin.addPage(
 				pageName = "Test Page Name 1",
 				pageTypeURL = "https://www.google.com",
 				sitePageType = "Embedded");
@@ -129,14 +159,13 @@ definition {
 			PagesAdmin.configurePage(
 				pageName = "Test Page Name 1",
 				pageTypeURL = "http://iscaliforniaonfire.com/",
-				privacy = "Public Pages",
 				sitePageType = "Embedded");
 		}
 
 		task ("Add a panel page with community component") {
 			PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
 
-			PagesAdmin.addPublicPage(
+			PagesAdmin.addPage(
 				componentName = "Community",
 				pageName = "Test Page Name 2",
 				sitePageType = "Panel");
@@ -200,9 +229,7 @@ definition {
 				pageName = "Test Page Name Edit",
 				siteName = "Test Site Name");
 
-			PagesAdmin.viewPageItemPresent(
-				pageName = "Test Page Name Edit",
-				privacy = "Public Pages");
+			PagesAdmin.viewPageItemPresent(pageName = "Test Page Name Edit");
 		}
 
 		task ("Edit the SEO settings") {
@@ -229,6 +256,74 @@ definition {
 				htmlTitle = "S.P.A.C.E.Home",
 				metaTagsDescription = "Welcome to S.P.A.C.E., a graduate-level school for those passionate about expanding their horizons through science, research, and space travel",
 				metaTagsKeywords = "space, education, space travel, graduateschool");
+		}
+	}
+
+	@description = "This is a test for LPS-145264. The changes on widget page template should be propagate to widget page when Inherit Changes is enabled."
+	@priority = "4"
+	test PropagateChangesFromWidgetPageTemplate {
+		property testray.component.names = "Site Pages Administration,Widget Page Templates";
+
+		task ("Given a page creator has a widget page template") {
+			task ("Add a widget page template") {
+				JSONLayoutpagetemplate.addLayoutPageTemplateCollection(
+					groupName = "Test Site Name",
+					layoutPageTemplateCollectionName = "Widget Template Collection");
+
+				JSONLayoutpagetemplate.addLayoutPageTemplateEntry(
+					groupName = "Test Site Name",
+					layoutPageTemplateCollectionName = "Widget Template Collection",
+					layoutPageTemplateEntryName = "Widget Template Name",
+					layoutPageTemplateStatus = "Approved",
+					layoutPageTemplateType = "Widget Page Template");
+			}
+
+			task ("Add a Blogs widget to page template") {
+				PageTemplatesAdmin.openPageTemplatesAdmin(siteURLKey = "test-site-name");
+
+				Navigator.gotoNavNested(navNested = "Widget Template Collection");
+
+				PageTemplatesAdmin.gotoPageTemplate(pageTemplateName = "Widget Template Name");
+
+				Portlet.addPG(portletName = "Blogs");
+			}
+		}
+
+		task ("When the page creator adds a widget page based on template") {
+			PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
+
+			PagesAdmin.addPage(
+				collectionName = "Widget Template Collection",
+				pageName = "Test Page Name",
+				pageTemplateName = "Widget Template Name");
+		}
+
+		task ("Then page creator can see Inherit Changes is enabled by default") {
+			AssertChecked.assertCheckedNotVisible(
+				key_toggleSwitchLabel = "Inherit Changes",
+				locator1 = "ToggleSwitch#ANY_TOGGLE_SWITCH");
+
+			Alert.viewWarningSpecific(warningMessage = "Some page settings are unavailable because Inherit Changes is enabled. To change these settings, disable Inherit Changes under the General section.");
+		}
+
+		task ("When the page creator adds an Asset Publisher on widget page template") {
+			PageTemplatesAdmin.openPageTemplatesAdmin(siteURLKey = "test-site-name");
+
+			Navigator.gotoNavNested(navNested = "Widget Template Collection");
+
+			PageTemplatesAdmin.gotoPageTemplate(pageTemplateName = "Widget Template Name");
+
+			Portlet.addPG(portletName = "Asset Publisher");
+		}
+
+		task ("Then the page creator should see the Asset Publisher is propagated to widget page") {
+			Navigator.gotoSitePage(
+				pageName = "Test Page Name",
+				siteName = "Test Site name");
+
+			for (var widgetName : list "Blogs,Asset Publisher") {
+				Portlet.viewSpecificPG(portletName = "${widgetName}");
+			}
 		}
 	}
 

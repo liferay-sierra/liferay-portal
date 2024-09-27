@@ -21,7 +21,6 @@ import com.liferay.asset.kernel.service.AssetTagServiceUtil;
 import com.liferay.asset.tags.constants.AssetTagsAdminPortletKeys;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
@@ -30,6 +29,7 @@ import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.portlet.SearchDisplayStyleUtil;
 import com.liferay.portal.kernel.portlet.SearchOrderByUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.SortFactoryUtil;
@@ -84,7 +84,7 @@ public class AssetTagsDisplayContext {
 								).setParameter(
 									"tagId", tag.getTagId()
 								).buildString());
-
+							dropdownItem.setIcon("pencil");
 							dropdownItem.setLabel(
 								LanguageUtil.get(_httpServletRequest, "edit"));
 						}
@@ -105,7 +105,7 @@ public class AssetTagsDisplayContext {
 								).setParameter(
 									"mergeTagIds", tag.getTagId()
 								).buildString());
-
+							dropdownItem.setIcon("merge");
 							dropdownItem.setLabel(
 								LanguageUtil.get(_httpServletRequest, "merge"));
 						}
@@ -118,7 +118,6 @@ public class AssetTagsDisplayContext {
 					DropdownItemListBuilder.add(
 						dropdownItem -> {
 							dropdownItem.putData("action", "deleteTag");
-
 							dropdownItem.putData(
 								"deleteTagURL",
 								PortletURLBuilder.createActionURL(
@@ -130,7 +129,7 @@ public class AssetTagsDisplayContext {
 								).setParameter(
 									"tagId", tag.getTagId()
 								).buildString());
-
+							dropdownItem.setIcon("trash");
 							dropdownItem.setLabel(
 								LanguageUtil.get(
 									_httpServletRequest, "delete"));

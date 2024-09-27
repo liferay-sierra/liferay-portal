@@ -18,6 +18,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepository;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileEntryWrapper;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -31,12 +32,10 @@ import org.junit.Test;
 
 import org.mockito.Mockito;
 
-import org.powermock.api.mockito.PowerMockito;
-
 /**
  * @author Alejandro Tardín
  */
-public class HTMLImageAttachmentElementReplacerTest extends PowerMockito {
+public class HTMLImageAttachmentElementReplacerTest {
 
 	@ClassRule
 	@Rule
@@ -54,11 +53,11 @@ public class HTMLImageAttachmentElementReplacerTest extends PowerMockito {
 
 		};
 
-		_portletFileRepository = mock(PortletFileRepository.class);
+		_portletFileRepository = Mockito.mock(PortletFileRepository.class);
 
-		when(
+		Mockito.when(
 			_portletFileRepository.getPortletFileEntryURL(
-				Mockito.isNull(ThemeDisplay.class), Mockito.eq(_fileEntry),
+				Mockito.nullable(ThemeDisplay.class), Mockito.eq(_fileEntry),
 				Mockito.eq(StringPool.BLANK))
 		).thenReturn(
 			_FILE_ENTRY_IMAGE_URL
@@ -67,7 +66,8 @@ public class HTMLImageAttachmentElementReplacerTest extends PowerMockito {
 		_htmlImageAttachmentElementReplacer =
 			new HTMLImageAttachmentElementReplacer();
 
-		_htmlImageAttachmentElementReplacer.setPortletFileRepository(
+		ReflectionTestUtil.setFieldValue(
+			_htmlImageAttachmentElementReplacer, "_portletFileRepository",
 			_portletFileRepository);
 	}
 

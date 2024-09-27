@@ -19,7 +19,7 @@ import com.liferay.expando.kernel.model.ExpandoColumn;
 import com.liferay.expando.kernel.model.ExpandoColumnConstants;
 import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
 import com.liferay.expando.kernel.util.ExpandoBridgeFactory;
-import com.liferay.expando.kernel.util.ExpandoBridgeIndexer;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.search.BooleanQuery;
 import com.liferay.portal.kernel.search.Field;
@@ -27,9 +27,11 @@ import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.generic.BooleanQueryImpl;
 import com.liferay.portal.kernel.search.query.FieldQueryFactory;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.search.analysis.FieldQueryBuilderFactory;
+import com.liferay.portal.search.expando.ExpandoBridgeIndexer;
 import com.liferay.portal.search.internal.analysis.DescriptionFieldQueryBuilder;
 import com.liferay.portal.search.internal.analysis.SimpleKeywordTokenizer;
 import com.liferay.portal.search.internal.analysis.SubstringFieldQueryBuilder;
@@ -51,7 +53,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import org.mockito.Matchers;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import org.osgi.framework.BundleContext;
@@ -175,7 +177,7 @@ public abstract class BaseExpandoTestCase extends BaseIndexingTestCase {
 		).when(
 			expandoBridge
 		).getAttributeProperties(
-			Mockito.anyString()
+			Mockito.nullable(String.class)
 		);
 
 		return expandoBridge;
@@ -191,7 +193,7 @@ public abstract class BaseExpandoTestCase extends BaseIndexingTestCase {
 		).when(
 			expandoBridgeFactory
 		).getExpandoBridge(
-			Mockito.anyLong(), Matchers.eq(_CLASS_NAME_KEYWORD)
+			Mockito.anyLong(), Mockito.eq(_CLASS_NAME_KEYWORD)
 		);
 
 		Mockito.doReturn(
@@ -200,7 +202,7 @@ public abstract class BaseExpandoTestCase extends BaseIndexingTestCase {
 		).when(
 			expandoBridgeFactory
 		).getExpandoBridge(
-			Mockito.anyLong(), Matchers.eq(_CLASS_NAME_TEXT)
+			Mockito.anyLong(), Mockito.eq(_CLASS_NAME_TEXT)
 		);
 
 		return expandoBridgeFactory;
@@ -215,8 +217,7 @@ public abstract class BaseExpandoTestCase extends BaseIndexingTestCase {
 		).when(
 			expandoBridgeIndexer
 		).encodeFieldName(
-			Mockito.anyString(),
-			Matchers.eq(ExpandoColumnConstants.INDEX_TYPE_KEYWORD)
+			Mockito.eq(_indexTypeKeywordExpandoColumn)
 		);
 
 		Mockito.doReturn(
@@ -224,8 +225,15 @@ public abstract class BaseExpandoTestCase extends BaseIndexingTestCase {
 		).when(
 			expandoBridgeIndexer
 		).encodeFieldName(
-			Mockito.anyString(),
-			Matchers.eq(ExpandoColumnConstants.INDEX_TYPE_TEXT)
+			Mockito.eq(_indexTypeTextExpandoColumn)
+		);
+
+		Mockito.doReturn(
+			StringPool.BLANK
+		).when(
+			expandoBridgeIndexer
+		).getNumericSuffix(
+			Mockito.anyInt()
 		);
 
 		return expandoBridgeIndexer;
@@ -254,20 +262,21 @@ public abstract class BaseExpandoTestCase extends BaseIndexingTestCase {
 			ExpandoColumnLocalService.class);
 
 		Mockito.doReturn(
-			createExpandoColumn(ExpandoColumnConstants.INDEX_TYPE_KEYWORD)
+			_indexTypeKeywordExpandoColumn
 		).when(
 			expandoColumnLocalService
 		).getDefaultTableColumn(
-			Mockito.anyLong(), Mockito.anyString(),
+			Mockito.anyLong(), Mockito.nullable(String.class),
 			Mockito.eq(_ATTRIBUTE_KEYWORD)
 		);
 
 		Mockito.doReturn(
-			createExpandoColumn(ExpandoColumnConstants.INDEX_TYPE_TEXT)
+			_indexTypeTextExpandoColumn
 		).when(
 			expandoColumnLocalService
 		).getDefaultTableColumn(
-			Mockito.anyLong(), Mockito.anyString(), Mockito.eq(_ATTRIBUTE_TEXT)
+			Mockito.anyLong(), Mockito.nullable(String.class),
+			Mockito.eq(_ATTRIBUTE_TEXT)
 		);
 
 		return expandoColumnLocalService;
@@ -276,13 +285,20 @@ public abstract class BaseExpandoTestCase extends BaseIndexingTestCase {
 	protected ExpandoQueryContributorHelper
 		createExpandoQueryContributorHelper() {
 
-		return new ExpandoQueryContributorHelperImpl() {
-			{
-				setExpandoBridgeFactory(createExpandoBridgeFactory());
-				setExpandoBridgeIndexer(createExpandoBridgeIndexer());
-				setExpandoColumnLocalService(createExpandoColumnLocalService());
-			}
-		};
+		ExpandoQueryContributorHelperImpl expandoQueryContributorHelperImpl =
+			new ExpandoQueryContributorHelperImpl();
+
+		ReflectionTestUtil.setFieldValue(
+			expandoQueryContributorHelperImpl, "_expandoBridgeFactory",
+			createExpandoBridgeFactory());
+		ReflectionTestUtil.setFieldValue(
+			expandoQueryContributorHelperImpl, "_expandoBridgeIndexer",
+			createExpandoBridgeIndexer());
+		ReflectionTestUtil.setFieldValue(
+			expandoQueryContributorHelperImpl, "_expandoColumnLocalService",
+			createExpandoColumnLocalService());
+
+		return expandoQueryContributorHelperImpl;
 	}
 
 	protected UnicodeProperties createUnicodeProperties(int indexType) {
@@ -342,5 +358,13 @@ public abstract class BaseExpandoTestCase extends BaseIndexingTestCase {
 		"expando__custom_fields__testColumnName";
 
 	private static ServiceRegistration<?> _serviceRegistration;
+
+	@Mock
+	private ExpandoColumn _indexTypeKeywordExpandoColumn = createExpandoColumn(
+		ExpandoColumnConstants.INDEX_TYPE_KEYWORD);
+
+	@Mock
+	private ExpandoColumn _indexTypeTextExpandoColumn = createExpandoColumn(
+		ExpandoColumnConstants.INDEX_TYPE_TEXT);
 
 }

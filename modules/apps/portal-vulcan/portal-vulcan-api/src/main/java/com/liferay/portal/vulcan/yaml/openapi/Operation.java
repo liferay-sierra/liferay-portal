@@ -19,10 +19,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author     Peter Shin
- * @deprecated As of Athanasius (7.3.x)
+ * @author Peter Shin
  */
-@Deprecated
 public class Operation {
 
 	public String getDescription() {

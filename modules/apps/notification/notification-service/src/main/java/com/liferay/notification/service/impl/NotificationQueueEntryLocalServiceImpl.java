@@ -1,0 +1,241 @@
+/**
+ * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ */
+
+package com.liferay.notification.service.impl;
+
+import com.liferay.notification.constants.NotificationQueueEntryConstants;
+import com.liferay.notification.context.NotificationContext;
+import com.liferay.notification.model.NotificationQueueEntry;
+import com.liferay.notification.model.NotificationRecipient;
+import com.liferay.notification.model.NotificationRecipientSetting;
+import com.liferay.notification.service.NotificationQueueEntryAttachmentLocalService;
+import com.liferay.notification.service.NotificationRecipientLocalService;
+import com.liferay.notification.service.NotificationRecipientSettingLocalService;
+import com.liferay.notification.service.base.NotificationQueueEntryLocalServiceBaseImpl;
+import com.liferay.portal.aop.AopService;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.ResourceConstants;
+import com.liferay.portal.kernel.model.SystemEventConstants;
+import com.liferay.portal.kernel.search.Indexable;
+import com.liferay.portal.kernel.search.IndexableType;
+import com.liferay.portal.kernel.service.ResourceLocalService;
+import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.systemevent.SystemEvent;
+import com.liferay.portal.kernel.util.Portal;
+
+import java.util.Date;
+import java.util.List;
+
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+
+/**
+ * @author Gabriel Albuquerque
+ * @author Gustavo Lima
+ */
+@Component(
+	property = "model.class.name=com.liferay.notification.model.NotificationQueueEntry",
+	service = AopService.class
+)
+public class NotificationQueueEntryLocalServiceImpl
+	extends NotificationQueueEntryLocalServiceBaseImpl {
+
+	@Override
+	public NotificationQueueEntry addNotificationQueueEntry(
+			NotificationContext notificationContext)
+		throws PortalException {
+
+		NotificationQueueEntry notificationQueueEntry =
+			notificationContext.getNotificationQueueEntry();
+
+		notificationQueueEntry.setNotificationQueueEntryId(
+			counterLocalService.increment());
+
+		notificationQueueEntry = notificationQueueEntryPersistence.update(
+			notificationQueueEntry);
+
+		_resourceLocalService.addResources(
+			notificationQueueEntry.getCompanyId(), 0,
+			notificationQueueEntry.getUserId(),
+			NotificationQueueEntry.class.getName(),
+			notificationQueueEntry.getNotificationQueueEntryId(), false, true,
+			true);
+
+		for (long fileEntryId : notificationContext.getFileEntryIds()) {
+			_notificationQueueEntryAttachmentLocalService.
+				addNotificationQueueEntryAttachment(
+					notificationQueueEntry.getCompanyId(), fileEntryId,
+					notificationQueueEntry.getNotificationQueueEntryId());
+		}
+
+		NotificationRecipient notificationRecipient =
+			notificationContext.getNotificationRecipient();
+
+		notificationRecipient.setNotificationRecipientId(
+			counterLocalService.increment());
+		notificationRecipient.setClassNameId(
+			_portal.getClassNameId(NotificationQueueEntry.class));
+		notificationRecipient.setClassPK(
+			notificationQueueEntry.getNotificationQueueEntryId());
+
+		_notificationRecipientLocalService.updateNotificationRecipient(
+			notificationRecipient);
+
+		for (NotificationRecipientSetting notificationRecipientSetting :
+				notificationContext.getNotificationRecipientSettings()) {
+
+			notificationRecipientSetting.setNotificationRecipientSettingId(
+				counterLocalService.increment());
+			notificationRecipientSetting.setNotificationRecipientId(
+				notificationRecipient.getNotificationRecipientId());
+
+			_notificationRecipientSettingLocalService.
+				updateNotificationRecipientSetting(
+					notificationRecipientSetting);
+		}
+
+		return notificationQueueEntry;
+	}
+
+	@Override
+	public void deleteNotificationQueueEntries(Date sentDate)
+		throws PortalException {
+
+		for (NotificationQueueEntry notificationQueueEntry :
+				notificationQueueEntryPersistence.findByLtSentDate(sentDate)) {
+
+			notificationQueueEntryPersistence.remove(notificationQueueEntry);
+
+			_notificationQueueEntryAttachmentLocalService.
+				deleteNotificationQueueEntryAttachments(
+					notificationQueueEntry.getNotificationQueueEntryId());
+		}
+	}
+
+	@Override
+	public NotificationQueueEntry deleteNotificationQueueEntry(
+			long notificationQueueEntryId)
+		throws PortalException {
+
+		NotificationQueueEntry notificationQueueEntry =
+			notificationQueueEntryPersistence.findByPrimaryKey(
+				notificationQueueEntryId);
+
+		return notificationQueueEntryLocalService.deleteNotificationQueueEntry(
+			notificationQueueEntry);
+	}
+
+	@Override
+	@SystemEvent(type = SystemEventConstants.TYPE_DELETE)
+	public NotificationQueueEntry deleteNotificationQueueEntry(
+			NotificationQueueEntry notificationQueueEntry)
+		throws PortalException {
+
+		notificationQueueEntry = notificationQueueEntryPersistence.remove(
+			notificationQueueEntry);
+
+		_resourceLocalService.deleteResource(
+			notificationQueueEntry, ResourceConstants.SCOPE_INDIVIDUAL);
+
+		_notificationQueueEntryAttachmentLocalService.
+			deleteNotificationQueueEntryAttachments(
+				notificationQueueEntry.getNotificationQueueEntryId());
+
+		NotificationRecipient notificationRecipient =
+			notificationQueueEntry.getNotificationRecipient();
+
+		_notificationRecipientLocalService.deleteNotificationRecipient(
+			notificationRecipient);
+
+		for (NotificationRecipientSetting notificationRecipientSetting :
+				notificationRecipient.getNotificationRecipientSettings()) {
+
+			_notificationRecipientSettingLocalService.
+				deleteNotificationRecipientSetting(
+					notificationRecipientSetting);
+		}
+
+		return notificationQueueEntry;
+	}
+
+	@Override
+	public List<NotificationQueueEntry> getUnsentNotificationEntries(
+		String type) {
+
+		return notificationQueueEntryPersistence.findByT_S(
+			type, NotificationQueueEntryConstants.STATUS_UNSENT);
+	}
+
+	@Override
+	public NotificationQueueEntry resendNotificationQueueEntry(
+			long notificationQueueEntryId)
+		throws PortalException {
+
+		return notificationQueueEntryLocalService.updateStatus(
+			notificationQueueEntryId,
+			NotificationQueueEntryConstants.STATUS_UNSENT);
+	}
+
+	@Indexable(type = IndexableType.REINDEX)
+	@Override
+	public NotificationQueueEntry updateNotificationQueueEntry(
+		NotificationQueueEntry notificationQueueEntry) {
+
+		return notificationQueueEntryPersistence.update(notificationQueueEntry);
+	}
+
+	@Indexable(type = IndexableType.REINDEX)
+	@Override
+	public NotificationQueueEntry updateStatus(
+			long notificationQueueEntryId, int status)
+		throws PortalException {
+
+		NotificationQueueEntry notificationQueueEntry =
+			notificationQueueEntryPersistence.findByPrimaryKey(
+				notificationQueueEntryId);
+
+		if (status == NotificationQueueEntryConstants.STATUS_SENT) {
+			notificationQueueEntry.setSentDate(new Date());
+		}
+		else {
+			notificationQueueEntry.setSentDate(null);
+		}
+
+		notificationQueueEntry.setStatus(status);
+
+		return notificationQueueEntryPersistence.update(notificationQueueEntry);
+	}
+
+	@Reference
+	private NotificationQueueEntryAttachmentLocalService
+		_notificationQueueEntryAttachmentLocalService;
+
+	@Reference
+	private NotificationRecipientLocalService
+		_notificationRecipientLocalService;
+
+	@Reference
+	private NotificationRecipientSettingLocalService
+		_notificationRecipientSettingLocalService;
+
+	@Reference
+	private Portal _portal;
+
+	@Reference
+	private ResourceLocalService _resourceLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
+
+}

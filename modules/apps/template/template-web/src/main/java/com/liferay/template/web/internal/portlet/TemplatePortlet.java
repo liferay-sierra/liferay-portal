@@ -15,10 +15,9 @@
 package com.liferay.template.web.internal.portlet;
 
 import com.liferay.dynamic.data.mapping.configuration.DDMWebConfiguration;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
-import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portlet.display.template.PortletDisplayTemplate;
 import com.liferay.template.constants.TemplatePortletKeys;
 
@@ -62,7 +61,8 @@ import org.osgi.service.component.annotations.Reference;
 		"javax.portlet.init-param.template-path=/META-INF/resources/",
 		"javax.portlet.init-param.view-template=/view.jsp",
 		"javax.portlet.name=" + TemplatePortletKeys.TEMPLATE,
-		"javax.portlet.resource-bundle=content.Language"
+		"javax.portlet.resource-bundle=content.Language",
+		"javax.portlet.version=3.0"
 	},
 	service = Portlet.class
 )
@@ -83,7 +83,7 @@ public class TemplatePortlet extends MVCPortlet {
 		renderRequest.setAttribute(
 			DDMWebConfiguration.class.getName(), _ddmWebConfiguration);
 		renderRequest.setAttribute(
-			InfoItemServiceTracker.class.getName(), _infoItemServiceTracker);
+			InfoItemServiceRegistry.class.getName(), _infoItemServiceRegistry);
 		renderRequest.setAttribute(
 			PortletDisplayTemplate.class.getName(), _portletDisplayTemplate);
 
@@ -93,10 +93,7 @@ public class TemplatePortlet extends MVCPortlet {
 	private volatile DDMWebConfiguration _ddmWebConfiguration;
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
-
-	@Reference
-	private Portal _portal;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
 	private PortletDisplayTemplate _portletDisplayTemplate;

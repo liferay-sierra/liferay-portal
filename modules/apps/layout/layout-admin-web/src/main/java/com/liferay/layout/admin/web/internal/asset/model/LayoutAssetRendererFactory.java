@@ -37,7 +37,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eduardo García
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + LayoutAdminPortletKeys.GROUP_PAGES,
 	service = AssetRendererFactory.class
 )
@@ -63,7 +62,11 @@ public class LayoutAssetRendererFactory
 
 		Layout layout = _layoutLocalService.getLayout(classPK);
 
-		User user = _userLocalService.getUserById(layout.getUserId());
+		User user = _userLocalService.fetchUser(layout.getUserId());
+
+		if (user == null) {
+			user = _userLocalService.fetchDefaultUser(layout.getCompanyId());
+		}
 
 		AssetEntry assetEntry = _assetEntryLocalService.createAssetEntry(
 			classPK);
@@ -75,7 +78,7 @@ public class LayoutAssetRendererFactory
 		assetEntry.setCreateDate(layout.getCreateDate());
 		assetEntry.setClassNameId(
 			_portal.getClassNameId(Layout.class.getName()));
-		assetEntry.setClassPK(layout.getLayoutId());
+		assetEntry.setClassPK(layout.getPlid());
 		assetEntry.setTitle(layout.getHTMLTitle(LocaleUtil.getSiteDefault()));
 
 		return assetEntry;
@@ -85,8 +88,14 @@ public class LayoutAssetRendererFactory
 	public AssetRenderer<Layout> getAssetRenderer(long plid, int type)
 		throws PortalException {
 
+		Layout layout = _layoutLocalService.fetchLayout(plid);
+
+		if (layout == null) {
+			return null;
+		}
+
 		LayoutAssetRenderer layoutAssetRenderer = new LayoutAssetRenderer(
-			_layoutLocalService.getLayout(plid));
+			layout);
 
 		layoutAssetRenderer.setAssetRendererType(type);
 		layoutAssetRenderer.setServletContext(_servletContext);
@@ -114,40 +123,19 @@ public class LayoutAssetRendererFactory
 		return true;
 	}
 
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.layout.admin.web)",
-		unbind = "-"
-	)
-	public void setServletContext(ServletContext servletContext) {
-		_servletContext = servletContext;
-	}
-
-	@Reference(unbind = "-")
-	protected void setAssetEntryLocalService(
-		AssetEntryLocalService assetEntryLocalService) {
-
-		_assetEntryLocalService = assetEntryLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setLayoutLocalService(
-		LayoutLocalService layoutLocalService) {
-
-		_layoutLocalService = layoutLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setUserLocalService(UserLocalService userLocalService) {
-		_userLocalService = userLocalService;
-	}
-
+	@Reference
 	private AssetEntryLocalService _assetEntryLocalService;
+
+	@Reference
 	private LayoutLocalService _layoutLocalService;
 
 	@Reference
 	private Portal _portal;
 
+	@Reference(target = "(osgi.web.symbolicname=com.liferay.layout.admin.web)")
 	private ServletContext _servletContext;
+
+	@Reference
 	private UserLocalService _userLocalService;
 
 }

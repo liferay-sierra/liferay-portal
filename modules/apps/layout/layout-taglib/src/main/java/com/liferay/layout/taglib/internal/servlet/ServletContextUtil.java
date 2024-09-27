@@ -14,23 +14,25 @@
 
 package com.liferay.layout.taglib.internal.servlet;
 
-import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
 import com.liferay.fragment.entry.processor.helper.FragmentEntryProcessorHelper;
+import com.liferay.fragment.helper.FragmentEntryLinkHelper;
 import com.liferay.fragment.renderer.FragmentRendererController;
-import com.liferay.fragment.renderer.FragmentRendererTracker;
 import com.liferay.fragment.util.configuration.FragmentEntryConfigurationParser;
 import com.liferay.frontend.token.definition.FrontendTokenDefinitionRegistry;
-import com.liferay.info.item.InfoItemServiceTracker;
-import com.liferay.info.list.renderer.InfoListRendererTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
+import com.liferay.info.list.renderer.InfoListRendererRegistry;
 import com.liferay.layout.adaptive.media.LayoutAdaptiveMediaProcessor;
-import com.liferay.layout.display.page.LayoutDisplayPageProviderTracker;
-import com.liferay.layout.list.retriever.LayoutListRetrieverTracker;
-import com.liferay.layout.list.retriever.ListObjectReferenceFactoryTracker;
+import com.liferay.layout.display.page.LayoutDisplayPageProviderRegistry;
+import com.liferay.layout.helper.CollectionPaginationHelper;
+import com.liferay.layout.list.retriever.LayoutListRetrieverRegistry;
+import com.liferay.layout.list.retriever.ListObjectReferenceFactoryRegistry;
+import com.liferay.layout.provider.LayoutStructureProvider;
 import com.liferay.layout.util.LayoutClassedModelUsageRecorder;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.segments.SegmentsEntryRetriever;
 import com.liferay.segments.context.RequestContextMapper;
+import com.liferay.segments.service.SegmentsExperienceLocalService;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,23 +48,21 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 /**
  * @author Chema Balsas
  */
-@Component(immediate = true, service = {})
+@Component(service = {})
 public class ServletContextUtil {
 
-	public static String getContextPath() {
-		return _servletContext.getContextPath();
-	}
-
-	public static FragmentCollectionContributorTracker
-		getFragmentCollectionContributorTracker() {
-
-		return _fragmentCollectionContributorTracker;
+	public static CollectionPaginationHelper getCollectionPaginationHelper() {
+		return _collectionPaginationHelper;
 	}
 
 	public static FragmentEntryConfigurationParser
 		getFragmentEntryConfigurationParser() {
 
 		return _fragmentEntryConfigurationParser;
+	}
+
+	public static FragmentEntryLinkHelper getFragmentEntryLinkHelper() {
+		return _fragmentEntryLinkHelper;
 	}
 
 	public static FragmentEntryProcessorHelper
@@ -75,22 +75,18 @@ public class ServletContextUtil {
 		return _fragmentRendererController;
 	}
 
-	public static FragmentRendererTracker getFragmentRendererTracker() {
-		return _fragmentRendererTracker;
-	}
-
 	public static FrontendTokenDefinitionRegistry
 		getFrontendTokenDefinitionRegistry() {
 
 		return _frontendTokenDefinitionRegistry;
 	}
 
-	public static InfoItemServiceTracker getInfoItemServiceTracker() {
-		return _infoItemServiceTracker;
+	public static InfoItemServiceRegistry getInfoItemServiceRegistry() {
+		return _infoItemServiceRegistry;
 	}
 
-	public static InfoListRendererTracker getInfoListRendererTracker() {
-		return _infoListRendererTracker;
+	public static InfoListRendererRegistry getInfoListRendererRegistry() {
+		return _infoListRendererRegistry;
 	}
 
 	public static LayoutAdaptiveMediaProcessor
@@ -105,20 +101,24 @@ public class ServletContextUtil {
 		return _layoutClassedModelUsageRecorders;
 	}
 
-	public static LayoutDisplayPageProviderTracker
-		getLayoutDisplayPageProviderTracker() {
+	public static LayoutDisplayPageProviderRegistry
+		getLayoutDisplayPageProviderRegistry() {
 
-		return _layoutDisplayPageProviderTracker;
+		return _layoutDisplayPageProviderRegistry;
 	}
 
-	public static LayoutListRetrieverTracker getLayoutListRetrieverTracker() {
-		return _layoutListRetrieverTracker;
+	public static LayoutListRetrieverRegistry getLayoutListRetrieverRegistry() {
+		return _layoutListRetrieverRegistry;
 	}
 
-	public static ListObjectReferenceFactoryTracker
-		getListObjectReferenceFactoryTracker() {
+	public static LayoutStructureProvider getLayoutStructureHelper() {
+		return _layoutStructureProvider;
+	}
 
-		return _listObjectReferenceFactoryTracker;
+	public static ListObjectReferenceFactoryRegistry
+		getListObjectReferenceFactoryRegistry() {
+
+		return _listObjectReferenceFactoryRegistry;
 	}
 
 	public static RequestContextMapper getRequestContextMapper() {
@@ -127,6 +127,12 @@ public class ServletContextUtil {
 
 	public static SegmentsEntryRetriever getSegmentsEntryRetriever() {
 		return _segmentsEntryRetriever;
+	}
+
+	public static SegmentsExperienceLocalService
+		getSegmentsExperienceLocalService() {
+
+		return _segmentsExperienceLocalService;
 	}
 
 	public static ServletContext getServletContext() {
@@ -168,12 +174,10 @@ public class ServletContextUtil {
 	}
 
 	@Reference(unbind = "-")
-	protected void setFragmentCollectionContributorTracker(
-		FragmentCollectionContributorTracker
-			fragmentCollectionContributorTracker) {
+	protected void setCollectionPaginationHelper(
+		CollectionPaginationHelper collectionPaginationHelper) {
 
-		_fragmentCollectionContributorTracker =
-			fragmentCollectionContributorTracker;
+		_collectionPaginationHelper = collectionPaginationHelper;
 	}
 
 	@Reference(unbind = "-")
@@ -181,6 +185,13 @@ public class ServletContextUtil {
 		FragmentEntryConfigurationParser fragmentEntryConfigurationParser) {
 
 		_fragmentEntryConfigurationParser = fragmentEntryConfigurationParser;
+	}
+
+	@Reference(unbind = "-")
+	protected void setFragmentEntryLinkHelper(
+		FragmentEntryLinkHelper fragmentEntryLinkHelper) {
+
+		_fragmentEntryLinkHelper = fragmentEntryLinkHelper;
 	}
 
 	@Reference(unbind = "-")
@@ -198,13 +209,6 @@ public class ServletContextUtil {
 	}
 
 	@Reference(unbind = "-")
-	protected void setFragmentRendererTracker(
-		FragmentRendererTracker fragmentRendererTracker) {
-
-		_fragmentRendererTracker = fragmentRendererTracker;
-	}
-
-	@Reference(unbind = "-")
 	protected void setFrontendTokenDefinitionRegistry(
 		FrontendTokenDefinitionRegistry frontendTokenDefinitionRegistry) {
 
@@ -212,17 +216,17 @@ public class ServletContextUtil {
 	}
 
 	@Reference(unbind = "-")
-	protected void setInfoItemServiceTracker(
-		InfoItemServiceTracker infoItemServiceTracker) {
+	protected void setInfoItemServiceRegistry(
+		InfoItemServiceRegistry infoItemServiceRegistry) {
 
-		_infoItemServiceTracker = infoItemServiceTracker;
+		_infoItemServiceRegistry = infoItemServiceRegistry;
 	}
 
 	@Reference(unbind = "-")
-	protected void setInfoListRendererTracker(
-		InfoListRendererTracker infoListRendererTracker) {
+	protected void setInfoListRendererRegistry(
+		InfoListRendererRegistry infoListRendererRegistry) {
 
-		_infoListRendererTracker = infoListRendererTracker;
+		_infoListRendererRegistry = infoListRendererRegistry;
 	}
 
 	@Reference(unbind = "-")
@@ -233,24 +237,32 @@ public class ServletContextUtil {
 	}
 
 	@Reference(unbind = "-")
-	protected void setLayoutDisplayPageProviderTracker(
-		LayoutDisplayPageProviderTracker layoutDisplayPageProviderTracker) {
+	protected void setLayoutDisplayPageProviderRegistry(
+		LayoutDisplayPageProviderRegistry layoutDisplayPageProviderRegistry) {
 
-		_layoutDisplayPageProviderTracker = layoutDisplayPageProviderTracker;
+		_layoutDisplayPageProviderRegistry = layoutDisplayPageProviderRegistry;
 	}
 
 	@Reference(unbind = "-")
-	protected void setLayoutListRetrieverTracker(
-		LayoutListRetrieverTracker layoutListRetrieverTracker) {
+	protected void setLayoutListRetrieverRegistry(
+		LayoutListRetrieverRegistry layoutListRetrieverRegistry) {
 
-		_layoutListRetrieverTracker = layoutListRetrieverTracker;
+		_layoutListRetrieverRegistry = layoutListRetrieverRegistry;
 	}
 
 	@Reference(unbind = "-")
-	protected void setListObjectReferenceFactoryTracker(
-		ListObjectReferenceFactoryTracker listObjectReferenceFactoryTracker) {
+	protected void setLayoutStructureHelper(
+		LayoutStructureProvider layoutStructureProvider) {
 
-		_listObjectReferenceFactoryTracker = listObjectReferenceFactoryTracker;
+		_layoutStructureProvider = layoutStructureProvider;
+	}
+
+	@Reference(unbind = "-")
+	protected void setListObjectReferenceFactoryRegistry(
+		ListObjectReferenceFactoryRegistry listObjectReferenceFactoryRegistry) {
+
+		_listObjectReferenceFactoryRegistry =
+			listObjectReferenceFactoryRegistry;
 	}
 
 	@Reference(unbind = "-")
@@ -267,6 +279,13 @@ public class ServletContextUtil {
 		_segmentsEntryRetriever = segmentsEntryRetriever;
 	}
 
+	@Reference(unbind = "-")
+	protected void setSegmentsExperienceLocalService(
+		SegmentsExperienceLocalService segmentsExperienceLocalService) {
+
+		_segmentsExperienceLocalService = segmentsExperienceLocalService;
+	}
+
 	@Reference(
 		target = "(osgi.web.symbolicname=com.liferay.layout.taglib)",
 		unbind = "-"
@@ -275,27 +294,29 @@ public class ServletContextUtil {
 		_servletContext = servletContext;
 	}
 
-	private static FragmentCollectionContributorTracker
-		_fragmentCollectionContributorTracker;
+	private static CollectionPaginationHelper _collectionPaginationHelper;
 	private static FragmentEntryConfigurationParser
 		_fragmentEntryConfigurationParser;
+	private static FragmentEntryLinkHelper _fragmentEntryLinkHelper;
 	private static FragmentEntryProcessorHelper _fragmentEntryProcessorHelper;
 	private static FragmentRendererController _fragmentRendererController;
-	private static FragmentRendererTracker _fragmentRendererTracker;
 	private static FrontendTokenDefinitionRegistry
 		_frontendTokenDefinitionRegistry;
-	private static InfoItemServiceTracker _infoItemServiceTracker;
-	private static InfoListRendererTracker _infoListRendererTracker;
+	private static InfoItemServiceRegistry _infoItemServiceRegistry;
+	private static InfoListRendererRegistry _infoListRendererRegistry;
 	private static LayoutAdaptiveMediaProcessor _layoutAdaptiveMediaProcessor;
 	private static final Map<String, LayoutClassedModelUsageRecorder>
 		_layoutClassedModelUsageRecorders = new ConcurrentHashMap<>();
-	private static LayoutDisplayPageProviderTracker
-		_layoutDisplayPageProviderTracker;
-	private static LayoutListRetrieverTracker _layoutListRetrieverTracker;
-	private static ListObjectReferenceFactoryTracker
-		_listObjectReferenceFactoryTracker;
+	private static LayoutDisplayPageProviderRegistry
+		_layoutDisplayPageProviderRegistry;
+	private static LayoutListRetrieverRegistry _layoutListRetrieverRegistry;
+	private static LayoutStructureProvider _layoutStructureProvider;
+	private static ListObjectReferenceFactoryRegistry
+		_listObjectReferenceFactoryRegistry;
 	private static RequestContextMapper _requestContextMapper;
 	private static SegmentsEntryRetriever _segmentsEntryRetriever;
+	private static SegmentsExperienceLocalService
+		_segmentsExperienceLocalService;
 	private static ServletContext _servletContext;
 
 }

@@ -38,6 +38,8 @@ import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Projection;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.PersistedModel;
 import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.search.Indexable;
@@ -280,6 +282,50 @@ public abstract class ListTypeDefinitionLocalServiceBaseImpl
 	}
 
 	/**
+	 * Returns the list type definition with the matching external reference code and company.
+	 *
+	 * @param companyId the primary key of the company
+	 * @param externalReferenceCode the list type definition's external reference code
+	 * @return the matching list type definition, or <code>null</code> if a matching list type definition could not be found
+	 */
+	@Override
+	public ListTypeDefinition fetchListTypeDefinitionByExternalReferenceCode(
+		long companyId, String externalReferenceCode) {
+
+		return listTypeDefinitionPersistence.fetchByC_ERC(
+			companyId, externalReferenceCode);
+	}
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link #fetchListTypeDefinitionByExternalReferenceCode(long, String)}
+	 */
+	@Deprecated
+	@Override
+	public ListTypeDefinition fetchListTypeDefinitionByReferenceCode(
+		long companyId, String externalReferenceCode) {
+
+		return fetchListTypeDefinitionByExternalReferenceCode(
+			companyId, externalReferenceCode);
+	}
+
+	/**
+	 * Returns the list type definition with the matching external reference code and company.
+	 *
+	 * @param companyId the primary key of the company
+	 * @param externalReferenceCode the list type definition's external reference code
+	 * @return the matching list type definition
+	 * @throws PortalException if a matching list type definition could not be found
+	 */
+	@Override
+	public ListTypeDefinition getListTypeDefinitionByExternalReferenceCode(
+			long companyId, String externalReferenceCode)
+		throws PortalException {
+
+		return listTypeDefinitionPersistence.findByC_ERC(
+			companyId, externalReferenceCode);
+	}
+
+	/**
 	 * Returns the list type definition with the primary key.
 	 *
 	 * @param listTypeDefinitionId the primary key of the list type definition
@@ -424,6 +470,11 @@ public abstract class ListTypeDefinitionLocalServiceBaseImpl
 	@Override
 	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
 		throws PortalException {
+
+		if (_log.isWarnEnabled()) {
+			_log.warn(
+				"Implement ListTypeDefinitionLocalServiceImpl#deleteListTypeDefinition(ListTypeDefinition) to avoid orphaned data");
+		}
 
 		return listTypeDefinitionLocalService.deleteListTypeDefinition(
 			(ListTypeDefinition)persistedModel);
@@ -594,5 +645,8 @@ public abstract class ListTypeDefinitionLocalServiceBaseImpl
 	@Reference
 	protected com.liferay.counter.kernel.service.CounterLocalService
 		counterLocalService;
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		ListTypeDefinitionLocalServiceBaseImpl.class);
 
 }

@@ -14,13 +14,11 @@
 
 package com.liferay.layout.content.page.editor.web.internal.portlet.action;
 
-import com.liferay.fragment.processor.PortletRegistry;
+import com.liferay.fragment.service.FragmentEntryLinkLocalService;
 import com.liferay.layout.content.page.editor.constants.ContentPageEditorPortletKeys;
-import com.liferay.layout.content.page.editor.listener.ContentPageEditorListenerTracker;
-import com.liferay.layout.content.page.editor.web.internal.util.FragmentEntryLinkUtil;
+import com.liferay.layout.content.page.editor.web.internal.util.ContentUtil;
 import com.liferay.layout.content.page.editor.web.internal.util.layout.structure.LayoutStructureUtil;
 import com.liferay.layout.util.structure.LayoutStructure;
-import com.liferay.layout.util.structure.LayoutStructureItem;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
@@ -28,10 +26,6 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.segments.constants.SegmentsExperienceConstants;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -43,7 +37,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + ContentPageEditorPortletKeys.CONTENT_PAGE_EDITOR_PORTLET,
 		"mvc.command.name=/layout_content_page_editor/update_row_columns"
@@ -62,38 +55,19 @@ public class UpdateRowColumnsMVCActionCommand
 			WebKeys.THEME_DISPLAY);
 
 		long segmentsExperienceId = ParamUtil.getLong(
-			actionRequest, "segmentsExperienceId",
-			SegmentsExperienceConstants.ID_DEFAULT);
+			actionRequest, "segmentsExperienceId");
 		String itemId = ParamUtil.getString(actionRequest, "itemId");
 		int numberOfColumns = ParamUtil.getInteger(
 			actionRequest, "numberOfColumns");
 
-		List<LayoutStructureItem> deletedLayoutStructureItems =
-			new ArrayList<>();
-
 		LayoutStructureUtil.updateLayoutPageTemplateData(
 			themeDisplay.getScopeGroupId(), segmentsExperienceId,
 			themeDisplay.getPlid(),
-			layoutStructure -> deletedLayoutStructureItems.addAll(
+			layoutStructure ->
 				layoutStructure.updateRowColumnsLayoutStructureItem(
-					itemId, numberOfColumns)));
-
-		List<Long> deletedFragmentEntryLinkIds = new ArrayList<>();
-
-		for (long fragmentEntryLinkId :
-				LayoutStructureUtil.getFragmentEntryLinkIds(
-					deletedLayoutStructureItems)) {
-
-			FragmentEntryLinkUtil.deleteFragmentEntryLink(
-				themeDisplay.getCompanyId(), _contentPageEditorListenerTracker,
-				fragmentEntryLinkId, themeDisplay.getPlid(), _portletRegistry);
-
-			deletedFragmentEntryLinkIds.add(fragmentEntryLinkId);
-		}
+					itemId, numberOfColumns));
 
 		return JSONUtil.put(
-			"deletedFragmentEntryLinkIds", deletedFragmentEntryLinkIds.toArray()
-		).put(
 			"layoutData",
 			() -> {
 				LayoutStructure layoutStructure =
@@ -103,16 +77,19 @@ public class UpdateRowColumnsMVCActionCommand
 
 				return layoutStructure.toJSONObject();
 			}
+		).put(
+			"pageContents",
+			ContentUtil.getPageContentsJSONArray(
+				_portal.getHttpServletRequest(actionRequest),
+				_portal.getHttpServletResponse(actionResponse),
+				themeDisplay.getPlid(), segmentsExperienceId)
 		);
 	}
 
 	@Reference
-	private ContentPageEditorListenerTracker _contentPageEditorListenerTracker;
+	private FragmentEntryLinkLocalService _fragmentEntryLinkLocalService;
 
 	@Reference
 	private Portal _portal;
-
-	@Reference
-	private PortletRegistry _portletRegistry;
 
 }

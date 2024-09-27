@@ -14,8 +14,10 @@
 
 package com.liferay.friendly.url.taglib.util;
 
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemObjectProvider;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -29,34 +31,41 @@ public class InfoItemObjectProviderUtil {
 
 	public static Object getInfoItem(String className, long classPK) {
 		try {
-			if (_infoItemServiceTracker == null) {
+			if (_infoItemServiceRegistry == null) {
 				return null;
 			}
 
 			InfoItemObjectProvider<Object> infoItemObjectProvider =
-				_infoItemServiceTracker.getFirstInfoItemService(
+				_infoItemServiceRegistry.getFirstInfoItemService(
 					InfoItemObjectProvider.class, className);
 
 			return infoItemObjectProvider.getInfoItem(classPK);
 		}
 		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return null;
 		}
 	}
 
 	@Reference(policy = ReferencePolicy.DYNAMIC)
-	protected void setInfoItemServiceTracker(
-		InfoItemServiceTracker infoItemServiceTracker) {
+	protected void setInfoItemServiceRegistry(
+		InfoItemServiceRegistry infoItemServiceRegistry) {
 
-		_infoItemServiceTracker = infoItemServiceTracker;
+		_infoItemServiceRegistry = infoItemServiceRegistry;
 	}
 
-	protected void unsetInfoItemServiceTracker(
-		InfoItemServiceTracker infoItemServiceTracker) {
+	protected void unsetInfoItemServiceRegistry(
+		InfoItemServiceRegistry infoItemServiceRegistry) {
 
-		_infoItemServiceTracker = null;
+		_infoItemServiceRegistry = null;
 	}
 
-	private static volatile InfoItemServiceTracker _infoItemServiceTracker;
+	private static final Log _log = LogFactoryUtil.getLog(
+		InfoItemObjectProviderUtil.class);
+
+	private static volatile InfoItemServiceRegistry _infoItemServiceRegistry;
 
 }

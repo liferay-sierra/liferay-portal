@@ -15,11 +15,7 @@ import React from 'react';
 
 const ScriptInput = ({inputValue, updateSelectedItem}) => (
 	<ClayForm.Group>
-		<label htmlFor="nodeScript">
-			{`${Liferay.Language.get('script')} (${Liferay.Language.get(
-				'groovy'
-			)})`}
-		</label>
+		<label htmlFor="nodeScript">{Liferay.Language.get('script')}</label>
 
 		<ClayInput
 			component="textarea"
@@ -35,7 +31,6 @@ const ScriptInput = ({inputValue, updateSelectedItem}) => (
 export default ScriptInput;
 
 ScriptInput.propTypes = {
-	inputValue: PropTypes.oneOfType([PropTypes.object, PropTypes.string])
-		.isRequired,
+	inputValue: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
 	updateSelectedItem: PropTypes.func,
 };

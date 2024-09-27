@@ -1,4 +1,4 @@
-@component-name = "portal-collaboration"
+@component-name = "portal-lima"
 definition {
 
 	property portal.acceptance = "true";
@@ -39,7 +39,7 @@ definition {
 
 		BlogsEntry.addCustomAbstract(entryAbstractDescription = "Blogs Entry Abstract Description");
 
-		Click.pauseClickAt(
+		Click.clickAt(
 			key_editor = "content",
 			locator1 = "AlloyEditor#EDITOR");
 
@@ -187,6 +187,38 @@ definition {
 
 		BlogsEntry.viewEntryPG(
 			entryContent = "Blogs Entry Content",
+			entryTitle = "Blogs Entry Title");
+	}
+
+	@description = "This ensures that content can be added in code view using cite tag."
+	@priority = "3"
+	test CanAddContentWithCiteTag {
+		JSONLayout.addPublicLayout(
+			groupName = "Guest",
+			layoutName = "Blogs Page");
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Guest",
+			layoutName = "Blogs Page",
+			widgetName = "Blogs");
+
+		BlogsNavigator.openToAddEntry(
+			layoutName = "Blogs Page",
+			siteURLKey = "guest");
+
+		Blogs.addEntryWithHTML(
+			entryContent = '''<cite>Blogs Entry Content</cite>''',
+			entrySubtitle = "Blogs Entry Subtitle",
+			entryTitle = "Blogs Entry Title",
+			skipNavigation = "true");
+
+		BlogsNavigator.openToBlogEntry(
+			entryTitle = "Blogs Entry Title",
+			layoutName = "Blogs Page",
+			siteURLKey = "guest");
+
+		BlogsEntry.viewEntryPG(
+			entryContentCite = "Blogs Entry Content",
 			entryTitle = "Blogs Entry Title");
 	}
 
@@ -410,9 +442,9 @@ definition {
 	}
 
 	@description = "This checks that basic text can be inputted and displayed in the most common fields in a blog entry."
+	@e2etest
 	@priority = "5"
 	@refactordone
-	@uitest
 	test CanAddWithSubtitle {
 		JSONLayout.addPublicLayout(
 			groupName = "Guest",
@@ -509,9 +541,9 @@ definition {
 	}
 
 	@description = "This checks that a user can change the publish date for a scheduled entry to the present and publish it."
+	@e2etest
 	@priority = "4"
 	@refactordone
-	@uitest
 	test CanChangeAScheduledEntryToThePresentAndPublish {
 		property test.name.skip.portal.instance = "BlogsEntry#CanChangeAScheduledEntryToThePresentAndPublish";
 
@@ -806,6 +838,223 @@ definition {
 			entryTitle = "Blogs Entry Title Edit");
 	}
 
+	@description = "This is a test for LPS-67515. It ensures that an exported blog entry with a cover image can be imported to a new site after cleaning the DB."
+	@priority = "4"
+	test CanImportEntryWithImageAfterCleaningDB {
+		property portal.acceptance = "false";
+		property test.name.skip.portal.instance = "BlogsEntry#CanImportEntryWithImageAfterCleaningDB";
+
+		var testRunEnvironment = PropsUtil.get("test.run.environment");
+		var imageId = JSONBlog.uploadBlogImage(
+			groupName = "Guest",
+			sourceFileName = "Document_1.jpg");
+
+		JSONBlog.addEntryWithImage(
+			coverImageId = "${imageId}",
+			entryContent = "Blogs Entry Content",
+			entrySubtitle = "Blogs Entry Subtitle",
+			entryTitle = "Blogs Entry Title",
+			groupName = "Guest");
+
+		BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
+
+		LAR.exportPortlet(larFileName = "Blog_portlet.lar");
+
+		Portlet.shutdownServer();
+
+		SQL.executeMySQLStatement(mysqlStatement = "drop database if exists lportal;");
+
+		AntCommand(
+			locator1 = "build-test.xml",
+			value1 = "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+
+		Portlet.startServer(
+			deleteLiferayHome = "false",
+			keepOsGiState = "true");
+
+		if ("${testRunEnvironment}" == "EE") {
+			License.deployLicenseFile();
+		}
+
+		Open.openInTheNewTab(locator1 = "http://localhost:8080");
+
+		User._clickSignInLink();
+
+		SignIn.agreeToTermsOfUse();
+
+		User.answerPasswordReminder();
+
+		SearchAdministration.executeReindex();
+
+		BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
+
+		BlogsEntry.viewDefaultCP();
+
+		LAR.importPortlet(larFileName = "Blog_portlet.lar");
+
+		AssertConsoleTextNotPresent(value1 = "Unable to execute background task");
+
+		BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
+
+		BlogsNavigator.gotoEntryCP(entryTitle = "Blogs Entry Title");
+
+		BlogsEntry.viewEntryCP(
+			entryContent = "Blogs Entry Content",
+			entrySubtitle = "Blogs Entry Subtitle",
+			entryTitle = "Blogs Entry Title",
+			uploadFileName = "Document_1");
+	}
+
+	@description = "This is a test for LPS-67515. It ensures that a blog entry with a cover image can be exported and imported between different sites."
+	@priority = "4"
+	test CanImportEntryWithImageBetweenDifferentSites {
+		property portal.acceptance = "false";
+
+		JSONGroup.addGroup(groupName = "Test Site Name");
+
+		var imageId = JSONBlog.uploadBlogImage(
+			groupName = "Guest",
+			sourceFileName = "Document_1.jpg");
+
+		JSONBlog.addEntryWithImage(
+			coverImageId = "${imageId}",
+			entryContent = "Blogs Entry Content",
+			entrySubtitle = "Blogs Entry Subtitle",
+			entryTitle = "Blogs Entry Title",
+			groupName = "Guest");
+
+		BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
+
+		LAR.exportPortlet(larFileName = "Blog_portlet.lar");
+
+		BlogsNavigator.openBlogsAdmin(siteURLKey = "test-site-name");
+
+		LAR.importPortlet(larFileName = "Blog_portlet.lar");
+
+		AssertConsoleTextNotPresent(value1 = "Unable to execute background task");
+
+		BlogsNavigator.openBlogsAdmin(siteURLKey = "test-site-name");
+
+		BlogsNavigator.gotoEntryCP(entryTitle = "Blogs Entry Title");
+
+		BlogsEntry.viewEntryCP(
+			entryContent = "Blogs Entry Content",
+			entrySubtitle = "Blogs Entry Subtitle",
+			entryTitle = "Blogs Entry Title",
+			uploadFileName = "Document_1");
+	}
+
+	@description = "This is a test for LPS-67515. It ensures that an exported blog entry with a small image can be imported to a new site after cleaning the DB."
+	@priority = "4"
+	test CanImportEntryWithSmallImageAfterCleaningDB {
+		property portal.acceptance = "false";
+		property test.name.skip.portal.instance = "BlogsEntry#CanImportEntryWithSmallImageAfterCleaningDB";
+
+		var testRunEnvironment = PropsUtil.get("test.run.environment");
+
+		BlogsNavigator.openToAddEntry(
+			layoutName = "Blogs Page",
+			siteURLKey = "guest");
+
+		BlogsEntry.addEntryContent(
+			entryContent = "Blogs Entry Content",
+			entryTitle = "Blogs Entry with Small Image");
+
+		BlogsEntry.addSmallImage(
+			navTab = "Documents and Media",
+			uploadFileName = "Document_1.jpg");
+
+		PortletEntry.publish();
+
+		BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
+
+		LAR.exportPortlet(larFileName = "Blog_portlet.lar");
+
+		Portlet.shutdownServer();
+
+		SQL.executeMySQLStatement(mysqlStatement = "drop database if exists lportal;");
+
+		AntCommand(
+			locator1 = "build-test.xml",
+			value1 = "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+
+		Portlet.startServer(
+			deleteLiferayHome = "false",
+			keepOsGiState = "true");
+
+		if ("${testRunEnvironment}" == "EE") {
+			License.deployLicenseFile();
+		}
+
+		Open.openInTheNewTab(locator1 = "http://localhost:8080");
+
+		User._clickSignInLink();
+
+		SignIn.agreeToTermsOfUse();
+
+		User.answerPasswordReminder();
+
+		SearchAdministration.executeReindex();
+
+		BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
+
+		BlogsEntry.viewDefaultCP();
+
+		LAR.importPortlet(larFileName = "Blog_portlet.lar");
+
+		AssertConsoleTextNotPresent(value1 = "Unable to execute background task");
+
+		BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
+
+		BlogsNavigator.gotoEntryCP(entryTitle = "Blogs Entry with Small Image");
+
+		BlogsEntry.viewEntryCP(
+			entryContent = "Blogs Entry Content",
+			entrySmallImage = "Document_1",
+			entryTitle = "Blogs Entry with Small Image");
+	}
+
+	@description = "This is a test for LPS-67515. It ensures that a blog entry with a small image can be exported and imported between different sites."
+	@priority = "4"
+	test CanImportEntryWithSmallImageBetweenDifferentSites {
+		property portal.acceptance = "false";
+
+		JSONGroup.addGroup(groupName = "Test Site Name");
+
+		BlogsNavigator.openToAddEntry(
+			layoutName = "Blogs Page",
+			siteURLKey = "guest");
+
+		BlogsEntry.addEntryContent(
+			entryContent = "Blogs Entry Content",
+			entryTitle = "Blogs Entry with Small Image");
+
+		BlogsEntry.addSmallImage(
+			navTab = "Documents and Media",
+			uploadFileName = "Document_1.jpg");
+
+		PortletEntry.publish();
+
+		BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
+
+		LAR.exportPortlet(larFileName = "Blog_portlet.lar");
+
+		BlogsNavigator.openBlogsAdmin(siteURLKey = "test-site-name");
+
+		LAR.importPortlet(larFileName = "Blog_portlet.lar");
+
+		AssertConsoleTextNotPresent(value1 = "Unable to execute background task");
+
+		BlogsNavigator.openBlogsAdmin(siteURLKey = "test-site-name");
+
+		BlogsNavigator.gotoEntryCP(entryTitle = "Blogs Entry with Small Image");
+
+		BlogsEntry.viewEntryCP(
+			entryContent = "Blogs Entry Content",
+			entrySmallImage = "Document_1",
+			entryTitle = "Blogs Entry with Small Image");
+	}
+
 	@description = "This checks that a blog entry can be manually saved as a draft."
 	@priority = "5"
 	@refactordone
@@ -880,7 +1129,9 @@ definition {
 
 		Button.clickPublish();
 
-		Alert.viewRequiredField();
+		AssertTextEquals.assertPartialText(
+			locator1 = "TextInput#REQUIRED_ALERT",
+			value1 = "The Content field is required.");
 	}
 
 	@description = "This checks that a blog entry without content cannot be added."
@@ -911,6 +1162,36 @@ definition {
 		BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
 
 		BlogsEntry.viewDefaultCP(entryTitle = "");
+	}
+
+	@description = "This is a test for LPS-147320. It checks that Javascript cannot be executed in the code view."
+	@priority = "4"
+	test CannotExecuteXSSInCodeView {
+		JSONLayout.addPublicLayout(
+			groupName = "Guest",
+			layoutName = "Blogs Page");
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Guest",
+			layoutName = "Blogs Page",
+			widgetName = "Blogs");
+
+		BlogsNavigator.openToAddEntry(
+			layoutName = "Blogs Page",
+			siteURLKey = "guest");
+
+		BlogsEntry.addTitle(entryTitle = "Blogs Entry Title");
+
+		BlogsEntry.addEntryContentViaCodeView(entryContent = '''<p><img src="xss" onerror="alert(1)" /></p>''');
+
+		Button.clickPublish();
+
+		BlogsNavigator.openToBlogEntry(
+			entryTitle = "Blogs Entry Title",
+			layoutName = "Blogs Page",
+			siteURLKey = "guest");
+
+		AssertAlertNotPresent();
 	}
 
 	@description = "This is a test for LPS-136764. It checks that Javascript cannot be executed in the content field."
@@ -1003,6 +1284,74 @@ definition {
 		Navigator.gotoPage(pageName = "Blogs Page");
 
 		AssertAlertNotPresent();
+	}
+
+	@description = "This is a use case for LPS-82204. View blogs entry with XSS custom abstract."
+	@priority = "5"
+	test CannotExecuteXSSInCustomAbstractViaAP {
+		property testray.component.names = "Security";
+
+		var entryAbstractDescription = '''<script>alert(123)</script>''';
+
+		var key_entryAbstractDescription = "${entryAbstractDescription}";
+
+		task ("Add public layout") {
+			JSONLayout.addPublicLayout(
+				groupName = "Guest",
+				layoutName = "Blogs Page");
+		}
+
+		task ("Add page") {
+			JSONLayout.addWidgetToPublicLayout(
+				groupName = "Guest",
+				layoutName = "Blogs Page",
+				widgetName = "Asset Publisher");
+		}
+
+		task ("Add custom abstract") {
+			JSONBlog.addEntry(
+				entryAbstractDescription = "${entryAbstractDescription}",
+				entryContent = "Blogs Entry Content",
+				entryTitle = "Blogs Entry Title");
+		}
+
+		task ("Assert abstract added successfully") {
+			Navigator.gotoPage(pageName = "Blogs Page");
+
+			AssertAlertNotPresent();
+
+			Blogs.viewContentAbstractDescription(descriptionValue = "${entryAbstractDescription}");
+		}
+	}
+
+	@description = "This test covers LPS-49419. It validates that BBCode cannot be injected into a blog comment using Pingback."
+	@priority = "4"
+	test CannotInjectBBCodeIntoCommentUsingPingback {
+		property portal.acceptance = "false";
+		property test.name.skip.portal.instance = "BlogsEntry#CannotInjectBBCodeIntoCommentUsingPingback";
+
+		JSONLayout.addPublicLayout(
+			groupName = "Guest",
+			layoutName = "Blogs Page");
+
+		JSONLayout.addWidgetToPublicLayout(
+			column = "1",
+			groupName = "Guest",
+			layoutName = "Blogs Page",
+			widgetName = "Blogs");
+
+		JSONBlog.addEntry(
+			entryContent = "Blogs Entry Content",
+			entryTitle = "test");
+
+		var portalURL = JSONCompany.getPortalURL();
+
+		for (var ip : list "0.0.0.0,127.127.127.127,[::1],10.0.0.10,172.17.172.17") {
+			BlogsEntry.executePingbackViacURL(
+				entryTitle = "test",
+				ip = "${ip}",
+				portalURL = "${portalURL}");
+		}
 	}
 
 	@description = "This is a test for LPS-136788. It checks that a user cannot rate a post when it is disabled in the configuration."
@@ -1159,6 +1508,30 @@ definition {
 		}
 	}
 
+	@description = "This is a test for LPS-80502. It asserts that user can search a draft blog entry."
+	@priority = "5"
+	test CanSearchForDraftEntry {
+		JSONBlog.addEntry(
+			entryContent = "Blogs Entry Content",
+			entrySubtitle = "Blogs Entry Subtitle",
+			entryTitle = "Blogs Entry Title");
+
+		JSONBlog.addEntry(
+			entryContent = "Blogs Entry Content",
+			entrySubtitle = "Blogs Entry Subtitle",
+			entryTitle = "Blogs Entry Title",
+			workflowAction = "DRAFT");
+
+		BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
+
+		LexiconEntry.changeDisplayStyle(displayStyle = "list");
+
+		BlogsEntry.searchCP(
+			entrySearchTerm = "Blogs Entry Title",
+			entryTitle = "Blogs Entry Title",
+			position = "2");
+	}
+
 	@priority = "4"
 	@refactorneeded
 	test CanViewDefaultAbstract {
@@ -1184,17 +1557,229 @@ definition {
 		Navigator.gotoPage(pageName = "Blogs Page");
 
 		BlogsEntry.viewAbstractDisplay(
-			entryAbstractDescription = "Liferay Portal provides an excellent platform for building web applications, websites, and portals, but it can additionally be used for a new category of web applications called social applications. The definition is simple: a social application is a web application that additionally leverages social identity, data, and features or services. In the left figure, the light blue squares represent...",
+			entryAbstractDescription = "Liferay Portal provides an excellent platform for building web applications, websites, and portals, but it can additionally be used for a new category of web applications called social applications. The definition is simple: a social application is a web application that additionally leverages social identity, data, and features or services. In the left figure, the light blue squares...",
 			entryContent = "Blogs Entry Content",
 			entryTitle = "Blogs Entry Title");
 
 		BlogsNavigator.gotoEntryWithAbstractPG(
-			entryAbstractDescription = "Liferay Portal provides an excellent platform for building web applications, websites, and portals, but it can additionally be used for a new category of web applications called social applications. The definition is simple: a social application is a web application that additionally leverages social identity, data, and features or services. In the left figure, the light blue squares represent...",
+			entryAbstractDescription = "Liferay Portal provides an excellent platform for building web applications, websites, and portals, but it can additionally be used for a new category of web applications called social applications. The definition is simple: a social application is a web application that additionally leverages social identity, data, and features or services. In the left figure, the light blue squares...",
 			entryTitle = "Blogs Entry Title");
 
 		BlogsEntry.viewEntryPG(
 			entryContent = "Liferay Portal provides an excellent platform for building web applications, websites, and portals, but it can additionally be used for a new category of web applications called social applications. The definition is simple: a social application is a web application that additionally leverages social identity, data, and features or services. In the left figure, the light blue squares represent a definition of a standard web application while the darker blue squares show the addition of social aspects.",
 			entryTitle = "Blogs Entry Title");
+	}
+
+	@description = "This ensures that an external video in the Blogs content field can be rendered correctly after moving it to a folder."
+	@priority = "4"
+	test CanViewInlineVideoAfterMovingToFolder {
+		property portal.acceptance = "false";
+
+		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
+
+		VideoShortcut.addCP(
+			videoShortcutTitle = "Test YouTube Video Name",
+			videoURL = "https://www.youtube.com/watch?v=HOdbzGCI5ME");
+
+		JSONBlog.addEntry(
+			entryContent = "Blogs Entry Content",
+			entryTitle = "Blogs Entry Title");
+
+		BlogsNavigator.openToEditEntryInSite(
+			entryTitle = "Blogs Entry Title",
+			groupName = "Guest",
+			siteURLKey = "guest");
+
+		BlogsEntry.editContent(
+			embedVideo = "Test YouTube Video Name",
+			entryContent = "Blogs Entry Content",
+			entryContentEdit = "Blogs Entry Content Edit",
+			navTab = "Documents and Media");
+
+		PortletEntry.publish();
+
+		JSONFolder.addFolder(
+			dmFolderDescription = "DM Folder Description",
+			dmFolderName = "DM Folder Name",
+			groupName = "Guest");
+
+		JSONDocument.moveFileEntryToFolder(
+			dmDocumentTitle = "Test YouTube Video Name",
+			folderName = "DM Folder Name",
+			groupName = "Guest");
+
+		BlogsNavigator.openToEditEntryInSite(
+			entryTitle = "Blogs Entry Title",
+			groupName = "Guest",
+			siteURLKey = "guest");
+
+		BlogsEntry.viewEntryCP(
+			embedVideo = "true",
+			entryContent = "Blogs Entry Content Edit",
+			entryTitle = "Blogs Entry Title");
+	}
+
+	@description = "This ensures that an external video in the Blogs content field can be rendered correctly when publication is enabled."
+	@priority = "5"
+	test CanViewInlineVideoWithPublication {
+		property osgi.module.configuration.file.names = "com.liferay.change.tracking.configuration.CTSettingsConfiguration.config";
+		property osgi.module.configurations = "enabled=B\"true\"";
+
+		JSONPublications.addPublication(publicationName = "Publication Name");
+
+		JSONPublications.selectPublication(publicationName = "Publication Name");
+
+		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
+
+		VideoShortcut.addCP(
+			videoShortcutTitle = "Test YouTube Video Name",
+			videoURL = "https://www.youtube.com/watch?v=HOdbzGCI5ME");
+
+		JSONBlog.addEntry(
+			entryContent = "Blogs Entry Content",
+			entryTitle = "Blogs Entry Title");
+
+		BlogsNavigator.openToEditEntryInSite(
+			entryTitle = "Blogs Entry Title",
+			groupName = "Guest",
+			siteURLKey = "guest");
+
+		BlogsEntry.editContent(
+			embedVideo = "Test YouTube Video Name",
+			entryContent = "Blogs Entry Content",
+			entryContentEdit = "Blogs Entry Content Edit",
+			navTab = "Documents and Media");
+
+		PortletEntry.publish();
+
+		JSONPublications.publishPublication(publicationName = "Publication Name");
+
+		BlogsNavigator.openToEditEntryInSite(
+			entryTitle = "Blogs Entry Title",
+			groupName = "Guest",
+			siteURLKey = "guest");
+
+		BlogsEntry.viewEntryCP(
+			embedVideo = "true",
+			entryContent = "Blogs Entry Content Edit",
+			entryTitle = "Blogs Entry Title");
+	}
+
+	@description = "This checks that an external video embedded in a blog content can be played correctly."
+	@priority = "3"
+	test ExternalVideoEmbeddedInBlogContentFieldCanBePlayed {
+		JSONLayout.addPublicLayout(
+			groupName = "Guest",
+			layoutName = "Blogs Page");
+
+		JSONLayout.addWidgetToPublicLayout(
+			column = "1",
+			groupName = "Guest",
+			layoutName = "Blogs Page",
+			widgetName = "Blogs");
+
+		Navigator.gotoPage(pageName = "Blogs Page");
+
+		Blogs.addEntry(
+			embedVideo = "https://www.youtube.com/watch?v=2EPZxIC5ogU",
+			entryContent = "video",
+			entryTitle = "Blogs Entry Title",
+			navTab = "URL",
+			videoService = "youtube");
+
+		BlogsNavigator.openToBlogEntry(
+			entryTitle = "Blogs Entry Title",
+			layoutName = "Blogs Page",
+			siteURLKey = "guest");
+
+		YoutubePortlet.playEmbeddedVideo(
+			progressBarInitialization = "0 Minutes 0 Seconds of 0 Minutes 0 Seconds",
+			videoDuration = "3 Minutes 30 Seconds",
+			videoPlayNode = "0 Minutes 10 Seconds of 3 Minutes 30 Seconds");
+	}
+
+	@description = "This is a test for LPS-90966. It checks that the caption link will keep persisting."
+	@priority = "4"
+	test LinkToImageInCaptionPersistsAfterBeingAdded {
+		BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
+
+		Blogs.addEntryWithUploadedCoverImage(
+			captionField = "Cover Image Caption",
+			captionFieldLink = "www.google.com",
+			coverImageName = "Document_1",
+			entryContent = "Blogs Entry Content",
+			entryTitle = "Blogs Entry Title",
+			navTab = "Blog Images",
+			uploadFileName = "Document_1.jpg");
+
+		Button.clickPublish();
+
+		BlogsNavigator.gotoEditCP(entryTitle = "Blogs Entry Title");
+
+		BlogsEntry.viewEntryCP(
+			captionField = "true",
+			captionFieldLink = "Cover Image Caption",
+			entryContent = "Blogs Entry Content",
+			entryTitle = "Blogs Entry Title");
+	}
+
+	@description = "This test covers LPS-133714. The blog entry creator receives a notification of its own blog"
+	@priority = "3"
+	test NotificationIsReceivedByNewEntryCreator {
+		property custom.properties = "jsonws.web.service.paths.excludes=";
+
+		task ("Enable Send Notifications to Blogs Entry Creator") {
+			BlogsNavigator.openToConfigInInstanceSettings(portlet = "Blogs Service");
+
+			FormFields.enableCheckbox(fieldName = "Send Notifications to Blogs Entry Creator");
+
+			if (IsElementPresent(key_text = "Save", locator1 = "Button#ANY")) {
+				Button.clickSave();
+			}
+			else {
+				Button.clickUpdate();
+			}
+		}
+
+		task ("Check no notifications are pending") {
+			Notifications.viewBadgeCount(notificationCount = "0");
+		}
+
+		task ("Create a Blog Page and subscribe to widget to receive notifications") {
+			JSONLayout.addPublicLayout(
+				groupName = "Guest",
+				layoutName = "Blogs Page Admin");
+
+			JSONLayout.addWidgetToPublicLayout(
+				column = "1",
+				groupName = "Guest",
+				layoutName = "Blogs Page Admin",
+				widgetName = "Blogs");
+
+			Navigator.gotoPage(pageName = "Blogs Page Admin");
+
+			if (IsElementPresent(locator1 = "Blogs#UNSUBSCRIBE_LINK", value1 = "Unsubscribe")) {
+				AssertClick(
+					locator1 = "Blogs#UNSUBSCRIBE_LINK",
+					value1 = "Unsubscribe");
+			}
+
+			Blogs.subscribePG();
+		}
+
+		task ("Add blog entry") {
+			JSONBlog.addEntry(
+				entryContent = "Blogs Entry Content",
+				entryTitle = "Blogs Entry Title",
+				userEmailAddress = "test@liferay.com",
+				userPassword = "test");
+		}
+
+		task ("Check entry creator has a notification") {
+			Navigator.gotoPage(pageName = "Blogs Page Admin");
+
+			Notifications.viewBadgeCount(notificationCount = "1");
+		}
 	}
 
 	@description = "This is a use case for LPS-69240. It checks that when blog entries are duplicated their custom URL's are unique."

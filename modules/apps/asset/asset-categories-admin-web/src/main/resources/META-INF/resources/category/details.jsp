@@ -44,8 +44,8 @@ else if (parentCategoryId > 0) {
 renderResponse.setTitle(title);
 %>
 
-<portlet:actionURL name="editCategory" var="editCategoryURL">
-	<portlet:param name="mvcPath" value="/edit_category.jsp" />
+<portlet:actionURL name="/asset_categories_admin/edit_asset_category" var="editCategoryURL">
+	<portlet:param name="mvcPath" value="/edit_asset_category.jsp" />
 	<portlet:param name="groupId" value="<%= String.valueOf(groupId) %>" />
 	<portlet:param name="vocabularyId" value="<%= String.valueOf(vocabularyId) %>" />
 </portlet:actionURL>
@@ -70,12 +70,25 @@ renderResponse.setTitle(title);
 				collapsible="<%= true %>"
 				label="details"
 			>
-				<aui:input label="name" localized="<%= true %>" name="title" placeholder="name" type="text" value="<%= (category == null) ? StringPool.BLANK : assetCategoriesDisplayContext.getCategoryLocalizationXML(category) %>">
+				<aui:input label="name" localized="<%= true %>" name="title" placeholder="name" required="<%= true %>" type="text" value="<%= (category == null) ? StringPool.BLANK : assetCategoriesDisplayContext.getCategoryLocalizationXML(category) %>">
 					<aui:validator name="maxLength"><%= ModelHintsUtil.getMaxLength(AssetCategory.class.getName(), "name") %></aui:validator>
-					<aui:validator name="required" />
 				</aui:input>
 
-				<aui:input name="description" placeholder="description" />
+				<div>
+					<label for="<portlet:namespace />description"><liferay-ui:message key="description" /></label>
+
+					<liferay-ui:input-localized
+						availableLocales="<%= assetCategoriesDisplayContext.getAvailableLocales() %>"
+						cssClass="form-control"
+						defaultLanguageId="<%= assetCategoriesDisplayContext.getDefaultLanguageId(category) %>"
+						editorName="ckeditor"
+						formName="fm"
+						name="description"
+						selectedLanguageId="<%= assetCategoriesDisplayContext.getSelectedLanguageId(category) %>"
+						type="editor"
+						xml="<%= (category == null) ? StringPool.BLANK : category.getDescription() %>"
+					/>
+				</div>
 
 				<c:choose>
 					<c:when test="<%= assetCategoriesDisplayContext.isFlattenedNavigationAllowed() %>">
@@ -88,7 +101,7 @@ renderResponse.setTitle(title);
 							<div>
 								<div id="<portlet:namespace />parentCategoryContainer">
 									<div class="field-content">
-										<div class="form-group" id="<%= "namespace_assetCategoriesSelector_" + vocabularyId %>">
+										<div class="form-group" id="namespace_assetCategoriesSelector_<%= vocabularyId %>">
 											<div class="input-group">
 												<div class="input-group-item">
 													<div class="form-control form-control-tag-group input-group">
@@ -193,9 +206,9 @@ renderResponse.setTitle(title);
 			<liferay-frontend:edit-form-footer>
 				<aui:button disabled="<%= assetCategoriesDisplayContext.isSaveButtonDisabled() %>" type="submit" />
 
-				<aui:button cssClass="btn-secondary" disabled="<%= assetCategoriesDisplayContext.isSaveAndAddNewButtonDisabled() %>" onClick='<%= liferayPortletResponse.getNamespace() + "saveAndAddNew();" %>' value="save-and-add-a-new-one" />
+				<aui:button disabled="<%= assetCategoriesDisplayContext.isSaveAndAddNewButtonDisabled() %>" onClick='<%= liferayPortletResponse.getNamespace() + "saveAndAddNew();" %>' value="save-and-add-a-new-one" />
 
-				<aui:button cssClass="btn-secondary" href="<%= redirect %>" type="cancel" />
+				<aui:button href="<%= redirect %>" type="cancel" />
 			</liferay-frontend:edit-form-footer>
 		</c:when>
 		<c:otherwise>

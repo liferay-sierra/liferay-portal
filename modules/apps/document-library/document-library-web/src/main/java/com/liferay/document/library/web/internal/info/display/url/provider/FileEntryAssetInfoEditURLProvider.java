@@ -16,16 +16,16 @@ package com.liferay.document.library.web.internal.info.display.url.provider;
 
 import com.liferay.document.library.constants.DLPortletKeys;
 import com.liferay.info.display.url.provider.InfoEditURLProvider;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
@@ -85,7 +85,7 @@ public class FileEntryAssetInfoEditURLProvider
 					"p_l_mode", Constants.VIEW);
 
 				try {
-					redirect = _http.setParameter(
+					redirect = HttpComponentsUtil.setParameter(
 						_portal.getLayoutRelativeURL(layout, themeDisplay),
 						"p_l_mode", mode);
 				}
@@ -98,7 +98,6 @@ public class FileEntryAssetInfoEditURLProvider
 		}
 
 		portletURL.setParameter("redirect", redirect);
-
 		portletURL.setParameter(
 			"fileEntryId", String.valueOf(fileEntry.getFileEntryId()));
 
@@ -110,9 +109,6 @@ public class FileEntryAssetInfoEditURLProvider
 
 	@Reference
 	private GroupLocalService _groupLocalService;
-
-	@Reference
-	private Http _http;
 
 	@Reference
 	private Portal _portal;

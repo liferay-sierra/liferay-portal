@@ -28,7 +28,7 @@ import com.liferay.frontend.data.set.provider.search.FDSKeywords;
 import com.liferay.frontend.data.set.provider.search.FDSPagination;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.search.Sort;
@@ -50,7 +50,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Riccardo Alberti
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "fds.data.provider.key=" + CommercePricingFDSNames.DISCOUNT_RULE_PRODUCT_DEFINITIONS,
 	service = FDSDataProvider.class
 )
@@ -103,10 +102,10 @@ public class CommerceDiscountRuleCPDefinitionFDSDataProvider
 			_commerceDiscountRuleService.getCommerceDiscountRule(
 				commerceDiscountRuleId);
 
-		String settingsProperty = commerceDiscountRule.getSettingsProperty(
-			commerceDiscountRule.getType());
-
-		long[] cpDefinitionIds = StringUtil.split(settingsProperty, 0L);
+		long[] cpDefinitionIds = StringUtil.split(
+			commerceDiscountRule.getSettingsProperty(
+				commerceDiscountRule.getType()),
+			0L);
 
 		if (cpDefinitionIds == null) {
 			return Collections.emptyList();
@@ -117,7 +116,7 @@ public class CommerceDiscountRuleCPDefinitionFDSDataProvider
 
 		Locale locale = _portal.getLocale(httpServletRequest);
 
-		String languageId = LanguageUtil.getLanguageId(locale);
+		String languageId = _language.getLanguageId(locale);
 
 		String keywordsLowerCase = StringUtil.toLowerCase(
 			fdsKeywords.getKeywords());
@@ -157,7 +156,7 @@ public class CommerceDiscountRuleCPDefinitionFDSDataProvider
 		}
 
 		if (cpInstances.size() > 1) {
-			return LanguageUtil.get(locale, "multiple-skus");
+			return _language.get(locale, "multiple-skus");
 		}
 
 		CPInstance cpInstance = cpInstances.get(0);
@@ -173,6 +172,9 @@ public class CommerceDiscountRuleCPDefinitionFDSDataProvider
 
 	@Reference
 	private CPDefinitionService _cpDefinitionService;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

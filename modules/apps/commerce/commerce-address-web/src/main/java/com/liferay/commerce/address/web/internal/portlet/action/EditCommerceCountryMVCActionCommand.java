@@ -23,7 +23,7 @@ import com.liferay.portal.kernel.exception.CountryA3Exception;
 import com.liferay.portal.kernel.exception.CountryNameException;
 import com.liferay.portal.kernel.exception.DuplicateCountryException;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Country;
@@ -40,7 +40,7 @@ import com.liferay.portal.kernel.transaction.TransactionConfig;
 import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -62,7 +62,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Luca Pellizzon
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = {
 		"javax.portlet.name=" + CommercePortletKeys.COMMERCE_COUNTRY,
 		"mvc.command.name=/commerce_country/edit_commerce_country"
@@ -152,8 +152,7 @@ public class EditCommerceCountryMVCActionCommand extends BaseMVCActionCommand {
 			deleteCountryIds = new long[] {countryId};
 		}
 		else {
-			deleteCountryIds = StringUtil.split(
-				ParamUtil.getString(actionRequest, "deleteCountryIds"), 0L);
+			deleteCountryIds = ParamUtil.getLongValues(actionRequest, "rowIds");
 		}
 
 		for (long deleteCountryId : deleteCountryIds) {
@@ -223,7 +222,7 @@ public class EditCommerceCountryMVCActionCommand extends BaseMVCActionCommand {
 		boolean active = ParamUtil.getBoolean(actionRequest, "active");
 		boolean billingAllowed = ParamUtil.getBoolean(
 			actionRequest, "billingAllowed");
-		Map<Locale, String> nameMap = LocalizationUtil.getLocalizationMap(
+		Map<Locale, String> nameMap = _localization.getLocalizationMap(
 			actionRequest, "name");
 		String number = ParamUtil.getString(actionRequest, "number");
 		double position = ParamUtil.getDouble(actionRequest, "position");
@@ -251,7 +250,7 @@ public class EditCommerceCountryMVCActionCommand extends BaseMVCActionCommand {
 
 		for (Map.Entry<Locale, String> entry : nameMap.entrySet()) {
 			_countryLocalService.updateCountryLocalization(
-				country, LanguageUtil.getLanguageId(entry.getKey()),
+				country, _language.getLanguageId(entry.getKey()),
 				entry.getValue());
 		}
 
@@ -273,6 +272,12 @@ public class EditCommerceCountryMVCActionCommand extends BaseMVCActionCommand {
 
 	@Reference
 	private CountryService _countryService;
+
+	@Reference
+	private Language _language;
+
+	@Reference
+	private Localization _localization;
 
 	@Reference
 	private Portal _portal;

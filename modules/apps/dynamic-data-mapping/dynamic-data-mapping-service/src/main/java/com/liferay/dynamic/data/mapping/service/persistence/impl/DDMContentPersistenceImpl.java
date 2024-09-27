@@ -48,7 +48,7 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 
 import java.io.Serializable;
 
@@ -205,7 +205,7 @@ public class DDMContentPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<DDMContent>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (DDMContent ddmContent : list) {
@@ -594,7 +594,7 @@ public class DDMContentPersistenceImpl
 
 			finderArgs = new Object[] {uuid};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -730,7 +730,7 @@ public class DDMContentPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = finderCache.getResult(
-				_finderPathFetchByUUID_G, finderArgs);
+				_finderPathFetchByUUID_G, finderArgs, this);
 		}
 
 		if (result instanceof DDMContent) {
@@ -850,7 +850,7 @@ public class DDMContentPersistenceImpl
 
 			finderArgs = new Object[] {uuid, groupId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1022,7 +1022,7 @@ public class DDMContentPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<DDMContent>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (DDMContent ddmContent : list) {
@@ -1443,7 +1443,7 @@ public class DDMContentPersistenceImpl
 
 			finderArgs = new Object[] {uuid, companyId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1604,7 +1604,7 @@ public class DDMContentPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<DDMContent>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (DDMContent ddmContent : list) {
@@ -1969,7 +1969,7 @@ public class DDMContentPersistenceImpl
 
 			finderArgs = new Object[] {groupId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2113,7 +2113,7 @@ public class DDMContentPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<DDMContent>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (DDMContent ddmContent : list) {
@@ -2480,7 +2480,7 @@ public class DDMContentPersistenceImpl
 
 			finderArgs = new Object[] {companyId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2655,7 +2655,7 @@ public class DDMContentPersistenceImpl
 		ddmContent.setNew(true);
 		ddmContent.setPrimaryKey(contentId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		ddmContent.setUuid(uuid);
 
@@ -2773,7 +2773,7 @@ public class DDMContentPersistenceImpl
 			(DDMContentModelImpl)ddmContent;
 
 		if (Validator.isNull(ddmContent.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			ddmContent.setUuid(uuid);
 		}
@@ -2897,7 +2897,9 @@ public class DDMContentPersistenceImpl
 	 */
 	@Override
 	public DDMContent fetchByPrimaryKey(Serializable primaryKey) {
-		if (ctPersistenceHelper.isProductionMode(DDMContent.class)) {
+		if (ctPersistenceHelper.isProductionMode(
+				DDMContent.class, primaryKey)) {
+
 			return super.fetchByPrimaryKey(primaryKey);
 		}
 
@@ -3113,7 +3115,7 @@ public class DDMContentPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<DDMContent>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -3189,7 +3191,7 @@ public class DDMContentPersistenceImpl
 
 		if (productionMode) {
 			count = (Long)finderCache.getResult(
-				_finderPathCountAll, FINDER_ARGS_EMPTY);
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 		}
 
 		if (count == null) {
@@ -3499,6 +3501,6 @@ public class DDMContentPersistenceImpl
 	}
 
 	@Reference
-	private DDMContentModelArgumentsResolver _ddmContentModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

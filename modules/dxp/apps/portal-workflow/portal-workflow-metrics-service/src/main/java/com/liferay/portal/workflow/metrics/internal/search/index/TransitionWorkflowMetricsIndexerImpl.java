@@ -26,17 +26,13 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Inácio Nery
  */
-@Component(immediate = true, service = TransitionWorkflowMetricsIndexer.class)
+@Component(service = TransitionWorkflowMetricsIndexer.class)
 public class TransitionWorkflowMetricsIndexerImpl
 	extends BaseWorkflowMetricsIndexer
 	implements TransitionWorkflowMetricsIndexer {
 
 	@Override
 	public Document addTransition(AddTransitionRequest addTransitionRequest) {
-		if (searchEngineAdapter == null) {
-			return null;
-		}
-
 		DocumentBuilder documentBuilder = documentBuilderFactory.builder();
 
 		Document document = documentBuilder.setLong(

@@ -1,6 +1,9 @@
 @component-name = "portal-publications"
 definition {
 
+	property database.types = "db2,hypersonic,mariadb,mysql,oracle,postgresql,sqlserver";
+	property osgi.module.configuration.file.names = "com.liferay.change.tracking.configuration.CTSettingsConfiguration.config";
+	property osgi.module.configurations = "enabled=B\"true\"";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Publications";
@@ -9,8 +12,6 @@ definition {
 		TestCase.setUpPortalInstance();
 
 		User.firstLoginPG();
-
-		JSONPublications.enablePublications();
 	}
 
 	tearDown {
@@ -123,7 +124,7 @@ definition {
 			panel = "Applications",
 			portlet = "Publications");
 
-		Publications.deletePublication(publicationName = "Publication Name");
+		Publications.deletePublication(publicationName = "Publication Name 2");
 
 		User.logoutPG();
 
@@ -200,42 +201,528 @@ definition {
 		AssertElementNotPresent(locator1 = "Publications#PUBLICATIONS_INDICATOR_BUTTON");
 	}
 
-	@priority = "5"
-	test AssertPublicationHistoryIsSortedByPublishDate {
-		JSONPublications.addPublication(publicationName = "Publication Name 1");
+	@description = "This is the use case for LPS-153276. Browsing in a publication should not cause changes inside the publication."
+	@priority = "4"
+	test BrowsingInPublicationCannotCauseChanges {
+		JSONPublications.addPublication(publicationName = "Publication Name");
 
-		JSONPublications.selectPublication(publicationName = "Publication Name 1");
+		JSONPublications.selectPublication(publicationName = "Publication Name");
 
+		ApplicationsMenuHelper.openApplicationsMenu();
+
+		Navigator.gotoNavTab(navTab = "Applications");
+
+		PublicationsNavigator.openPublicationsAdmin();
+
+		PublicationsNavigator.gotoReviewChanges(publicationName = "Publication Name");
+
+		AssertElementPresent(locator1 = "PublicationsChanges#MESSAGE_NO_CHANGES");
+
+		Navigator.openURL();
+
+		ProductMenu.gotoPortlet(
+			category = "Content & Data",
+			portlet = "Documents and Media");
+
+		DMNavigator.gotoAddDocumentTypeCP(dmDocumentTypeName = "File Upload");
+
+		Button.click(button = "Cancel");
+
+		DMNavigator.gotoDocumentType();
+
+		DMNavigator.gotoMetadataSets();
+
+		PublicationsNavigator.gotoReviewChanges(publicationName = "Publication Name");
+
+		AssertElementPresent(locator1 = "PublicationsChanges#MESSAGE_NO_CHANGES");
+
+		UserBar.gotoDropdownItem(dropdownItem = "Account Settings");
+
+		PublicationsNavigator.gotoReviewChanges(
+			gotoPublicationsAdmin = "true",
+			publicationName = "Publication Name");
+
+		AssertElementPresent(locator1 = "PublicationsChanges#MESSAGE_NO_CHANGES");
+	}
+
+	@description = "This is the use case for LPS-158789. Allow you to change publication via URL parameter"
+	@priority = "4"
+	test CanChangePublicationViaURLParameter {
+		JSONGroup.addGroup(groupName = "Site Name");
+
+		JSONLayout.addPublicLayout(
+			groupName = "Site Name",
+			layoutName = "Test Page Name");
+
+		JSONPublications.addPublication(publicationName = "Publication Name");
+
+		JSONPublications.selectPublication(publicationName = "Publication Name");
+
+		JSONWebcontent.addWebContent(
+			content = "Web Content Content",
+			groupName = "Site Name",
+			title = "Web Content Title");
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Site Name",
+			layoutName = "Test Page Name",
+			widgetName = "Web Content Display");
+
+		Navigator.openSitePage(
+			pageName = "Test Page Name",
+			siteName = "Site Name");
+
+		WebContentDisplayPortlet.selectWebContent(webContentTitle = "Web Content Title");
+
+		PublicationsNavigator.openPublicationsAdmin();
+
+		Publications.workOnProduction();
+
+		var ctCollectionId = JSONPublicationsAPI._getCTCollectionId(publicationName = "Publication Name");
+		var portalURL = PropsUtil.get("portal.url");
+
+		Navigator.openSpecificURL(url = "${portalURL}/web/site-name/test-page-name?previewCTCollectionId=${ctCollectionId}");
+
+		WebContentDisplayPortlet.viewContent(
+			webContentContent = "Web Content Content",
+			webContentTitle = "Web Content Title");
+	}
+
+	@description = "Filter Publications Changes."
+	@priority = "4"
+	test CanFilterChangesInReview {
 		JSONWebcontent.addWebContent(
 			content = "WC WebContent Content 1",
 			groupName = "Guest",
 			title = "WC WebContent Title 1");
 
-		JSONPublications.addPublication(publicationName = "Publication Name 2");
+		JSONDocument.addFileWithUploadedFile(
+			dmDocumentDescription = "DM Document Description",
+			dmDocumentTitle = "DM Document Title",
+			groupName = "Guest",
+			guestPermissions = "false",
+			mimeType = "image/jpeg",
+			sourceFileName = "Document_1.jpg");
 
-		JSONPublications.selectPublication(publicationName = "Publication Name 2");
+		JSONGroup.addGroup(groupName = "Test Site Name");
+
+		JSONPublications.addPublication(publicationName = "Publication Name");
+
+		JSONPublications.selectPublication(publicationName = "Publication Name");
+
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "guest");
+
+		WebContent.moveToRecycleBinCP(webContentTitle = "WC WebContent Title 1");
+
+		RecycleBin.openRecycleBinAdmin(siteURLKey = "guest");
+
+		RecycleBin.deleteCP(
+			assetName = "WC WebContent Title 1",
+			assetType = "Web Content Article");
+
+		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
+
+		DMDocument.editCP(
+			dmDocumentDescription = "DM Document Description",
+			dmDocumentDescriptionEdit = "DM Document Description Edit",
+			dmDocumentTitle = "DM Document Title",
+			dmDocumentTitleEdit = "DM Document Title Edit");
 
 		JSONWebcontent.addWebContent(
 			content = "WC WebContent Content 2",
-			groupName = "Guest",
+			groupName = "Test Site Name",
 			title = "WC WebContent Title 2");
 
-		JSONPublications.addPublication(publicationName = "Publication Name 3");
+		PublicationsNavigator.gotoReviewChanges();
 
-		JSONPublications.selectPublication(publicationName = "Publication Name 3");
+		PublicationsChanges.filterChangesByItem(
+			checkboxName = "Added",
+			menuItem = "Change Types");
+
+		PublicationsChanges.viewChanges(
+			changeCategory = "Web Content Article",
+			changeSite = "Test Site Name",
+			changeTitle = "WC WebContent Title 2",
+			changeType = "Added",
+			changeUser = "Test Test");
+
+		PublicationsChanges.viewChangesResultNotPresent(
+			changeCategory = "Web Content Article",
+			changeTitle = "WC WebContent Title 1");
+
+		PublicationsChanges.viewChangesResultNotPresent(
+			changeCategory = "Document",
+			changeTitle = "DM Document Title Edit");
+
+		PublicationsChanges.filterChangesByItem(
+			checkboxName = "Deleted",
+			menuItem = "Change Types");
+
+		PublicationsChanges.viewChanges(
+			changeCategory = "Web Content Article",
+			changeSite = "Guest",
+			changeTitle = "WC WebContent Title 1",
+			changeType = "Deleted",
+			changeUser = "Test Test");
+
+		PublicationsChanges.viewChangesResultNotPresent(
+			changeCategory = "Web Content Article",
+			changeOrder = "2",
+			changeTitle = "WC WebContent Title 2");
+
+		PublicationsChanges.viewChangesResultNotPresent(
+			changeCategory = "Document",
+			changeTitle = "DM Document Title Edit");
+
+		PublicationsChanges.filterChangesByItem(
+			checkboxName = "Modified",
+			menuItem = "Change Types");
+
+		PublicationsChanges.viewChanges(
+			changeCategory = "Document",
+			changeSite = "Guest",
+			changeTitle = "DM Document Title Edit",
+			changeType = "Modified",
+			changeUser = "Test Test");
+
+		PublicationsChanges.viewChangesResultNotPresent(
+			changeCategory = "Web Content Article",
+			changeTitle = "WC WebContent Title 1");
+
+		PublicationsChanges.viewChangesResultNotPresent(
+			changeCategory = "Web Content Article",
+			changeOrder = "2",
+			changeTitle = "WC WebContent Title 2");
+
+		PublicationsChanges.filterChangesByItem(
+			checkboxName = "Guest",
+			menuItem = "Sites");
+
+		PublicationsChanges.viewChanges(
+			changeCategory = "Document",
+			changeSite = "Guest",
+			changeTitle = "DM Document Title Edit",
+			changeType = "Modified",
+			changeUser = "Test Test");
+
+		PublicationsChanges.viewChanges(
+			changeCategory = "Web Content Article",
+			changeSite = "Guest",
+			changeTitle = "WC WebContent Title 1",
+			changeType = "Deleted",
+			changeUser = "Test Test");
+
+		PublicationsChanges.viewChangesResultNotPresent(
+			changeCategory = "Web Content Article",
+			changeOrder = "2",
+			changeTitle = "WC WebContent Title 2");
+
+		PublicationsChanges.filterChangesByItem(
+			checkboxName = "Test Site Name",
+			menuItem = "Sites");
+
+		PublicationsChanges.viewChanges(
+			changeCategory = "Web Content Article",
+			changeSite = "Test Site Name",
+			changeTitle = "WC WebContent Title 2",
+			changeType = "Added",
+			changeUser = "Test Test");
+
+		PublicationsChanges.viewChangesResultNotPresent(
+			changeCategory = "Web Content Article",
+			changeTitle = "WC WebContent Title 1");
+
+		PublicationsChanges.viewChangesResultNotPresent(
+			changeCategory = "Document",
+			changeTitle = "DM Document Title Edit");
+
+		PublicationsChanges.filterChangesByItem(
+			checkboxName = "Document",
+			menuItem = "Types");
+
+		PublicationsChanges.viewChanges(
+			changeCategory = "Document",
+			changeSite = "Guest",
+			changeTitle = "DM Document Title Edit",
+			changeType = "Modified",
+			changeUser = "Test Test");
+
+		PublicationsChanges.viewChangesResultNotPresent(
+			changeCategory = "Web Content Article",
+			changeTitle = "WC WebContent Title 1");
+
+		PublicationsChanges.viewChangesResultNotPresent(
+			changeCategory = "Web Content Article",
+			changeOrder = "2",
+			changeTitle = "WC WebContent Title 2");
+
+		PublicationsChanges.filterChangesByItem(
+			checkboxName = "Web Content Article",
+			menuItem = "Types");
+
+		PublicationsChanges.viewChanges(
+			changeCategory = "Web Content Article",
+			changeSite = "Guest",
+			changeTitle = "WC WebContent Title 1",
+			changeType = "Deleted",
+			changeUser = "Test Test");
+
+		PublicationsChanges.viewChanges(
+			changeCategory = "Web Content Article",
+			changeOrder = "2",
+			changeSite = "Test Site Name",
+			changeTitle = "WC WebContent Title 2",
+			changeType = "Added",
+			changeUser = "Test Test");
+
+		PublicationsChanges.viewChangesResultNotPresent(
+			changeCategory = "Document",
+			changeTitle = "DM Document Title Edit");
+	}
+
+	@description = "This is the use case for LPS-158789."
+	@priority = "4"
+	test CannotChangePublicationViaURLWithNonexistentCollectionId {
+		JSONGroup.addGroup(groupName = "Site Name");
+
+		JSONLayout.addPublicLayout(
+			groupName = "Site Name",
+			layoutName = "Test Page Name");
+
+		JSONPublications.addPublication(publicationName = "Publication Name");
+
+		JSONPublications.selectPublication(publicationName = "Publication Name");
 
 		JSONWebcontent.addWebContent(
-			content = "WC WebContent Content 3",
-			groupName = "Guest",
-			title = "WC WebContent Title 3");
+			content = "Web Content Content",
+			groupName = "Site Name",
+			title = "Web Content Title");
 
-		JSONPublications.publishPublication(publicationName = "Publication Name 1");
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Site Name",
+			layoutName = "Test Page Name",
+			widgetName = "Web Content Display");
 
-		JSONPublications.publishPublication(publicationName = "Publication Name 3");
+		Navigator.openSitePage(
+			pageName = "Test Page Name",
+			siteName = "Site Name");
 
-		JSONPublications.publishPublication(publicationName = "Publication Name 2");
+		WebContentDisplayPortlet.selectWebContent(webContentTitle = "Web Content Title");
 
-		Publications.viewPublicationOrderInHistory(publicationList = "Publication Name 2,Publication Name 3,Publication Name 1");
+		PublicationsNavigator.openPublicationsAdmin();
+
+		Publications.workOnProduction();
+
+		var ctCollectionId1 = JSONPublicationsAPI._getCTCollectionId(publicationName = "Publication Name");
+
+		var ctCollectionId2 = ${ctCollectionId1} + 1;
+		var portalURL = PropsUtil.get("portal.url");
+
+		Open.openRedirect(locator1 = "${portalURL}/web/site-name/test-page-name?previewCTCollectionId=${ctCollectionId2}");
+
+		Alert.viewErrorMessage(errorMessage = "Your request failed to complete.");
+	}
+
+	@description = "This is the use case for LPS-158789."
+	@priority = "4"
+	test CannotPreviewPublishedPublicationViaURL {
+		JSONGroup.addGroup(groupName = "Site Name");
+
+		JSONLayout.addPublicLayout(
+			groupName = "Site Name",
+			layoutName = "Test Page Name");
+
+		JSONPublications.addPublication(publicationName = "Publication Name");
+
+		JSONPublications.selectPublication(publicationName = "Publication Name");
+
+		JSONWebcontent.addWebContent(
+			content = "Web Content Content",
+			groupName = "Site Name",
+			title = "Web Content Title");
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Site Name",
+			layoutName = "Test Page Name",
+			widgetName = "Web Content Display");
+
+		Navigator.openSitePage(
+			pageName = "Test Page Name",
+			siteName = "Site Name");
+
+		WebContentDisplayPortlet.selectWebContent(webContentTitle = "Web Content Title");
+
+		var ctCollectionId = JSONPublicationsAPI._getCTCollectionId(publicationName = "Publication Name");
+		var portalURL = PropsUtil.get("portal.url");
+
+		JSONPublications.publishPublication(publicationName = "Publication Name");
+
+		Publications.viewPublicationPublished(publicationName = "Publication Name");
+
+		Open.openRedirect(locator1 = "${portalURL}/web/site-name/test-page-name?previewCTCollectionId=${ctCollectionId}");
+
+		Alert.viewErrorMessage(errorMessage = "Your request failed to complete.");
+	}
+
+	@description = "LPS-136380 - Add localization for translated titles and content."
+	@priority = "4"
+	test CanPublishLocalizedContent {
+		JSONPublications.addPublication(publicationName = "Publication Name");
+
+		JSONPublications.selectPublication(publicationName = "Publication Name");
+
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "Guest");
+
+		WebContentNavigator.gotoAddCP();
+
+		PortletEntry.viewLocale(locale = "en-US");
+
+		WebContent.addCP(
+			webContentContent = "Web Content",
+			webContentTitle = "Web Content Title");
+
+		PortletEntry.changeLocale(locale = "zh-CN");
+
+		WebContent.addCP(
+			webContentContent = "网页内容",
+			webContentTitle = "网页内容标题");
+
+		PortletEntry.publish();
+
+		PublicationsNavigator.gotoReviewChanges();
+
+		PublicationsChanges.viewChanges(
+			changeCategory = "Web Content Translation",
+			changeSite = "Guest",
+			changeTitle = "Web Content Title",
+			changeType = "Added",
+			changeUser = "Test Test");
+
+		PublicationsChanges.viewChanges(
+			changeCategory = "Web Content Translation",
+			changeOrder = "2",
+			changeSite = "Guest",
+			changeTitle = "网页内容标题",
+			changeType = "Added",
+			changeUser = "Test Test");
+
+		PublicationsNavigator.gotoViewChangeDetails(
+			changeCategory = "Web Content Article",
+			changeTitle = "Web Content Title");
+
+		PublicationsChangeDetails.viewChangeDetailsInDisplay(
+			changeType = "Added",
+			contentValueInPublication = "Web Content");
+
+		PublicationsNavigator.gotoNavbar(navBarTitle = "Data");
+
+		PublicationsChangeDetails.viewChangeDetailsInData(
+			changeType = "Added",
+			columnName = "Name",
+			columnValueInPublication = "Web Content Title");
+
+		Click(
+			key_currentLocale = StringUtil.lowerCase("en-US"),
+			locator1 = "Button#TRANSLATIONS_LOCALIZATION");
+
+		Click(
+			key_locale = "zh_CN",
+			locator1 = "Translation#DROPDOWN_MENU_ITEM");
+
+		PublicationsChangeDetails.viewChangeDetailsInData(
+			changeType = "Added",
+			columnName = "名称",
+			columnValueInPublication = "网页内容标题");
+
+		PublicationsNavigator.gotoNavbar(navBarTitle = "Display");
+
+		PublicationsChangeDetails.viewChangeDetailsInDisplay(
+			changeType = "Added",
+			contentValueInPublication = "网页内容");
+	}
+
+	@description = "Login after resetting password when last in Publication."
+	@priority = "4"
+	test CanResetPasswordWhenLastInPublication {
+		property custom.properties = "jsonws.web.service.paths.excludes=";
+
+		JSONUser.addUser(
+			userEmailAddress = "userea@liferay.com",
+			userFirstName = "userfn",
+			userLastName = "userln",
+			userScreenName = "usersn");
+
+		JSONUser.setFirstPassword(
+			agreeToTermsAndAnswerReminderQuery = "true",
+			requireReset = "false",
+			userEmailAddress = "userea@liferay.com");
+
+		JSONPublications.addPublication(publicationName = "Publication Name");
+
+		PublicationsNavigator.openPublicationsAdmin();
+
+		Publications.inviteUsers(
+			publicationName = "Publication Name",
+			publicationRole = "Editor",
+			userInvite = "userea@liferay.com",
+			userMissingPublicationsRole = "true");
+
+		var siteName = TestCase.getSiteName(siteName = "${siteName}");
+
+		ApplicationsMenu.gotoPortlet(
+			category = "Users",
+			panel = "Control Panel",
+			portlet = "Users and Organizations");
+
+		User.impersonateCP(
+			siteName = "${siteName}",
+			userScreenName = "usersn");
+
+		Publications.selectPublication(publicationName = "Publication Name");
+
+		User.logoutAndLoginPG(
+			userLoginEmailAddress = "userea@liferay.com",
+			userLoginFullName = "userfn userln");
+
+		AssertTextEquals(
+			locator1 = "Publications#PUBLICATIONS_INDICATOR_BUTTON",
+			value1 = "Publication Name");
+	}
+
+	@description = "This is use case for LPS-157264.Changing permissions on a publication shouldn't go into the publication"
+	@priority = "3"
+	test ChangePermissionsOnAPublicationShouldGoIntoProduction {
+		JSONPublications.addPublication(publicationName = "Publication Name");
+
+		JSONPublications.selectPublication(publicationName = "Publication Name");
+
+		PublicationsNavigator.openPublicationsAdmin();
+
+		PublicationsNavigator._gotoPublicationEllipsisItem(
+			menuItem = "Permissions",
+			publicationName = "Publication Name");
+
+		IFrame.selectPermissionsFrame();
+
+		Check.checkNotVisible(
+			key_roleTitle = "publications-user",
+			locator1 = "Permissions#CONFIGURATION_PERMISSIONS_VIEW_CHECKBOX");
+
+		PortletEntry.save();
+
+		IFrame.closeFrame();
+
+		Publications.workOnProduction();
+
+		PublicationsNavigator._gotoPublicationEllipsisItem(
+			menuItem = "Permissions",
+			publicationName = "Publication Name");
+
+		IFrame.selectPermissionsFrame();
+
+		AssertChecked.assertCheckedNotVisible(
+			key_roleTitle = "publications-user",
+			locator1 = "Permissions#CONFIGURATION_PERMISSIONS_VIEW_CHECKBOX");
 	}
 
 	@priority = "4"
@@ -329,6 +816,48 @@ definition {
 	}
 
 	@priority = "4"
+	test IsBrowserHistoryPreserved {
+		property app.server.types = "jboss,tomcat,websphere,wildfly";
+		property test.assert.warning.exceptions = "true";
+		property test.name.skip.portal.instance = "Publications#IsBrowserHistoryPreserved";
+
+		JSONPublications.addPublication(publicationName = "Publication Name");
+
+		JSONPublications.selectPublication(publicationName = "Publication Name");
+
+		JSONWebcontent.addWebContent(
+			content = "WC WebContent Content",
+			groupName = "Guest",
+			title = "WC WebContent Title");
+
+		PublicationsNavigator.gotoPublish(
+			gotoPublicationsAdmin = "true",
+			publicationName = "Publication Name");
+
+		Publications.publishPublication(publicationName = "Publication Name");
+
+		RunScript(locator1 = "window.history.go(-1)");
+
+		AssertTextPresent(
+			key_publicationName = "Production",
+			locator1 = "Publications#PUBLICATIONS_INDICATOR_TITLE",
+			value1 = "Production");
+
+		AssertElementNotPresent(
+			key_changeTitle = "Conflicting Changes",
+			locator1 = "PublicationsChanges#CHANGE_TITLE");
+
+		RunScript(locator1 = "window.history.go(-1)");
+
+		LexiconEntry.changeDisplayStyle(displayStyle = "list");
+
+		AssertTextEquals(
+			key_publicationName = "Publication Name",
+			locator1 = "Publications#LIST_PUBLISHED_STATUS",
+			value1 = "Published");
+	}
+
+	@priority = "4"
 	test IsLocalizedInPublicationsAdmin {
 		property test.name.skip.portal.instance = "Publications#IsLocalizedInPublicationsAdmin";
 
@@ -361,6 +890,34 @@ definition {
 			key_tableEntry = "En progreso",
 			locator1 = "LexiconTable#TABLE_ENTRY_INFO",
 			value1 = "En progreso");
+	}
+
+	@description = "This is a use case for LPS-153949. Users should always be able to modify their account regardless of whether they are in a publication."
+	@priority = "4"
+	test MyAccountActionsAreForcedToProduction {
+		JSONPublications.addPublication(publicationName = "Publication Name");
+
+		JSONPublications.selectPublication(publicationName = "Publication Name");
+
+		Navigator.gotoAccountSettings();
+
+		User.editUserInformation(userScreenNameEdit = "testscreen");
+
+		User.viewUserInfomation(
+			userEmailAddress = "test@liferay.com",
+			userFirstName = "Test",
+			userLastName = "Test",
+			userScreenName = "testscreen");
+
+		Publications.workOnProduction();
+
+		Navigator.gotoAccountSettings();
+
+		User.viewUserInfomation(
+			userEmailAddress = "test@liferay.com",
+			userFirstName = "Test",
+			userLastName = "Test",
+			userScreenName = "testscreen");
 	}
 
 	@description = "Assert publications changes can search and sort"
@@ -422,8 +979,6 @@ definition {
 
 	@priority = "5"
 	test PublishParallelPublications {
-		property app.server.types = "jboss,tcserver,tomcat,weblogic,websphere,wildfly";
-		property database.types = "hypersonic,mariadb,mysql,oracle,postgresql,sqlserver,sybase";
 		property environment.acceptance = "true";
 		property portal.acceptance = "true";
 
@@ -561,7 +1116,7 @@ definition {
 			publicationName = "Publication Name",
 			publishNow = "true");
 
-		JSONPublications.publishPublication(publicationName = "Revert &quot;Publication Name&quot;");
+		JSONPublications.publishPublication(publicationName = "Revert \"Publication Name\"");
 
 		WebContentNavigator.openWebContentAdmin(siteURLKey = "guest");
 
@@ -647,9 +1202,139 @@ definition {
 		}
 	}
 
+	@description = "This is the use case for LPS-162683."
+	@priority = "4"
+	test UnrelatedChangesShouldnotDisplayUnderDiscardPage {
+		JSONLayout.addPublicLayout(
+			groupName = "Guest",
+			layoutName = "Child Page",
+			parentLayoutName = "Search");
+
+		JSONGroup.addGroup(groupName = "Test Site Name");
+
+		JSONLayout.addPublicLayout(
+			groupName = "Test Site Name",
+			layoutName = "Test Page");
+
+		JSONPublications.addPublication(publicationName = "Publication Name");
+
+		JSONPublications.selectPublication(publicationName = "Publication Name");
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Guest",
+			layoutName = "Child Page",
+			widgetName = "Web Content Display");
+
+		PublicationsNavigator.openPublicationsAdmin();
+
+		Publications.workOnProduction();
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Guest",
+			layoutName = "Child Page",
+			widgetName = "Asset Publisher");
+
+		Publications.selectPublication(publicationName = "Publication Name");
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Test Site Name",
+			layoutName = "Test Page",
+			widgetName = "Web Content Display");
+
+		Publications.workOnProduction();
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Test Site Name",
+			layoutName = "Test Page",
+			widgetName = "Asset Publisher");
+
+		PublicationsNavigator.gotoPublish(
+			gotoPublicationsAdmin = "true",
+			publicationName = "Publication Name");
+
+		Publications.viewNeedsManualResolution(
+			entryTitle = "Child Page",
+			warningMessage = "Modification Conflict: The conflict cannot be automatically resolved.");
+
+		Publications.viewNeedsManualResolution(
+			entryTitle = "Test Page",
+			warningMessage = "Modification Conflict: The conflict cannot be automatically resolved.");
+
+		Click(
+			key_changeCategory = "Page",
+			key_changeTitle = "Test Page",
+			locator1 = "PublicationsChanges#PUBLICATIONS_CHANGE_DROPDOWN");
+
+		MenuItem.click(menuItem = "Discard Change");
+
+		AssertElementPresent(
+			key_changeTitle = "Test Page",
+			locator1 = "PublicationsChanges#CONTEXT_CHANGE_TITLE");
+
+		AssertElementNotPresent(
+			key_changeTitle = "Child Page",
+			locator1 = "PublicationsChanges#CONTEXT_CHANGE_TITLE");
+	}
+
+	@description = "This is the use case for LPS-158789."
+	@priority = "4"
+	test UserWithoutAccessCannotChangePublicationViaURL {
+
+		// Workaround LPS-160890 on Websphere
+
+		property app.server.types = "jboss,tomcat,weblogic,wildfly";
+
+		JSONGroup.addGroup(groupName = "Site Name");
+
+		JSONLayout.addPublicLayout(
+			groupName = "Site Name",
+			layoutName = "Test Page Name");
+
+		JSONPublications.addPublication(publicationName = "Publication Name");
+
+		JSONPublications.selectPublication(publicationName = "Publication Name");
+
+		JSONWebcontent.addWebContent(
+			content = "Web Content Content",
+			groupName = "Site Name",
+			title = "Web Content Title");
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Site Name",
+			layoutName = "Test Page Name",
+			widgetName = "Web Content Display");
+
+		Navigator.openSitePage(
+			pageName = "Test Page Name",
+			siteName = "Site Name");
+
+		WebContentDisplayPortlet.selectWebContent(webContentTitle = "Web Content Title");
+
+		Navigator.openSitePage(
+			pageName = "Test Page Name",
+			siteName = "Site Name");
+
+		Publications.workOnProduction();
+
+		var ctCollectionId = JSONPublicationsAPI._getCTCollectionId(publicationName = "Publication Name");
+		var portalURL = PropsUtil.get("portal.url");
+
+		User.logoutPG();
+
+		Open.openRedirect(locator1 = "${portalURL}/web/site-name/test-page-name?previewCTCollectionId=${ctCollectionId}");
+
+		Alert.viewErrorMessage(errorMessage = "Your request failed to complete.");
+	}
+
 	@description = "Assert Publications change details on Display Data Parents and Children Tabs"
 	@priority = "4"
 	test ViewPublicationsChangeDetails {
+
+		// Workaround LPS-140997 and LPS-148148
+
+		property app.server.types = "jboss,tomcat,weblogic,wildfly";
+		property database.types = "hypersonic,mariadb,mysql,oracle,postgresql,sqlserver";
+
 		JSONWebcontent.addWebContent(
 			content = "WC WebContent Content",
 			groupName = "Guest",
@@ -682,7 +1367,7 @@ definition {
 			contentValueInPublication = "WC WebContent Content Edited",
 			diffAddedValue = "Edited");
 
-		PublicationsNavigator.gotoChangeDetailsNavbar(navBarTitle = "Data");
+		PublicationsNavigator.gotoNavbar(navBarTitle = "Data");
 
 		PublicationsChangeDetails.viewChangeDetailsInData(
 			changeType = "Modified",
@@ -691,17 +1376,56 @@ definition {
 			columnValueInPublication = "WC WebContent Title Edited",
 			diffAddedValue = "Edited");
 
-		PublicationsNavigator.gotoChangeDetailsNavbar(navBarTitle = "Parents");
+		PublicationsNavigator.gotoNavbar(navBarTitle = "Parents");
 
 		PublicationsChangeDetails.viewChangeDetailsInParents(
 			changeParentsCategory = "Dynamic Data Mapping Template",
 			changeParentsTitle = "Basic Web Content");
 
-		PublicationsNavigator.gotoChangeDetailsNavbar(navBarTitle = "Children");
+		PublicationsNavigator.gotoNavbar(navBarTitle = "Children");
 
 		PublicationsChangeDetails.viewChangeDetailsInChildren(
 			changeChildrenCategory = "Web Content Translation",
 			changeChildrenTitle = "WC WebContent Title Edited");
+	}
+
+	@description = "Can view Published Publications items pagination and order on History Tab."
+	@priority = "4"
+	test ViewPublicationsHistoryItemsPaginationAndOrder {
+		for (var count : list "1,2,3,4,5,6,7") {
+			JSONPublications.addPublication(publicationName = "Publication Name ${count}");
+
+			JSONPublications.selectPublication(publicationName = "Publication Name ${count}");
+
+			JSONWebcontent.addWebContent(
+				content = "WC Content ${count}",
+				groupName = "Guest",
+				title = "WC Title ${count}");
+
+			JSONPublications.publishPublication(publicationName = "Publication Name ${count}");
+		}
+
+		PublicationsNavigator.openPublicationsHistory();
+
+		Publications.viewPublicationOrderInHistory(publicationList = "Publication Name 7,Publication Name 6,Publication Name 5,Publication Name 4,Publication Name 3,Publication Name 2,Publication Name 1");
+
+		Pagination.viewResults(results = "Showing 1 to 7 of 7 entries.");
+
+		Pagination.changePagination(itemsPerPage = "4");
+
+		Pagination.viewResults(results = "Showing 1 to 4 of 7 entries.");
+
+		Publications.viewPublicationOrderInHistory(
+			paginationView = "true",
+			publicationList = "Publication Name 7,Publication Name 6,Publication Name 5,Publication Name 4");
+
+		Click(locator1 = "Pagination#NEXT_LINK");
+
+		Pagination.viewResults(results = "Showing 5 to 7 of 7 entries.");
+
+		Publications.viewPublicationOrderInHistory(
+			paginationView = "true",
+			publicationList = "Publication Name 3,Publication Name 2,Publication Name 1");
 	}
 
 }

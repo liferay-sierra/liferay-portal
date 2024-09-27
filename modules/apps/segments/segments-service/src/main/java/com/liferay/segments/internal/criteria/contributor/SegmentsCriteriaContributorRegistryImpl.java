@@ -39,9 +39,7 @@ import org.osgi.service.component.annotations.Deactivate;
 /**
  * @author Eduardo García
  */
-@Component(
-	immediate = true, service = SegmentsCriteriaContributorRegistry.class
-)
+@Component(service = SegmentsCriteriaContributorRegistry.class)
 public class SegmentsCriteriaContributorRegistryImpl
 	implements SegmentsCriteriaContributorRegistry {
 
@@ -57,7 +55,7 @@ public class SegmentsCriteriaContributorRegistryImpl
 				classNameSegmentsCriteriaContributors =
 					_serviceTrackerMap.getService(className);
 
-			if (!ListUtil.isEmpty(classNameSegmentsCriteriaContributors)) {
+			if (ListUtil.isNotEmpty(classNameSegmentsCriteriaContributors)) {
 				segmentsCriteriaContributors.addAll(
 					classNameSegmentsCriteriaContributors);
 			}
@@ -66,7 +64,7 @@ public class SegmentsCriteriaContributorRegistryImpl
 		List<SegmentsCriteriaContributor> generalSegmentsCriteriaContributors =
 			_serviceTrackerMap.getService("*");
 
-		if (!ListUtil.isEmpty(generalSegmentsCriteriaContributors)) {
+		if (ListUtil.isNotEmpty(generalSegmentsCriteriaContributors)) {
 			segmentsCriteriaContributors.addAll(
 				generalSegmentsCriteriaContributors);
 		}

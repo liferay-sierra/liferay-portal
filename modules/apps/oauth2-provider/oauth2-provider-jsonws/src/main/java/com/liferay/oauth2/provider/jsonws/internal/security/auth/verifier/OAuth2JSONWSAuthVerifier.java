@@ -22,7 +22,6 @@ import com.liferay.oauth2.provider.model.OAuth2Authorization;
 import com.liferay.oauth2.provider.model.OAuth2ScopeGrant;
 import com.liferay.oauth2.provider.rest.spi.bearer.token.provider.BearerTokenProvider;
 import com.liferay.oauth2.provider.rest.spi.bearer.token.provider.BearerTokenProviderAccessor;
-import com.liferay.oauth2.provider.scope.liferay.ScopeLocator;
 import com.liferay.oauth2.provider.scope.liferay.constants.OAuth2ProviderScopeLiferayConstants;
 import com.liferay.oauth2.provider.scope.spi.scope.finder.ScopeFinder;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
@@ -56,6 +55,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.annotations.Component;
@@ -85,14 +85,32 @@ public class OAuth2JSONWSAuthVerifier implements AuthVerifier {
 
 		AuthVerifierResult authVerifierResult = new AuthVerifierResult();
 
-		OAuth2Authorization oAuth2Authorization = _getOAuth2Authorization(
+		String accessTokenContent = _getAccessTokenContent(
 			accessControlContext);
+
+		if (accessTokenContent == null) {
+			return authVerifierResult;
+		}
+
+		OAuth2Authorization oAuth2Authorization =
+			_oAuth2AuthorizationLocalService.
+				fetchOAuth2AuthorizationByAccessTokenContent(
+					accessTokenContent);
 
 		try {
 			BearerTokenProvider.AccessToken accessToken = _getAccessToken(
 				oAuth2Authorization);
 
 			if (accessToken == null) {
+				HttpServletResponse httpServletResponse =
+					accessControlContext.getResponse();
+
+				httpServletResponse.setStatus(
+					HttpServletResponse.SC_UNAUTHORIZED);
+
+				authVerifierResult.setState(
+					AuthVerifierResult.State.INVALID_CREDENTIALS);
+
 				return authVerifierResult;
 			}
 
@@ -233,7 +251,7 @@ public class OAuth2JSONWSAuthVerifier implements AuthVerifier {
 			oAuth2Authorization.getUserName());
 	}
 
-	private OAuth2Authorization _getOAuth2Authorization(
+	private String _getAccessTokenContent(
 		AccessControlContext accessControlContext) {
 
 		HttpServletRequest httpServletRequest =
@@ -254,14 +272,11 @@ public class OAuth2JSONWSAuthVerifier implements AuthVerifier {
 			return null;
 		}
 
-		String token = authorizationParts[1];
-
-		if (Validator.isBlank(token)) {
-			return null;
+		if (authorizationParts.length < 2) {
+			return StringPool.BLANK;
 		}
 
-		return _oAuth2AuthorizationLocalService.
-			fetchOAuth2AuthorizationByAccessTokenContent(token);
+		return authorizationParts[1];
 	}
 
 	private static final String _TOKEN_KEY = "Bearer";
@@ -294,8 +309,5 @@ public class OAuth2JSONWSAuthVerifier implements AuthVerifier {
 	@Reference
 	private SAPEntryScopeDescriptorFinderRegistrator
 		_sapEntryScopeDescriptorFinderRegistrator;
-
-	@Reference
-	private ScopeLocator _scopeLocator;
 
 }

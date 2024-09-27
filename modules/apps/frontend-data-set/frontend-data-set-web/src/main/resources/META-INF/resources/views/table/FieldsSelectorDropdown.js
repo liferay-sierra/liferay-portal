@@ -12,21 +12,18 @@
  * details.
  */
 
-import ClayButton from '@clayui/button';
+import {ClayButtonWithIcon} from '@clayui/button';
 import ClayDropDown from '@clayui/drop-down';
-import ClayIcon from '@clayui/icon';
 import PropTypes from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
 
-import {AppContext} from '../../AppContext';
-import DataSetContext from '../../DataSetContext';
+import FrontendDataSetContext from '../../FrontendDataSetContext';
 import persistVisibleFieldNames from '../../thunks/persistVisibleFieldNames';
 import ViewsContext from '../ViewsContext';
 
 const FieldsSelectorDropdown = ({fields}) => {
-	const {id} = useContext(DataSetContext);
-	const {appURL, portletId} = useContext(AppContext);
-	const [{visibleFieldNames}, dispatch] = useContext(ViewsContext);
+	const {appURL, id, portletId} = useContext(FrontendDataSetContext);
+	const [{visibleFieldNames}, viewsDispatch] = useContext(ViewsContext);
 
 	const [active, setActive] = useState(false);
 	const [filteredFields, setFilteredFields] = useState(fields);
@@ -54,22 +51,24 @@ const FieldsSelectorDropdown = ({fields}) => {
 		<ClayDropDown
 			active={active}
 			className="ml-auto"
+			hasLeftSymbols
 			onActiveChange={setActive}
 			trigger={
-				<ClayButton borderless displayType="secondary">
-					<ClayIcon symbol={active ? 'caret-top' : 'caret-bottom'} />
-
-					<span className="sr-only">
-						{active
+				<ClayButtonWithIcon
+					aria-label={
+						active
 							? Liferay.Language.get('close-fields-menu')
-							: Liferay.Language.get('open-fields-menu')}
-					</span>
-				</ClayButton>
+							: Liferay.Language.get('open-fields-menu')
+					}
+					borderless
+					displayType="secondary"
+					symbol={active ? 'caret-top' : 'caret-bottom'}
+				/>
 			}
 		>
 			<ClayDropDown.Search
 				formProps={{onSubmit: (event) => event.preventDefault()}}
-				onChange={(event) => setQuery(event.target.value)}
+				onChange={setQuery}
 				value={query}
 			/>
 
@@ -79,25 +78,38 @@ const FieldsSelectorDropdown = ({fields}) => {
 						<ClayDropDown.Item
 							key={fieldName}
 							onClick={() => {
-								dispatch(
-									persistVisibleFieldNames({
-										appURL,
-										id,
-										portletId,
-										visibleFieldNames: {
-											...selectedFieldNames,
-											[fieldName]: !selectedFieldNames[
-												fieldName
-											],
-										},
-									})
-								);
-							}}
-						>
-							{selectedFieldNames[fieldName] && (
-								<ClayIcon className="mr-2" symbol="check" />
-							)}
+								const newVisibleFieldNames = {
+									...selectedFieldNames,
+									[fieldName]: !selectedFieldNames[fieldName],
+								};
 
+								const isVisible = Object.keys(
+									newVisibleFieldNames
+								).some(
+									(visibleFieldName) =>
+										newVisibleFieldNames[visibleFieldName]
+								);
+
+								if (isVisible) {
+									viewsDispatch(
+										persistVisibleFieldNames({
+											appURL,
+											id,
+											portletId,
+											visibleFieldNames: {
+												...selectedFieldNames,
+												[fieldName]: !selectedFieldNames[
+													fieldName
+												],
+											},
+										})
+									);
+								}
+							}}
+							symbolLeft={
+								selectedFieldNames[fieldName] ? 'check' : null
+							}
+						>
 							{label}
 						</ClayDropDown.Item>
 					))}

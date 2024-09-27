@@ -14,8 +14,6 @@
 
 package com.liferay.marketplace.store.web.internal.oauth.util;
 
-import com.liferay.expando.kernel.exception.DuplicateColumnNameException;
-import com.liferay.expando.kernel.exception.DuplicateTableNameException;
 import com.liferay.expando.kernel.model.ExpandoColumnConstants;
 import com.liferay.expando.kernel.model.ExpandoTable;
 import com.liferay.expando.kernel.model.ExpandoValue;
@@ -30,6 +28,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 
 import org.osgi.service.component.annotations.Activate;
@@ -150,87 +149,46 @@ public class OAuthManager {
 			});
 	}
 
-	@Reference(unbind = "-")
-	protected void setCompanyLocalService(
-		CompanyLocalService companyLocalService) {
-
-		_companyLocalService = companyLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setExpandoColumnLocalService(
-		ExpandoColumnLocalService expandoColumnLocalService) {
-
-		_expandoColumnLocalService = expandoColumnLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setExpandoTableLocalService(
-		ExpandoTableLocalService expandoTableLocalService) {
-
-		_expandoTableLocalService = expandoTableLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setExpandoValueLocalService(
-		ExpandoValueLocalService expandoValueLocalService) {
-
-		_expandoValueLocalService = expandoValueLocalService;
-	}
-
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
-	protected void setModuleServiceLifecycle(
-		ModuleServiceLifecycle moduleServiceLifecycle) {
-	}
-
 	private void _setupExpando(long companyId) throws Exception {
-		ExpandoTable table = null;
+		ExpandoTable table = _expandoTableLocalService.fetchTable(
+			companyId,
+			_classNameLocalService.getClassNameId(User.class.getName()), "MP");
 
-		try {
-			table = _expandoTableLocalService.addTable(
-				companyId, User.class.getName(), "MP");
-		}
-		catch (DuplicateTableNameException duplicateTableNameException) {
-
-			// LPS-52675
-
-			if (_log.isDebugEnabled()) {
-				_log.debug(duplicateTableNameException);
-			}
-
-			table = _expandoTableLocalService.getTable(
-				companyId, User.class.getName(), "MP");
+		if (table != null) {
+			return;
 		}
 
-		try {
-			_expandoColumnLocalService.addColumn(
-				table.getTableId(), "accessSecret",
-				ExpandoColumnConstants.STRING);
-			_expandoColumnLocalService.addColumn(
-				table.getTableId(), "accessToken",
-				ExpandoColumnConstants.STRING);
-			_expandoColumnLocalService.addColumn(
-				table.getTableId(), "requestSecret",
-				ExpandoColumnConstants.STRING);
-			_expandoColumnLocalService.addColumn(
-				table.getTableId(), "requestToken",
-				ExpandoColumnConstants.STRING);
-		}
-		catch (DuplicateColumnNameException duplicateColumnNameException) {
+		table = _expandoTableLocalService.addTable(
+			companyId, User.class.getName(), "MP");
 
-			// LPS-52675
-
-			if (_log.isDebugEnabled()) {
-				_log.debug(duplicateColumnNameException);
-			}
-		}
+		_expandoColumnLocalService.addColumn(
+			table.getTableId(), "accessSecret", ExpandoColumnConstants.STRING);
+		_expandoColumnLocalService.addColumn(
+			table.getTableId(), "accessToken", ExpandoColumnConstants.STRING);
+		_expandoColumnLocalService.addColumn(
+			table.getTableId(), "requestSecret", ExpandoColumnConstants.STRING);
+		_expandoColumnLocalService.addColumn(
+			table.getTableId(), "requestToken", ExpandoColumnConstants.STRING);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(OAuthManager.class);
 
+	@Reference
+	private ClassNameLocalService _classNameLocalService;
+
+	@Reference
 	private CompanyLocalService _companyLocalService;
+
+	@Reference
 	private ExpandoColumnLocalService _expandoColumnLocalService;
+
+	@Reference
 	private ExpandoTableLocalService _expandoTableLocalService;
+
+	@Reference
 	private ExpandoValueLocalService _expandoValueLocalService;
+
+	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
+	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
 }

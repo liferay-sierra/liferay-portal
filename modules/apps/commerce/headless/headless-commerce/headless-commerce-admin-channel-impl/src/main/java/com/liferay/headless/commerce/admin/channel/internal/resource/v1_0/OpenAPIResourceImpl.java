@@ -20,10 +20,14 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.info.License;
 
+import java.lang.reflect.Method;
+
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.annotation.Generated;
+
+import javax.servlet.http.HttpServletRequest;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -42,13 +46,12 @@ import org.osgi.service.component.annotations.Reference;
  * @generated
  */
 @Component(
-	enabled = false,
 	properties = "OSGI-INF/liferay/rest/v1_0/openapi.properties",
 	service = OpenAPIResourceImpl.class
 )
 @Generated("")
 @OpenAPIDefinition(
-	info = @Info(description = "Liferay Commerce Admin Channel API. A Java client JAR is available for use with the group ID 'com.liferay', artifact ID 'com.liferay.headless.commerce.admin.channel.client', and version '4.0.10'.", license = @License(name = "Apache 2.0", url = "http://www.apache.org/licenses/LICENSE-2.0.html"), title = "Liferay Commerce Admin Channel API", version = "v1.0")
+	info = @Info(description = "Liferay Commerce Admin Channel API. A Java client JAR is available for use with the group ID 'com.liferay', artifact ID 'com.liferay.headless.commerce.admin.channel.client', and version '4.0.19'.", license = @License(name = "Apache 2.0", url = "http://www.apache.org/licenses/LICENSE-2.0.html"), title = "Liferay Commerce Admin Channel API", version = "v1.0")
 )
 @Path("/v1.0")
 public class OpenAPIResourceImpl {
@@ -59,19 +62,33 @@ public class OpenAPIResourceImpl {
 	public Response getOpenAPI(@PathParam("type") String type)
 		throws Exception {
 
+		Class<? extends OpenAPIResource> clazz = _openAPIResource.getClass();
+
 		try {
-			Class<? extends OpenAPIResource> clazz =
-				_openAPIResource.getClass();
+			Method method = clazz.getMethod(
+				"getOpenAPI", HttpServletRequest.class, Set.class, String.class,
+				UriInfo.class);
 
-			clazz.getMethod(
-				"getOpenAPI", Set.class, String.class, UriInfo.class);
+			return (Response)method.invoke(
+				_openAPIResource, _httpServletRequest, _resourceClasses, type,
+				_uriInfo);
 		}
-		catch (NoSuchMethodException noSuchMethodException) {
-			return _openAPIResource.getOpenAPI(_resourceClasses, type);
-		}
+		catch (NoSuchMethodException noSuchMethodException1) {
+			try {
+				Method method = clazz.getMethod(
+					"getOpenAPI", Set.class, String.class, UriInfo.class);
 
-		return _openAPIResource.getOpenAPI(_resourceClasses, type, _uriInfo);
+				return (Response)method.invoke(
+					_openAPIResource, _resourceClasses, type, _uriInfo);
+			}
+			catch (NoSuchMethodException noSuchMethodException2) {
+				return _openAPIResource.getOpenAPI(_resourceClasses, type);
+			}
+		}
 	}
+
+	@Context
+	private HttpServletRequest _httpServletRequest;
 
 	@Reference
 	private OpenAPIResource _openAPIResource;
@@ -92,6 +109,8 @@ public class OpenAPIResourceImpl {
 			add(ShippingFixedOptionOrderTypeResourceImpl.class);
 
 			add(ShippingFixedOptionTermResourceImpl.class);
+
+			add(ShippingMethodResourceImpl.class);
 
 			add(TaxCategoryResourceImpl.class);
 

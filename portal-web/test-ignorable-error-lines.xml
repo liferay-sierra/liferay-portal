@@ -57,11 +57,19 @@
 			<matches></matches>
 		</ignore-error>
 		<ignore-error description="">
+			<contains></contains>
+			<matches>Email .* will be ignored because it is included in mail.send.blacklist</matches>
+		</ignore-error>
+		<ignore-error description="">
 			<contains>INFO:</contains>
 			<matches></matches>
 		</ignore-error>
 		<ignore-error description="">
 			<contains>No theme found for specified theme id userdashboard_WAR_userdashboardtheme</contains>
+			<matches></matches>
+		</ignore-error>
+		<ignore-error description="">
+			<contains>Skipping email because the sender is not specified</contains>
 			<matches></matches>
 		</ignore-error>
 		<ignore-error description="LPS-22821">
@@ -240,6 +248,10 @@
 			<contains></contains>
 			<matches>Attempting to upgrade table .* by adding a temporary column [\s\S]*</matches>
 		</ignore-error>
+		<ignore-error description="LPS-140679 - temporarily ignore until fixed">
+			<contains>Illegal 'domain' attribute "lax.liferay.com". Domain of origin: "localhost"</contains>
+			<matches></matches>
+		</ignore-error>
 		<ignore-error description="LPS-141256 - temporarily ignore until fixed">
 			<contains>The following session is not valid</contains>
 			<matches></matches>
@@ -258,6 +270,26 @@
 		</ignore-error>
 		<ignore-error description="LPS-145925 - temporarily ignore until fixed">
 			<contains>com.liferay.portal.kernel.repository.UndeployedExternalRepositoryException: Unable to load external repository class com.liferay.portal.repository.liferayrepository.LiferayRepository because its plugin is not deployed</contains>
+			<matches></matches>
+		</ignore-error>
+		<ignore-error description="LPS-150491 - temporarily ignore until fixed">
+			<contains>Unable to handle received message {destinationName=liferay/cache_replication, response=null, responseDestinationName=null, responseId=null, payload=</contains>
+			<matches></matches>
+		</ignore-error>
+		<ignore-error description="LPS-150714">
+			<contains></contains>
+			<matches>.*/o/frontend-js-aui-web/build/aui-skin-deprecated/images/common/state_default_bg.png.* uri=/o/frontend-js-aui-web/build/aui-skin-deprecated/images/common/state_default_bg.png.*</matches>
+		</ignore-error>
+		<ignore-error description="LPS-150714">
+			<contains></contains>
+			<matches>.*/o/frontend-js-aui-web/build/aui-skin-deprecated/images/loading_indicator.gif.* uri=/o/frontend-js-aui-web/build/aui-skin-deprecated/images/loading_indicator.gif.*</matches>
+		</ignore-error>
+		<ignore-error description="LPS-154189 - temporarily ignore until fixed">
+			<contains>java.sql.SQLIntegrityConstraintViolationException</contains>
+			<matches></matches>
+		</ignore-error>
+		<ignore-error description="LPS-163680">
+			<contains>The iframe tag contained an attribute that we could not process</contains>
 			<matches></matches>
 		</ignore-error>
 		<ignore-error description="LRQA-24859">

@@ -15,7 +15,6 @@
 package com.liferay.headless.admin.taxonomy.internal.resource.v1_0;
 
 import com.liferay.asset.kernel.model.AssetTag;
-import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.asset.kernel.service.AssetTagLocalService;
 import com.liferay.asset.kernel.service.AssetTagService;
 import com.liferay.headless.admin.taxonomy.dto.v1_0.Keyword;
@@ -34,18 +33,16 @@ import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.odata.entity.EntityModel;
+import com.liferay.portal.vulcan.aggregation.Aggregation;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
-import com.liferay.portal.vulcan.resource.EntityModelResource;
 import com.liferay.portal.vulcan.util.SearchUtil;
 import com.liferay.portlet.asset.model.impl.AssetTagImpl;
 import com.liferay.portlet.asset.service.permission.AssetTagsPermission;
@@ -53,6 +50,7 @@ import com.liferay.portlet.asset.service.permission.AssetTagsPermission;
 import java.sql.Timestamp;
 
 import java.util.Date;
+import java.util.Map;
 
 import javax.ws.rs.core.MultivaluedMap;
 
@@ -67,8 +65,7 @@ import org.osgi.service.component.annotations.ServiceScope;
 	properties = "OSGI-INF/liferay/rest/v1_0/keyword.properties",
 	scope = ServiceScope.PROTOTYPE, service = KeywordResource.class
 )
-public class KeywordResourceImpl
-	extends BaseKeywordResourceImpl implements EntityModelResource {
+public class KeywordResourceImpl extends BaseKeywordResourceImpl {
 
 	@Override
 	public void deleteKeyword(Long keywordId) throws Exception {
@@ -77,12 +74,38 @@ public class KeywordResourceImpl
 
 	@Override
 	public Page<Keyword> getAssetLibraryKeywordsPage(
-			Long assetLibraryId, String search, Filter filter,
-			Pagination pagination, Sort[] sorts)
+			Long assetLibraryId, String search, Aggregation aggregation,
+			Filter filter, Pagination pagination, Sort[] sorts)
 		throws Exception {
 
-		return getSiteKeywordsPage(
-			assetLibraryId, search, filter, pagination, sorts);
+		return _getKeywordsPage(
+			HashMapBuilder.put(
+				"create",
+				addAction(
+					ActionKeys.MANAGE_TAG, "postAssetLibraryKeyword",
+					AssetTagsPermission.RESOURCE_NAME, assetLibraryId)
+			).put(
+				"createBatch",
+				addAction(
+					ActionKeys.MANAGE_TAG, "postAssetLibraryKeywordBatch",
+					AssetTagsPermission.RESOURCE_NAME, assetLibraryId)
+			).put(
+				"deleteBatch",
+				addAction(
+					ActionKeys.DELETE, "deleteKeywordBatch",
+					AssetTagsPermission.RESOURCE_NAME, null)
+			).put(
+				"get",
+				addAction(
+					ActionKeys.MANAGE_TAG, "getAssetLibraryKeywordsPage",
+					AssetTagsPermission.RESOURCE_NAME, assetLibraryId)
+			).put(
+				"updateBatch",
+				addAction(
+					ActionKeys.UPDATE, "putKeywordBatch",
+					AssetTagsPermission.RESOURCE_NAME, null)
+			).build(),
+			assetLibraryId, search, aggregation, filter, pagination, sorts);
 	}
 
 	@Override
@@ -131,36 +154,38 @@ public class KeywordResourceImpl
 
 	@Override
 	public Page<Keyword> getSiteKeywordsPage(
-			Long siteId, String search, Filter filter, Pagination pagination,
-			Sort[] sorts)
+			Long siteId, String search, Aggregation aggregation, Filter filter,
+			Pagination pagination, Sort[] sorts)
 		throws Exception {
 
-		return SearchUtil.search(
+		return _getKeywordsPage(
 			HashMapBuilder.put(
 				"create",
 				addAction(
 					ActionKeys.MANAGE_TAG, "postSiteKeyword",
 					AssetTagsPermission.RESOURCE_NAME, siteId)
 			).put(
+				"createBatch",
+				addAction(
+					ActionKeys.MANAGE_TAG, "postSiteKeywordBatch",
+					AssetTagsPermission.RESOURCE_NAME, siteId)
+			).put(
+				"deleteBatch",
+				addAction(
+					ActionKeys.DELETE, "deleteKeywordBatch",
+					AssetTagsPermission.RESOURCE_NAME, null)
+			).put(
 				"get",
 				addAction(
 					ActionKeys.MANAGE_TAG, "getSiteKeywordsPage",
 					AssetTagsPermission.RESOURCE_NAME, siteId)
+			).put(
+				"updateBatch",
+				addAction(
+					ActionKeys.UPDATE, "putKeywordBatch",
+					AssetTagsPermission.RESOURCE_NAME, null)
 			).build(),
-			booleanQuery -> {
-			},
-			filter, AssetTag.class.getName(), search, pagination,
-			queryConfig -> queryConfig.setSelectedFieldNames(
-				Field.ENTRY_CLASS_PK),
-			searchContext -> {
-				searchContext.setAttribute(Field.NAME, search);
-				searchContext.setCompanyId(contextCompany.getCompanyId());
-				searchContext.setGroupIds(new long[] {siteId});
-			},
-			sorts,
-			document -> _toKeyword(
-				_assetTagService.getTag(
-					GetterUtil.getLong(document.get(Field.ENTRY_CLASS_PK)))));
+			siteId, search, aggregation, filter, pagination, sorts);
 	}
 
 	@Override
@@ -215,6 +240,31 @@ public class KeywordResourceImpl
 	@Override
 	protected String getPermissionCheckerResourceName(Object id) {
 		return AssetTagsPermission.RESOURCE_NAME;
+	}
+
+	private Page<Keyword> _getKeywordsPage(
+			Map<String, Map<String, String>> actions, Long groupId,
+			String search, Aggregation aggregation, Filter filter,
+			Pagination pagination, Sort[] sorts)
+		throws Exception {
+
+		return SearchUtil.search(
+			actions,
+			booleanQuery -> {
+			},
+			filter, AssetTag.class.getName(), search, pagination,
+			queryConfig -> queryConfig.setSelectedFieldNames(
+				Field.ENTRY_CLASS_PK),
+			searchContext -> {
+				searchContext.addVulcanAggregation(aggregation);
+				searchContext.setAttribute(Field.NAME, search);
+				searchContext.setCompanyId(contextCompany.getCompanyId());
+				searchContext.setGroupIds(new long[] {groupId});
+			},
+			sorts,
+			document -> _toKeyword(
+				_assetTagService.getTag(
+					GetterUtil.getLong(document.get(Field.ENTRY_CLASS_PK)))));
 	}
 
 	private ProjectionList _getProjectionList() {
@@ -330,9 +380,6 @@ public class KeywordResourceImpl
 	private static final EntityModel _entityModel = new KeywordEntityModel();
 
 	@Reference
-	private AssetEntryLocalService _assetEntryLocalService;
-
-	@Reference
 	private AssetTagLocalService _assetTagLocalService;
 
 	@Reference
@@ -343,11 +390,5 @@ public class KeywordResourceImpl
 
 	@Reference
 	private KeywordDTOConverter _keywordDTOConverter;
-
-	@Reference
-	private Portal _portal;
-
-	@Reference
-	private UserLocalService _userLocalService;
 
 }

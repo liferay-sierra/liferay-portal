@@ -19,7 +19,6 @@ import com.liferay.portal.kernel.backgroundtask.BackgroundTask;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskExecutor;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskResult;
 import com.liferay.portal.kernel.backgroundtask.BaseBackgroundTaskExecutor;
-import com.liferay.portal.kernel.backgroundtask.constants.BackgroundTaskConstants;
 import com.liferay.portal.kernel.backgroundtask.display.BackgroundTaskDisplay;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -81,15 +80,11 @@ import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * @author Rafael Praxedes
  */
 @Component(
-	immediate = true,
 	property = "background.task.executor.class.name=com.liferay.portal.workflow.metrics.internal.background.task.WorkflowMetricsSLAProcessBackgroundTaskExecutor",
 	service = BackgroundTaskExecutor.class
 )
@@ -104,11 +99,6 @@ public class WorkflowMetricsSLAProcessBackgroundTaskExecutor
 	@Override
 	public BackgroundTaskResult execute(BackgroundTask backgroundTask)
 		throws Exception {
-
-		if (_searchEngineAdapter == null) {
-			return new BackgroundTaskResult(
-				BackgroundTaskConstants.STATUS_CANCELLED);
-		}
 
 		long workflowMetricsSLADefinitionId = MapUtil.getLong(
 			backgroundTask.getTaskContextMap(),
@@ -712,10 +702,6 @@ public class WorkflowMetricsSLAProcessBackgroundTaskExecutor
 		long companyId, long endInstanceId, long slaDefinitionId,
 		long startInstanceId) {
 
-		if (_searchEngineAdapter == null) {
-			return;
-		}
-
 		UpdateByQueryDocumentRequest updateByQueryDocumentRequest =
 			new UpdateByQueryDocumentRequest(
 				_queries.rangeTerm(
@@ -762,12 +748,7 @@ public class WorkflowMetricsSLAProcessBackgroundTaskExecutor
 	@Reference
 	private Scripts _scripts;
 
-	@Reference(
-		cardinality = ReferenceCardinality.OPTIONAL,
-		policy = ReferencePolicy.DYNAMIC,
-		policyOption = ReferencePolicyOption.GREEDY,
-		target = "(search.engine.impl=Elasticsearch)"
-	)
+	@Reference(target = "(search.engine.impl=Elasticsearch)")
 	private volatile SearchEngineAdapter _searchEngineAdapter;
 
 	@Reference

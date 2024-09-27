@@ -289,7 +289,7 @@ if (portletTitleBasedNavigation) {
 
 	<c:if test="<%= !thread.isInTrash() && moreMessagesPagination %>">
 		<div class="reply-to-main-thread-container">
-			<a class="btn btn-secondary" href="javascript:;" id="<portlet:namespace />moreMessages"><liferay-ui:message key="more-messages" /></a>
+			<a class="btn btn-secondary" href="javascript:void(0);" id="<portlet:namespace />moreMessages"><liferay-ui:message key="more-messages" /></a>
 		</div>
 
 		<aui:form name="fm">
@@ -299,7 +299,9 @@ if (portletTitleBasedNavigation) {
 	</c:if>
 </div>
 
-<aui:script require="frontend-js-web/liferay/util/run_scripts_in_element.es as runScriptsInElement">
+<aui:script require="frontend-js-web/index as frontendJsWeb">
+	var {runScriptsInElement} = frontendJsWeb;
+
 	var moreMessagesButton = document.getElementById(
 		'<portlet:namespace />moreMessages'
 	);
@@ -344,7 +346,7 @@ if (portletTitleBasedNavigation) {
 								.createContextualFragment(response)
 						);
 
-						runScriptsInElement.default(messageContainer.parentElement);
+						runScriptsInElement(messageContainer.parentElement);
 
 						var replyContainer = document.querySelector(
 							'#<portlet:namespace />messageContainer > .reply-container'

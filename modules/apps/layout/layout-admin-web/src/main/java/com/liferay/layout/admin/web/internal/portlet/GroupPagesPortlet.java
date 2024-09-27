@@ -16,11 +16,13 @@ package com.liferay.layout.admin.web.internal.portlet;
 
 import com.liferay.application.list.GroupProvider;
 import com.liferay.asset.kernel.exception.AssetCategoryException;
+import com.liferay.client.extension.type.manager.CETManager;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValuesValidationException;
 import com.liferay.friendly.url.exception.DuplicateFriendlyURLEntryException;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
+import com.liferay.item.selector.ItemSelector;
 import com.liferay.layout.admin.constants.LayoutAdminPortletKeys;
-import com.liferay.layout.admin.web.internal.configuration.FFBulkTranslationConfiguration;
+import com.liferay.layout.admin.web.internal.configuration.LayoutUtilityPageThumbnailConfiguration;
 import com.liferay.layout.admin.web.internal.constants.LayoutAdminWebKeys;
 import com.liferay.layout.admin.web.internal.display.context.LayoutsAdminDisplayContext;
 import com.liferay.layout.admin.web.internal.display.context.MillerColumnsDisplayContext;
@@ -64,7 +66,6 @@ import com.liferay.portal.kernel.upload.UploadException;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.staging.StagingGroupHelper;
-import com.liferay.translation.exporter.TranslationInfoItemFieldValuesExporterTracker;
 import com.liferay.translation.security.permission.TranslationPermission;
 import com.liferay.translation.url.provider.TranslationURLProvider;
 
@@ -90,8 +91,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Jorge Ferrer
  */
 @Component(
-	configurationPid = "com.liferay.layout.admin.web.internal.configuration.FFBulkTranslationConfiguration",
-	immediate = true,
+	configurationPid = "com.liferay.layout.admin.web.internal.configuration.LayoutUtilityPageThumbnailConfiguration",
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.css-class-wrapper=portlet-layouts-admin",
@@ -111,7 +111,8 @@ import org.osgi.service.component.annotations.Reference;
 		"javax.portlet.name=" + LayoutAdminPortletKeys.GROUP_PAGES,
 		"javax.portlet.resource-bundle=content.Language",
 		"javax.portlet.supported-public-render-parameter=layoutSetBranchId",
-		"javax.portlet.supported-public-render-parameter=selPlid"
+		"javax.portlet.supported-public-render-parameter=selPlid",
+		"javax.portlet.version=3.0"
 	},
 	service = Portlet.class
 )
@@ -135,8 +136,9 @@ public class GroupPagesPortlet extends MVCPortlet {
 	@Activate
 	@Modified
 	protected void activate(Map<String, Object> properties) {
-		_ffBulkTranslationConfiguration = ConfigurableUtil.createConfigurable(
-			FFBulkTranslationConfiguration.class, properties);
+		_layoutUtilityPageThumbnailConfiguration =
+			ConfigurableUtil.createConfigurable(
+				LayoutUtilityPageThumbnailConfiguration.class, properties);
 	}
 
 	@Override
@@ -189,13 +191,16 @@ public class GroupPagesPortlet extends MVCPortlet {
 				}
 			}
 
+			renderRequest.setAttribute(CETManager.class.getName(), _cetManager);
 			renderRequest.setAttribute(
-				FFBulkTranslationConfiguration.class.getName(),
-				_ffBulkTranslationConfiguration);
+				ItemSelector.class.getName(), _itemSelector);
+			renderRequest.setAttribute(
+				LayoutUtilityPageThumbnailConfiguration.class.getName(),
+				_layoutUtilityPageThumbnailConfiguration);
 
 			LayoutsAdminDisplayContext layoutsAdminDisplayContext =
 				new LayoutsAdminDisplayContext(
-					_layoutConverterRegistry, _layoutCopyHelper,
+					_itemSelector, _layoutConverterRegistry, _layoutCopyHelper,
 					_portal.getLiferayPortletRequest(renderRequest),
 					_portal.getLiferayPortletResponse(renderResponse),
 					_stagingGroupHelper);
@@ -220,12 +225,11 @@ public class GroupPagesPortlet extends MVCPortlet {
 					layoutActionDropdownItemsProvider,
 					layoutsAdminDisplayContext,
 					_portal.getLiferayPortletRequest(renderRequest),
-					_portal.getLiferayPortletResponse(renderResponse),
-					_translationInfoItemFieldValuesExporterTracker));
+					_portal.getLiferayPortletResponse(renderResponse)));
 			renderRequest.setAttribute(
 				LayoutAdminWebKeys.SELECT_LAYOUT_COLLECTION_DISPLAY_CONTEXT,
 				new SelectLayoutCollectionDisplayContext(
-					_infoItemServiceTracker,
+					_infoItemServiceRegistry,
 					_portal.getLiferayPortletRequest(renderRequest),
 					_portal.getLiferayPortletResponse(renderResponse)));
 			renderRequest.setAttribute(
@@ -275,14 +279,17 @@ public class GroupPagesPortlet extends MVCPortlet {
 	private static final Log _log = LogFactoryUtil.getLog(
 		GroupPagesPortlet.class);
 
-	private volatile FFBulkTranslationConfiguration
-		_ffBulkTranslationConfiguration;
+	@Reference
+	private CETManager _cetManager;
 
 	@Reference
 	private GroupProvider _groupProvider;
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
+
+	@Reference
+	private ItemSelector _itemSelector;
 
 	@Reference
 	private LayoutConverterRegistry _layoutConverterRegistry;
@@ -297,15 +304,14 @@ public class GroupPagesPortlet extends MVCPortlet {
 	@Reference
 	private LayoutPrototypeLocalService _layoutPrototypeLocalService;
 
+	private volatile LayoutUtilityPageThumbnailConfiguration
+		_layoutUtilityPageThumbnailConfiguration;
+
 	@Reference
 	private Portal _portal;
 
 	@Reference
 	private StagingGroupHelper _stagingGroupHelper;
-
-	@Reference
-	private TranslationInfoItemFieldValuesExporterTracker
-		_translationInfoItemFieldValuesExporterTracker;
 
 	@Reference
 	private TranslationPermission _translationPermission;

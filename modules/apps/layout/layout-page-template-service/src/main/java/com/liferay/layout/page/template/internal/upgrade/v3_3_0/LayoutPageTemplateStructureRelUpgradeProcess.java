@@ -32,7 +32,6 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.segments.constants.SegmentsExperienceConstants;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -156,9 +155,7 @@ public class LayoutPageTemplateStructureRelUpgradeProcess
 				continue;
 			}
 
-			if (segmentsExperienceId ==
-					SegmentsExperienceConstants.ID_DEFAULT) {
-
+			if (segmentsExperienceId == _SEGMENTS_EXPERIENCE_ID_DEFAULT) {
 				fragmentEntryLink.setEditableValues(
 					EditableValuesTransformerUtil.getEditableValues(
 						fragmentEntryLink.getEditableValues(),
@@ -209,7 +206,8 @@ public class LayoutPageTemplateStructureRelUpgradeProcess
 						editableValuesJSONObject.toString(),
 						segmentsExperienceId),
 					newNamespace, fragmentEntryLink.getPosition(),
-					fragmentEntryLink.getRendererKey(), new ServiceContext());
+					fragmentEntryLink.getRendererKey(),
+					fragmentEntryLink.getType(), new ServiceContext());
 
 			fragmentStyledLayoutStructureItem.setFragmentEntryLinkId(
 				newFragmentEntryLink.getFragmentEntryLinkId());
@@ -217,7 +215,7 @@ public class LayoutPageTemplateStructureRelUpgradeProcess
 
 		JSONObject layoutDataJSONObject = layoutStructure.toJSONObject();
 
-		return layoutDataJSONObject.toJSONString();
+		return layoutDataJSONObject.toString();
 	}
 
 	private void _upgradeLayoutPageTemplateStructureRel() throws Exception {
@@ -228,9 +226,9 @@ public class LayoutPageTemplateStructureRelUpgradeProcess
 						"segmentsExperienceId desc");
 			PreparedStatement preparedStatement =
 				AutoBatchPreparedStatementUtil.autoBatch(
-					connection.prepareStatement(
-						"update LayoutPageTemplateStructureRel set data_ = ? " +
-							"where lPageTemplateStructureRelId = ?"))) {
+					connection,
+					"update LayoutPageTemplateStructureRel set data_ = ? " +
+						"where lPageTemplateStructureRelId = ?")) {
 
 			while (resultSet.next()) {
 				long layoutPageTemplateStructureRelId = resultSet.getLong(
@@ -254,6 +252,8 @@ public class LayoutPageTemplateStructureRelUpgradeProcess
 	}
 
 	private static final String _INSTANCE_SEPARATOR = "_INSTANCE_";
+
+	private static final long _SEGMENTS_EXPERIENCE_ID_DEFAULT = 0;
 
 	private static final String _SEGMENTS_EXPERIENCE_SEPARATOR_1 =
 		"_SEGMENTS_EXPERIENCE_";

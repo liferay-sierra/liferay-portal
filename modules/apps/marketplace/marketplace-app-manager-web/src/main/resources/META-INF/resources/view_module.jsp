@@ -75,11 +75,8 @@ else {
 />
 
 <clay:container-fluid>
-	<liferay-ui:breadcrumb
-		showCurrentGroup="<%= false %>"
-		showGuestGroup="<%= false %>"
-		showLayout="<%= false %>"
-		showParentGroups="<%= false %>"
+	<liferay-site-navigation:breadcrumb
+		breadcrumbEntries="<%= BreadcrumbEntriesUtil.getBreadcrumbEntries(request, false, false, false, false, true) %>"
 	/>
 
 	<liferay-ui:search-container
@@ -95,12 +92,12 @@ else {
 				<c:choose>
 					<c:when test='<%= pluginType.equals("portlets") %>'>
 						<liferay-util:include page="/icon.jsp" servletContext="<%= application %>">
-							<liferay-util:param name="iconURL" value='<%= PortalUtil.getPathContext(request) + "/images/icons.svg#portlets" %>' />
+							<liferay-util:param name="iconURL" value='<%= FrontendIconsUtil.getSpritemap(themeDisplay) + "#portlets" %>' />
 						</liferay-util:include>
 					</c:when>
 					<c:otherwise>
 						<liferay-util:include page="/icon.jsp" servletContext="<%= application %>">
-							<liferay-util:param name="iconURL" value='<%= PortalUtil.getPathContext(request) + "/images/icons.svg#components" %>' />
+							<liferay-util:param name="iconURL" value='<%= FrontendIconsUtil.getSpritemap(themeDisplay) + "#components" %>' />
 						</liferay-util:include>
 					</c:otherwise>
 				</c:choose>

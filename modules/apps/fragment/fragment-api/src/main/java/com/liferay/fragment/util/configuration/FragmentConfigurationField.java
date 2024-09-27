@@ -18,12 +18,13 @@ import com.liferay.fragment.constants.FragmentConfigurationFieldDataType;
 import com.liferay.info.item.InfoItemReference;
 import com.liferay.layout.display.page.LayoutDisplayPageObjectProvider;
 import com.liferay.layout.display.page.LayoutDisplayPageProvider;
-import com.liferay.layout.display.page.LayoutDisplayPageProviderTracker;
+import com.liferay.layout.display.page.LayoutDisplayPageProviderRegistry;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -81,16 +82,18 @@ public class FragmentConfigurationField {
 	}
 
 	public String getDefaultValue() {
-		if (Validator.isNotNull(_defaultValue) &&
-			!Objects.equals("itemSelector", _type)) {
-
-			return _defaultValue;
-		}
-		else if (Objects.equals("colorPalette", _type)) {
+		if (Objects.equals("colorPalette", _type)) {
 			return _getColorPaletteDefaultValue();
 		}
 		else if (Objects.equals("itemSelector", _type)) {
 			return _getItemSelectorDefaultValue();
+		}
+		else if (Objects.equals("text", _type) && isLocalizable()) {
+			return _getTextDefaultValue();
+		}
+
+		if (Validator.isNotNull(_defaultValue)) {
+			return _defaultValue;
 		}
 
 		return StringPool.BLANK;
@@ -134,6 +137,10 @@ public class FragmentConfigurationField {
 	}
 
 	private String _getColorPaletteDefaultValue() {
+		if (Validator.isNotNull(_defaultValue)) {
+			return _defaultValue;
+		}
+
 		return JSONUtil.put(
 			"cssClass", StringPool.BLANK
 		).put(
@@ -156,12 +163,12 @@ public class FragmentConfigurationField {
 				String className = defaultValueJSONObject.getString(
 					"className");
 
-				LayoutDisplayPageProviderTracker
-					layoutDisplayPageProviderTracker =
+				LayoutDisplayPageProviderRegistry
+					layoutDisplayPageProviderRegistry =
 						_serviceTracker.getService();
 
 				LayoutDisplayPageProvider<?> layoutDisplayPageProvider =
-					layoutDisplayPageProviderTracker.
+					layoutDisplayPageProviderRegistry.
 						getLayoutDisplayPageProviderByClassName(className);
 
 				if (layoutDisplayPageProvider == null) {
@@ -195,11 +202,20 @@ public class FragmentConfigurationField {
 		return _defaultValue;
 	}
 
+	private String _getTextDefaultValue() {
+		if (Validator.isNull(_defaultValue)) {
+			return _defaultValue;
+		}
+
+		return LanguageUtil.get(
+			LocaleUtil.getMostRelevantLocale(), _defaultValue);
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		FragmentConfigurationField.class);
 
 	private static final ServiceTracker
-		<LayoutDisplayPageProviderTracker, LayoutDisplayPageProviderTracker>
+		<LayoutDisplayPageProviderRegistry, LayoutDisplayPageProviderRegistry>
 			_serviceTracker;
 
 	static {
@@ -207,7 +223,7 @@ public class FragmentConfigurationField {
 			FragmentConfigurationField.class);
 
 		_serviceTracker = new ServiceTracker<>(
-			bundle.getBundleContext(), LayoutDisplayPageProviderTracker.class,
+			bundle.getBundleContext(), LayoutDisplayPageProviderRegistry.class,
 			null);
 
 		_serviceTracker.open();

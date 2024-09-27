@@ -17,13 +17,13 @@ package com.liferay.headless.delivery.internal.resource.v1_0;
 import com.liferay.dynamic.data.mapping.util.DDMIndexer;
 import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
 import com.liferay.expando.kernel.service.ExpandoTableLocalService;
+import com.liferay.headless.common.spi.odata.entity.EntityFieldsUtil;
 import com.liferay.headless.common.spi.resource.SPIRatingResource;
 import com.liferay.headless.common.spi.service.context.ServiceContextRequestUtil;
 import com.liferay.headless.delivery.dto.v1_0.MessageBoardMessage;
 import com.liferay.headless.delivery.dto.v1_0.Rating;
 import com.liferay.headless.delivery.dto.v1_0.util.CustomFieldsUtil;
 import com.liferay.headless.delivery.internal.dto.v1_0.converter.MessageBoardMessageDTOConverter;
-import com.liferay.headless.delivery.internal.dto.v1_0.util.EntityFieldsUtil;
 import com.liferay.headless.delivery.internal.dto.v1_0.util.RatingUtil;
 import com.liferay.headless.delivery.internal.odata.entity.v1_0.MessageBoardMessageEntityModel;
 import com.liferay.headless.delivery.resource.v1_0.MessageBoardMessageResource;
@@ -61,6 +61,7 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.search.aggregation.Aggregations;
+import com.liferay.portal.search.expando.ExpandoBridgeIndexer;
 import com.liferay.portal.search.legacy.searcher.SearchRequestBuilderFactory;
 import com.liferay.portal.search.query.Queries;
 import com.liferay.portal.search.searcher.SearchRequestBuilder;
@@ -70,9 +71,7 @@ import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
-import com.liferay.portal.vulcan.resource.EntityModelResource;
 import com.liferay.portal.vulcan.util.SearchUtil;
-import com.liferay.portal.vulcan.util.TransformUtil;
 import com.liferay.portal.vulcan.util.UriInfoUtil;
 import com.liferay.ratings.kernel.service.RatingsEntryLocalService;
 
@@ -99,7 +98,7 @@ import org.osgi.service.component.annotations.ServiceScope;
 	scope = ServiceScope.PROTOTYPE, service = MessageBoardMessageResource.class
 )
 public class MessageBoardMessageResourceImpl
-	extends BaseMessageBoardMessageResourceImpl implements EntityModelResource {
+	extends BaseMessageBoardMessageResourceImpl {
 
 	@Override
 	public void deleteMessageBoardMessage(Long messageBoardMessageId)
@@ -134,8 +133,8 @@ public class MessageBoardMessageResourceImpl
 		return new MessageBoardMessageEntityModel(
 			EntityFieldsUtil.getEntityFields(
 				_portal.getClassNameId(MBMessage.class.getName()),
-				contextCompany.getCompanyId(), _expandoColumnLocalService,
-				_expandoTableLocalService));
+				contextCompany.getCompanyId(), _expandoBridgeIndexer,
+				_expandoColumnLocalService, _expandoTableLocalService));
 	}
 
 	@Override
@@ -192,7 +191,7 @@ public class MessageBoardMessageResourceImpl
 
 			return Page.of(
 				actions,
-				TransformUtil.transform(
+				transform(
 					_mbMessageService.getChildMessages(
 						mbMessage.getMessageId(),
 						Optional.ofNullable(
@@ -278,7 +277,7 @@ public class MessageBoardMessageResourceImpl
 
 			return Page.of(
 				actions,
-				TransformUtil.transform(
+				transform(
 					_mbMessageService.getChildMessages(
 						mbThread.getRootMessageId(), false,
 						new QueryDefinition<>(
@@ -336,10 +335,20 @@ public class MessageBoardMessageResourceImpl
 
 		return _getMessageBoardMessagesPage(
 			HashMapBuilder.put(
+				"deleteBatch",
+				addAction(
+					ActionKeys.DELETE, "deleteMessageBoardMessageBatch",
+					MBConstants.RESOURCE_NAME, null)
+			).put(
 				"get",
 				addAction(
 					ActionKeys.VIEW, "getSiteMessageBoardMessagesPage",
 					MBConstants.RESOURCE_NAME, siteId)
+			).put(
+				"updateBatch",
+				addAction(
+					ActionKeys.UPDATE, "putMessageBoardMessageBatch",
+					MBConstants.RESOURCE_NAME, null)
 			).build(),
 			null, siteId, flatten, search, aggregation, filter, pagination,
 			sorts);
@@ -739,8 +748,6 @@ public class MessageBoardMessageResourceImpl
 		if ((showAsAnswer != null) && (showAsAnswer != mbMessage.isAnswer())) {
 			_mbMessageService.updateAnswer(
 				mbMessage.getMessageId(), showAsAnswer, false);
-
-			mbMessage.setAnswer(showAsAnswer);
 		}
 	}
 
@@ -785,6 +792,9 @@ public class MessageBoardMessageResourceImpl
 
 	@Reference
 	private DTOConverterRegistry _dtoConverterRegistry;
+
+	@Reference
+	private ExpandoBridgeIndexer _expandoBridgeIndexer;
 
 	@Reference
 	private ExpandoColumnLocalService _expandoColumnLocalService;

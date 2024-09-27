@@ -26,9 +26,11 @@ import com.liferay.fragment.util.configuration.FragmentEntryConfigurationParser;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.service.GroupLocalService;
@@ -76,7 +78,7 @@ public class MenuDisplayFragmentRenderer implements FragmentRenderer {
 			"content.Language", getClass());
 
 		try {
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
+			JSONObject jsonObject = _jsonFactory.createJSONObject(
 				StringUtil.read(
 					getClass(),
 					"/com/liferay/fragment/renderer/menu/display/internal" +
@@ -86,6 +88,10 @@ public class MenuDisplayFragmentRenderer implements FragmentRenderer {
 				jsonObject, resourceBundle);
 		}
 		catch (JSONException jsonException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(jsonException);
+			}
+
 			return StringPool.BLANK;
 		}
 	}
@@ -100,7 +106,7 @@ public class MenuDisplayFragmentRenderer implements FragmentRenderer {
 		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
 			"content.Language", getClass());
 
-		return LanguageUtil.get(resourceBundle, "menu-display");
+		return _language.get(resourceBundle, "menu-display");
 	}
 
 	@Override
@@ -144,14 +150,6 @@ public class MenuDisplayFragmentRenderer implements FragmentRenderer {
 		catch (Exception exception) {
 			throw new RuntimeException(exception);
 		}
-	}
-
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.fragment.renderer.menu.display.impl)",
-		unbind = "-"
-	)
-	public void setServletContext(ServletContext servletContext) {
-		_servletContext = servletContext;
 	}
 
 	private void _configureMenu(
@@ -299,6 +297,9 @@ public class MenuDisplayFragmentRenderer implements FragmentRenderer {
 		printWriter.write(styles);
 	}
 
+	private static final Log _log = LogFactoryUtil.getLog(
+		MenuDisplayFragmentRenderer.class);
+
 	@Reference
 	private DDMTemplateLocalService _ddmTemplateLocalService;
 
@@ -307,6 +308,12 @@ public class MenuDisplayFragmentRenderer implements FragmentRenderer {
 
 	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;
@@ -318,6 +325,9 @@ public class MenuDisplayFragmentRenderer implements FragmentRenderer {
 	@Reference
 	private Portal _portal;
 
+	@Reference(
+		target = "(osgi.web.symbolicname=com.liferay.fragment.renderer.menu.display.impl)"
+	)
 	private ServletContext _servletContext;
 
 }

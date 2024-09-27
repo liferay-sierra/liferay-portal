@@ -14,6 +14,7 @@
 
 package com.liferay.commerce.model;
 
+import com.liferay.exportimport.kernel.lar.StagedModelType;
 import com.liferay.portal.kernel.model.ModelWrapper;
 import com.liferay.portal.kernel.model.wrapper.BaseModelWrapper;
 
@@ -43,6 +44,8 @@ public class CommerceShipmentWrapper
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		attributes.put("mvccVersion", getMvccVersion());
+		attributes.put("uuid", getUuid());
+		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("commerceShipmentId", getCommerceShipmentId());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
@@ -54,11 +57,12 @@ public class CommerceShipmentWrapper
 		attributes.put("commerceAddressId", getCommerceAddressId());
 		attributes.put(
 			"commerceShippingMethodId", getCommerceShippingMethodId());
-		attributes.put("shippingOptionName", getShippingOptionName());
 		attributes.put("carrier", getCarrier());
-		attributes.put("trackingNumber", getTrackingNumber());
-		attributes.put("shippingDate", getShippingDate());
 		attributes.put("expectedDate", getExpectedDate());
+		attributes.put("shippingDate", getShippingDate());
+		attributes.put("shippingOptionName", getShippingOptionName());
+		attributes.put("trackingNumber", getTrackingNumber());
+		attributes.put("trackingURL", getTrackingURL());
 		attributes.put("status", getStatus());
 
 		return attributes;
@@ -70,6 +74,19 @@ public class CommerceShipmentWrapper
 
 		if (mvccVersion != null) {
 			setMvccVersion(mvccVersion);
+		}
+
+		String uuid = (String)attributes.get("uuid");
+
+		if (uuid != null) {
+			setUuid(uuid);
+		}
+
+		String externalReferenceCode = (String)attributes.get(
+			"externalReferenceCode");
+
+		if (externalReferenceCode != null) {
+			setExternalReferenceCode(externalReferenceCode);
 		}
 
 		Long commerceShipmentId = (Long)attributes.get("commerceShipmentId");
@@ -133,23 +150,16 @@ public class CommerceShipmentWrapper
 			setCommerceShippingMethodId(commerceShippingMethodId);
 		}
 
-		String shippingOptionName = (String)attributes.get(
-			"shippingOptionName");
-
-		if (shippingOptionName != null) {
-			setShippingOptionName(shippingOptionName);
-		}
-
 		String carrier = (String)attributes.get("carrier");
 
 		if (carrier != null) {
 			setCarrier(carrier);
 		}
 
-		String trackingNumber = (String)attributes.get("trackingNumber");
+		Date expectedDate = (Date)attributes.get("expectedDate");
 
-		if (trackingNumber != null) {
-			setTrackingNumber(trackingNumber);
+		if (expectedDate != null) {
+			setExpectedDate(expectedDate);
 		}
 
 		Date shippingDate = (Date)attributes.get("shippingDate");
@@ -158,10 +168,23 @@ public class CommerceShipmentWrapper
 			setShippingDate(shippingDate);
 		}
 
-		Date expectedDate = (Date)attributes.get("expectedDate");
+		String shippingOptionName = (String)attributes.get(
+			"shippingOptionName");
 
-		if (expectedDate != null) {
-			setExpectedDate(expectedDate);
+		if (shippingOptionName != null) {
+			setShippingOptionName(shippingOptionName);
+		}
+
+		String trackingNumber = (String)attributes.get("trackingNumber");
+
+		if (trackingNumber != null) {
+			setTrackingNumber(trackingNumber);
+		}
+
+		String trackingURL = (String)attributes.get("trackingURL");
+
+		if (trackingURL != null) {
+			setTrackingURL(trackingURL);
 		}
 
 		Integer status = (Integer)attributes.get("status");
@@ -289,6 +312,16 @@ public class CommerceShipmentWrapper
 	}
 
 	/**
+	 * Returns the external reference code of this commerce shipment.
+	 *
+	 * @return the external reference code of this commerce shipment
+	 */
+	@Override
+	public String getExternalReferenceCode() {
+		return model.getExternalReferenceCode();
+	}
+
+	/**
 	 * Returns the group ID of this commerce shipment.
 	 *
 	 * @return the group ID of this commerce shipment
@@ -369,6 +402,16 @@ public class CommerceShipmentWrapper
 	}
 
 	/**
+	 * Returns the tracking url of this commerce shipment.
+	 *
+	 * @return the tracking url of this commerce shipment
+	 */
+	@Override
+	public String getTrackingURL() {
+		return model.getTrackingURL();
+	}
+
+	/**
 	 * Returns the user ID of this commerce shipment.
 	 *
 	 * @return the user ID of this commerce shipment
@@ -396,6 +439,16 @@ public class CommerceShipmentWrapper
 	@Override
 	public String getUserUuid() {
 		return model.getUserUuid();
+	}
+
+	/**
+	 * Returns the uuid of this commerce shipment.
+	 *
+	 * @return the uuid of this commerce shipment
+	 */
+	@Override
+	public String getUuid() {
+		return model.getUuid();
 	}
 
 	@Override
@@ -484,6 +537,16 @@ public class CommerceShipmentWrapper
 	}
 
 	/**
+	 * Sets the external reference code of this commerce shipment.
+	 *
+	 * @param externalReferenceCode the external reference code of this commerce shipment
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		model.setExternalReferenceCode(externalReferenceCode);
+	}
+
+	/**
 	 * Sets the group ID of this commerce shipment.
 	 *
 	 * @param groupId the group ID of this commerce shipment
@@ -564,6 +627,16 @@ public class CommerceShipmentWrapper
 	}
 
 	/**
+	 * Sets the tracking url of this commerce shipment.
+	 *
+	 * @param trackingURL the tracking url of this commerce shipment
+	 */
+	@Override
+	public void setTrackingURL(String trackingURL) {
+		model.setTrackingURL(trackingURL);
+	}
+
+	/**
 	 * Sets the user ID of this commerce shipment.
 	 *
 	 * @param userId the user ID of this commerce shipment
@@ -591,6 +664,21 @@ public class CommerceShipmentWrapper
 	@Override
 	public void setUserUuid(String userUuid) {
 		model.setUserUuid(userUuid);
+	}
+
+	/**
+	 * Sets the uuid of this commerce shipment.
+	 *
+	 * @param uuid the uuid of this commerce shipment
+	 */
+	@Override
+	public void setUuid(String uuid) {
+		model.setUuid(uuid);
+	}
+
+	@Override
+	public StagedModelType getStagedModelType() {
+		return model.getStagedModelType();
 	}
 
 	@Override

@@ -36,6 +36,8 @@ import org.osgi.annotation.versioning.ProviderType;
 				"setVisible('emailFromName', getValue('sendEmailNotification'))",
 				"setVisible('emailSubject', getValue('sendEmailNotification'))",
 				"setVisible('emailToAddress', getValue('sendEmailNotification'))",
+				"setVisible('limitToOneSubmissionPerUserBody', getValue('limitToOneSubmissionPerUser'))",
+				"setVisible('limitToOneSubmissionPerUserHeader', getValue('limitToOneSubmissionPerUser'))",
 				"setVisible('objectDefinitionId', contains(getValue('storageType'), \"object\"))",
 				"setVisible('published', FALSE)",
 				"setVisible('workflowDefinition', not(contains(getValue('storageType'), \"object\")))"
@@ -105,9 +107,12 @@ import org.osgi.annotation.versioning.ProviderType;
 						@DDMFormLayoutColumn(
 							size = 12,
 							value = {
+								"displayChartAsTable",
 								"showPartialResultsToRespondents",
-								"limitToOneSubmissionPerUser", "expirationDate",
-								"neverExpire"
+								"limitToOneSubmissionPerUser",
+								"limitToOneSubmissionPerUserHeader",
+								"limitToOneSubmissionPerUserBody",
+								"expirationDate", "neverExpire"
 							}
 						)
 					}
@@ -124,6 +129,16 @@ public interface DDMFormInstanceSettings {
 		properties = "showAsSwitcher=true"
 	)
 	public boolean autosaveEnabled();
+
+	@DDMFormField
+	public boolean convertedFromPolls();
+
+	@DDMFormField(
+		label = "%display-chart-as-table",
+		tip = "%display-entries-of-the-following-field-types-as-tables-select-from-list-single-selection-multiple-selection-and-boolean",
+		type = "checkbox"
+	)
+	public boolean displayChartAsTable();
 
 	@DDMFormField(
 		label = "%from-address",
@@ -161,6 +176,23 @@ public interface DDMFormInstanceSettings {
 	public boolean limitToOneSubmissionPerUser();
 
 	@DDMFormField(
+		label = "%body",
+		properties = {
+			"displayStyle=multiline",
+			"placeholder=%you-can-fill-out-this-form-only-once.-contact-the-owner-of-the-form-if-you-think-this-is-a-mistake"
+		},
+		type = "localizable_text"
+	)
+	public String limitToOneSubmissionPerUserBody();
+
+	@DDMFormField(
+		label = "%header",
+		properties = "placeholder=%you-have-already-responded",
+		type = "localizable_text"
+	)
+	public String limitToOneSubmissionPerUserHeader();
+
+	@DDMFormField(
 		label = "%never-expire", predefinedValue = "true", type = "checkbox"
 	)
 	public boolean neverExpire();
@@ -181,7 +213,7 @@ public interface DDMFormInstanceSettings {
 		label = "%redirect-url-on-success",
 		properties = "placeholder=%enter-a-valid-url",
 		validationErrorMessage = "%please-enter-a-valid-url",
-		validationExpression = "isEmpty(redirectURL) OR isURL(redirectURL)"
+		validationExpression = "isEmpty(redirectURL) OR isURL(redirectURL, TRUE)"
 	)
 	public String redirectURL();
 
@@ -204,8 +236,9 @@ public interface DDMFormInstanceSettings {
 	public boolean sendEmailNotification();
 
 	@DDMFormField(
-		label = "%show-partial-results-to-respondents",
-		tip = "%respondents-can-see-all-submitted-form-data", type = "checkbox"
+		label = "%show-forms-report-data-to-respondents",
+		tip = "%allow-respondents-to-see-the-current-forms-report-data",
+		type = "checkbox"
 	)
 	public boolean showPartialResultsToRespondents();
 

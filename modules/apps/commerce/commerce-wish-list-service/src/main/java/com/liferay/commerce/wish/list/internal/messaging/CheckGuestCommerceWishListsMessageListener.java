@@ -36,7 +36,6 @@ import java.util.Map;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
 /**
@@ -44,14 +43,12 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.commerce.wish.list.internal.configuration.CommerceWishListConfiguration",
-	enabled = false, immediate = true,
-	service = CheckGuestCommerceWishListsMessageListener.class
+	immediate = true, service = CheckGuestCommerceWishListsMessageListener.class
 )
 public class CheckGuestCommerceWishListsMessageListener
 	extends BaseMessageListener {
 
 	@Activate
-	@Modified
 	protected void activate(Map<String, Object> properties) {
 		Class<?> clazz = getClass();
 
@@ -87,16 +84,14 @@ public class CheckGuestCommerceWishListsMessageListener
 			UserConstants.USER_ID_DEFAULT, createDate);
 	}
 
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
-	protected void setModuleServiceLifecycle(
-		ModuleServiceLifecycle moduleServiceLifecycle) {
-	}
-
 	private volatile CommerceWishListConfiguration
 		_commerceWishListConfiguration;
 
 	@Reference
 	private CommerceWishListLocalService _commerceWishListLocalService;
+
+	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
+	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
 	@Reference
 	private SchedulerEngineHelper _schedulerEngineHelper;

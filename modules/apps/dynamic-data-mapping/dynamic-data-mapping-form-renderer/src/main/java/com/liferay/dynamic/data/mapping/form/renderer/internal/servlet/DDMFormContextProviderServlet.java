@@ -15,7 +15,7 @@
 package com.liferay.dynamic.data.mapping.form.renderer.internal.servlet;
 
 import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormEvaluator;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderingContext;
 import com.liferay.dynamic.data.mapping.form.renderer.internal.DDMFormPagesTemplateContextFactory;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLayoutLocalService;
@@ -26,12 +26,13 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONSerializer;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
+import com.liferay.portal.kernel.util.HtmlParser;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -56,7 +57,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marcellus Tavares
  */
 @Component(
-	immediate = true,
 	property = {
 		"osgi.http.whiteboard.context.path=/dynamic-data-mapping-form-context-provider",
 		"osgi.http.whiteboard.servlet.name=com.liferay.dynamic.data.mapping.form.renderer.internal.servlet.DDMFormContextProviderServlet",
@@ -129,7 +129,7 @@ public class DDMFormContextProviderServlet extends HttpServlet {
 
 		try {
 			Locale locale = LocaleUtil.fromLanguageId(
-				LanguageUtil.getLanguageId(httpServletRequest));
+				_language.getLanguageId(httpServletRequest));
 
 			DDMFormRenderingContext ddmFormRenderingContext =
 				_createDDMFormRenderingContext(
@@ -156,13 +156,13 @@ public class DDMFormContextProviderServlet extends HttpServlet {
 						ddmFormRenderingContext,
 						_ddmStructureLayoutLocalService,
 						_ddmStructureLocalService, _groupLocalService,
-						_jsonFactory);
+						_htmlParser, _jsonFactory);
 
 			ddmFormPagesTemplateContextFactory.setDDMFormEvaluator(
 				_ddmFormEvaluator);
 			ddmFormPagesTemplateContextFactory.
-				setDDMFormFieldTypeServicesTracker(
-					_ddmFormFieldTypeServicesTracker);
+				setDDMFormFieldTypeServicesRegistry(
+					_ddmFormFieldTypeServicesRegistry);
 
 			return ddmFormPagesTemplateContextFactory.create();
 		}
@@ -223,7 +223,7 @@ public class DDMFormContextProviderServlet extends HttpServlet {
 	private DDMFormEvaluator _ddmFormEvaluator;
 
 	@Reference
-	private DDMFormFieldTypeServicesTracker _ddmFormFieldTypeServicesTracker;
+	private DDMFormFieldTypeServicesRegistry _ddmFormFieldTypeServicesRegistry;
 
 	@Reference
 	private DDMStructureLayoutLocalService _ddmStructureLayoutLocalService;
@@ -235,6 +235,12 @@ public class DDMFormContextProviderServlet extends HttpServlet {
 	private GroupLocalService _groupLocalService;
 
 	@Reference
+	private HtmlParser _htmlParser;
+
+	@Reference
 	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 }

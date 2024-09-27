@@ -14,6 +14,7 @@
 
 package com.liferay.headless.commerce.admin.catalog.internal.resource.v1_0.factory;
 
+import com.liferay.headless.commerce.admin.catalog.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.headless.commerce.admin.catalog.resource.v1_0.PinResource;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -33,14 +34,18 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -59,7 +62,8 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @generated
  */
 @Component(
-	enabled = false, immediate = true, service = PinResource.Factory.class
+	property = "resource.locator.key=/headless-commerce-admin-catalog/v1.0/Pin",
+	service = PinResource.Factory.class
 )
 @Generated("")
 public class PinResourceFactoryImpl implements PinResource.Factory {
@@ -74,9 +78,7 @@ public class PinResourceFactoryImpl implements PinResource.Factory {
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (PinResource)ProxyUtil.newProxyInstance(
-					PinResource.class.getClassLoader(),
-					new Class<?>[] {PinResource.class},
+				return _pinResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -133,14 +135,31 @@ public class PinResourceFactoryImpl implements PinResource.Factory {
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		PinResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, PinResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		PinResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			PinResource.class.getClassLoader(), PinResource.class);
+
+		try {
+			Constructor<PinResource> constructor =
+				(Constructor<PinResource>)proxyClass.getConstructor(
+					InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -163,7 +182,7 @@ public class PinResourceFactoryImpl implements PinResource.Factory {
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		PinResource pinResource = _componentServiceObjects.getService();
@@ -185,6 +204,7 @@ public class PinResourceFactoryImpl implements PinResource.Factory {
 		pinResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		pinResource.setRoleLocalService(_roleLocalService);
+		pinResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(pinResource, arguments);
@@ -200,6 +220,9 @@ public class PinResourceFactoryImpl implements PinResource.Factory {
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, PinResource>
+		_pinResourceProxyProviderFunction = _getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -221,9 +244,6 @@ public class PinResourceFactoryImpl implements PinResource.Factory {
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -232,6 +252,9 @@ public class PinResourceFactoryImpl implements PinResource.Factory {
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

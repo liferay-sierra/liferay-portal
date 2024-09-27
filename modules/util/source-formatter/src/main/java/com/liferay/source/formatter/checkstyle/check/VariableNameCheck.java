@@ -504,13 +504,102 @@ public class VariableNameCheck extends BaseCheck {
 		}
 	}
 
+	private void _checkShortTypeNames(
+		DetailAST detailAST, String variableName, String typeName,
+		String expectedVariableName) {
+
+		if (!detailAST.branchContains(TokenTypes.LITERAL_PRIVATE) ||
+			detailAST.branchContains(TokenTypes.LITERAL_STATIC)) {
+
+			return;
+		}
+
+		DetailAST parentDetailAST = detailAST.getParent();
+
+		if (parentDetailAST.getType() != TokenTypes.OBJBLOCK) {
+			return;
+		}
+
+		List<String> enforceShortTypeNames = getAttributeValues(
+			_ENFORCE_SHORT_TYPE_NAMES_KEY);
+
+		if (!enforceShortTypeNames.contains(typeName)) {
+			return;
+		}
+
+		List<DetailAST> variableDeclarationDetailASTList = new ArrayList<>();
+
+		variableDeclarationDetailASTList.addAll(
+			getAllChildTokens(parentDetailAST, false, TokenTypes.VARIABLE_DEF));
+
+		int count = 0;
+
+		for (DetailAST variableDeclarationDetailAST :
+				variableDeclarationDetailASTList) {
+
+			DetailAST typeDetailAST =
+				variableDeclarationDetailAST.findFirstToken(TokenTypes.TYPE);
+
+			DetailAST firstChildDetailAST = typeDetailAST.getFirstChild();
+
+			if (firstChildDetailAST == null) {
+				continue;
+			}
+
+			if ((firstChildDetailAST.getType() != TokenTypes.DOT) &&
+				typeName.equals(getTypeName(typeDetailAST, false))) {
+
+				count++;
+			}
+		}
+
+		if (count == 1) {
+			log(
+				detailAST, MSG_RENAME_VARIABLE, variableName,
+				"_" + expectedVariableName);
+		}
+	}
+
 	private void _checkTypeName(
 		DetailAST detailAST, String variableName, String typeName) {
 
 		if (variableName.matches("_?INSTANCE") ||
-			variableName.matches("(?i).*" + typeName + "[0-9]*") ||
 			(typeName.equals("Object") &&
 			 !variableName.matches("(o|obj|(.*Obj))[0-9]*"))) {
+
+			return;
+		}
+
+		if (variableName.matches("(?i).*" + typeName + "[0-9]*")) {
+			List<String> enforceTableSchemaFieldTypeNames = getAttributeValues(
+				_ENFORCE_TABLE_SCHEMA_FIELD_TYPE_NAMES_KEY);
+
+			for (String enforceTableSchemaFieldTypeName :
+					enforceTableSchemaFieldTypeNames) {
+
+				if (!typeName.matches(
+						enforceTableSchemaFieldTypeName + "Field")) {
+
+					continue;
+				}
+
+				String expectedVariableName = _getExpectedVariableName(
+					detailAST, enforceTableSchemaFieldTypeName);
+
+				if (Validator.isNull(expectedVariableName)) {
+					continue;
+				}
+
+				if (!variableName.matches(
+						"(?i).*" + expectedVariableName + "[0-9]*")) {
+
+					log(
+						detailAST, _MSG_INCORRECT_ENDING_VARIABLE, typeName,
+						expectedVariableName);
+
+					return;
+				}
+			}
 
 			return;
 		}
@@ -562,6 +651,9 @@ public class VariableNameCheck extends BaseCheck {
 				return;
 			}
 		}
+
+		_checkShortTypeNames(
+			detailAST, variableName, typeName, expectedVariableName);
 	}
 
 	private void _checkTypo(DetailAST detailAST, String variableName) {
@@ -752,6 +844,68 @@ public class VariableNameCheck extends BaseCheck {
 		return null;
 	}
 
+	private String _getExpectedVariableName(
+		DetailAST detailAST, String enforceTableSchemaFieldTypeName) {
+
+		DetailAST assignDetailAST = detailAST.findFirstToken(TokenTypes.ASSIGN);
+
+		if (assignDetailAST == null) {
+			return null;
+		}
+
+		DetailAST firstChildDetailAST = assignDetailAST.getFirstChild();
+
+		if (firstChildDetailAST.getType() != TokenTypes.EXPR) {
+			return null;
+		}
+
+		firstChildDetailAST = firstChildDetailAST.getFirstChild();
+
+		if (firstChildDetailAST.getType() != TokenTypes.METHOD_CALL) {
+			return null;
+		}
+
+		firstChildDetailAST = firstChildDetailAST.getFirstChild();
+
+		if (firstChildDetailAST.getType() != TokenTypes.DOT) {
+			return null;
+		}
+
+		List<String> names = getNames(firstChildDetailAST, false);
+
+		if (names.size() != 2) {
+			return null;
+		}
+
+		String methodCallClassName = names.get(0);
+		String methodCallMethodName = names.get(1);
+
+		if (!methodCallClassName.matches(
+				"(?i)" + enforceTableSchemaFieldTypeName + "Builder") &&
+			!methodCallMethodName.matches(
+				"(?i)add" + enforceTableSchemaFieldTypeName)) {
+
+			return null;
+		}
+
+		DetailAST parameterDetailAST = getParameterDetailAST(
+			firstChildDetailAST.getParent());
+
+		if (parameterDetailAST.getType() != TokenTypes.STRING_LITERAL) {
+			return null;
+		}
+
+		String s = parameterDetailAST.getText();
+
+		s = TextFormatter.format(
+			StringUtil.replace(
+				TextFormatter.format(s, TextFormatter.Q), '.', '-'),
+			TextFormatter.M);
+
+		return s.substring(1, s.length() - 1) +
+			enforceTableSchemaFieldTypeName + "Field";
+	}
+
 	private String _getExpectedVariableName(String literalString) {
 		String s = literalString.substring(1, literalString.length() - 1);
 
@@ -837,6 +991,12 @@ public class VariableNameCheck extends BaseCheck {
 
 	private static final String _ALLOWED_VARIABLE_NAMES_KEY =
 		"allowedVariableNames";
+
+	private static final String _ENFORCE_SHORT_TYPE_NAMES_KEY =
+		"enforceShortTypeNames";
+
+	private static final String _ENFORCE_TABLE_SCHEMA_FIELD_TYPE_NAMES_KEY =
+		"enforceTableSchemaFieldTypeNames";
 
 	private static final String _ENFORCE_TYPE_NAMES_KEY = "enforceTypeNames";
 

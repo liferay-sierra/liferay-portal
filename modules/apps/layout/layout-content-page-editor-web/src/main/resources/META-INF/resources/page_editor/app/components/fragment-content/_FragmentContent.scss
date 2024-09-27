@@ -1,5 +1,3 @@
-@import '../variables';
-
 html#{$cadmin-selector} {
 	.page-editor__fragment-content {
 		cursor: pointer;
@@ -8,6 +6,10 @@ html#{$cadmin-selector} {
 			.portlet-options {
 				display: none;
 			}
+		}
+
+		&--master .page-editor .portlet-options {
+			display: inline-block;
 		}
 
 		&--portlet-topper-hidden
@@ -55,6 +57,10 @@ html#{$cadmin-selector} {
 						}
 					}
 				}
+			}
+
+			.portlet-content.portlet-content-editable {
+				min-height: 54px;
 			}
 		}
 

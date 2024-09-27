@@ -21,7 +21,9 @@ import com.liferay.commerce.notification.model.impl.CommerceNotificationQueueEnt
 import com.liferay.commerce.notification.model.impl.CommerceNotificationQueueEntryModelImpl;
 import com.liferay.commerce.notification.service.persistence.CommerceNotificationQueueEntryPersistence;
 import com.liferay.commerce.notification.service.persistence.CommerceNotificationQueueEntryUtil;
+import com.liferay.commerce.notification.service.persistence.impl.constants.CommercePersistenceConstants;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.configuration.Configuration;
 import com.liferay.portal.kernel.dao.orm.EntityCache;
 import com.liferay.portal.kernel.dao.orm.FinderCache;
 import com.liferay.portal.kernel.dao.orm.FinderPath;
@@ -29,11 +31,13 @@ import com.liferay.portal.kernel.dao.orm.Query;
 import com.liferay.portal.kernel.dao.orm.QueryPos;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.portal.kernel.dao.orm.SessionFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
+import com.liferay.portal.kernel.service.persistence.BasePersistence;
 import com.liferay.portal.kernel.service.persistence.impl.BasePersistenceImpl;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
@@ -41,7 +45,6 @@ import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
-import com.liferay.portal.spring.extender.service.ServiceReference;
 
 import java.io.Serializable;
 
@@ -56,6 +59,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.sql.DataSource;
+
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Reference;
+
 /**
  * The persistence implementation for the commerce notification queue entry service.
  *
@@ -66,6 +76,11 @@ import java.util.Set;
  * @author Alessio Antonio Rendina
  * @generated
  */
+@Component(
+	service = {
+		CommerceNotificationQueueEntryPersistence.class, BasePersistence.class
+	}
+)
 public class CommerceNotificationQueueEntryPersistenceImpl
 	extends BasePersistenceImpl<CommerceNotificationQueueEntry>
 	implements CommerceNotificationQueueEntryPersistence {
@@ -183,7 +198,7 @@ public class CommerceNotificationQueueEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<CommerceNotificationQueueEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (CommerceNotificationQueueEntry
@@ -558,7 +573,7 @@ public class CommerceNotificationQueueEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {groupId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -711,7 +726,7 @@ public class CommerceNotificationQueueEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<CommerceNotificationQueueEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (CommerceNotificationQueueEntry
@@ -1113,7 +1128,7 @@ public class CommerceNotificationQueueEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {commerceNotificationTemplateId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -1250,7 +1265,7 @@ public class CommerceNotificationQueueEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<CommerceNotificationQueueEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (CommerceNotificationQueueEntry
@@ -1622,7 +1637,7 @@ public class CommerceNotificationQueueEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {sent};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -1751,7 +1766,7 @@ public class CommerceNotificationQueueEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<CommerceNotificationQueueEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (CommerceNotificationQueueEntry
@@ -2149,7 +2164,7 @@ public class CommerceNotificationQueueEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {_getTime(sentDate)};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -2323,7 +2338,7 @@ public class CommerceNotificationQueueEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<CommerceNotificationQueueEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (CommerceNotificationQueueEntry
@@ -2777,7 +2792,7 @@ public class CommerceNotificationQueueEntryPersistenceImpl
 			groupId, classNameId, classPK, sent
 		};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(5);
@@ -3301,7 +3316,7 @@ public class CommerceNotificationQueueEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<CommerceNotificationQueueEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -3374,7 +3389,7 @@ public class CommerceNotificationQueueEntryPersistenceImpl
 	@Override
 	public int countAll() {
 		Long count = (Long)finderCache.getResult(
-			_finderPathCountAll, FINDER_ARGS_EMPTY);
+			_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -3429,7 +3444,8 @@ public class CommerceNotificationQueueEntryPersistenceImpl
 	/**
 	 * Initializes the commerce notification queue entry persistence.
 	 */
-	public void afterPropertiesSet() {
+	@Activate
+	public void activate() {
 		_valueObjectFinderCacheListThreshold = GetterUtil.getInteger(
 			PropsUtil.get(PropsKeys.VALUE_OBJECT_FINDER_CACHE_LIST_THRESHOLD));
 
@@ -3546,7 +3562,8 @@ public class CommerceNotificationQueueEntryPersistenceImpl
 		_setCommerceNotificationQueueEntryUtilPersistence(this);
 	}
 
-	public void destroy() {
+	@Deactivate
+	public void deactivate() {
 		_setCommerceNotificationQueueEntryUtilPersistence(null);
 
 		entityCache.removeCache(
@@ -3571,10 +3588,36 @@ public class CommerceNotificationQueueEntryPersistenceImpl
 		}
 	}
 
-	@ServiceReference(type = EntityCache.class)
+	@Override
+	@Reference(
+		target = CommercePersistenceConstants.SERVICE_CONFIGURATION_FILTER,
+		unbind = "-"
+	)
+	public void setConfiguration(Configuration configuration) {
+	}
+
+	@Override
+	@Reference(
+		target = CommercePersistenceConstants.ORIGIN_BUNDLE_SYMBOLIC_NAME_FILTER,
+		unbind = "-"
+	)
+	public void setDataSource(DataSource dataSource) {
+		super.setDataSource(dataSource);
+	}
+
+	@Override
+	@Reference(
+		target = CommercePersistenceConstants.ORIGIN_BUNDLE_SYMBOLIC_NAME_FILTER,
+		unbind = "-"
+	)
+	public void setSessionFactory(SessionFactory sessionFactory) {
+		super.setSessionFactory(sessionFactory);
+	}
+
+	@Reference
 	protected EntityCache entityCache;
 
-	@ServiceReference(type = FinderCache.class)
+	@Reference
 	protected FinderCache finderCache;
 
 	private static Long _getTime(Date date) {

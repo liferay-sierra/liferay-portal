@@ -16,7 +16,6 @@ package com.liferay.user.groups.admin.web.internal.display.context;
 
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.ViewTypeItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.ViewTypeItemList;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
@@ -25,10 +24,10 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserGroup;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.UserGroupLocalServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -126,18 +125,13 @@ public class SelectUserGroupManagementToolbarDisplayContext {
 			(UserGroupDisplayTerms)userGroupSearch.getSearchTerms();
 
 		if (filterManageableUserGroups) {
-			List<UserGroup> userGroups = UsersAdminUtil.filterUserGroups(
-				themeDisplay.getPermissionChecker(),
-				UserGroupLocalServiceUtil.search(
-					themeDisplay.getCompanyId(), searchTerms.getKeywords(),
-					null, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
-					userGroupSearch.getOrderByComparator()));
-
 			userGroupSearch.setResultsAndTotal(
-				() -> ListUtil.subList(
-					userGroups, userGroupSearch.getStart(),
-					userGroupSearch.getEnd()),
-				userGroups.size());
+				UsersAdminUtil.filterUserGroups(
+					themeDisplay.getPermissionChecker(),
+					UserGroupLocalServiceUtil.search(
+						themeDisplay.getCompanyId(), searchTerms.getKeywords(),
+						null, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+						userGroupSearch.getOrderByComparator())));
 		}
 		else {
 			userGroupSearch.setResultsAndTotal(

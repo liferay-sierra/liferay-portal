@@ -14,13 +14,13 @@
 
 package com.liferay.product.navigation.product.menu.web.internal.product.navigation.control.menu;
 
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -83,6 +83,10 @@ public class ProductMenuProductNavigationControlMenuEntry
 			HttpServletResponse httpServletResponse)
 		throws IOException {
 
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
 		Map<String, String> values = HashMapBuilder.put(
 			"cssClass",
 			() -> {
@@ -109,13 +113,11 @@ public class ProductMenuProductNavigationControlMenuEntry
 						RenderRequest.RENDER_PHASE)
 				).setMVCPath(
 					"/portlet/product_menu.jsp"
+				).setRedirect(
+					themeDisplay.getURLCurrent()
 				).setParameter(
 					"selPpid",
 					() -> {
-						ThemeDisplay themeDisplay =
-							(ThemeDisplay)httpServletRequest.getAttribute(
-								WebKeys.THEME_DISPLAY);
-
 						PortletDisplay portletDisplay =
 							themeDisplay.getPortletDisplay();
 
@@ -133,8 +135,13 @@ public class ProductMenuProductNavigationControlMenuEntry
 				ProductNavigationProductMenuPortletKeys.
 					PRODUCT_NAVIGATION_PRODUCT_MENU)
 		).put(
+			"skipLinkLabel",
+			HtmlUtil.escape(
+				_language.get(httpServletRequest, "skip-to-product-menu"))
+		).put(
 			"title",
-			HtmlUtil.escape(LanguageUtil.get(httpServletRequest, "menu"))
+			HtmlUtil.escape(
+				_language.get(httpServletRequest, "open-close-product-menu"))
 		).build();
 
 		try {
@@ -142,7 +149,6 @@ public class ProductMenuProductNavigationControlMenuEntry
 
 			iconTag.setCssClass("icon-monospaced icon-product-menu-closed");
 			iconTag.setImage("product-menu-closed");
-			iconTag.setMarkupView("lexicon");
 
 			values.put(
 				"closedIcon",
@@ -150,7 +156,6 @@ public class ProductMenuProductNavigationControlMenuEntry
 
 			iconTag.setCssClass("icon-monospaced icon-product-menu-open");
 			iconTag.setImage("product-menu-open");
-			iconTag.setMarkupView("lexicon");
 
 			values.put(
 				"openIcon",
@@ -182,6 +187,9 @@ public class ProductMenuProductNavigationControlMenuEntry
 
 	private static final String _TMPL_CONTENT = StringUtil.read(
 		ProductMenuProductNavigationControlMenuEntry.class, "icon.tmpl");
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

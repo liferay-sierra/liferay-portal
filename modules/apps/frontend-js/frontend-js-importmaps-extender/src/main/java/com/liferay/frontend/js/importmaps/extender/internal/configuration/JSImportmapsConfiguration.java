@@ -21,7 +21,7 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 /**
  * @author Iván Zaera Avellón
  */
-@ExtendedObjectClassDefinition(category = "infrastructure")
+@ExtendedObjectClassDefinition(category = "infrastructure", generateUI = false)
 @Meta.OCD(
 	description = "frontend-js-importmaps-description",
 	id = "com.liferay.frontend.js.importmaps.extender.internal.configuration.JSImportmapsConfiguration",
@@ -30,7 +30,7 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 )
 public interface JSImportmapsConfiguration {
 
-	@Meta.AD(deflt = "false", name = "enable-importmaps", required = false)
+	@Meta.AD(deflt = "true", name = "enable-importmaps", required = false)
 	public boolean enableImportmaps();
 
 	@Meta.AD(

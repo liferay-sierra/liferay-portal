@@ -34,11 +34,8 @@ String target = ParamUtil.getString(request, "target", groupItemSelectorCriterio
 <aui:form action="<%= siteItemSelectorViewDisplayContext.getPortletURL() %>" cssClass="container-fluid container-fluid-max-xl" method="post" name="selectGroupFm">
 	<c:if test="<%= siteItemSelectorViewDisplayContext.isShowChildSitesLink() %>">
 		<div id="breadcrumb">
-			<liferay-ui:breadcrumb
-				showCurrentGroup="<%= false %>"
-				showGuestGroup="<%= false %>"
-				showLayout="<%= false %>"
-				showPortletBreadcrumb="<%= true %>"
+			<liferay-site-navigation:breadcrumb
+				breadcrumbEntries="<%= BreadcrumbEntriesUtil.getBreadcrumbEntries(request, false, false, false, true, true) %>"
 			/>
 		</div>
 	</c:if>
@@ -106,7 +103,7 @@ String target = ParamUtil.getString(request, "target", groupItemSelectorCriterio
 						<h5>
 							<c:choose>
 								<c:when test="<%= group.isActive() %>">
-									<aui:a cssClass="selector-button" data="<%= data %>" href="javascript:;">
+									<aui:a cssClass="selector-button" data="<%= data %>" href="javascript:void(0);">
 										<%= HtmlUtil.escape(siteItemSelectorViewDisplayContext.getGroupName(group)) %>
 									</aui:a>
 								</c:when>
@@ -123,7 +120,7 @@ String target = ParamUtil.getString(request, "target", groupItemSelectorCriterio
 						</h5>
 
 						<h6 class="text-default">
-							<span><%= LanguageUtil.get(request, group.getScopeLabel(themeDisplay)) %></span>
+							<span><liferay-ui:message key="<%= group.getScopeLabel(themeDisplay) %>" /></span>
 						</h6>
 
 						<c:if test="<%= siteItemSelectorViewDisplayContext.isShowChildSitesLink() %>">
@@ -178,8 +175,17 @@ String target = ParamUtil.getString(request, "target", groupItemSelectorCriterio
 									>
 										<c:choose>
 											<c:when test="<%= group.isActive() %>">
-												<aui:a cssClass="card-title selector-button text-truncate" data="<%= data %>" href="javascript:;" title="<%= siteVerticalCard.getSubtitle() %>">
-													<%= siteVerticalCard.getTitle() %>
+
+												<%
+												boolean hasURL = true;
+
+												if (data.get("url") == null) {
+													hasURL = false;
+												}
+												%>
+
+												<aui:a cssClass='<%= hasURL ? "card-title selector-button text-truncate" : "disabled text-muted" %>' data="<%= data %>" href='<%= hasURL ? "javascript:void(0);" : StringPool.BLANK %>'>
+													<%= HtmlUtil.escape(siteItemSelectorViewDisplayContext.getGroupName(group)) %>
 												</aui:a>
 											</c:when>
 											<c:otherwise>
@@ -198,7 +204,7 @@ String target = ParamUtil.getString(request, "target", groupItemSelectorCriterio
 
 									<c:if test="<%= groupItemSelectorCriterion.isAllowNavigation() && group.isActive() %>">
 										<clay:content-col>
-											<aui:a cssClass="btn btn-outline-borderless btn-outline-secondary" href="<%= siteVerticalCard.getHref() %>" target="_blank" />
+											<aui:a cssClass="btn btn-monospaced btn-outline-borderless btn-outline-secondary btn-sm" href="<%= siteVerticalCard.getHref() %>" target="_blank" />
 										</clay:content-col>
 									</c:if>
 								</clay:content-row>
@@ -213,7 +219,7 @@ String target = ParamUtil.getString(request, "target", groupItemSelectorCriterio
 					>
 						<c:choose>
 							<c:when test="<%= group.isActive() %>">
-								<aui:a cssClass="selector-button" data="<%= data %>" href="javascript:;">
+								<aui:a cssClass="selector-button" data="<%= data %>" href="javascript:void(0);">
 									<%= HtmlUtil.escape(siteItemSelectorViewDisplayContext.getGroupName(group)) %>
 								</aui:a>
 							</c:when>

@@ -45,6 +45,7 @@ public class ObjectFieldWrapper
 
 		attributes.put("mvccVersion", getMvccVersion());
 		attributes.put("uuid", getUuid());
+		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("objectFieldId", getObjectFieldId());
 		attributes.put("companyId", getCompanyId());
 		attributes.put("userId", getUserId());
@@ -57,6 +58,7 @@ public class ObjectFieldWrapper
 		attributes.put("dbColumnName", getDBColumnName());
 		attributes.put("dbTableName", getDBTableName());
 		attributes.put("dbType", getDBType());
+		attributes.put("defaultValue", getDefaultValue());
 		attributes.put("indexed", isIndexed());
 		attributes.put("indexedAsKeyword", isIndexedAsKeyword());
 		attributes.put("indexedLanguageId", getIndexedLanguageId());
@@ -64,6 +66,8 @@ public class ObjectFieldWrapper
 		attributes.put("name", getName());
 		attributes.put("relationshipType", getRelationshipType());
 		attributes.put("required", isRequired());
+		attributes.put("state", isState());
+		attributes.put("system", isSystem());
 
 		return attributes;
 	}
@@ -80,6 +84,13 @@ public class ObjectFieldWrapper
 
 		if (uuid != null) {
 			setUuid(uuid);
+		}
+
+		String externalReferenceCode = (String)attributes.get(
+			"externalReferenceCode");
+
+		if (externalReferenceCode != null) {
+			setExternalReferenceCode(externalReferenceCode);
 		}
 
 		Long objectFieldId = (Long)attributes.get("objectFieldId");
@@ -155,6 +166,12 @@ public class ObjectFieldWrapper
 			setDBType(dbType);
 		}
 
+		String defaultValue = (String)attributes.get("defaultValue");
+
+		if (defaultValue != null) {
+			setDefaultValue(defaultValue);
+		}
+
 		Boolean indexed = (Boolean)attributes.get("indexed");
 
 		if (indexed != null) {
@@ -196,11 +213,28 @@ public class ObjectFieldWrapper
 		if (required != null) {
 			setRequired(required);
 		}
+
+		Boolean state = (Boolean)attributes.get("state");
+
+		if (state != null) {
+			setState(state);
+		}
+
+		Boolean system = (Boolean)attributes.get("system");
+
+		if (system != null) {
+			setSystem(system);
+		}
 	}
 
 	@Override
 	public ObjectField cloneWithOriginalValues() {
 		return wrap(model.cloneWithOriginalValues());
+	}
+
+	@Override
+	public boolean compareBusinessType(String businessType) {
+		return model.compareBusinessType(businessType);
 	}
 
 	@Override
@@ -271,6 +305,26 @@ public class ObjectFieldWrapper
 	@Override
 	public String getDefaultLanguageId() {
 		return model.getDefaultLanguageId();
+	}
+
+	/**
+	 * Returns the default value of this object field.
+	 *
+	 * @return the default value of this object field
+	 */
+	@Override
+	public String getDefaultValue() {
+		return model.getDefaultValue();
+	}
+
+	/**
+	 * Returns the external reference code of this object field.
+	 *
+	 * @return the external reference code of this object field
+	 */
+	@Override
+	public String getExternalReferenceCode() {
+		return model.getExternalReferenceCode();
 	}
 
 	/**
@@ -439,6 +493,11 @@ public class ObjectFieldWrapper
 		return model.getObjectFieldId();
 	}
 
+	@Override
+	public java.util.List<ObjectFieldSetting> getObjectFieldSettings() {
+		return model.getObjectFieldSettings();
+	}
+
 	/**
 	 * Returns the primary key of this object field.
 	 *
@@ -467,6 +526,26 @@ public class ObjectFieldWrapper
 	@Override
 	public boolean getRequired() {
 		return model.getRequired();
+	}
+
+	/**
+	 * Returns the state of this object field.
+	 *
+	 * @return the state of this object field
+	 */
+	@Override
+	public boolean getState() {
+		return model.getState();
+	}
+
+	/**
+	 * Returns the system of this object field.
+	 *
+	 * @return the system of this object field
+	 */
+	@Override
+	public boolean getSystem() {
+		return model.getSystem();
 	}
 
 	/**
@@ -537,6 +616,26 @@ public class ObjectFieldWrapper
 	@Override
 	public boolean isRequired() {
 		return model.isRequired();
+	}
+
+	/**
+	 * Returns <code>true</code> if this object field is state.
+	 *
+	 * @return <code>true</code> if this object field is state; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isState() {
+		return model.isState();
+	}
+
+	/**
+	 * Returns <code>true</code> if this object field is system.
+	 *
+	 * @return <code>true</code> if this object field is system; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isSystem() {
+		return model.isSystem();
 	}
 
 	@Override
@@ -617,6 +716,26 @@ public class ObjectFieldWrapper
 	@Override
 	public void setDBType(String dbType) {
 		model.setDBType(dbType);
+	}
+
+	/**
+	 * Sets the default value of this object field.
+	 *
+	 * @param defaultValue the default value of this object field
+	 */
+	@Override
+	public void setDefaultValue(String defaultValue) {
+		model.setDefaultValue(defaultValue);
+	}
+
+	/**
+	 * Sets the external reference code of this object field.
+	 *
+	 * @param externalReferenceCode the external reference code of this object field
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		model.setExternalReferenceCode(externalReferenceCode);
 	}
 
 	/**
@@ -773,6 +892,13 @@ public class ObjectFieldWrapper
 		model.setObjectFieldId(objectFieldId);
 	}
 
+	@Override
+	public void setObjectFieldSettings(
+		java.util.List<ObjectFieldSetting> objectFieldSettings) {
+
+		model.setObjectFieldSettings(objectFieldSettings);
+	}
+
 	/**
 	 * Sets the primary key of this object field.
 	 *
@@ -801,6 +927,26 @@ public class ObjectFieldWrapper
 	@Override
 	public void setRequired(boolean required) {
 		model.setRequired(required);
+	}
+
+	/**
+	 * Sets whether this object field is state.
+	 *
+	 * @param state the state of this object field
+	 */
+	@Override
+	public void setState(boolean state) {
+		model.setState(state);
+	}
+
+	/**
+	 * Sets whether this object field is system.
+	 *
+	 * @param system the system of this object field
+	 */
+	@Override
+	public void setSystem(boolean system) {
+		model.setSystem(system);
 	}
 
 	/**

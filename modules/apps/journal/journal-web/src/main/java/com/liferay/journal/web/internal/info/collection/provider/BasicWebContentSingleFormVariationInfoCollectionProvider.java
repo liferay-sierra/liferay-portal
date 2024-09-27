@@ -29,15 +29,16 @@ import com.liferay.info.field.type.TextInfoFieldType;
 import com.liferay.info.filter.InfoFilter;
 import com.liferay.info.filter.KeywordsInfoFilter;
 import com.liferay.info.form.InfoForm;
-import com.liferay.info.item.InfoItemServiceTracker;
 import com.liferay.info.localized.InfoLocalizedValue;
+import com.liferay.info.localized.SingleValueInfoLocalizedValue;
 import com.liferay.info.pagination.InfoPage;
 import com.liferay.info.pagination.Pagination;
 import com.liferay.info.sort.Sort;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.service.JournalArticleLocalService;
 import com.liferay.journal.web.internal.search.JournalSearcher;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.search.Document;
@@ -133,6 +134,8 @@ public class BasicWebContentSingleFormVariationInfoCollectionProvider
 			InfoField.builder(
 			).infoFieldType(
 				TextInfoFieldType.INSTANCE
+			).namespace(
+				StringPool.BLANK
 			).name(
 				Field.TITLE
 			).labelInfoLocalizedValue(
@@ -158,7 +161,7 @@ public class BasicWebContentSingleFormVariationInfoCollectionProvider
 
 	@Override
 	public String getLabel(Locale locale) {
-		return LanguageUtil.get(locale, "basic-web-content");
+		return _language.get(locale, "basic-web-content");
 	}
 
 	@Override
@@ -198,10 +201,10 @@ public class BasicWebContentSingleFormVariationInfoCollectionProvider
 		String[] title = configuration.get(Field.TITLE);
 
 		if (ArrayUtil.isNotEmpty(title) && Validator.isNotNull(title[0])) {
-			String localizedName = Field.getLocalizedName(
-				LocaleUtil.getSiteDefault(), Field.TITLE);
-
-			searchContext.setAttribute(localizedName, title[0]);
+			searchContext.setAttribute(
+				Field.getLocalizedName(
+					LocaleUtil.getSiteDefault(), Field.TITLE),
+				title[0]);
 		}
 
 		ServiceContext serviceContext =
@@ -269,12 +272,15 @@ public class BasicWebContentSingleFormVariationInfoCollectionProvider
 		for (AssetTag assetTag : assetTags) {
 			options.add(
 				new SelectInfoFieldType.Option(
-					assetTag.getName(), assetTag.getName()));
+					new SingleValueInfoLocalizedValue<>(assetTag.getName()),
+					assetTag.getName()));
 		}
 
 		InfoField.FinalStep<?> finalStep = InfoField.builder(
 		).infoFieldType(
 			SelectInfoFieldType.INSTANCE
+		).namespace(
+			StringPool.BLANK
 		).name(
 			Field.ASSET_TAG_NAMES
 		).attribute(
@@ -300,10 +306,10 @@ public class BasicWebContentSingleFormVariationInfoCollectionProvider
 	private DDMStructureLocalService _ddmStructureLocalService;
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private JournalArticleLocalService _journalArticleLocalService;
 
 	@Reference
-	private JournalArticleLocalService _journalArticleLocalService;
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

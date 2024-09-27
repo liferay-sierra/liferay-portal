@@ -17,6 +17,8 @@ package com.liferay.object.service.impl;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectView;
 import com.liferay.object.model.ObjectViewColumn;
+import com.liferay.object.model.ObjectViewFilterColumn;
+import com.liferay.object.model.ObjectViewSortColumn;
 import com.liferay.object.service.base.ObjectViewServiceBaseImpl;
 import com.liferay.object.service.persistence.ObjectDefinitionPersistence;
 import com.liferay.portal.aop.AopService;
@@ -47,7 +49,9 @@ public class ObjectViewServiceImpl extends ObjectViewServiceBaseImpl {
 	public ObjectView addObjectView(
 			long objectDefinitionId, boolean defaultObjectView,
 			Map<Locale, String> nameMap,
-			List<ObjectViewColumn> objectViewColumns)
+			List<ObjectViewColumn> objectViewColumns,
+			List<ObjectViewFilterColumn> objectViewFilterColumns,
+			List<ObjectViewSortColumn> objectViewSortColumns)
 		throws PortalException {
 
 		ObjectDefinition objectDefinition =
@@ -59,7 +63,7 @@ public class ObjectViewServiceImpl extends ObjectViewServiceBaseImpl {
 
 		return objectViewLocalService.addObjectView(
 			getUserId(), objectDefinitionId, defaultObjectView, nameMap,
-			objectViewColumns);
+			objectViewColumns, objectViewFilterColumns, objectViewSortColumns);
 	}
 
 	@Override
@@ -92,7 +96,9 @@ public class ObjectViewServiceImpl extends ObjectViewServiceBaseImpl {
 	public ObjectView updateObjectView(
 			long objectViewId, boolean defaultObjectView,
 			Map<Locale, String> nameMap,
-			List<ObjectViewColumn> objectViewColumns)
+			List<ObjectViewColumn> objectViewColumns,
+			List<ObjectViewFilterColumn> objectViewFilterColumns,
+			List<ObjectViewSortColumn> objectViewSortColumns)
 		throws PortalException {
 
 		ObjectView objectView = objectViewPersistence.findByPrimaryKey(
@@ -103,7 +109,8 @@ public class ObjectViewServiceImpl extends ObjectViewServiceBaseImpl {
 			ActionKeys.UPDATE);
 
 		return objectViewLocalService.updateObjectView(
-			objectViewId, defaultObjectView, nameMap, objectViewColumns);
+			objectViewId, defaultObjectView, nameMap, objectViewColumns,
+			objectViewFilterColumns, objectViewSortColumns);
 	}
 
 	@Reference(

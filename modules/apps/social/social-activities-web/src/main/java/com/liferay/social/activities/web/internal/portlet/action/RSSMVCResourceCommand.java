@@ -25,7 +25,7 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.HtmlParser;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
@@ -124,27 +124,6 @@ public class RSSMVCResourceCommand extends BaseRSSMVCResourceCommand {
 			portletPreferences.getValue("enableRss", null), true);
 	}
 
-	@Reference(unbind = "-")
-	protected void setGroupLocalService(GroupLocalService groupLocalService) {
-		_groupLocalService = groupLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setSocialActivitiesQueryHelper(
-		SocialActivitiesQueryHelper socialActivitiesQueryHelper) {
-
-		_socialActivitiesQueryHelper = socialActivitiesQueryHelper;
-	}
-
-	@Reference(unbind = "-")
-	protected void setSocialActivityInterpreterLocalService(
-		SocialActivityInterpreterLocalService
-			socialActivityInterpreterLocalService) {
-
-		_socialActivityInterpreterLocalService =
-			socialActivityInterpreterLocalService;
-	}
-
 	private String _exportToRSS(
 			ResourceRequest resourceRequest, ResourceResponse resourceResponse,
 			String title, String description, String format, double version,
@@ -198,7 +177,7 @@ public class RSSMVCResourceCommand extends BaseRSSMVCResourceCommand {
 			syndEntry.setPublishedDate(
 				new Date(socialActivitySet.getCreateDate()));
 			syndEntry.setTitle(
-				HtmlUtil.extractText(socialActivityFeedEntry.getTitle()));
+				_htmlParser.extractText(socialActivityFeedEntry.getTitle()));
 			syndEntry.setUri(socialActivityFeedEntry.getLink());
 
 			syndEntries.add(syndEntry);
@@ -240,7 +219,11 @@ public class RSSMVCResourceCommand extends BaseRSSMVCResourceCommand {
 		return _rssExporter.export(syndFeed);
 	}
 
+	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private HtmlParser _htmlParser;
 
 	@Reference
 	private Portal _portal;
@@ -248,7 +231,10 @@ public class RSSMVCResourceCommand extends BaseRSSMVCResourceCommand {
 	@Reference
 	private RSSExporter _rssExporter;
 
+	@Reference
 	private SocialActivitiesQueryHelper _socialActivitiesQueryHelper;
+
+	@Reference
 	private SocialActivityInterpreterLocalService
 		_socialActivityInterpreterLocalService;
 

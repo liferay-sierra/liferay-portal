@@ -72,7 +72,7 @@ public class CommerceInventoryMVCCTest {
 	public void testReplenishmentItemMVCC() throws Exception {
 		CommerceInventoryWarehouse commerceInventoryWarehouse =
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouse(
-				RandomTestUtil.randomString(), true, _serviceContext);
+				RandomTestUtil.randomLocaleStringMap(), true, _serviceContext);
 
 		CPInstance cpInstance =
 			CommerceInventoryTestUtil.addRandomCPInstanceSku(
@@ -81,13 +81,14 @@ public class CommerceInventoryMVCCTest {
 		CommerceInventoryReplenishmentItem commerceInventoryReplenishmentItem =
 			_commerceInventoryReplenishmentItemLocalService.
 				addCommerceInventoryReplenishmentItem(
-					_user.getUserId(),
+					null, _user.getUserId(),
 					commerceInventoryWarehouse.
 						getCommerceInventoryWarehouseId(),
 					cpInstance.getSku(), new Date(), 10);
 
 		_commerceInventoryReplenishmentItemLocalService.
 			updateCommerceInventoryReplenishmentItem(
+				null,
 				commerceInventoryReplenishmentItem.
 					getCommerceInventoryReplenishmentItemId(),
 				commerceInventoryReplenishmentItem.getAvailabilityDate(), 15,
@@ -95,6 +96,7 @@ public class CommerceInventoryMVCCTest {
 
 		_commerceInventoryReplenishmentItemLocalService.
 			updateCommerceInventoryReplenishmentItem(
+				null,
 				commerceInventoryReplenishmentItem.
 					getCommerceInventoryReplenishmentItemId(),
 				commerceInventoryReplenishmentItem.getAvailabilityDate(), 20,
@@ -105,7 +107,7 @@ public class CommerceInventoryMVCCTest {
 	public void testWarehouseItemMVCC() throws Exception {
 		CommerceInventoryWarehouse commerceInventoryWarehouse =
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouse(
-				RandomTestUtil.randomString(), true, _serviceContext);
+				RandomTestUtil.randomLocaleStringMap(), true, _serviceContext);
 
 		CPInstance cpInstance =
 			CommerceInventoryTestUtil.addRandomCPInstanceSku(
@@ -138,12 +140,13 @@ public class CommerceInventoryMVCCTest {
 	public void testWarehouseMVCC() throws Exception {
 		CommerceInventoryWarehouse commerceInventoryWarehouse =
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouse(
-				RandomTestUtil.randomString(), true, _serviceContext);
+				RandomTestUtil.randomLocaleStringMap(), true, _serviceContext);
 
 		_commerceInventoryWarehouseLocalService.
 			updateCommerceInventoryWarehouse(
 				commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
-				commerceInventoryWarehouse.getName(), "New Description OK",
+				commerceInventoryWarehouse.getNameMap(),
+				RandomTestUtil.randomLocaleStringMap(),
 				commerceInventoryWarehouse.isActive(),
 				commerceInventoryWarehouse.getStreet1(),
 				commerceInventoryWarehouse.getStreet2(),
@@ -159,7 +162,8 @@ public class CommerceInventoryMVCCTest {
 		_commerceInventoryWarehouseLocalService.
 			updateCommerceInventoryWarehouse(
 				commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
-				commerceInventoryWarehouse.getName(), "New Description KO",
+				commerceInventoryWarehouse.getNameMap(),
+				RandomTestUtil.randomLocaleStringMap(),
 				commerceInventoryWarehouse.isActive(),
 				commerceInventoryWarehouse.getStreet1(),
 				commerceInventoryWarehouse.getStreet2(),

@@ -238,13 +238,13 @@ SiteNavigationMenu siteNavigationMenu = siteNavigationMenuDisplayContext.getSite
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button type="submit" />
-
-		<aui:button type="cancel" />
+		<liferay-frontend:edit-form-buttons />
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>
 
-<aui:script require="frontend-js-web/liferay/delegate/delegate.es as delegateModule">
+<aui:script require="frontend-js-web/index as frontendJsWeb">
+	var {delegate} = frontendJsWeb;
+
 	var form = document.<portlet:namespace />fm;
 
 	form.addEventListener('change', <portlet:namespace />resetPreview);
@@ -351,6 +351,7 @@ SiteNavigationMenu siteNavigationMenu = siteNavigationMenuDisplayContext.getSite
 			);
 
 			Liferay.Util.openSelectionModal({
+				height: '70vh',
 				onSelect: function (selectedItem) {
 					if (selectedItem) {
 						rootMenuItemIdInput.value =
@@ -363,6 +364,7 @@ SiteNavigationMenu siteNavigationMenu = siteNavigationMenuDisplayContext.getSite
 				},
 				selectEventName:
 					'<%= siteNavigationMenuDisplayContext.getRootMenuItemEventName() %>',
+				size: 'md',
 				title:
 					'<liferay-ui:message key="select-site-navigation-menu-item" />',
 				url: uri,
@@ -392,11 +394,13 @@ SiteNavigationMenu siteNavigationMenu = siteNavigationMenuDisplayContext.getSite
 			Liferay.Util.openSelectionModal({
 				id: '<portlet:namespace />selectSiteNavigationMenu',
 				onSelect: function (selectedItem) {
-					if (selectedItem) {
-						navigationMenuName.innerText = selectedItem.name;
+					const itemValue = JSON.parse(selectedItem.value);
+
+					if (itemValue) {
+						navigationMenuName.innerText = itemValue.name;
 						rootMenuItemIdInput.value = '0';
-						rootMenuItemNameSpan.innerText = selectedItem.name;
-						siteNavigationMenuIdInput.value = selectedItem.id;
+						rootMenuItemNameSpan.innerText = itemValue.name;
+						siteNavigationMenuIdInput.value = itemValue.id;
 
 						removeSiteNavigationMenu.classList.toggle('hide');
 
@@ -484,8 +488,6 @@ SiteNavigationMenu siteNavigationMenu = siteNavigationMenuDisplayContext.getSite
 		siteNavigationMenuIdInput &&
 		siteNavigationMenuType
 	) {
-		var delegate = delegateModule.default;
-
 		delegate(
 			document.<portlet:namespace />fm,
 			'change',

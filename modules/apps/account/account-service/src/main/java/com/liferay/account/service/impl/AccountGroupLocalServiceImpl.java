@@ -15,10 +15,13 @@
 package com.liferay.account.service.impl;
 
 import com.liferay.account.constants.AccountConstants;
+import com.liferay.account.exception.AccountGroupNameException;
+import com.liferay.account.exception.DuplicateAccountGroupExternalReferenceCodeException;
 import com.liferay.account.model.AccountGroup;
 import com.liferay.account.model.AccountGroupRel;
 import com.liferay.account.service.base.AccountGroupLocalServiceBaseImpl;
 import com.liferay.account.service.persistence.AccountGroupRelPersistence;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -43,10 +46,11 @@ import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.vulcan.util.TransformUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -67,6 +71,8 @@ public class AccountGroupLocalServiceImpl
 			long userId, String description, String name)
 		throws PortalException {
 
+		_validateName(name);
+
 		long accountGroupId = counterLocalService.increment();
 
 		AccountGroup accountGroup = accountGroupPersistence.create(
@@ -81,6 +87,7 @@ public class AccountGroupLocalServiceImpl
 		accountGroup.setDefaultAccountGroup(false);
 		accountGroup.setDescription(description);
 		accountGroup.setName(name);
+
 		accountGroup.setType(AccountConstants.ACCOUNT_GROUP_TYPE_STATIC);
 
 		_resourceLocalService.addResources(
@@ -94,13 +101,14 @@ public class AccountGroupLocalServiceImpl
 	public AccountGroup checkGuestAccountGroup(long companyId)
 		throws PortalException {
 
-		if (hasDefaultAccountGroup(companyId)) {
-			return accountGroupPersistence.findByC_D_First(
-				companyId, true, null);
+		AccountGroup accountGroup = accountGroupPersistence.fetchByC_D_First(
+			companyId, true, null);
+
+		if (accountGroup != null) {
+			return accountGroup;
 		}
 
-		AccountGroup accountGroup = createAccountGroup(
-			counterLocalService.increment());
+		accountGroup = createAccountGroup(counterLocalService.increment());
 
 		accountGroup.setCompanyId(companyId);
 
@@ -119,7 +127,7 @@ public class AccountGroupLocalServiceImpl
 			AccountGroup.class.getName(), accountGroup.getAccountGroupId(),
 			false, false, false);
 
-		return accountGroupLocalService.addAccountGroup(accountGroup);
+		return accountGroupPersistence.update(accountGroup);
 	}
 
 	@Indexable(type = IndexableType.DELETE)
@@ -213,6 +221,13 @@ public class AccountGroupLocalServiceImpl
 			searchContext.setKeywords(keywords);
 
 			if (MapUtil.isNotEmpty(params)) {
+				long[] accountEntryIds = (long[])params.get("accountEntryIds");
+
+				if (ArrayUtil.isNotEmpty(accountEntryIds)) {
+					searchContext.setAttribute(
+						"accountEntryIds", accountEntryIds);
+				}
+
 				long permissionUserId = GetterUtil.getLong(
 					params.get("permissionUserId"));
 
@@ -234,6 +249,8 @@ public class AccountGroupLocalServiceImpl
 			long accountGroupId, String description, String name)
 		throws PortalException {
 
+		_validateName(name);
+
 		AccountGroup accountGroup = accountGroupPersistence.fetchByPrimaryKey(
 			accountGroupId);
 
@@ -241,6 +258,37 @@ public class AccountGroupLocalServiceImpl
 		accountGroup.setName(name);
 
 		return accountGroupPersistence.update(accountGroup);
+	}
+
+	@Indexable(type = IndexableType.REINDEX)
+	@Override
+	public AccountGroup updateExternalReferenceCode(
+			AccountGroup accountGroup, String externalReferenceCode)
+		throws PortalException {
+
+		if (Objects.equals(
+				accountGroup.getExternalReferenceCode(),
+				externalReferenceCode)) {
+
+			return accountGroup;
+		}
+
+		_validateExternalReferenceCode(
+			accountGroup.getAccountGroupId(), externalReferenceCode);
+
+		accountGroup.setExternalReferenceCode(externalReferenceCode);
+
+		return updateAccountGroup(accountGroup);
+	}
+
+	@Indexable(type = IndexableType.REINDEX)
+	@Override
+	public AccountGroup updateExternalReferenceCode(
+			long accountGroupId, String externalReferenceCode)
+		throws PortalException {
+
+		return updateExternalReferenceCode(
+			getAccountGroup(accountGroupId), externalReferenceCode);
 	}
 
 	private SearchContext _buildSearchContext(
@@ -311,6 +359,34 @@ public class AccountGroupLocalServiceImpl
 
 		throw new SearchException(
 			"Unable to fix the search index after 10 attempts");
+	}
+
+	private void _validateExternalReferenceCode(
+			long accountGroupId, String externalReferenceCode)
+		throws PortalException {
+
+		if (Validator.isNull(externalReferenceCode)) {
+			return;
+		}
+
+		AccountGroup accountGroup = getAccountGroup(accountGroupId);
+
+		accountGroup = fetchAccountGroupByExternalReferenceCode(
+			accountGroup.getCompanyId(), externalReferenceCode);
+
+		if (accountGroup == null) {
+			return;
+		}
+
+		if (accountGroup.getAccountGroupId() != accountGroupId) {
+			throw new DuplicateAccountGroupExternalReferenceCodeException();
+		}
+	}
+
+	private void _validateName(String name) throws PortalException {
+		if (Validator.isNull(name)) {
+			throw new AccountGroupNameException("Name is null");
+		}
 	}
 
 	private static final String[] _SELECTED_FIELD_NAMES = {

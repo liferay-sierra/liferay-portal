@@ -105,9 +105,7 @@ TypeFacetPortletPreferences typeFacetPortletPreferences = new com.liferay.portal
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button type="submit" />
-
-		<aui:button type="cancel" />
+		<liferay-frontend:edit-form-buttons />
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>
 
@@ -124,7 +122,7 @@ TypeFacetPortletPreferences typeFacetPortletPreferences = new com.liferay.portal
 
 			data[
 				'<%= PortletPreferencesJspUtil.getInputName(TypeFacetPortletPreferences.PREFERENCE_KEY_ASSET_TYPES) %>'
-			] = Liferay.Util.listSelect(currentAssetTypes);
+			] = Liferay.Util.getSelectedOptionValues(currentAssetTypes);
 
 			Liferay.Util.postForm(form, {data: data});
 		});

@@ -1,4 +1,4 @@
-@component-name = "portal-collaboration"
+@component-name = "portal-lima"
 definition {
 
 	property portal.release = "true";
@@ -44,6 +44,76 @@ definition {
 		AssertTextEquals.assertPartialText(
 			locator1 = "Message#ERROR",
 			value1 = "Error:At least one field must be added.");
+	}
+
+	@description = "This is a test for LPS-95290. It asserts that an unauthorized user can not download the file through the document URL of the staged site."
+	@priority = "5"
+	test CannotDownloadFileThroughDocumentURLOfStagedSiteWithoutPermissions {
+		JSONDocument.addFileWithUploadedFile(
+			dmDocumentDescription = "DM Document Description",
+			dmDocumentTitle = "DM Document Title",
+			groupName = "Site Name-staging",
+			mimeType = "image/jpeg",
+			sourceFileName = "Document_1.jpg");
+
+		DMNavigator.openToEditEntryInSite(
+			dmDocumentTitle = "DM Document Title",
+			groupName = "Site Name (Staging)",
+			site = "false",
+			siteURLKey = "site-name-staging");
+
+		DMDocument.editCmd(dmDocumentTitleEdit = "DM Document Title Edit");
+
+		Button.clickPublish();
+
+		DMNavigator.openToEntryInAdmin(
+			dmDocumentTitle = "DM Document Title Edit",
+			groupName = "Site Name (Staging)",
+			site = "false",
+			siteURLKey = "site-name-staging");
+
+		var latestVersionURL = DMDocument.getLatestVersionURL();
+
+		User.logoutPG();
+
+		for (var version : list "1.0,1.1") {
+			Navigator.openSpecificURL(url = "${latestVersionURL}?version=${version}");
+
+			AssertVisible(locator1 = "Button#SIGN_IN");
+		}
+	}
+
+	@description = "This is a test for LPS-91043. It asserts that user can not publish from old versions to live."
+	@priority = "5"
+	test CanNotPublishFromOldVersions {
+		JSONDocument.addFileWithUploadedFile(
+			dmDocumentDescription = "DM Document Description",
+			dmDocumentTitle = "DM Document Title",
+			groupName = "Site Name-staging",
+			mimeType = "image/jpeg",
+			sourceFileName = "Document_1.jpg");
+
+		DMNavigator.openToEditEntryInSite(
+			dmDocumentTitle = "DM Document Title",
+			groupName = "Site Name (Staging)",
+			site = "false",
+			siteURLKey = "site-name-staging");
+
+		DMDocument.editCmd(dmDocumentTitleEdit = "DM Document Title Edit");
+
+		Button.clickPublish();
+
+		DMNavigator.openToEntryInAdmin(
+			dmDocumentTitle = "DM Document Title Edit",
+			groupName = "Site Name (Staging)",
+			site = "false",
+			siteURLKey = "site-name-staging");
+
+		for (var n : list "0,1") {
+			DMDocument.viewNoItemInVersionMenu(
+				dmDocumentVersionNumber = "1.${n}",
+				menuItem = "Publish to Live");
+		}
 	}
 
 	@description = "This is a test for LPS-136819. It checks that a file version can be deleted and published."
@@ -367,7 +437,7 @@ definition {
 	@description = "This is a test for LPS-136822. It checks that a document type can be updated and published using the normal publication process."
 	@priority = "3"
 	test CanPublishUpdatedDocumentType {
-		property osgi.app.includes = "document-library-google-docs";
+		property osgi.modules.includes = "document-library-google-docs";
 
 		JSONLayout.addWidgetToPublicLayout(
 			column = "1",
@@ -525,6 +595,558 @@ definition {
 			siteURLKey = "site-name");
 
 		DMDocument.viewCP(dmDocumentTitle = "DM Document Title Edit");
+	}
+
+	@description = "This test covers LPS-154415. It checks that an external video displays properly in the Media Gallery widget after the friendlyURL has been edited and published on a site."
+	@priority = "4"
+	test CanViewExternalVideoInMGAfterFriendlyURLIsUpdated {
+		JSONDepot.addDepot(
+			depotDescription = "This is the description of a depot",
+			depotName = "Test Depot Name");
+
+		JSONStaging.enableLocalStaging(
+			groupName = "Test Depot Name",
+			site = "false");
+
+		JSONDepot.connectSite(
+			depotName = "Test Depot Name (Staging)",
+			groupName = "Site Name (Staging)",
+			site = "false");
+
+		DepotNavigator.openDepotDocumentsAndMediaAdminStaging(depotName = "Test Depot Name");
+
+		VideoShortcut.addCP(
+			videoShortcutTitle = "Test YouTube Video",
+			videoURL = "https://www.youtube.com/watch?v=HOdbzGCI5ME");
+
+		DepotNavigator.openToEditDMEntryInDepot(
+			depotName = "Test Depot Name",
+			dmDocumentTitle = "Test YouTube Video",
+			staging = "true");
+
+		DMDocument.editFriendlyURL(
+			dmDocumentTitle = "Test YouTube Video",
+			friendlyURLEdit = "custom-url");
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Site Name (Staging)",
+			layoutName = "Staging DM Page",
+			site = "false",
+			widgetName = "Media Gallery");
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		MGPortlet.setRootFolder(
+			depotName = "Test Depot Name",
+			selectRootFolder = "true");
+
+		DepotNavigator.openDepotAssetListsAdminStaging(depotName = "Test Depot Name");
+
+		DepotNavigator.switchStagingStatus(stagingItem = "Publish to Live");
+
+		Staging.publishToLive();
+
+		DepotNavigator.openToEditDMEntryInDepot(
+			depotName = "Test Depot Name",
+			dmDocumentTitle = "Test YouTube Video",
+			staging = "true");
+
+		DMDocument.editFriendlyURL(
+			dmDocumentTitle = "Test YouTube Video",
+			friendlyURLEdit = "new-custom-url");
+
+		DepotNavigator.openDepotAssetListsAdminStaging(depotName = "Test Depot Name");
+
+		DepotNavigator.switchStagingStatus(stagingItem = "Publish to Live");
+
+		Staging.publishToLive();
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		DMDocument.viewPGViaMG(
+			mgDocumentTitle = "HOdbzGCI5ME",
+			staging = "true");
+
+		Staging.gotoPublishToLive();
+
+		Staging.publishToLive();
+
+		Navigator.gotoSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		DMDocument.viewPGViaMG(
+			mgDocumentTitle = "HOdbzGCI5ME",
+			staging = "true");
+	}
+
+	@description = "This test covers LPS-154396."
+	@priority = "4"
+	test CanViewExternalVideoInMGAfterPublish {
+		VideoShortcut.addCP(
+			videoShortcutTitle = "Test YouTube Video",
+			videoURL = "https://www.youtube.com/watch?v=HOdbzGCI5ME");
+
+		DMNavigator.openToEditEntryInSite(
+			dmDocumentTitle = "Test YouTube Video",
+			groupName = "Site Name (Staging)",
+			site = "false",
+			siteURLKey = "site-name-staging");
+
+		DMDocument.editFriendlyURL(
+			dmDocumentTitle = "Test YouTube Video",
+			friendlyURLEdit = "custom-url");
+
+		JSONLayout.addWidgetToPublicLayout(
+			column = "1",
+			groupName = "Site Name (Staging)",
+			layoutName = "Staging DM Page",
+			site = "false",
+			widgetName = "Media Gallery");
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		Staging.gotoPublishToLive();
+
+		Staging.publishToLive();
+
+		Navigator.gotoSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		DMDocument.viewPGViaMG(
+			mgDocumentTitle = "HOdbzGCI5ME",
+			staging = "true");
+	}
+
+	@description = "This test covers LPS-154417. It checks that an external video with a custom friendlyURL added to the Web content field displays properly after its friendlyURL is edited and published on a site" 
+	@priority = "4"
+	test CanViewExternalVideotInWCAfterFriendlyURLIsUpdated {
+		VideoShortcut.addCP(
+			videoShortcutTitle = "Test YouTube Video",
+			videoURL = "https://www.youtube.com/watch?v=HOdbzGCI5ME");
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		Staging.gotoPublishToLive();
+
+		Staging.publishToLive();
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Site Name (Staging)",
+			layoutName = "Staging DM Page",
+			site = "false",
+			widgetName = "Web Content Display");
+
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name-staging");
+
+		WebContentNavigator.gotoAddCP();
+
+		WebContent.addCP(
+			embedVideo = "true",
+			navTab = "Documents and Media",
+			videoShortcutTitle = "Test YouTube Video",
+			webContentContent = "Web Content Content",
+			webContentTitle = "Web Content Title");
+
+		PortletEntry.publish();
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		WebContentDisplayPortlet.selectWebContent(webContentTitle = "Web Content Title");
+
+		DMNavigator.openToEditEntryInSite(
+			dmDocumentTitle = "Test YouTube Video",
+			groupName = "Site Name (Staging)",
+			site = "false",
+			siteURLKey = "site-name-staging");
+
+		DMDocument.editFriendlyURL(
+			dmDocumentTitle = "Test YouTube Video",
+			friendlyURLEdit = "custom-url");
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		WebContentDisplayPortlet.viewContent(
+			videoShortcutTitle = "YouTube",
+			webContentTitle = "Web Content Title");
+
+		Staging.gotoPublishToLive();
+
+		Staging.publishToLive();
+
+		Navigator.openSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		WebContentDisplayPortlet.viewContent(
+			videoShortcutTitle = "YouTube",
+			webContentTitle = "Web Content Title");
+	}
+
+	@description = "This test covers LPS-154413. It checks that an image with a custom friendlyURL added to a dynamic collection displayed in an Asset Publisher can be rendered properly on a site after its friendlyURL is edited and republished."
+	@priority = "4"
+	test CanViewImageInDynamicCollectionViaAPAfterFriendlyURLIsUpdated {
+		JSONDepot.addDepot(
+			depotDescription = "This is the description of a depot",
+			depotName = "Test Depot Name");
+
+		JSONStaging.enableLocalStaging(
+			groupName = "Test Depot Name",
+			site = "false");
+
+		JSONDepot.connectSite(
+			depotName = "Test Depot Name (Staging)",
+			groupName = "Site Name (Staging)",
+			site = "false");
+
+		JSONDocument.addFileWithUploadedFile(
+			dmDocumentDescription = "DM Document Description",
+			dmDocumentTitle = "Document_2.jpg",
+			groupName = "Test Depot Name-staging",
+			mimeType = "image/jpeg",
+			sourceFileName = "Document_2.jpg");
+
+		DepotNavigator.openToEditDMEntryInDepot(
+			depotName = "Test Depot Name",
+			dmDocumentTitle = "Document_2.jpg",
+			staging = "true");
+
+		DMDocument.editFriendlyURL(
+			dmDocumentTitle = "Document_2.jpg",
+			friendlyURLEdit = "custom-url");
+
+		JSONAssetlist.addDynamicAssetListEntryWithItemType(
+			groupName = "Test Depot Name (Staging)",
+			itemSubtype = "Basic Document",
+			itemType = "Document",
+			site = "false",
+			title = "Depot Dynamic Asset List");
+
+		DepotNavigator.openDepotAssetListsAdminStaging(depotName = "Test Depot Name");
+
+		DepotNavigator.switchStagingStatus(stagingItem = "Publish to Live");
+
+		Staging.publishToLive();
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Site Name (Staging)",
+			layoutName = "Staging DM Page",
+			site = "false",
+			widgetName = "Asset Publisher");
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		AssetPublisherPortlet.selectAssetList(
+			assetListName = "Depot Dynamic Asset List",
+			depotName = "Test Depot Name");
+
+		DepotNavigator.openToEditDMEntryInDepot(
+			depotName = "Test Depot Name",
+			dmDocumentTitle = "Document_2.jpg",
+			staging = "true");
+
+		DMDocument.editFriendlyURL(
+			dmDocumentTitle = "Document_2.jpg",
+			friendlyURLEdit = "new-custom-url");
+
+		DepotNavigator.switchStagingStatus(stagingItem = "Publish to Live");
+
+		Staging.publishToLive();
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		AssetPublisherPortlet.viewAssetPG(assetTitle = "Document_2.jpg");
+
+		Staging.gotoPublishToLive();
+
+		Staging.publishToLive();
+
+		Navigator.openSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		AssetPublisherPortlet.viewAssetPG(assetTitle = "Document_2.jpg");
+	}
+
+	@description = "This test covers LPS-154412. It checks that an image with a custom friendlyURL added to a manual collection displayed in an Asset Publisher can be rendered properly on a site after its friendlyURL is edited and republished."
+	@priority = "4"
+	test CanViewImageInManualCollectionViaAPAfterFriendlyURLIsUpdated {
+		JSONDepot.addDepot(
+			depotDescription = "This is the description of a depot",
+			depotName = "Test Depot Name");
+
+		JSONStaging.enableLocalStaging(
+			groupName = "Test Depot Name",
+			site = "false");
+
+		JSONDepot.connectSite(
+			depotName = "Test Depot Name (Staging)",
+			groupName = "Site Name (Staging)",
+			site = "false");
+
+		JSONDocument.addFileWithUploadedFile(
+			dmDocumentDescription = "DM Document Description",
+			dmDocumentTitle = "Document_2.jpg",
+			groupName = "Test Depot Name-staging",
+			mimeType = "image/jpeg",
+			sourceFileName = "Document_2.jpg");
+
+		DepotNavigator.openToEditDMEntryInDepot(
+			depotName = "Test Depot Name",
+			dmDocumentTitle = "Document_2.jpg",
+			staging = "true");
+
+		DMDocument.editFriendlyURL(
+			dmDocumentTitle = "Document_2.jpg",
+			friendlyURLEdit = "custom-url");
+
+		JSONAssetlist.addManualAssetListEntryWithItemType(
+			groupName = "Test Depot Name (Staging)",
+			itemSubtype = "Basic Document",
+			itemType = "Document",
+			site = "false",
+			title = "Depot Manual Asset List");
+
+		DepotNavigator.openDepotAssetListsAdminStaging(depotName = "Test Depot Name");
+
+		AssetListsAdmin.selectAsset(
+			assetListName = "Depot Manual Asset List",
+			assetName = "Document_2.jpg",
+			assetType = "Basic Document",
+			itemSubtype = "Basic Document",
+			itemType = "Document");
+
+		DepotNavigator.switchStagingStatus(stagingItem = "Publish to Live");
+
+		Staging.publishToLive();
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Site Name (Staging)",
+			layoutName = "Staging DM Page",
+			site = "false",
+			widgetName = "Asset Publisher");
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		AssetPublisherPortlet.selectAssetList(
+			assetListName = "Depot Manual Asset List",
+			depotName = "Test Depot Name");
+
+		DepotNavigator.openToEditDMEntryInDepot(
+			depotName = "Test Depot Name",
+			dmDocumentTitle = "Document_2.jpg",
+			staging = "true");
+
+		DMDocument.editFriendlyURL(
+			dmDocumentTitle = "Document_2.jpg",
+			friendlyURLEdit = "new-custom-url");
+
+		DepotNavigator.switchStagingStatus(stagingItem = "Publish to Live");
+
+		Staging.publishToLive();
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		AssetPublisherPortlet.viewAssetPG(assetTitle = "Document_2.jpg");
+
+		Staging.gotoPublishToLive();
+
+		Staging.publishToLive();
+
+		Navigator.openSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		AssetPublisherPortlet.viewAssetPG(assetTitle = "Document_2.jpg");
+	}
+
+	@description = "This test covers LPS-154414. It checks that an image displays properly in the Media Gallery widget after the friendlyURL has been edited and published on a site."
+	@priority = "4"
+	test CanViewImageInMGAfterFriendlyURLIsUpdated {
+		JSONDepot.addDepot(
+			depotDescription = "This is the description of a depot",
+			depotName = "Test Depot Name");
+
+		JSONStaging.enableLocalStaging(
+			groupName = "Test Depot Name",
+			site = "false");
+
+		JSONDepot.connectSite(
+			depotName = "Test Depot Name (Staging)",
+			groupName = "Site Name (Staging)",
+			site = "false");
+
+		JSONDocument.addFileWithUploadedFile(
+			dmDocumentDescription = "DM Document Description",
+			dmDocumentTitle = "Document_2.jpg",
+			groupName = "Test Depot Name-staging",
+			mimeType = "image/jpeg",
+			sourceFileName = "Document_2.jpg");
+
+		DepotNavigator.openToEditDMEntryInDepot(
+			depotName = "Test Depot Name",
+			dmDocumentTitle = "Document_2.jpg",
+			staging = "true");
+
+		DMDocument.editFriendlyURL(
+			dmDocumentTitle = "Document_2.jpg",
+			friendlyURLEdit = "custom-url");
+
+		DepotNavigator.openDepotAssetListsAdminStaging(depotName = "Test Depot Name");
+
+		DepotNavigator.switchStagingStatus(stagingItem = "Publish to Live");
+
+		Staging.publishToLive();
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Site Name (Staging)",
+			layoutName = "Staging DM Page",
+			site = "false",
+			widgetName = "Media Gallery");
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		MGPortlet.setRootFolder(
+			depotName = "Test Depot Name",
+			selectRootFolder = "true");
+
+		DepotNavigator.openToEditDMEntryInDepot(
+			depotName = "Test Depot Name",
+			dmDocumentTitle = "Document_2.jpg",
+			staging = "true");
+
+		DMDocument.editFriendlyURL(
+			dmDocumentTitle = "Document_2.jpg",
+			friendlyURLEdit = "new-custom-url");
+
+		DepotNavigator.switchStagingStatus(stagingItem = "Publish to Live");
+
+		Staging.publishToLive();
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		DMDocument.viewPGViaMG(
+			mgDocumentTitle = "Document_2.jpg",
+			staging = "true");
+
+		Staging.gotoPublishToLive();
+
+		Staging.publishToLive();
+
+		Navigator.openSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		DMDocument.viewPGViaMG(
+			mgDocumentTitle = "Document_2.jpg",
+			staging = "true");
+	}
+
+	@description = "This test covers LPS-154416. It checks that an image with a custom friendlyURL added to the Web content field displays properly after its friendlyURL is edited and published on a site."
+	@priority = "4"
+	test CanViewImageInWCAfterFriendlyURLIsUpdated {
+		JSONDocument.addFileWithUploadedFile(
+			dmDocumentDescription = "DM Document Description",
+			dmDocumentTitle = "DM Document Title",
+			groupName = "Site Name-staging",
+			mimeType = "image/jpeg",
+			sourceFileName = "Document_1.jpg");
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		Staging.gotoPublishToLive();
+
+		Staging.publishToLive();
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Site Name (Staging)",
+			layoutName = "Staging DM Page",
+			site = "false",
+			widgetName = "Web Content Display");
+
+		WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name-staging");
+
+		WebContentNavigator.gotoAddCP();
+
+		WebContent.addCP(
+			embedImage = "true",
+			imageFileName = "DM Document Title",
+			siteName = "Site Name",
+			webContentContent = "Web Content Content",
+			webContentTitle = "Web Content Title");
+
+		PortletEntry.publish();
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		WebContentDisplayPortlet.selectWebContent(webContentTitle = "Web Content Title");
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		Staging.gotoPublishToLive();
+
+		Staging.publishToLive();
+
+		DMNavigator.openToEditEntryInSite(
+			dmDocumentTitle = "DM Document Title",
+			groupName = "Site Name (Staging)",
+			site = "false",
+			siteURLKey = "site-name-staging");
+
+		DMDocument.editFriendlyURL(
+			dmDocumentTitle = "DM Document Title",
+			friendlyURLEdit = "custom-url");
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		WebContentDisplayPortlet.viewContent(
+			imageFileName = "dm-document-title",
+			webContentTitle = "Web Content Title");
+
+		Staging.gotoPublishToLive();
+
+		Staging.publishToLive();
+
+		Navigator.openSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		WebContentDisplayPortlet.viewContent(
+			imageFileName = "dm-document-title",
+			webContentTitle = "Web Content Title");
 	}
 
 	@description = "This is a use case for LPS-74621."
@@ -752,6 +1374,54 @@ definition {
 			previewImage = "Image_2.jpg");
 	}
 
+	@description = "This test covers LPS-155794. It ensures that an image that was published on a site can still be accessed after local staging is disabled."
+	@priority = "5"
+	test ImageIsStillAccessibleAfterDisablingStaging {
+		var portalURL = PropsUtil.get("portal.url");
+
+		JSONDocument.addFileWithUploadedFile(
+			dmDocumentDescription = "DM Document Description",
+			dmDocumentTitle = "Document_2",
+			groupName = "Site Name-staging",
+			mimeType = "image/jpeg",
+			sourceFileName = "Document_2.jpg");
+
+		DMNavigator.openToEditEntryInSite(
+			dmDocumentTitle = "Document_2",
+			groupName = "Site Name (Staging)",
+			site = "false",
+			siteURLKey = "site-name-staging");
+
+		DMDocument.editFriendlyURL(
+			dmDocumentTitle = "Document_2",
+			friendlyURLEdit = "document_2_edit");
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		Staging.gotoPublishToLive();
+
+		Staging.publishToLive();
+
+		DMNavigator.openToEntryInAdmin(
+			dmDocumentTitle = "Document_2",
+			groupName = "Site Name",
+			siteURLKey = "site-name");
+
+		var latestVersionURL = DMDocument.getLatestVersionURL();
+
+		Staging.openStagingAdmin(siteURLKey = "site-name-staging");
+
+		Staging.deactivateStagingCP(siteName = "Site Name");
+
+		Navigator.openSpecificURL(url = "${latestVersionURL}");
+
+		AssertVisible(
+			key_imageSourceURL = "${portalURL}/documents/d/site-name/document_2_edit",
+			locator1 = "DocumentsAndMediaDocument#DOCUMENT_VIEWPORT_PREVIEW");
+	}
+
 	@description = "This test covers LPS-82539."
 	@priority = "5"
 	@refactordone
@@ -798,78 +1468,6 @@ definition {
 		AssertTextEquals(
 			locator1 = "Message#EMPTY_INFO",
 			value1 = "There are no documents or media files in this folder.");
-	}
-
-	@description = "LPS-90557 - Publishing deletion of shortcut target results in PortletDataException."
-	@priority = "5"
-	test PublishDeletionOfShortcutTarget {
-		property portal.acceptance = "true";
-
-		DMNavigator.gotoAddDocumentTypeCP();
-
-		DMDocument.editDocument(
-			dmDocumentDescription = "DM Document Description",
-			dmDocumentFile = "Document_1.doc",
-			dmDocumentTitle = "DM Document Title");
-
-		Button.clickPublish();
-
-		DMDocument.addDMShortcutCPWithStaging(
-			dmDocumentTitle = "DM Document Title",
-			siteName = "Site Name");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging DM Page",
-			siteName = "Site Name");
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		ProductMenu.gotoLiveSite();
-
-		ProductMenu.gotoPortlet(
-			category = "Content & Data",
-			panel = "Site Administration",
-			portlet = "Documents and Media");
-
-		AssertElementPresent(
-			key_card = "DM Document Title",
-			locator1 = "Card#CARD_SHORTCUT");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging DM Page",
-			siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content & Data",
-			panel = "Site Administration",
-			portlet = "Documents and Media");
-
-		DMDocument.deleteCP(dmDocumentTitle = "DM Document Title");
-
-		AssertElementNotPresent(
-			key_card = "DM Document Title",
-			locator1 = "Card#CARD_SHORTCUT");
-
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging DM Page",
-			siteName = "Site Name");
-
-		Staging.gotoPublishToLive();
-
-		Staging.publishToLive();
-
-		ProductMenu.gotoLiveSite();
-
-		ProductMenu.gotoPortlet(
-			category = "Content & Data",
-			panel = "Site Administration",
-			portlet = "Documents and Media");
-
-		AssertElementNotPresent(
-			key_card = "DM Document Title",
-			locator1 = "Card#CARD_SHORTCUT");
 	}
 
 	@description = "This is a use case for LPS-79925."
@@ -1137,6 +1735,8 @@ definition {
 	@priority = "5"
 	@refactorneeded
 	test PublishEditsToMetadataSet {
+		property custom.properties = "dl.actions.visible=true";
+
 		DMNavigator.gotoMetadataSets();
 
 		DMMetadataSet.addTitle(metadataSetName = "DM Metadata Set Name");
@@ -1171,8 +1771,6 @@ definition {
 			siteName = "Site Name");
 
 		Portlet.addPG(portletName = "Documents and Media");
-
-		DMDocument.enableActionsMenuOnPortlet();
 
 		DMDocument.viewPG(
 			dmDocumentDescription = "DM Document Description",
@@ -1319,7 +1917,7 @@ definition {
 	@priority = "4"
 	@refactorneeded
 	test ShareDMDocumentOnLiveSite {
-		property custom.properties = "jsonws.web.service.paths.excludes=";
+		property custom.properties = "jsonws.web.service.paths.excludes=${line.separator}dl.actions.visible=true";
 
 		JSONUser.addUser(
 			userEmailAddress = "userea@liferay.com",
@@ -1344,8 +1942,6 @@ definition {
 			siteName = "Site Name");
 
 		Portlet.addPG(portletName = "Documents and Media");
-
-		DMDocument.enableActionsMenuOnPortlet();
 
 		LexiconEntry.changeDisplayStyle(displayStyle = "list");
 
@@ -1391,29 +1987,62 @@ definition {
 			ownerName = "Test Test");
 	}
 
+	@description = "This test covers LPS-90557. It ensures that a basic document and a shortcut pointing to it can be removed and republished when enabling local staging."
+	@priority = "5"
+	test ShortcutDisppearsAfterTargetDeletionIsPublished {
+		property portal.acceptance = "true";
+
+		JSONDocument.addFileWithUploadedFile(
+			dmDocumentDescription = "DM Document Description",
+			dmDocumentTitle = "DM Document Title",
+			groupName = "Site Name-staging",
+			mimeType = "image/jpeg",
+			sourceFileName = "Document_1.jpg");
+
+		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "site-name-staging");
+
+		DMDocument.addDMShortcutCP(
+			dmDocumentTitle = "DM Document Title",
+			stagingSiteName = "true");
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		Staging.gotoPublishToLive();
+
+		Staging.publishToLive();
+
+		JSONDocument.deleteFile(
+			dmDocumentTitle = "DM Document Title",
+			groupName = "Site Name (Staging)",
+			site = "false");
+
+		Navigator.gotoStagedSitePage(
+			pageName = "Staging DM Page",
+			siteName = "Site Name");
+
+		Staging.gotoPublishToLive();
+
+		Staging.publishToLive();
+
+		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "site-name");
+
+		DMDocument.viewDefault();
+
+		AssertConsoleTextNotPresent(value1 = "PortletDataException");
+	}
+
 	@priority = "5"
 	@refactorneeded
 	test StagingDemoDocumentsAndMedia {
 		property custom.properties = "default.layout.template.id=1_column";
+		property custom.properties = "dl.actions.visible=true";
 		property portal.acceptance = "true";
 		property test.name.skip.portal.instance = "DMLocalStaging#StagingDemoDocumentsAndMedia";
 		property testray.component.names = "Training";
 
-		SystemSettings.openSystemSettingsAdmin();
-
-		SystemSettings.gotoConfiguration(
-			configurationCategory = "Documents and Media",
-			configurationName = "Service",
-			configurationScope = "System Scope");
-
-		Type(
-			key_fieldLabel = "Maximum File Size",
-			locator1 = "TextInput#GENERIC_TEXT_INPUT",
-			value1 = "30000000");
-
-		ScrollWebElementIntoView(locator1 = "Button#SAVE");
-
-		PortletEntry.save();
+		DMDocument.updateMaximumFileSize(fieldValue = "30000000");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Staging DM Page",
@@ -1422,8 +2051,6 @@ definition {
 		Portlet.addPG(portletName = "Documents and Media");
 
 		LexiconEntry.changeDisplayStyle(displayStyle = "list");
-
-		DMDocument.enableActionsMenuOnPortlet();
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Staging DM Page",
@@ -1519,6 +2146,8 @@ definition {
 	@priority = "5"
 	@refactorneeded
 	test ViewRepublishedDocumentInfo {
+		property custom.properties = "dl.actions.visible=true";
+
 		ProductMenu.gotoPortlet(
 			category = "Categorization",
 			portlet = "Tags");
@@ -1530,8 +2159,6 @@ definition {
 			siteName = "Site Name");
 
 		Portlet.addPG(portletName = "Documents and Media");
-
-		DMDocument.enableActionsMenuOnPortlet();
 
 		DMDocument.addPG(
 			dmDocumentDescription = "DM Document Description",
@@ -1547,12 +2174,6 @@ definition {
 		Staging.gotoPublishToLive();
 
 		Staging.publishToLive();
-
-		Navigator.gotoSitePage(
-			pageName = "Staging DM Page",
-			siteName = "Site Name");
-
-		var siteId = Site.getSiteId();
 
 		Navigator.gotoSitePage(
 			pageName = "Staging DM Page",
@@ -1575,8 +2196,8 @@ definition {
 			tagNameList = "tag1");
 
 		DMDocument.viewLatestVersionURL(
-			dmDocumentFileName = "Document_1.jpg",
-			siteId = "${siteId}");
+			dmDocumentFileName = "document_1",
+			siteName = "site-name");
 
 		DMDocument.viewWebDAVURL(
 			dmDocumentFileName = "Document_1.jpg",
@@ -1624,8 +2245,8 @@ definition {
 			tagNameList = "tag1");
 
 		DMDocument.viewLatestVersionURL(
-			dmDocumentFileName = "Document_3Edit.png",
-			siteId = "${siteId}");
+			dmDocumentFileName = "document_1",
+			siteName = "site-name");
 
 		DMDocument.viewWebDAVURL(
 			dmDocumentFileName = "Document_3Edit.png",

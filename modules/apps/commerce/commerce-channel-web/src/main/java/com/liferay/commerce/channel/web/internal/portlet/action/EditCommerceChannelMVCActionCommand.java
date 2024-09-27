@@ -72,7 +72,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = {
 		"javax.portlet.name=" + CPPortletKeys.COMMERCE_CHANNELS,
 		"mvc.command.name=/commerce_channels/edit_commerce_channel"
@@ -238,6 +238,7 @@ public class EditCommerceChannelMVCActionCommand extends BaseMVCActionCommand {
 
 		_updateAccountCartMaxAllowed(commerceChannel, actionRequest);
 		_updatePurchaseOrderNumber(commerceChannel, actionRequest);
+		_updateRequestedDeliveryDateFormat(commerceChannel, actionRequest);
 		_updateShippingTaxCategory(commerceChannel, actionRequest);
 		_updateSiteType(commerceChannel, actionRequest);
 		_updateWorkflowDefinitionLinks(commerceChannel, actionRequest);
@@ -263,6 +264,29 @@ public class EditCommerceChannelMVCActionCommand extends BaseMVCActionCommand {
 
 		Map<String, String> parameterMap = PropertiesParamUtil.getProperties(
 			actionRequest, "settings--");
+
+		for (Map.Entry<String, String> entry : parameterMap.entrySet()) {
+			modifiableSettings.setValue(entry.getKey(), entry.getValue());
+		}
+
+		modifiableSettings.store();
+	}
+
+	private void _updateRequestedDeliveryDateFormat(
+			CommerceChannel commerceChannel, ActionRequest actionRequest)
+		throws Exception {
+
+		Settings settings = _settingsFactory.getSettings(
+			new GroupServiceSettingsLocator(
+				commerceChannel.getGroupId(),
+				CommerceConstants.
+					SERVICE_NAME_COMMERCE_ORDER_IMPORTER_DATE_FORMAT));
+
+		ModifiableSettings modifiableSettings =
+			settings.getModifiableSettings();
+
+		Map<String, String> parameterMap = PropertiesParamUtil.getProperties(
+			actionRequest, "format--");
 
 		for (Map.Entry<String, String> entry : parameterMap.entrySet()) {
 			modifiableSettings.setValue(entry.getKey(), entry.getValue());
@@ -375,11 +399,15 @@ public class EditCommerceChannelMVCActionCommand extends BaseMVCActionCommand {
 		FileEntry newFileEntry = _dlAppLocalService.getFileEntry(fileEntryId);
 
 		if (!Objects.equals(newFileEntry.getExtension(), "jrxml")) {
+			_dlAppLocalService.deleteFileEntry(newFileEntry.getFileEntryId());
+
 			throw new FileExtensionException();
 		}
 
 		if (!_commerceReportExporter.isValidJRXMLTemplate(
 				newFileEntry.getContentStream())) {
+
+			_dlAppLocalService.deleteFileEntry(newFileEntry.getFileEntryId());
 
 			throw new InvalidFileException();
 		}
@@ -401,8 +429,8 @@ public class EditCommerceChannelMVCActionCommand extends BaseMVCActionCommand {
 					DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 					newFileEntry.getFileName(), newFileEntry.getMimeType(),
 					formattedFileName, StringPool.BLANK, StringPool.BLANK,
-					newFileEntry.getContentStream(), newFileEntry.getSize(),
-					null, null, new ServiceContext());
+					StringPool.BLANK, newFileEntry.getContentStream(),
+					newFileEntry.getSize(), null, null, new ServiceContext());
 			}
 			finally {
 				_dlAppLocalService.deleteFileEntry(fileEntryId);
@@ -412,7 +440,7 @@ public class EditCommerceChannelMVCActionCommand extends BaseMVCActionCommand {
 			_dlAppLocalService.updateFileEntry(
 				commerceChannel.getUserId(), existingFileEntry.getFileEntryId(),
 				newFileEntry.getFileName(), newFileEntry.getMimeType(),
-				existingFileEntry.getTitle(),
+				existingFileEntry.getTitle(), StringPool.BLANK,
 				existingFileEntry.getDescription(), StringPool.BLANK,
 				DLVersionNumberIncrease.NONE, newFileEntry.getContentStream(),
 				newFileEntry.getSize(), null, null, new ServiceContext());

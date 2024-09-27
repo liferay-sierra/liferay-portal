@@ -41,7 +41,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Jürgen Kappler
  */
-@Component(enabled = false, service = InfoItemFieldReader.class)
+@Component(service = InfoItemFieldReader.class)
 public class AssetCategoryMainImageInfoItemFieldReader
 	implements InfoItemFieldReader<AssetCategory> {
 
@@ -50,6 +50,8 @@ public class AssetCategoryMainImageInfoItemFieldReader
 		return InfoField.builder(
 		).infoFieldType(
 			ImageInfoFieldType.INSTANCE
+		).namespace(
+			AssetCategory.class.getSimpleName()
 		).name(
 			"mainImage"
 		).labelInfoLocalizedValue(

@@ -16,7 +16,7 @@
 
 <%@ include file="/html/portal/init.jsp" %>
 
-<div class="pt-0" id="wrapper">
+<div class="position-relative pt-0" id="wrapper">
 	<header class="mb-4" id="banner">
 		<div class="mb-4 navbar navbar-classic navbar-top py-3">
 			<div class="container">
@@ -98,7 +98,13 @@
 									<liferay-ui:message key="administrator-user" />
 								</h3>
 
-								<%@ include file="/html/portal/setup_wizard_user_name.jspf" %>
+								<aui:input label="first-name" name="adminFirstName" value="<%= PropsValues.DEFAULT_ADMIN_FIRST_NAME %>">
+									<aui:validator name="required" />
+								</aui:input>
+
+								<aui:input label="last-name" name="adminLastName" value="<%= PropsValues.DEFAULT_ADMIN_LAST_NAME %>">
+									<aui:validator name="required" />
+								</aui:input>
 
 								<aui:input label="email" name="adminEmailAddress">
 									<aui:validator name="email" />
@@ -171,7 +177,7 @@
 									</c:choose>
 
 									<c:if test="<%= Validator.isNull(PropsValues.JDBC_DEFAULT_JNDI_NAME) %>">
-										<a href="<%= HttpUtil.addParameter(themeDisplay.getPathMain() + "/portal/setup_wizard", "defaultDatabase", false) %>" id="customDatabaseOptionsLink">
+										<a href="<%= HttpComponentsUtil.addParameter(themeDisplay.getPathMain() + "/portal/setup_wizard", "defaultDatabase", false) %>" id="customDatabaseOptionsLink">
 											(<liferay-ui:message key="change" />)
 										</a>
 									</c:if>
@@ -180,7 +186,7 @@
 								<div class="hide" id="customDatabaseOptions">
 									<div class="connection-messages" id="connectionMessages"></div>
 
-									<a class="d-inline-block database-options mb-3" href="<%= HttpUtil.addParameter(themeDisplay.getPathMain() + "/portal/setup_wizard", "defaultDatabase", true) %>" id="defaultDatabaseOptionsLink">
+									<a class="d-inline-block database-options mb-3" href="<%= HttpComponentsUtil.addParameter(themeDisplay.getPathMain() + "/portal/setup_wizard", "defaultDatabase", true) %>" id="defaultDatabaseOptionsLink">
 										&laquo; <liferay-ui:message key='<%= defaultDatabase ? "use-default-database" : "use-configured-database" %>' />
 									</a>
 
@@ -365,7 +371,7 @@
 						);
 
 						var updateMessage = function(message) {
-							connectionMessages.html('<div class="alert alert-danger"><span class="alert-indicator"><svg aria-hidden="true" class="lexicon-icon lexicon-icon-exclamation-full"><use xlink:href="<%= themeDisplay.getPathThemeImages() %>/clay/icons.svg#exclamation-full"></use></svg></span><strong class="lead"><liferay-ui:message key="error-colon" /></strong>' + message + '</div>');
+							connectionMessages.html('<div class="alert alert-danger"><span class="alert-indicator"><svg aria-hidden="true" class="lexicon-icon lexicon-icon-exclamation-full"><use xlink:href="<%= FrontendIconsUtil.getSpritemap(themeDisplay) %>#exclamation-full"></use></svg></span><strong class="lead"><liferay-ui:message key="error-colon" /></strong>' + message + '</div>');
 						};
 
 						var startInstall = function() {
@@ -429,7 +435,7 @@
 							<div class="alert alert-success">
 								<span class="alert-indicator">
 									<svg aria-hidden="true" class="lexicon-icon lexicon-icon-check-circle-full">
-										<use xlink:href="<%= themeDisplay.getPathThemeImages() %>/clay/icons.svg#check-circle-full"></use>
+										<use xlink:href="<%= FrontendIconsUtil.getSpritemap(themeDisplay) %>#check-circle-full"></use>
 									</svg>
 								</span>
 
@@ -458,7 +464,7 @@
 							<div class="alert alert-info">
 								<span class="alert-indicator">
 									<svg aria-hidden="true" class="lexicon-icon lexicon-icon-info-circle">
-										<use xlink:href="<%= themeDisplay.getPathThemeImages() %>/clay/icons.svg#info-circle"></use>
+										<use xlink:href="<%= FrontendIconsUtil.getSpritemap(themeDisplay) %>#info-circle"></use>
 									</svg>
 								</span>
 
@@ -470,7 +476,7 @@
 								<div class="alert alert-warning">
 									<span class="alert-indicator">
 										<svg aria-hidden="true" class="lexicon-icon lexicon-icon-warning-full">
-											<use xlink:href="<%= themeDisplay.getPathThemeImages() %>/clay/icons.svg#warning-full"></use>
+											<use xlink:href="<%= FrontendIconsUtil.getSpritemap(themeDisplay) %>#warning-full"></use>
 										</svg>
 									</span>
 

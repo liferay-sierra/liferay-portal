@@ -255,16 +255,6 @@ public class PortalUtil {
 	}
 
 	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static void addUserLocaleOptionsMessage(
-		HttpServletRequest httpServletRequest) {
-
-		_portal.addUserLocaleOptionsMessage(httpServletRequest);
-	}
-
-	/**
 	 * Clears the render parameters in the request if the portlet is in the
 	 * action phase.
 	 *
@@ -956,18 +946,6 @@ public class PortalUtil {
 		return _portal.getGoogleGadgetURL(portlet, themeDisplay);
 	}
 
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
-	 * #getGroupFriendlyURL(LayoutSet, ThemeDisplay, boolean, boolean)}
-	 */
-	@Deprecated
-	public static String getGroupFriendlyURL(
-			LayoutSet layoutSet, ThemeDisplay themeDisplay)
-		throws PortalException {
-
-		return _portal.getGroupFriendlyURL(layoutSet, themeDisplay);
-	}
-
 	public static String getGroupFriendlyURL(
 			LayoutSet layoutSet, ThemeDisplay themeDisplay,
 			boolean canonicalURL, boolean controlPanel)
@@ -1371,10 +1349,6 @@ public class PortalUtil {
 		throws PortalException {
 
 		return _portal.getPortalURL(themeDisplay);
-	}
-
-	public static String getPortalWebDir() {
-		return _portal.getPortalWebDir();
 	}
 
 	public static PortletConfig getPortletConfig(
@@ -1807,15 +1781,6 @@ public class PortalUtil {
 		return _portal.getValidUserId(companyId, userId);
 	}
 
-	/**
-	 * @deprecated As of Mueller (7.2.x), replaced by {@link
-	 *             #getVirtualHostnames(LayoutSet)}
-	 */
-	@Deprecated
-	public static String getVirtualHostname(LayoutSet layoutSet) {
-		return _portal.getVirtualHostname(layoutSet);
-	}
-
 	public static TreeMap<String, String> getVirtualHostnames(
 		LayoutSet layoutSet) {
 
@@ -1895,6 +1860,10 @@ public class PortalUtil {
 		throws Exception {
 
 		return _portal.isGroupAdmin(user, groupId);
+	}
+
+	public static boolean isGroupControlPanelPath(String path) {
+		return _portal.isGroupControlPanelPath(path);
 	}
 
 	public static boolean isGroupFriendlyURL(
@@ -1978,6 +1947,10 @@ public class PortalUtil {
 
 	public static boolean isSystemRole(String roleName) {
 		return _portal.isSystemRole(roleName);
+	}
+
+	public static boolean isValidPortalDomain(long companyId, String domain) {
+		return _portal.isValidPortalDomain(companyId, domain);
 	}
 
 	public static boolean isValidResourceId(String resourceId) {

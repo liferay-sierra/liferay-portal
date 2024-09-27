@@ -37,21 +37,9 @@ import org.osgi.service.component.annotations.Deactivate;
 /**
  * @author Eduardo García
  */
-@Component(immediate = true, service = SegmentsFieldCustomizerRegistry.class)
+@Component(service = SegmentsFieldCustomizerRegistry.class)
 public class SegmentsFieldCustomizerRegistryImpl
 	implements SegmentsFieldCustomizerRegistry {
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 *             #getSegmentsFieldCustomizerOptional(String, String)}
-	 */
-	@Deprecated
-	@Override
-	public Optional<SegmentsFieldCustomizer> getSegmentFieldCustomizerOptional(
-		String entityName, String fieldName) {
-
-		return getSegmentsFieldCustomizerOptional(entityName, fieldName);
-	}
 
 	@Override
 	public Optional<SegmentsFieldCustomizer> getSegmentsFieldCustomizerOptional(

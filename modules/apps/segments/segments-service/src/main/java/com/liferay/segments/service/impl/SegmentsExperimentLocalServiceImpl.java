@@ -14,7 +14,6 @@
 
 package com.liferay.segments.service.impl;
 
-import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
@@ -30,8 +29,10 @@ import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserNotificationDeliveryConstants;
 import com.liferay.portal.kernel.notifications.UserNotificationManagerUtil;
+import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.UserNotificationEventLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.BigDecimalUtil;
@@ -39,7 +40,6 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.segments.constants.SegmentsExperienceConstants;
 import com.liferay.segments.constants.SegmentsExperimentConstants;
 import com.liferay.segments.constants.SegmentsPortletKeys;
 import com.liferay.segments.exception.LockedSegmentsExperimentException;
@@ -54,10 +54,10 @@ import com.liferay.segments.exception.WinnerSegmentsExperienceException;
 import com.liferay.segments.model.SegmentsExperience;
 import com.liferay.segments.model.SegmentsExperiment;
 import com.liferay.segments.model.SegmentsExperimentRel;
-import com.liferay.segments.model.SegmentsExperimentRelTable;
 import com.liferay.segments.service.SegmentsExperienceLocalService;
 import com.liferay.segments.service.SegmentsExperimentRelLocalService;
 import com.liferay.segments.service.base.SegmentsExperimentLocalServiceBaseImpl;
+import com.liferay.segments.service.persistence.SegmentsExperiencePersistence;
 
 import java.math.RoundingMode;
 
@@ -65,7 +65,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
@@ -104,7 +103,7 @@ public class SegmentsExperimentLocalServiceImpl
 		segmentsExperiment.setUuid(serviceContext.getUuid());
 		segmentsExperiment.setGroupId(serviceContext.getScopeGroupId());
 
-		User user = userLocalService.getUser(serviceContext.getUserId());
+		User user = _userLocalService.getUser(serviceContext.getUserId());
 
 		segmentsExperiment.setCompanyId(user.getCompanyId());
 		segmentsExperiment.setUserId(user.getUserId());
@@ -138,7 +137,7 @@ public class SegmentsExperimentLocalServiceImpl
 
 		// Resources
 
-		resourceLocalService.addModelResources(
+		_resourceLocalService.addModelResources(
 			segmentsExperiment, serviceContext);
 
 		// Segments experiment rel
@@ -186,7 +185,7 @@ public class SegmentsExperimentLocalServiceImpl
 
 		// Resources
 
-		resourceLocalService.deleteResource(
+		_resourceLocalService.deleteResource(
 			segmentsExperiment, ResourceConstants.SCOPE_INDIVIDUAL);
 
 		// Segments experiment rels
@@ -210,35 +209,6 @@ public class SegmentsExperimentLocalServiceImpl
 			segmentsExperimentLocalService.deleteSegmentsExperiment(
 				segmentsExperiment);
 		}
-	}
-
-	@Override
-	public SegmentsExperience fetchControlSegmentExperience(
-		SegmentsExperience segmentsExperience) {
-
-		List<SegmentsExperimentRel> segmentsExperimentRels =
-			_segmentsExperimentRelLocalService.dslQuery(
-				DSLQueryFactoryUtil.select(
-					SegmentsExperimentRelTable.INSTANCE
-				).from(
-					SegmentsExperimentRelTable.INSTANCE
-				).where(
-					SegmentsExperimentRelTable.INSTANCE.segmentsExperienceId.eq(
-						segmentsExperience.getSegmentsExperienceId())
-				));
-
-		if (segmentsExperimentRels.isEmpty()) {
-			return null;
-		}
-
-		SegmentsExperimentRel segmentsExperimentRel =
-			segmentsExperimentRels.get(0);
-
-		SegmentsExperiment segmentsExperiment = fetchSegmentsExperiment(
-			segmentsExperimentRel.getSegmentsExperimentId());
-
-		return _segmentsExperienceLocalService.fetchSegmentsExperience(
-			segmentsExperiment.getSegmentsExperienceId());
 	}
 
 	@Override
@@ -443,7 +413,68 @@ public class SegmentsExperimentLocalServiceImpl
 			winnerSegmentsExperienceId, status);
 	}
 
-	protected void sendNotificationEvent(SegmentsExperiment segmentsExperiment)
+	private DynamicQuery _getSegmentsExperienceIdsDynamicQuery(
+		long segmentsEntryId) {
+
+		DynamicQuery dynamicQuery =
+			_segmentsExperienceLocalService.dynamicQuery();
+
+		Property segmentsEntryIdProperty = PropertyFactoryUtil.forName(
+			"segmentsEntryId");
+
+		dynamicQuery.add(segmentsEntryIdProperty.eq(segmentsEntryId));
+
+		dynamicQuery.setProjection(
+			ProjectionFactoryUtil.property("segmentsExperienceId"));
+
+		return dynamicQuery;
+	}
+
+	private SegmentsExperience _publishSegmentsExperienceVariant(
+		SegmentsExperience controlSegmentsExperience,
+		SegmentsExperience variantSegmentsExperience) {
+
+		SegmentsExperience segmentsExperience =
+			_segmentsExperiencePersistence.fetchByG_C_C_Last(
+				controlSegmentsExperience.getGroupId(),
+				controlSegmentsExperience.getClassNameId(),
+				controlSegmentsExperience.getClassPK(), null);
+
+		int controlSegmentsExperiencePriority =
+			controlSegmentsExperience.getPriority();
+		int variantSegmentsExperiencePriority =
+			variantSegmentsExperience.getPriority();
+
+		controlSegmentsExperience.setPriority(
+			segmentsExperience.getPriority() - 1);
+
+		controlSegmentsExperience = _segmentsExperiencePersistence.update(
+			controlSegmentsExperience);
+
+		variantSegmentsExperience.setPriority(
+			segmentsExperience.getPriority() - 2);
+
+		variantSegmentsExperience = _segmentsExperiencePersistence.update(
+			variantSegmentsExperience);
+
+		_segmentsExperiencePersistence.flush();
+
+		controlSegmentsExperience.setPriority(
+			variantSegmentsExperiencePriority);
+		controlSegmentsExperience.setActive(false);
+
+		_segmentsExperienceLocalService.updateSegmentsExperience(
+			controlSegmentsExperience);
+
+		variantSegmentsExperience.setPriority(
+			controlSegmentsExperiencePriority);
+		variantSegmentsExperience.setActive(true);
+
+		return _segmentsExperienceLocalService.updateSegmentsExperience(
+			variantSegmentsExperience);
+	}
+
+	private void _sendNotificationEvent(SegmentsExperiment segmentsExperiment)
 		throws PortalException {
 
 		ServiceContext serviceContext =
@@ -476,72 +507,6 @@ public class SegmentsExperimentLocalServiceImpl
 			));
 	}
 
-	private DynamicQuery _getSegmentsExperienceIdsDynamicQuery(
-		long segmentsEntryId) {
-
-		DynamicQuery dynamicQuery =
-			_segmentsExperienceLocalService.dynamicQuery();
-
-		Property segmentsEntryIdProperty = PropertyFactoryUtil.forName(
-			"segmentsEntryId");
-
-		dynamicQuery.add(segmentsEntryIdProperty.eq(segmentsEntryId));
-
-		dynamicQuery.setProjection(
-			ProjectionFactoryUtil.property("segmentsExperienceId"));
-
-		return dynamicQuery;
-	}
-
-	private SegmentsExperience _publishSegmentsExperienceVariant(
-		SegmentsExperience controlSegmentsExperience,
-		SegmentsExperience variantSegmentsExperience) {
-
-		int lowestSegmentsExperiencePriority = Optional.ofNullable(
-			segmentsExperiencePersistence.fetchByG_C_C_Last(
-				controlSegmentsExperience.getGroupId(),
-				controlSegmentsExperience.getClassNameId(),
-				controlSegmentsExperience.getClassPK(), null)
-		).map(
-			SegmentsExperience::getPriority
-		).orElse(
-			SegmentsExperienceConstants.PRIORITY_DEFAULT
-		);
-
-		int controlSegmentsExperiencePriority =
-			controlSegmentsExperience.getPriority();
-		int variantSegmentsExperiencePriority =
-			variantSegmentsExperience.getPriority();
-
-		controlSegmentsExperience.setPriority(
-			lowestSegmentsExperiencePriority - 1);
-
-		controlSegmentsExperience = segmentsExperiencePersistence.update(
-			controlSegmentsExperience);
-
-		variantSegmentsExperience.setPriority(
-			lowestSegmentsExperiencePriority - 2);
-
-		variantSegmentsExperience = segmentsExperiencePersistence.update(
-			variantSegmentsExperience);
-
-		segmentsExperiencePersistence.flush();
-
-		controlSegmentsExperience.setPriority(
-			variantSegmentsExperiencePriority);
-		controlSegmentsExperience.setActive(false);
-
-		_segmentsExperienceLocalService.updateSegmentsExperience(
-			controlSegmentsExperience);
-
-		variantSegmentsExperience.setPriority(
-			controlSegmentsExperiencePriority);
-		variantSegmentsExperience.setActive(true);
-
-		return _segmentsExperienceLocalService.updateSegmentsExperience(
-			variantSegmentsExperience);
-	}
-
 	private SegmentsExperiment _updateSegmentsExperimentStatus(
 			SegmentsExperiment segmentsExperiment,
 			long winnerSegmentsExperienceId, int status)
@@ -565,7 +530,7 @@ public class SegmentsExperimentLocalServiceImpl
 		segmentsExperiment = segmentsExperimentPersistence.update(
 			segmentsExperiment);
 
-		sendNotificationEvent(segmentsExperiment);
+		_sendNotificationEvent(segmentsExperiment);
 
 		return segmentsExperiment;
 	}
@@ -600,7 +565,9 @@ public class SegmentsExperimentLocalServiceImpl
 			SegmentsExperimentConstants.Status.valueOf(status);
 
 		if ((segmentsExperiment.getSegmentsExperienceId() !=
-				SegmentsExperienceConstants.ID_DEFAULT) &&
+				_segmentsExperienceLocalService.
+					fetchDefaultSegmentsExperienceId(
+						segmentsExperiment.getClassPK())) &&
 			(statusObject == SegmentsExperimentConstants.Status.COMPLETED) &&
 			(winnerSegmentsExperienceId !=
 				segmentsExperiment.getSegmentsExperienceId())) {
@@ -758,11 +725,20 @@ public class SegmentsExperimentLocalServiceImpl
 	}
 
 	@Reference
+	private ResourceLocalService _resourceLocalService;
+
+	@Reference
 	private SegmentsExperienceLocalService _segmentsExperienceLocalService;
+
+	@Reference
+	private SegmentsExperiencePersistence _segmentsExperiencePersistence;
 
 	@Reference
 	private SegmentsExperimentRelLocalService
 		_segmentsExperimentRelLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 	@Reference
 	private UserNotificationEventLocalService

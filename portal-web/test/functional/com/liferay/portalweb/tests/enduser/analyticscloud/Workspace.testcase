@@ -1,6 +1,8 @@
 @component-name = "portal-analytics-cloud"
 definition {
 
+	property analytics.cloud.release = "true";
+	property analytics.cloud.upstream = "true";
 	property portal.release = "false";
 	property portal.upstream = "true";
 	property property.group = "analytics.cloud.profile";
@@ -75,10 +77,10 @@ definition {
 			ACSettings.goToWorkspace();
 		}
 
-		task ("Change the timezone to Los Angeles of United States") {
+		task ("Change the timezone to Hong Kong of China") {
 			ACWorkspace.configureWorkspaceSettings(
-				timezone = "United States",
-				timezoneId = "UTC-08:00 Pacific Time (America/Los Angeles)");
+				timezone = "China",
+				timezoneId = "UTC+08:00 Hong Kong Time (Asia/Hong Kong)");
 
 			ACUtils.waitForLoading();
 		}
@@ -88,7 +90,7 @@ definition {
 		}
 
 		task ("View the information banner") {
-			ACUtils.viewAlertInfo(infoMessage = "Workspace timezone has changed to UTC-08:00 Pacific Time");
+			ACUtils.viewAlertInfo(infoMessage = "Workspace timezone has changed to UTC+08:00 Hong Kong Time");
 		}
 
 		task ("Dismiss the information banner") {
@@ -153,6 +155,48 @@ definition {
 
 		task ("View the information banner") {
 			ACUtils.viewAlertInfo(infoMessage = "Workspace timezone has changed to UTC-03:00 Brasilia Time");
+		}
+	}
+
+	@description = "Bug: LRAC-8268 | Automation ID: LRAC-11511 | Test Summary: Change friendlyURL for workspace"
+	@priority = "4"
+	test UpdateWorkspaceURLWithFriendlyURL {
+		var currentURL = Navigator.getCurrentURL();
+
+		var extractedAddress = StringUtil.extractFirst("${currentURL}", "/workspace");
+
+		task ("Connect AC to DXP") {
+			ACSettings.takeTokenFromAnalyticsCloud();
+
+			ACUtils.launchDXP();
+
+			ACDXPSettings.connectDXPtoAnalyticsCloud();
+		}
+
+		task ("Close all sessions and go to AC") {
+			ACUtils.closeAllSessionsAndWait();
+
+			ACUtils.launchAC();
+		}
+
+		task ("Navigate to Workspace Settings") {
+			ACNavigation.goToSettings();
+
+			ACSettings.goToWorkspace();
+		}
+
+		task ("Set friendly URL") {
+			ACWorkspace.setFriendlyURL(
+				friendlyURL = "${extractedAddress}/workspace/faro-dev-liferay",
+				urlName = "faro-dev-liferay");
+
+			ACUtils.waitForLoading();
+		}
+
+		task ("Assert friendly URL being apply to workspace url") {
+			Navigator.openSpecificURL(url = "${extractedAddress}/workspace/faro-dev-liferay/sites");
+
+			ACNavigation.assertPageHeader(headerTitle = "Sites");
 		}
 	}
 
@@ -287,10 +331,10 @@ definition {
 			ACSettings.goToWorkspace();
 		}
 
-		task ("Change the timezone to Los Angeles of United States") {
+		task ("Change the timezone to Xinjiang of China") {
 			ACWorkspace.configureWorkspaceSettings(
-				timezone = "United States",
-				timezoneId = "UTC-08:00 Pacific Time (America/Los Angeles)");
+				timezone = "China",
+				timezoneId = "UTC+06:00 Xinjiang Time (Asia/Urumqi)");
 
 			ACUtils.waitForLoading();
 		}
@@ -300,7 +344,7 @@ definition {
 		}
 
 		task ("View the information banner") {
-			ACUtils.viewAlertInfo(infoMessage = "Workspace timezone has changed to UTC-08:00 Pacific Time");
+			ACUtils.viewAlertInfo(infoMessage = "Workspace timezone has changed to UTC+06:00 XinJiang Time");
 		}
 
 		task ("Change the timezone to Shanghai of China") {
@@ -309,10 +353,6 @@ definition {
 				timezoneId = "UTC+08:00 China Time (Asia/Shanghai)");
 
 			ACUtils.waitForLoading();
-		}
-
-		task ("Refresh the page") {
-			Refresh();
 		}
 
 		task ("View only one information banner shown") {

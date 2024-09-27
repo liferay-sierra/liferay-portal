@@ -56,16 +56,16 @@ definition {
 		var key_changeTitle = "${changeTitle}";
 
 		if ("${conflictingChanges}" == "true") {
-			if (IsElementPresent(locator1 = "PublicationsChanges#DISCARD_CHANGE_BUTTON")) {
-				Click(locator1 = "PublicationsChanges#DISCARD_CHANGE_BUTTON");
-			}
-			else if (IsElementPresent(locator1 = "PublicationsChanges#PUBLICATIONS_CHANGE_DROPDOWN")) {
+			if (IsElementPresent(locator1 = "PublicationsChanges#PUBLICATIONS_CHANGE_DROPDOWN")) {
 				Click(locator1 = "PublicationsChanges#PUBLICATIONS_CHANGE_DROPDOWN");
 
 				MenuItem.click(menuItem = "Discard Change");
 			}
+			else if (IsElementPresent(locator1 = "PublicationsChanges#DISCARD_CHANGE_BUTTON")) {
+				Click(locator1 = "PublicationsChanges#DISCARD_CHANGE_BUTTON");
+			}
 			else {
-				MenuItem.click(menuItem = "Discard Change");
+				Click(locator1 = "PublicationsChangeDetails#DISCARD_CHANGE_BUTTON");
 			}
 		}
 		else {
@@ -76,7 +76,9 @@ definition {
 			MenuItem.click(menuItem = "Discard");
 		}
 
-		AssertElementPresent(locator1 = "PublicationsChanges#DISCARDED_CHANGES_TITLE");
+		AssertElementPresent(
+			key_changeTitle = "Discarded Changes",
+			locator1 = "PublicationsChanges#CHANGE_TITLE");
 
 		while (IsElementNotPresent(locator1 = "PublicationsChanges#CONTEXT_CHANGE_TITLE")) {
 			Click(locator1 = "Pagination#NEXT_LINK");
@@ -111,6 +113,24 @@ definition {
 			value1 = "${commentValueEdit}");
 	}
 
+	macro filterChangesByItem {
+		if (IsElementPresent(key_text = "Clear", locator1 = "Button#ANY")) {
+			Click(
+				key_text = "Clear",
+				locator1 = "Button#ANY");
+		}
+
+		Click(
+			key_name = "Filter By",
+			locator1 = "PublicationsChanges#SORT_BUTTON");
+
+		MenuItem.clickNoError(menuItem = "${menuItem}");
+
+		Check.checkNotVisible(
+			key_checkboxName = "${checkboxName}",
+			locator1 = "MenuItem#ANY_CHECKBOX");
+	}
+
 	macro gotoEditChanges {
 		if (isSet(changeOrder)) {
 			var changeOrder = "${changeOrder}";
@@ -120,6 +140,7 @@ definition {
 		}
 
 		Click(
+			key_changeCategory = "${changeCategory}",
 			key_changeTitle = "${changeTitle}",
 			locator1 = "PublicationsChanges#PUBLICATIONS_CHANGE_DROPDOWN");
 
@@ -182,6 +203,14 @@ definition {
 			locator1 = "PublicationsChanges#PUBLICATIONS_CHANGE_SITE",
 			value1 = "${changeSite}");
 
+		if (isSet(changeStatus)) {
+			var key_changeStatus = "${changeStatus}";
+
+			AssertTextEquals.assertPartialText(
+				locator1 = "PublicationsChanges#PUBLICATIONS_CHANGE_STATUS",
+				value1 = "${changeStatus}");
+		}
+
 		AssertTextEquals.assertPartialText(
 			locator1 = "PublicationsChanges#PUBLICATIONS_CHANGE_TITLE",
 			value1 = "${changeTitle}");
@@ -189,6 +218,15 @@ definition {
 		AssertTextEquals.assertPartialText(
 			locator1 = "PublicationsChanges#PUBLICATIONS_CHANGE_TYPE",
 			value1 = "${changeType}");
+	}
+
+	macro viewChangesInRelationships {
+		PublicationsNavigator.gotoNavbar(navBarTitle = "Relationships");
+
+		AssertTextEquals.assertPartialText(
+			key_changeTitle = "${changeTitle}",
+			locator1 = "PublicationsChanges#RELATIONSHIPS_CHANGE_TITLE",
+			value1 = "${changeTitle}");
 	}
 
 	macro viewChangesResultNotPresent {

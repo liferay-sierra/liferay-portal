@@ -36,6 +36,71 @@ definition {
 		}
 	}
 
+	@description = "LPS-94874 Bug: Can't edit segment if the segment has a select input"
+	@priority = "5"
+	@uitest
+	test CanEditSegmentIfHaveASelectInput {
+		property portal.acceptance = "true";
+
+		task ("Go to segments portlet") {
+			Segmentation.openSegmentsAdmin(siteURLKey = "test-site-name");
+		}
+
+		task ("Edit the segment with a select input") {
+			Segmentation.editSegment(entry = "EditSegment Test");
+
+			AssertChecked.assertCheckedNotVisible(
+				checkboxName = "",
+				locator1 = "Checkbox#ANY_CHECKBOX_CHECKED");
+
+			Segmentation.deleteProperty();
+
+			Segmentation.addProperties(propertyOption = "Regular Role");
+
+			Segmentation.fillProperty(selectCheckbox = "Administrator");
+
+			Segmentation.fillTitle(titleField = "EditSegmentIfHaveASelectInput Test");
+
+			Segmentation.viewMembers(memberName = "Test Test");
+
+			Button.clickSave();
+		}
+
+		task ("Assert segment edited") {
+			Segmentation.editSegment(entry = "EditSegmentIfHaveASelectInput Test");
+
+			AssertValue(
+				locator1 = "Segmentation#CRITERION_INPUT_ANY",
+				value1 = "Administrator");
+
+			Segmentation.fillProperty(selectCheckbox = "Power User");
+
+			Button.clickSave();
+
+			Segmentation.editSegment(entry = "EditSegmentIfHaveASelectInput Test");
+
+			AssertChecked.assertCheckedNotVisible(
+				checkboxName = "",
+				locator1 = "Checkbox#ANY_CHECKBOX_CHECKED");
+
+			AssertValue(
+				locator1 = "Segmentation#CRITERION_INPUT_ANY",
+				value1 = "Power User");
+		}
+
+		task ("Assert the segment cannot be edited with the toggle off") {
+			Uncheck.uncheckNotVisible(
+				checkboxName = "",
+				locator1 = "Checkbox#ANY_CHECKBOX_CHECKED");
+
+			AssertNotChecked.assertNotCheckedNotVisible(
+				checkboxName = "",
+				locator1 = "Checkbox#ANY_CHECKBOX_CHECKED");
+
+			AssertElementNotPresent(locator1 = "Button#SELECT");
+		}
+	}
+
 	@description = "LPS-102740 Validate if the user can edit a segment with Properties Country"
 	@priority = "5"
 	@uitest
@@ -51,7 +116,7 @@ definition {
 
 			Segmentation.fillTitle(titleField = "EditSegmentUserByCountry Test");
 
-			Segmentation.deleteProperties();
+			Segmentation.deleteProperty();
 
 			Segmentation.gotoSidebar(fieldType = "Organization");
 
@@ -67,9 +132,9 @@ definition {
 		task ("Assert segment edited") {
 			Segmentation.editSegment(entry = "EditSegmentUserByCountry Test");
 
-			Segmentation.viewSegment(
-				criterion = "options",
-				value = "china");
+			AssertValue(
+				locator1 = "Segmentation#CRITERION_INPUT_ANY",
+				value1 = "china");
 		}
 	}
 
@@ -86,7 +151,7 @@ definition {
 		task ("Edit the segment") {
 			Segmentation.editSegment(entry = "EditSegment Test");
 
-			Segmentation.deleteProperties();
+			Segmentation.deleteProperty();
 
 			Segmentation.gotoSidebar(fieldType = "Organization");
 
@@ -104,9 +169,9 @@ definition {
 		task ("Assert segment edited") {
 			Segmentation.editSegment(entry = "EditSegmentUserByRegion Test");
 
-			Segmentation.viewSegment(
-				criterion = "options",
-				value = "madrid");
+			AssertValue(
+				locator1 = "Segmentation#CRITERION_INPUT_ANY",
+				value1 = "madrid");
 		}
 	}
 
@@ -125,13 +190,13 @@ definition {
 
 			Segmentation.fillTitle(titleField = "EditSegmentUserBySessionURL Test");
 
-			Segmentation.deleteProperties();
+			Segmentation.deleteProperty();
 
 			Segmentation.gotoSidebar(fieldType = "Session");
 
 			Segmentation.addProperties(propertyOption = "URL");
 
-			Segmentation.fillProperty(propertyField = "http://localhost:8080");
+			Segmentation.fillProperty(criterionValue = "http://localhost:8080");
 
 			Button.clickSave();
 		}
@@ -139,7 +204,9 @@ definition {
 		task ("Assert segment edited") {
 			Segmentation.editSegment(entry = "EditSegmentUserBySessionURL Test");
 
-			Segmentation.viewSegment(propertyField = "http://localhost:8080");
+			AssertValue(
+				locator1 = "Segmentation#CRITERION_INPUT_ANY",
+				value1 = "http://localhost:8080");
 		}
 	}
 
@@ -165,7 +232,7 @@ definition {
 		task ("Edit the segment") {
 			Segmentation.editSegment(entry = "EditSegment Test");
 
-			Segmentation.deleteProperties();
+			Segmentation.deleteProperty();
 
 			Segmentation.addProperties(propertyOption = "Tag");
 
@@ -181,9 +248,9 @@ definition {
 		task ("Assert segment edited") {
 			Segmentation.editSegment(entry = "EditSegmentUserByUserTag Test");
 
-			Segmentation.viewSegment(
-				criterion = "select-input",
-				value = "tagname");
+			AssertValue(
+				locator1 = "Segmentation#CRITERION_INPUT_ANY",
+				value1 = "tagname");
 		}
 	}
 
@@ -210,7 +277,9 @@ definition {
 		task ("Assert segment edited") {
 			Segmentation.editSegment(entry = "EditSegmentUserEmailAddressContainsToEquals Test");
 
-			Segmentation.viewSegment(criterionInputOption = "eq");
+			AssertValue(
+				locator1 = "Segmentation#CRITERION_OPERATOR",
+				value1 = "eq");
 		}
 	}
 

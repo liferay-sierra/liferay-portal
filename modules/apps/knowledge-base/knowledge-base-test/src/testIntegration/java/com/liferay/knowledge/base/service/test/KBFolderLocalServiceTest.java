@@ -23,8 +23,8 @@ import com.liferay.knowledge.base.exception.KBFolderParentException;
 import com.liferay.knowledge.base.exception.NoSuchFolderException;
 import com.liferay.knowledge.base.model.KBArticle;
 import com.liferay.knowledge.base.model.KBFolder;
-import com.liferay.knowledge.base.service.KBArticleLocalServiceUtil;
-import com.liferay.knowledge.base.service.KBFolderLocalServiceUtil;
+import com.liferay.knowledge.base.service.KBArticleLocalService;
+import com.liferay.knowledge.base.service.KBFolderLocalService;
 import com.liferay.knowledge.base.util.comparator.KBObjectsModifiedDateComparator;
 import com.liferay.knowledge.base.util.comparator.KBObjectsPriorityComparator;
 import com.liferay.knowledge.base.util.comparator.KBObjectsTitleComparator;
@@ -44,6 +44,7 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.Date;
@@ -82,7 +83,7 @@ public class KBFolderLocalServiceTest {
 		KBFolder kbFolder = addKBFolder(
 			KBFolderConstants.DEFAULT_PARENT_FOLDER_ID);
 
-		KBFolderLocalServiceUtil.addKBFolder(
+		_kbFolderLocalService.addKBFolder(
 			kbFolder.getExternalReferenceCode(), _user.getUserId(),
 			_group.getGroupId(),
 			PortalUtil.getClassNameId(KBFolderConstants.getClassName()),
@@ -96,7 +97,7 @@ public class KBFolderLocalServiceTest {
 	public void testAddKBFolderWithExternalReferenceCode() throws Exception {
 		String externalReferenceCode = RandomTestUtil.randomString();
 
-		KBFolder kbFolder = KBFolderLocalServiceUtil.addKBFolder(
+		KBFolder kbFolder = _kbFolderLocalService.addKBFolder(
 			externalReferenceCode, _user.getUserId(), _group.getGroupId(),
 			PortalUtil.getClassNameId(KBFolderConstants.getClassName()),
 			KBFolderConstants.DEFAULT_PARENT_FOLDER_ID,
@@ -110,7 +111,7 @@ public class KBFolderLocalServiceTest {
 
 	@Test
 	public void testAddKBFolderWithoutExternalReferenceCode() throws Exception {
-		KBFolder kbFolder = KBFolderLocalServiceUtil.addKBFolder(
+		KBFolder kbFolder1 = _kbFolderLocalService.addKBFolder(
 			null, _user.getUserId(), _group.getGroupId(),
 			PortalUtil.getClassNameId(KBFolderConstants.getClassName()),
 			KBFolderConstants.DEFAULT_PARENT_FOLDER_ID,
@@ -118,9 +119,15 @@ public class KBFolderLocalServiceTest {
 			ServiceContextTestUtil.getServiceContext(
 				_group, _user.getUserId()));
 
-		Assert.assertEquals(
-			kbFolder.getExternalReferenceCode(),
-			String.valueOf(kbFolder.getKbFolderId()));
+		String externalReferenceCode = kbFolder1.getExternalReferenceCode();
+
+		Assert.assertEquals(externalReferenceCode, kbFolder1.getUuid());
+
+		KBFolder kbFolder2 =
+			_kbFolderLocalService.getKBFolderByExternalReferenceCode(
+				_group.getGroupId(), externalReferenceCode);
+
+		Assert.assertEquals(kbFolder1, kbFolder2);
 	}
 
 	@Test
@@ -134,7 +141,7 @@ public class KBFolderLocalServiceTest {
 
 		Assert.assertEquals(
 			3,
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticlesCount(
+			_kbFolderLocalService.getKBFoldersAndKBArticlesCount(
 				_group.getGroupId(), _kbFolder.getKbFolderId(),
 				WorkflowConstants.STATUS_ANY));
 	}
@@ -149,7 +156,7 @@ public class KBFolderLocalServiceTest {
 
 		Assert.assertEquals(
 			2,
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticlesCount(
+			_kbFolderLocalService.getKBFoldersAndKBArticlesCount(
 				_group.getGroupId(), KBFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 				WorkflowConstants.STATUS_ANY));
 	}
@@ -164,7 +171,7 @@ public class KBFolderLocalServiceTest {
 
 		Assert.assertEquals(
 			1,
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticlesCount(
+			_kbFolderLocalService.getKBFoldersAndKBArticlesCount(
 				_group.getGroupId(), KBFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 				WorkflowConstants.STATUS_DRAFT));
 	}
@@ -183,7 +190,7 @@ public class KBFolderLocalServiceTest {
 
 		Assert.assertEquals(
 			2,
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticlesCount(
+			_kbFolderLocalService.getKBFoldersAndKBArticlesCount(
 				_group.getGroupId(), parentKBArticle.getResourcePrimKey(),
 				WorkflowConstants.STATUS_ANY));
 	}
@@ -201,7 +208,7 @@ public class KBFolderLocalServiceTest {
 
 		Assert.assertEquals(
 			2,
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticlesCount(
+			_kbFolderLocalService.getKBFoldersAndKBArticlesCount(
 				_group.getGroupId(), _kbFolder.getKbFolderId(),
 				WorkflowConstants.STATUS_ANY));
 	}
@@ -218,7 +225,7 @@ public class KBFolderLocalServiceTest {
 
 		Assert.assertEquals(
 			2,
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticlesCount(
+			_kbFolderLocalService.getKBFoldersAndKBArticlesCount(
 				_group.getGroupId(), KBFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 				WorkflowConstants.STATUS_ANY));
 	}
@@ -231,7 +238,7 @@ public class KBFolderLocalServiceTest {
 		KBFolder kbFolder = addKBFolder(_kbFolder.getKbFolderId());
 
 		List<Object> kbFoldersAndKBArticles =
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticles(
+			_kbFolderLocalService.getKBFoldersAndKBArticles(
 				_group.getGroupId(), _kbFolder.getKbFolderId(),
 				WorkflowConstants.STATUS_APPROVED, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS,
@@ -256,7 +263,7 @@ public class KBFolderLocalServiceTest {
 			RandomTestUtil.randomString());
 
 		List<Object> kbFoldersAndKBArticles =
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticles(
+			_kbFolderLocalService.getKBFoldersAndKBArticles(
 				_group.getGroupId(), KBFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 				WorkflowConstants.STATUS_ANY, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS, new KBObjectsTitleComparator<>(false, true));
@@ -279,7 +286,7 @@ public class KBFolderLocalServiceTest {
 			RandomTestUtil.randomString());
 
 		List<Object> kbFoldersAndKBArticles =
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticles(
+			_kbFolderLocalService.getKBFoldersAndKBArticles(
 				_group.getGroupId(), KBFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 				WorkflowConstants.STATUS_DRAFT, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS, new KBObjectsTitleComparator<>(false, true));
@@ -311,7 +318,7 @@ public class KBFolderLocalServiceTest {
 			new Date(date.getTime() + (Time.SECOND * 2)));
 
 		List<Object> kbFoldersAndKBArticles =
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticles(
+			_kbFolderLocalService.getKBFoldersAndKBArticles(
 				_group.getGroupId(), KBFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 				WorkflowConstants.STATUS_ANY, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS,
@@ -346,11 +353,11 @@ public class KBFolderLocalServiceTest {
 			KBFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString());
 
-		KBArticleLocalServiceUtil.updatePriority(
+		_kbArticleLocalService.updatePriority(
 			kbArticle2.getResourcePrimKey(), 10.0);
 
 		List<Object> kbFoldersAndKBArticles =
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticles(
+			_kbFolderLocalService.getKBFoldersAndKBArticles(
 				_group.getGroupId(), KBFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 				WorkflowConstants.STATUS_ANY, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS, new KBObjectsPriorityComparator(true));
@@ -382,7 +389,7 @@ public class KBFolderLocalServiceTest {
 			KBFolderConstants.DEFAULT_PARENT_FOLDER_ID, "B");
 
 		List<Object> kbFoldersAndKBArticles =
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticles(
+			_kbFolderLocalService.getKBFoldersAndKBArticles(
 				_group.getGroupId(), KBFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 				WorkflowConstants.STATUS_ANY, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS, new KBObjectsTitleComparator(true, true));
@@ -413,11 +420,11 @@ public class KBFolderLocalServiceTest {
 		KBArticle kbArticle3 = addKBArticle(
 			KBFolderConstants.DEFAULT_PARENT_FOLDER_ID, "C");
 
-		KBArticleLocalServiceUtil.incrementViewCount(
+		_kbArticleLocalService.incrementViewCount(
 			kbArticle2.getUserId(), kbArticle2.getResourcePrimKey(), 1000);
 
 		List<Object> kbFoldersAndKBArticles =
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticles(
+			_kbFolderLocalService.getKBFoldersAndKBArticles(
 				_group.getGroupId(), KBFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 				WorkflowConstants.STATUS_ANY, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS, new KBObjectsViewCountComparator(true));
@@ -454,7 +461,7 @@ public class KBFolderLocalServiceTest {
 			new Date(date.getTime() + (Time.SECOND * 2)));
 
 		List<Object> kbFoldersAndKBArticles =
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticles(
+			_kbFolderLocalService.getKBFoldersAndKBArticles(
 				_group.getGroupId(), KBFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 				WorkflowConstants.STATUS_ANY, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS,
@@ -489,11 +496,11 @@ public class KBFolderLocalServiceTest {
 			KBFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString());
 
-		KBArticleLocalServiceUtil.updatePriority(
+		_kbArticleLocalService.updatePriority(
 			kbArticle2.getResourcePrimKey(), 10.0);
 
 		List<Object> kbFoldersAndKBArticles =
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticles(
+			_kbFolderLocalService.getKBFoldersAndKBArticles(
 				_group.getGroupId(), KBFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 				WorkflowConstants.STATUS_ANY, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS, new KBObjectsPriorityComparator(false));
@@ -525,7 +532,7 @@ public class KBFolderLocalServiceTest {
 			KBFolderConstants.DEFAULT_PARENT_FOLDER_ID, "B");
 
 		List<Object> kbFoldersAndKBArticles =
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticles(
+			_kbFolderLocalService.getKBFoldersAndKBArticles(
 				_group.getGroupId(), KBFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 				WorkflowConstants.STATUS_ANY, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS, new KBObjectsTitleComparator(false, true));
@@ -556,11 +563,11 @@ public class KBFolderLocalServiceTest {
 		KBArticle kbArticle3 = addKBArticle(
 			KBFolderConstants.DEFAULT_PARENT_FOLDER_ID, "C");
 
-		KBArticleLocalServiceUtil.incrementViewCount(
+		_kbArticleLocalService.incrementViewCount(
 			kbArticle2.getUserId(), kbArticle2.getResourcePrimKey(), 1000);
 
 		List<Object> kbFoldersAndKBArticles =
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticles(
+			_kbFolderLocalService.getKBFoldersAndKBArticles(
 				_group.getGroupId(), KBFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 				WorkflowConstants.STATUS_ANY, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS, new KBObjectsViewCountComparator(false));
@@ -592,7 +599,7 @@ public class KBFolderLocalServiceTest {
 			kbArticle, RandomTestUtil.randomString());
 
 		List<Object> kbFoldersAndKBArticles =
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticles(
+			_kbFolderLocalService.getKBFoldersAndKBArticles(
 				_group.getGroupId(), KBFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 				WorkflowConstants.STATUS_ANY, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS, null);
@@ -617,7 +624,7 @@ public class KBFolderLocalServiceTest {
 		KBArticle kbArticle2 = addChildKBArticle(parentKBArticle, "B");
 
 		List<Object> kbFoldersAndKBArticles =
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticles(
+			_kbFolderLocalService.getKBFoldersAndKBArticles(
 				_group.getGroupId(), parentKBArticle.getResourcePrimKey(),
 				WorkflowConstants.STATUS_APPROVED, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS,
@@ -644,7 +651,7 @@ public class KBFolderLocalServiceTest {
 		KBFolder kbFolder = addKBFolder(_kbFolder.getKbFolderId());
 
 		List<Object> kbFoldersAndKBArticles =
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticles(
+			_kbFolderLocalService.getKBFoldersAndKBArticles(
 				_group.getGroupId(), _kbFolder.getKbFolderId(),
 				WorkflowConstants.STATUS_APPROVED, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS,
@@ -675,7 +682,7 @@ public class KBFolderLocalServiceTest {
 			kbArticle, RandomTestUtil.randomString());
 
 		List<Object> kbFoldersAndKBArticles =
-			KBFolderLocalServiceUtil.getKBFoldersAndKBArticles(
+			_kbFolderLocalService.getKBFoldersAndKBArticles(
 				_group.getGroupId(), KBFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 				WorkflowConstants.STATUS_ANY, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS, new KBObjectsTitleComparator<>(false, true));
@@ -699,7 +706,7 @@ public class KBFolderLocalServiceTest {
 
 		KBFolder kbSubfolder = addKBFolder(kbFolder.getKbFolderId());
 
-		KBFolderLocalServiceUtil.moveKBFolder(
+		_kbFolderLocalService.moveKBFolder(
 			kbFolder.getKbFolderId(), kbSubfolder.getKbFolderId());
 	}
 
@@ -709,7 +716,7 @@ public class KBFolderLocalServiceTest {
 		KBArticle kbArticle = addKBArticle(
 			_kbFolder.getKbFolderId(), RandomTestUtil.randomString());
 
-		KBFolderLocalServiceUtil.moveKBFolder(
+		_kbFolderLocalService.moveKBFolder(
 			kbFolder.getKbFolderId(), kbArticle.getResourcePrimKey());
 	}
 
@@ -722,11 +729,10 @@ public class KBFolderLocalServiceTest {
 		KBFolder parentKBFolder = addKBFolder(
 			KBFolderConstants.DEFAULT_PARENT_FOLDER_ID);
 
-		KBFolderLocalServiceUtil.moveKBFolder(
+		_kbFolderLocalService.moveKBFolder(
 			kbFolder.getKbFolderId(), parentKBFolder.getKbFolderId());
 
-		kbFolder = KBFolderLocalServiceUtil.getKBFolder(
-			kbFolder.getKbFolderId());
+		kbFolder = _kbFolderLocalService.getKBFolder(kbFolder.getKbFolderId());
 
 		Assert.assertEquals(
 			parentKBFolder.getKbFolderId(), kbFolder.getParentKBFolderId());
@@ -737,11 +743,10 @@ public class KBFolderLocalServiceTest {
 		KBFolder kbFolder = addKBFolder(_kbFolder.getKbFolderId());
 		KBFolder parentKBFolder = addKBFolder(_kbFolder.getKbFolderId());
 
-		KBFolderLocalServiceUtil.moveKBFolder(
+		_kbFolderLocalService.moveKBFolder(
 			kbFolder.getKbFolderId(), parentKBFolder.getKbFolderId());
 
-		kbFolder = KBFolderLocalServiceUtil.getKBFolder(
-			kbFolder.getKbFolderId());
+		kbFolder = _kbFolderLocalService.getKBFolder(kbFolder.getKbFolderId());
 
 		Assert.assertEquals(
 			parentKBFolder.getKbFolderId(), kbFolder.getParentKBFolderId());
@@ -751,7 +756,7 @@ public class KBFolderLocalServiceTest {
 	public void testUpdateKBFolderWithEmptyName() throws Exception {
 		KBFolder kbFolder = addKBFolder(_kbFolder.getKbFolderId());
 
-		KBFolderLocalServiceUtil.updateKBFolder(
+		_kbFolderLocalService.updateKBFolder(
 			PortalUtil.getClassNameId(KBFolderConstants.getClassName()),
 			_kbFolder.getKbFolderId(), kbFolder.getKbFolderId(),
 			StringPool.BLANK, kbFolder.getDescription(),
@@ -762,12 +767,12 @@ public class KBFolderLocalServiceTest {
 	protected KBArticle addChildKBArticle(KBArticle kbArticle, String title)
 		throws Exception {
 
-		return KBArticleLocalServiceUtil.addKBArticle(
+		return _kbArticleLocalService.addKBArticle(
 			null, _user.getUserId(),
 			PortalUtil.getClassNameId(KBArticleConstants.getClassName()),
 			kbArticle.getResourcePrimKey(), title, title,
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(), null,
-			new String[0], new String[0],
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			new String[0], null, null, null, new String[0],
 			ServiceContextTestUtil.getServiceContext(
 				_group, _user.getUserId()));
 	}
@@ -783,22 +788,23 @@ public class KBFolderLocalServiceTest {
 		serviceContext.setCreateDate(createDate);
 		serviceContext.setModifiedDate(createDate);
 
-		return KBArticleLocalServiceUtil.addKBArticle(
+		return _kbArticleLocalService.addKBArticle(
 			null, _user.getUserId(),
 			PortalUtil.getClassNameId(KBFolderConstants.getClassName()),
 			parentKbFolderId, title, title, RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), null, new String[0], new String[0],
-			serviceContext);
+			RandomTestUtil.randomString(), new String[0], null, null, null,
+			new String[0], serviceContext);
 	}
 
 	protected KBArticle addKBArticle(long parentKbFolderId, String title)
 		throws Exception {
 
-		return KBArticleLocalServiceUtil.addKBArticle(
+		return _kbArticleLocalService.addKBArticle(
 			null, _user.getUserId(),
 			PortalUtil.getClassNameId(KBFolderConstants.getClassName()),
 			parentKbFolderId, title, title, RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), null, new String[0], new String[0],
+			RandomTestUtil.randomString(), new String[0], null, null, null,
+			new String[0],
 			ServiceContextTestUtil.getServiceContext(
 				_group, _user.getUserId()));
 	}
@@ -806,7 +812,7 @@ public class KBFolderLocalServiceTest {
 	protected KBFolder addKBFolder(long parentResourcePrimKey)
 		throws PortalException {
 
-		return KBFolderLocalServiceUtil.addKBFolder(
+		return _kbFolderLocalService.addKBFolder(
 			null, _user.getUserId(), _group.getGroupId(),
 			PortalUtil.getClassNameId(KBFolderConstants.getClassName()),
 			parentResourcePrimKey, RandomTestUtil.randomString(),
@@ -818,10 +824,11 @@ public class KBFolderLocalServiceTest {
 	protected KBArticle updateKBArticle(KBArticle kbArticle, String title)
 		throws Exception {
 
-		return KBArticleLocalServiceUtil.updateKBArticle(
+		return _kbArticleLocalService.updateKBArticle(
 			kbArticle.getUserId(), kbArticle.getResourcePrimKey(), title,
-			kbArticle.getContent(), kbArticle.getDescription(),
-			kbArticle.getSourceURL(), null, new String[0], new long[0],
+			kbArticle.getContent(), kbArticle.getDescription(), null,
+			kbArticle.getSourceURL(), kbArticle.getExpirationDate(),
+			kbArticle.getReviewDate(), new String[0], new long[0],
 			ServiceContextTestUtil.getServiceContext(
 				_group, _user.getUserId()));
 	}
@@ -829,7 +836,14 @@ public class KBFolderLocalServiceTest {
 	@DeleteAfterTestRun
 	private Group _group;
 
+	@Inject
+	private KBArticleLocalService _kbArticleLocalService;
+
 	private KBFolder _kbFolder;
+
+	@Inject
+	private KBFolderLocalService _kbFolderLocalService;
+
 	private User _user;
 
 }

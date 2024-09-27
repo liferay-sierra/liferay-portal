@@ -22,7 +22,7 @@ import com.liferay.info.item.renderer.InfoItemTemplatedRenderer;
 import com.liferay.info.item.renderer.template.InfoItemRendererTemplate;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -145,7 +145,7 @@ public class JournalArticleDDMTemplateInfoItemTemplatedRenderer
 
 	@Override
 	public String getLabel(Locale locale) {
-		return LanguageUtil.get(locale, "ddm-template");
+		return _language.get(locale, "ddm-template");
 	}
 
 	@Override
@@ -153,6 +153,12 @@ public class JournalArticleDDMTemplateInfoItemTemplatedRenderer
 		JournalArticle article, String templateKey,
 		HttpServletRequest httpServletRequest,
 		HttpServletResponse httpServletResponse) {
+
+		if (!JournalArticleRendererUtil.isShowArticle(
+				httpServletRequest, article)) {
+
+			return;
+		}
 
 		if (Validator.isNull(templateKey)) {
 			render(article, httpServletRequest, httpServletResponse);
@@ -176,19 +182,16 @@ public class JournalArticleDDMTemplateInfoItemTemplatedRenderer
 		}
 	}
 
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.journal.web)", unbind = "-"
-	)
-	public void setServletContext(ServletContext servletContext) {
-		_servletContext = servletContext;
-	}
-
 	@Reference
 	private DDMStructureLocalService _ddmStructureLocalService;
 
 	@Reference
+	private Language _language;
+
+	@Reference
 	private Portal _portal;
 
+	@Reference(target = "(osgi.web.symbolicname=com.liferay.journal.web)")
 	private ServletContext _servletContext;
 
 	@Reference

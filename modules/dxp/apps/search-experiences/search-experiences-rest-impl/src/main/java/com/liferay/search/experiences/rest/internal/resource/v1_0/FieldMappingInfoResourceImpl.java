@@ -60,7 +60,8 @@ public class FieldMappingInfoResourceImpl
 	public List<FieldMappingInfo> getFieldMappings(String query) {
 		JSONObject jsonObject = FieldMappingsWebCacheItem.get(
 			_indexInformation,
-			_indexNameBuilder.getIndexName(contextCompany.getCompanyId()));
+			_indexNameBuilder.getIndexName(contextCompany.getCompanyId()),
+			_jsonFactory);
 
 		if (jsonObject.length() == 0) {
 			return Collections.<FieldMappingInfo>emptyList();
@@ -127,7 +128,8 @@ public class FieldMappingInfoResourceImpl
 				int languageIdPosition = -1;
 
 				if (!Validator.isBlank(languageId)) {
-					languageIdPosition = fieldName.lastIndexOf(languageId);
+					languageIdPosition = fieldPath.lastIndexOf(languageId);
+
 					fieldPath = StringUtil.removeSubstring(
 						fieldPath, languageId);
 				}

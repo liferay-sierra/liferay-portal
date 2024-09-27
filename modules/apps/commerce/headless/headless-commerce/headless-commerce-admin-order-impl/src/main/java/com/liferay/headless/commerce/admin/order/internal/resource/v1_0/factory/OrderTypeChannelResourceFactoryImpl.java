@@ -14,6 +14,7 @@
 
 package com.liferay.headless.commerce.admin.order.internal.resource.v1_0.factory;
 
+import com.liferay.headless.commerce.admin.order.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.headless.commerce.admin.order.resource.v1_0.OrderTypeChannelResource;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -33,14 +34,18 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -59,7 +62,7 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @generated
  */
 @Component(
-	enabled = false, immediate = true,
+	property = "resource.locator.key=/headless-commerce-admin-order/v1.0/OrderTypeChannel",
 	service = OrderTypeChannelResource.Factory.class
 )
 @Generated("")
@@ -76,9 +79,7 @@ public class OrderTypeChannelResourceFactoryImpl
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (OrderTypeChannelResource)ProxyUtil.newProxyInstance(
-					OrderTypeChannelResource.class.getClassLoader(),
-					new Class<?>[] {OrderTypeChannelResource.class},
+				return _orderTypeChannelResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -137,14 +138,32 @@ public class OrderTypeChannelResourceFactoryImpl
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		OrderTypeChannelResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, OrderTypeChannelResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		OrderTypeChannelResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			OrderTypeChannelResource.class.getClassLoader(),
+			OrderTypeChannelResource.class);
+
+		try {
+			Constructor<OrderTypeChannelResource> constructor =
+				(Constructor<OrderTypeChannelResource>)
+					proxyClass.getConstructor(InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -167,7 +186,7 @@ public class OrderTypeChannelResourceFactoryImpl
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		OrderTypeChannelResource orderTypeChannelResource =
@@ -193,6 +212,7 @@ public class OrderTypeChannelResourceFactoryImpl
 		orderTypeChannelResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		orderTypeChannelResource.setRoleLocalService(_roleLocalService);
+		orderTypeChannelResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(orderTypeChannelResource, arguments);
@@ -208,6 +228,10 @@ public class OrderTypeChannelResourceFactoryImpl
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, OrderTypeChannelResource>
+		_orderTypeChannelResourceProxyProviderFunction =
+			_getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -230,9 +254,6 @@ public class OrderTypeChannelResourceFactoryImpl
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -241,6 +262,9 @@ public class OrderTypeChannelResourceFactoryImpl
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

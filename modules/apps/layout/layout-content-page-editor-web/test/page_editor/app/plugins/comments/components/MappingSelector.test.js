@@ -15,7 +15,6 @@
 import '@testing-library/jest-dom/extend-expect';
 import {
 	act,
-	cleanup,
 	fireEvent,
 	getByLabelText,
 	getByText,
@@ -132,6 +131,11 @@ jest.mock(
 	})
 );
 
+jest.mock('frontend-js-web', () => ({
+	...jest.requireActual('frontend-js-web'),
+	sub: jest.fn((key, arg) => key.replace('x', arg)),
+}));
+
 function renderMappingSelector({
 	mappedItem = {},
 	mappingFields = defaultMappingFields,
@@ -178,14 +182,6 @@ function renderMappingSelector({
 }
 
 describe('MappingSelector', () => {
-	Liferay.Util.sub.mockImplementation((langKey, args) =>
-		[langKey, args].join('-')
-	);
-
-	afterEach(() => {
-		cleanup();
-	});
-
 	it('renders correct selects in content pages', async () => {
 		renderMappingSelector({});
 
@@ -352,7 +348,7 @@ describe('MappingSelector', () => {
 		expect(
 			getByText(
 				document.body,
-				'no-fields-are-available-for-x-editable-text'
+				'no-fields-are-available-for-text-editable'
 			)
 		).toBeInTheDocument();
 	});

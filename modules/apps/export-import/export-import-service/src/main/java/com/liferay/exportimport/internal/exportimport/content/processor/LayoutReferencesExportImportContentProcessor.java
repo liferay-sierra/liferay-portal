@@ -43,7 +43,7 @@ import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutFriendlyURLLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.InetAddressUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -57,6 +57,7 @@ import com.liferay.staging.StagingGroupHelper;
 
 import java.net.InetAddress;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 
 import java.util.Locale;
@@ -73,7 +74,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.exportimport.configuration.ExportImportServiceConfiguration",
-	immediate = true, property = "content.processor.type=LayoutReferences",
+	property = "content.processor.type=LayoutReferences",
 	service = ExportImportContentProcessor.class
 )
 public class LayoutReferencesExportImportContentProcessor
@@ -117,11 +118,11 @@ public class LayoutReferencesExportImportContentProcessor
 			Group group, String url, StringBundler urlSB)
 		throws PortalException {
 
-		if (!_http.hasProtocol(url)) {
+		if (!HttpComponentsUtil.hasProtocol(url)) {
 			return url;
 		}
 
-		boolean secure = _http.isSecure(url);
+		boolean secure = HttpComponentsUtil.isSecure(url);
 
 		int serverPort = _portal.getPortalServerPort(secure);
 
@@ -351,29 +352,34 @@ public class LayoutReferencesExportImportContentProcessor
 
 						url = urlWithoutLocale;
 					}
-					else if (urlWithoutLocale.indexOf(StringPool.SLASH, 1) ==
-								-1) {
+					else if ((urlWithoutLocale.indexOf(StringPool.SLASH, 1) ==
+								-1) &&
+							 !localePath.equals(
+								 _PRIVATE_GROUP_SERVLET_MAPPING) &&
+							 !localePath.equals(
+								 _PRIVATE_USER_SERVLET_MAPPING) &&
+							 !localePath.equals(
+								 _PUBLIC_GROUP_SERVLET_MAPPING)) {
 
-						if (!localePath.equals(
-								_PRIVATE_GROUP_SERVLET_MAPPING) &&
-							!localePath.equals(_PRIVATE_USER_SERVLET_MAPPING) &&
-							!localePath.equals(_PUBLIC_GROUP_SERVLET_MAPPING)) {
+						urlSB.append(localePath);
 
+						url = urlWithoutLocale;
+					}
+					else {
+						Layout layout =
+							_layoutLocalService.fetchLayoutByFriendlyURL(
+								group.getGroupId(), false, urlWithoutLocale);
+
+						if (layout == null) {
+							layout =
+								_layoutLocalService.fetchLayoutByFriendlyURL(
+									group.getGroupId(), true, urlWithoutLocale);
+						}
+
+						if (layout != null) {
 							urlSB.append(localePath);
 
 							url = urlWithoutLocale;
-						}
-						else {
-							Layout layout =
-								_layoutLocalService.fetchLayoutByFriendlyURL(
-									group.getGroupId(), false,
-									urlWithoutLocale);
-
-							if (layout != null) {
-								urlSB.append(localePath);
-
-								url = urlWithoutLocale;
-							}
 						}
 					}
 				}
@@ -855,13 +861,6 @@ public class LayoutReferencesExportImportContentProcessor
 		return content;
 	}
 
-	@Reference(unbind = "-")
-	protected void setConfigurationProvider(
-		ConfigurationProvider configurationProvider) {
-
-		_configurationProvider = configurationProvider;
-	}
-
 	protected void validateLayoutReferences(long groupId, String content)
 		throws PortalException {
 
@@ -1006,25 +1005,30 @@ public class LayoutReferencesExportImportContentProcessor
 
 					url = urlWithoutLocale;
 				}
-				else if (urlWithoutLocale.indexOf(StringPool.SLASH, 1) == -1) {
-					if (!localePath.equals(_PRIVATE_GROUP_SERVLET_MAPPING) &&
-						!localePath.equals(_PRIVATE_USER_SERVLET_MAPPING) &&
-						!localePath.equals(_PUBLIC_GROUP_SERVLET_MAPPING)) {
+				else if ((urlWithoutLocale.indexOf(StringPool.SLASH, 1) ==
+							-1) &&
+						 !localePath.equals(_PRIVATE_GROUP_SERVLET_MAPPING) &&
+						 !localePath.equals(_PRIVATE_USER_SERVLET_MAPPING) &&
+						 !localePath.equals(_PUBLIC_GROUP_SERVLET_MAPPING)) {
 
+					urlSB.append(localePath);
+
+					url = urlWithoutLocale;
+				}
+				else {
+					Layout layout =
+						_layoutLocalService.fetchLayoutByFriendlyURL(
+							group.getGroupId(), false, urlWithoutLocale);
+
+					if (layout == null) {
+						layout = _layoutLocalService.fetchLayoutByFriendlyURL(
+							group.getGroupId(), true, urlWithoutLocale);
+					}
+
+					if (layout != null) {
 						urlSB.append(localePath);
 
 						url = urlWithoutLocale;
-					}
-					else {
-						Layout layout =
-							_layoutLocalService.fetchLayoutByFriendlyURL(
-								group.getGroupId(), false, urlWithoutLocale);
-
-						if (layout != null) {
-							urlSB.append(localePath);
-
-							url = urlWithoutLocale;
-						}
 					}
 				}
 			}
@@ -1172,22 +1176,32 @@ public class LayoutReferencesExportImportContentProcessor
 		throws PortalException {
 
 		try {
-			URI uri = _http.getURI(url);
+			URI uri = null;
 
-			if ((uri != null) &&
-				InetAddressUtil.isLocalInetAddress(
-					InetAddress.getByName(uri.getHost()))) {
+			try {
+				uri = HttpComponentsUtil.getURI(url);
+			}
+			catch (URISyntaxException uriSyntaxException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(uriSyntaxException);
+				}
+			}
 
-				return StringBundler.concat(
-					uri.getScheme(), "://", uri.getHost(), StringPool.COLON,
-					uri.getPort());
+			if (uri != null) {
+				InetAddress inetAddress = InetAddressUtil.getInetAddressByName(
+					uri.getHost());
+
+				if ((inetAddress != null) &&
+					InetAddressUtil.isLocalInetAddress(inetAddress)) {
+
+					return StringBundler.concat(
+						uri.getScheme(), "://", uri.getHost(), StringPool.COLON,
+						uri.getPort());
+				}
 			}
 		}
 		catch (UnknownHostException unknownHostException) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(unknownHostException);
-			}
-			else if (_log.isWarnEnabled()) {
+			if (_log.isWarnEnabled()) {
 				_log.warn(unknownHostException);
 			}
 		}
@@ -1319,15 +1333,14 @@ public class LayoutReferencesExportImportContentProcessor
 	@Reference
 	private CompanyLocalService _companyLocalService;
 
+	@Reference
 	private ConfigurationProvider _configurationProvider;
+
 	private volatile ExportImportServiceConfiguration
 		_exportImportServiceConfiguration;
 
 	@Reference
 	private GroupLocalService _groupLocalService;
-
-	@Reference
-	private Http _http;
 
 	@Reference
 	private LayoutFriendlyURLLocalService _layoutFriendlyURLLocalService;

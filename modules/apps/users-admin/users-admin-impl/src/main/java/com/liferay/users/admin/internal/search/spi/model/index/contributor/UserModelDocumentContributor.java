@@ -18,7 +18,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.NoSuchCountryException;
 import com.liferay.portal.kernel.exception.NoSuchRegionException;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Address;
@@ -26,6 +26,8 @@ import com.liferay.portal.kernel.model.Country;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.Region;
+import com.liferay.portal.kernel.model.Role;
+import com.liferay.portal.kernel.model.Team;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserGroupRole;
 import com.liferay.portal.kernel.search.Document;
@@ -35,8 +37,11 @@ import com.liferay.portal.kernel.service.CountryService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.OrganizationLocalService;
 import com.liferay.portal.kernel.service.RegionService;
+import com.liferay.portal.kernel.service.RoleLocalService;
+import com.liferay.portal.kernel.service.TeamLocalService;
 import com.liferay.portal.kernel.service.UserGroupRoleLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.search.spi.model.index.contributor.ModelDocumentContributor;
 
@@ -54,7 +59,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Luan Maoski
  */
 @Component(
-	immediate = true,
 	property = "indexer.class.name=com.liferay.portal.kernel.model.User",
 	service = ModelDocumentContributor.class
 )
@@ -89,17 +93,33 @@ public class UserModelDocumentContributor
 			document.addText("fullName", user.getFullName());
 			document.addKeyword("groupIds", user.getGroupIds());
 			document.addText("jobTitle", user.getJobTitle());
+			document.addDate("lastLoginDate", user.getLastLoginDate());
 			document.addText("lastName", user.getLastName());
 			document.addText("middleName", user.getMiddleName());
 			document.addKeyword("organizationIds", organizationIds);
 			document.addKeyword(
 				"organizationCount", String.valueOf(organizationIds.length));
-			document.addKeyword("roleIds", user.getRoleIds());
-			document.addText("screenName", user.getScreenName());
-			document.addKeyword("teamIds", user.getTeamIds());
-			document.addKeyword("userGroupIds", user.getUserGroupIds());
+
+			long[] roleIds = user.getRoleIds();
+
+			document.addKeyword("roleIds", roleIds);
 			document.addKeyword(
-				"userGroupRoleIds", _getUserGroupRoleIds(user.getUserId()));
+				"roleNames",
+				ListUtil.toArray(
+					_roleLocalService.getRoles(roleIds), Role.NAME_ACCESSOR));
+
+			document.addText("screenName", user.getScreenName());
+			document.addKeyword("teamIds", _getTeamIds(user));
+			document.addKeyword("userGroupIds", user.getUserGroupIds());
+
+			long[] userGroupRoleIds = _getUserGroupRoleIds(user.getUserId());
+
+			document.addKeyword("userGroupRoleIds", userGroupRoleIds);
+			document.addKeyword(
+				"userGroupRoleNames",
+				ListUtil.toArray(
+					_roleLocalService.getRoles(userGroupRoleIds),
+					Role.NAME_ACCESSOR));
 
 			_populateAddresses(document, user.getAddresses(), 0, 0);
 		}
@@ -171,7 +191,7 @@ public class UserModelDocumentContributor
 	private Set<String> _getLocalizedCountryNames(Country country) {
 		Set<String> countryNames = new HashSet<>();
 
-		for (Locale locale : LanguageUtil.getAvailableLocales()) {
+		for (Locale locale : _language.getAvailableLocales()) {
 			String countryName = country.getName(locale);
 
 			countryName = StringUtil.toLowerCase(countryName);
@@ -180,6 +200,24 @@ public class UserModelDocumentContributor
 		}
 
 		return countryNames;
+	}
+
+	private long[] _getTeamIds(User user) {
+		long[] userGroupIds = user.getUserGroupIds();
+
+		if (userGroupIds.length == 0) {
+			return user.getTeamIds();
+		}
+
+		List<Team> teams = new ArrayList<>();
+
+		for (long userGroupId : user.getUserGroupIds()) {
+			teams.addAll(_teamLocalService.getUserGroupTeams(userGroupId));
+		}
+
+		return ArrayUtil.append(
+			ListUtil.toLongArray(teams, Team.TEAM_ID_ACCESSOR),
+			user.getTeamIds());
 	}
 
 	private long[] _getUserGroupRoleIds(long userId) {
@@ -258,5 +296,14 @@ public class UserModelDocumentContributor
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		UserModelDocumentContributor.class);
+
+	@Reference
+	private Language _language;
+
+	@Reference
+	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private TeamLocalService _teamLocalService;
 
 }

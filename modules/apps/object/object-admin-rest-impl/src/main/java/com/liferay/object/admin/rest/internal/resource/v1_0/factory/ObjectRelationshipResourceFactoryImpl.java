@@ -14,6 +14,7 @@
 
 package com.liferay.object.admin.rest.internal.resource.v1_0.factory;
 
+import com.liferay.object.admin.rest.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.object.admin.rest.resource.v1_0.ObjectRelationshipResource;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -33,14 +34,18 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -58,7 +61,10 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @author Javier Gamarra
  * @generated
  */
-@Component(immediate = true, service = ObjectRelationshipResource.Factory.class)
+@Component(
+	property = "resource.locator.key=/object-admin/v1.0/ObjectRelationship",
+	service = ObjectRelationshipResource.Factory.class
+)
 @Generated("")
 public class ObjectRelationshipResourceFactoryImpl
 	implements ObjectRelationshipResource.Factory {
@@ -73,9 +79,7 @@ public class ObjectRelationshipResourceFactoryImpl
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (ObjectRelationshipResource)ProxyUtil.newProxyInstance(
-					ObjectRelationshipResource.class.getClassLoader(),
-					new Class<?>[] {ObjectRelationshipResource.class},
+				return _objectRelationshipResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -134,14 +138,32 @@ public class ObjectRelationshipResourceFactoryImpl
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		ObjectRelationshipResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, ObjectRelationshipResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		ObjectRelationshipResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			ObjectRelationshipResource.class.getClassLoader(),
+			ObjectRelationshipResource.class);
+
+		try {
+			Constructor<ObjectRelationshipResource> constructor =
+				(Constructor<ObjectRelationshipResource>)
+					proxyClass.getConstructor(InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -164,7 +186,7 @@ public class ObjectRelationshipResourceFactoryImpl
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		ObjectRelationshipResource objectRelationshipResource =
@@ -191,6 +213,7 @@ public class ObjectRelationshipResourceFactoryImpl
 		objectRelationshipResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		objectRelationshipResource.setRoleLocalService(_roleLocalService);
+		objectRelationshipResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(objectRelationshipResource, arguments);
@@ -206,6 +229,10 @@ public class ObjectRelationshipResourceFactoryImpl
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, ObjectRelationshipResource>
+		_objectRelationshipResourceProxyProviderFunction =
+			_getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -228,9 +255,6 @@ public class ObjectRelationshipResourceFactoryImpl
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -239,6 +263,9 @@ public class ObjectRelationshipResourceFactoryImpl
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

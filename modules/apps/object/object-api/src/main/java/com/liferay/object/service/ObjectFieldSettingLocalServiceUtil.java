@@ -45,12 +45,11 @@ public class ObjectFieldSettingLocalServiceUtil {
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.object.service.impl.ObjectFieldSettingLocalServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
 	public static ObjectFieldSetting addObjectFieldSetting(
-			long userId, long objectFieldId, String name, boolean required,
-			String value)
+			long userId, long objectFieldId, String name, String value)
 		throws PortalException {
 
 		return getService().addObjectFieldSetting(
-			userId, objectFieldId, name, required, value);
+			userId, objectFieldId, name, value);
 	}
 
 	/**
@@ -89,6 +88,13 @@ public class ObjectFieldSettingLocalServiceUtil {
 		throws PortalException {
 
 		return getService().createPersistedModel(primaryKeyObj);
+	}
+
+	public static void deleteObjectFieldObjectFieldSetting(
+			com.liferay.object.model.ObjectField objectField)
+		throws PortalException {
+
+		getService().deleteObjectFieldObjectFieldSetting(objectField);
 	}
 
 	/**
@@ -226,6 +232,12 @@ public class ObjectFieldSettingLocalServiceUtil {
 		return getService().fetchObjectFieldSetting(objectFieldSettingId);
 	}
 
+	public static ObjectFieldSetting fetchObjectFieldSetting(
+		long objectFieldId, String name) {
+
+		return getService().fetchObjectFieldSetting(objectFieldId, name);
+	}
+
 	/**
 	 * Returns the object field setting with the matching UUID and company.
 	 *
@@ -259,6 +271,12 @@ public class ObjectFieldSettingLocalServiceUtil {
 			getIndexableActionableDynamicQuery() {
 
 		return getService().getIndexableActionableDynamicQuery();
+	}
+
+	public static List<ObjectFieldSetting> getObjectFieldObjectFieldSettings(
+		long objectFieldId) {
+
+		return getService().getObjectFieldObjectFieldSettings(objectFieldId);
 	}
 
 	/**
@@ -306,12 +324,6 @@ public class ObjectFieldSettingLocalServiceUtil {
 		int start, int end) {
 
 		return getService().getObjectFieldSettings(start, end);
-	}
-
-	public static List<ObjectFieldSetting> getObjectFieldSettings(
-		long objectFieldId) {
-
-		return getService().getObjectFieldSettings(objectFieldId);
 	}
 
 	/**

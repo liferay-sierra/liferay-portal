@@ -25,7 +25,6 @@ import org.osgi.service.component.annotations.Component;
  * @author Keven Leone
  */
 @Component(
-	immediate = true,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.display-category=category.hidden",
@@ -41,7 +40,8 @@ import org.osgi.service.component.annotations.Component;
 		"javax.portlet.init-param.view-template=/digital_signature/view.jsp",
 		"javax.portlet.name=" + DigitalSignaturePortletKeys.DIGITAL_SIGNATURE,
 		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=power-user,user"
+		"javax.portlet.security-role-ref=power-user,user",
+		"javax.portlet.version=3.0"
 	},
 	service = Portlet.class
 )

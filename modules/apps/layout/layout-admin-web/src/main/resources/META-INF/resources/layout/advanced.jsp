@@ -43,7 +43,16 @@ Group group = layoutsAdminDisplayContext.getGroup();
 	<aui:input cssClass="propagatable-field" disabled="<%= selLayout.isLayoutPrototypeLinkActive() %>" helpMessage="query-string-help" label="query-string" name="TypeSettingsProperties--query-string--" size="30" type="text" value='<%= GetterUtil.getString(layoutTypeSettings.getProperty("query-string")) %>' />
 </c:if>
 
-<aui:input cssClass="propagatable-field" disabled="<%= selLayout.isLayoutPrototypeLinkActive() %>" label="target" name="TypeSettingsProperties--target--" size="15" type="text" value='<%= GetterUtil.getString(layoutTypeSettings.getProperty("target")) %>' />
+<%
+String targetType = GetterUtil.getString(layoutTypeSettings.getProperty("targetType"));
+%>
+
+<aui:select cssClass="propagatable-field" id="targetType" label="target-type" name="TypeSettingsProperties--targetType--">
+	<aui:option label="specific-frame" selected='<%= !Objects.equals(targetType, "useNewTab") %>' value="" />
+	<aui:option label="new-tab" selected='<%= Objects.equals(targetType, "useNewTab") %>' value="useNewTab" />
+</aui:select>
+
+<aui:input cssClass="propagatable-field" disabled="<%= selLayout.isLayoutPrototypeLinkActive() %>" id="target" label="target" name="TypeSettingsProperties--target--" size="15" type="text" value='<%= GetterUtil.getString(layoutTypeSettings.getProperty("target")) %>' wrapperCssClass='<%= Objects.equals(targetType, "useNewTab") ? "hide" : "" %>' />
 
 <aui:field-wrapper helpMessage="this-icon-will-be-shown-in-the-navigation-menu" label="icon" name="iconFileName">
 	<liferay-ui:logo-selector
@@ -53,3 +62,15 @@ Group group = layoutsAdminDisplayContext.getGroup();
 		tempImageFileName="<%= String.valueOf(selLayout.getPlid()) %>"
 	/>
 </aui:field-wrapper>
+
+<liferay-frontend:component
+	componentId='<%= liferayPortletResponse.getNamespace() + "addLayout" %>'
+	context='<%=
+		HashMapBuilder.<String, Object>put(
+			"defaultTarget", Objects.equals(targetType, "useNewTab") ? StringPool.BLANK : GetterUtil.getString(layoutTypeSettings.getProperty("target"))
+		).put(
+			"namespace", liferayPortletResponse.getNamespace()
+		).build()
+	%>'
+	module="js/Advanced"
+/>

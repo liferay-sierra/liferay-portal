@@ -17,13 +17,15 @@ package com.liferay.document.library.web.internal.upload;
 import com.liferay.document.library.kernel.exception.NoSuchFileEntryException;
 import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.service.DLAppService;
-import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
 import com.liferay.document.library.kernel.util.DLValidator;
 import com.liferay.expando.kernel.model.ExpandoBridge;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
@@ -31,6 +33,8 @@ import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermi
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
+import com.liferay.portal.kernel.service.permission.ModelPermissions;
+import com.liferay.portal.kernel.service.permission.ModelPermissionsFactory;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -92,7 +96,9 @@ public class DLUploadFileEntryHandler implements UploadFileEntryHandler {
 		throws PortalException {
 
 		_dlValidator.validateFileSize(
-			fileName, uploadPortletRequest.getSize(parameterName));
+			themeDisplay.getScopeGroupId(), fileName,
+			uploadPortletRequest.getContentType(parameterName),
+			uploadPortletRequest.getSize(parameterName));
 
 		String uniqueFileName = _uniqueFileNameProvider.provide(
 			fileName,
@@ -102,9 +108,10 @@ public class DLUploadFileEntryHandler implements UploadFileEntryHandler {
 		return _dlAppService.addFileEntry(
 			null, themeDisplay.getScopeGroupId(), folderId, uniqueFileName,
 			uploadPortletRequest.getContentType(parameterName), uniqueFileName,
-			_getDescription(uploadPortletRequest), StringPool.BLANK,
-			inputStream, uploadPortletRequest.getSize(parameterName), null,
-			null, _getServiceContext(uploadPortletRequest));
+			uniqueFileName, _getDescription(uploadPortletRequest),
+			StringPool.BLANK, inputStream,
+			uploadPortletRequest.getSize(parameterName), null, null,
+			_getServiceContext(uploadPortletRequest));
 	}
 
 	private FileEntry _editImageFileEntry(
@@ -189,12 +196,13 @@ public class DLUploadFileEntryHandler implements UploadFileEntryHandler {
 		if ((fileEntry == null) ||
 			!(fileEntry.getModel() instanceof DLFileEntry)) {
 
-			return ServiceContextFactory.getInstance(
-				DLFileEntry.class.getName(), uploadPortletRequest);
+			return _getServiceContextWithRestrictedGuestPermissions(
+				uploadPortletRequest);
 		}
 
-		ServiceContext serviceContext = ServiceContextFactory.getInstance(
-			DLFileEntry.class.getName(), uploadPortletRequest);
+		ServiceContext serviceContext =
+			_getServiceContextWithRestrictedGuestPermissions(
+				uploadPortletRequest);
 
 		ExpandoBridge expandoBridge = fileEntry.getExpandoBridge();
 
@@ -204,14 +212,45 @@ public class DLUploadFileEntryHandler implements UploadFileEntryHandler {
 		return serviceContext;
 	}
 
+	private ServiceContext _getServiceContextWithRestrictedGuestPermissions(
+			UploadPortletRequest uploadPortletRequest)
+		throws PortalException {
+
+		ServiceContext serviceContext = ServiceContextFactory.getInstance(
+			DLFileEntry.class.getName(), uploadPortletRequest);
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)uploadPortletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
+		Layout layout = themeDisplay.getLayout();
+		Group group = themeDisplay.getScopeGroup();
+
+		if (layout.isPublicLayout() ||
+			(layout.isTypeControlPanel() && !group.hasPrivateLayouts())) {
+
+			return serviceContext;
+		}
+
+		ModelPermissions modelPermissions =
+			serviceContext.getModelPermissions();
+
+		serviceContext.setModelPermissions(
+			ModelPermissionsFactory.create(
+				modelPermissions.getActionIds(
+					RoleConstants.PLACEHOLDER_DEFAULT_GROUP_ROLE),
+				_RESTRICTED_GUEST_PERMISSIONS, DLFileEntry.class.getName()));
+
+		return serviceContext;
+	}
+
+	private static final String[] _RESTRICTED_GUEST_PERMISSIONS = {};
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		DLUploadFileEntryHandler.class);
 
 	@Reference
 	private DLAppService _dlAppService;
-
-	@Reference
-	private DLFileEntryLocalService _dlFileEntryLocalService;
 
 	@Reference
 	private DLValidator _dlValidator;

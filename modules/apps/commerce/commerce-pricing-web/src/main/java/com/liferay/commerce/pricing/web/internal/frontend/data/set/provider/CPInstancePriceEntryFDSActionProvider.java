@@ -21,18 +21,17 @@ import com.liferay.commerce.pricing.web.internal.constants.CommercePricingFDSNam
 import com.liferay.commerce.pricing.web.internal.model.InstancePriceEntry;
 import com.liferay.commerce.product.constants.CPPortletKeys;
 import com.liferay.commerce.product.model.CPDefinition;
-import com.liferay.commerce.product.model.CPInstance;
 import com.liferay.frontend.data.set.provider.FDSActionProvider;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
@@ -56,7 +55,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "fds.data.provider.key=" + CommercePricingFDSNames.INSTANCE_PRICE_ENTRIES,
 	service = FDSActionProvider.class
 )
@@ -69,6 +67,11 @@ public class CPInstancePriceEntryFDSActionProvider
 		throws PortalException {
 
 		InstancePriceEntry instancePriceEntry = (InstancePriceEntry)model;
+
+		long cpDefinitionId = ParamUtil.getLong(
+			httpServletRequest, "cpDefinitionId");
+		long cpInstanceId = ParamUtil.getLong(
+			httpServletRequest, "cpInstanceId");
 
 		CommercePriceEntry commercePriceEntry =
 			_commercePriceEntryService.getCommercePriceEntry(
@@ -84,9 +87,10 @@ public class CPInstancePriceEntryFDSActionProvider
 			dropdownItem -> {
 				dropdownItem.setHref(
 					_getInstancePriceEntryEditURL(
-						commercePriceEntry, httpServletRequest));
+						commercePriceEntry, cpDefinitionId, cpInstanceId,
+						httpServletRequest));
 				dropdownItem.setLabel(
-					LanguageUtil.get(httpServletRequest, "edit"));
+					_language.get(httpServletRequest, "edit"));
 				dropdownItem.setTarget("sidePanel");
 			}
 		).add(
@@ -96,19 +100,18 @@ public class CPInstancePriceEntryFDSActionProvider
 			dropdownItem -> {
 				dropdownItem.setHref(
 					_getInstancePriceEntryDeleteURL(
-						commercePriceEntry, httpServletRequest));
+						commercePriceEntry, cpDefinitionId, cpInstanceId,
+						httpServletRequest));
 				dropdownItem.setLabel(
-					LanguageUtil.get(httpServletRequest, "delete"));
+					_language.get(httpServletRequest, "delete"));
 			}
 		).build();
 	}
 
 	private PortletURL _getInstancePriceEntryDeleteURL(
-			CommercePriceEntry commercePriceEntry,
-			HttpServletRequest httpServletRequest)
+			CommercePriceEntry commercePriceEntry, long cpDefinitionId,
+			long cpInstanceId, HttpServletRequest httpServletRequest)
 		throws PortalException {
-
-		CPInstance cpInstance = commercePriceEntry.getCPInstance();
 
 		return PortletURLBuilder.create(
 			_portal.getControlPanelPortletURL(
@@ -125,18 +128,16 @@ public class CPInstancePriceEntryFDSActionProvider
 		).setParameter(
 			"commercePriceEntryId", commercePriceEntry.getCommercePriceEntryId()
 		).setParameter(
-			"cpDefinitionId", cpInstance.getCPDefinitionId()
+			"cpDefinitionId", cpDefinitionId
 		).setParameter(
-			"cpInstanceId", cpInstance.getCPInstanceId()
+			"cpInstanceId", cpInstanceId
 		).buildPortletURL();
 	}
 
 	private PortletURL _getInstancePriceEntryEditURL(
-			CommercePriceEntry commercePriceEntry,
-			HttpServletRequest httpServletRequest)
+			CommercePriceEntry commercePriceEntry, long cpDefinitionId,
+			long cpInstanceId, HttpServletRequest httpServletRequest)
 		throws PortalException {
-
-		CPInstance cpInstance = commercePriceEntry.getCPInstance();
 
 		PortletURL portletURL = PortletURLBuilder.create(
 			PortletProviderUtil.getPortletURL(
@@ -149,9 +150,9 @@ public class CPInstancePriceEntryFDSActionProvider
 		).setParameter(
 			"commercePriceEntryId", commercePriceEntry.getCommercePriceEntryId()
 		).setParameter(
-			"cpDefinitionId", cpInstance.getCPDefinitionId()
+			"cpDefinitionId", cpDefinitionId
 		).setParameter(
-			"cpInstanceId", cpInstance.getCPInstanceId()
+			"cpInstanceId", cpInstanceId
 		).buildPortletURL();
 
 		try {
@@ -175,6 +176,9 @@ public class CPInstancePriceEntryFDSActionProvider
 	)
 	private ModelResourcePermission<CommercePriceList>
 		_commercePriceListModelResourcePermission;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

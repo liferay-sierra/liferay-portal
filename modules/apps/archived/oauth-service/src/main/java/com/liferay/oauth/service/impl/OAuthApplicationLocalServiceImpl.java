@@ -34,7 +34,7 @@ import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.PwdGenerator;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 
 import java.io.InputStream;
 
@@ -72,7 +72,7 @@ public class OAuthApplicationLocalServiceImpl
 		String consumerKey = serviceContext.getUuid();
 
 		if (Validator.isNull(consumerKey)) {
-			consumerKey = PortalUUIDUtil.generate();
+			consumerKey = _portalUUID.generate();
 		}
 
 		return oAuthApplicationLocalService.addOAuthApplication(
@@ -113,11 +113,10 @@ public class OAuthApplicationLocalServiceImpl
 		String consumerKey = serviceContext.getUuid();
 
 		if (Validator.isNull(consumerKey)) {
-			consumerKey = PortalUUIDUtil.generate();
+			consumerKey = _portalUUID.generate();
 		}
 
 		oAuthApplication.setConsumerKey(consumerKey);
-
 		oAuthApplication.setConsumerSecret(token);
 		oAuthApplication.setAccessLevel(accessLevel);
 		oAuthApplication.setShareableAccessToken(shareableAccessToken);
@@ -340,5 +339,8 @@ public class OAuthApplicationLocalServiceImpl
 
 	@Reference
 	private ImageLocalService _imageLocalService;
+
+	@Reference
+	private PortalUUID _portalUUID;
 
 }

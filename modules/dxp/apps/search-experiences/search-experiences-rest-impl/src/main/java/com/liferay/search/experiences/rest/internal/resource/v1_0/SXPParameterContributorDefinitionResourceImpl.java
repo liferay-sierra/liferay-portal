@@ -14,7 +14,7 @@
 
 package com.liferay.search.experiences.rest.internal.resource.v1_0;
 
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.search.experiences.blueprint.parameter.contributor.SXPParameterContributorDefinitionProvider;
 import com.liferay.search.experiences.rest.dto.v1_0.SXPParameterContributorDefinition;
@@ -45,14 +45,15 @@ public class SXPParameterContributorDefinitionResourceImpl
 			transform(
 				_sxpParameterContributorDefinitionProvider.
 					getSXPParameterContributorDefinitions(
-						contextCompany.getCompanyId()),
+						contextCompany.getCompanyId(),
+						contextAcceptLanguage.getPreferredLocale()),
 				sxpParameterContributorDefinition ->
 					new SXPParameterContributorDefinition() {
 						{
 							className =
 								sxpParameterContributorDefinition.
 									getClassName();
-							description = LanguageUtil.get(
+							description = _language.get(
 								contextAcceptLanguage.getPreferredLocale(),
 								sxpParameterContributorDefinition.
 									getLanguageKey());
@@ -62,6 +63,9 @@ public class SXPParameterContributorDefinitionResourceImpl
 						}
 					}));
 	}
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private SXPParameterContributorDefinitionProvider

@@ -31,7 +31,6 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 
 import java.sql.Blob;
@@ -233,34 +232,6 @@ public class CTSContentModelImpl
 		getAttributeSetterBiConsumers() {
 
 		return _attributeSetterBiConsumers;
-	}
-
-	private static Function<InvocationHandler, CTSContent>
-		_getProxyProviderFunction() {
-
-		Class<?> proxyClass = ProxyUtil.getProxyClass(
-			CTSContent.class.getClassLoader(), CTSContent.class,
-			ModelWrapper.class);
-
-		try {
-			Constructor<CTSContent> constructor =
-				(Constructor<CTSContent>)proxyClass.getConstructor(
-					InvocationHandler.class);
-
-			return invocationHandler -> {
-				try {
-					return constructor.newInstance(invocationHandler);
-				}
-				catch (ReflectiveOperationException
-							reflectiveOperationException) {
-
-					throw new InternalError(reflectiveOperationException);
-				}
-			};
-		}
-		catch (NoSuchMethodException noSuchMethodException) {
-			throw new InternalError(noSuchMethodException);
-		}
 	}
 
 	private static final Map<String, Function<CTSContent, Object>>
@@ -794,78 +765,12 @@ public class CTSContentModelImpl
 		return sb.toString();
 	}
 
-	@Override
-	public String toXmlString() {
-		StringBundler sb = new StringBundler(34);
-
-		sb.append("<model><model-name>");
-		sb.append("com.liferay.change.tracking.store.model.CTSContent");
-		sb.append("</model-name>");
-
-		sb.append(
-			"<column><column-name>mvccVersion</column-name><column-value><![CDATA[");
-
-		sb.append(getMvccVersion());
-
-		sb.append("]]></column-value></column>");
-		sb.append(
-			"<column><column-name>ctCollectionId</column-name><column-value><![CDATA[");
-
-		sb.append(getCtCollectionId());
-
-		sb.append("]]></column-value></column>");
-		sb.append(
-			"<column><column-name>ctsContentId</column-name><column-value><![CDATA[");
-
-		sb.append(getCtsContentId());
-
-		sb.append("]]></column-value></column>");
-		sb.append(
-			"<column><column-name>companyId</column-name><column-value><![CDATA[");
-
-		sb.append(getCompanyId());
-
-		sb.append("]]></column-value></column>");
-		sb.append(
-			"<column><column-name>repositoryId</column-name><column-value><![CDATA[");
-
-		sb.append(getRepositoryId());
-
-		sb.append("]]></column-value></column>");
-		sb.append(
-			"<column><column-name>path</column-name><column-value><![CDATA[");
-
-		sb.append(getPath());
-
-		sb.append("]]></column-value></column>");
-		sb.append(
-			"<column><column-name>version</column-name><column-value><![CDATA[");
-
-		sb.append(getVersion());
-
-		sb.append("]]></column-value></column>");
-		sb.append(
-			"<column><column-name>size</column-name><column-value><![CDATA[");
-
-		sb.append(getSize());
-
-		sb.append("]]></column-value></column>");
-		sb.append(
-			"<column><column-name>storeType</column-name><column-value><![CDATA[");
-
-		sb.append(getStoreType());
-
-		sb.append("]]></column-value></column>");
-
-		sb.append("</model>");
-
-		return sb.toString();
-	}
-
 	private static class EscapedModelProxyProviderFunctionHolder {
 
 		private static final Function<InvocationHandler, CTSContent>
-			_escapedModelProxyProviderFunction = _getProxyProviderFunction();
+			_escapedModelProxyProviderFunction =
+				ProxyUtil.getProxyProviderFunction(
+					CTSContent.class, ModelWrapper.class);
 
 	}
 

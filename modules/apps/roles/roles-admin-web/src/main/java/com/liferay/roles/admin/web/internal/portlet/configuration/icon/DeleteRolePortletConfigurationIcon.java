@@ -14,19 +14,19 @@
 
 package com.liferay.roles.admin.web.internal.portlet.configuration.icon;
 
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
 import com.liferay.portal.kernel.portlet.configuration.icon.BasePortletConfigurationIcon;
 import com.liferay.portal.kernel.portlet.configuration.icon.PortletConfigurationIcon;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.RoleService;
-import com.liferay.portal.kernel.service.permission.RolePermissionUtil;
+import com.liferay.portal.kernel.service.permission.RolePermission;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -45,7 +45,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pei-Jung Lan
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + RolesAdminPortletKeys.ROLES_ADMIN,
 		"path=/edit_role.jsp", "path=/edit_role_assignments.jsp",
@@ -58,8 +57,7 @@ public class DeleteRolePortletConfigurationIcon
 
 	@Override
 	public String getMessage(PortletRequest portletRequest) {
-		return LanguageUtil.get(
-			getResourceBundle(getLocale(portletRequest)), "delete");
+		return _language.get(getLocale(portletRequest), "delete");
 	}
 
 	@Override
@@ -109,7 +107,7 @@ public class DeleteRolePortletConfigurationIcon
 					portletRequest);
 
 			if (currentRoleTypeContributor.isAllowDelete(role) &&
-				RolePermissionUtil.contains(
+				_rolePermission.contains(
 					themeDisplay.getPermissionChecker(), roleId,
 					ActionKeys.DELETE)) {
 
@@ -125,11 +123,6 @@ public class DeleteRolePortletConfigurationIcon
 		return false;
 	}
 
-	@Reference(unbind = "-")
-	protected void setRoleService(RoleService roleService) {
-		_roleService = roleService;
-	}
-
 	private long _getRoleId(PortletRequest portletRequest) {
 		return ParamUtil.getLong(
 			_portal.getHttpServletRequest(portletRequest), "roleId");
@@ -139,8 +132,15 @@ public class DeleteRolePortletConfigurationIcon
 		DeleteRolePortletConfigurationIcon.class);
 
 	@Reference
+	private Language _language;
+
+	@Reference
 	private Portal _portal;
 
+	@Reference
+	private RolePermission _rolePermission;
+
+	@Reference
 	private RoleService _roleService;
 
 }

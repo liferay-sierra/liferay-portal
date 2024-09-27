@@ -82,6 +82,10 @@ public interface CPContentHelper {
 
 	public List<CPContentRenderer> getCPContentRenderers(String cpType);
 
+	public String getCPDefinitionCDNURL(
+			long cpDefinitionId, HttpServletRequest httpServletRequest)
+		throws Exception;
+
 	public FileVersion getCPDefinitionImageFileVersion(
 			long cpDefinitionId, HttpServletRequest httpServletRequest)
 		throws Exception;
@@ -126,6 +130,12 @@ public interface CPContentHelper {
 
 	public String getImageURL(FileEntry fileEntry, ThemeDisplay themeDisplay)
 		throws Exception;
+
+	public String getIncomingQuantityLabel(
+			HttpServletRequest httpServletRequest, String sku)
+		throws PortalException;
+
+	public int getMinOrderQuantity(long cpDefinitionId);
 
 	public String getReplacementCommerceProductFriendlyURL(
 			CPSku cpSku, ThemeDisplay themeDisplay)

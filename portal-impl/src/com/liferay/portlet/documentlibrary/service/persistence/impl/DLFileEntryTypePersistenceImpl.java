@@ -203,7 +203,7 @@ public class DLFileEntryTypePersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<DLFileEntryType>)FinderCacheUtil.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (DLFileEntryType dlFileEntryType : list) {
@@ -596,7 +596,8 @@ public class DLFileEntryTypePersistenceImpl
 
 			finderArgs = new Object[] {uuid};
 
-			count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs);
+			count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -732,7 +733,7 @@ public class DLFileEntryTypePersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = FinderCacheUtil.getResult(
-				_finderPathFetchByUUID_G, finderArgs);
+				_finderPathFetchByUUID_G, finderArgs, this);
 		}
 
 		if (result instanceof DLFileEntryType) {
@@ -852,7 +853,8 @@ public class DLFileEntryTypePersistenceImpl
 
 			finderArgs = new Object[] {uuid, groupId};
 
-			count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs);
+			count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1024,7 +1026,7 @@ public class DLFileEntryTypePersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<DLFileEntryType>)FinderCacheUtil.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (DLFileEntryType dlFileEntryType : list) {
@@ -1449,7 +1451,8 @@ public class DLFileEntryTypePersistenceImpl
 
 			finderArgs = new Object[] {uuid, companyId};
 
-			count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs);
+			count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1613,7 +1616,7 @@ public class DLFileEntryTypePersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<DLFileEntryType>)FinderCacheUtil.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (DLFileEntryType dlFileEntryType : list) {
@@ -2481,7 +2484,7 @@ public class DLFileEntryTypePersistenceImpl
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DLFileEntryTypeModelImpl</code>.
 	 * </p>
 	 *
-	 * @param groupId the group ID
+	 * @param groupIds the group IDs
 	 * @param start the lower bound of the range of document library file entry types
 	 * @param end the upper bound of the range of document library file entry types (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
@@ -2527,7 +2530,7 @@ public class DLFileEntryTypePersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<DLFileEntryType>)FinderCacheUtil.getResult(
-				_finderPathWithPaginationFindByGroupId, finderArgs);
+				_finderPathWithPaginationFindByGroupId, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (DLFileEntryType dlFileEntryType : list) {
@@ -2637,7 +2640,8 @@ public class DLFileEntryTypePersistenceImpl
 
 			finderArgs = new Object[] {groupId};
 
-			count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs);
+			count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2703,7 +2707,7 @@ public class DLFileEntryTypePersistenceImpl
 			finderArgs = new Object[] {StringUtil.merge(groupIds)};
 
 			count = (Long)FinderCacheUtil.getResult(
-				_finderPathWithPaginationCountByGroupId, finderArgs);
+				_finderPathWithPaginationCountByGroupId, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2950,7 +2954,7 @@ public class DLFileEntryTypePersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = FinderCacheUtil.getResult(
-				_finderPathFetchByG_DDI, finderArgs);
+				_finderPathFetchByG_DDI, finderArgs, this);
 		}
 
 		if (result instanceof DLFileEntryType) {
@@ -3058,7 +3062,8 @@ public class DLFileEntryTypePersistenceImpl
 
 			finderArgs = new Object[] {groupId, dataDefinitionId};
 
-			count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs);
+			count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -3187,7 +3192,7 @@ public class DLFileEntryTypePersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = FinderCacheUtil.getResult(
-				_finderPathFetchByG_F, finderArgs);
+				_finderPathFetchByG_F, finderArgs, this);
 		}
 
 		if (result instanceof DLFileEntryType) {
@@ -3308,7 +3313,8 @@ public class DLFileEntryTypePersistenceImpl
 
 			finderArgs = new Object[] {groupId, fileEntryTypeKey};
 
-			count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs);
+			count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -3799,7 +3805,9 @@ public class DLFileEntryTypePersistenceImpl
 	 */
 	@Override
 	public DLFileEntryType fetchByPrimaryKey(Serializable primaryKey) {
-		if (CTPersistenceHelperUtil.isProductionMode(DLFileEntryType.class)) {
+		if (CTPersistenceHelperUtil.isProductionMode(
+				DLFileEntryType.class, primaryKey)) {
+
 			return super.fetchByPrimaryKey(primaryKey);
 		}
 
@@ -4019,7 +4027,7 @@ public class DLFileEntryTypePersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<DLFileEntryType>)FinderCacheUtil.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -4095,7 +4103,7 @@ public class DLFileEntryTypePersistenceImpl
 
 		if (productionMode) {
 			count = (Long)FinderCacheUtil.getResult(
-				_finderPathCountAll, FINDER_ARGS_EMPTY);
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 		}
 
 		if (count == null) {

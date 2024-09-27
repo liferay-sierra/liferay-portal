@@ -30,6 +30,7 @@ import java.util.Properties;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -74,8 +75,8 @@ public class ProjectTemplatesRESTBuilderTest
 			gradleWorkspaceDir, "modules");
 
 		File gradleProjectDir = buildTemplateWithGradle(
-			gradleWorkspaceModulesDir, template, name, "--package-name",
-			packageName, "--liferay-version", liferayVersion);
+			gradleWorkspaceModulesDir, template, name, "--liferay-version",
+			liferayVersion, "--package-name", packageName);
 
 		testExists(gradleProjectDir, name + "-api/build.gradle");
 		testExists(gradleProjectDir, name + "-client/build.gradle");
@@ -89,8 +90,8 @@ public class ProjectTemplatesRESTBuilderTest
 
 		File mavenProjectDir = buildTemplateWithMaven(
 			mavenModulesDir, mavenModulesDir, template, name, "com.test",
-			mavenExecutor, "-Dpackage=" + packageName,
-			"-DliferayVersion=" + liferayVersion, "-DbuildType=maven");
+			mavenExecutor, "-DbuildType=maven",
+			"-DliferayVersion=" + liferayVersion, "-Dpackage=" + packageName);
 
 		testExists(mavenProjectDir, name + "-api/pom.xml");
 		testExists(mavenProjectDir, name + "-client/pom.xml");
@@ -98,6 +99,7 @@ public class ProjectTemplatesRESTBuilderTest
 		testExists(mavenProjectDir, name + "-test/pom.xml");
 	}
 
+	@Ignore
 	@Test
 	public void testBuildTemplateRESTBuilderCheckExports() throws Exception {
 		String liferayVersion = "7.4.3.4";
@@ -113,8 +115,8 @@ public class ProjectTemplatesRESTBuilderTest
 			gradleWorkspaceDir, "modules");
 
 		File gradleProjectDir = buildTemplateWithGradle(
-			gradleWorkspaceModulesDir, template, name, "--package-name",
-			packageName, "--liferay-version", liferayVersion);
+			gradleWorkspaceModulesDir, template, name, "--liferay-version",
+			liferayVersion, "--package-name", packageName);
 
 		File gradleBndFile = testExists(
 			gradleProjectDir, name + "-api/bnd.bnd");
@@ -126,8 +128,8 @@ public class ProjectTemplatesRESTBuilderTest
 
 		File mavenProjectDir = buildTemplateWithMaven(
 			mavenModulesDir, mavenModulesDir, template, name, "com.test",
-			mavenExecutor, "-Dpackage=" + packageName,
-			"-DliferayVersion=" + liferayVersion, "-DbuildType=maven");
+			mavenExecutor, "-DbuildType=maven",
+			"-DliferayVersion=" + liferayVersion, "-Dpackage=" + packageName);
 
 		File mavenBndFile = testExists(mavenProjectDir, name + "-api/bnd.bnd");
 

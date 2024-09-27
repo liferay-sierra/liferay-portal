@@ -37,9 +37,7 @@ import org.osgi.service.component.annotations.Component;
  * @author Marcellus Tavares
  * @author Norbert Kocsis
  */
-@Component(
-	immediate = true, property = "node.type=FORK", service = NodeValidator.class
-)
+@Component(property = "node.type=FORK", service = NodeValidator.class)
 public class ForkNodeValidator extends BaseNodeValidator<Fork> {
 
 	@Override
@@ -48,12 +46,12 @@ public class ForkNodeValidator extends BaseNodeValidator<Fork> {
 
 		if (fork.getIncomingTransitionsCount() == 0) {
 			throw new KaleoDefinitionValidationException.
-				MustSetIncomingTransition(fork.getName());
+				MustSetIncomingTransition(fork.getDefaultLabel());
 		}
 
 		if (fork.getOutgoingTransitionsCount() < 2) {
 			throw new KaleoDefinitionValidationException.
-				MustSetMultipleOutgoingTransition(fork.getName());
+				MustSetMultipleOutgoingTransition(fork.getDefaultLabel());
 		}
 
 		_traverse(fork);
@@ -120,7 +118,8 @@ public class ForkNodeValidator extends BaseNodeValidator<Fork> {
 			!sourceNodes.containsAll(targetNodes)) {
 
 			throw new KaleoDefinitionValidationException.
-				UnbalancedForkAndJoinNode(fork.getName(), join.getName());
+				UnbalancedForkAndJoinNode(
+					fork.getDefaultLabel(), join.getDefaultLabel());
 		}
 	}
 
@@ -163,7 +162,8 @@ public class ForkNodeValidator extends BaseNodeValidator<Fork> {
 				else if (!Objects.equals(join, targetNode)) {
 					throw new KaleoDefinitionValidationException.
 						MustPairedForkAndJoinNodes(
-							fork.getName(), targetNode.getName());
+							fork.getDefaultLabel(),
+							targetNode.getDefaultLabel());
 				}
 			}
 			else {
@@ -176,7 +176,7 @@ public class ForkNodeValidator extends BaseNodeValidator<Fork> {
 
 		if (join == null) {
 			throw new KaleoDefinitionValidationException.MustSetJoinNode(
-				fork.getName());
+				fork.getDefaultLabel());
 		}
 
 		_reverseTraverse(fork, join, targetNodes, joinForkMap);

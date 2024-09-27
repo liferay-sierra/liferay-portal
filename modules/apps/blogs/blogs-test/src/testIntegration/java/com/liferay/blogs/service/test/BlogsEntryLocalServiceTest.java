@@ -184,7 +184,7 @@ public class BlogsEntryLocalServiceTest {
 	public void testAddBlogsEntryWithoutExternalReferenceCode()
 		throws Exception {
 
-		BlogsEntry blogsEntry = BlogsEntryLocalServiceUtil.addEntry(
+		BlogsEntry blogsEntry1 = BlogsEntryLocalServiceUtil.addEntry(
 			null, TestPropsValues.getUserId(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
@@ -192,9 +192,15 @@ public class BlogsEntryLocalServiceTest {
 			RandomTestUtil.randomString(), null, null,
 			ServiceContextTestUtil.getServiceContext());
 
-		Assert.assertEquals(
-			blogsEntry.getExternalReferenceCode(),
-			String.valueOf(blogsEntry.getEntryId()));
+		String externalReferenceCode = blogsEntry1.getExternalReferenceCode();
+
+		Assert.assertEquals(externalReferenceCode, blogsEntry1.getUuid());
+
+		BlogsEntry blogsEntry2 =
+			BlogsEntryLocalServiceUtil.getBlogsEntryByExternalReferenceCode(
+				TestPropsValues.getGroupId(), externalReferenceCode);
+
+		Assert.assertEquals(blogsEntry1, blogsEntry2);
 	}
 
 	@Test
@@ -543,13 +549,11 @@ public class BlogsEntryLocalServiceTest {
 
 	@Test
 	public void testAddOriginalImageInVisibleImageFolder() throws Exception {
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(
-				_group.getGroupId(), _user.getUserId());
-
 		BlogsEntry blogsEntry = BlogsEntryLocalServiceUtil.addEntry(
 			_user.getUserId(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), serviceContext);
+			RandomTestUtil.randomString(),
+			ServiceContextTestUtil.getServiceContext(
+				_group.getGroupId(), _user.getUserId()));
 
 		FileEntry tempFileEntry = getTempFileEntry(
 			_user.getUserId(), _group.getGroupId(), "image.jpg");
@@ -1588,7 +1592,7 @@ public class BlogsEntryLocalServiceTest {
 			serviceContext, Constants.ADD);
 
 		return MBMessageLocalServiceUtil.addDiscussionMessage(
-			userId, RandomTestUtil.randomString(), _group.getGroupId(),
+			null, userId, RandomTestUtil.randomString(), _group.getGroupId(),
 			BlogsEntry.class.getName(), entry.getEntryId(),
 			mbThread.getThreadId(),
 			MBMessageConstants.DEFAULT_PARENT_MESSAGE_ID,

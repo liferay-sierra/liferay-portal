@@ -62,14 +62,15 @@ public class DispatchTriggerLocalServiceUtil {
 	}
 
 	public static DispatchTrigger addDispatchTrigger(
-			long userId, String dispatchTaskExecutorType,
+			String externalReferenceCode, long userId,
+			String dispatchTaskExecutorType,
 			com.liferay.portal.kernel.util.UnicodeProperties
 				dispatchTaskSettingsUnicodeProperties,
 			String name, boolean system)
 		throws PortalException {
 
 		return getService().addDispatchTrigger(
-			userId, dispatchTaskExecutorType,
+			externalReferenceCode, userId, dispatchTaskExecutorType,
 			dispatchTaskSettingsUnicodeProperties, name, system);
 	}
 
@@ -235,6 +236,45 @@ public class DispatchTriggerLocalServiceUtil {
 		return getService().fetchDispatchTrigger(companyId, name);
 	}
 
+	/**
+	 * Returns the dispatch trigger with the matching external reference code and company.
+	 *
+	 * @param companyId the primary key of the company
+	 * @param externalReferenceCode the dispatch trigger's external reference code
+	 * @return the matching dispatch trigger, or <code>null</code> if a matching dispatch trigger could not be found
+	 */
+	public static DispatchTrigger fetchDispatchTriggerByExternalReferenceCode(
+		long companyId, String externalReferenceCode) {
+
+		return getService().fetchDispatchTriggerByExternalReferenceCode(
+			companyId, externalReferenceCode);
+	}
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link #fetchDispatchTriggerByExternalReferenceCode(long, String)}
+	 */
+	@Deprecated
+	public static DispatchTrigger fetchDispatchTriggerByReferenceCode(
+		long companyId, String externalReferenceCode) {
+
+		return getService().fetchDispatchTriggerByReferenceCode(
+			companyId, externalReferenceCode);
+	}
+
+	/**
+	 * Returns the dispatch trigger with the matching UUID and company.
+	 *
+	 * @param uuid the dispatch trigger's UUID
+	 * @param companyId the primary key of the company
+	 * @return the matching dispatch trigger, or <code>null</code> if a matching dispatch trigger could not be found
+	 */
+	public static DispatchTrigger fetchDispatchTriggerByUuidAndCompanyId(
+		String uuid, long companyId) {
+
+		return getService().fetchDispatchTriggerByUuidAndCompanyId(
+			uuid, companyId);
+	}
+
 	public static java.util.Date fetchNextFireDate(long dispatchTriggerId) {
 		return getService().fetchNextFireDate(dispatchTriggerId);
 	}
@@ -260,6 +300,38 @@ public class DispatchTriggerLocalServiceUtil {
 		throws PortalException {
 
 		return getService().getDispatchTrigger(dispatchTriggerId);
+	}
+
+	/**
+	 * Returns the dispatch trigger with the matching external reference code and company.
+	 *
+	 * @param companyId the primary key of the company
+	 * @param externalReferenceCode the dispatch trigger's external reference code
+	 * @return the matching dispatch trigger
+	 * @throws PortalException if a matching dispatch trigger could not be found
+	 */
+	public static DispatchTrigger getDispatchTriggerByExternalReferenceCode(
+			long companyId, String externalReferenceCode)
+		throws PortalException {
+
+		return getService().getDispatchTriggerByExternalReferenceCode(
+			companyId, externalReferenceCode);
+	}
+
+	/**
+	 * Returns the dispatch trigger with the matching UUID and company.
+	 *
+	 * @param uuid the dispatch trigger's UUID
+	 * @param companyId the primary key of the company
+	 * @return the matching dispatch trigger
+	 * @throws PortalException if a matching dispatch trigger could not be found
+	 */
+	public static DispatchTrigger getDispatchTriggerByUuidAndCompanyId(
+			String uuid, long companyId)
+		throws PortalException {
+
+		return getService().getDispatchTriggerByUuidAndCompanyId(
+			uuid, companyId);
 	}
 
 	public static List<DispatchTrigger> getDispatchTriggers(
@@ -305,6 +377,14 @@ public class DispatchTriggerLocalServiceUtil {
 
 	public static int getDispatchTriggersCount(long companyId) {
 		return getService().getDispatchTriggersCount(companyId);
+	}
+
+	public static com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery
+		getExportActionableDynamicQuery(
+			com.liferay.exportimport.kernel.lar.PortletDataContext
+				portletDataContext) {
+
+		return getService().getExportActionableDynamicQuery(portletDataContext);
 	}
 
 	public static
@@ -380,14 +460,14 @@ public class DispatchTriggerLocalServiceUtil {
 			int endDateMonth, int endDateDay, int endDateYear, int endDateHour,
 			int endDateMinute, boolean neverEnd, boolean overlapAllowed,
 			int startDateMonth, int startDateDay, int startDateYear,
-			int startDateHour, int startDateMinute)
+			int startDateHour, int startDateMinute, String timeZoneId)
 		throws PortalException {
 
 		return getService().updateDispatchTrigger(
 			dispatchTriggerId, active, cronExpression, dispatchTaskClusterMode,
 			endDateMonth, endDateDay, endDateYear, endDateHour, endDateMinute,
 			neverEnd, overlapAllowed, startDateMonth, startDateDay,
-			startDateYear, startDateHour, startDateMinute);
+			startDateYear, startDateHour, startDateMinute, timeZoneId);
 	}
 
 	public static DispatchTrigger updateDispatchTrigger(

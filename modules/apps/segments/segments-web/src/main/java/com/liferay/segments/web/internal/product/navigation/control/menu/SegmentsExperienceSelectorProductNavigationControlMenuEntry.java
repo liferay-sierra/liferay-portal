@@ -18,6 +18,8 @@ import com.liferay.layout.content.page.editor.constants.ContentPageEditorWebKeys
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.security.permission.resource.LayoutContentModelResourcePermission;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONFactory;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
@@ -28,22 +30,27 @@ import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.permission.LayoutPermission;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
-import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.product.navigation.control.menu.BaseJSPProductNavigationControlMenuEntry;
 import com.liferay.product.navigation.control.menu.ProductNavigationControlMenuEntry;
 import com.liferay.product.navigation.control.menu.constants.ProductNavigationControlMenuCategoryKeys;
-import com.liferay.segments.model.SegmentsExperience;
+import com.liferay.segments.manager.SegmentsExperienceManager;
+import com.liferay.segments.service.SegmentsEntryLocalService;
 import com.liferay.segments.service.SegmentsExperienceLocalService;
-import com.liferay.sites.kernel.util.SitesUtil;
+import com.liferay.segments.service.SegmentsExperimentLocalService;
+import com.liferay.segments.service.SegmentsExperimentRelLocalService;
+import com.liferay.segments.web.internal.display.context.SegmentsExperienceSelectorDisplayContext;
+import com.liferay.sites.kernel.util.Sites;
 
-import java.util.List;
+import java.io.IOException;
+
 import java.util.Objects;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -52,7 +59,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pablo Molina
  */
 @Component(
-	immediate = true,
 	property = {
 		"product.navigation.control.menu.category.key=" + ProductNavigationControlMenuCategoryKeys.TOOLS,
 		"product.navigation.control.menu.entry.order:Integer=110"
@@ -83,16 +89,6 @@ public class SegmentsExperienceSelectorProductNavigationControlMenuEntry
 			(ThemeDisplay)httpServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
 
-		List<SegmentsExperience> segmentsExperiences =
-			_segmentsExperienceLocalService.getSegmentsExperiences(
-				themeDisplay.getScopeGroupId(),
-				_portal.getClassNameId(Layout.class.getName()),
-				themeDisplay.getPlid(), true);
-
-		if (ListUtil.isEmpty(segmentsExperiences)) {
-			return false;
-		}
-
 		LayoutTypePortlet layoutTypePortlet =
 			themeDisplay.getLayoutTypePortlet();
 
@@ -100,6 +96,22 @@ public class SegmentsExperienceSelectorProductNavigationControlMenuEntry
 			layoutTypePortlet.getLayoutTypeController();
 
 		if (layoutTypeController.isFullPageDisplayable()) {
+			return false;
+		}
+
+		Layout layout = themeDisplay.getLayout();
+
+		if (!layout.isTypeContent() || !_sites.isLayoutUpdateable(layout)) {
+			return false;
+		}
+
+		long segmentsExperiencesCount =
+			_segmentsExperienceLocalService.getSegmentsExperiencesCount(
+				themeDisplay.getScopeGroupId(),
+				_portal.getClassNameId(Layout.class.getName()),
+				themeDisplay.getPlid(), true);
+
+		if (segmentsExperiencesCount <= 1) {
 			return false;
 		}
 
@@ -112,23 +124,13 @@ public class SegmentsExperienceSelectorProductNavigationControlMenuEntry
 			return false;
 		}
 
-		Layout layout = themeDisplay.getLayout();
-
-		if (!layout.isTypeContent() || !SitesUtil.isLayoutUpdateable(layout)) {
-			return false;
-		}
-
 		try {
 			if (layout.isSystem() && layout.isTypeContent()) {
 				layout = _layoutLocalService.getLayout(layout.getClassPK());
 			}
 
-			if (_layoutPermission.contains(
-					themeDisplay.getPermissionChecker(), layout,
-					ActionKeys.UPDATE) ||
-				_layoutPermission.contains(
-					themeDisplay.getPermissionChecker(), layout,
-					ActionKeys.UPDATE_LAYOUT_CONTENT) ||
+			if (_layoutPermission.containsLayoutUpdatePermission(
+					themeDisplay.getPermissionChecker(), layout) ||
 				_modelResourcePermission.contains(
 					themeDisplay.getPermissionChecker(), layout.getPlid(),
 					ActionKeys.UPDATE)) {
@@ -146,16 +148,37 @@ public class SegmentsExperienceSelectorProductNavigationControlMenuEntry
 	}
 
 	@Override
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.segments.web)",
-		unbind = "-"
-	)
-	public void setServletContext(ServletContext servletContext) {
-		super.setServletContext(servletContext);
+	protected ServletContext getServletContext() {
+		return _servletContext;
+	}
+
+	@Override
+	protected boolean include(
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse, String jspPath)
+		throws IOException {
+
+		httpServletRequest.setAttribute(
+			SegmentsExperienceSelectorDisplayContext.class.getName(),
+			new SegmentsExperienceSelectorDisplayContext(
+				httpServletRequest, _jsonFactory, _language, _portal,
+				_segmentsEntryLocalService,
+				new SegmentsExperienceManager(_segmentsExperienceLocalService),
+				_segmentsExperienceLocalService,
+				_segmentsExperimentLocalService,
+				_segmentsExperimentRelLocalService));
+
+		return super.include(httpServletRequest, httpServletResponse, jspPath);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		SegmentsExperienceSelectorProductNavigationControlMenuEntry.class);
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;
@@ -170,6 +193,22 @@ public class SegmentsExperienceSelectorProductNavigationControlMenuEntry
 	private Portal _portal;
 
 	@Reference
+	private SegmentsEntryLocalService _segmentsEntryLocalService;
+
+	@Reference
 	private SegmentsExperienceLocalService _segmentsExperienceLocalService;
+
+	@Reference
+	private SegmentsExperimentLocalService _segmentsExperimentLocalService;
+
+	@Reference
+	private SegmentsExperimentRelLocalService
+		_segmentsExperimentRelLocalService;
+
+	@Reference(target = "(osgi.web.symbolicname=com.liferay.segments.web)")
+	private ServletContext _servletContext;
+
+	@Reference
+	private Sites _sites;
 
 }

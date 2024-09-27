@@ -15,7 +15,9 @@
 package com.liferay.portal.jsp.engine.internal;
 
 import com.liferay.petra.lang.ClassLoaderPool;
-import com.liferay.portal.asm.ASMWrapperUtil;
+import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringPool;
+import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.jsp.engine.internal.delegate.CheckEnabledServletDelegate;
 import com.liferay.portal.jsp.engine.internal.delegate.JspConfigDescriptorServletContextDelegate;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -24,6 +26,7 @@ import com.liferay.portal.kernel.util.PortalLifecycleUtil;
 import com.liferay.portal.kernel.util.PropertiesUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.ServerDetector;
 import com.liferay.portal.util.PropsImpl;
 import com.liferay.shielded.container.Ordered;
@@ -70,9 +73,17 @@ public class JSPEngineShieldedContainerInitializer
 			servletContext.getRealPath(SHIELDED_CONTAINER_LIB));
 
 		try {
+			String path = shieldedContainerLib.getCanonicalPath();
+
+			path = StringUtil.replace(
+				path, CharPool.BACK_SLASH, CharPool.SLASH);
+
+			if (!path.endsWith(StringPool.SLASH)) {
+				path += StringPool.SLASH;
+			}
+
 			System.setProperty(
-				PropsKeys.LIFERAY_SHIELDED_CONTAINER_LIB_PORTAL_DIR,
-				shieldedContainerLib.getCanonicalPath());
+				PropsKeys.LIFERAY_SHIELDED_CONTAINER_LIB_PORTAL_DIR, path);
 		}
 		catch (IOException ioException) {
 			throw new ServletException(ioException);
@@ -106,7 +117,7 @@ public class JSPEngineShieldedContainerInitializer
 
 		jasperInitializer.onStartup(
 			null,
-			ASMWrapperUtil.createASMWrapper(
+			ProxyUtil.newDelegateProxyInstance(
 				servletContext.getClassLoader(), ServletContext.class,
 				new JspConfigDescriptorServletContextDelegate(servletContext),
 				servletContext));
@@ -141,7 +152,7 @@ public class JSPEngineShieldedContainerInitializer
 		Servlet portalJSPServlet;
 
 		if (checkInterval > 0) {
-			portalJSPServlet = ASMWrapperUtil.createASMWrapper(
+			portalJSPServlet = ProxyUtil.newDelegateProxyInstance(
 				servletContext.getClassLoader(), Servlet.class,
 				new CheckEnabledServletDelegate(
 					jspServlet, servletContext, checkInterval),

@@ -41,6 +41,8 @@ import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.PersistedModel;
 import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.search.Indexable;
@@ -277,6 +279,50 @@ public abstract class SXPBlueprintLocalServiceBaseImpl
 	}
 
 	/**
+	 * Returns the sxp blueprint with the matching external reference code and company.
+	 *
+	 * @param companyId the primary key of the company
+	 * @param externalReferenceCode the sxp blueprint's external reference code
+	 * @return the matching sxp blueprint, or <code>null</code> if a matching sxp blueprint could not be found
+	 */
+	@Override
+	public SXPBlueprint fetchSXPBlueprintByExternalReferenceCode(
+		long companyId, String externalReferenceCode) {
+
+		return sxpBlueprintPersistence.fetchByC_ERC(
+			companyId, externalReferenceCode);
+	}
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link #fetchSXPBlueprintByExternalReferenceCode(long, String)}
+	 */
+	@Deprecated
+	@Override
+	public SXPBlueprint fetchSXPBlueprintByReferenceCode(
+		long companyId, String externalReferenceCode) {
+
+		return fetchSXPBlueprintByExternalReferenceCode(
+			companyId, externalReferenceCode);
+	}
+
+	/**
+	 * Returns the sxp blueprint with the matching external reference code and company.
+	 *
+	 * @param companyId the primary key of the company
+	 * @param externalReferenceCode the sxp blueprint's external reference code
+	 * @return the matching sxp blueprint
+	 * @throws PortalException if a matching sxp blueprint could not be found
+	 */
+	@Override
+	public SXPBlueprint getSXPBlueprintByExternalReferenceCode(
+			long companyId, String externalReferenceCode)
+		throws PortalException {
+
+		return sxpBlueprintPersistence.findByC_ERC(
+			companyId, externalReferenceCode);
+	}
+
+	/**
 	 * Returns the sxp blueprint with the primary key.
 	 *
 	 * @param sxpBlueprintId the primary key of the sxp blueprint
@@ -451,6 +497,11 @@ public abstract class SXPBlueprintLocalServiceBaseImpl
 	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
 		throws PortalException {
 
+		if (_log.isWarnEnabled()) {
+			_log.warn(
+				"Implement SXPBlueprintLocalServiceImpl#deleteSXPBlueprint(SXPBlueprint) to avoid orphaned data");
+		}
+
 		return sxpBlueprintLocalService.deleteSXPBlueprint(
 			(SXPBlueprint)persistedModel);
 	}
@@ -615,5 +666,8 @@ public abstract class SXPBlueprintLocalServiceBaseImpl
 	@Reference
 	protected com.liferay.counter.kernel.service.CounterLocalService
 		counterLocalService;
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		SXPBlueprintLocalServiceBaseImpl.class);
 
 }

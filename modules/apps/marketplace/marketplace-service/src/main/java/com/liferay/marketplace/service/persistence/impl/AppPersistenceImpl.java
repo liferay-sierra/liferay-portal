@@ -47,7 +47,7 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 
 import java.io.Serializable;
 
@@ -193,7 +193,8 @@ public class AppPersistenceImpl
 		List<App> list = null;
 
 		if (useFinderCache) {
-			list = (List<App>)finderCache.getResult(finderPath, finderArgs);
+			list = (List<App>)finderCache.getResult(
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (App app : list) {
@@ -571,7 +572,7 @@ public class AppPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -727,7 +728,8 @@ public class AppPersistenceImpl
 		List<App> list = null;
 
 		if (useFinderCache) {
-			list = (List<App>)finderCache.getResult(finderPath, finderArgs);
+			list = (List<App>)finderCache.getResult(
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (App app : list) {
@@ -1134,7 +1136,7 @@ public class AppPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid, companyId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -1289,7 +1291,8 @@ public class AppPersistenceImpl
 		List<App> list = null;
 
 		if (useFinderCache) {
-			list = (List<App>)finderCache.getResult(finderPath, finderArgs);
+			list = (List<App>)finderCache.getResult(
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (App app : list) {
@@ -1644,7 +1647,7 @@ public class AppPersistenceImpl
 
 		Object[] finderArgs = new Object[] {companyId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -1748,7 +1751,7 @@ public class AppPersistenceImpl
 
 		if (useFinderCache) {
 			result = finderCache.getResult(
-				_finderPathFetchByRemoteAppId, finderArgs);
+				_finderPathFetchByRemoteAppId, finderArgs, this);
 		}
 
 		if (result instanceof App) {
@@ -1851,7 +1854,7 @@ public class AppPersistenceImpl
 
 		Object[] finderArgs = new Object[] {remoteAppId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -1985,7 +1988,8 @@ public class AppPersistenceImpl
 		List<App> list = null;
 
 		if (useFinderCache) {
-			list = (List<App>)finderCache.getResult(finderPath, finderArgs);
+			list = (List<App>)finderCache.getResult(
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (App app : list) {
@@ -2366,7 +2370,7 @@ public class AppPersistenceImpl
 
 		Object[] finderArgs = new Object[] {category};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -2538,7 +2542,7 @@ public class AppPersistenceImpl
 		app.setNew(true);
 		app.setPrimaryKey(appId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		app.setUuid(uuid);
 
@@ -2649,7 +2653,7 @@ public class AppPersistenceImpl
 		AppModelImpl appModelImpl = (AppModelImpl)app;
 
 		if (Validator.isNull(app.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			app.setUuid(uuid);
 		}
@@ -2839,7 +2843,8 @@ public class AppPersistenceImpl
 		List<App> list = null;
 
 		if (useFinderCache) {
-			list = (List<App>)finderCache.getResult(finderPath, finderArgs);
+			list = (List<App>)finderCache.getResult(
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -2909,7 +2914,7 @@ public class AppPersistenceImpl
 	@Override
 	public int countAll() {
 		Long count = (Long)finderCache.getResult(
-			_finderPathCountAll, FINDER_ARGS_EMPTY);
+			_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -3149,6 +3154,6 @@ public class AppPersistenceImpl
 	}
 
 	@Reference
-	private AppModelArgumentsResolver _appModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

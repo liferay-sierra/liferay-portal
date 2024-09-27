@@ -43,12 +43,20 @@ public class ObjectDefinitionServiceUtil {
 			Map<java.util.Locale, String> labelMap, String name,
 			String panelAppOrder, String panelCategoryKey,
 			Map<java.util.Locale, String> pluralLabelMap, String scope,
+			String storageType,
 			List<com.liferay.object.model.ObjectField> objectFields)
 		throws PortalException {
 
 		return getService().addCustomObjectDefinition(
 			labelMap, name, panelAppOrder, panelCategoryKey, pluralLabelMap,
-			scope, objectFields);
+			scope, storageType, objectFields);
+	}
+
+	public static ObjectDefinition addObjectDefinition(
+			String externalReferenceCode)
+		throws PortalException {
+
+		return getService().addObjectDefinition(externalReferenceCode);
 	}
 
 	public static ObjectDefinition deleteObjectDefinition(
@@ -58,10 +66,26 @@ public class ObjectDefinitionServiceUtil {
 		return getService().deleteObjectDefinition(objectDefinitionId);
 	}
 
+	public static ObjectDefinition fetchObjectDefinitionByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws PortalException {
+
+		return getService().fetchObjectDefinitionByExternalReferenceCode(
+			externalReferenceCode, companyId);
+	}
+
 	public static ObjectDefinition getObjectDefinition(long objectDefinitionId)
 		throws PortalException {
 
 		return getService().getObjectDefinition(objectDefinitionId);
+	}
+
+	public static ObjectDefinition getObjectDefinitionByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws PortalException {
+
+		return getService().getObjectDefinitionByExternalReferenceCode(
+			externalReferenceCode, companyId);
 	}
 
 	public static List<ObjectDefinition> getObjectDefinitions(
@@ -103,17 +127,41 @@ public class ObjectDefinitionServiceUtil {
 	}
 
 	public static ObjectDefinition updateCustomObjectDefinition(
-			long objectDefinitionId, long descriptionObjectFieldId,
-			long titleObjectFieldId, boolean active,
+			String externalReferenceCode, long objectDefinitionId,
+			long accountEntryRestrictedObjectFieldId,
+			long descriptionObjectFieldId, long titleObjectFieldId,
+			boolean accountEntryRestricted, boolean active,
+			boolean enableCategorization, boolean enableComments,
+			boolean enableObjectEntryHistory,
 			Map<java.util.Locale, String> labelMap, String name,
 			String panelAppOrder, String panelCategoryKey, boolean portlet,
 			Map<java.util.Locale, String> pluralLabelMap, String scope)
 		throws PortalException {
 
 		return getService().updateCustomObjectDefinition(
-			objectDefinitionId, descriptionObjectFieldId, titleObjectFieldId,
-			active, labelMap, name, panelAppOrder, panelCategoryKey, portlet,
+			externalReferenceCode, objectDefinitionId,
+			accountEntryRestrictedObjectFieldId, descriptionObjectFieldId,
+			titleObjectFieldId, accountEntryRestricted, active,
+			enableCategorization, enableComments, enableObjectEntryHistory,
+			labelMap, name, panelAppOrder, panelCategoryKey, portlet,
 			pluralLabelMap, scope);
+	}
+
+	public static ObjectDefinition updateExternalReferenceCode(
+			long objectDefinitionId, String externalReferenceCode)
+		throws PortalException {
+
+		return getService().updateExternalReferenceCode(
+			objectDefinitionId, externalReferenceCode);
+	}
+
+	public static ObjectDefinition updateSystemObjectDefinition(
+			String externalReferenceCode, long objectDefinitionId,
+			long titleObjectFieldId)
+		throws PortalException {
+
+		return getService().updateSystemObjectDefinition(
+			externalReferenceCode, objectDefinitionId, titleObjectFieldId);
 	}
 
 	public static ObjectDefinition updateTitleObjectFieldId(

@@ -49,6 +49,14 @@ function filterAndSortIndexFields(indexFields, field) {
 		});
 }
 
+/**
+ * Displays a single item in the autocomplete dropdown.
+ * @param {object} indexField A field mapping object containing
+ * 	{languageIdPosition, name, type}.
+ * 	@see FieldMappingInfoResourceImpl#_addFieldMappingInfo
+ * @param {String} match The current input value.
+ * @param {Function} onClick
+ */
 function AutocompleteItem({indexField, match = '', onClick}) {
 	const fuzzyMatch = fuzzy.match(match, indexField.name, {
 		post: '</strong>',
@@ -69,7 +77,14 @@ function AutocompleteItem({indexField, match = '', onClick}) {
 
 			{indexField.languageIdPosition > -1 && <ClayIcon symbol="globe" />}
 
-			<span className="type">{indexField.type}</span>
+			<span
+				className="type"
+				{...(indexField.type?.length > 7
+					? {title: indexField.type}
+					: {})}
+			>
+				{indexField.type}
+			</span>
 		</ClayDropDown.Item>
 	);
 }
@@ -83,6 +98,7 @@ function AutocompleteItem({indexField, match = '', onClick}) {
  * 	name: 'ddmTemplateKey',
  * 	type: 'keyword'
  * }
+ * @see FieldMappingInfoResourceImpl#_addFieldMappingInfo
  */
 function FieldRow({
 	boost = 1,
@@ -268,8 +284,8 @@ function FieldRow({
 				)}
 
 				{showBoost && (
-					<ClayInput.GroupItem shrink>
-						<ClayTooltipProvider>
+					<ClayTooltipProvider>
+						<ClayInput.GroupItem shrink>
 							<ClayInput
 								aria-label={Liferay.Language.get('boost')}
 								className="field-boost-input"
@@ -284,8 +300,8 @@ function FieldRow({
 								type="number"
 								value={boost}
 							/>
-						</ClayTooltipProvider>
-					</ClayInput.GroupItem>
+						</ClayInput.GroupItem>
+					</ClayTooltipProvider>
 				)}
 
 				{onDelete && (

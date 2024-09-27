@@ -19,11 +19,11 @@ import com.liferay.dynamic.data.mapping.model.DDMFormInstance;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
 import com.liferay.petra.function.UnsafeConsumer;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -135,7 +135,6 @@ public class DDMFormAdminActionDropdownItemsProvider {
 		_getDeleteActionUnsafeConsumer() {
 
 		return dropdownItem -> {
-			dropdownItem.put("symbolLeft", "times-circle");
 			dropdownItem.setData(
 				HashMapBuilder.<String, Object>put(
 					"action", "delete"
@@ -151,6 +150,7 @@ public class DDMFormAdminActionDropdownItemsProvider {
 						"formInstanceId", _ddmFormInstance.getFormInstanceId()
 					).buildString()
 				).build());
+			dropdownItem.setIcon("times-circle");
 			dropdownItem.setLabel(
 				LanguageUtil.get(_httpServletRequest, "delete"));
 		};
@@ -160,7 +160,6 @@ public class DDMFormAdminActionDropdownItemsProvider {
 		_getDuplicateActionUnsafeConsumer() {
 
 		return dropdownItem -> {
-			dropdownItem.put("symbolLeft", "copy");
 			dropdownItem.setDisabled(_invalidDDMFormInstance);
 			dropdownItem.setHref(
 				PortletURLBuilder.createActionURL(
@@ -174,6 +173,7 @@ public class DDMFormAdminActionDropdownItemsProvider {
 				).setParameter(
 					"groupId", _scopeGroupId
 				).buildString());
+			dropdownItem.setIcon("copy");
 			dropdownItem.setLabel(
 				LanguageUtil.get(_httpServletRequest, "duplicate"));
 		};
@@ -183,7 +183,6 @@ public class DDMFormAdminActionDropdownItemsProvider {
 		_getEditActionUnsafeConsumer() {
 
 		return dropdownItem -> {
-			dropdownItem.put("symbolLeft", "pencil");
 			dropdownItem.setDisabled(_invalidDDMFormInstance);
 			dropdownItem.setHref(
 				PortletURLBuilder.createRenderURL(
@@ -195,6 +194,7 @@ public class DDMFormAdminActionDropdownItemsProvider {
 				).setParameter(
 					"formInstanceId", _ddmFormInstance.getFormInstanceId()
 				).buildString());
+			dropdownItem.setIcon("pencil");
 			dropdownItem.setLabel(
 				LanguageUtil.get(_httpServletRequest, "edit"));
 		};
@@ -244,7 +244,6 @@ public class DDMFormAdminActionDropdownItemsProvider {
 		_getShareActionUnsafeConsumer() {
 
 		return dropdownItem -> {
-			dropdownItem.put("symbolLeft", "share");
 			dropdownItem.setData(
 				HashMapBuilder.<String, Object>put(
 					"action", "shareForm"
@@ -260,6 +259,7 @@ public class DDMFormAdminActionDropdownItemsProvider {
 					"url", _publishedFormURL
 				).build());
 			dropdownItem.setDisabled(_invalidDDMFormInstance);
+			dropdownItem.setIcon("share");
 			dropdownItem.setLabel(
 				LanguageUtil.get(_httpServletRequest, "share"));
 		};
@@ -269,7 +269,6 @@ public class DDMFormAdminActionDropdownItemsProvider {
 		_getViewEntriesActionUnsafeConsumer() {
 
 		return dropdownItem -> {
-			dropdownItem.put("symbolLeft", "list-ul");
 			dropdownItem.setDisabled(_invalidDDMFormInstance);
 			dropdownItem.setHref(
 				PortletURLBuilder.createRenderURL(
@@ -281,6 +280,7 @@ public class DDMFormAdminActionDropdownItemsProvider {
 				).setParameter(
 					"formInstanceId", _ddmFormInstance.getFormInstanceId()
 				).buildString());
+			dropdownItem.setIcon("list-ul");
 			dropdownItem.setLabel(
 				LanguageUtil.get(_httpServletRequest, "view-entries"));
 		};

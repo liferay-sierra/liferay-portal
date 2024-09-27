@@ -31,7 +31,8 @@ import com.liferay.headless.admin.user.internal.dto.v1_0.util.EmailAddressUtil;
 import com.liferay.headless.admin.user.internal.dto.v1_0.util.PhoneUtil;
 import com.liferay.headless.admin.user.internal.dto.v1_0.util.PostalAddressUtil;
 import com.liferay.headless.admin.user.internal.dto.v1_0.util.WebUrlUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Country;
 import com.liferay.portal.kernel.model.ListType;
 import com.liferay.portal.kernel.model.OrgLabor;
@@ -52,7 +53,6 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
-import com.liferay.portal.vulcan.util.TransformUtil;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -124,6 +124,7 @@ public class OrganizationResourceDTOConverter
 					dtoConverterContext.getLocale());
 				dateCreated = organization.getCreateDate();
 				dateModified = organization.getModifiedDate();
+				externalReferenceCode = organization.getExternalReferenceCode();
 				id = String.valueOf(organization.getOrganizationId());
 				keywords = ListUtil.toArray(
 					_assetTagLocalService.getTags(
@@ -153,7 +154,7 @@ public class OrganizationResourceDTOConverter
 								}
 
 								Set<Locale> locales =
-									LanguageUtil.getCompanyAvailableLocales(
+									_language.getCompanyAvailableLocales(
 										organization.getCompanyId());
 
 								Stream<Locale> localesStream = locales.stream();
@@ -272,7 +273,7 @@ public class OrganizationResourceDTOConverter
 	}
 
 	private Service _toService(OrgLabor orgLabor) throws Exception {
-		ListType listType = orgLabor.getType();
+		ListType listType = orgLabor.getListType();
 
 		return new Service() {
 			{
@@ -316,6 +317,9 @@ public class OrganizationResourceDTOConverter
 
 	@Reference
 	private EmailAddressService _emailAddressService;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private OrganizationLocalService _organizationLocalService;

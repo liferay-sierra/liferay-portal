@@ -44,7 +44,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alejandro Tardín
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + ContentPageEditorPortletKeys.CONTENT_PAGE_EDITOR_PORTLET,
 		"mvc.command.name=/layout_content_page_editor/add_fragment_entry_link_comment"
@@ -92,7 +91,7 @@ public class AddFragmentEntryLinkCommentMVCActionCommand
 						FragmentEntryLink.class.getName(), fragmentEntryLinkId);
 
 					commentId = _commentManager.addComment(
-						themeDisplay.getUserId(),
+						null, themeDisplay.getUserId(),
 						themeDisplay.getScopeGroupId(),
 						FragmentEntryLink.class.getName(), fragmentEntryLinkId,
 						user.getFullName(), null,
@@ -101,7 +100,7 @@ public class AddFragmentEntryLinkCommentMVCActionCommand
 				}
 				else {
 					commentId = _commentManager.addComment(
-						themeDisplay.getUserId(),
+						null, themeDisplay.getUserId(),
 						FragmentEntryLink.class.getName(), fragmentEntryLinkId,
 						user.getFullName(), parentCommentId, null,
 						ParamUtil.getString(actionRequest, "body"),

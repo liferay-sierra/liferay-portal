@@ -18,12 +18,12 @@ import com.liferay.bookmarks.constants.BookmarksFolderConstants;
 import com.liferay.bookmarks.constants.BookmarksPortletKeys;
 import com.liferay.bookmarks.model.BookmarksFolder;
 import com.liferay.bookmarks.web.internal.portlet.action.ActionUtil;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.configuration.icon.BasePortletConfigurationIcon;
 import com.liferay.portal.kernel.portlet.configuration.icon.PortletConfigurationIcon;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -55,17 +55,7 @@ public class DeleteFolderPortletConfigurationIcon
 
 	@Override
 	public String getMessage(PortletRequest portletRequest) {
-		String key = "delete";
-
-		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
-		if (_isTrashEnabled(themeDisplay.getScopeGroupId())) {
-			key = "move-to-recycle-bin";
-		}
-
-		return LanguageUtil.get(
-			getResourceBundle(themeDisplay.getLocale()), key);
+		return _language.get(getLocale(portletRequest), "delete");
 	}
 
 	@Override
@@ -127,7 +117,6 @@ public class DeleteFolderPortletConfigurationIcon
 		}
 
 		deleteURL.setParameter("redirect", parentFolderURL.toString());
-
 		deleteURL.setParameter(
 			"folderId", String.valueOf(folder.getFolderId()));
 
@@ -191,6 +180,9 @@ public class DeleteFolderPortletConfigurationIcon
 	)
 	private ModelResourcePermission<BookmarksFolder>
 		_bookmarksFolderModelResourcePermission;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

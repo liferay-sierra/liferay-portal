@@ -12,23 +12,54 @@
  * details.
  */
 
-import React from 'react';
+import ClayButton from '@clayui/button';
+import ClayIcon from '@clayui/icon';
+import classNames from 'classnames';
+import React, {MouseEventHandler} from 'react';
 
 import './DefaultPageHeader.scss';
 
-const DefaultPageHeader: React.FC<IProps> = ({description, title}) => {
+const DefaultPageHeader: React.FC<IProps> = ({
+	description,
+	hideBackButton,
+	onClickBack,
+	title,
+}) => {
 	return (
-		<div className="lfr-ddm__default-page-header">
-			<h1 className="lfr-ddm__default-page-header-title">{title}</h1>
+		<>
+			{(onClickBack || hideBackButton) && (
+				<ClayButton
+					className={classNames(
+						'lfr-ddm__default-page-header-back-button',
+						{
+							hide: hideBackButton,
+						}
+					)}
+					displayType="link"
+					onClick={onClickBack}
+				>
+					<ClayIcon symbol="order-arrow-left" />
 
-			{description && (
-				<span className="lfr-ddm__default-page-header-description">
-					{description}
-				</span>
+					{Liferay.Language.get('back')}
+				</ClayButton>
 			)}
+			<div className="lfr-ddm__default-page-header">
+				<h1 className="lfr-ddm__default-page-header-title" tabIndex={0}>
+					{title}
+				</h1>
 
-			<div className="lfr-ddm__default-page-header-line" />
-		</div>
+				{description && (
+					<span
+						className="lfr-ddm__default-page-header-description"
+						tabIndex={0}
+					>
+						{description}
+					</span>
+				)}
+
+				<div className="lfr-ddm__default-page-header-line" />
+			</div>
+		</>
 	);
 };
 
@@ -36,5 +67,7 @@ export default DefaultPageHeader;
 
 interface IProps {
 	description?: string;
+	hideBackButton?: boolean;
+	onClickBack?: MouseEventHandler<HTMLButtonElement>;
 	title: string;
 }

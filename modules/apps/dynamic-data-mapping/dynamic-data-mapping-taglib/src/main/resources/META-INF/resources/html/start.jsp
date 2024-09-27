@@ -95,7 +95,7 @@
 									markupView="lexicon"
 									message="<%= StringUtil.replace(curLanguageId, '_', '-') %>"
 									onClick="event.preventDefault(); fireLocaleChanged(event);"
-									url="javascript:;"
+									url="javascript:void(0);"
 								>
 								</liferay-ui:icon>
 							</c:if>
@@ -163,6 +163,7 @@
 					isPrivateLayoutsEnabled: <%= group.isPrivateLayoutsEnabled() %>,
 					mode: '<%= HtmlUtil.escapeJS(mode) %>',
 					p_l_id: <%= themeDisplay.getPlid() %>,
+					portletId: '<%= themeDisplay.getPpid() %>',
 					portletNamespace: '<portlet:namespace />',
 					repeatable: <%= repeatable %>,
 					requestedLocale:

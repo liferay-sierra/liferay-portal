@@ -15,6 +15,7 @@
 package com.liferay.headless.commerce.admin.account.internal.resource.v1_0;
 
 import com.liferay.account.model.AccountEntry;
+import com.liferay.account.service.AccountEntryService;
 import com.liferay.commerce.account.constants.CommerceAccountConstants;
 import com.liferay.commerce.account.exception.NoSuchAccountException;
 import com.liferay.commerce.account.exception.NoSuchAccountGroupException;
@@ -44,9 +45,7 @@ import com.liferay.headless.commerce.admin.account.internal.util.v1_0.AccountOrg
 import com.liferay.headless.commerce.admin.account.resource.v1_0.AccountResource;
 import com.liferay.headless.commerce.core.util.ExpandoUtil;
 import com.liferay.headless.commerce.core.util.ServiceContextHelper;
-import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -54,7 +53,6 @@ import com.liferay.portal.kernel.model.Country;
 import com.liferay.portal.kernel.model.Region;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.Field;
-import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.service.CountryService;
@@ -69,13 +67,11 @@ import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.portal.vulcan.multipart.MultipartBody;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
-import com.liferay.portal.vulcan.resource.EntityModelResource;
 import com.liferay.portal.vulcan.util.SearchUtil;
 
 import java.io.IOException;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.core.MultivaluedMap;
@@ -89,12 +85,10 @@ import org.osgi.service.component.annotations.ServiceScope;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	properties = "OSGI-INF/liferay/rest/v1_0/account.properties",
 	scope = ServiceScope.PROTOTYPE, service = AccountResource.class
 )
-public class AccountResourceImpl
-	extends BaseAccountResourceImpl implements EntityModelResource {
+public class AccountResourceImpl extends BaseAccountResourceImpl {
 
 	@Override
 	public Response deleteAccount(Long id) throws Exception {
@@ -210,18 +204,11 @@ public class AccountResourceImpl
 			AccountEntry.class.getName(), search, pagination,
 			queryConfig -> queryConfig.setSelectedFieldNames(
 				Field.ENTRY_CLASS_PK),
-			new UnsafeConsumer() {
-
-				public void accept(Object object) throws Exception {
-					SearchContext searchContext = (SearchContext)object;
-
-					searchContext.setCompanyId(contextCompany.getCompanyId());
-				}
-
-			},
+			searchContext -> searchContext.setCompanyId(
+				contextCompany.getCompanyId()),
 			sorts,
 			document -> _toAccount(
-				_commerceAccountService.fetchCommerceAccount(
+				_accountEntryService.getAccountEntry(
 					GetterUtil.getLong(document.get(Field.ENTRY_CLASS_PK)))));
 	}
 
@@ -458,6 +445,17 @@ public class AccountResourceImpl
 		return true;
 	}
 
+	private Account _toAccount(AccountEntry accountEntry) throws Exception {
+		if (accountEntry == null) {
+			return null;
+		}
+
+		return _accountDTOConverter.toDTO(
+			new DefaultDTOConverterContext(
+				accountEntry.getAccountEntryId(),
+				contextAcceptLanguage.getPreferredLocale()));
+	}
+
 	private Account _toAccount(CommerceAccount commerceAccount)
 		throws Exception {
 
@@ -521,17 +519,6 @@ public class AccountResourceImpl
 		AccountAddress[] accountAddresses = account.getAccountAddresses();
 
 		if (accountAddresses != null) {
-			List<CommerceAddress> commerceAddresses =
-				_commerceAddressService.getCommerceAddresses(
-					AccountEntry.class.getName(),
-					commerceAccount.getCommerceAccountId(), QueryUtil.ALL_POS,
-					QueryUtil.ALL_POS, null);
-
-			for (CommerceAddress commerceAddress : commerceAddresses) {
-				_commerceAddressService.deleteCommerceAddress(
-					commerceAddress.getCommerceAddressId());
-			}
-
 			for (AccountAddress accountAddress : accountAddresses) {
 				Country country = _countryService.fetchCountryByA2(
 					commerceAccount.getCompanyId(),
@@ -545,6 +532,49 @@ public class AccountResourceImpl
 								"country ISO code ", account.getName(),
 								" and account name ",
 								accountAddress.getCountryISOCode()));
+					}
+
+					continue;
+				}
+
+				long accountAddressId = GetterUtil.getLong(
+					accountAddress.getId());
+
+				if (accountAddressId > 0) {
+					CommerceAddress exisitingCommerceAddress =
+						_commerceAddressService.getCommerceAddress(
+							accountAddressId);
+
+					_commerceAddressService.updateCommerceAddress(
+						exisitingCommerceAddress.getCommerceAddressId(),
+						accountAddress.getName(),
+						accountAddress.getDescription(),
+						accountAddress.getStreet1(),
+						accountAddress.getStreet2(),
+						accountAddress.getStreet3(), accountAddress.getCity(),
+						accountAddress.getZip(),
+						_getRegionId(country, accountAddress),
+						country.getCountryId(), accountAddress.getPhoneNumber(),
+						GetterUtil.getInteger(
+							accountAddress.getType(),
+							CommerceAddressConstants.
+								ADDRESS_TYPE_BILLING_AND_SHIPPING),
+						serviceContext);
+
+					if (GetterUtil.get(
+							accountAddress.getDefaultBilling(), false)) {
+
+						_commerceAccountService.updateDefaultBillingAddress(
+							commerceAccount.getCommerceAccountId(),
+							exisitingCommerceAddress.getCommerceAddressId());
+					}
+
+					if (GetterUtil.get(
+							accountAddress.getDefaultShipping(), false)) {
+
+						_commerceAccountService.updateDefaultShippingAddress(
+							commerceAccount.getCommerceAccountId(),
+							exisitingCommerceAddress.getCommerceAddressId());
 					}
 
 					continue;
@@ -653,6 +683,9 @@ public class AccountResourceImpl
 
 	@Reference
 	private AccountDTOConverter _accountDTOConverter;
+
+	@Reference
+	private AccountEntryService _accountEntryService;
 
 	@Reference
 	private CommerceAccountGroupCommerceAccountRelService

@@ -17,6 +17,7 @@ package com.liferay.portlet.expando.service.impl;
 import com.liferay.expando.kernel.exception.ColumnNameException;
 import com.liferay.expando.kernel.exception.ColumnTypeException;
 import com.liferay.expando.kernel.exception.DuplicateColumnNameException;
+import com.liferay.expando.kernel.exception.ValueDataException;
 import com.liferay.expando.kernel.model.ExpandoColumn;
 import com.liferay.expando.kernel.model.ExpandoColumnConstants;
 import com.liferay.expando.kernel.model.ExpandoTable;
@@ -30,6 +31,7 @@ import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.adapter.ModelAdapterUtil;
 import com.liferay.portal.kernel.service.SystemEventLocalService;
@@ -92,14 +94,14 @@ public class ExpandoColumnLocalServiceImpl
 	}
 
 	@Override
-	public void deleteColumn(ExpandoColumn column) {
+	public void deleteColumn(ExpandoColumn column) throws PortalException {
 		addDeletionSystemEvent(column);
-
-		// Column
 
 		expandoColumnPersistence.remove(column);
 
-		// Values
+		resourceLocalService.deleteResource(
+			column.getCompanyId(), ExpandoColumn.class.getName(),
+			ResourceConstants.SCOPE_INDIVIDUAL, column.getColumnId());
 
 		expandoValueLocalService.deleteColumnValues(column.getColumnId());
 	}
@@ -124,7 +126,7 @@ public class ExpandoColumnLocalServiceImpl
 	}
 
 	@Override
-	public void deleteColumn(long tableId, String name) {
+	public void deleteColumn(long tableId, String name) throws PortalException {
 		ExpandoColumn column = expandoColumnPersistence.fetchByT_N(
 			tableId, name);
 
@@ -144,7 +146,7 @@ public class ExpandoColumnLocalServiceImpl
 	}
 
 	@Override
-	public void deleteColumns(long tableId) {
+	public void deleteColumns(long tableId) throws PortalException {
 		List<ExpandoColumn> columns = expandoColumnPersistence.findByTableId(
 			tableId);
 
@@ -535,8 +537,21 @@ public class ExpandoColumnLocalServiceImpl
 				(Map<Locale, String[]>)defaultData, LocaleUtil.getDefault());
 		}
 		else if (type == ExpandoColumnConstants.STRING_LOCALIZED) {
-			value.setStringMap(
-				(Map<Locale, String>)defaultData, LocaleUtil.getDefault());
+			Map<Locale, String> defaultValuesMap =
+				(Map<Locale, String>)defaultData;
+
+			Locale defaultLocale = LocaleUtil.getDefault();
+
+			if (Validator.isNull(defaultValuesMap.get(defaultLocale))) {
+				for (String defaultValue : defaultValuesMap.values()) {
+					if (Validator.isNotNull(defaultValue)) {
+						throw new ValueDataException.MustInformDefaultLocale(
+							defaultLocale);
+					}
+				}
+			}
+
+			value.setStringMap(defaultValuesMap, defaultLocale);
 		}
 
 		return value;

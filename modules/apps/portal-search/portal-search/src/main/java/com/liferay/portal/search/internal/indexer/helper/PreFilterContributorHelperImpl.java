@@ -24,10 +24,10 @@ import com.liferay.portal.kernel.search.SearchPermissionChecker;
 import com.liferay.portal.kernel.search.filter.BooleanFilter;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.search.internal.indexer.IndexerProvidedClausesUtil;
-import com.liferay.portal.search.internal.indexer.ModelPreFilterContributorsHolder;
+import com.liferay.portal.search.internal.indexer.ModelPreFilterContributorsRegistry;
 import com.liferay.portal.search.internal.indexer.ModelSearchSettingsImpl;
-import com.liferay.portal.search.internal.indexer.QueryPreFilterContributorsHolder;
-import com.liferay.portal.search.internal.indexer.SearchPermissionFilterContributorsHolder;
+import com.liferay.portal.search.internal.indexer.QueryPreFilterContributorsRegistry;
+import com.liferay.portal.search.internal.indexer.SearchPermissionFilterContributorsRegistry;
 import com.liferay.portal.search.internal.util.SearchStringUtil;
 import com.liferay.portal.search.permission.SearchPermissionFilterContributor;
 import com.liferay.portal.search.spi.model.query.contributor.ModelPreFilterContributor;
@@ -98,17 +98,19 @@ public class PreFilterContributorHelperImpl
 	}
 
 	@Reference
-	protected ModelPreFilterContributorsHolder modelPreFilterContributorsHolder;
+	protected ModelPreFilterContributorsRegistry
+		modelPreFilterContributorsRegistry;
 
 	@Reference
-	protected QueryPreFilterContributorsHolder queryPreFilterContributorsHolder;
+	protected QueryPreFilterContributorsRegistry
+		queryPreFilterContributorsRegistry;
 
 	@Reference
 	protected SearchPermissionChecker searchPermissionChecker;
 
 	@Reference
-	protected SearchPermissionFilterContributorsHolder
-		searchPermissionFilterContributorsHolder;
+	protected SearchPermissionFilterContributorsRegistry
+		searchPermissionFilterContributorsRegistry;
 
 	private void _addIndexerProvidedPreFilters(
 		BooleanFilter booleanFilter, Indexer<?> indexer,
@@ -142,8 +144,14 @@ public class PreFilterContributorHelperImpl
 		SearchContext searchContext) {
 
 		Stream<ModelPreFilterContributor> stream =
-			modelPreFilterContributorsHolder.stream(
+			modelPreFilterContributorsRegistry.stream(
 				modelSearchSettings.getClassName(),
+				getStrings(
+					"search.full.query.clause.contributors.excludes",
+					searchContext),
+				getStrings(
+					"search.full.query.clause.contributors.includes",
+					searchContext),
 				IndexerProvidedClausesUtil.shouldSuppress(searchContext));
 
 		stream.forEach(
@@ -174,12 +182,12 @@ public class PreFilterContributorHelperImpl
 		BooleanFilter booleanFilter, SearchContext searchContext) {
 
 		Stream<QueryPreFilterContributor> stream =
-			queryPreFilterContributorsHolder.stream(
-				getStrings(
-					"search.full.query.clause.contributors.includes",
-					searchContext),
+			queryPreFilterContributorsRegistry.stream(
 				getStrings(
 					"search.full.query.clause.contributors.excludes",
+					searchContext),
+				getStrings(
+					"search.full.query.clause.contributors.includes",
 					searchContext));
 
 		stream.forEach(
@@ -219,7 +227,7 @@ public class PreFilterContributorHelperImpl
 		String entryClassName) {
 
 		Stream<SearchPermissionFilterContributor> stream =
-			searchPermissionFilterContributorsHolder.getAll();
+			searchPermissionFilterContributorsRegistry.getAll();
 
 		List<SearchPermissionFilterContributor> list = stream.collect(
 			Collectors.toList());

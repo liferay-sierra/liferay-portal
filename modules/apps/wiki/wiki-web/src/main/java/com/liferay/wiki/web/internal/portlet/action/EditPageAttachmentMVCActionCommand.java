@@ -28,15 +28,14 @@ import com.liferay.document.library.kernel.exception.InvalidFileVersionException
 import com.liferay.document.library.kernel.exception.NoSuchFileEntryException;
 import com.liferay.document.library.kernel.exception.NoSuchFolderException;
 import com.liferay.document.library.kernel.exception.SourceFileNameException;
-import com.liferay.document.library.kernel.util.DLValidator;
 import com.liferay.dynamic.data.mapping.kernel.StorageFieldRequiredException;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.lock.DuplicateLockException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -99,13 +98,6 @@ import org.osgi.service.component.annotations.Reference;
 	service = MVCActionCommand.class
 )
 public class EditPageAttachmentMVCActionCommand extends BaseMVCActionCommand {
-
-	@Reference(unbind = "-")
-	public void setWikiAttachmentsHelper(
-		WikiAttachmentsHelper wikiAttachmentsHelper) {
-
-		_wikiAttachmentsHelper = wikiAttachmentsHelper;
-	}
 
 	@Activate
 	@Modified
@@ -222,7 +214,7 @@ public class EditPageAttachmentMVCActionCommand extends BaseMVCActionCommand {
 		long nodeId = ParamUtil.getLong(uploadPortletRequest, "nodeId");
 		String fileName = ParamUtil.getString(actionRequest, "fileName");
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+		JSONObject jsonObject = _jsonFactory.createJSONObject();
 
 		try {
 			_wikiPageService.deleteTempFileEntry(
@@ -350,12 +342,16 @@ public class EditPageAttachmentMVCActionCommand extends BaseMVCActionCommand {
 					errorType = ServletResponseConstants.SC_FILE_NAME_EXCEPTION;
 				}
 				else if (exception instanceof FileSizeException) {
+					FileSizeException fileSizeException =
+						(FileSizeException)exception;
+
 					errorMessage = themeDisplay.translate(
 						"please-enter-a-file-with-a-valid-file-size-no-" +
 							"larger-than-x",
-						LanguageUtil.formatStorageSize(
-							_dlValidator.getMaxAllowableSize(),
+						_language.formatStorageSize(
+							fileSizeException.getMaxSize(),
 							themeDisplay.getLocale()));
+
 					errorType = ServletResponseConstants.SC_FILE_SIZE_EXCEPTION;
 				}
 
@@ -415,7 +411,10 @@ public class EditPageAttachmentMVCActionCommand extends BaseMVCActionCommand {
 	private volatile DLConfiguration _dlConfiguration;
 
 	@Reference
-	private DLValidator _dlValidator;
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;
@@ -430,6 +429,7 @@ public class EditPageAttachmentMVCActionCommand extends BaseMVCActionCommand {
 	@Reference(target = "(upload.response.handler=multiple)")
 	private UploadResponseHandler _uploadResponseHandler;
 
+	@Reference
 	private WikiAttachmentsHelper _wikiAttachmentsHelper;
 
 	@Reference

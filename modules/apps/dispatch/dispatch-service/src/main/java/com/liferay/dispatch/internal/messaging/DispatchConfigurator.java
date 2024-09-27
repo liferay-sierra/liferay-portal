@@ -42,7 +42,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Matija Petanjek
  */
-@Component(immediate = true, service = {})
+@Component(service = {})
 public class DispatchConfigurator {
 
 	@Activate
@@ -112,14 +112,13 @@ public class DispatchConfigurator {
 					dispatchTrigger.getCronExpression(),
 					dispatchTrigger.getStartDate(),
 					dispatchTrigger.getEndDate(),
-					dispatchTaskClusterMode.getStorageType());
+					dispatchTaskClusterMode.getStorageType(),
+					dispatchTrigger.getTimeZoneId());
 			}
 			catch (DispatchTriggerSchedulerException
 						dispatchTriggerSchedulerException) {
 
-				_log.error(
-					dispatchTriggerSchedulerException.getMessage(),
-					dispatchTriggerSchedulerException);
+				_log.error(dispatchTriggerSchedulerException);
 			}
 		}
 	}
@@ -141,9 +140,7 @@ public class DispatchConfigurator {
 			catch (DispatchTriggerSchedulerException
 						dispatchTriggerSchedulerException) {
 
-				_log.error(
-					dispatchTriggerSchedulerException.getMessage(),
-					dispatchTriggerSchedulerException);
+				_log.error(dispatchTriggerSchedulerException);
 			}
 		}
 	}

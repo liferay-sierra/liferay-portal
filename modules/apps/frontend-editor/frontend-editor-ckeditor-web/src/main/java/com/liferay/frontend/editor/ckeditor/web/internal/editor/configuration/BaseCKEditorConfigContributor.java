@@ -69,14 +69,8 @@ public class BaseCKEditorConfigContributor extends BaseEditorConfigContributor {
 		).put(
 			"contentsCss",
 			JSONUtil.putAll(
-				HtmlUtil.escape(
-					PortalUtil.getStaticResourceURL(
-						themeDisplay.getRequest(),
-						themeDisplay.getPathThemeCss() + "/clay.css")),
-				HtmlUtil.escape(
-					PortalUtil.getStaticResourceURL(
-						themeDisplay.getRequest(),
-						themeDisplay.getPathThemeCss() + "/main.css")),
+				HtmlUtil.escape(themeDisplay.getClayCSSURL()),
+				HtmlUtil.escape(themeDisplay.getMainCSSURL()),
 				HtmlUtil.escape(
 					PortalUtil.getStaticResourceURL(
 						themeDisplay.getRequest(),
@@ -119,7 +113,12 @@ public class BaseCKEditorConfigContributor extends BaseEditorConfigContributor {
 				CKEditorConstants.ATTRIBUTE_NAMESPACE + ":resizable"));
 
 		if (resizable) {
-			jsonObject.put("resize_dir", "vertical");
+			String resizeDirection = GetterUtil.getString(
+				inputEditorTaglibAttributes.get(
+					CKEditorConstants.ATTRIBUTE_NAMESPACE +
+						":resizeDirection"));
+
+			jsonObject.put("resize_dir", resizeDirection);
 		}
 
 		jsonObject.put("resize_enabled", resizable);

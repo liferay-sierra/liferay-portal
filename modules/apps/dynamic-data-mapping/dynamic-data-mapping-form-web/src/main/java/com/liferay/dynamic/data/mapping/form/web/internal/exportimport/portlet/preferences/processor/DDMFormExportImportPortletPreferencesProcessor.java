@@ -46,7 +46,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marcellus Tavares
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM,
 	service = ExportImportPortletPreferencesProcessor.class
 )
@@ -132,7 +131,9 @@ public class DDMFormExportImportPortletPreferencesProcessor
 				return portletPreferences;
 			}
 
-			if (!group.isCompanyStagingGroup() && !group.isStagingGroup()) {
+			if (!group.isCompanyStagingGroup() && !group.isStaged() &&
+				!group.isStagingGroup()) {
+
 				return portletPreferences;
 			}
 		}

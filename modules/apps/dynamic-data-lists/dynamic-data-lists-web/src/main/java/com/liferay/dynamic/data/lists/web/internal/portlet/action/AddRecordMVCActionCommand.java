@@ -48,7 +48,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marcellus Tavares
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + DDLPortletKeys.DYNAMIC_DATA_LISTS,
 		"javax.portlet.name=" + DDLPortletKeys.DYNAMIC_DATA_LISTS_DISPLAY,
@@ -86,27 +85,13 @@ public class AddRecordMVCActionCommand extends BaseMVCActionCommand {
 		return _deserialize(serializedDDMFormValues, ddmForm);
 	}
 
-	@Reference(unbind = "-")
-	protected void setDDLRecordService(DDLRecordService ddlRecordService) {
-		this.ddlRecordService = ddlRecordService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDLRecordSetService(
-		DDLRecordSetService ddlRecordSetService) {
-
-		this.ddlRecordSetService = ddlRecordSetService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMTemplateService(
-		DDMTemplateService ddmTemplateService) {
-
-		this.ddmTemplateService = ddmTemplateService;
-	}
-
+	@Reference
 	protected DDLRecordService ddlRecordService;
+
+	@Reference
 	protected DDLRecordSetService ddlRecordSetService;
+
+	@Reference
 	protected DDMTemplateService ddmTemplateService;
 
 	@Reference(target = "(ddm.form.deserializer.type=json)")

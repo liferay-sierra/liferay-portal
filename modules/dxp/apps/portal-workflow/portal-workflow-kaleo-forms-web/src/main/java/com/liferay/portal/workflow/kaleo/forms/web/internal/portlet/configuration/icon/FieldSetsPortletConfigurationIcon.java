@@ -15,8 +15,7 @@
 package com.liferay.portal.workflow.kaleo.forms.web.internal.portlet.configuration.icon;
 
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.PortletProvider;
@@ -24,6 +23,7 @@ import com.liferay.portal.kernel.portlet.PortletProviderUtil;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
 import com.liferay.portal.kernel.portlet.configuration.icon.BasePortletConfigurationIcon;
 import com.liferay.portal.kernel.portlet.configuration.icon.PortletConfigurationIcon;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.PortletLocalService;
 import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -41,7 +41,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Rafael Praxedes
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + KaleoFormsPortletKeys.KALEO_FORMS_ADMIN,
 	service = PortletConfigurationIcon.class
 )
@@ -50,9 +49,9 @@ public class FieldSetsPortletConfigurationIcon
 
 	@Override
 	public String getMessage(PortletRequest portletRequest) {
-		return LanguageUtil.format(
+		return _language.format(
 			getLocale(portletRequest), "manage-x",
-			LanguageUtil.get(getLocale(portletRequest), "field-sets"));
+			_language.get(getLocale(portletRequest), "field-sets"));
 	}
 
 	@Override
@@ -61,11 +60,6 @@ public class FieldSetsPortletConfigurationIcon
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
-
-		PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
-
-		Portlet portlet = _portletLocalService.getPortletById(
-			portletDisplay.getId());
 
 		return PortletURLBuilder.create(
 			PortletURLFactoryUtil.create(
@@ -82,7 +76,16 @@ public class FieldSetsPortletConfigurationIcon
 		).setParameter(
 			"refererPortletName", KaleoFormsPortletKeys.KALEO_FORMS_ADMIN
 		).setParameter(
-			"refererWebDAVToken", WebDAVUtil.getStorageToken(portlet)
+			"refererWebDAVToken",
+			() -> {
+				PortletDisplay portletDisplay =
+					themeDisplay.getPortletDisplay();
+
+				Portlet portlet = _portletLocalService.getPortletById(
+					portletDisplay.getId());
+
+				return WebDAVUtil.getStorageToken(portlet);
+			}
 		).setParameter(
 			"showAncestorScopes", true
 		).setParameter(
@@ -109,18 +112,10 @@ public class FieldSetsPortletConfigurationIcon
 		return true;
 	}
 
-	@Override
-	public boolean isToolTip() {
-		return false;
-	}
+	@Reference
+	private Language _language;
 
-	@Reference(unbind = "-")
-	protected void setPortletLocalService(
-		PortletLocalService portletLocalService) {
-
-		_portletLocalService = portletLocalService;
-	}
-
+	@Reference
 	private PortletLocalService _portletLocalService;
 
 }

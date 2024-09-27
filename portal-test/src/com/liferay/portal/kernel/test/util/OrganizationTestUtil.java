@@ -47,13 +47,14 @@ public class OrganizationTestUtil {
 		throws Exception {
 
 		return AddressLocalServiceUtil.addAddress(
-			organization.getUserId(), organization.getModelClassName(),
-			organization.getOrganizationId(), RandomTestUtil.randomString(),
+			null, organization.getUserId(), organization.getModelClassName(),
+			organization.getOrganizationId(), null, null,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			RandomTestUtil.nextLong(), RandomTestUtil.randomLong(),
+			RandomTestUtil.randomString(), RandomTestUtil.nextLong(),
+			RandomTestUtil.randomLong(),
 			_getListTypeId(ListTypeConstants.ORGANIZATION_ADDRESS), false,
-			false, new ServiceContext());
+			false, null, new ServiceContext());
 	}
 
 	public static EmailAddress addEmailAddress(Organization organization)
@@ -139,7 +140,7 @@ public class OrganizationTestUtil {
 			organization.getCompanyId(), organization.getOrganizationId(),
 			organization.getParentOrganizationId(), organization.getName(),
 			organization.getType(), organization.getRegionId(),
-			organization.getCountryId(), organization.getStatusId(),
+			organization.getCountryId(), organization.getStatusListTypeId(),
 			organization.getComments(), false, null, true, null);
 	}
 

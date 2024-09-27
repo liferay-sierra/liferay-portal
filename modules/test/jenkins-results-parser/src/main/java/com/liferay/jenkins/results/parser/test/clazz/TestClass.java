@@ -14,6 +14,8 @@
 
 package com.liferay.jenkins.results.parser.test.clazz;
 
+import com.liferay.jenkins.results.parser.TestHistory;
+
 import java.io.File;
 
 import java.util.List;
@@ -25,6 +27,10 @@ import org.json.JSONObject;
  */
 public interface TestClass extends Comparable<TestClass> {
 
+	public long getAverageDuration();
+
+	public long getAverageOverheadDuration();
+
 	public JSONObject getJSONObject();
 
 	public String getName();
@@ -32,6 +38,8 @@ public interface TestClass extends Comparable<TestClass> {
 	public File getTestClassFile();
 
 	public List<TestClassMethod> getTestClassMethods();
+
+	public TestHistory getTestHistory();
 
 	public boolean hasTestClassMethods();
 

@@ -14,7 +14,10 @@
 
 package com.liferay.info.field.type;
 
+import com.liferay.info.localized.InfoLocalizedValue;
+
 import java.util.Collection;
+import java.util.Locale;
 
 /**
  * @author Alicia Garcia
@@ -37,20 +40,35 @@ public class SelectInfoFieldType implements InfoFieldType {
 
 	public static class Option {
 
-		public Option(String label, String value) {
+		public Option(
+			boolean active, InfoLocalizedValue<String> label, String value) {
+
+			_active = active;
 			_label = label;
 			_value = value;
 		}
 
-		public String getLabel() {
-			return _label;
+		public Option(InfoLocalizedValue<String> label, String value) {
+			_label = label;
+			_value = value;
+
+			_active = false;
+		}
+
+		public String getLabel(Locale locale) {
+			return _label.getValue(locale);
 		}
 
 		public String getValue() {
 			return _value;
 		}
 
-		private final String _label;
+		public boolean isActive() {
+			return _active;
+		}
+
+		private final boolean _active;
+		private final InfoLocalizedValue<String> _label;
 		private final String _value;
 
 	}

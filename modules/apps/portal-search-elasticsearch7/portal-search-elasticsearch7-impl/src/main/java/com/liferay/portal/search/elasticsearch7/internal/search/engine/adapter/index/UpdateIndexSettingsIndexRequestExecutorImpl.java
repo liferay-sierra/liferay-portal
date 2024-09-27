@@ -26,7 +26,7 @@ import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.IndicesClient;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.xcontent.XContentType;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -92,21 +92,10 @@ public class UpdateIndexSettingsIndexRequestExecutorImpl
 		}
 	}
 
-	@Reference(unbind = "-")
-	protected void setElasticsearchClientResolver(
-		ElasticsearchClientResolver elasticsearchClientResolver) {
-
-		_elasticsearchClientResolver = elasticsearchClientResolver;
-	}
-
-	@Reference(unbind = "-")
-	protected void setIndicesOptionsTranslator(
-		IndicesOptionsTranslator indicesOptionsTranslator) {
-
-		_indicesOptionsTranslator = indicesOptionsTranslator;
-	}
-
+	@Reference
 	private ElasticsearchClientResolver _elasticsearchClientResolver;
+
+	@Reference
 	private IndicesOptionsTranslator _indicesOptionsTranslator;
 
 }

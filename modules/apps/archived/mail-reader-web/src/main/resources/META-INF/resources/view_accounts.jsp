@@ -23,11 +23,7 @@ MailManager mailManager = MailManager.getInstance(request);
 %>
 
 <c:if test="<%= mailManager != null %>">
-	<aui:nav-bar>
-		<aui:nav>
-			<aui:nav-item iconCssClass="icon-plus" label="add-mail-account" onClick="Liferay.Mail.addAccount();" />
-		</aui:nav>
-	</aui:nav-bar>
+	<aui:button icon="icon-plus" onClick="Liferay.Mail.addAccount();" value="add-mail-account" />
 
 	<%
 	List<Account> mailAccounts = mailManager.getAccounts();
@@ -41,7 +37,7 @@ MailManager mailManager = MailManager.getInstance(request);
 			%>
 
 				<li class="nav-item tab <%= (mailAccount.getAccountId() == accountId) ? "active" : "" %>">
-					<aui:a cssClass="folders-link nav-link" data-accountId="<%= mailAccount.getAccountId() %>" data-inboxFolderId="<%= mailAccount.getInboxFolderId() %>" href="javascript:;" label="<%= mailAccount.getAddress() %>" />
+					<aui:a cssClass="folders-link nav-link" data-accountId="<%= mailAccount.getAccountId() %>" data-inboxFolderId="<%= mailAccount.getInboxFolderId() %>" href="javascript:void(0);" label="<%= mailAccount.getAddress() %>" />
 				</li>
 
 			<%

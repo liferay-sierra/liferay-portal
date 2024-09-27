@@ -364,6 +364,33 @@ public class DLFolderLocalServiceWrapper
 	}
 
 	/**
+	 * Returns the document library folder with the matching external reference code and group.
+	 *
+	 * @param groupId the primary key of the group
+	 * @param externalReferenceCode the document library folder's external reference code
+	 * @return the matching document library folder, or <code>null</code> if a matching document library folder could not be found
+	 */
+	@Override
+	public DLFolder fetchDLFolderByExternalReferenceCode(
+		long groupId, String externalReferenceCode) {
+
+		return _dlFolderLocalService.fetchDLFolderByExternalReferenceCode(
+			groupId, externalReferenceCode);
+	}
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link #fetchDLFolderByExternalReferenceCode(long, String)}
+	 */
+	@Deprecated
+	@Override
+	public DLFolder fetchDLFolderByReferenceCode(
+		long groupId, String externalReferenceCode) {
+
+		return _dlFolderLocalService.fetchDLFolderByReferenceCode(
+			groupId, externalReferenceCode);
+	}
+
+	/**
 	 * Returns the document library folder matching the UUID and group.
 	 *
 	 * @param uuid the document library folder's UUID
@@ -467,6 +494,23 @@ public class DLFolderLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _dlFolderLocalService.getDLFolder(folderId);
+	}
+
+	/**
+	 * Returns the document library folder with the matching external reference code and group.
+	 *
+	 * @param groupId the primary key of the group
+	 * @param externalReferenceCode the document library folder's external reference code
+	 * @return the matching document library folder
+	 * @throws PortalException if a matching document library folder could not be found
+	 */
+	@Override
+	public DLFolder getDLFolderByExternalReferenceCode(
+			long groupId, String externalReferenceCode)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _dlFolderLocalService.getDLFolderByExternalReferenceCode(
+			groupId, externalReferenceCode);
 	}
 
 	/**
@@ -628,24 +672,6 @@ public class DLFolderLocalServiceWrapper
 
 		return _dlFolderLocalService.getFolders(
 			groupId, parentFolderId, includeMountfolders, start, end,
-			orderByComparator);
-	}
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 #getFolders(long, long, boolean, int, int,
-	 OrderByComparator)}
-	 */
-	@Deprecated
-	@Override
-	public java.util.List<DLFolder> getFolders(
-		long groupId, long parentFolderId, int status,
-		boolean includeMountfolders, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<DLFolder>
-			orderByComparator) {
-
-		return _dlFolderLocalService.getFolders(
-			groupId, parentFolderId, status, includeMountfolders, start, end,
 			orderByComparator);
 	}
 

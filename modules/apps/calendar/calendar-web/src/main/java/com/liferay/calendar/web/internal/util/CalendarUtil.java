@@ -25,6 +25,7 @@ import com.liferay.calendar.service.CalendarResourceLocalService;
 import com.liferay.calendar.service.CalendarService;
 import com.liferay.calendar.util.JCalendarUtil;
 import com.liferay.calendar.util.RecurrenceUtil;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
@@ -38,6 +39,7 @@ import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.service.WorkflowInstanceLinkLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.TimeZoneUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
@@ -58,7 +60,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Peter Shin
  * @author Fabio Pezzutto
  */
-@Component(immediate = true, service = {})
+@Component(service = {})
 public class CalendarUtil {
 
 	public static JSONObject getCalendarRenderingRulesJSONObject(
@@ -68,8 +70,8 @@ public class CalendarUtil {
 
 		List<CalendarBooking> calendarBookings = _calendarBookingService.search(
 			themeDisplay.getCompanyId(), null, calendarIds, new long[0], -1,
-			null, startTime, endTime, true, statuses, QueryUtil.ALL_POS,
-			QueryUtil.ALL_POS, null);
+			null, startTime, endTime, timeZone, true, statuses,
+			QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 
 		Map<Integer, Map<Integer, List<Integer>>> rulesMap = new HashMap<>();
 
@@ -78,12 +80,16 @@ public class CalendarUtil {
 				calendarBooking.getStartTime(), startTime);
 
 			java.util.Calendar startTimeJCalendar = JCalendarUtil.getJCalendar(
-				maxStartTime, timeZone);
+				maxStartTime,
+				calendarBooking.isAllDay() ?
+					TimeZoneUtil.getTimeZone(StringPool.UTC) : timeZone);
 
 			long minEndTime = Math.min(calendarBooking.getEndTime(), endTime);
 
 			java.util.Calendar endTimeJCalendar = JCalendarUtil.getJCalendar(
-				minEndTime, timeZone);
+				minEndTime,
+				calendarBooking.isAllDay() ?
+					TimeZoneUtil.getTimeZone(StringPool.UTC) : timeZone);
 
 			long days = JCalendarUtil.getDaysBetween(
 				startTimeJCalendar, endTimeJCalendar);
@@ -168,6 +174,15 @@ public class CalendarUtil {
 			"calendarBookingId", calendarBooking.getCalendarBookingId()
 		).put(
 			"calendarId", calendarBooking.getCalendarId()
+		).put(
+			"calendarResourceName",
+			() -> {
+				CalendarResource calendarResource =
+					_calendarResourceLocalService.getCalendarResource(
+						calendarBooking.getCalendarResourceId());
+
+				return calendarResource.getName(themeDisplay.getLocale());
+			}
 		).put(
 			"description",
 			calendarBooking.getDescription(themeDisplay.getLocale())
@@ -279,7 +294,9 @@ public class CalendarUtil {
 			}
 
 			JSONObject jsonObject = toCalendarBookingJSONObject(
-				themeDisplay, calendarBooking, timeZone);
+				themeDisplay, calendarBooking,
+				calendarBooking.isAllDay() ?
+					TimeZoneUtil.getTimeZone(StringPool.UTC) : timeZone);
 
 			jsonArray.put(jsonObject);
 		}

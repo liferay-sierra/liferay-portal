@@ -16,7 +16,7 @@ import {defaultLanguageId} from '../../../../constants';
 import BaseNode from '../BaseNode';
 
 export default function StartNode({
-	data: {actions, description, label, newNode} = {},
+	data: {actions, description, label, newNode, notifications} = {},
 	descriptionSidebar,
 	id,
 	...otherProps
@@ -30,13 +30,14 @@ export default function StartNode({
 	return (
 		<BaseNode
 			actions={actions}
-			className="start-node"
 			description={description}
 			descriptionSidebar={descriptionSidebar}
 			icon="play"
 			id={id}
 			label={label}
 			newNode={newNode}
+			nodeTypeClassName="start-node"
+			notifications={notifications}
 			type="start"
 			{...otherProps}
 		/>

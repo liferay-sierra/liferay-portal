@@ -33,7 +33,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
  * @author Brian Wing Shun Chan
  * @author Brian Greenwald
  */
-@Component(immediate = true, service = ReportFillManagerRegistry.class)
+@Component(service = ReportFillManagerRegistry.class)
 public class ReportFillManagerRegistry {
 
 	public ReportFillManager getReportFillManager(
@@ -42,7 +42,7 @@ public class ReportFillManagerRegistry {
 		ReportFillManager reportFillManager = _reportFillManagers.get(
 			reportDataSourceType);
 
-		if (_reportFillManagers == null) {
+		if (reportFillManager == null) {
 			throw new IllegalArgumentException(
 				"No report fill manager found for " + reportDataSourceType);
 		}
@@ -92,7 +92,7 @@ public class ReportFillManagerRegistry {
 	private static final Log _log = LogFactoryUtil.getLog(
 		ReportFillManagerRegistry.class);
 
-	private Map<ReportDataSourceType, ReportFillManager> _reportFillManagers =
-		new ConcurrentHashMap<>();
+	private final Map<ReportDataSourceType, ReportFillManager>
+		_reportFillManagers = new ConcurrentHashMap<>();
 
 }

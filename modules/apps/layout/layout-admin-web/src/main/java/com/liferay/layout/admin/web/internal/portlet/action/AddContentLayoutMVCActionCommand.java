@@ -42,7 +42,7 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PropertiesParamUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.sites.kernel.util.SitesUtil;
+import com.liferay.sites.kernel.util.Sites;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -58,7 +58,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + LayoutAdminPortletKeys.GROUP_PAGES,
 		"mvc.command.name=/layout_admin/add_content_layout"
@@ -117,7 +116,7 @@ public class AddContentLayoutMVCActionCommand
 
 				// Force propagation from page template to page. See LPS-48430.
 
-				SitesUtil.mergeLayoutPrototypeLayout(layout.getGroup(), layout);
+				_sites.mergeLayoutPrototypeLayout(layout.getGroup(), layout);
 			}
 			else {
 				if (layoutPageTemplateEntryId > 0) {
@@ -204,5 +203,8 @@ public class AddContentLayoutMVCActionCommand
 
 	@Reference
 	private LayoutService _layoutService;
+
+	@Reference
+	private Sites _sites;
 
 }

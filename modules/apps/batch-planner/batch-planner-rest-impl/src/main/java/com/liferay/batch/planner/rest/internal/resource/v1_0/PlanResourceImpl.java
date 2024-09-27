@@ -20,13 +20,22 @@ import com.liferay.batch.planner.model.BatchPlannerPolicy;
 import com.liferay.batch.planner.rest.dto.v1_0.Mapping;
 import com.liferay.batch.planner.rest.dto.v1_0.Plan;
 import com.liferay.batch.planner.rest.dto.v1_0.Policy;
+import com.liferay.batch.planner.rest.internal.vulcan.batch.engine.FieldProvider;
 import com.liferay.batch.planner.rest.resource.v1_0.PlanResource;
 import com.liferay.batch.planner.service.BatchPlannerMappingService;
 import com.liferay.batch.planner.service.BatchPlannerPlanService;
 import com.liferay.batch.planner.service.BatchPlannerPolicyService;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.vulcan.batch.engine.Field;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
-import com.liferay.portal.vulcan.util.TransformUtil;
+
+import java.util.Iterator;
+import java.util.List;
+
+import javax.ws.rs.core.Response;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -65,6 +74,14 @@ public class PlanResourceImpl extends BasePlanResourceImpl {
 	}
 
 	@Override
+	public Response getPlanTemplate(String internalClassName) throws Exception {
+		return _getResponse(
+			internalClassName.substring(
+				internalClassName.lastIndexOf(StringPool.PERIOD) + 1),
+			_fieldProvider.getFields(internalClassName));
+	}
+
+	@Override
 	public Plan patchPlan(Long id, Plan plan) throws Exception {
 		BatchPlannerPlan batchPlannerPlan =
 			_batchPlannerPlanService.updateBatchPlannerPlan(
@@ -98,7 +115,7 @@ public class PlanResourceImpl extends BasePlanResourceImpl {
 		BatchPlannerPlan batchPlannerPlan =
 			_batchPlannerPlanService.addBatchPlannerPlan(
 				plan.getExport(), plan.getExternalType(), plan.getExternalURL(),
-				plan.getInternalClassName(), plan.getName(),
+				plan.getInternalClassName(), plan.getName(), 0,
 				plan.getTaskItemDelegateName(), plan.getTemplate());
 
 		Mapping[] mappings = plan.getMappings();
@@ -127,6 +144,47 @@ public class PlanResourceImpl extends BasePlanResourceImpl {
 		return _toPlan(batchPlannerPlan);
 	}
 
+	private Response _getResponse(String dtoEntityName, List<Field> fields) {
+		fields = _fieldProvider.filter(fields, Field.AccessType.READ);
+
+		Iterator<Field> iterator = fields.iterator();
+
+		StringBundler headerSB = new StringBundler(fields.size() * 2);
+		StringBundler lineSB = new StringBundler(fields.size() * 2);
+
+		while (iterator.hasNext()) {
+			Field field = iterator.next();
+
+			String fieldName = field.getName();
+
+			if (fieldName.endsWith("_i18n")) {
+				fieldName = StringBundler.concat(
+					fieldName, StringPool.UNDERLINE,
+					contextAcceptLanguage.getPreferredLanguageId());
+			}
+
+			headerSB.append(fieldName);
+
+			lineSB.append(field.getType());
+
+			if (iterator.hasNext()) {
+				headerSB.append(StringPool.COMMA);
+
+				lineSB.append(StringPool.COMMA);
+			}
+		}
+
+		return Response.ok(
+			StringBundler.concat(
+				headerSB.toString(), System.lineSeparator(), lineSB.toString())
+		).header(
+			"content-disposition",
+			StringBundler.concat(
+				"attachment; filename=", StringUtil.toLowerCase(dtoEntityName),
+				"-", StringUtil.randomString(), ".csv")
+		).build();
+	}
+
 	private Mapping _toMapping(BatchPlannerMapping batchPlannerMapping) {
 		return new Mapping() {
 			{
@@ -150,13 +208,13 @@ public class PlanResourceImpl extends BasePlanResourceImpl {
 				externalURL = batchPlannerPlan.getExternalURL();
 				id = batchPlannerPlan.getBatchPlannerPlanId();
 				internalClassName = batchPlannerPlan.getInternalClassName();
-				mappings = TransformUtil.transformToArray(
+				mappings = transformToArray(
 					_batchPlannerMappingService.getBatchPlannerMappings(
 						batchPlannerPlan.getBatchPlannerPlanId()),
 					batchPlannerMapping -> _toMapping(batchPlannerMapping),
 					Mapping.class);
 				name = batchPlannerPlan.getName();
-				policies = TransformUtil.transformToArray(
+				policies = transformToArray(
 					_batchPlannerPolicyService.getBatchPlannerPolicies(
 						batchPlannerPlan.getBatchPlannerPlanId()),
 					batchPlannerPolicy -> _toPolicy(batchPlannerPolicy),
@@ -187,5 +245,8 @@ public class PlanResourceImpl extends BasePlanResourceImpl {
 
 	@Reference
 	private BatchPlannerPolicyService _batchPlannerPolicyService;
+
+	@Reference
+	private FieldProvider _fieldProvider;
 
 }

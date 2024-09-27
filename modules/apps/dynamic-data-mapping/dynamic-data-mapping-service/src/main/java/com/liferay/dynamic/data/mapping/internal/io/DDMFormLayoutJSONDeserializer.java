@@ -14,7 +14,7 @@
 
 package com.liferay.dynamic.data.mapping.internal.io;
 
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.internal.io.util.DDMFormFieldDeserializerUtil;
 import com.liferay.dynamic.data.mapping.io.DDMFormLayoutDeserializer;
 import com.liferay.dynamic.data.mapping.io.DDMFormLayoutDeserializerDeserializeRequest;
@@ -45,7 +45,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marcellus Tavares
  */
 @Component(
-	immediate = true, property = "ddm.form.layout.deserializer.type=json",
+	property = "ddm.form.layout.deserializer.type=json",
 	service = DDMFormLayoutDeserializer.class
 )
 public class DDMFormLayoutJSONDeserializer
@@ -68,7 +68,7 @@ public class DDMFormLayoutJSONDeserializer
 
 			ddmFormLayout.setDDMFormFields(
 				DDMFormFieldDeserializerUtil.deserialize(
-					_ddmFormFieldTypeServicesTracker,
+					_ddmFormFieldTypeServicesRegistry,
 					Optional.ofNullable(
 						jsonObject.getJSONArray("fields")
 					).orElse(
@@ -144,10 +144,8 @@ public class DDMFormLayoutJSONDeserializer
 		List<DDMFormLayoutColumn> ddmFormLayoutColumns = new ArrayList<>();
 
 		for (int i = 0; i < jsonArray.length(); i++) {
-			DDMFormLayoutColumn ddmFormLayoutColumn = getDDMFormLayoutColumn(
-				jsonArray.getJSONObject(i));
-
-			ddmFormLayoutColumns.add(ddmFormLayoutColumn);
+			ddmFormLayoutColumns.add(
+				getDDMFormLayoutColumn(jsonArray.getJSONObject(i)));
 		}
 
 		return ddmFormLayoutColumns;
@@ -172,10 +170,8 @@ public class DDMFormLayoutJSONDeserializer
 		List<DDMFormLayoutPage> ddmFormLayoutPages = new ArrayList<>();
 
 		for (int i = 0; i < jsonArray.length(); i++) {
-			DDMFormLayoutPage ddmFormLayoutPage = getDDMFormLayoutPage(
-				jsonArray.getJSONObject(i));
-
-			ddmFormLayoutPages.add(ddmFormLayoutPage);
+			ddmFormLayoutPages.add(
+				getDDMFormLayoutPage(jsonArray.getJSONObject(i)));
 		}
 
 		return ddmFormLayoutPages;
@@ -185,25 +181,11 @@ public class DDMFormLayoutJSONDeserializer
 		List<DDMFormLayoutRow> ddmFormLayoutRows = new ArrayList<>();
 
 		for (int i = 0; i < jsonArray.length(); i++) {
-			DDMFormLayoutRow ddmFormLayoutRow = _getDDMFormLayoutRow(
-				jsonArray.getJSONObject(i));
-
-			ddmFormLayoutRows.add(ddmFormLayoutRow);
+			ddmFormLayoutRows.add(
+				_getDDMFormLayoutRow(jsonArray.getJSONObject(i)));
 		}
 
 		return ddmFormLayoutRows;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMFormFieldTypeServicesTracker(
-		DDMFormFieldTypeServicesTracker ddmFormFieldTypeServicesTracker) {
-
-		_ddmFormFieldTypeServicesTracker = ddmFormFieldTypeServicesTracker;
-	}
-
-	@Reference(unbind = "-")
-	protected void setJSONFactory(JSONFactory jsonFactory) {
-		_jsonFactory = jsonFactory;
 	}
 
 	private List<String> _getDDMFormLayoutColumnFieldNames(
@@ -308,7 +290,10 @@ public class DDMFormLayoutJSONDeserializer
 	private static final Log _log = LogFactoryUtil.getLog(
 		DDMFormLayoutJSONDeserializer.class);
 
-	private DDMFormFieldTypeServicesTracker _ddmFormFieldTypeServicesTracker;
+	@Reference
+	private DDMFormFieldTypeServicesRegistry _ddmFormFieldTypeServicesRegistry;
+
+	@Reference
 	private JSONFactory _jsonFactory;
 
 }

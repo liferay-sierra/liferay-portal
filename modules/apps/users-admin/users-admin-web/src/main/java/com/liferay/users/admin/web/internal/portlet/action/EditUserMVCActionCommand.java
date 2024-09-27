@@ -18,9 +18,9 @@ import com.liferay.announcements.kernel.model.AnnouncementsDelivery;
 import com.liferay.asset.kernel.exception.AssetCategoryException;
 import com.liferay.asset.kernel.exception.AssetTagException;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
-import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.bean.BeanParamUtil;
 import com.liferay.portal.kernel.exception.CompanyMaxUsersException;
 import com.liferay.portal.kernel.exception.ContactBirthdayException;
@@ -34,8 +34,7 @@ import com.liferay.portal.kernel.exception.UserFieldException;
 import com.liferay.portal.kernel.exception.UserIdException;
 import com.liferay.portal.kernel.exception.UserReminderQueryException;
 import com.liferay.portal.kernel.exception.UserScreenNameException;
-import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.messaging.proxy.ProxyModeThreadLocal;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Address;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Contact;
@@ -61,10 +60,11 @@ import com.liferay.portal.kernel.service.UserService;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -76,7 +76,7 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portlet.InvokerPortletUtil;
 import com.liferay.portlet.admin.util.AdminUtil;
 import com.liferay.users.admin.constants.UsersAdminPortletKeys;
-import com.liferay.users.admin.kernel.util.UsersAdminUtil;
+import com.liferay.users.admin.kernel.util.UsersAdmin;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -84,6 +84,7 @@ import java.util.Locale;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
+import javax.portlet.PortletException;
 import javax.portlet.PortletRequest;
 
 import javax.servlet.http.HttpServletRequest;
@@ -100,16 +101,25 @@ import org.osgi.service.component.annotations.Reference;
  * @author Wesley Gong
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + UsersAdminPortletKeys.MY_ACCOUNT,
 		"javax.portlet.name=" + UsersAdminPortletKeys.MY_ORGANIZATIONS,
 		"javax.portlet.name=" + UsersAdminPortletKeys.USERS_ADMIN,
 		"mvc.command.name=/users_admin/edit_user"
 	},
-	service = MVCActionCommand.class
+	service = AopService.class
 )
-public class EditUserMVCActionCommand extends BaseMVCActionCommand {
+public class EditUserMVCActionCommand
+	extends BaseMVCActionCommand implements AopService, MVCActionCommand {
+
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public boolean processAction(
+			ActionRequest actionRequest, ActionResponse actionResponse)
+		throws PortletException {
+
+		return super.processAction(actionRequest, actionResponse);
+	}
 
 	protected void deleteUsers(ActionRequest actionRequest) throws Exception {
 		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
@@ -117,29 +127,24 @@ public class EditUserMVCActionCommand extends BaseMVCActionCommand {
 		long[] deleteUserIds = StringUtil.split(
 			ParamUtil.getString(actionRequest, "deleteUserIds"), 0L);
 
-		try (SafeCloseable safeCloseable =
-				ProxyModeThreadLocal.setWithSafeCloseable(true)) {
+		for (long deleteUserId : deleteUserIds) {
+			if (cmd.equals(Constants.DEACTIVATE) ||
+				cmd.equals(Constants.RESTORE)) {
 
-			for (long deleteUserId : deleteUserIds) {
-				if (cmd.equals(Constants.DEACTIVATE) ||
-					cmd.equals(Constants.RESTORE)) {
+				int status = WorkflowConstants.STATUS_APPROVED;
 
-					int status = WorkflowConstants.STATUS_APPROVED;
-
-					if (cmd.equals(Constants.DEACTIVATE)) {
-						status = WorkflowConstants.STATUS_INACTIVE;
-					}
-
-					ServiceContext serviceContext =
-						ServiceContextFactory.getInstance(
-							User.class.getName(), actionRequest);
-
-					_userService.updateStatus(
-						deleteUserId, status, serviceContext);
+				if (cmd.equals(Constants.DEACTIVATE)) {
+					status = WorkflowConstants.STATUS_INACTIVE;
 				}
-				else {
-					_userService.deleteUser(deleteUserId);
-				}
+
+				ServiceContext serviceContext =
+					ServiceContextFactory.getInstance(
+						User.class.getName(), actionRequest);
+
+				_userService.updateStatus(deleteUserId, status, serviceContext);
+			}
+			else {
+				_userService.deleteUser(deleteUserId);
 			}
 		}
 	}
@@ -245,7 +250,7 @@ public class EditUserMVCActionCommand extends BaseMVCActionCommand {
 						redirect, themeDisplay.getI18nPath(), i18nPath);
 				}
 
-				redirect = http.setParameter(
+				redirect = HttpComponentsUtil.setParameter(
 					redirect, actionResponse.getNamespace() + "p_u_i_d",
 					user.getUserId());
 			}
@@ -256,8 +261,10 @@ public class EditUserMVCActionCommand extends BaseMVCActionCommand {
 				(userLocalService.fetchUserById(scopeGroup.getClassPK()) ==
 					null)) {
 
-				redirect = http.setParameter(redirect, "doAsGroupId", 0);
-				redirect = http.setParameter(redirect, "refererPlid", 0);
+				redirect = HttpComponentsUtil.setParameter(
+					redirect, "doAsGroupId", 0);
+				redirect = HttpComponentsUtil.setParameter(
+					redirect, "refererPlid", 0);
 			}
 
 			sendRedirect(actionRequest, actionResponse, redirect);
@@ -323,28 +330,6 @@ public class EditUserMVCActionCommand extends BaseMVCActionCommand {
 		}
 	}
 
-	@Reference(unbind = "-")
-	protected void setDLAppLocalService(DLAppLocalService dlAppLocalService) {
-		_dlAppLocalService = dlAppLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setListTypeLocalService(
-		ListTypeLocalService listTypeLocalService) {
-
-		_listTypeLocalService = listTypeLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setUserLocalService(UserLocalService userLocalService) {
-		this.userLocalService = userLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setUserService(UserService userService) {
-		_userService = userService;
-	}
-
 	protected Object[] updateUser(
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
@@ -386,10 +371,10 @@ public class EditUserMVCActionCommand extends BaseMVCActionCommand {
 			user, actionRequest, "middleName");
 		String lastName = BeanParamUtil.getString(
 			user, actionRequest, "lastName");
-		long prefixId = BeanParamUtil.getInteger(
-			contact, actionRequest, "prefixId");
-		long suffixId = BeanParamUtil.getInteger(
-			contact, actionRequest, "suffixId");
+		long prefixListTypeId = BeanParamUtil.getInteger(
+			contact, actionRequest, "prefixListTypeId");
+		long suffixListTypeId = BeanParamUtil.getInteger(
+			contact, actionRequest, "suffixListTypeId");
 		boolean male = BeanParamUtil.getBoolean(
 			user, actionRequest, "male", true);
 
@@ -416,8 +401,8 @@ public class EditUserMVCActionCommand extends BaseMVCActionCommand {
 			user.getUserId(), oldPassword, null, null, user.isPasswordReset(),
 			null, null, screenName, emailAddress, !deleteLogo, portraitBytes,
 			languageId, user.getTimeZoneId(), user.getGreeting(), comments,
-			firstName, middleName, lastName, prefixId, suffixId, male,
-			birthdayMonth, birthdayDay, birthdayYear, contact.getSmsSn(),
+			firstName, middleName, lastName, prefixListTypeId, suffixListTypeId,
+			male, birthdayMonth, birthdayDay, birthdayYear, contact.getSmsSn(),
 			contact.getFacebookSn(), contact.getJabberSn(),
 			contact.getSkypeSn(), contact.getTwitterSn(), jobTitle, null, null,
 			null, null, null, null, null, null, null, null, serviceContext);
@@ -444,7 +429,7 @@ public class EditUserMVCActionCommand extends BaseMVCActionCommand {
 
 			Locale locale = LocaleUtil.fromLanguageId(languageId);
 
-			LanguageUtil.updateCookie(
+			_language.updateCookie(
 				httpServletRequest, httpServletResponse, locale);
 
 			// Clear cached portlet responses
@@ -469,11 +454,9 @@ public class EditUserMVCActionCommand extends BaseMVCActionCommand {
 	}
 
 	@Reference
-	protected Http http;
-
-	@Reference
 	protected Portal portal;
 
+	@Reference
 	protected UserLocalService userLocalService;
 
 	private User _addUser(ActionRequest actionRequest) throws Exception {
@@ -489,8 +472,10 @@ public class EditUserMVCActionCommand extends BaseMVCActionCommand {
 		String firstName = ParamUtil.getString(actionRequest, "firstName");
 		String middleName = ParamUtil.getString(actionRequest, "middleName");
 		String lastName = ParamUtil.getString(actionRequest, "lastName");
-		long prefixId = ParamUtil.getInteger(actionRequest, "prefixId");
-		long suffixId = ParamUtil.getInteger(actionRequest, "suffixId");
+		long prefixListTypeId = ParamUtil.getInteger(
+			actionRequest, "prefixListTypeId");
+		long suffixListTypeId = ParamUtil.getInteger(
+			actionRequest, "suffixListTypeId");
 		boolean male = ParamUtil.getBoolean(actionRequest, "male", true);
 		int birthdayMonth = ParamUtil.getInteger(
 			actionRequest, "birthdayMonth");
@@ -498,8 +483,7 @@ public class EditUserMVCActionCommand extends BaseMVCActionCommand {
 		int birthdayYear = ParamUtil.getInteger(actionRequest, "birthdayYear");
 		String comments = ParamUtil.getString(actionRequest, "comments");
 		String jobTitle = ParamUtil.getString(actionRequest, "jobTitle");
-		long[] organizationIds = UsersAdminUtil.getOrganizationIds(
-			actionRequest);
+		long[] organizationIds = _usersAdmin.getOrganizationIds(actionRequest);
 		boolean sendEmail = true;
 
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
@@ -508,12 +492,27 @@ public class EditUserMVCActionCommand extends BaseMVCActionCommand {
 		User user = _userService.addUser(
 			themeDisplay.getCompanyId(), true, null, null, autoScreenName,
 			screenName, emailAddress, LocaleUtil.fromLanguageId(languageId),
-			firstName, middleName, lastName, prefixId, suffixId, male,
-			birthdayMonth, birthdayDay, birthdayYear, jobTitle, null,
+			firstName, middleName, lastName, prefixListTypeId, suffixListTypeId,
+			male, birthdayMonth, birthdayDay, birthdayYear, jobTitle, null,
 			organizationIds, null, null, new ArrayList<Address>(),
 			new ArrayList<EmailAddress>(), new ArrayList<Phone>(),
 			new ArrayList<Website>(), new ArrayList<AnnouncementsDelivery>(),
 			sendEmail, serviceContext);
+
+		byte[] portraitBytes = null;
+
+		long fileEntryId = ParamUtil.getLong(actionRequest, "fileEntryId");
+
+		if (fileEntryId > 0) {
+			FileEntry fileEntry = _dlAppLocalService.getFileEntry(fileEntryId);
+
+			portraitBytes = FileUtil.getBytes(fileEntry.getContentStream());
+		}
+
+		if (portraitBytes != null) {
+			user = userLocalService.updatePortrait(
+				user.getUserId(), portraitBytes);
+		}
 
 		user.setComments(comments);
 
@@ -555,25 +554,39 @@ public class EditUserMVCActionCommand extends BaseMVCActionCommand {
 		DynamicActionRequest dynamicActionRequest = new DynamicActionRequest(
 			actionRequest);
 
-		long prefixId = _getListTypeId(
-			actionRequest, "prefixValue", ListTypeConstants.CONTACT_PREFIX);
+		long prefixListTypeId = _getListTypeId(
+			actionRequest, "prefixListTypeValue",
+			ListTypeConstants.CONTACT_PREFIX);
 
-		dynamicActionRequest.setParameter("prefixId", String.valueOf(prefixId));
+		dynamicActionRequest.setParameter(
+			"prefixListTypeId", String.valueOf(prefixListTypeId));
 
-		long suffixId = _getListTypeId(
-			actionRequest, "suffixValue", ListTypeConstants.CONTACT_SUFFIX);
+		long suffixListTypeId = _getListTypeId(
+			actionRequest, "suffixListTypeValue",
+			ListTypeConstants.CONTACT_SUFFIX);
 
-		dynamicActionRequest.setParameter("suffixId", String.valueOf(suffixId));
+		dynamicActionRequest.setParameter(
+			"suffixListTypeId", String.valueOf(suffixListTypeId));
 
 		return dynamicActionRequest;
 	}
 
+	@Reference
 	private DLAppLocalService _dlAppLocalService;
+
+	@Reference
+	private Language _language;
+
+	@Reference
 	private ListTypeLocalService _listTypeLocalService;
 
 	@Reference
 	private Portal _portal;
 
+	@Reference
+	private UsersAdmin _usersAdmin;
+
+	@Reference
 	private UserService _userService;
 
 }

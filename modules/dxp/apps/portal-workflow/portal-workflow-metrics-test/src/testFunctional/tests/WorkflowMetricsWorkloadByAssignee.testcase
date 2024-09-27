@@ -44,6 +44,8 @@ definition {
 	@description = "LPS-98518 - Verify that there is an image besides the assignee name that is retrieved from the global user profile picture (add, delete, update)"
 	@priority = "3"
 	test AssigneeImagesRetrievedFromGlobalUserProfile {
+		property portal.upstream = "quarantine";
+
 		ApplicationsMenu.gotoPortlet(
 			category = "Workflow",
 			panel = "Applications",
@@ -89,8 +91,6 @@ definition {
 		AssertElementPresent(locator1 = "UsersAndOrganizationsEditUser#UPLOAD_IMAGE_SELECT");
 
 		UploadDependencyFile.uploadFile(fileName = "これは写真です.jpg");
-
-		Pause(locator1 = "3000");
 
 		WaitForElementPresent(locator1 = "UsersAndOrganizationsEditUser#USER_PORTRAIT_CROPPER");
 
@@ -203,9 +203,9 @@ definition {
 
 		User.searchCP(searchTerm = "1user user1");
 
-		var key_rowEntry = "1user user1";
+		var key_user = "1user user1";
 
-		Click(locator1 = "ContentRow#ENTRY_CONTENT_ENTRY_ELLIPSIS");
+		Click(locator1 = "WorkflowMetricsAllItemsList#USER_ELLIPSIS");
 
 		MenuItem.click(menuItem = "Edit");
 
@@ -242,9 +242,9 @@ definition {
 
 		User.searchCP(searchTerm = "1user user1");
 
-		var key_rowEntry = "1user user1";
+		var key_user = "1user user1";
 
-		Click(locator1 = "ContentRow#ENTRY_CONTENT_ENTRY_ELLIPSIS");
+		Click(locator1 = "WorkflowMetricsAllItemsList#USER_ELLIPSIS");
 
 		MenuItem.clickNoError(menuItem = "Deactivate");
 
@@ -544,9 +544,15 @@ definition {
 			panel = "Applications",
 			portlet = "Process Builder");
 
-		Workflow.uploadDefinition(
-			workflowDefinitionFile = "12-transitions-workflow-definition.xml",
-			workflowDefinitionTitle = "12 Transitions Definition");
+		Workflow.addNewDefinition(workflowDefinitionTitle = "12 Transitions Definition");
+
+		ProcessBuilderKaleoDesignerReact.uploadDefinition(workflowDefinitionFile = "12-transitions-workflow-definition.xml");
+
+		ProcessBuilderKaleoDesignerReact.diagramSourceSwitchView();
+
+		PortletEntry.publish();
+
+		Navigator.gotoBack();
 
 		Navigator.gotoNavItem(navItem = "Configuration");
 
@@ -595,9 +601,15 @@ definition {
 			panel = "Applications",
 			portlet = "Process Builder");
 
-		Workflow.uploadDefinition(
-			workflowDefinitionFile = "12-transitions-workflow-definition.xml",
-			workflowDefinitionTitle = "12 transitions");
+		Workflow.addNewDefinition(workflowDefinitionTitle = "12 transitions");
+
+		ProcessBuilderKaleoDesignerReact.uploadDefinition(workflowDefinitionFile = "12-transitions-workflow-definition.xml");
+
+		ProcessBuilderKaleoDesignerReact.diagramSourceSwitchView();
+
+		PortletEntry.publish();
+
+		Navigator.gotoBack();
 
 		Navigator.gotoNavItem(navItem = "Configuration");
 
@@ -719,6 +731,12 @@ definition {
 	@description = "LPS-97669 - Verify that the sum of items Overdue and On time of 'Workload by Assignee' page are never bigger than the Total items"
 	@priority = "3"
 	test SumOfOverdueAndOnTimeAreNeverBiggerThanTotalItems {
+		property test.name.skip.portal.instance = "WorkflowMetricsWorkloadByAssignee#SumOfOverdueAndOnTimeAreNeverBiggerThanTotalItems";
+
+		WorkflowMetrics.setSLADefinitionsJobInterval(
+			definitionsJobInterval = "1",
+			slaJobInterval = "1");
+
 		ApplicationsMenu.gotoPortlet(
 			category = "Workflow",
 			panel = "Applications",
@@ -905,6 +923,7 @@ definition {
 	@priority = "4"
 	test WorkloadByAssigneeCardDisplaysUpTo10Users {
 		property portal.acceptance = "true";
+		property portal.upstream = "quarantine";
 		property test.name.skip.portal.instance = "WorkflowMetricsWorkloadByAssignee#WorkloadByAssigneeCardDisplaysUpTo10Users";
 
 		var siteName = TestCase.getSiteName(siteName = "${siteName}");

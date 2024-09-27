@@ -19,11 +19,10 @@ import com.liferay.info.collection.provider.CollectionQuery;
 import com.liferay.info.collection.provider.InfoCollectionProvider;
 import com.liferay.info.field.InfoFieldValue;
 import com.liferay.info.item.InfoItemFieldValues;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFieldValuesProvider;
 import com.liferay.info.pagination.InfoPage;
 import com.liferay.info.pagination.Pagination;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.language.LanguageUtil;
@@ -31,6 +30,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ClassedModel;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -51,10 +51,10 @@ import javax.servlet.http.HttpServletRequest;
 public class InfoCollectionProviderItemsDisplayContext {
 
 	public InfoCollectionProviderItemsDisplayContext(
-		InfoItemServiceTracker infoItemServiceTracker,
+		InfoItemServiceRegistry infoItemServiceRegistry,
 		RenderRequest renderRequest, RenderResponse renderResponse) {
 
-		_infoItemServiceTracker = infoItemServiceTracker;
+		_infoItemServiceRegistry = infoItemServiceRegistry;
 		_renderRequest = renderRequest;
 		_renderResponse = renderResponse;
 
@@ -108,7 +108,7 @@ public class InfoCollectionProviderItemsDisplayContext {
 			_getInfoCollectionProvider();
 
 		_infoItemFieldValuesProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFieldValuesProvider.class,
 				infoCollectionProvider.getCollectionItemClassName());
 
@@ -188,7 +188,7 @@ public class InfoCollectionProviderItemsDisplayContext {
 			return _infoCollectionProvider;
 		}
 
-		_infoCollectionProvider = _infoItemServiceTracker.getInfoItemService(
+		_infoCollectionProvider = _infoItemServiceRegistry.getInfoItemService(
 			InfoCollectionProvider.class, _getInfoCollectionProviderKey());
 
 		return _infoCollectionProvider;
@@ -240,7 +240,7 @@ public class InfoCollectionProviderItemsDisplayContext {
 	private String _infoCollectionProviderClassName;
 	private String _infoCollectionProviderKey;
 	private InfoItemFieldValuesProvider<Object> _infoItemFieldValuesProvider;
-	private final InfoItemServiceTracker _infoItemServiceTracker;
+	private final InfoItemServiceRegistry _infoItemServiceRegistry;
 	private final RenderRequest _renderRequest;
 	private final RenderResponse _renderResponse;
 	private Boolean _showActions;

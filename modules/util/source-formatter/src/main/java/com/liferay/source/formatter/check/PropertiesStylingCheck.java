@@ -16,9 +16,9 @@ package com.liferay.source.formatter.check;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.util.NaturalOrderStringComparator;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.source.formatter.check.util.SourceUtil;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -33,10 +33,11 @@ public class PropertiesStylingCheck extends BaseFileCheck {
 	protected String doProcess(
 		String fileName, String absolutePath, String content) {
 
-		content = content.replaceAll("(\n\n)( *#+)( [^#\\s])", "$1$2\n$2$3");
+		content = content.replaceAll(
+			"(\n\n)((( *#+)( [^#\n]+)\n)+( *#))", "$1$4\n$2");
 
 		content = content.replaceAll(
-			"(\n)( *#+)( [^#\\s].*\n)(?!\\2([ \n]|\\Z))", "$1$2$3$2\n");
+			"(\n\n)( *#+)(\n(\\2( [^#\n]+)\n)+)(?! *#)", "$1$2$3$2\n");
 
 		content = content.replaceAll(
 			"(\\A|(?<!\\\\)\n)( *[\\w.-]+)(( +=)|(= +))(.*)(\\Z|\n)",
@@ -44,98 +45,96 @@ public class PropertiesStylingCheck extends BaseFileCheck {
 
 		content = content.replaceAll("(?m)^(.*,) +(\\\\)$", "$1$2");
 
-		Matcher matcher = _sqlPattern1.matcher(content);
-
-		while (matcher.find()) {
-			String match = matcher.group();
-			String indent = matcher.group(1);
-
-			String sqlClause = matcher.group(3);
-
-			sqlClause = sqlClause.replaceAll(" AND (?=\\()", " AND \\\\\n");
-			sqlClause = sqlClause.replaceAll(" OR (?=\\()", " OR \\\\\n");
-			sqlClause = sqlClause.replaceAll("\\((?=\\()", "(\\\\\n");
-			sqlClause = sqlClause.replaceAll("\\)(?=\\))", ")\\\\\n");
-
-			String[] sqlClauses = sqlClause.split("\n");
-
-			String replacement = StringBundler.concat(
-				indent, matcher.group(2), "\\\n",
-				_formatSQLClause(indent + StringPool.FOUR_SPACES, sqlClauses));
-
-			return StringUtil.replaceFirst(
-				content, match, replacement, matcher.start());
-		}
-
-		matcher = _sqlPattern2.matcher(content);
-
-		while (matcher.find()) {
-			int lineNumber = getLineNumber(content, matcher.start());
-
-			if (Validator.isNull(matcher.group(4))) {
-				continue;
-			}
-
-			String nextSQLClause = _getSQLClause(
-				SourceUtil.getLine(content, lineNumber + 1));
-
-			if (nextSQLClause == null) {
-				continue;
-			}
-
-			String sqlClause = matcher.group(1);
-
-			if (sqlClause.compareTo(nextSQLClause) > 0) {
-				content = StringUtil.replaceFirst(
-					content, nextSQLClause, sqlClause,
-					getLineStartPos(content, lineNumber + 1));
-
-				return StringUtil.replaceFirst(
-					content, sqlClause, nextSQLClause,
-					getLineStartPos(content, lineNumber));
-			}
+		if (fileName.endsWith("test.properties")) {
+			return _sortTestProperties(
+				fileName, content, StringPool.BLANK,
+				StringPool.POUND + StringPool.POUND);
 		}
 
 		return content;
 	}
 
-	private String _formatSQLClause(String indent, String[] sqlClauses) {
-		StringBundler sb = new StringBundler(sqlClauses.length * 3);
+	private String _sortTestProperties(
+		String fileName, String content, String indent, String pounds) {
 
-		for (String sqlClause : sqlClauses) {
-			if (sqlClause.startsWith(")")) {
-				indent = indent.substring(4);
+		String indentWithPounds = indent + pounds;
+
+		CommentComparator comparator = new CommentComparator();
+
+		Pattern pattern = Pattern.compile(
+			StringBundler.concat(
+				"((?<=\\A|\n\n)", indentWithPounds, "\n", indentWithPounds,
+				"( .+)\n", indentWithPounds, "\n\n[\\s\\S]*?)(?=(\n\n",
+				indentWithPounds, "\n|\\Z))"));
+
+		Matcher matcher = pattern.matcher(content);
+
+		String previousProperties = null;
+		String previousPropertiesComment = null;
+		int previousPropertiesStartPosition = -1;
+
+		while (matcher.find()) {
+			String properties = matcher.group(1);
+			String propertiesComment = matcher.group(2);
+			int propertiesStartPosition = matcher.start();
+
+			if (pounds.length() == 2) {
+				String newProperties = _sortTestProperties(
+					fileName, properties, indent + StringPool.FOUR_SPACES,
+					StringPool.POUND);
+
+				if (!newProperties.equals(properties)) {
+					return StringUtil.replaceFirst(
+						content, properties, newProperties,
+						propertiesStartPosition);
+				}
 			}
 
-			sb.append(indent);
-			sb.append(sqlClause);
-			sb.append("\n");
+			if (Validator.isNull(previousProperties)) {
+				previousProperties = properties;
+				previousPropertiesComment = propertiesComment;
+				previousPropertiesStartPosition = propertiesStartPosition;
 
-			if (sqlClause.equals("(\\")) {
-				indent = indent + StringPool.FOUR_SPACES;
+				continue;
 			}
+
+			int value = comparator.compare(
+				previousPropertiesComment, propertiesComment);
+
+			if (value > 0) {
+				content = StringUtil.replaceFirst(
+					content, properties, previousProperties,
+					propertiesStartPosition);
+				content = StringUtil.replaceFirst(
+					content, previousProperties, properties,
+					previousPropertiesStartPosition);
+
+				return content;
+			}
+
+			previousProperties = properties;
+			previousPropertiesComment = propertiesComment;
+			previousPropertiesStartPosition = propertiesStartPosition;
 		}
 
-		if (sb.length() > 0) {
-			sb.setIndex(sb.index() - 1);
-		}
-
-		return sb.toString();
+		return content;
 	}
 
-	private String _getSQLClause(String line) {
-		Matcher matcher = _sqlPattern2.matcher(line);
+	private class CommentComparator extends NaturalOrderStringComparator {
 
-		if (matcher.find()) {
-			return matcher.group(1);
+		@Override
+		public int compare(String comment1, String comment2) {
+			if (comment1.equals(" Default")) {
+				return -1;
+			}
+
+			if (comment2.equals(" Default")) {
+				return 1;
+			}
+
+			return super.compare(comment1, comment2);
 		}
 
-		return null;
 	}
-
-	private static final Pattern _sqlPattern1 = Pattern.compile(
-		"(?<=\n)( +)(test.batch.run.property.query.+]=)([^\\\\].+)");
-	private static final Pattern _sqlPattern2 = Pattern.compile(
-		"\\s(\\(.* ([!=]=|~) .+\\))( (AND|OR) )?(\\\\)?");
 
 }

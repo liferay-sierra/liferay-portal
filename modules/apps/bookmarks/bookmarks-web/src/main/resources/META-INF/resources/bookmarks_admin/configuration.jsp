@@ -255,9 +255,7 @@ catch (NoSuchFolderException nsfe) {
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button type="submit" />
-
-		<aui:button type="cancel" />
+		<liferay-frontend:edit-form-buttons />
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>
 
@@ -276,7 +274,9 @@ catch (NoSuchFolderException nsfe) {
 			);
 
 			if (currentFolderColumns && folderColumns) {
-				folderColumns.value = Util.listSelect(currentFolderColumns);
+				folderColumns.value = Util.getSelectedOptionValues(
+					currentFolderColumns
+				);
 			}
 
 			var currentEntryColumns = form.querySelector(
@@ -287,7 +287,9 @@ catch (NoSuchFolderException nsfe) {
 			);
 
 			if (currentEntryColumns && entryColumns) {
-				entryColumns.value = Util.listSelect(currentEntryColumns);
+				entryColumns.value = Util.getSelectedOptionValues(
+					currentEntryColumns
+				);
 			}
 
 			submitForm(form);

@@ -12,18 +12,18 @@
  * details.
  */
 
+import ClayEmptyState from '@clayui/empty-state';
 import {ClayCheckbox} from '@clayui/form';
 import ClayLoadingIndicator from '@clayui/loading-indicator';
 import ClayTable from '@clayui/table';
 import PropTypes from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
 
-import DataSetContext from '../../DataSetContext';
-import EmptyResultMessage from '../../EmptyResultMessage';
+import FrontendDataSetContext from '../../FrontendDataSetContext';
 
 function SelectableTable({dataLoading, items: itemsProp, schema, style}) {
-	const {namespace} = useContext(DataSetContext);
-	const {selectedItemsKey} = useContext(DataSetContext);
+	const {namespace, selectedItemsKey} = useContext(FrontendDataSetContext);
+
 	const [items, setItems] = useState(null);
 
 	useEffect(() => {
@@ -65,7 +65,15 @@ function SelectableTable({dataLoading, items: itemsProp, schema, style}) {
 	}
 
 	if (!items || items?.length === 0) {
-		return <EmptyResultMessage />;
+		return (
+			<ClayEmptyState
+				description={Liferay.Language.get(
+					'sorry,-no-results-were-found'
+				)}
+				imgSrc={`${themeDisplay.getPathThemeImages()}/states/search_state.gif`}
+				title={Liferay.Language.get('no-results-found')}
+			/>
+		);
 	}
 
 	return (

@@ -35,7 +35,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author David Mendez Gonzalez
  */
-@Component(immediate = true, service = StagedModelDataHandler.class)
+@Component(service = StagedModelDataHandler.class)
 public class EmailAddressStagedModelDataHandler
 	extends BaseStagedModelDataHandler<EmailAddress> {
 
@@ -108,13 +108,13 @@ public class EmailAddressStagedModelDataHandler
 
 			importedEmailAddress = _emailAddressLocalService.addEmailAddress(
 				userId, emailAddress.getClassName(), emailAddress.getClassPK(),
-				emailAddress.getAddress(), emailAddress.getTypeId(),
+				emailAddress.getAddress(), emailAddress.getListTypeId(),
 				emailAddress.isPrimary(), serviceContext);
 		}
 		else {
 			importedEmailAddress = _emailAddressLocalService.updateEmailAddress(
 				existingEmailAddress.getEmailAddressId(),
-				emailAddress.getAddress(), emailAddress.getTypeId(),
+				emailAddress.getAddress(), emailAddress.getListTypeId(),
 				emailAddress.isPrimary());
 		}
 
@@ -122,19 +122,10 @@ public class EmailAddressStagedModelDataHandler
 			emailAddress, importedEmailAddress);
 	}
 
-	@Reference(unbind = "-")
-	protected void setEmailAddressLocalService(
-		EmailAddressLocalService emailAddressLocalService) {
-
-		_emailAddressLocalService = emailAddressLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setGroupLocalService(GroupLocalService groupLocalService) {
-		_groupLocalService = groupLocalService;
-	}
-
+	@Reference
 	private EmailAddressLocalService _emailAddressLocalService;
+
+	@Reference
 	private GroupLocalService _groupLocalService;
 
 }

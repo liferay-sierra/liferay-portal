@@ -14,6 +14,7 @@
 
 package com.liferay.headless.commerce.admin.channel.internal.resource.v1_0.factory;
 
+import com.liferay.headless.commerce.admin.channel.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.headless.commerce.admin.channel.resource.v1_0.TermResource;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -33,14 +34,18 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -59,7 +62,8 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @generated
  */
 @Component(
-	enabled = false, immediate = true, service = TermResource.Factory.class
+	property = "resource.locator.key=/headless-commerce-admin-channel/v1.0/Term",
+	service = TermResource.Factory.class
 )
 @Generated("")
 public class TermResourceFactoryImpl implements TermResource.Factory {
@@ -74,9 +78,7 @@ public class TermResourceFactoryImpl implements TermResource.Factory {
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (TermResource)ProxyUtil.newProxyInstance(
-					TermResource.class.getClassLoader(),
-					new Class<?>[] {TermResource.class},
+				return _termResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -135,14 +137,31 @@ public class TermResourceFactoryImpl implements TermResource.Factory {
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		TermResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, TermResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		TermResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			TermResource.class.getClassLoader(), TermResource.class);
+
+		try {
+			Constructor<TermResource> constructor =
+				(Constructor<TermResource>)proxyClass.getConstructor(
+					InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -165,7 +184,7 @@ public class TermResourceFactoryImpl implements TermResource.Factory {
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		TermResource termResource = _componentServiceObjects.getService();
@@ -187,6 +206,7 @@ public class TermResourceFactoryImpl implements TermResource.Factory {
 		termResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		termResource.setRoleLocalService(_roleLocalService);
+		termResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(termResource, arguments);
@@ -202,6 +222,9 @@ public class TermResourceFactoryImpl implements TermResource.Factory {
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, TermResource>
+		_termResourceProxyProviderFunction = _getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -223,9 +246,6 @@ public class TermResourceFactoryImpl implements TermResource.Factory {
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -234,6 +254,9 @@ public class TermResourceFactoryImpl implements TermResource.Factory {
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

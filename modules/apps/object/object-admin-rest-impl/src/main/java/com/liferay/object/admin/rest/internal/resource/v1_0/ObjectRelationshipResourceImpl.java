@@ -16,6 +16,7 @@ package com.liferay.object.admin.rest.internal.resource.v1_0;
 
 import com.liferay.object.admin.rest.dto.v1_0.ObjectDefinition;
 import com.liferay.object.admin.rest.dto.v1_0.ObjectRelationship;
+import com.liferay.object.admin.rest.internal.dto.v1_0.converter.ObjectRelationshipDTOConverter;
 import com.liferay.object.admin.rest.internal.odata.entity.v1_0.ObjectRelationshipEntityModel;
 import com.liferay.object.admin.rest.resource.v1_0.ObjectRelationshipResource;
 import com.liferay.object.service.ObjectDefinitionLocalService;
@@ -27,14 +28,12 @@ import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.odata.entity.EntityModel;
+import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.portal.vulcan.fields.NestedField;
 import com.liferay.portal.vulcan.fields.NestedFieldSupport;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
-import com.liferay.portal.vulcan.resource.EntityModelResource;
 import com.liferay.portal.vulcan.util.SearchUtil;
-
-import java.util.Collections;
 
 import javax.ws.rs.core.MultivaluedMap;
 
@@ -52,8 +51,7 @@ import org.osgi.service.component.annotations.ServiceScope;
 	service = {NestedFieldSupport.class, ObjectRelationshipResource.class}
 )
 public class ObjectRelationshipResourceImpl
-	extends BaseObjectRelationshipResourceImpl
-	implements EntityModelResource, NestedFieldSupport {
+	extends BaseObjectRelationshipResourceImpl implements NestedFieldSupport {
 
 	@Override
 	public void deleteObjectRelationship(Long objectRelationshipId)
@@ -78,7 +76,26 @@ public class ObjectRelationshipResourceImpl
 		throws Exception {
 
 		return SearchUtil.search(
-			Collections.emptyMap(),
+			HashMapBuilder.put(
+				"createBatch",
+				addAction(
+					ActionKeys.UPDATE,
+					"postObjectDefinitionObjectRelationshipBatch",
+					com.liferay.object.model.ObjectDefinition.class.getName(),
+					objectDefinitionId)
+			).put(
+				"deleteBatch",
+				addAction(
+					ActionKeys.DELETE, "deleteObjectRelationshipBatch",
+					com.liferay.object.model.ObjectDefinition.class.getName(),
+					null)
+			).put(
+				"updateBatch",
+				addAction(
+					ActionKeys.UPDATE, "putObjectRelationshipBatch",
+					com.liferay.object.model.ObjectDefinition.class.getName(),
+					null)
+			).build(),
 			booleanQuery -> {
 			},
 			filter, com.liferay.object.model.ObjectRelationship.class.getName(),
@@ -111,9 +128,36 @@ public class ObjectRelationshipResourceImpl
 			Long objectDefinitionId, ObjectRelationship objectRelationship)
 		throws Exception {
 
+		long objectDefinitionId2 = GetterUtil.getLong(
+			objectRelationship.getObjectDefinitionId2());
+
+		if ((objectDefinitionId2 == 0) &&
+			(objectRelationship.getObjectDefinitionExternalReferenceCode2() !=
+				null)) {
+
+			com.liferay.object.model.ObjectDefinition objectDefinition =
+				_objectDefinitionLocalService.
+					fetchObjectDefinitionByExternalReferenceCode(
+						contextCompany.getCompanyId(),
+						objectRelationship.
+							getObjectDefinitionExternalReferenceCode2());
+
+			if (objectDefinition == null) {
+				objectDefinition =
+					_objectDefinitionLocalService.addObjectDefinition(
+						objectRelationship.
+							getObjectDefinitionExternalReferenceCode2(),
+						contextUser.getUserId());
+			}
+
+			objectDefinitionId2 = objectDefinition.getObjectDefinitionId();
+		}
+
 		return _toObjectRelationship(
 			_objectRelationshipService.addObjectRelationship(
-				objectDefinitionId, objectRelationship.getObjectDefinitionId2(),
+				objectDefinitionId, objectDefinitionId2,
+				GetterUtil.getLong(
+					objectRelationship.getParameterObjectFieldId()),
 				objectRelationship.getDeletionTypeAsString(),
 				LocalizedMapUtil.getLocalizedMap(objectRelationship.getLabel()),
 				objectRelationship.getName(),
@@ -128,6 +172,8 @@ public class ObjectRelationshipResourceImpl
 		return _toObjectRelationship(
 			_objectRelationshipService.updateObjectRelationship(
 				objectRelationshipId,
+				GetterUtil.getLong(
+					objectRelationship.getParameterObjectFieldId()),
 				objectRelationship.getDeletionTypeAsString(),
 				LocalizedMapUtil.getLocalizedMap(
 					objectRelationship.getLabel())));
@@ -137,46 +183,20 @@ public class ObjectRelationshipResourceImpl
 			com.liferay.object.model.ObjectRelationship objectRelationship)
 		throws Exception {
 
-		com.liferay.object.model.ObjectDefinition objectDefinition1 =
-			_objectDefinitionLocalService.getObjectDefinition(
-				objectRelationship.getObjectDefinitionId1());
-		com.liferay.object.model.ObjectDefinition objectDefinition2 =
-			_objectDefinitionLocalService.getObjectDefinition(
-				objectRelationship.getObjectDefinitionId2());
-
-		return new ObjectRelationship() {
-			{
-				actions = HashMapBuilder.put(
+		return _objectRelationshipDTOConverter.toDTO(
+			new DefaultDTOConverterContext(
+				false,
+				HashMapBuilder.put(
 					"delete",
-					() -> {
-						if (objectDefinition1.isApproved() ||
-							objectRelationship.isReverse()) {
-
-							return null;
-						}
-
-						return addAction(
-							ActionKeys.DELETE, "deleteObjectRelationship",
-							com.liferay.object.model.ObjectDefinition.class.
-								getName(),
-							objectRelationship.getObjectDefinitionId1());
-					}
-				).build();
-				deletionType = ObjectRelationship.DeletionType.create(
-					objectRelationship.getDeletionType());
-				id = objectRelationship.getObjectRelationshipId();
-				label = LocalizedMapUtil.getLanguageIdMap(
-					objectRelationship.getLabelMap());
-				name = objectRelationship.getName();
-				objectDefinitionId1 =
-					objectRelationship.getObjectDefinitionId1();
-				objectDefinitionId2 =
-					objectRelationship.getObjectDefinitionId2();
-				objectDefinitionName2 = objectDefinition2.getShortName();
-				type = ObjectRelationship.Type.create(
-					objectRelationship.getType());
-			}
-		};
+					addAction(
+						ActionKeys.DELETE, "deleteObjectRelationship",
+						com.liferay.object.model.ObjectDefinition.class.
+							getName(),
+						objectRelationship.getObjectDefinitionId1())
+				).build(),
+				null, null, contextAcceptLanguage.getPreferredLocale(), null,
+				null),
+			objectRelationship);
 	}
 
 	private static final EntityModel _entityModel =
@@ -184,6 +204,9 @@ public class ObjectRelationshipResourceImpl
 
 	@Reference
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;
+
+	@Reference
+	private ObjectRelationshipDTOConverter _objectRelationshipDTOConverter;
 
 	@Reference
 	private ObjectRelationshipService _objectRelationshipService;

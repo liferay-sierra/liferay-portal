@@ -14,6 +14,7 @@
 
 package com.liferay.change.tracking.web.internal.portlet.action;
 
+import com.liferay.change.tracking.constants.CTActionKeys;
 import com.liferay.change.tracking.constants.CTPortletKeys;
 import com.liferay.change.tracking.model.CTCollection;
 import com.liferay.change.tracking.service.CTCollectionLocalService;
@@ -25,6 +26,7 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
+import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
@@ -39,6 +41,8 @@ import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCResourceCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCResourceCommand;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.ResourceActions;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
@@ -64,6 +68,7 @@ import javax.portlet.ResourceResponse;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -71,7 +76,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Samuel Trong Tran
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + CTPortletKeys.PUBLICATIONS,
 		"mvc.command.name=/change_tracking/invite_users"
@@ -90,6 +94,31 @@ public class InviteUsersMVCResourceCommand
 		throws PortletException {
 
 		return super.serveResource(resourceRequest, resourceResponse);
+	}
+
+	@Activate
+	protected void activate() throws PortalException {
+		_companyLocalService.forEachCompanyId(
+			companyId -> {
+				Role role = _roleLocalService.getRole(
+					companyId, RoleConstants.PUBLICATIONS_USER);
+
+				_resourcePermissionLocalService.addResourcePermission(
+					role.getCompanyId(),
+					_resourceActions.getPortletRootModelResource(
+						CTPortletKeys.PUBLICATIONS),
+					ResourceConstants.SCOPE_COMPANY,
+					String.valueOf(role.getCompanyId()), role.getRoleId(),
+					CTActionKeys.ADD_PUBLICATION);
+				_resourcePermissionLocalService.addResourcePermission(
+					companyId, CTPortletKeys.PUBLICATIONS,
+					ResourceConstants.SCOPE_COMPANY, String.valueOf(companyId),
+					role.getRoleId(), ActionKeys.ACCESS_IN_CONTROL_PANEL);
+				_resourcePermissionLocalService.addResourcePermission(
+					companyId, CTPortletKeys.PUBLICATIONS,
+					ResourceConstants.SCOPE_COMPANY, String.valueOf(companyId),
+					role.getRoleId(), ActionKeys.VIEW);
+			});
 	}
 
 	@Override
@@ -217,6 +246,25 @@ public class InviteUsersMVCResourceCommand
 					httpServletRequest, "users-were-invited-successfully")));
 	}
 
+	private String[] _getModelResourceActions(int role) {
+		if (role == PublicationRoleConstants.ROLE_ADMIN) {
+			return new String[] {
+				ActionKeys.PERMISSIONS, ActionKeys.UPDATE, ActionKeys.VIEW,
+				CTActionKeys.PUBLISH
+			};
+		}
+		else if (role == PublicationRoleConstants.ROLE_EDITOR) {
+			return new String[] {ActionKeys.UPDATE, ActionKeys.VIEW};
+		}
+		else if (role == PublicationRoleConstants.ROLE_PUBLISHER) {
+			return new String[] {
+				ActionKeys.UPDATE, ActionKeys.VIEW, CTActionKeys.PUBLISH
+			};
+		}
+
+		return new String[] {ActionKeys.VIEW};
+	}
+
 	private Role _getRole(int roleValue, ThemeDisplay themeDisplay)
 		throws PortalException {
 
@@ -230,10 +278,7 @@ public class InviteUsersMVCResourceCommand
 				themeDisplay.getDefaultUserId(), null, 0, name, null, null,
 				RoleConstants.TYPE_PUBLICATIONS, null, null);
 
-			for (String actionId :
-					PublicationRoleConstants.getModelResourceActions(
-						roleValue)) {
-
+			for (String actionId : _getModelResourceActions(roleValue)) {
 				_resourcePermissionLocalService.addResourcePermission(
 					themeDisplay.getCompanyId(), CTCollection.class.getName(),
 					ResourceConstants.SCOPE_GROUP_TEMPLATE,
@@ -279,6 +324,9 @@ public class InviteUsersMVCResourceCommand
 	}
 
 	@Reference
+	private CompanyLocalService _companyLocalService;
+
+	@Reference
 	private CTCollectionLocalService _ctCollectionLocalService;
 
 	@Reference
@@ -289,6 +337,14 @@ public class InviteUsersMVCResourceCommand
 
 	@Reference
 	private Portal _portal;
+
+	@Reference(
+		target = "(javax.portlet.name=" + CTPortletKeys.PUBLICATIONS + ")"
+	)
+	private Portlet _portlet;
+
+	@Reference
+	private ResourceActions _resourceActions;
 
 	@Reference
 	private ResourcePermissionLocalService _resourcePermissionLocalService;

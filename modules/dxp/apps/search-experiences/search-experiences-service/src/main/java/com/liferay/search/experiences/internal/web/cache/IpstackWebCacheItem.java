@@ -16,7 +16,6 @@ package com.liferay.search.experiences.internal.web.cache;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -25,12 +24,11 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.webcache.WebCacheItem;
 import com.liferay.portal.kernel.webcache.WebCachePoolUtil;
+import com.liferay.search.experiences.blueprint.exception.InvalidWebCacheItemException;
 import com.liferay.search.experiences.blueprint.exception.PrivateIPAddressException;
 import com.liferay.search.experiences.internal.configuration.IpstackConfiguration;
 
 import java.beans.ExceptionListener;
-
-import java.io.IOException;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -100,8 +98,8 @@ public class IpstackWebCacheItem implements WebCacheItem {
 
 			return jsonObject;
 		}
-		catch (IOException | JSONException exception) {
-			throw new RuntimeException(exception);
+		catch (Exception exception) {
+			throw new InvalidWebCacheItemException(exception);
 		}
 	}
 
@@ -140,7 +138,7 @@ public class IpstackWebCacheItem implements WebCacheItem {
 			return;
 		}
 
-		throw new RuntimeException(
+		throw new InvalidWebCacheItemException(
 			StringBundler.concat(
 				"IPStack: ",
 				JSONUtil.getValueAsString(

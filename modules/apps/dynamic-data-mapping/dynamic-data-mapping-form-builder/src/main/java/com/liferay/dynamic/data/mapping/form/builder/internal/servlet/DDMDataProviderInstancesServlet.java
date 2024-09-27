@@ -50,7 +50,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Rafael Praxedes
  */
 @Component(
-	immediate = true,
 	property = {
 		"dynamic.data.mapping.form.builder.servlet=true",
 		"osgi.http.whiteboard.context.path=/dynamic-data-mapping-form-builder-data-provider-instances",
@@ -80,7 +79,7 @@ public class DDMDataProviderInstancesServlet extends BaseDDMFormBuilderServlet {
 		httpServletResponse.setStatus(HttpServletResponse.SC_OK);
 
 		ServletResponseUtil.write(
-			httpServletResponse, dataProviderInstancesJSONArray.toJSONString());
+			httpServletResponse, dataProviderInstancesJSONArray.toString());
 	}
 
 	private JSONArray _getDataProviderInstancesJSONArray(

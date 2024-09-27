@@ -22,7 +22,6 @@ import com.liferay.layout.content.page.editor.web.internal.util.layout.structure
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalServiceUtil;
 import com.liferay.layout.util.structure.FragmentStyledLayoutStructureItem;
 import com.liferay.layout.util.structure.LayoutStructure;
-import com.liferay.layout.util.structure.LayoutStructureItem;
 import com.liferay.portal.kernel.comment.CommentManager;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONException;
@@ -41,17 +40,15 @@ import com.liferay.portal.kernel.service.PortletPreferenceValueLocalServiceUtil;
 import com.liferay.portal.kernel.service.PortletPreferencesLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.CopyLayoutThreadLocal;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.HttpUtil;
-import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
-import com.liferay.segments.constants.SegmentsEntryConstants;
-import com.liferay.segments.constants.SegmentsExperienceConstants;
 import com.liferay.segments.constants.SegmentsExperimentConstants;
 import com.liferay.segments.model.SegmentsExperience;
 import com.liferay.segments.model.SegmentsExperiment;
@@ -64,8 +61,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -83,10 +78,22 @@ public class SegmentsExperienceUtil {
 			long userId)
 		throws PortalException {
 
-		_copyLayoutData(
-			plid, commentManager, groupId, portletRegistry,
-			sourceSegmentsExperienceId, targetSegmentsExperienceId,
-			serviceContextFunction, userId);
+		boolean copyLayout = CopyLayoutThreadLocal.isCopyLayout();
+
+		try {
+			CopyLayoutThreadLocal.setCopyLayout(true);
+
+			_copyLayoutData(
+				plid, commentManager, groupId, portletRegistry,
+				sourceSegmentsExperienceId, targetSegmentsExperienceId,
+				serviceContextFunction, userId);
+		}
+		catch (Throwable throwable) {
+			throw new PortalException(throwable);
+		}
+		finally {
+			CopyLayoutThreadLocal.setCopyLayout(copyLayout);
+		}
 	}
 
 	public static Map<String, Object> getAvailableSegmentsExperiences(
@@ -101,11 +108,9 @@ public class SegmentsExperienceUtil {
 
 		Layout draftLayout = themeDisplay.getLayout();
 
-		Layout layout = LayoutLocalServiceUtil.getLayout(
-			draftLayout.getClassPK());
-
 		String layoutFullURL = PortalUtil.getLayoutFullURL(
-			layout, themeDisplay);
+			LayoutLocalServiceUtil.getLayout(draftLayout.getClassPK()),
+			themeDisplay);
 
 		List<SegmentsExperience> segmentsExperiences =
 			SegmentsExperienceServiceUtil.getSegmentsExperiences(
@@ -113,20 +118,7 @@ public class SegmentsExperienceUtil {
 				PortalUtil.getClassNameId(Layout.class.getName()),
 				themeDisplay.getPlid(), true);
 
-		boolean addedDefault = false;
-
 		for (SegmentsExperience segmentsExperience : segmentsExperiences) {
-			if ((segmentsExperience.getPriority() <
-					SegmentsExperienceConstants.PRIORITY_DEFAULT) &&
-				!addedDefault) {
-
-				availableSegmentsExperiences.put(
-					String.valueOf(SegmentsExperienceConstants.ID_DEFAULT),
-					_getDefaultExperience(themeDisplay, layoutFullURL));
-
-				addedDefault = true;
-			}
-
 			availableSegmentsExperiences.put(
 				String.valueOf(segmentsExperience.getSegmentsExperienceId()),
 				HashMapBuilder.<String, Object>put(
@@ -153,12 +145,6 @@ public class SegmentsExperienceUtil {
 						themeDisplay, layoutFullURL,
 						segmentsExperience.getSegmentsExperienceId())
 				).build());
-		}
-
-		if (!addedDefault) {
-			availableSegmentsExperiences.put(
-				String.valueOf(SegmentsExperienceConstants.ID_DEFAULT),
-				_getDefaultExperience(themeDisplay, layoutFullURL));
 		}
 
 		return availableSegmentsExperiences;
@@ -206,27 +192,6 @@ public class SegmentsExperienceUtil {
 		).build();
 	}
 
-	public static boolean hasDefaultSegmentsExperienceLockedSegmentsExperiment(
-			ThemeDisplay themeDisplay)
-		throws Exception {
-
-		Optional<SegmentsExperiment> segmentsExperimentOptional =
-			_getSegmentsExperimentOptional(
-				themeDisplay, SegmentsExperienceConstants.ID_DEFAULT);
-
-		if (!segmentsExperimentOptional.isPresent()) {
-			return false;
-		}
-
-		SegmentsExperiment segmentsExperiment =
-			segmentsExperimentOptional.get();
-
-		List<Integer> lockedStatusValuesList = ListUtil.fromArray(
-			SegmentsExperimentConstants.Status.getLockedStatusValues());
-
-		return lockedStatusValuesList.contains(segmentsExperiment.getStatus());
-	}
-
 	private static void _copyLayoutData(
 			long plid, CommentManager commentManager, long groupId,
 			PortletRegistry portletRegistry, long sourceSegmentsExperienceId,
@@ -263,36 +228,6 @@ public class SegmentsExperienceUtil {
 				fragmentEntryLink.getNamespace(),
 				newFragmentEntryLink.getNamespace(), plid, portletId);
 		}
-	}
-
-	private static HashMap<String, Object> _getDefaultExperience(
-			ThemeDisplay themeDisplay, String layoutFullURL)
-		throws Exception {
-
-		return HashMapBuilder.<String, Object>put(
-			"hasLockedSegmentsExperiment",
-			hasDefaultSegmentsExperienceLockedSegmentsExperiment(themeDisplay)
-		).put(
-			"name",
-			SegmentsExperienceConstants.getDefaultSegmentsExperienceName(
-				themeDisplay.getLocale())
-		).put(
-			"priority", SegmentsExperienceConstants.PRIORITY_DEFAULT
-		).put(
-			"segmentsEntryId", String.valueOf(SegmentsEntryConstants.ID_DEFAULT)
-		).put(
-			"segmentsExperienceId",
-			String.valueOf(SegmentsExperienceConstants.ID_DEFAULT)
-		).put(
-			"segmentsExperimentStatus",
-			getSegmentsExperimentStatus(
-				themeDisplay, SegmentsExperienceConstants.ID_DEFAULT)
-		).put(
-			"segmentsExperimentURL",
-			_getSegmentsExperimentURL(
-				themeDisplay, layoutFullURL,
-				SegmentsExperienceConstants.ID_DEFAULT)
-		).build();
 	}
 
 	private static String _getNewEditableValues(
@@ -410,10 +345,10 @@ public class SegmentsExperienceUtil {
 		ThemeDisplay themeDisplay, String layoutFullURL,
 		long segmentsExperienceId) {
 
-		HttpUtil.addParameter(
+		HttpComponentsUtil.addParameter(
 			layoutFullURL, "p_l_back_url", themeDisplay.getURLCurrent());
 
-		return HttpUtil.addParameter(
+		return HttpComponentsUtil.addParameter(
 			layoutFullURL, "segmentsExperienceId", segmentsExperienceId);
 	}
 
@@ -430,30 +365,19 @@ public class SegmentsExperienceUtil {
 				getFragmentEntryLinksBySegmentsExperienceId(
 					groupId, sourceSegmentsExperienceId, plid);
 
-		Stream<FragmentEntryLink> stream = fragmentEntryLinks.stream();
-
-		Map<Long, FragmentEntryLink> fragmentEntryLinkMap = stream.collect(
-			Collectors.toMap(
-				FragmentEntryLink::getFragmentEntryLinkId,
-				fragmentEntryLink -> fragmentEntryLink));
-
-		for (LayoutStructureItem layoutStructureItem :
-				layoutStructure.getLayoutStructureItems()) {
-
-			if (!(layoutStructureItem instanceof
-					FragmentStyledLayoutStructureItem)) {
-
+		for (FragmentEntryLink fragmentEntryLink : fragmentEntryLinks) {
+			if (fragmentEntryLink.isDeleted()) {
 				continue;
 			}
 
 			FragmentStyledLayoutStructureItem
 				fragmentStyledLayoutStructureItem =
-					(FragmentStyledLayoutStructureItem)layoutStructureItem;
+					(FragmentStyledLayoutStructureItem)
+						layoutStructure.
+							getLayoutStructureItemByFragmentEntryLinkId(
+								fragmentEntryLink.getFragmentEntryLinkId());
 
-			FragmentEntryLink fragmentEntryLink = fragmentEntryLinkMap.get(
-				fragmentStyledLayoutStructureItem.getFragmentEntryLinkId());
-
-			if (fragmentEntryLink == null) {
+			if (fragmentStyledLayoutStructureItem == null) {
 				continue;
 			}
 
@@ -470,7 +394,7 @@ public class SegmentsExperienceUtil {
 			newFragmentEntryLink.setSegmentsExperienceId(
 				targetSegmentsExperienceId);
 
-			String newNamespace = StringUtil.randomId();
+			String newNamespace = fragmentEntryLink.getNamespace();
 
 			newFragmentEntryLink.setEditableValues(
 				_getNewEditableValues(

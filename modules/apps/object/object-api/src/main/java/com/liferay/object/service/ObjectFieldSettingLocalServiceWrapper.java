@@ -39,12 +39,11 @@ public class ObjectFieldSettingLocalServiceWrapper
 
 	@Override
 	public com.liferay.object.model.ObjectFieldSetting addObjectFieldSetting(
-			long userId, long objectFieldId, String name, boolean required,
-			String value)
+			long userId, long objectFieldId, String name, String value)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectFieldSettingLocalService.addObjectFieldSetting(
-			userId, objectFieldId, name, required, value);
+			userId, objectFieldId, name, value);
 	}
 
 	/**
@@ -89,6 +88,15 @@ public class ObjectFieldSettingLocalServiceWrapper
 
 		return _objectFieldSettingLocalService.createPersistedModel(
 			primaryKeyObj);
+	}
+
+	@Override
+	public void deleteObjectFieldObjectFieldSetting(
+			com.liferay.object.model.ObjectField objectField)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		_objectFieldSettingLocalService.deleteObjectFieldObjectFieldSetting(
+			objectField);
 	}
 
 	/**
@@ -252,6 +260,14 @@ public class ObjectFieldSettingLocalServiceWrapper
 			objectFieldSettingId);
 	}
 
+	@Override
+	public com.liferay.object.model.ObjectFieldSetting fetchObjectFieldSetting(
+		long objectFieldId, String name) {
+
+		return _objectFieldSettingLocalService.fetchObjectFieldSetting(
+			objectFieldId, name);
+	}
+
 	/**
 	 * Returns the object field setting with the matching UUID and company.
 	 *
@@ -290,6 +306,14 @@ public class ObjectFieldSettingLocalServiceWrapper
 
 		return _objectFieldSettingLocalService.
 			getIndexableActionableDynamicQuery();
+	}
+
+	@Override
+	public java.util.List<com.liferay.object.model.ObjectFieldSetting>
+		getObjectFieldObjectFieldSettings(long objectFieldId) {
+
+		return _objectFieldSettingLocalService.
+			getObjectFieldObjectFieldSettings(objectFieldId);
 	}
 
 	/**
@@ -342,14 +366,6 @@ public class ObjectFieldSettingLocalServiceWrapper
 
 		return _objectFieldSettingLocalService.getObjectFieldSettings(
 			start, end);
-	}
-
-	@Override
-	public java.util.List<com.liferay.object.model.ObjectFieldSetting>
-		getObjectFieldSettings(long objectFieldId) {
-
-		return _objectFieldSettingLocalService.getObjectFieldSettings(
-			objectFieldId);
 	}
 
 	/**

@@ -20,8 +20,11 @@ import com.liferay.object.system.BaseSystemObjectDefinitionMetadata;
 import com.liferay.object.system.SystemObjectDefinitionMetadata;
 import com.liferay.petra.sql.dsl.Column;
 import com.liferay.petra.sql.dsl.Table;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserTable;
+import com.liferay.portal.kernel.service.UserLocalService;
 
 import java.util.Arrays;
 import java.util.List;
@@ -29,14 +32,45 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Marco Leo
  * @author Brian Wing Shun Chan
  */
-@Component(immediate = true, service = SystemObjectDefinitionMetadata.class)
+@Component(service = SystemObjectDefinitionMetadata.class)
 public class UserSystemObjectDefinitionMetadata
 	extends BaseSystemObjectDefinitionMetadata {
+
+	@Override
+	public BaseModel<?> deleteBaseModel(BaseModel<?> baseModel)
+		throws PortalException {
+
+		return _userLocalService.deleteUser((User)baseModel);
+	}
+
+	@Override
+	public BaseModel<?> getBaseModelByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws PortalException {
+
+		return _userLocalService.getUserByExternalReferenceCode(
+			companyId, externalReferenceCode);
+	}
+
+	@Override
+	public String getExternalReferenceCode(long primaryKey)
+		throws PortalException {
+
+		User user = _userLocalService.getUser(primaryKey);
+
+		return user.getExternalReferenceCode();
+	}
+
+	@Override
+	public String getJaxRsApplicationName() {
+		return "Liferay.Headless.Admin.User";
+	}
 
 	@Override
 	public Map<Locale, String> getLabelMap() {
@@ -52,14 +86,15 @@ public class UserSystemObjectDefinitionMetadata
 	public List<ObjectField> getObjectFields() {
 		return Arrays.asList(
 			createObjectField(
-				"Text", "String", "email-address", "emailAddress", true),
+				"Text", "String", "email-address", "emailAddress", true, true),
 			createObjectField(
-				"Text", "firstName", "String", "first-name", "givenName", true),
+				"Text", "firstName", "String", "first-name", "givenName", true,
+				true),
 			createObjectField(
 				"Text", "middleName", "String", "middle-name", "additionalName",
-				false),
+				false, true),
 			createObjectField(
-				"Text", "uuid_", "String", "uuid", "uuid", false));
+				"Text", "uuid_", "String", "uuid", "uuid", false, true));
 	}
 
 	@Override
@@ -91,5 +126,8 @@ public class UserSystemObjectDefinitionMetadata
 	public int getVersion() {
 		return 1;
 	}
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

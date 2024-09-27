@@ -38,13 +38,13 @@ import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.IndexWriterHelper;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.SearchContext;
+import com.liferay.portal.kernel.search.SearchException;
 import com.liferay.portal.kernel.search.Summary;
 import com.liferay.portal.kernel.search.filter.BooleanFilter;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.search.filter.MissingFilter;
 import com.liferay.portal.kernel.search.filter.TermFilter;
 import com.liferay.portal.kernel.search.filter.TermsFilter;
-import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -68,7 +68,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marco Leo
  * @author Alessio Antonio Rendina
  */
-@Component(enabled = false, immediate = true, service = Indexer.class)
+@Component(immediate = true, service = Indexer.class)
 public class CommercePriceListIndexer extends BaseIndexer<CommercePriceList> {
 
 	public static final String CLASS_NAME = CommercePriceList.class.getName();
@@ -83,6 +83,13 @@ public class CommercePriceListIndexer extends BaseIndexer<CommercePriceList> {
 			Field.SCOPE_GROUP_ID, Field.UID);
 		setFilterSearch(true);
 		setPermissionAware(true);
+	}
+
+	@Override
+	public void delete(long companyId, String uuid) throws SearchException {
+		super.delete(companyId, uuid);
+
+		_commercePriceListLocalService.cleanPriceListCache();
 	}
 
 	@Override
@@ -203,6 +210,8 @@ public class CommercePriceListIndexer extends BaseIndexer<CommercePriceList> {
 		deleteDocument(
 			commercePriceList.getCompanyId(),
 			commercePriceList.getCommercePriceListId());
+
+		_commercePriceListLocalService.cleanPriceListCache();
 	}
 
 	@Override
@@ -323,8 +332,9 @@ public class CommercePriceListIndexer extends BaseIndexer<CommercePriceList> {
 		throws Exception {
 
 		_indexWriterHelper.updateDocument(
-			getSearchEngineId(), commercePriceList.getCompanyId(),
-			getDocument(commercePriceList), isCommitImmediately());
+			commercePriceList.getCompanyId(), getDocument(commercePriceList));
+
+		_commercePriceListLocalService.cleanPriceListCache();
 	}
 
 	@Override
@@ -337,6 +347,8 @@ public class CommercePriceListIndexer extends BaseIndexer<CommercePriceList> {
 		long companyId = GetterUtil.getLong(ids[0]);
 
 		_reindexCommercePriceLists(companyId);
+
+		_commercePriceListLocalService.cleanPriceListCache();
 	}
 
 	private long _getCatalogId(CommercePriceList commercePriceList)
@@ -373,16 +385,12 @@ public class CommercePriceListIndexer extends BaseIndexer<CommercePriceList> {
 					}
 				}
 			});
-		indexableActionableDynamicQuery.setSearchEngineId(getSearchEngineId());
 
 		indexableActionableDynamicQuery.performActions();
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		CommercePriceListIndexer.class);
-
-	@Reference
-	private ClassNameLocalService _classNameLocalService;
 
 	@Reference
 	private CommerceCatalogLocalService _commerceCatalogLocalService;

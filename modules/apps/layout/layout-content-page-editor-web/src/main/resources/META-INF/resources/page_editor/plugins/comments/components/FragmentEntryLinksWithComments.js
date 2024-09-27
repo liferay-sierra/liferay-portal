@@ -12,6 +12,7 @@
  * details.
  */
 
+import {sub} from 'frontend-js-web';
 import React from 'react';
 
 import {LAYOUT_DATA_ITEM_TYPES} from '../../../app/config/constants/layoutDataItemTypes';
@@ -20,7 +21,6 @@ import {
 	useSelectItem,
 } from '../../../app/contexts/ControlsContext';
 import {useSelector} from '../../../app/contexts/StoreContext';
-import SidebarPanelContent from '../../../common/components/SidebarPanelContent';
 import SidebarPanelHeader from '../../../common/components/SidebarPanelHeader';
 import NoCommentsMessage from './NoCommentsMessage';
 import ResolvedCommentsToggle from './ResolvedCommentsToggle';
@@ -55,23 +55,21 @@ export default function FragmentEntryLinksWithComments() {
 				{Liferay.Language.get('comments')}
 			</SidebarPanelHeader>
 
-			<SidebarPanelContent padded={false}>
-				<ResolvedCommentsToggle />
+			<ResolvedCommentsToggle />
 
-				{itemsWithComments.length ? (
-					<nav className="list-group">
-						{itemsWithComments.map(([item, fragmentEntryLink]) => (
-							<FragmentEntryLinkWithComments
-								fragmentEntryLink={fragmentEntryLink}
-								item={item}
-								key={fragmentEntryLink.fragmentEntryLinkId}
-							/>
-						))}
-					</nav>
-				) : (
-					<NoCommentsMessage />
-				)}
-			</SidebarPanelContent>
+			{itemsWithComments.length ? (
+				<nav className="list-group mb-0 overflow-auto page-editor__fragments-with-comments">
+					{itemsWithComments.map(([item, fragmentEntryLink]) => (
+						<FragmentEntryLinkWithComments
+							fragmentEntryLink={fragmentEntryLink}
+							item={item}
+							key={fragmentEntryLink.fragmentEntryLinkId}
+						/>
+					))}
+				</nav>
+			) : (
+				<NoCommentsMessage />
+			)}
 		</>
 	);
 }
@@ -83,7 +81,7 @@ function FragmentEntryLinkWithComments({fragmentEntryLink, item}) {
 	return (
 		<button
 			aria-label={Liferay.Language.get('show-comments')}
-			className="border-0 list-group-item list-group-item-action"
+			className="border-0 flex-shrink-0 list-group-item list-group-item-action"
 			onClick={() => selectItem(item.itemId)}
 			onFocus={() => hoverItem(item.itemId)}
 			onMouseOut={() => hoverItem(null)}
@@ -95,7 +93,7 @@ function FragmentEntryLinkWithComments({fragmentEntryLink, item}) {
 			</strong>
 
 			<span className="text-secondary">
-				{Liferay.Util.sub(
+				{sub(
 					fragmentEntryLink.comments.length === 1
 						? Liferay.Language.get('x-comment')
 						: Liferay.Language.get('x-comments'),

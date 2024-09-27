@@ -15,12 +15,17 @@
 package com.liferay.item.selector.web.internal.display.context;
 
 import com.liferay.frontend.taglib.clay.servlet.taglib.display.context.SearchContainerManagementToolbarDisplayContext;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.LabelItem;
 import com.liferay.item.selector.ItemSelectorViewDescriptor;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.util.Validator;
+
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -60,6 +65,16 @@ public class ItemSelectorViewDescriptorRendererManagementToolbarDisplayContext
 	}
 
 	@Override
+	public List<LabelItem> getFilterLabelItems() {
+		return _itemSelectorViewDescriptor.getFilterLabelItems();
+	}
+
+	@Override
+	public List<DropdownItem> getFilterNavigationDropdownItems() {
+		return _itemSelectorViewDescriptor.getFilterNavigationDropdownItems();
+	}
+
+	@Override
 	public String[] getOrderByKeys() {
 		return _itemSelectorViewDescriptor.getOrderByKeys();
 	}
@@ -70,8 +85,23 @@ public class ItemSelectorViewDescriptorRendererManagementToolbarDisplayContext
 	}
 
 	@Override
+	public String getSearchContainerId() {
+		return "entries";
+	}
+
+	@Override
+	public String getSortingURL() {
+		if (Validator.isNull(_itemSelectorViewDescriptor.getOrderByKeys())) {
+			return null;
+		}
+
+		return super.getSortingURL();
+	}
+
+	@Override
 	public Boolean isSelectable() {
-		return false;
+		return _itemSelectorViewDescriptorRendererDisplayContext.
+			isMultipleSelection();
 	}
 
 	@Override
@@ -92,7 +122,7 @@ public class ItemSelectorViewDescriptorRendererManagementToolbarDisplayContext
 
 	@Override
 	protected String[] getDisplayViews() {
-		return new String[] {"descriptive", "icon", "list"};
+		return _itemSelectorViewDescriptor.getDisplayViews();
 	}
 
 	private final ItemSelectorViewDescriptor<Object>

@@ -19,16 +19,20 @@ import com.liferay.account.exception.AccountEntryTypeException;
 import com.liferay.account.manager.CurrentAccountEntryManager;
 import com.liferay.account.model.AccountEntry;
 import com.liferay.account.service.AccountEntryLocalService;
+import com.liferay.account.service.AccountEntryOrganizationRelLocalService;
 import com.liferay.account.service.AccountEntryUserRelLocalService;
 import com.liferay.account.service.test.util.AccountEntryTestUtil;
 import com.liferay.account.settings.AccountEntryGroupSettings;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserConstants;
-import com.liferay.portal.kernel.test.rule.DataGuard;
+import com.liferay.portal.kernel.service.OrganizationLocalService;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.test.util.OrganizationTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
@@ -41,6 +45,7 @@ import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import java.util.List;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -50,7 +55,6 @@ import org.junit.runner.RunWith;
  * @author Pei-Jung Lan
  * @author Drew Brokke
  */
-@DataGuard(scope = DataGuard.Scope.METHOD)
 @RunWith(Arquillian.class)
 public class CurrentAccountEntryManagerTest {
 
@@ -59,37 +63,60 @@ public class CurrentAccountEntryManagerTest {
 	public static final LiferayIntegrationTestRule liferayIntegrationTestRule =
 		new LiferayIntegrationTestRule();
 
+	@Before
+	public void setUp() throws Exception {
+		_group = GroupTestUtil.addGroup();
+		_user = UserTestUtil.addUser();
+	}
+
 	@Test
 	public void testGetCurrentAccountEntry() throws Exception {
-		User user = UserTestUtil.addUser();
+		AccountEntry accountEntry = _addAccountEntry("aaa");
 
-		AccountEntry accountEntry1 = AccountEntryTestUtil.addAccountEntry(
-			_accountEntryLocalService);
+		_addAccountEntry("bbb");
 
-		_accountEntryUserRelLocalService.addAccountEntryUserRel(
-			accountEntry1.getAccountEntryId(), user.getUserId());
-
-		AccountEntry accountEntry2 = AccountEntryTestUtil.addAccountEntry(
-			_accountEntryLocalService);
-
-		_accountEntryUserRelLocalService.addAccountEntryUserRel(
-			accountEntry2.getAccountEntryId(), user.getUserId());
-
-		List<AccountEntry> accountEntries =
-			_accountEntryLocalService.getUserAccountEntries(
-				user.getUserId(),
-				AccountConstants.PARENT_ACCOUNT_ENTRY_ID_DEFAULT, null,
-				new String[] {
-					AccountConstants.ACCOUNT_ENTRY_TYPE_BUSINESS,
-					AccountConstants.ACCOUNT_ENTRY_TYPE_PERSON
-				},
-				0, 1);
-
-		Assert.assertNotNull(accountEntries);
 		Assert.assertEquals(
-			accountEntries.get(0),
+			accountEntry,
 			_currentAccountEntryManager.getCurrentAccountEntry(
-				TestPropsValues.getGroupId(), user.getUserId()));
+				_group.getGroupId(), _user.getUserId()));
+	}
+
+	@Test
+	public void testGetCurrentAccountEntryDefault() throws Exception {
+		AccountEntry inactiveAccountEntry = _addAccountEntry("aInactive");
+
+		_accountEntryLocalService.deactivateAccountEntry(inactiveAccountEntry);
+
+		_addAccountEntry(
+			"bInvalidType", AccountConstants.ACCOUNT_ENTRY_TYPE_PERSON);
+
+		_setAllowedTypes(
+			_group.getGroupId(),
+			new String[] {AccountConstants.ACCOUNT_ENTRY_TYPE_BUSINESS});
+
+		AccountEntry noPermissionAccountEntry = _addAccountEntry(
+			"cNoPermission");
+
+		_accountEntryUserRelLocalService.deleteAccountEntryUserRels(
+			noPermissionAccountEntry.getAccountEntryId(),
+			new long[] {_user.getUserId()});
+
+		Organization organization = OrganizationTestUtil.addOrganization();
+
+		_organizationLocalService.addUserOrganization(
+			_user.getUserId(), organization.getOrganizationId());
+		_accountEntryOrganizationRelLocalService.addAccountEntryOrganizationRel(
+			noPermissionAccountEntry.getAccountEntryId(),
+			organization.getOrganizationId());
+
+		AccountEntry expectedAccountEntry = _addAccountEntry("dHasPermission");
+
+		AccountEntry currentAccountEntry =
+			_currentAccountEntryManager.getCurrentAccountEntry(
+				_group.getGroupId(), _user.getUserId());
+
+		Assert.assertNotNull(currentAccountEntry);
+		Assert.assertEquals(expectedAccountEntry, currentAccountEntry);
 	}
 
 	@Test
@@ -97,24 +124,18 @@ public class CurrentAccountEntryManagerTest {
 		throws Exception {
 
 		Group group = GroupTestUtil.addGroup();
-
-		_setAllowedTypes(
-			group.getGroupId(),
-			new String[] {AccountConstants.ACCOUNT_ENTRY_TYPE_BUSINESS});
-
-		AccountEntry personAccountEntry =
-			AccountEntryTestUtil.addPersonAccountEntry(
-				_accountEntryLocalService);
-
-		Assert.assertNull(
-			_currentAccountEntryManager.getCurrentAccountEntry(
-				group.getGroupId(), TestPropsValues.getUserId()));
-
-		group = GroupTestUtil.addGroup();
+		AccountEntry personAccountEntry = _addAccountEntry(
+			RandomTestUtil.randomString(),
+			AccountConstants.ACCOUNT_ENTRY_TYPE_PERSON);
 
 		_currentAccountEntryManager.setCurrentAccountEntry(
 			personAccountEntry.getAccountEntryId(), group.getGroupId(),
-			TestPropsValues.getUserId());
+			_user.getUserId());
+
+		Assert.assertEquals(
+			personAccountEntry,
+			_currentAccountEntryManager.getCurrentAccountEntry(
+				group.getGroupId(), _user.getUserId()));
 
 		_setAllowedTypes(
 			group.getGroupId(),
@@ -122,7 +143,7 @@ public class CurrentAccountEntryManagerTest {
 
 		Assert.assertNull(
 			_currentAccountEntryManager.getCurrentAccountEntry(
-				group.getGroupId(), TestPropsValues.getUserId()));
+				group.getGroupId(), _user.getUserId()));
 	}
 
 	@Test
@@ -131,33 +152,67 @@ public class CurrentAccountEntryManagerTest {
 			_accountEntryLocalService.getGuestAccountEntry(
 				TestPropsValues.getCompanyId()),
 			_currentAccountEntryManager.getCurrentAccountEntry(
-				TestPropsValues.getGroupId(), UserConstants.USER_ID_DEFAULT));
+				_group.getGroupId(), UserConstants.USER_ID_DEFAULT));
 	}
 
 	@Test
 	public void testGetCurrentAccountEntryForUserWithNoAccountEntries()
 		throws Exception {
 
-		User user = UserTestUtil.addUser();
-
 		Assert.assertNull(
 			_currentAccountEntryManager.getCurrentAccountEntry(
-				TestPropsValues.getGroupId(), user.getUserId()));
+				_group.getGroupId(), _user.getUserId()));
 	}
 
 	@Test
-	public void testSetCurrentAccountEntry() throws Exception {
+	public void testGetCurrentAccountEntryWithNoViewPermission()
+		throws Exception {
+
 		AccountEntry accountEntry = AccountEntryTestUtil.addAccountEntry(
 			_accountEntryLocalService);
 
 		_currentAccountEntryManager.setCurrentAccountEntry(
-			accountEntry.getAccountEntryId(), TestPropsValues.getGroupId(),
-			TestPropsValues.getUserId());
+			accountEntry.getAccountEntryId(), _group.getGroupId(),
+			_user.getUserId());
+
+		Assert.assertNull(
+			_currentAccountEntryManager.getCurrentAccountEntry(
+				_group.getGroupId(), _user.getUserId()));
+	}
+
+	@Test
+	public void testGetCurrentAccountEntryWithViewPermission()
+		throws Exception {
+
+		AccountEntry accountEntry = AccountEntryTestUtil.addAccountEntry(
+			_accountEntryLocalService);
+
+		_accountEntryUserRelLocalService.addAccountEntryUserRel(
+			accountEntry.getAccountEntryId(), _user.getUserId());
+
+		_currentAccountEntryManager.setCurrentAccountEntry(
+			accountEntry.getAccountEntryId(), _group.getGroupId(),
+			_user.getUserId());
 
 		Assert.assertEquals(
 			accountEntry,
 			_currentAccountEntryManager.getCurrentAccountEntry(
-				TestPropsValues.getGroupId(), TestPropsValues.getUserId()));
+				_group.getGroupId(), _user.getUserId()));
+	}
+
+	@Test
+	public void testSetCurrentAccountEntry() throws Exception {
+		AccountEntry accountEntry = _addAccountEntry(
+			RandomTestUtil.randomString());
+
+		_currentAccountEntryManager.setCurrentAccountEntry(
+			accountEntry.getAccountEntryId(), _group.getGroupId(),
+			_user.getUserId());
+
+		Assert.assertEquals(
+			accountEntry,
+			_currentAccountEntryManager.getCurrentAccountEntry(
+				_group.getGroupId(), _user.getUserId()));
 	}
 
 	@Test
@@ -181,7 +236,7 @@ public class CurrentAccountEntryManagerTest {
 
 			_currentAccountEntryManager.setCurrentAccountEntry(
 				personAccountEntry.getAccountEntryId(), group.getGroupId(),
-				TestPropsValues.getUserId());
+				_user.getUserId());
 
 			List<LogEntry> logEntries = logCapture.getLogEntries();
 
@@ -203,6 +258,29 @@ public class CurrentAccountEntryManagerTest {
 		}
 	}
 
+	private AccountEntry _addAccountEntry(String name) throws Exception {
+		return _addAccountEntry(
+			name, AccountConstants.ACCOUNT_ENTRY_TYPE_BUSINESS);
+	}
+
+	private AccountEntry _addAccountEntry(String name, String type)
+		throws Exception {
+
+		AccountEntry accountEntry = AccountEntryTestUtil.addAccountEntry(
+			_accountEntryLocalService);
+
+		accountEntry.setName(name);
+		accountEntry.setType(type);
+
+		accountEntry = _accountEntryLocalService.updateAccountEntry(
+			accountEntry);
+
+		_accountEntryUserRelLocalService.addAccountEntryUserRel(
+			accountEntry.getAccountEntryId(), _user.getUserId());
+
+		return accountEntry;
+	}
+
 	private void _setAllowedTypes(long groupId, String[] allowedTypes)
 		throws Exception {
 
@@ -221,9 +299,23 @@ public class CurrentAccountEntryManagerTest {
 	private AccountEntryLocalService _accountEntryLocalService;
 
 	@Inject
+	private AccountEntryOrganizationRelLocalService
+		_accountEntryOrganizationRelLocalService;
+
+	@Inject
 	private AccountEntryUserRelLocalService _accountEntryUserRelLocalService;
 
 	@Inject
 	private CurrentAccountEntryManager _currentAccountEntryManager;
+
+	private Group _group;
+
+	@Inject
+	private OrganizationLocalService _organizationLocalService;
+
+	@Inject
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
+
+	private User _user;
 
 }

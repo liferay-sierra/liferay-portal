@@ -18,7 +18,7 @@ import com.liferay.knowledge.base.model.KBArticle;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
@@ -44,7 +44,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eduardo García
  */
 @Component(
-	immediate = true,
 	property = {
 		"segments.criteria.contributor.key=" + UserKBArticleSegmentsCriteriaContributor.KEY,
 		"segments.criteria.contributor.model.class.name=com.liferay.portal.kernel.model.User",
@@ -118,7 +117,7 @@ public class UserKBArticleSegmentsCriteriaContributor
 		return Collections.singletonList(
 			new Field(
 				"title",
-				LanguageUtil.get(_portal.getLocale(portletRequest), "title"),
+				_language.get(_portal.getLocale(portletRequest), "title"),
 				"string"));
 	}
 
@@ -136,6 +135,9 @@ public class UserKBArticleSegmentsCriteriaContributor
 		UserKBArticleSegmentsCriteriaContributor.class);
 
 	private static final EntityModel _entityModel = new KBArticleEntityModel();
+
+	@Reference
+	private Language _language;
 
 	@Reference(
 		target = "(model.class.name=com.liferay.knowledge.base.model.KBArticle)"

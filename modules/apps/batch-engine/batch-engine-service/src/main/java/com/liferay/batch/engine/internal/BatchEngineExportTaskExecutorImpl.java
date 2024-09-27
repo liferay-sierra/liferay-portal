@@ -17,7 +17,7 @@ package com.liferay.batch.engine.internal;
 import com.liferay.batch.engine.BatchEngineExportTaskExecutor;
 import com.liferay.batch.engine.BatchEngineTaskContentType;
 import com.liferay.batch.engine.BatchEngineTaskExecuteStatus;
-import com.liferay.batch.engine.configuration.BatchEngineTaskConfiguration;
+import com.liferay.batch.engine.configuration.BatchEngineTaskCompanyConfiguration;
 import com.liferay.batch.engine.internal.item.BatchEngineTaskItemDelegateExecutor;
 import com.liferay.batch.engine.internal.item.BatchEngineTaskItemDelegateExecutorFactory;
 import com.liferay.batch.engine.internal.writer.BatchEngineExportTaskItemWriter;
@@ -27,12 +27,16 @@ import com.liferay.batch.engine.pagination.Page;
 import com.liferay.batch.engine.service.BatchEngineExportTaskLocalService;
 import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.petra.io.unsync.UnsyncByteArrayOutputStream;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.dao.jdbc.OutputBlob;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.search.filter.Filter;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -57,16 +61,16 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Ivica Cardic
  */
-@Component(
-	configurationPid = "com.liferay.batch.engine.configuration.BatchEngineTaskConfiguration",
-	service = BatchEngineExportTaskExecutor.class
-)
+@Component(service = BatchEngineExportTaskExecutor.class)
 public class BatchEngineExportTaskExecutorImpl
 	implements BatchEngineExportTaskExecutor {
 
 	@Override
 	public void execute(BatchEngineExportTask batchEngineExportTask) {
-		try {
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setWithSafeCloseable(
+					batchEngineExportTask.getCompanyId())) {
+
 			batchEngineExportTask.setExecuteStatus(
 				BatchEngineTaskExecuteStatus.STARTED.toString());
 			batchEngineExportTask.setStartTime(new Date());
@@ -88,27 +92,26 @@ public class BatchEngineExportTaskExecutorImpl
 					batchEngineExportTask,
 				throwable);
 
-			_updateBatchEngineExportTask(
-				BatchEngineTaskExecuteStatus.FAILED, batchEngineExportTask,
-				throwable.getMessage());
+			try {
+				BatchEngineExportTask currentBatchEngineExportTask =
+					_batchEngineExportTaskLocalService.getBatchEngineExportTask(
+						batchEngineExportTask.getPrimaryKey());
+
+				_updateBatchEngineExportTask(
+					BatchEngineTaskExecuteStatus.FAILED,
+					currentBatchEngineExportTask, throwable.getMessage());
+			}
+			catch (PortalException portalException) {
+				_log.error(
+					"Unable to update batch engine export task",
+					portalException);
+			}
 		}
 	}
 
 	@Activate
 	protected void activate(
 		BundleContext bundleContext, Map<String, Object> properties) {
-
-		BatchEngineTaskConfiguration batchEngineTaskConfiguration =
-			ConfigurableUtil.createConfigurable(
-				BatchEngineTaskConfiguration.class, properties);
-
-		_batchSize = batchEngineTaskConfiguration.exportBatchSize();
-
-		_batchEngineExportTaskItemWriterFactory =
-			new BatchEngineExportTaskItemWriterFactory(
-				GetterUtil.getString(
-					batchEngineTaskConfiguration.csvFileColumnDelimiter(),
-					StringPool.COMMA));
 
 		_batchEngineTaskItemDelegateExecutorFactory =
 			new BatchEngineTaskItemDelegateExecutorFactory(
@@ -139,13 +142,20 @@ public class BatchEngineExportTaskExecutorImpl
 				_batchEngineExportTaskItemWriterFactory.create(
 					BatchEngineTaskContentType.valueOf(
 						batchEngineExportTask.getContentType()),
+					GetterUtil.getString(
+						_getCSVFileColumnDelimiter(
+							batchEngineExportTask.getCompanyId()),
+						StringPool.COMMA),
 					batchEngineExportTask.getFieldNamesList(),
 					_batchEngineTaskMethodRegistry.getItemClass(
 						batchEngineExportTask.getClassName()),
-					zipOutputStream)) {
+					zipOutputStream, batchEngineExportTask.getParameters())) {
+
+			int exportBatchSize = _getExportBatchSize(
+				batchEngineExportTask.getCompanyId());
 
 			Page<?> page = batchEngineTaskItemDelegateExecutor.getItems(
-				1, _batchSize);
+				1, exportBatchSize);
 
 			batchEngineExportTask.setTotalItemsCount(
 				Math.toIntExact(page.getTotalCount()));
@@ -172,7 +182,7 @@ public class BatchEngineExportTaskExecutorImpl
 				}
 
 				page = batchEngineTaskItemDelegateExecutor.getItems(
-					(int)page.getPage() + 1, _batchSize);
+					(int)page.getPage() + 1, exportBatchSize);
 
 				items = page.getItems();
 			}
@@ -186,6 +196,28 @@ public class BatchEngineExportTaskExecutorImpl
 
 		_batchEngineExportTaskLocalService.updateBatchEngineExportTask(
 			batchEngineExportTask);
+	}
+
+	private String _getCSVFileColumnDelimiter(long companyId)
+		throws ConfigurationException {
+
+		BatchEngineTaskCompanyConfiguration
+			batchEngineTaskCompanyConfiguration =
+				_configurationProvider.getCompanyConfiguration(
+					BatchEngineTaskCompanyConfiguration.class, companyId);
+
+		return batchEngineTaskCompanyConfiguration.csvFileColumnDelimiter();
+	}
+
+	private int _getExportBatchSize(long companyId)
+		throws ConfigurationException {
+
+		BatchEngineTaskCompanyConfiguration
+			batchEngineTaskCompanyConfiguration =
+				_configurationProvider.getCompanyConfiguration(
+					BatchEngineTaskCompanyConfiguration.class, companyId);
+
+		return batchEngineTaskCompanyConfiguration.exportBatchSize();
 	}
 
 	private ZipOutputStream _getZipOutputStream(
@@ -225,8 +257,9 @@ public class BatchEngineExportTaskExecutorImpl
 	private static final Log _log = LogFactoryUtil.getLog(
 		BatchEngineExportTaskExecutorImpl.class);
 
-	private BatchEngineExportTaskItemWriterFactory
-		_batchEngineExportTaskItemWriterFactory;
+	private final BatchEngineExportTaskItemWriterFactory
+		_batchEngineExportTaskItemWriterFactory =
+			new BatchEngineExportTaskItemWriterFactory();
 
 	@Reference
 	private BatchEngineExportTaskLocalService
@@ -238,10 +271,11 @@ public class BatchEngineExportTaskExecutorImpl
 	@Reference
 	private BatchEngineTaskMethodRegistry _batchEngineTaskMethodRegistry;
 
-	private int _batchSize;
-
 	@Reference
 	private CompanyLocalService _companyLocalService;
+
+	@Reference
+	private ConfigurationProvider _configurationProvider;
 
 	@Reference(
 		target = "(result.class.name=com.liferay.portal.kernel.search.filter.Filter)"

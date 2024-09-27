@@ -13,13 +13,7 @@
  */
 
 import '@testing-library/jest-dom/extend-expect';
-import {
-	act,
-	cleanup,
-	fireEvent,
-	getByText,
-	render,
-} from '@testing-library/react';
+import {act, fireEvent, getByText, render} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -74,10 +68,6 @@ const COLLECTION_KEY = 'COLLECTION_KEY';
 const handleConfigurationChanged = jest.fn();
 
 const renderComponent = () => {
-	Liferay.Util.sub.mockImplementation((langKey, ...args) =>
-		[langKey, ...args].join('-')
-	);
-
 	const result = render(
 		<StoreContextProvider
 			initialState={{
@@ -88,6 +78,7 @@ const renderComponent = () => {
 						subtype: 'Web Content Article - Basic Web Content',
 					},
 				],
+				permissions: {UPDATE: true},
 				selectedViewportSize: VIEWPORT_SIZES.desktop,
 			}}
 		>
@@ -112,7 +103,6 @@ const renderComponent = () => {
 
 describe('CollectionFilterConfigurationModal', () => {
 	beforeEach(() => {
-		cleanup();
 		handleConfigurationChanged.mockClear();
 	});
 
@@ -176,9 +166,7 @@ describe('CollectionFilterConfigurationModal', () => {
 			fireEvent.blur(titleInput);
 		});
 
-		expect(
-			getByText('there-are-x-results-for-x-4-This is a test')
-		).toBeInTheDocument();
+		expect(getByText('there-are-x-results-for-x')).toBeInTheDocument();
 	});
 
 	it('clears the filter when the clear button is clicked', async () => {

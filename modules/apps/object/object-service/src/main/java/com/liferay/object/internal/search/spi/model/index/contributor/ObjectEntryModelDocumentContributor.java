@@ -14,6 +14,8 @@
 
 package com.liferay.object.internal.search.spi.model.index.contributor;
 
+import com.liferay.object.constants.ObjectFieldConstants;
+import com.liferay.object.entry.util.ObjectEntryValuesUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.model.ObjectField;
@@ -107,6 +109,15 @@ public class ObjectEntryModelDocumentContributor
 			_log.debug("Object entry " + objectEntry);
 		}
 
+		document.add(
+			new Field(
+				Field.getSortableFieldName(Field.ENTRY_CLASS_PK),
+				document.get(Field.ENTRY_CLASS_PK)));
+		document.add(
+			new Field(
+				Field.getSortableFieldName("externalReferenceCode"),
+				objectEntry.getExternalReferenceCode()));
+
 		FieldArray fieldArray = (FieldArray)document.getField(
 			"nestedFieldArray");
 
@@ -147,8 +158,6 @@ public class ObjectEntryModelDocumentContributor
 
 		document.add(
 			new Field("objectEntryTitle", objectEntry.getTitleValue()));
-
-		document.remove(Field.USER_NAME);
 	}
 
 	private void _contribute(
@@ -174,6 +183,17 @@ public class ObjectEntryModelDocumentContributor
 		}
 
 		String objectFieldName = objectField.getName();
+
+		if (StringUtil.equals(
+				objectField.getBusinessType(),
+				ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT) ||
+			StringUtil.equals(
+				objectField.getBusinessType(),
+				ObjectFieldConstants.BUSINESS_TYPE_RICH_TEXT)) {
+
+			value = ObjectEntryValuesUtil.getValueString(objectField, values);
+		}
+
 		String valueString = String.valueOf(value);
 
 		if (objectField.isIndexedAsKeyword()) {

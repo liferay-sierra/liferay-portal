@@ -69,14 +69,11 @@ public class DocumentResourceTest extends BaseDocumentResourceTestCase {
 				ServiceContextTestUtil.getServiceContext(
 					testGroup.getGroupId()));
 
-		String documentRenderedContentByDisplayPageDisplayPageKey =
+		Assert.assertNotNull(
 			documentResource.
 				getDocumentRenderedContentByDisplayPageDisplayPageKey(
 					document.getId(),
-					layoutPageTemplateEntry.getLayoutPageTemplateEntryKey());
-
-		Assert.assertNotNull(
-			documentRenderedContentByDisplayPageDisplayPageKey);
+					layoutPageTemplateEntry.getLayoutPageTemplateEntryKey()));
 	}
 
 	@Override
@@ -149,6 +146,41 @@ public class DocumentResourceTest extends BaseDocumentResourceTestCase {
 	}
 
 	@Override
+	protected Document
+			testDeleteAssetLibraryDocumentByExternalReferenceCode_addDocument()
+		throws Exception {
+
+		return documentResource.postAssetLibraryDocument(
+			testDepotEntry.getDepotEntryId(), randomDocument(),
+			getMultipartFiles());
+	}
+
+	@Override
+	protected Long
+			testDeleteAssetLibraryDocumentByExternalReferenceCode_getAssetLibraryId()
+		throws Exception {
+
+		return testDepotEntry.getDepotEntryId();
+	}
+
+	@Override
+	protected Document
+			testGetAssetLibraryDocumentByExternalReferenceCode_addDocument()
+		throws Exception {
+
+		return testPostAssetLibraryDocument_addDocument(
+			randomDocument(), getMultipartFiles());
+	}
+
+	@Override
+	protected Long
+			testGetAssetLibraryDocumentByExternalReferenceCode_getAssetLibraryId()
+		throws Exception {
+
+		return testDepotEntry.getDepotEntryId();
+	}
+
+	@Override
 	protected Long testGetDocumentFolderDocumentsPage_getDocumentFolderId()
 		throws Exception {
 
@@ -168,6 +200,30 @@ public class DocumentResourceTest extends BaseDocumentResourceTestCase {
 	protected Document testGraphQLDocument_addDocument() throws Exception {
 		return testPostDocumentFolderDocument_addDocument(
 			randomDocument(), getMultipartFiles());
+	}
+
+	@Override
+	protected Document
+			testGraphQLGetAssetLibraryDocumentByExternalReferenceCode_addDocument()
+		throws Exception {
+
+		return testGetAssetLibraryDocumentByExternalReferenceCode_addDocument();
+	}
+
+	@Override
+	protected Long
+			testGraphQLGetAssetLibraryDocumentByExternalReferenceCode_getAssetLibraryId()
+		throws Exception {
+
+		return testDepotEntry.getDepotEntryId();
+	}
+
+	@Override
+	protected Long
+			testPutAssetLibraryDocumentByExternalReferenceCode_getAssetLibraryId()
+		throws Exception {
+
+		return testDepotEntry.getDepotEntryId();
 	}
 
 	private String _read(String url) throws Exception {

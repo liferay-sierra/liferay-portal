@@ -501,6 +501,12 @@ public class ModulesStructureTest {
 				public FileVisitResult preVisitDirectory(
 					Path dirPath, BasicFileAttributes basicFileAttributes) {
 
+					String dirName = String.valueOf(dirPath.getFileName());
+
+					if (_excludedDirNames.contains(dirName)) {
+						return FileVisitResult.SKIP_SUBTREE;
+					}
+
 					if (Files.exists(dirPath.resolve("bnd.bnd"))) {
 						for (Map.Entry<String, String> entry :
 								renameMap.entrySet()) {
@@ -990,6 +996,7 @@ public class ModulesStructureTest {
 			name.equals("com.liferay.whip") ||
 			!name.startsWith("com.liferay.") ||
 			_isInModulesRootDir(dirPath, "sdk", "third-party", "util") ||
+			Files.exists(dirPath.resolve("settings.gradle")) ||
 			Files.exists(dirPath.resolve(".lfrbuild-ci")) ||
 			_hasGitCommitMarkerFile(dirPath) || _isInGitRepoReadOnly(dirPath) ||
 			_isInPrivateModulesCheckoutDir(dirPath)) {
@@ -1505,13 +1512,11 @@ public class ModulesStructureTest {
 				Assert.assertFalse(sb.toString(), !allowed);
 			}
 
-			GradleDependency activeGradleDependency =
-				_getActiveGradleDependency(
-					gradleDependencies, gradleDependency);
-
 			Assert.assertEquals(
 				"Redundant dependency detected in " + path,
-				activeGradleDependency, gradleDependency);
+				_getActiveGradleDependency(
+					gradleDependencies, gradleDependency),
+				gradleDependency);
 		}
 	}
 
@@ -1689,7 +1694,8 @@ public class ModulesStructureTest {
 	private static Set<String> _checkoutPrivateAppsDirs;
 	private static final Set<String> _excludedDirNames = SetUtil.fromList(
 		Arrays.asList(
-			"bin", "build", "classes", "node_modules", "test-classes", "tmp"));
+			"bin", "build", "classes", "ext-test-impl", "node_modules",
+			"test-classes", "tmp"));
 	private static final Pattern _gitRepoGradleProjectGroupPattern =
 		Pattern.compile("com\\.liferay(?:\\.[a-z]+)+");
 	private static final Set<String> _gitRepoGradlePropertiesKeys =

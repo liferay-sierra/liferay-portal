@@ -17,6 +17,9 @@ package com.liferay.change.tracking.internal.search.spi.model.query.contributor;
 import com.liferay.change.tracking.constants.CTConstants;
 import com.liferay.change.tracking.model.CTEntry;
 import com.liferay.change.tracking.service.CTEntryLocalService;
+import com.liferay.change.tracking.spi.search.CTSearchExcludeModelClassPKContributor;
+import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerList;
+import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerListFactory;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
@@ -49,7 +52,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author André de Oliveira
  */
 @Component(
-	immediate = true,
 	property = {"indexer.class.name=ALL", "indexer.clauses.mandatory=true"},
 	service = ModelPreFilterContributor.class
 )
@@ -88,7 +90,7 @@ public class CTModelPreFilterContributor implements ModelPreFilterContributor {
 			}
 		}
 		else {
-			List<Long> excludeModelClassPKs = new ArrayList<>();
+			List<Long> excludeProductionModelClassPKs = new ArrayList<>();
 
 			for (CTEntry ctEntry :
 					_ctEntryLocalService.getCTEntries(
@@ -100,7 +102,16 @@ public class CTModelPreFilterContributor implements ModelPreFilterContributor {
 				if ((changeType == CTConstants.CT_CHANGE_TYPE_DELETION) ||
 					(changeType == CTConstants.CT_CHANGE_TYPE_MODIFICATION)) {
 
-					excludeModelClassPKs.add(ctEntry.getModelClassPK());
+					excludeProductionModelClassPKs.add(
+						ctEntry.getModelClassPK());
+				}
+
+				for (CTSearchExcludeModelClassPKContributor
+						ctSEMCPKContributor : _serviceTrackerList) {
+
+					ctSEMCPKContributor.contribute(
+						className, ctEntry.getModelClassPK(),
+						excludeProductionModelClassPKs);
 				}
 			}
 
@@ -117,10 +128,10 @@ public class CTModelPreFilterContributor implements ModelPreFilterContributor {
 			ctBooleanFilter.add(
 				ctCollectionIdTermsFilter, BooleanClauseOccur.SHOULD);
 
-			if (!excludeModelClassPKs.isEmpty()) {
+			if (!excludeProductionModelClassPKs.isEmpty()) {
 				TermsFilter uidTermsFilter = new TermsFilter(Field.UID);
 
-				for (Long classPK : excludeModelClassPKs) {
+				for (Long classPK : excludeProductionModelClassPKs) {
 					uidTermsFilter.addValue(
 						_uidFactory.getUID(
 							className, String.valueOf(classPK),
@@ -139,6 +150,9 @@ public class CTModelPreFilterContributor implements ModelPreFilterContributor {
 
 	@Activate
 	protected void activate(BundleContext bundleContext) {
+		_serviceTrackerList = ServiceTrackerListFactory.open(
+			bundleContext, CTSearchExcludeModelClassPKContributor.class);
+
 		_serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
 			bundleContext, (Class<CTService<?>>)(Class<?>)CTService.class, null,
 			(serviceReference, emitter) -> {
@@ -153,6 +167,8 @@ public class CTModelPreFilterContributor implements ModelPreFilterContributor {
 
 	@Deactivate
 	protected void deactivate() {
+		_serviceTrackerList.close();
+
 		_serviceTrackerMap.close();
 	}
 
@@ -167,6 +183,8 @@ public class CTModelPreFilterContributor implements ModelPreFilterContributor {
 	@Reference
 	private CTEntryLocalService _ctEntryLocalService;
 
+	private ServiceTrackerList<CTSearchExcludeModelClassPKContributor>
+		_serviceTrackerList;
 	private ServiceTrackerMap<String, CTService<?>> _serviceTrackerMap;
 
 	@Reference

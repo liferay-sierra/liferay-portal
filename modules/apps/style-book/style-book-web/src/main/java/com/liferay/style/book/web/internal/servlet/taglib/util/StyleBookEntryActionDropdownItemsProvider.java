@@ -21,9 +21,9 @@ import com.liferay.item.selector.ItemSelectorCriterion;
 import com.liferay.item.selector.criteria.FileEntryItemSelectorReturnType;
 import com.liferay.item.selector.criteria.upload.criterion.UploadItemSelectorCriterion;
 import com.liferay.petra.function.UnsafeConsumer;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.upload.UploadServletRequestConfigurationHelperUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -35,7 +35,6 @@ import com.liferay.style.book.web.internal.constants.StyleBookWebKeys;
 
 import java.util.List;
 
-import javax.portlet.PortletURL;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 import javax.portlet.ResourceURL;
@@ -143,6 +142,7 @@ public class StyleBookEntryActionDropdownItemsProvider {
 				).setParameter(
 					"styleBookEntryIds", _styleBookEntry.getStyleBookEntryId()
 				).buildString());
+			dropdownItem.setIcon("copy");
 			dropdownItem.setLabel(
 				LanguageUtil.get(_httpServletRequest, "make-a-copy"));
 		};
@@ -164,6 +164,7 @@ public class StyleBookEntryActionDropdownItemsProvider {
 				).setParameter(
 					"styleBookEntryId", _styleBookEntry.getStyleBookEntryId()
 				).buildString());
+			dropdownItem.setIcon("trash");
 			dropdownItem.setLabel(
 				LanguageUtil.get(_httpServletRequest, "delete"));
 		};
@@ -222,6 +223,7 @@ public class StyleBookEntryActionDropdownItemsProvider {
 				_renderResponse.createRenderURL(), "mvcRenderCommandName",
 				"/style_book/edit_style_book_entry", "styleBookEntryId",
 				_styleBookEntry.getStyleBookEntryId());
+			dropdownItem.setIcon("pencil");
 			dropdownItem.setLabel(
 				LanguageUtil.get(_httpServletRequest, "edit"));
 		};
@@ -241,6 +243,7 @@ public class StyleBookEntryActionDropdownItemsProvider {
 
 		return dropdownItem -> {
 			dropdownItem.setHref(exportStyleBookEntryURL);
+			dropdownItem.setIcon("upload");
 			dropdownItem.setLabel(
 				LanguageUtil.get(_httpServletRequest, "export"));
 		};
@@ -248,27 +251,30 @@ public class StyleBookEntryActionDropdownItemsProvider {
 
 	private String _getItemSelectorURL() {
 		ItemSelectorCriterion itemSelectorCriterion =
-			new UploadItemSelectorCriterion(
-				StyleBookPortletKeys.STYLE_BOOK,
+			UploadItemSelectorCriterion.builder(
+			).desiredItemSelectorReturnTypes(
+				new FileEntryItemSelectorReturnType()
+			).maxFileSize(
+				UploadServletRequestConfigurationHelperUtil.getMaxSize()
+			).portletId(
+				StyleBookPortletKeys.STYLE_BOOK
+			).repositoryName(
+				LanguageUtil.get(_httpServletRequest, "style-book")
+			).url(
 				PortletURLBuilder.createActionURL(
 					_renderResponse
 				).setActionName(
 					"/style_book/upload_style_book_entry_preview"
 				).setParameter(
 					"styleBookEntryId", _styleBookEntry.getStyleBookEntryId()
-				).buildString(),
-				LanguageUtil.get(_httpServletRequest, "style-book"),
-				UploadServletRequestConfigurationHelperUtil.getMaxSize());
+				).buildString()
+			).build();
 
-		itemSelectorCriterion.setDesiredItemSelectorReturnTypes(
-			new FileEntryItemSelectorReturnType());
-
-		PortletURL itemSelectorURL = _itemSelector.getItemSelectorURL(
-			RequestBackedPortletURLFactoryUtil.create(_httpServletRequest),
-			_renderResponse.getNamespace() + "changePreview",
-			itemSelectorCriterion);
-
-		return itemSelectorURL.toString();
+		return String.valueOf(
+			_itemSelector.getItemSelectorURL(
+				RequestBackedPortletURLFactoryUtil.create(_httpServletRequest),
+				_renderResponse.getNamespace() + "changePreview",
+				itemSelectorCriterion));
 	}
 
 	private UnsafeConsumer<DropdownItem, Exception>
@@ -351,6 +357,7 @@ public class StyleBookEntryActionDropdownItemsProvider {
 			dropdownItem.putData(
 				"styleBookEntryId",
 				String.valueOf(_styleBookEntry.getStyleBookEntryId()));
+			dropdownItem.setIcon("change");
 			dropdownItem.setLabel(
 				LanguageUtil.get(_httpServletRequest, "change-thumbnail"));
 		};

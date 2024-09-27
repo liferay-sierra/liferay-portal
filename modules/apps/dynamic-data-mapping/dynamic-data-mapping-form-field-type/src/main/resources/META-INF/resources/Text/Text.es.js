@@ -17,16 +17,64 @@ import ClayDropDown from '@clayui/drop-down';
 import {ClayInput} from '@clayui/form';
 import {usePrevious} from '@liferay/frontend-js-react-web';
 import {normalizeFieldName} from 'data-engine-js-components-web';
+import {sub} from 'frontend-js-web';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 
 import {FieldBase} from '../FieldBase/ReactFieldBase.es';
 import {useSyncValue} from '../hooks/useSyncValue.es';
 import withConfirmationField from '../util/withConfirmationField.es';
 
+const CounterContainer = ({
+	counter,
+	displayErrors,
+	error,
+	maxLength,
+	setError,
+	showCounter,
+	valid,
+}) => {
+	if (
+		!showCounter ||
+		(displayErrors === true && !valid && !Object.keys(error).length)
+	) {
+		return null;
+	}
+
+	const message = sub(
+		Liferay.Language.get('x-of-x-characters'),
+		counter,
+		maxLength
+	);
+
+	if (counter > maxLength) {
+		if (error.errorMessage !== message) {
+			setError({
+				displayErrors: true,
+				errorMessage: message,
+				valid: false,
+			});
+		}
+
+		return null;
+	}
+
+	if (error.displayErrors) {
+		setError({});
+	}
+
+	return (
+		<span aria-hidden="true" className="form-text">
+			{message}
+		</span>
+	);
+};
+
 const Text = ({
 	defaultLanguageId,
 	disabled,
+	displayErrors,
 	editingLanguageId,
+	error,
 	fieldName,
 	id,
 	invalidCharacters,
@@ -39,8 +87,11 @@ const Text = ({
 	onChange,
 	onFocus,
 	placeholder,
+	setError,
 	shouldUpdateValue,
+	showCounter,
 	syncDelay,
+	valid,
 	value: initialValue,
 }) => {
 	const [value, setValue] = useSyncValue(
@@ -91,79 +142,108 @@ const Text = ({
 	]);
 
 	return (
-		<ClayInput
-			className="ddm-field-text"
-			dir={Liferay.Language.direction[editingLanguageId]}
-			disabled={disabled}
-			id={id}
-			lang={editingLanguageId}
-			maxLength={maxLength}
-			name={name}
-			onBlur={(event) => {
-				if (normalizeField) {
-					onBlur({target: {value: initialValue}});
-				}
-				else {
-					onBlur(event);
-				}
-			}}
-			onChange={(event) => {
-				const {value} = event.target;
+		<>
+			<ClayInput
+				className="ddm-field-text"
+				dir={Liferay.Language.direction[editingLanguageId]}
+				disabled={disabled}
+				id={id}
+				lang={editingLanguageId}
+				maxLength={showCounter ? '' : maxLength}
+				name={name}
+				onBlur={(event) => {
+					if (normalizeField) {
+						onBlur({target: {value: initialValue}});
+					}
+					else {
+						onBlur(event);
+					}
+				}}
+				onChange={(event) => {
+					const {value} = event.target;
 
-				if (normalizeField) {
-					event.target.value = normalizeFieldName(value);
-				}
-				else if (invalidCharacters) {
-					const regex = new RegExp(invalidCharacters, 'g');
+					if (normalizeField) {
+						event.target.value = normalizeFieldName(value);
+					}
+					else if (invalidCharacters) {
+						const regex = new RegExp(invalidCharacters, 'g');
 
-					event.target.value = value.replace(regex, '');
-				}
+						event.target.value = value.replace(regex, '');
+					}
+					setValue(event.target.value);
+					onChange(event);
+				}}
+				onFocus={onFocus}
+				placeholder={placeholder}
+				ref={inputRef}
+				type="text"
+				value={value}
+			/>
 
-				setValue(event.target.value);
-				onChange(event);
-			}}
-			onFocus={onFocus}
-			placeholder={placeholder}
-			ref={inputRef}
-			type="text"
-			value={value}
-		/>
+			<CounterContainer
+				counter={value?.length}
+				displayErrors={displayErrors}
+				error={error}
+				maxLength={maxLength}
+				setError={setError}
+				showCounter={showCounter}
+				valid={valid}
+			/>
+		</>
 	);
 };
 
 const Textarea = ({
 	disabled,
+	displayErrors,
 	editingLanguageId,
+	error,
 	id,
+	maxLength,
 	name,
 	onBlur,
 	onChange,
 	onFocus,
 	placeholder,
+	setError,
+	showCounter,
 	syncDelay,
+	valid,
 	value: initialValue,
 }) => {
 	const [value, setValue] = useSyncValue(initialValue, syncDelay);
 
 	return (
-		<textarea
-			className="ddm-field-text form-control"
-			dir={Liferay.Language.direction[editingLanguageId]}
-			disabled={disabled}
-			id={id}
-			lang={editingLanguageId}
-			name={name}
-			onBlur={onBlur}
-			onChange={(event) => {
-				setValue(event.target.value);
-				onChange(event);
-			}}
-			onFocus={onFocus}
-			placeholder={placeholder}
-			style={disabled ? {resize: 'none'} : null}
-			type="text"
-			value={value}
-		/>
+		<>
+			<textarea
+				className="ddm-field-text form-control"
+				dir={Liferay.Language.direction[editingLanguageId]}
+				disabled={disabled}
+				id={id}
+				lang={editingLanguageId}
+				name={name}
+				onBlur={onBlur}
+				onChange={(event) => {
+					setValue(event.target.value);
+					onChange(event);
+				}}
+				onFocus={onFocus}
+				placeholder={placeholder}
+				style={disabled ? {resize: 'none'} : null}
+				type="text"
+				value={value}
+			/>
+
+			<CounterContainer
+				counter={value?.length}
+				displayErrors={displayErrors}
+				error={error}
+				maxLength={maxLength}
+				setError={setError}
+				showCounter={showCounter}
+				valid={valid}
+			/>
+		</>
 	);
 };
 
@@ -271,7 +351,7 @@ const Autocomplete = ({
 					if (
 						(event.key === 'Tab' || event.key === 'ArrowDown') &&
 						!event.shiftKey &&
-						filteredItems.length > 0 &&
+						!!filteredItems.length &&
 						visible
 					) {
 						event.preventDefault();
@@ -311,7 +391,7 @@ const Autocomplete = ({
 					}}
 					ref={itemListRef}
 				>
-					{filteredItems.length === 0 && (
+					{!filteredItems.length && (
 						<ClayDropDown.Item className="disabled">
 							{Liferay.Language.get('no-results-were-found')}
 						</ClayDropDown.Item>
@@ -346,7 +426,9 @@ const Main = ({
 	autocomplete,
 	autocompleteEnabled,
 	defaultLanguageId,
+	displayErrors,
 	displayStyle = 'singleline',
+	showCounter,
 	fieldName,
 	id,
 	invalidCharacters = '',
@@ -365,12 +447,16 @@ const Main = ({
 	readOnly,
 	shouldUpdateValue = false,
 	syncDelay = true,
+	valid,
 	value,
 	...otherProps
 }) => {
 	const optionsMemo = useMemo(() => options.map((option) => option.label), [
 		options,
 	]);
+
+	const [error, setError] = useState({});
+
 	const Component =
 		DISPLAY_STYLE[
 			autocomplete || autocompleteEnabled
@@ -381,18 +467,23 @@ const Main = ({
 	return (
 		<FieldBase
 			{...otherProps}
+			{...error}
+			displayErrors={error.displayErrors ?? displayErrors}
 			fieldName={fieldName}
 			id={id}
 			localizedValue={localizedValue}
 			name={name}
 			readOnly={readOnly}
+			valid={error.valid ?? valid}
 		>
 			<Component
 				defaultLanguageId={defaultLanguageId}
 				disabled={readOnly}
+				displayErrors={displayErrors}
 				editingLanguageId={locale}
+				error={error}
 				fieldName={fieldName}
-				id={id}
+				id={id ?? name}
 				invalidCharacters={invalidCharacters}
 				localizable={localizable}
 				localizedValue={localizedValue}
@@ -404,8 +495,11 @@ const Main = ({
 				onFocus={onFocus}
 				options={optionsMemo}
 				placeholder={placeholder}
+				setError={setError}
 				shouldUpdateValue={shouldUpdateValue}
+				showCounter={showCounter}
 				syncDelay={syncDelay}
+				valid={valid}
 				value={value ? value : predefinedValue}
 			/>
 		</FieldBase>

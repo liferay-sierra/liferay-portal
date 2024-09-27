@@ -36,6 +36,12 @@ JournalDDMStructuresManagementToolbarDisplayContext journalDDMStructuresManageme
 	<portlet:param name="mvcPath" value="/view_ddm_structures.jsp" />
 </portlet:actionURL>
 
+<div>
+	<react:component
+		module="js/modals/ImportAndOverrideDataDefinitionModal"
+	/>
+</div>
+
 <aui:form action="<%= deleteDataDefinitionURL %>" cssClass="container-fluid container-fluid-max-xl" method="post" name="fm">
 	<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
 
@@ -117,9 +123,18 @@ JournalDDMStructuresManagementToolbarDisplayContext journalDDMStructuresManageme
 				value="<%= ddmStructure.getModifiedDate() %>"
 			/>
 
-			<liferay-ui:search-container-column-jsp
-				path="/ddm_structure_action.jsp"
-			/>
+			<liferay-ui:search-container-column-text>
+
+				<%
+				DDMStructureActionDropdownItemsProvider ddmStructureActionDropdownItemsProvider = new DDMStructureActionDropdownItemsProvider(ddmStructure, liferayPortletRequest, liferayPortletResponse);
+				%>
+
+				<clay:dropdown-actions
+					aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
+					dropdownItems="<%= ddmStructureActionDropdownItemsProvider.getActionDropdownItems() %>"
+					propsTransformer="js/DDMStructrureElementsDefaultPropsTransformer"
+				/>
+			</liferay-ui:search-container-column-text>
 		</liferay-ui:search-container-row>
 
 		<liferay-ui:search-iterator

@@ -30,7 +30,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Gabriel Albuquerque
  */
 @Component(
-	immediate = true,
 	property = "model.class.name=com.liferay.list.type.model.ListTypeDefinition",
 	service = ModelResourcePermission.class
 )
@@ -74,7 +73,6 @@ public class ListTypeDefinitionModelResourcePermission
 				ListTypeDefinition.class.getName(),
 				listTypeDefinition.getListTypeDefinitionId(),
 				listTypeDefinition.getUserId(), actionId) ||
-			(permissionChecker.getUserId() == listTypeDefinition.getUserId()) ||
 			permissionChecker.hasPermission(
 				null, ListTypeDefinition.class.getName(),
 				listTypeDefinition.getPrimaryKey(), actionId)) {
@@ -91,11 +89,11 @@ public class ListTypeDefinitionModelResourcePermission
 			String actionId)
 		throws PortalException {
 
-		ListTypeDefinition listTypeDefinition =
+		return contains(
+			permissionChecker,
 			_listTypeDefinitionLocalService.getListTypeDefinition(
-				listTypeDefinitionId);
-
-		return contains(permissionChecker, listTypeDefinition, actionId);
+				listTypeDefinitionId),
+			actionId);
 	}
 
 	@Override

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.jaxrs.xml.JacksonXMLProvider;
 import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.document.library.kernel.util.DLValidator;
 import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
@@ -30,11 +31,13 @@ import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
 import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.batch.engine.resource.VulcanBatchEngineImportTaskResource;
+import com.liferay.portal.vulcan.extension.ExtensionProviderRegistry;
 import com.liferay.portal.vulcan.internal.jaxrs.container.request.filter.CTContainerRequestFilter;
 import com.liferay.portal.vulcan.internal.jaxrs.container.request.filter.ContextContainerRequestFilter;
 import com.liferay.portal.vulcan.internal.jaxrs.container.request.filter.LogContainerRequestFilter;
 import com.liferay.portal.vulcan.internal.jaxrs.container.request.filter.NestedFieldsContainerRequestFilter;
 import com.liferay.portal.vulcan.internal.jaxrs.container.request.filter.TransactionContainerRequestFilter;
+import com.liferay.portal.vulcan.internal.jaxrs.container.response.filter.EntityExtensionContainerResponseFilter;
 import com.liferay.portal.vulcan.internal.jaxrs.context.provider.AcceptLanguageContextProvider;
 import com.liferay.portal.vulcan.internal.jaxrs.context.provider.AggregationContextProvider;
 import com.liferay.portal.vulcan.internal.jaxrs.context.provider.CompanyContextProvider;
@@ -44,6 +47,7 @@ import com.liferay.portal.vulcan.internal.jaxrs.context.provider.PaginationConte
 import com.liferay.portal.vulcan.internal.jaxrs.context.provider.RestrictFieldsQueryParamContextProvider;
 import com.liferay.portal.vulcan.internal.jaxrs.context.provider.SortContextProvider;
 import com.liferay.portal.vulcan.internal.jaxrs.context.provider.UserContextProvider;
+import com.liferay.portal.vulcan.internal.jaxrs.context.resolver.EntityExtensionHandlerContextResolver;
 import com.liferay.portal.vulcan.internal.jaxrs.context.resolver.ObjectMapperContextResolver;
 import com.liferay.portal.vulcan.internal.jaxrs.context.resolver.XmlMapperContextResolver;
 import com.liferay.portal.vulcan.internal.jaxrs.dynamic.feature.StatusDynamicFeature;
@@ -70,6 +74,7 @@ import com.liferay.portal.vulcan.internal.jaxrs.writer.interceptor.NestedFieldsW
 import com.liferay.portal.vulcan.internal.jaxrs.writer.interceptor.PageEntityExtensionWriterInterceptor;
 import com.liferay.portal.vulcan.internal.param.converter.provider.DateParamConverterProvider;
 
+import javax.ws.rs.Priorities;
 import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;
 
@@ -105,6 +110,7 @@ public class VulcanFeature implements Feature {
 		featureContext.register(BeanValidationInterceptor.class);
 		featureContext.register(CTContainerRequestFilter.class);
 		featureContext.register(DateParamConverterProvider.class);
+		featureContext.register(EntityExtensionContainerResponseFilter.class);
 		featureContext.register(EntityExtensionWriterInterceptor.class);
 		featureContext.register(ExceptionMapper.class);
 		featureContext.register(FieldsQueryParamContextProvider.class);
@@ -144,19 +150,24 @@ public class VulcanFeature implements Feature {
 				_configurationAdmin, _expressionConvert, _filterParserProvider,
 				_groupLocalService, _language, _portal,
 				_resourceActionLocalService, _resourcePermissionLocalService,
-				_roleLocalService, _getScopeChecker(),
+				_roleLocalService, _getScopeChecker(), _sortParserProvider,
 				_vulcanBatchEngineImportTaskResource));
+		featureContext.register(
+			new EntityExtensionHandlerContextResolver(
+				_extensionProviderRegistry));
 		featureContext.register(
 			new FilterContextProvider(
 				_expressionConvert, _filterParserProvider, _language, _portal));
 		featureContext.register(
 			new MultipartBodyMessageBodyReader(
-				_dlValidator.getMaxAllowableSize()));
+				_dlValidator.getMaxAllowableSize(
+					GroupConstants.DEFAULT_PARENT_GROUP_ID, null)));
 
 		_nestedFieldsWriterInterceptor = new NestedFieldsWriterInterceptor(
 			_bundleContext);
 
-		featureContext.register(_nestedFieldsWriterInterceptor);
+		featureContext.register(
+			_nestedFieldsWriterInterceptor, Priorities.USER - 10);
 
 		featureContext.register(
 			new SiteParamConverterProvider(
@@ -207,6 +218,9 @@ public class VulcanFeature implements Feature {
 		target = "(result.class.name=com.liferay.portal.kernel.search.filter.Filter)"
 	)
 	private ExpressionConvert<Filter> _expressionConvert;
+
+	@Reference
+	private ExtensionProviderRegistry _extensionProviderRegistry;
 
 	@Reference
 	private FilterParserProvider _filterParserProvider;

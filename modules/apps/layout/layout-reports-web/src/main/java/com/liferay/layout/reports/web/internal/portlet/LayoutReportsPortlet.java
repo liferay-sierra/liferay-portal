@@ -30,7 +30,6 @@ import org.osgi.service.component.annotations.Component;
  * @author Cristina González
  */
 @Component(
-	immediate = true,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.display-category=category.hidden",
@@ -42,7 +41,8 @@ import org.osgi.service.component.annotations.Component;
 		"javax.portlet.display-name=Page Audit",
 		"javax.portlet.init-param.view-template=/view.jsp",
 		"javax.portlet.name=" + LayoutReportsPortletKeys.LAYOUT_REPORTS,
-		"javax.portlet.resource-bundle=content.Language"
+		"javax.portlet.resource-bundle=content.Language",
+		"javax.portlet.version=3.0"
 	},
 	service = {LayoutReportsPortlet.class, Portlet.class}
 )

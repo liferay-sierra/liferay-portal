@@ -16,7 +16,6 @@ package com.liferay.change.tracking.internal;
 
 import com.liferay.change.tracking.constants.CTConstants;
 import com.liferay.change.tracking.model.CTEntry;
-import com.liferay.change.tracking.service.CTCollectionLocalService;
 import com.liferay.change.tracking.service.CTEntryLocalService;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -26,13 +25,15 @@ import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.persistence.change.tracking.helper.CTPersistenceHelper;
 
+import java.io.Serializable;
+
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Preston Crary
  */
-@Component(immediate = true, service = CTPersistenceHelper.class)
+@Component(service = CTPersistenceHelper.class)
 public class CTPersistenceHelperImpl implements CTPersistenceHelper {
 
 	@Override
@@ -87,6 +88,12 @@ public class CTPersistenceHelperImpl implements CTPersistenceHelper {
 	public <T extends CTModel<T>> boolean isProductionMode(
 		Class<T> ctModelClass) {
 
+		return isProductionMode(ctModelClass, null);
+	}
+
+	public <T extends CTModel<T>> boolean isProductionMode(
+		Class<T> ctModelClass, Serializable primaryKey) {
+
 		long ctCollectionId = CTCollectionThreadLocal.getCTCollectionId();
 
 		if (ctCollectionId == CTConstants.CT_COLLECTION_ID_PRODUCTION) {
@@ -95,6 +102,16 @@ public class CTPersistenceHelperImpl implements CTPersistenceHelper {
 
 		long modelClassNameId = _classNameLocalService.getClassNameId(
 			ctModelClass);
+
+		if (primaryKey instanceof Long) {
+			if (_ctEntryLocalService.hasCTEntry(
+					ctCollectionId, modelClassNameId, (Long)primaryKey)) {
+
+				return false;
+			}
+
+			return true;
+		}
 
 		if (_ctEntryLocalService.hasCTEntries(
 				ctCollectionId, modelClassNameId)) {
@@ -162,9 +179,6 @@ public class CTPersistenceHelperImpl implements CTPersistenceHelper {
 
 	@Reference
 	private ClassNameLocalService _classNameLocalService;
-
-	@Reference
-	private CTCollectionLocalService _ctCollectionLocalService;
 
 	@Reference
 	private CTEntryLocalService _ctEntryLocalService;

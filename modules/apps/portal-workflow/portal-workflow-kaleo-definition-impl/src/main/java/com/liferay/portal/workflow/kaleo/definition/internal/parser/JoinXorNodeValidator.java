@@ -24,10 +24,7 @@ import org.osgi.service.component.annotations.Component;
 /**
  * @author Michael C. Han
  */
-@Component(
-	immediate = true, property = "node.type=JOIN_XOR",
-	service = NodeValidator.class
-)
+@Component(property = "node.type=JOIN_XOR", service = NodeValidator.class)
 public class JoinXorNodeValidator extends BaseNodeValidator<JoinXor> {
 
 	@Override
@@ -36,12 +33,12 @@ public class JoinXorNodeValidator extends BaseNodeValidator<JoinXor> {
 
 		if (joinXor.getIncomingTransitionsCount() == 0) {
 			throw new KaleoDefinitionValidationException.
-				MustSetIncomingTransition(joinXor.getName());
+				MustSetIncomingTransition(joinXor.getDefaultLabel());
 		}
 
 		if (joinXor.getOutgoingTransitionsCount() == 0) {
 			throw new KaleoDefinitionValidationException.
-				MustSetOutgoingTransition(joinXor.getName());
+				MustSetOutgoingTransition(joinXor.getDefaultLabel());
 		}
 	}
 

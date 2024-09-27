@@ -19,7 +19,6 @@ import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistry;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.SearchPermissionChecker;
-import com.liferay.portal.kernel.search.filter.BooleanFilter;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.UserBag;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
@@ -35,9 +34,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 
 /**
  * @author André de Oliveira
@@ -51,14 +48,12 @@ public class SearchPermissionCheckerImplTest {
 
 	@Before
 	public void setUp() throws Exception {
-		MockitoAnnotations.initMocks(this);
-
 		Mockito.doReturn(
 			_indexer
 		).when(
 			_indexerRegistry
 		).getIndexer(
-			Mockito.anyString()
+			Mockito.nullable(String.class)
 		);
 
 		_searchPermissionChecker = _createSearchPermissionChecker();
@@ -82,13 +77,9 @@ public class SearchPermissionCheckerImplTest {
 		_whenPermissionCheckerGetUserBag(_userBag);
 		_whenUserGetUserId(userId);
 
-		BooleanFilter booleanFilter = null;
-
-		BooleanFilter permissionBooleanFilter =
+		Assert.assertNotNull(
 			_searchPermissionChecker.getPermissionBooleanFilter(
-				0, null, userId, null, booleanFilter, new SearchContext());
-
-		Assert.assertNotNull(permissionBooleanFilter);
+				0, null, userId, null, null, new SearchContext()));
 	}
 
 	private SearchPermissionCheckerImpl _createSearchPermissionChecker() {
@@ -140,34 +131,23 @@ public class SearchPermissionCheckerImplTest {
 		).getUserId();
 	}
 
-	@Mock
-	private Indexer<?> _indexer;
-
-	@Mock
-	private IndexerRegistry _indexerRegistry;
-
-	@Mock
-	private PermissionChecker _permissionChecker;
-
-	@Mock
-	private ResourcePermissionLocalService _resourcePermissionLocalService;
-
-	@Mock
-	private RoleLocalService _roleLocalService;
-
+	private final Indexer<?> _indexer = Mockito.mock(Indexer.class);
+	private final IndexerRegistry _indexerRegistry = Mockito.mock(
+		IndexerRegistry.class);
+	private final PermissionChecker _permissionChecker = Mockito.mock(
+		PermissionChecker.class);
+	private final ResourcePermissionLocalService
+		_resourcePermissionLocalService = Mockito.mock(
+			ResourcePermissionLocalService.class);
+	private final RoleLocalService _roleLocalService = Mockito.mock(
+		RoleLocalService.class);
 	private SearchPermissionChecker _searchPermissionChecker;
-
-	@Mock
-	private SearchPermissionCheckerConfiguration
-		_searchPermissionCheckerConfiguration;
-
-	@Mock
-	private User _user;
-
-	@Mock
-	private UserBag _userBag;
-
-	@Mock
-	private UserLocalService _userLocalService;
+	private final SearchPermissionCheckerConfiguration
+		_searchPermissionCheckerConfiguration = Mockito.mock(
+			SearchPermissionCheckerConfiguration.class);
+	private final User _user = Mockito.mock(User.class);
+	private final UserBag _userBag = Mockito.mock(UserBag.class);
+	private final UserLocalService _userLocalService = Mockito.mock(
+		UserLocalService.class);
 
 }

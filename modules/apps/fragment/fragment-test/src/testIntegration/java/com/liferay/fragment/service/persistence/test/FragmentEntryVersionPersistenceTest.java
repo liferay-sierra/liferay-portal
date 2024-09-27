@@ -173,6 +173,8 @@ public class FragmentEntryVersionPersistenceTest {
 
 		newFragmentEntryVersion.setType(RandomTestUtil.nextInt());
 
+		newFragmentEntryVersion.setTypeOptions(RandomTestUtil.randomString());
+
 		newFragmentEntryVersion.setLastPublishDate(RandomTestUtil.nextDate());
 
 		newFragmentEntryVersion.setStatus(RandomTestUtil.nextInt());
@@ -265,6 +267,9 @@ public class FragmentEntryVersionPersistenceTest {
 		Assert.assertEquals(
 			existingFragmentEntryVersion.getType(),
 			newFragmentEntryVersion.getType());
+		Assert.assertEquals(
+			existingFragmentEntryVersion.getTypeOptions(),
+			newFragmentEntryVersion.getTypeOptions());
 		Assert.assertEquals(
 			Time.getShortTimestamp(
 				existingFragmentEntryVersion.getLastPublishDate()),
@@ -384,6 +389,21 @@ public class FragmentEntryVersionPersistenceTest {
 			RandomTestUtil.nextLong(), RandomTestUtil.nextInt());
 
 		_persistence.countByFragmentCollectionId_Version(0L, 0);
+	}
+
+	@Test
+	public void testCountByType() throws Exception {
+		_persistence.countByType(RandomTestUtil.nextInt());
+
+		_persistence.countByType(0);
+	}
+
+	@Test
+	public void testCountByType_Version() throws Exception {
+		_persistence.countByType_Version(
+			RandomTestUtil.nextInt(), RandomTestUtil.nextInt());
+
+		_persistence.countByType_Version(0, 0);
 	}
 
 	@Test
@@ -917,6 +937,8 @@ public class FragmentEntryVersionPersistenceTest {
 		fragmentEntryVersion.setReadOnly(RandomTestUtil.randomBoolean());
 
 		fragmentEntryVersion.setType(RandomTestUtil.nextInt());
+
+		fragmentEntryVersion.setTypeOptions(RandomTestUtil.randomString());
 
 		fragmentEntryVersion.setLastPublishDate(RandomTestUtil.nextDate());
 

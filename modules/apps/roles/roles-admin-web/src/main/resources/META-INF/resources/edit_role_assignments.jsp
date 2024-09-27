@@ -102,13 +102,29 @@ renderResponse.setTitle(role.getTitle(locale));
 	viewTypeItems="<%= editRoleAssignmentsManagementToolbarDisplayContext.getViewTypeItems() %>"
 />
 
-<c:if test='<%= !SegmentsEntryDisplayContext.isRoleSegmentationEnabled() && tabs2.equals("segments") %>'>
+<c:if test='<%= !SegmentsEntryDisplayContext.isRoleSegmentationEnabled(themeDisplay.getCompanyId()) && tabs2.equals("segments") %>'>
 	<clay:stripe
-		elementClasses="assign-roles-segments-warning"
-		message="assigning-roles-by-segment-is-disabled-.to-enable,-go-to-system-settings-segments-segments-service"
-		style="warning"
-		title="Warning"
-	/>
+		displayType="warning"
+	>
+		<strong class="lead"><liferay-ui:message key="assigning-roles-by-segment-is-disabled" /></strong>
+
+		<%
+		String segmentsConfigurationURL = SegmentsEntryDisplayContext.getSegmentsCompanyConfigurationURL(request);
+		%>
+
+		<c:choose>
+			<c:when test="<%= segmentsConfigurationURL != null %>">
+				<clay:link
+					cssClass="assign-roles-segments-warning"
+					href="<%= segmentsConfigurationURL %>"
+					label='<%= LanguageUtil.get(request, "to-enable,-go-to-instance-settings") %>'
+				/>
+			</c:when>
+			<c:otherwise>
+				<span><liferay-ui:message key="contact-your-system-administrator-to-enable-it" /></span>
+			</c:otherwise>
+		</c:choose>
+	</clay:stripe>
 </c:if>
 
 <aui:form action="<%= portletURL %>" cssClass="container-fluid container-fluid-max-xl container-form-view" method="post" name="fm">
@@ -160,7 +176,7 @@ renderResponse.setTitle(role.getTitle(locale));
 			modalSegmentState: modalSegmentState,
 			namespace: '<portlet:namespace />',
 			portletURL: '<%= portletURL.toString() %>',
-			roleName: '<%= role.getName() %>',
+			roleName: '<%= HtmlUtil.escapeJS(role.getName()) %>',
 			selectAssigneesURL: '<%= selectAssigneesURL.toString() %>',
 		});
 	}

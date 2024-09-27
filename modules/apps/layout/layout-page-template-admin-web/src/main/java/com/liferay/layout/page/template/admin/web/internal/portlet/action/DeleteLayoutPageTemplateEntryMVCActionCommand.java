@@ -19,7 +19,7 @@ import com.liferay.layout.page.template.admin.constants.LayoutPageTemplateAdminP
 import com.liferay.layout.page.template.exception.RequiredLayoutPageTemplateEntryException;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryService;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
@@ -42,7 +42,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Jürgen Kappler
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + LayoutPageTemplateAdminPortletKeys.LAYOUT_PAGE_TEMPLATES,
 		"mvc.command.name=/layout_page_template_admin/delete_layout_page_template_entry"
@@ -122,7 +121,7 @@ public class DeleteLayoutPageTemplateEntryMVCActionCommand
 
 				MultiSessionMessages.add(
 					actionRequest, "displayPageTemplateDeleted",
-					LanguageUtil.format(
+					_language.format(
 						_portal.getHttpServletRequest(actionRequest),
 						"you-successfully-deleted-x-display-page-templates",
 						new Object[] {total}));
@@ -138,6 +137,9 @@ public class DeleteLayoutPageTemplateEntryMVCActionCommand
 	@Reference
 	private AssetDisplayPageEntryLocalService
 		_assetDisplayPageEntryLocalService;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private LayoutPageTemplateEntryService _layoutPageTemplateEntryService;

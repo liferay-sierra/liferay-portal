@@ -22,10 +22,16 @@
 String redirect = ParamUtil.getString(request, "redirect");
 
 if (Validator.isNull(redirect)) {
+	String mvcRenderCommandName = "/blogs/view";
+
+	if (Objects.equals(portletName, BlogsPortletKeys.BLOGS_AGGREGATOR)) {
+		mvcRenderCommandName = "/blogs_aggregator/view";
+	}
+
 	redirect = PortletURLBuilder.createRenderURL(
 		renderResponse
 	).setMVCRenderCommandName(
-		"/blogs/view"
+		mvcRenderCommandName
 	).buildString();
 }
 
@@ -51,6 +57,8 @@ if (ratingsStats != null) {
 if (request.getAttribute(WebKeys.LAYOUT_ASSET_ENTRY) == null) {
 	request.setAttribute(WebKeys.LAYOUT_ASSET_ENTRY, assetEntry);
 }
+
+LinkedAssetEntryIdsUtil.addLinkedAssetEntryId(request, assetEntry.getEntryId());
 
 request.setAttribute("view_entry_content.jsp-entry", entry);
 

@@ -26,7 +26,7 @@ import org.osgi.service.component.annotations.Component;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.css-class-wrapper=portlet-commerce-dashboard-overview-chart",
@@ -43,7 +43,8 @@ import org.osgi.service.component.annotations.Component;
 		"javax.portlet.init-param.view-template=/overview.jsp",
 		"javax.portlet.name=" + CommerceDashboardPortletKeys.COMMERCE_DASHBOARD_OVERVIEW_CHART,
 		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=power-user,user"
+		"javax.portlet.security-role-ref=power-user,user",
+		"javax.portlet.version=3.0"
 	},
 	service = {CommerceDashboardOverviewChartPortlet.class, Portlet.class}
 )

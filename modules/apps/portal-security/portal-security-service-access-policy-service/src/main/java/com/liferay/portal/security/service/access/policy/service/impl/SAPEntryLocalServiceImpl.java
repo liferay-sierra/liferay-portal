@@ -26,9 +26,11 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -74,13 +76,13 @@ public class SAPEntryLocalServiceImpl extends SAPEntryLocalServiceBaseImpl {
 
 		// Service access policy entry
 
-		User user = userLocalService.getUser(userId);
-		allowedServiceSignatures = normalizeServiceSignatures(
+		User user = _userLocalService.getUser(userId);
+		allowedServiceSignatures = _normalizeServiceSignatures(
 			allowedServiceSignatures);
 
 		name = StringUtil.trim(name);
 
-		validate(name, titleMap);
+		_validate(name, titleMap);
 
 		if (sapEntryPersistence.fetchByC_N(user.getCompanyId(), name) != null) {
 			throw new DuplicateSAPEntryNameException();
@@ -104,7 +106,7 @@ public class SAPEntryLocalServiceImpl extends SAPEntryLocalServiceBaseImpl {
 
 		// Resources
 
-		resourceLocalService.addResources(
+		_resourceLocalService.addResources(
 			sapEntry.getCompanyId(), 0, userId, SAPEntry.class.getName(),
 			sapEntry.getSapEntryId(), false, false, false);
 
@@ -124,7 +126,7 @@ public class SAPEntryLocalServiceImpl extends SAPEntryLocalServiceBaseImpl {
 			return;
 		}
 
-		long defaultUserId = userLocalService.getDefaultUserId(companyId);
+		long defaultUserId = _userLocalService.getDefaultUserId(companyId);
 		Role guestRole = _roleLocalService.getRole(
 			companyId, RoleConstants.GUEST);
 
@@ -183,7 +185,7 @@ public class SAPEntryLocalServiceImpl extends SAPEntryLocalServiceBaseImpl {
 
 		sapEntry = super.deleteSAPEntry(sapEntry);
 
-		resourceLocalService.deleteResource(
+		_resourceLocalService.deleteResource(
 			sapEntry.getCompanyId(), SAPEntry.class.getName(),
 			ResourceConstants.SCOPE_INDIVIDUAL, sapEntry.getSapEntryId());
 
@@ -248,7 +250,7 @@ public class SAPEntryLocalServiceImpl extends SAPEntryLocalServiceBaseImpl {
 			throw new DuplicateSAPEntryNameException();
 		}
 
-		allowedServiceSignatures = normalizeServiceSignatures(
+		allowedServiceSignatures = _normalizeServiceSignatures(
 			allowedServiceSignatures);
 
 		if (sapEntry.isSystem()) {
@@ -258,7 +260,7 @@ public class SAPEntryLocalServiceImpl extends SAPEntryLocalServiceBaseImpl {
 
 		name = StringUtil.trim(name);
 
-		validate(name, titleMap);
+		_validate(name, titleMap);
 
 		sapEntry.setAllowedServiceSignatures(allowedServiceSignatures);
 		sapEntry.setDefaultSAPEntry(defaultSAPEntry);
@@ -276,7 +278,7 @@ public class SAPEntryLocalServiceImpl extends SAPEntryLocalServiceBaseImpl {
 			SAPConfiguration.class, properties);
 	}
 
-	protected String normalizeServiceSignatures(String serviceSignatures) {
+	private String _normalizeServiceSignatures(String serviceSignatures) {
 		String[] serviceSignaturesArray = serviceSignatures.split(
 			StringPool.NEW_LINE);
 
@@ -325,7 +327,7 @@ public class SAPEntryLocalServiceImpl extends SAPEntryLocalServiceBaseImpl {
 		return sb.toString();
 	}
 
-	protected void validate(String name, Map<Locale, String> titleMap)
+	private void _validate(String name, Map<Locale, String> titleMap)
 		throws PortalException {
 
 		if (Validator.isNull(name)) {
@@ -358,11 +360,17 @@ public class SAPEntryLocalServiceImpl extends SAPEntryLocalServiceBaseImpl {
 	}
 
 	@Reference
+	private ResourceLocalService _resourceLocalService;
+
+	@Reference
 	private ResourcePermissionLocalService _resourcePermissionLocalService;
 
 	@Reference
 	private RoleLocalService _roleLocalService;
 
 	private volatile SAPConfiguration _sapConfiguration;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

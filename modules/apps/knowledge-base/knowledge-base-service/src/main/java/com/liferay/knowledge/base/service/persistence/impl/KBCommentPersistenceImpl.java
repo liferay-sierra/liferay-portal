@@ -48,7 +48,7 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 
 import java.io.Serializable;
 
@@ -195,7 +195,7 @@ public class KBCommentPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBComment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBComment kbComment : list) {
@@ -575,7 +575,7 @@ public class KBCommentPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -705,7 +705,7 @@ public class KBCommentPersistenceImpl
 
 		if (useFinderCache) {
 			result = finderCache.getResult(
-				_finderPathFetchByUUID_G, finderArgs);
+				_finderPathFetchByUUID_G, finderArgs, this);
 		}
 
 		if (result instanceof KBComment) {
@@ -816,7 +816,7 @@ public class KBCommentPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid, groupId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -982,7 +982,7 @@ public class KBCommentPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBComment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBComment kbComment : list) {
@@ -1394,7 +1394,7 @@ public class KBCommentPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid, companyId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -1549,7 +1549,7 @@ public class KBCommentPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBComment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBComment kbComment : list) {
@@ -1904,7 +1904,7 @@ public class KBCommentPersistenceImpl
 
 		Object[] finderArgs = new Object[] {groupId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -2047,7 +2047,7 @@ public class KBCommentPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBComment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBComment kbComment : list) {
@@ -2435,7 +2435,7 @@ public class KBCommentPersistenceImpl
 
 		Object[] finderArgs = new Object[] {groupId, classNameId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -2584,7 +2584,7 @@ public class KBCommentPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBComment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBComment kbComment : list) {
@@ -2970,7 +2970,7 @@ public class KBCommentPersistenceImpl
 
 		Object[] finderArgs = new Object[] {groupId, status};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -3120,7 +3120,7 @@ public class KBCommentPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBComment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBComment kbComment : list) {
@@ -3508,7 +3508,7 @@ public class KBCommentPersistenceImpl
 
 		Object[] finderArgs = new Object[] {classNameId, classPK};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -3665,7 +3665,7 @@ public class KBCommentPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBComment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBComment kbComment : list) {
@@ -4076,7 +4076,7 @@ public class KBCommentPersistenceImpl
 
 		Object[] finderArgs = new Object[] {userId, classNameId, classPK};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -4241,7 +4241,7 @@ public class KBCommentPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBComment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBComment kbComment : list) {
@@ -4696,7 +4696,7 @@ public class KBCommentPersistenceImpl
 	 *
 	 * @param classNameId the class name ID
 	 * @param classPK the class pk
-	 * @param status the status
+	 * @param statuses the statuses
 	 * @param start the lower bound of the range of kb comments
 	 * @param end the upper bound of the range of kb comments (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
@@ -4744,7 +4744,7 @@ public class KBCommentPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBComment>)finderCache.getResult(
-				_finderPathWithPaginationFindByC_C_S, finderArgs);
+				_finderPathWithPaginationFindByC_C_S, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBComment kbComment : list) {
@@ -4860,7 +4860,7 @@ public class KBCommentPersistenceImpl
 
 		Object[] finderArgs = new Object[] {classNameId, classPK, status};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -4927,7 +4927,7 @@ public class KBCommentPersistenceImpl
 		};
 
 		Long count = (Long)finderCache.getResult(
-			_finderPathWithPaginationCountByC_C_S, finderArgs);
+			_finderPathWithPaginationCountByC_C_S, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler();
@@ -5119,7 +5119,7 @@ public class KBCommentPersistenceImpl
 		kbComment.setNew(true);
 		kbComment.setPrimaryKey(kbCommentId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		kbComment.setUuid(uuid);
 
@@ -5234,7 +5234,7 @@ public class KBCommentPersistenceImpl
 		KBCommentModelImpl kbCommentModelImpl = (KBCommentModelImpl)kbComment;
 
 		if (Validator.isNull(kbComment.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			kbComment.setUuid(uuid);
 		}
@@ -5428,7 +5428,7 @@ public class KBCommentPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBComment>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -5498,7 +5498,7 @@ public class KBCommentPersistenceImpl
 	@Override
 	public int countAll() {
 		Long count = (Long)finderCache.getResult(
-			_finderPathCountAll, FINDER_ARGS_EMPTY);
+			_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -5836,6 +5836,6 @@ public class KBCommentPersistenceImpl
 	}
 
 	@Reference
-	private KBCommentModelArgumentsResolver _kbCommentModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

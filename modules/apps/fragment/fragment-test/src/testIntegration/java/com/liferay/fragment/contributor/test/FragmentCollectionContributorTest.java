@@ -17,13 +17,14 @@ package com.liferay.fragment.contributor.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.fragment.constants.FragmentConstants;
 import com.liferay.fragment.contributor.FragmentCollectionContributor;
-import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
+import com.liferay.fragment.contributor.FragmentCollectionContributorRegistry;
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.service.FragmentEntryLocalServiceUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
@@ -66,7 +67,11 @@ public class FragmentCollectionContributorTest {
 
 		_serviceRegistration = bundleContext.registerService(
 			FragmentCollectionContributor.class,
-			new TestFragmentCollectionContributor(), null);
+			new TestFragmentCollectionContributor(),
+			MapUtil.singletonDictionary(
+				"fragment.collection.key",
+				TestFragmentCollectionContributor.
+					TEST_FRAGMENT_COLLECTION_KEY));
 	}
 
 	@After
@@ -77,12 +82,15 @@ public class FragmentCollectionContributorTest {
 	@Test
 	public void testRegisterContributedFragmentEntries() {
 		Map<String, FragmentEntry> fragmentEntries =
-			_fragmentCollectionContributorTracker.getFragmentEntries();
+			_fragmentCollectionContributorRegistry.getFragmentEntries();
 
 		Assert.assertNotNull(
 			fragmentEntries.get(
 				TestFragmentCollectionContributor.
 					TEST_COMPONENT_FRAGMENT_ENTRY));
+		Assert.assertNotNull(
+			fragmentEntries.get(
+				TestFragmentCollectionContributor.TEST_INPUT_FRAGMENT_ENTRY));
 		Assert.assertNotNull(
 			fragmentEntries.get(
 				TestFragmentCollectionContributor.TEST_SECTION_FRAGMENT_ENTRY));
@@ -94,19 +102,19 @@ public class FragmentCollectionContributorTest {
 
 	@Test
 	public void testRegisterFragmentCollectionContributor() {
-		_fragmentCollectionContributorTracker.getFragmentCollectionContributor(
+		_fragmentCollectionContributorRegistry.getFragmentCollectionContributor(
 			TestFragmentCollectionContributor.TEST_FRAGMENT_COLLECTION_KEY);
 
 		Assert.assertNotNull(
-			_fragmentCollectionContributorTracker.
+			_fragmentCollectionContributorRegistry.
 				getFragmentCollectionContributor(
 					TestFragmentCollectionContributor.
 						TEST_FRAGMENT_COLLECTION_KEY));
 	}
 
 	@Inject
-	private FragmentCollectionContributorTracker
-		_fragmentCollectionContributorTracker;
+	private FragmentCollectionContributorRegistry
+		_fragmentCollectionContributorRegistry;
 
 	private ServiceRegistration<FragmentCollectionContributor>
 		_serviceRegistration;
@@ -119,6 +127,9 @@ public class FragmentCollectionContributorTest {
 
 		public static final String TEST_FRAGMENT_COLLECTION_KEY =
 			"test-fragment-collection-contributor";
+
+		public static final String TEST_INPUT_FRAGMENT_ENTRY =
+			"test-input-fragment-entry";
 
 		public static final String TEST_SECTION_FRAGMENT_ENTRY =
 			"test-section-fragment-entry";
@@ -143,6 +154,10 @@ public class FragmentCollectionContributorTest {
 			if (type == FragmentConstants.TYPE_COMPONENT) {
 				fragmentEntries.add(
 					_getFragmentEntry(TEST_COMPONENT_FRAGMENT_ENTRY, type));
+			}
+			else if (type == FragmentConstants.TYPE_INPUT) {
+				fragmentEntries.add(
+					_getFragmentEntry(TEST_INPUT_FRAGMENT_ENTRY, type));
 			}
 			else if (type == FragmentConstants.TYPE_SECTION) {
 				fragmentEntries.add(

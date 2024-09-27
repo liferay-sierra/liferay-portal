@@ -125,7 +125,6 @@ public class DDMFormInstanceRecordSearchTest {
 			_ddmFormInstance, "Simple description", "Joe Bloggs");
 
 		_searchContext.setKeywords("Simple description");
-
 		_searchContext.setUserId(user.getUserId());
 
 		assertSearch("description", 0);
@@ -179,7 +178,7 @@ public class DDMFormInstanceRecordSearchTest {
 		assertSearch("Liferay", 1);
 		assertSearch("Not indexable name", 0);
 
-		DDMFormInstanceTestUtil.deleteDDMFormInstance(ddmFormInstance);
+		DDMFormInstanceTestUtil.deleteFormInstance(ddmFormInstance);
 	}
 
 	@Test

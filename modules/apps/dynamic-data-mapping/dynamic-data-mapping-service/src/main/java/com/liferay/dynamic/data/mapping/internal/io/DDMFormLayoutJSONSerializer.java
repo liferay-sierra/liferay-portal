@@ -14,7 +14,7 @@
 
 package com.liferay.dynamic.data.mapping.internal.io;
 
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.internal.io.util.DDMFormFieldSerializerUtil;
 import com.liferay.dynamic.data.mapping.io.DDMFormLayoutSerializer;
 import com.liferay.dynamic.data.mapping.io.DDMFormLayoutSerializerSerializeRequest;
@@ -45,7 +45,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marcellus Tavares
  */
 @Component(
-	immediate = true, property = "ddm.form.layout.serializer.type=json",
+	property = "ddm.form.layout.serializer.type=json",
 	service = DDMFormLayoutSerializer.class
 )
 public class DDMFormLayoutJSONSerializer implements DDMFormLayoutSerializer {
@@ -72,7 +72,7 @@ public class DDMFormLayoutJSONSerializer implements DDMFormLayoutSerializer {
 		}
 
 		DDMFormFieldSerializerUtil.serialize(
-			ddmFormLayout.getDDMFormFields(), _ddmFormFieldTypeServicesTracker,
+			ddmFormLayout.getDDMFormFields(), _ddmFormFieldTypeServicesRegistry,
 			_jsonFactory, jsonObject);
 
 		DDMFormLayoutSerializerSerializeResponse.Builder builder =
@@ -98,18 +98,6 @@ public class DDMFormLayoutJSONSerializer implements DDMFormLayoutSerializer {
 
 		jsonObject.put(
 			"rules", DDMFormRuleJSONSerializer.serialize(ddmFormRules));
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMFormFieldTypeServicesTracker(
-		DDMFormFieldTypeServicesTracker ddmFormFieldTypeServicesTracker) {
-
-		_ddmFormFieldTypeServicesTracker = ddmFormFieldTypeServicesTracker;
-	}
-
-	@Reference(unbind = "-")
-	protected void setJSONFactory(JSONFactory jsonFactory) {
-		_jsonFactory = jsonFactory;
 	}
 
 	protected JSONObject toJSONObject(DDMFormLayoutColumn ddmFormLayoutColumn) {
@@ -222,7 +210,10 @@ public class DDMFormLayoutJSONSerializer implements DDMFormLayoutSerializer {
 		pageJSONObject.put("title", LocalizedValueUtil.toJSONObject(title));
 	}
 
-	private DDMFormFieldTypeServicesTracker _ddmFormFieldTypeServicesTracker;
+	@Reference
+	private DDMFormFieldTypeServicesRegistry _ddmFormFieldTypeServicesRegistry;
+
+	@Reference
 	private JSONFactory _jsonFactory;
 
 }

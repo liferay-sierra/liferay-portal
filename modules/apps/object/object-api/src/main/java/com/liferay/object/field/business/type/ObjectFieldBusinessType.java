@@ -14,17 +14,33 @@
 
 package com.liferay.object.field.business.type;
 
+import com.liferay.object.exception.ObjectFieldSettingNameException;
+import com.liferay.object.exception.ObjectFieldSettingValueException;
+import com.liferay.object.field.render.ObjectFieldRenderingContext;
 import com.liferay.object.model.ObjectField;
+import com.liferay.object.model.ObjectFieldSetting;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.vulcan.extension.PropertyDefinition;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Marcela Cunha
  */
 public interface ObjectFieldBusinessType {
+
+	public default Set<String> getAllowedObjectFieldSettingsNames() {
+		return Collections.emptySet();
+	}
 
 	public String getDBType();
 
@@ -38,18 +54,79 @@ public interface ObjectFieldBusinessType {
 
 	public String getName();
 
-	public default Map<String, Object> getProperties() {
+	public default Map<String, Object> getProperties(
+			ObjectField objectField,
+			ObjectFieldRenderingContext objectFieldRenderingContext)
+		throws PortalException {
+
 		return Collections.emptyMap();
 	}
 
-	public default Map<String, Object> getProperties(
-		Locale locale, ObjectField objectField) {
+	public PropertyDefinition.PropertyType getPropertyType();
 
-		return getProperties();
+	public default Set<String> getRequiredObjectFieldSettingsNames() {
+		return Collections.emptySet();
+	}
+
+	public default Object getValue(
+			ObjectField objectField, Map<String, Object> values)
+		throws PortalException {
+
+		return values.get(objectField.getName());
 	}
 
 	public default boolean isVisible() {
 		return true;
+	}
+
+	public default void predefineObjectFieldSettings(
+			ObjectField newObjectField, ObjectField oldObjectField,
+			List<ObjectFieldSetting> objectFieldSettings)
+		throws PortalException {
+	}
+
+	public default void validateObjectFieldSettings(
+			long objectDefinitionId, String objectFieldName,
+			List<ObjectFieldSetting> objectFieldSettings)
+		throws PortalException {
+
+		Set<String> missingRequiredObjectFieldSettingsNames = new HashSet<>();
+
+		Stream<ObjectFieldSetting> stream = objectFieldSettings.stream();
+
+		Map<String, String> objectFieldSettingsValuesMap = stream.collect(
+			Collectors.toMap(
+				ObjectFieldSetting::getName, ObjectFieldSetting::getValue));
+
+		for (String requiredObjectFieldSettingName :
+				getRequiredObjectFieldSettingsNames()) {
+
+			if (Validator.isNull(
+					objectFieldSettingsValuesMap.get(
+						requiredObjectFieldSettingName))) {
+
+				missingRequiredObjectFieldSettingsNames.add(
+					requiredObjectFieldSettingName);
+			}
+		}
+
+		if (!missingRequiredObjectFieldSettingsNames.isEmpty()) {
+			throw new ObjectFieldSettingValueException.MissingRequiredValues(
+				objectFieldName, missingRequiredObjectFieldSettingsNames);
+		}
+
+		Set<String> notAllowedObjectFieldSettingsNames = new HashSet<>(
+			objectFieldSettingsValuesMap.keySet());
+
+		notAllowedObjectFieldSettingsNames.removeAll(
+			getAllowedObjectFieldSettingsNames());
+		notAllowedObjectFieldSettingsNames.removeAll(
+			getRequiredObjectFieldSettingsNames());
+
+		if (!notAllowedObjectFieldSettingsNames.isEmpty()) {
+			throw new ObjectFieldSettingNameException.NotAllowedNames(
+				objectFieldName, notAllowedObjectFieldSettingsNames);
+		}
 	}
 
 }

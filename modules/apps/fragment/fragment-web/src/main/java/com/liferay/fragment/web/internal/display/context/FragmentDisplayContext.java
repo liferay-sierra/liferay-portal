@@ -17,7 +17,7 @@ package com.liferay.fragment.web.internal.display.context;
 import com.liferay.fragment.constants.FragmentActionKeys;
 import com.liferay.fragment.constants.FragmentPortletKeys;
 import com.liferay.fragment.contributor.FragmentCollectionContributor;
-import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
+import com.liferay.fragment.contributor.FragmentCollectionContributorRegistry;
 import com.liferay.fragment.model.FragmentCollection;
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.service.FragmentCollectionLocalServiceUtil;
@@ -32,7 +32,6 @@ import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.NavigationItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.NavigationItemListBuilder;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
@@ -43,6 +42,7 @@ import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.portlet.LiferayPortletURL;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.SearchOrderByUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -83,8 +83,8 @@ public class FragmentDisplayContext {
 		_renderRequest = renderRequest;
 		_renderResponse = renderResponse;
 
-		_fragmentCollectionContributorTracker =
-			(FragmentCollectionContributorTracker)
+		_fragmentCollectionContributorRegistry =
+			(FragmentCollectionContributorRegistry)
 				_httpServletRequest.getAttribute(
 					FragmentWebKeys.FRAGMENT_COLLECTION_CONTRIBUTOR_TRACKER);
 		_themeDisplay = (ThemeDisplay)_httpServletRequest.getAttribute(
@@ -153,6 +153,7 @@ public class FragmentDisplayContext {
 					DropdownItemListBuilder.add(
 						dropdownItem -> {
 							dropdownItem.putData("action", "exportCollections");
+							dropdownItem.setIcon("upload");
 							dropdownItem.setLabel(
 								LanguageUtil.get(
 									_httpServletRequest, "export"));
@@ -161,6 +162,7 @@ public class FragmentDisplayContext {
 						() -> hasManageFragmentEntriesPermission,
 						dropdownItem -> {
 							dropdownItem.putData("action", "openImportView");
+							dropdownItem.setIcon("import");
 							dropdownItem.setLabel(
 								LanguageUtil.get(
 									_httpServletRequest, "import"));
@@ -175,6 +177,7 @@ public class FragmentDisplayContext {
 						() -> hasManageFragmentEntriesPermission,
 						dropdownItem -> {
 							dropdownItem.putData("action", "deleteCollections");
+							dropdownItem.setIcon("trash");
 							dropdownItem.setLabel(
 								LanguageUtil.get(
 									_httpServletRequest, "delete"));
@@ -214,11 +217,7 @@ public class FragmentDisplayContext {
 			new FragmentCompositionFragmentEntryNameComparator(true));
 
 		contributedEntriesSearchContainer.setResultsAndTotal(
-			() -> ListUtil.subList(
-				contributedEntries,
-				contributedEntriesSearchContainer.getStart(),
-				contributedEntriesSearchContainer.getEnd()),
-			contributedEntries.size());
+			contributedEntries);
 
 		contributedEntriesSearchContainer.setRowChecker(
 			new EmptyOnClickRowChecker(_renderResponse));
@@ -241,7 +240,7 @@ public class FragmentDisplayContext {
 	}
 
 	public FragmentCollectionContributor getFragmentCollectionContributor() {
-		return _fragmentCollectionContributorTracker.
+		return _fragmentCollectionContributorRegistry.
 			getFragmentCollectionContributor(getFragmentCollectionKey());
 	}
 
@@ -249,7 +248,7 @@ public class FragmentDisplayContext {
 		getFragmentCollectionContributors(Locale locale) {
 
 		List<FragmentCollectionContributor> fragmentCollectionContributors =
-			_fragmentCollectionContributorTracker.
+			_fragmentCollectionContributorRegistry.
 				getFragmentCollectionContributors();
 
 		Collections.sort(
@@ -525,8 +524,6 @@ public class FragmentDisplayContext {
 
 		return PortletURLBuilder.createRenderURL(
 			_renderResponse
-		).setMVCRenderCommandName(
-			"/fragment/view"
 		).setParameter(
 			"fragmentCollectionId",
 			() -> {
@@ -661,7 +658,7 @@ public class FragmentDisplayContext {
 		}
 
 		List<FragmentCollectionContributor> fragmentCollectionContributors =
-			_fragmentCollectionContributorTracker.
+			_fragmentCollectionContributorRegistry.
 				getFragmentCollectionContributors();
 
 		if (ListUtil.isEmpty(fragmentCollectionContributors)) {
@@ -682,7 +679,7 @@ public class FragmentDisplayContext {
 	}
 
 	private FragmentCollectionContributor _getFragmentCollectionContributor() {
-		return _fragmentCollectionContributorTracker.
+		return _fragmentCollectionContributorRegistry.
 			getFragmentCollectionContributor(getFragmentCollectionKey());
 	}
 
@@ -711,8 +708,6 @@ public class FragmentDisplayContext {
 	private PortletURL _getPortletURL() {
 		return PortletURLBuilder.createRenderURL(
 			_renderResponse
-		).setMVCRenderCommandName(
-			"/fragment/view"
 		).setKeywords(
 			() -> {
 				String keywords = _getKeywords();
@@ -811,8 +806,8 @@ public class FragmentDisplayContext {
 
 	private SearchContainer<Object> _contributedEntriesSearchContainer;
 	private FragmentCollection _fragmentCollection;
-	private final FragmentCollectionContributorTracker
-		_fragmentCollectionContributorTracker;
+	private final FragmentCollectionContributorRegistry
+		_fragmentCollectionContributorRegistry;
 	private Long _fragmentCollectionId;
 	private String _fragmentCollectionKey;
 	private SearchContainer<Object> _fragmentEntriesSearchContainer;

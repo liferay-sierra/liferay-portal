@@ -604,7 +604,7 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 
 		try {
 			PortletFileRepositoryUtil.addPortletFileEntry(
-				folder.getGroupId(), userId, Group.class.getName(),
+				null, folder.getGroupId(), userId, Group.class.getName(),
 				folder.getGroupId(), _PORTLET_REPOSITORY_ID,
 				folder.getFolderId(), new UnsyncByteArrayInputStream(bytes),
 				fileName, ContentTypes.APPLICATION_ZIP, false);
@@ -792,28 +792,6 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 		try {
 			GroupServiceHttp.disableStaging(httpPrincipal, remoteGroupId);
 		}
-		catch (NoSuchGroupException noSuchGroupException) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(
-					"Remote live group was already deleted",
-					noSuchGroupException);
-			}
-		}
-		catch (PrincipalException principalException) {
-
-			// LPS-52675
-
-			if (_log.isDebugEnabled()) {
-				_log.debug(principalException);
-			}
-
-			RemoteExportException remoteExportException =
-				new RemoteExportException(RemoteExportException.NO_PERMISSIONS);
-
-			remoteExportException.setGroupId(remoteGroupId);
-
-			throw remoteExportException;
-		}
 		catch (RemoteAuthException remoteAuthException) {
 
 			// LPS-52675
@@ -842,6 +820,45 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 				remoteExportException.setURL(remoteURL);
 
 				throw remoteExportException;
+			}
+
+			if (_log.isWarnEnabled()) {
+				_log.warn("Forcibly disable remote staging");
+			}
+		}
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(portalException);
+			}
+
+			String message = portalException.getMessage();
+
+			if (message.contains(
+					NoSuchGroupException.class.getCanonicalName())) {
+
+				if (!forceDisable) {
+					RemoteExportException remoteExportException =
+						new RemoteExportException(
+							RemoteExportException.NO_GROUP);
+
+					remoteExportException.setGroupId(remoteGroupId);
+
+					throw remoteExportException;
+				}
+			}
+			else if (message.contains(
+						PrincipalException.class.getCanonicalName())) {
+
+				RemoteExportException remoteExportException =
+					new RemoteExportException(
+						RemoteExportException.NO_PERMISSIONS);
+
+				remoteExportException.setGroupId(remoteGroupId);
+
+				throw remoteExportException;
+			}
+			else {
+				throw portalException;
 			}
 
 			if (_log.isWarnEnabled()) {
@@ -1012,7 +1029,7 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 			}
 
 			PortletFileRepositoryUtil.addPortletFileEntry(
-				folder.getGroupId(), userId, Group.class.getName(),
+				null, folder.getGroupId(), userId, Group.class.getName(),
 				folder.getGroupId(), _PORTLET_REPOSITORY_ID,
 				folder.getFolderId(), tempFile,
 				getAssembledFileName(stagingRequestId),

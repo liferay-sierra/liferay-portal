@@ -14,6 +14,7 @@
 
 package com.liferay.headless.admin.user.internal.resource.v1_0.factory;
 
+import com.liferay.headless.admin.user.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.headless.admin.user.resource.v1_0.UserAccountResource;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -33,14 +34,18 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -58,7 +61,10 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @author Javier Gamarra
  * @generated
  */
-@Component(immediate = true, service = UserAccountResource.Factory.class)
+@Component(
+	property = "resource.locator.key=/headless-admin-user/v1.0/UserAccount",
+	service = UserAccountResource.Factory.class
+)
 @Generated("")
 public class UserAccountResourceFactoryImpl
 	implements UserAccountResource.Factory {
@@ -73,9 +79,7 @@ public class UserAccountResourceFactoryImpl
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (UserAccountResource)ProxyUtil.newProxyInstance(
-					UserAccountResource.class.getClassLoader(),
-					new Class<?>[] {UserAccountResource.class},
+				return _userAccountResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -134,14 +138,32 @@ public class UserAccountResourceFactoryImpl
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		UserAccountResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, UserAccountResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		UserAccountResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			UserAccountResource.class.getClassLoader(),
+			UserAccountResource.class);
+
+		try {
+			Constructor<UserAccountResource> constructor =
+				(Constructor<UserAccountResource>)proxyClass.getConstructor(
+					InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -164,7 +186,7 @@ public class UserAccountResourceFactoryImpl
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		UserAccountResource userAccountResource =
@@ -188,6 +210,7 @@ public class UserAccountResourceFactoryImpl
 		userAccountResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		userAccountResource.setRoleLocalService(_roleLocalService);
+		userAccountResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(userAccountResource, arguments);
@@ -203,6 +226,9 @@ public class UserAccountResourceFactoryImpl
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, UserAccountResource>
+		_userAccountResourceProxyProviderFunction = _getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -225,9 +251,6 @@ public class UserAccountResourceFactoryImpl
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -236,6 +259,9 @@ public class UserAccountResourceFactoryImpl
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

@@ -19,6 +19,8 @@ import com.liferay.portal.kernel.editor.configuration.BaseEditorConfigContributo
 import com.liferay.portal.kernel.editor.configuration.EditorConfigContributor;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -57,6 +59,19 @@ public class JournalArticleContentEditorConfigContributor
 		}
 
 		jsonObject.put("removePlugins", removePlugins);
+
+		PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
+
+		if (Validator.isNotNull(portletDisplay.getId())) {
+			jsonObject.put(
+				"uploadUrl",
+				PortletURLBuilder.create(
+					requestBackedPortletURLFactory.createActionURL(
+						JournalPortletKeys.JOURNAL)
+				).setActionName(
+					"/journal/upload_image"
+				).buildString());
+		}
 	}
 
 }

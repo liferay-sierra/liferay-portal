@@ -13,8 +13,6 @@
 							"id": "element-text",
 							"value": {
 								"fragmentLink": {
-									"value_i18n": {
-									}
 								},
 								"text": {
 									"mapping": {
@@ -39,12 +37,12 @@
 						"maxWidth": "none",
 						"minHeight": "auto",
 						"minWidth": "auto",
-						"opacity": "100",
 						"overflow": "visible",
 						"shadow": "shadow-none",
 						"textAlign": "none",
 						"width": "w-auto"
-					}
+					},
+					"indexed": true
 				},
 				"type": "Fragment"
 			}

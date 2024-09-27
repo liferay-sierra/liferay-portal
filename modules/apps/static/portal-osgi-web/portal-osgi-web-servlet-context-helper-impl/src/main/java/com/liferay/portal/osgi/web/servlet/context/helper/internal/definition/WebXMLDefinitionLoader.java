@@ -559,10 +559,9 @@ public class WebXMLDefinitionLoader extends DefaultHandler {
 			_servletMapping = new ServletMapping();
 		}
 		else if (qName.equals("web-app")) {
-			boolean metadataComplete = GetterUtil.getBoolean(
-				attributes.getValue("metadata-complete"));
-
-			_webXMLDefinition.setMetadataComplete(metadataComplete);
+			_webXMLDefinition.setMetadataComplete(
+				GetterUtil.getBoolean(
+					attributes.getValue("metadata-complete")));
 		}
 		else if (qName.equals("web-resource-collection")) {
 			_webResourceCollection = new WebResourceCollection();
@@ -575,7 +574,7 @@ public class WebXMLDefinitionLoader extends DefaultHandler {
 	private void _addURLPatterns(
 		FilterDefinition filterDefinition, List<String> value) {
 
-		if (!ListUtil.isEmpty(value)) {
+		if (ListUtil.isNotEmpty(value)) {
 			_addURLPatterns(
 				filterDefinition, value.toArray(new String[0]), null);
 		}
@@ -606,7 +605,7 @@ public class WebXMLDefinitionLoader extends DefaultHandler {
 	private void _addURLPatterns(
 		ServletDefinition servletDefinition, List<String> value) {
 
-		if (!ListUtil.isEmpty(value)) {
+		if (ListUtil.isNotEmpty(value)) {
 			_addURLPatterns(
 				servletDefinition, value.toArray(new String[0]), null);
 		}

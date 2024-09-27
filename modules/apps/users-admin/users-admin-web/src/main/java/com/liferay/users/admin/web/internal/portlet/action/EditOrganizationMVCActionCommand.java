@@ -17,6 +17,7 @@ package com.liferay.users.admin.web.internal.portlet.action;
 import com.liferay.asset.kernel.exception.AssetCategoryException;
 import com.liferay.asset.kernel.exception.AssetTagException;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
+import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.DataLimitExceededException;
 import com.liferay.portal.kernel.exception.DuplicateOrganizationException;
 import com.liferay.portal.kernel.exception.NoSuchCountryException;
@@ -32,13 +33,15 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.service.OrganizationLocalService;
 import com.liferay.portal.kernel.service.OrganizationService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.servlet.SessionErrors;
+import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -50,6 +53,7 @@ import java.util.Collections;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
+import javax.portlet.PortletException;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -60,15 +64,24 @@ import org.osgi.service.component.annotations.Reference;
  * @author Jorge Ferrer
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + UsersAdminPortletKeys.MY_ORGANIZATIONS,
 		"javax.portlet.name=" + UsersAdminPortletKeys.USERS_ADMIN,
 		"mvc.command.name=/users_admin/edit_organization"
 	},
-	service = MVCActionCommand.class
+	service = AopService.class
 )
-public class EditOrganizationMVCActionCommand extends BaseMVCActionCommand {
+public class EditOrganizationMVCActionCommand
+	extends BaseMVCActionCommand implements AopService, MVCActionCommand {
+
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public boolean processAction(
+			ActionRequest actionRequest, ActionResponse actionResponse)
+		throws PortletException {
+
+		return super.processAction(actionRequest, actionResponse);
+	}
 
 	protected void deleteOrganizations(ActionRequest actionRequest)
 		throws Exception {
@@ -101,7 +114,7 @@ public class EditOrganizationMVCActionCommand extends BaseMVCActionCommand {
 			String redirect = ParamUtil.getString(actionRequest, "redirect");
 
 			if (organization != null) {
-				redirect = _http.setParameter(
+				redirect = HttpComponentsUtil.setParameter(
 					redirect, actionResponse.getNamespace() + "organizationId",
 					organization.getOrganizationId());
 			}
@@ -158,7 +171,7 @@ public class EditOrganizationMVCActionCommand extends BaseMVCActionCommand {
 						actionRequest, "organizationId");
 
 					if (organizationId > 0) {
-						redirect = _http.setParameter(
+						redirect = HttpComponentsUtil.setParameter(
 							redirect,
 							actionResponse.getNamespace() + "organizationId",
 							organizationId);
@@ -220,6 +233,11 @@ public class EditOrganizationMVCActionCommand extends BaseMVCActionCommand {
 				Collections.emptyList(), Collections.emptyList(),
 				Collections.emptyList(), Collections.emptyList(),
 				serviceContext);
+
+			if (logoBytes != null) {
+				organization = _organizationLocalService.updateLogo(
+					organization.getOrganizationId(), logoBytes);
+			}
 		}
 		else {
 
@@ -246,7 +264,7 @@ public class EditOrganizationMVCActionCommand extends BaseMVCActionCommand {
 	private DLAppLocalService _dlAppLocalService;
 
 	@Reference
-	private Http _http;
+	private OrganizationLocalService _organizationLocalService;
 
 	@Reference
 	private OrganizationService _organizationService;

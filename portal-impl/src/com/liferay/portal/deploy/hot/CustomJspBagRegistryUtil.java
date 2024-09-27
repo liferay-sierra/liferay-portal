@@ -21,13 +21,14 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.log.SanitizerLogWrapper;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
+import com.liferay.portal.kernel.servlet.ServletContextPool;
 import com.liferay.portal.kernel.url.URLContainer;
 import com.liferay.portal.kernel.util.CustomJspRegistryUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.spring.context.PortalContextLoaderListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,6 +43,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import javax.servlet.ServletContext;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
@@ -136,13 +139,16 @@ public class CustomJspBagRegistryUtil {
 		boolean customJspGlobal = customJspBag.isCustomJspGlobal();
 		List<String> customJsps = customJspBag.getCustomJsps();
 
-		String portalWebDir = PortalUtil.getPortalWebDir();
+		ServletContext servletContext = ServletContextPool.get(
+			PortalContextLoaderListener.getPortalServletContextName());
+
+		_portalWebDir = servletContext.getRealPath(StringPool.SLASH);
 
 		for (String customJsp : customJsps) {
 			String portalJsp = getPortalJsp(customJsp, customJspDir);
 
 			if (customJspGlobal) {
-				File portalJspFile = new File(portalWebDir + portalJsp);
+				File portalJspFile = new File(_portalWebDir + portalJsp);
 
 				File portalJspBackupFile = getPortalJspBackupFile(
 					portalJspFile);
@@ -157,7 +163,7 @@ public class CustomJspBagRegistryUtil {
 			}
 
 			FileUtil.write(
-				portalWebDir + portalJsp,
+				_portalWebDir + portalJsp,
 				getCustomJspInputStream(
 					customJspBag.getURLContainer(), customJsp));
 		}
@@ -175,10 +181,8 @@ public class CustomJspBagRegistryUtil {
 		Set<String> customJsps = new HashSet<>();
 
 		for (String customJsp : customJspBag.getCustomJsps()) {
-			String portalJsp = getPortalJsp(
-				customJsp, customJspBag.getCustomJspDir());
-
-			customJsps.add(portalJsp);
+			customJsps.add(
+				getPortalJsp(customJsp, customJspBag.getCustomJspDir()));
 		}
 
 		Map<String, String> conflictingCustomJsps = new HashMap<>();
@@ -255,6 +259,7 @@ public class CustomJspBagRegistryUtil {
 		SystemBundleUtil.getBundleContext();
 	private static final Map<ServiceReference<CustomJspBag>, CustomJspBag>
 		_customJspBagsMap = new ConcurrentHashMap<>();
+	private static String _portalWebDir;
 	private static final ServiceTracker<CustomJspBag, CustomJspBag>
 		_serviceTracker;
 
@@ -316,9 +321,7 @@ public class CustomJspBagRegistryUtil {
 							duplicateCustomJspException) {
 
 					if (_log.isWarnEnabled()) {
-						_log.warn(
-							duplicateCustomJspException.getMessage(),
-							duplicateCustomJspException);
+						_log.warn(duplicateCustomJspException);
 					}
 
 					_bundleContext.ungetService(serviceReference);
@@ -335,7 +338,7 @@ public class CustomJspBagRegistryUtil {
 			}
 			catch (Exception exception) {
 				if (_log.isWarnEnabled()) {
-					_log.warn(exception.getMessage(), exception);
+					_log.warn(exception);
 				}
 
 				_bundleContext.ungetService(serviceReference);
@@ -377,8 +380,7 @@ public class CustomJspBagRegistryUtil {
 					pos + customJspDir.length());
 
 				if (customJspBag.isCustomJspGlobal()) {
-					File portalJspFile = new File(
-						PortalUtil.getPortalWebDir() + portalJsp);
+					File portalJspFile = new File(_portalWebDir + portalJsp);
 
 					File portalJspBackupFile = getPortalJspBackupFile(
 						portalJspFile);
@@ -406,8 +408,7 @@ public class CustomJspBagRegistryUtil {
 					portalJsp = CustomJspRegistryUtil.getCustomJspFileName(
 						contextId, portalJsp);
 
-					File portalJspFile = new File(
-						PortalUtil.getPortalWebDir() + portalJsp);
+					File portalJspFile = new File(_portalWebDir + portalJsp);
 
 					if (portalJspFile.exists()) {
 						portalJspFile.delete();

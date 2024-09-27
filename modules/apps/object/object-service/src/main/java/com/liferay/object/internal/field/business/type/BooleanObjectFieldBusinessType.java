@@ -17,18 +17,18 @@ package com.liferay.object.internal.field.business.type;
 import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.field.business.type.ObjectFieldBusinessType;
-import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
+import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.vulcan.extension.PropertyDefinition;
 
 import java.util.Locale;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Marcela Cunha
  */
 @Component(
-	immediate = true,
 	property = "object.field.business.type.key=" + ObjectFieldConstants.BUSINESS_TYPE_BOOLEAN,
 	service = {
 		BooleanObjectFieldBusinessType.class, ObjectFieldBusinessType.class
@@ -48,23 +48,25 @@ public class BooleanObjectFieldBusinessType implements ObjectFieldBusinessType {
 
 	@Override
 	public String getDescription(Locale locale) {
-		return LanguageUtil.get(
-			ResourceBundleUtil.getModuleAndPortalResourceBundle(
-				locale, getClass()),
-			"select-between-true-or-false");
+		return _language.get(locale, "select-between-true-or-false");
 	}
 
 	@Override
 	public String getLabel(Locale locale) {
-		return LanguageUtil.get(
-			ResourceBundleUtil.getModuleAndPortalResourceBundle(
-				locale, getClass()),
-			"boolean");
+		return _language.get(locale, "boolean");
 	}
 
 	@Override
 	public String getName() {
 		return ObjectFieldConstants.BUSINESS_TYPE_BOOLEAN;
 	}
+
+	@Override
+	public PropertyDefinition.PropertyType getPropertyType() {
+		return PropertyDefinition.PropertyType.BOOLEAN;
+	}
+
+	@Reference
+	private Language _language;
 
 }

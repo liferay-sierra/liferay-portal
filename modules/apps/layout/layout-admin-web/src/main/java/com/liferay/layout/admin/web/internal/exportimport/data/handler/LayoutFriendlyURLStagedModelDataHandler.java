@@ -23,7 +23,6 @@ import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutFriendlyURL;
 import com.liferay.portal.kernel.service.LayoutFriendlyURLLocalService;
-import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.xml.Element;
@@ -37,7 +36,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Sergio González
  */
-@Component(immediate = true, service = StagedModelDataHandler.class)
+@Component(service = StagedModelDataHandler.class)
 public class LayoutFriendlyURLStagedModelDataHandler
 	extends BaseStagedModelDataHandler<LayoutFriendlyURL> {
 
@@ -152,20 +151,6 @@ public class LayoutFriendlyURLStagedModelDataHandler
 			layoutFriendlyURL, importedLayoutFriendlyURL);
 	}
 
-	@Reference(unbind = "-")
-	protected void setLayoutFriendlyURLLocalService(
-		LayoutFriendlyURLLocalService layoutFriendlyURLLocalService) {
-
-		_layoutFriendlyURLLocalService = layoutFriendlyURLLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setLayoutLocalService(
-		LayoutLocalService layoutLocalService) {
-
-		_layoutLocalService = layoutLocalService;
-	}
-
 	private LayoutFriendlyURL _fetchExistingLayoutFriendlyURL(
 		PortletDataContext portletDataContext,
 		LayoutFriendlyURL layoutFriendlyURL, long plid) {
@@ -192,7 +177,7 @@ public class LayoutFriendlyURLStagedModelDataHandler
 
 		String friendlyURL = layoutFriendlyURL.getFriendlyURL();
 
-		boolean privateLayout = layoutFriendlyURL.isPrivateLayout();
+		boolean privateLayout = portletDataContext.isPrivateLayout();
 
 		if (existingLayoutFriendlyURL != null) {
 			privateLayout = existingLayoutFriendlyURL.isPrivateLayout();
@@ -219,7 +204,7 @@ public class LayoutFriendlyURLStagedModelDataHandler
 		return layoutFriendlyURL;
 	}
 
+	@Reference
 	private LayoutFriendlyURLLocalService _layoutFriendlyURLLocalService;
-	private LayoutLocalService _layoutLocalService;
 
 }

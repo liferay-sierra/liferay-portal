@@ -20,14 +20,18 @@ import com.liferay.data.engine.rest.dto.v2_0.DataLayout;
 import com.liferay.data.engine.rest.resource.exception.DataDefinitionValidationException;
 import com.liferay.data.engine.rest.resource.v2_0.DataDefinitionResource;
 import com.liferay.journal.constants.JournalPortletKeys;
+import com.liferay.journal.model.JournalArticle;
+import com.liferay.journal.service.JournalArticleLocalService;
+import com.liferay.journal.service.persistence.JournalArticleUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseTransactionalMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -109,8 +113,8 @@ public class UpdateDataDefinitionMVCActionCommand
 		String structureKey = ParamUtil.getString(
 			actionRequest, "structureKey");
 		String dataLayout = ParamUtil.getString(actionRequest, "dataLayout");
-		Map<Locale, String> descriptionMap =
-			LocalizationUtil.getLocalizationMap(actionRequest, "description");
+		Map<Locale, String> descriptionMap = _localization.getLocalizationMap(
+			actionRequest, "description");
 
 		dataDefinition.setDataDefinitionKey(structureKey);
 		dataDefinition.setDefaultDataLayout(DataLayout.toDTO(dataLayout));
@@ -119,9 +123,23 @@ public class UpdateDataDefinitionMVCActionCommand
 
 		dataDefinitionResource.putDataDefinition(
 			dataDefinitionId, dataDefinition);
+
+		List<JournalArticle> journalArticles =
+			_journalArticleLocalService.getStructureArticles(
+				new String[] {structureKey});
+
+		for (JournalArticle journalArticle : journalArticles) {
+			JournalArticleUtil.clearCache(journalArticle);
+		}
 	}
 
 	@Reference
 	private DataDefinitionResource.Factory _dataDefinitionResourceFactory;
+
+	@Reference
+	private JournalArticleLocalService _journalArticleLocalService;
+
+	@Reference
+	private Localization _localization;
 
 }

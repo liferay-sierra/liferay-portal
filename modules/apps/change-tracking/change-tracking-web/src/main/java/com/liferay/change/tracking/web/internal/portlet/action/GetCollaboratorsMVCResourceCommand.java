@@ -22,7 +22,7 @@ import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Group;
@@ -62,7 +62,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Samuel Trong Tran
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + CTPortletKeys.PUBLICATIONS,
 		"mvc.command.name=/change_tracking/get_collaborators"
@@ -82,12 +81,12 @@ public class GetCollaboratorsMVCResourceCommand extends BaseMVCResourceCommand {
 		if (ctCollection == null) {
 			JSONPortletResponseUtil.writeJSON(
 				resourceRequest, resourceResponse,
-				JSONFactoryUtil.createJSONArray());
+				_jsonFactory.createJSONArray());
 
 			return;
 		}
 
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)resourceRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
@@ -207,11 +206,9 @@ public class GetCollaboratorsMVCResourceCommand extends BaseMVCResourceCommand {
 				).put(
 					"roleLabel",
 					_language.get(
-						httpServletRequest,
-						PublicationRoleConstants.getNameLabel(role.getName()))
+						httpServletRequest, _getNameLabel(role.getName()))
 				).put(
-					"roleValue",
-					PublicationRoleConstants.getNameRole(role.getName())
+					"roleValue", _getNameRole(role.getName())
 				).put(
 					"userId", user.getUserId()
 				));
@@ -221,11 +218,42 @@ public class GetCollaboratorsMVCResourceCommand extends BaseMVCResourceCommand {
 			resourceRequest, resourceResponse, jsonArray);
 	}
 
+	private String _getNameLabel(String name) {
+		if (name.equals(PublicationRoleConstants.NAME_ADMIN)) {
+			return PublicationRoleConstants.LABEL_ADMIN;
+		}
+		else if (name.equals(PublicationRoleConstants.NAME_EDITOR)) {
+			return PublicationRoleConstants.LABEL_EDITOR;
+		}
+		else if (name.equals(PublicationRoleConstants.NAME_PUBLISHER)) {
+			return PublicationRoleConstants.LABEL_PUBLISHER;
+		}
+
+		return PublicationRoleConstants.LABEL_VIEWER;
+	}
+
+	private int _getNameRole(String name) {
+		if (name.equals(PublicationRoleConstants.NAME_ADMIN)) {
+			return PublicationRoleConstants.ROLE_ADMIN;
+		}
+		else if (name.equals(PublicationRoleConstants.NAME_EDITOR)) {
+			return PublicationRoleConstants.ROLE_EDITOR;
+		}
+		else if (name.equals(PublicationRoleConstants.NAME_PUBLISHER)) {
+			return PublicationRoleConstants.ROLE_PUBLISHER;
+		}
+
+		return PublicationRoleConstants.ROLE_VIEWER;
+	}
+
 	@Reference
 	private CTCollectionLocalService _ctCollectionLocalService;
 
 	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Language _language;

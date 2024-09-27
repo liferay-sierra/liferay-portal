@@ -19,7 +19,7 @@ import aQute.bnd.annotation.metatype.Meta;
 import com.liferay.analytics.message.sender.client.AnalyticsMessageSenderClient;
 import com.liferay.analytics.settings.configuration.AnalyticsConfiguration;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -29,7 +29,9 @@ import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.settings.Settings;
 import com.liferay.portal.kernel.settings.SettingsDescriptor;
 import com.liferay.portal.kernel.settings.SettingsFactory;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -58,7 +60,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Rachael Koestartyo
  */
-@Component(immediate = true, service = AnalyticsMessageSenderClient.class)
+@Component(service = AnalyticsMessageSenderClient.class)
 public class AnalyticsMessageSenderClientImpl
 	extends BaseAnalyticsClientImpl implements AnalyticsMessageSenderClient {
 
@@ -69,7 +71,7 @@ public class AnalyticsMessageSenderClientImpl
 		}
 
 		AnalyticsConfiguration analyticsConfiguration =
-			analyticsConfigurationTracker.getAnalyticsConfiguration(companyId);
+			analyticsConfigurationRegistry.getAnalyticsConfiguration(companyId);
 
 		HttpUriRequest httpUriRequest = _buildHttpUriRequest(
 			body, analyticsConfiguration.liferayAnalyticsDataSourceId(),
@@ -90,7 +92,7 @@ public class AnalyticsMessageSenderClientImpl
 		}
 
 		AnalyticsConfiguration analyticsConfiguration =
-			analyticsConfigurationTracker.getAnalyticsConfiguration(companyId);
+			analyticsConfigurationRegistry.getAnalyticsConfiguration(companyId);
 
 		_checkEndpoints(analyticsConfiguration, companyId);
 
@@ -104,13 +106,6 @@ public class AnalyticsMessageSenderClientImpl
 					analyticsConfiguration.liferayAnalyticsDataSourceId());
 
 		_execute(analyticsConfiguration, companyId, httpUriRequest);
-	}
-
-	@Reference(
-		target = "(&(release.bundle.symbolic.name=com.liferay.analytics.settings.web)(release.schema.version>=1.0.1))",
-		unbind = "-"
-	)
-	protected void setRelease(Release release) {
 	}
 
 	private HttpUriRequest _buildHttpUriRequest(
@@ -164,7 +159,7 @@ public class AnalyticsMessageSenderClientImpl
 			JSONObject responseJSONObject = null;
 
 			try {
-				responseJSONObject = JSONFactoryUtil.createJSONObject(
+				responseJSONObject = _jsonFactory.createJSONObject(
 					EntityUtils.toString(
 						closeableHttpResponse.getEntity(),
 						Charset.defaultCharset()));
@@ -227,17 +222,24 @@ public class AnalyticsMessageSenderClientImpl
 
 			StatusLine statusLine = closeableHttpResponse.getStatusLine();
 
-			if (statusLine.getStatusCode() != HttpStatus.SC_FORBIDDEN) {
-				return closeableHttpResponse;
-			}
-
-			JSONObject responseJSONObject = JSONFactoryUtil.createJSONObject(
+			JSONObject responseJSONObject = _jsonFactory.createJSONObject(
 				EntityUtils.toString(
 					closeableHttpResponse.getEntity(),
 					Charset.defaultCharset()));
 
+			boolean disconnected = StringUtil.equals(
+				GetterUtil.getString(responseJSONObject.getString("state")),
+				"DISCONNECTED");
+
+			if ((statusLine.getStatusCode() != HttpStatus.SC_FORBIDDEN) &&
+				!disconnected) {
+
+				return closeableHttpResponse;
+			}
+
 			processInvalidTokenMessage(
-				companyId, responseJSONObject.getString("message"));
+				companyId, disconnected,
+				responseJSONObject.getString("message"));
 
 			return closeableHttpResponse;
 		}
@@ -290,6 +292,14 @@ public class AnalyticsMessageSenderClientImpl
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		AnalyticsMessageSenderClientImpl.class);
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference(
+		target = "(&(release.bundle.symbolic.name=com.liferay.analytics.settings.web)(release.schema.version>=1.0.1))"
+	)
+	private Release _release;
 
 	@Reference
 	private SettingsFactory _settingsFactory;

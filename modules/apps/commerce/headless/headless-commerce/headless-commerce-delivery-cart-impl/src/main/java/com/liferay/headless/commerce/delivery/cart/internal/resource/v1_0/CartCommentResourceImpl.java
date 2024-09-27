@@ -34,8 +34,6 @@ import com.liferay.portal.vulcan.pagination.Pagination;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ws.rs.core.Response;
-
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
@@ -44,7 +42,6 @@ import org.osgi.service.component.annotations.ServiceScope;
  * @author Andrea Sbarra
  */
 @Component(
-	enabled = false,
 	properties = "OSGI-INF/liferay/rest/v1_0/cart-comment.properties",
 	scope = ServiceScope.PROTOTYPE,
 	service = {CartCommentResource.class, NestedFieldSupport.class}
@@ -53,12 +50,8 @@ public class CartCommentResourceImpl
 	extends BaseCartCommentResourceImpl implements NestedFieldSupport {
 
 	@Override
-	public Response deleteCartComment(Long commentId) throws Exception {
+	public void deleteCartComment(Long commentId) throws Exception {
 		_commerceOrderNoteService.deleteCommerceOrderNote(commentId);
-
-		Response.ResponseBuilder responseBuilder = Response.ok();
-
-		return responseBuilder.build();
 	}
 
 	@Override
@@ -72,14 +65,15 @@ public class CartCommentResourceImpl
 			@NestedFieldId("id") Long cartId, Pagination pagination)
 		throws Exception {
 
-		List<CommerceOrderNote> commerceOrderNotes =
-			_commerceOrderNoteService.getCommerceOrderNotes(cartId, false);
-
 		int totalItems = _commerceOrderNoteService.getCommerceOrderNotesCount(
 			cartId, false);
 
 		return Page.of(
-			_toOrderNotes(commerceOrderNotes), pagination, totalItems);
+			_toOrderNotes(
+				_commerceOrderNoteService.getCommerceOrderNotes(
+					cartId, false, pagination.getStartPosition(),
+					pagination.getEndPosition())),
+			pagination, totalItems);
 	}
 
 	@Override

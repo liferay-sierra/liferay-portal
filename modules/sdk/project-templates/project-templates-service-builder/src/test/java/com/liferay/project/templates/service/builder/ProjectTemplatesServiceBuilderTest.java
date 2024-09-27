@@ -123,7 +123,7 @@ public class ProjectTemplatesServiceBuilderTest
 		throws Exception {
 
 		File gradleProjectDir = _buildTemplateWithGradle(
-			"service-builder", "foo-bar", "--liferay-version", "7.4.3.4");
+			"service-builder", "foo-bar", "--liferay-version", "7.4.3.36");
 
 		testContains(
 			gradleProjectDir, "foo-bar-service/service.xml",
@@ -145,8 +145,8 @@ public class ProjectTemplatesServiceBuilderTest
 			gradleWorkspaceDir, "modules");
 
 		File gradleProjectDir = buildTemplateWithGradle(
-			gradleWorkspaceModulesDir, template, name, "--package-name",
-			packageName, "--liferay-version", liferayVersion);
+			gradleWorkspaceModulesDir, template, name, "--liferay-version",
+			liferayVersion, "--package-name", packageName);
 
 		File gradleServiceXml = new File(
 			new File(gradleProjectDir, name + "-service"), "service.xml");
@@ -166,8 +166,8 @@ public class ProjectTemplatesServiceBuilderTest
 
 		File mavenProjectDir = buildTemplateWithMaven(
 			mavenModulesDir, mavenModulesDir, template, name, "com.test",
-			mavenExecutor, "-Dpackage=" + packageName,
-			"-DliferayVersion=" + liferayVersion);
+			mavenExecutor, "-DliferayVersion=" + liferayVersion,
+			"-Dpackage=" + packageName);
 
 		File mavenServiceXml = new File(
 			new File(mavenProjectDir, name + "-service"), "service.xml");
@@ -231,7 +231,7 @@ public class ProjectTemplatesServiceBuilderTest
 	@Test
 	public void testBuildTemplateServiceBuilderWorkspaceUAD() throws Exception {
 		String dependencyInjector = "ds";
-		String liferayVersion = "7.4.3.4";
+		String liferayVersion = "7.4.3.36";
 		String name = "guestbook";
 		String packageName = "com.test.guestbook";
 		String template = "service-builder";
@@ -242,14 +242,14 @@ public class ProjectTemplatesServiceBuilderTest
 
 		writeGradlePropertiesInWorkspace(
 			gradleWorkspaceDir,
-			"liferay.workspace.target.platform.version=7.4.3.4");
+			"liferay.workspace.target.platform.version=7.4.3.36");
 
 		File modulesDir = new File(gradleWorkspaceDir, "modules");
 
 		File gradleProjectDir = buildTemplateWithGradle(
-			modulesDir, template, name, "--liferay-version", liferayVersion,
-			"--package-name", packageName, "--dependency-injector",
-			dependencyInjector, "--add-ons", "true");
+			modulesDir, template, name, "--add-ons", "true",
+			"--dependency-injector", dependencyInjector, "--liferay-version",
+			liferayVersion, "--package-name", packageName);
 
 		File gradleUADModuleDir = new File(gradleProjectDir, name + "-uad");
 
@@ -263,9 +263,9 @@ public class ProjectTemplatesServiceBuilderTest
 
 		File mavenProjectDir = buildTemplateWithMaven(
 			mavenModulesDir, mavenModulesDir, template, name, "com.test",
-			mavenExecutor, "-Dpackage=" + packageName,
+			mavenExecutor, "-DaddOns=true",
 			"-DdependencyInjector=" + dependencyInjector,
-			"-DliferayVersion=" + liferayVersion, "-DaddOns=true");
+			"-DliferayVersion=" + liferayVersion, "-Dpackage=" + packageName);
 
 		File mavenUADModuleDir = new File(mavenProjectDir, name + "-uad");
 
@@ -326,8 +326,8 @@ public class ProjectTemplatesServiceBuilderTest
 			mavenExecutor);
 
 		buildTemplateWithGradle(
-			gradleWorkspaceDir, "service-builder", name, "--liferay-version",
-			liferayVersion, "--add-ons", "true");
+			gradleWorkspaceDir, "service-builder", name, "--add-ons", "true",
+			"--liferay-version", liferayVersion);
 	}
 
 	@Test
@@ -348,8 +348,8 @@ public class ProjectTemplatesServiceBuilderTest
 			gradleWorkspaceDir, "modules");
 
 		buildTemplateWithGradle(
-			gradleWorkspaceModulesDir, template, name, "--package-name",
-			packageName, "--liferay-version", liferayVersion);
+			gradleWorkspaceModulesDir, template, name, "--liferay-version",
+			liferayVersion, "--package-name", packageName);
 
 		Optional<String> gradleResultOptional = executeGradle(
 			gradleWorkspaceDir, true, _gradleDistribution,

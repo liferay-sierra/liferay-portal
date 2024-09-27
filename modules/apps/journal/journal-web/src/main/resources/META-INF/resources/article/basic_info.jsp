@@ -27,7 +27,7 @@ DDMStructure ddmStructure = journalEditArticleDisplayContext.getDDMStructure();
 <aui:input name="ddmStructureKey" type="hidden" value="<%= ddmStructure.getStructureKey() %>" />
 
 <c:if test="<%= journalWebConfiguration.changeableDefaultLanguage() %>">
-	<div id="<%= liferayPortletResponse.getNamespace() + "-change-default-language" %>">
+	<div id="<%= liferayPortletResponse.getNamespace() %>-change-default-language">
 		<react:component
 			module="js/ChangeDefaultLanguage.es"
 			props="<%= journalEditArticleDisplayContext.getChangeDefaultLanguageData() %>"
@@ -66,7 +66,7 @@ DDMStructure ddmStructure = journalEditArticleDisplayContext.getDDMStructure();
 				).buildString()
 			).build()
 		%>'
-		module="js/SelectFolderButton.es"
+		module="js/SelectFolderButton"
 	/>
 </c:if>
 
@@ -101,11 +101,20 @@ DDMStructure ddmStructure = journalEditArticleDisplayContext.getDDMStructure();
 		</div>
 
 		<aui:script>
-			Liferay.Util.disableToggleBoxes(
-				'<portlet:namespace />autoArticleId',
-				'<portlet:namespace />newArticleId',
-				true
+			var autoArticleInput = document.getElementById(
+				'<portlet:namespace />autoArticleId'
 			);
+			var newArticleInput = document.getElementById(
+				'<portlet:namespace />newArticleId'
+			);
+
+			if (autoArticleInput && newArticleInput) {
+				newArticleInput.disabled = autoArticleInput.checked;
+
+				autoArticleInput.addEventListener('click', () => {
+					Liferay.Util.toggleDisabled(newArticleInput, !newArticleInput.disabled);
+				});
+			}
 		</aui:script>
 	</c:when>
 	<c:otherwise>

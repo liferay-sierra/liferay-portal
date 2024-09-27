@@ -19,10 +19,10 @@ import com.liferay.account.constants.AccountConstants;
 import com.liferay.account.model.AccountEntry;
 import com.liferay.account.model.AccountEntryUserRel;
 import com.liferay.account.model.AccountEntryUserRelModel;
-import com.liferay.account.model.AccountRole;
 import com.liferay.account.service.AccountEntryLocalServiceUtil;
 import com.liferay.account.service.AccountEntryUserRelLocalServiceUtil;
 import com.liferay.account.service.AccountRoleLocalServiceUtil;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
@@ -37,7 +37,6 @@ import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.vulcan.util.TransformUtil;
 
 import java.util.List;
 import java.util.Locale;
@@ -118,12 +117,9 @@ public class AccountUserDisplay {
 	public String getAccountRoleNamesString(long accountEntryId, Locale locale)
 		throws PortalException {
 
-		List<AccountRole> accountRoles =
-			AccountRoleLocalServiceUtil.getAccountRoles(
-				accountEntryId, getUserId());
-
 		List<String> accountRoleNames = TransformUtil.transform(
-			accountRoles,
+			AccountRoleLocalServiceUtil.getAccountRoles(
+				accountEntryId, getUserId()),
 			accountRole -> {
 				Role role = accountRole.getRole();
 
@@ -156,6 +152,10 @@ public class AccountUserDisplay {
 
 	public String getStatusLabelStyle() {
 		return _statusLabelStyle;
+	}
+
+	public User getUser() {
+		return _user;
 	}
 
 	public long getUserId() {
@@ -241,6 +241,8 @@ public class AccountUserDisplay {
 	}
 
 	private AccountUserDisplay(User user) {
+		_user = user;
+
 		_accountEntryNamesStyle = _getAccountEntryNamesStyle(user.getUserId());
 		_companyId = user.getCompanyId();
 		_emailAddress = user.getEmailAddress();
@@ -311,6 +313,7 @@ public class AccountUserDisplay {
 	private final int _status;
 	private final String _statusLabel;
 	private final String _statusLabelStyle;
+	private final User _user;
 	private final long _userId;
 
 }

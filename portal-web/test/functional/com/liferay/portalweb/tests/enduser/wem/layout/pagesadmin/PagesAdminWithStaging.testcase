@@ -56,7 +56,7 @@ definition {
 				pageName = "Test Page Name 3",
 				siteName = "Test Site Name Staging");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Publish to Live site") {
@@ -69,7 +69,7 @@ definition {
 			PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name-staging");
 
 			PagesAdmin.viewPagesOrder(
-				depth = "2",
+				depth = "1",
 				pageNameList = "Test Page Name 1,Test Page Name 2,Test Page Name 3");
 		}
 
@@ -85,7 +85,7 @@ definition {
 
 		task ("View Test Page Name 2 and 3 are moved to top of Test Page Name 1 in Staging site") {
 			PagesAdmin.viewPagesOrder(
-				depth = "2",
+				depth = "1",
 				pageNameList = "Test Page Name 2,Test Page Name 3,Test Page Name 1");
 		}
 
@@ -93,7 +93,7 @@ definition {
 			PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
 
 			PagesAdmin.viewPagesOrder(
-				depth = "2",
+				depth = "1",
 				pageNameList = "Test Page Name 1,Test Page Name 2,Test Page Name 3");
 		}
 
@@ -111,8 +111,308 @@ definition {
 			Alert.closeMessage(messageType = "ERROR");
 
 			PagesAdmin.viewPagesOrder(
-				depth = "2",
+				depth = "1",
 				pageNameList = "Test Page Name 1,Test Page Name 2,Test Page Name 3");
+		}
+	}
+
+	@description = "This is a test for LPS-152446. When a user with edit permissions clicks a content page in page administration of staging site, the page editor is opened with the selected page ready to be edited."
+	@priority = "4"
+	test NavigateToPageEditorWhenClickOnContentPageItemInStagingSite {
+		task ("Given a page creator has a content page") {
+			JSONLayout.addPublicLayout(
+				groupName = "Test Site Name (Staging)",
+				layoutName = "Test Page Name",
+				site = "false",
+				type = "content");
+
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Test Page Name",
+				siteName = "Test Site Name Staging");
+
+			PageEditor.addFragment(
+				collectionName = "Basic Components",
+				fragmentName = "Heading");
+
+			PageEditor.publish();
+
+			Staging.openStagingAdmin(siteURLKey = "test-site-name-staging");
+
+			Staging.publishCustomPublication();
+		}
+
+		task ("When the page creator clicks on the content page item in Pages admin of staging site") {
+			PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name-staging");
+
+			Click(
+				key_pageName = "Test Page Name",
+				locator1 = "PagesAdmin#LIST_GROUP_ITEM_ENTRY_TITLE_LINK");
+		}
+
+		task ("Then the page creator accesses to the page editor") {
+			ControlMenu.viewHeaderTitle(headerTitle = "Test Page Name");
+
+			PageEditor.viewFragmentEditableText(
+				editableText = "Heading Example",
+				fragmentName = "Heading",
+				id = "element-text");
+		}
+	}
+
+	@description = "This is a test for LPS-152446. When a user with edit permissions clicks a content page in page administration of live site, the page is opened in view mode."
+	@priority = "4"
+	test NavigateToViewModeWhenClickOnContentPageItemInLiveSite {
+		task ("Given a page creator has a content page") {
+			JSONLayout.addPublicLayout(
+				groupName = "Test Site Name (Staging)",
+				layoutName = "Test Page Name",
+				site = "false",
+				type = "content");
+
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Test Page Name",
+				siteName = "Test Site Name Staging");
+
+			PageEditor.addFragment(
+				collectionName = "Basic Components",
+				fragmentName = "Heading");
+
+			PageEditor.publish();
+
+			Staging.openStagingAdmin(siteURLKey = "test-site-name-staging");
+
+			Staging.publishCustomPublication();
+		}
+
+		task ("When the page creator clicks on the content page item in Pages admin of live site") {
+			PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
+
+			Click(
+				key_pageName = "Test Page Name",
+				locator1 = "PagesAdmin#LIST_GROUP_ITEM_ENTRY_TITLE_LINK");
+		}
+
+		task ("Then the page creator accesses to the content page at view mode") {
+			ControlMenu.viewHeaderTitle(headerTitle = "Test Page Name");
+
+			ContentPages.viewFragmentText(
+				fragmentName = "heading",
+				id = "element-text",
+				text = "Heading Example");
+
+			AssertElementNotPresent(locator1 = "Icon#EDIT_PENCIL");
+		}
+	}
+
+	@description = "This is a test for LPS-152446. When a user without edit permissions clicks a content page in page administration of live site, the page is opened in view mode."
+	@priority = "3"
+	test NavigateToViewModeWhenClickOnContentPageItemInLiveSiteAsUserWithoutEditPermission {
+		task ("Given a marketer without edit permission has a content page") {
+			JSONUser.addUser(
+				userEmailAddress = "userea@liferay.com",
+				userFirstName = "Userfn",
+				userLastName = "Userln",
+				userScreenName = "usersn");
+
+			JSONUser.setFirstPassword(
+				agreeToTermsAndAnswerReminderQuery = "true",
+				requireReset = "false",
+				userEmailAddress = "userea@liferay.com");
+
+			JSONUser.addUserToSite(
+				groupName = "Test Site Name",
+				userEmailAddress = "userea@liferay.com");
+
+			JSONRole.addSiteRole(
+				roleKey = "Marketer",
+				roleTitle = "Marketer");
+
+			Permissions.definePermissionViaJSONAPI(
+				resourceAction = "ACCESS_IN_CONTROL_PANEL",
+				resourceName = "com_liferay_layout_admin_web_portlet_GroupPagesPortlet",
+				roleTitle = "Marketer",
+				roleType = "site");
+
+			Permissions.definePermissionViaJSONAPI(
+				resourceAction = "VIEW_SITE_ADMINISTRATION",
+				resourceName = "com.liferay.portal.kernel.model.Group",
+				roleTitle = "Marketer",
+				roleType = "site");
+
+			Permissions.definePermissionViaJSONAPI(
+				resourceAction = "VIEW_SITE_ADMINISTRATION",
+				resourceName = "com.liferay.depot.model.DepotEntry",
+				roleTitle = "Marketer",
+				roleType = "site");
+
+			Permissions.definePermissionViaJSONAPI(
+				resourceAction = "VIEW",
+				resourceName = "com.liferay.portal.kernel.model.Layout",
+				roleTitle = "Marketer",
+				roleType = "site");
+
+			Permissions.definePermissionViaJSONAPI(
+				resourceAction = "VIEW",
+				resourceName = "com.liferay.layout.seo",
+				roleTitle = "Marketer",
+				roleType = "site");
+
+			JSONRole.assignSiteRoleToUser(
+				groupName = "Test Site Name",
+				roleTitle = "Marketer",
+				userEmailAddress = "userea@liferay.com");
+
+			JSONLayout.addPublicLayout(
+				groupName = "Test Site Name (Staging)",
+				layoutName = "Test Page Name",
+				site = "false",
+				type = "content");
+
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Test Page Name",
+				siteName = "Test Site Name Staging");
+
+			PageEditor.addFragment(
+				collectionName = "Basic Components",
+				fragmentName = "Heading");
+
+			PageEditor.publish();
+
+			Staging.openStagingAdmin(siteURLKey = "test-site-name-staging");
+
+			Staging.publishCustomPublication();
+		}
+
+		task ("When the marketer clicks on the content page item in Pages admin of live site") {
+			User.logoutAndLoginPG(
+				userLoginEmailAddress = "userea@liferay.com",
+				userLoginFullName = "userfn userln");
+
+			PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
+
+			Click(
+				key_pageName = "Test Page Name",
+				locator1 = "PagesAdmin#LIST_GROUP_ITEM_ENTRY_TITLE_LINK");
+		}
+
+		task ("Then the marketer accesses to the content page at view mode") {
+			ControlMenu.viewHeaderTitle(headerTitle = "Test Page Name");
+
+			ContentPages.viewFragmentText(
+				fragmentName = "heading",
+				id = "element-text",
+				text = "Heading Example");
+
+			AssertElementNotPresent(locator1 = "Icon#EDIT_PENCIL");
+
+			JSONRole.deleteRole(roleTitle = "Marketer");
+		}
+	}
+
+	@description = "This is a test for LPS-152446. When a user without edit permissions clicks a content page in page administration of staging site, the page is opened in view mode."
+	@priority = "3"
+	test NavigateToViewModeWhenClickOnContentPageItemInStagingSiteAsUserWithoutEditPermission {
+		task ("Given a marketer without edit permission has a content page") {
+			JSONUser.addUser(
+				userEmailAddress = "userea@liferay.com",
+				userFirstName = "Userfn",
+				userLastName = "Userln",
+				userScreenName = "usersn");
+
+			JSONUser.setFirstPassword(
+				agreeToTermsAndAnswerReminderQuery = "true",
+				requireReset = "false",
+				userEmailAddress = "userea@liferay.com");
+
+			JSONUser.addUserToSite(
+				groupName = "Test Site Name",
+				userEmailAddress = "userea@liferay.com");
+
+			JSONRole.addSiteRole(
+				roleKey = "Marketer",
+				roleTitle = "Marketer");
+
+			Permissions.definePermissionViaJSONAPI(
+				resourceAction = "ACCESS_IN_CONTROL_PANEL",
+				resourceName = "com_liferay_layout_admin_web_portlet_GroupPagesPortlet",
+				roleTitle = "Marketer",
+				roleType = "site");
+
+			for (var resourceActionIndex : list "VIEW_SITE_ADMINISTRATION,VIEW_STAGING") {
+				Permissions.definePermissionViaJSONAPI(
+					resourceAction = "${resourceActionIndex}",
+					resourceName = "com.liferay.portal.kernel.model.Group",
+					roleTitle = "Marketer",
+					roleType = "site");
+			}
+
+			Permissions.definePermissionViaJSONAPI(
+				resourceAction = "VIEW_SITE_ADMINISTRATION",
+				resourceName = "com.liferay.depot.model.DepotEntry",
+				roleTitle = "Marketer",
+				roleType = "site");
+
+			Permissions.definePermissionViaJSONAPI(
+				resourceAction = "VIEW",
+				resourceName = "com.liferay.portal.kernel.model.Layout",
+				roleTitle = "Marketer",
+				roleType = "site");
+
+			Permissions.definePermissionViaJSONAPI(
+				resourceAction = "VIEW",
+				resourceName = "com.liferay.layout.seo",
+				roleTitle = "Marketer",
+				roleType = "site");
+
+			JSONRole.assignSiteRoleToUser(
+				groupName = "Test Site Name",
+				roleTitle = "Marketer",
+				userEmailAddress = "userea@liferay.com");
+
+			JSONLayout.addPublicLayout(
+				groupName = "Test Site Name (Staging)",
+				layoutName = "Test Page Name",
+				site = "false",
+				type = "content");
+
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Test Page Name",
+				siteName = "Test Site Name Staging");
+
+			PageEditor.addFragment(
+				collectionName = "Basic Components",
+				fragmentName = "Heading");
+
+			PageEditor.publish();
+
+			Staging.openStagingAdmin(siteURLKey = "test-site-name-staging");
+
+			Staging.publishCustomPublication();
+		}
+
+		task ("When the marketer clicks on the content page item in Pages admin of staging site") {
+			User.logoutAndLoginPG(
+				userLoginEmailAddress = "userea@liferay.com",
+				userLoginFullName = "userfn userln");
+
+			PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name-staging");
+
+			Click(
+				key_pageName = "Test Page Name",
+				locator1 = "PagesAdmin#LIST_GROUP_ITEM_ENTRY_TITLE_LINK");
+		}
+
+		task ("Then the marketer accesses to the content page at view mode") {
+			ControlMenu.viewHeaderTitle(headerTitle = "Test Page Name");
+
+			ContentPages.viewFragmentText(
+				fragmentName = "heading",
+				id = "element-text",
+				text = "Heading Example");
+
+			AssertElementNotPresent(locator1 = "Icon#EDIT_PENCIL");
+
+			JSONRole.deleteRole(roleTitle = "Marketer");
 		}
 	}
 
@@ -155,12 +455,12 @@ definition {
 		task ("Add a collection page based on dynamic collection") {
 			PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name-staging");
 
-			ContentPages.addPublicCollectionPage(
+			ContentPages.addCollectionPage(
 				collectionName = "Dynamic Collection",
 				pageName = "Dynamic Collection Page Name",
 				tabName = "Collections");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("View header table are shown in collection items via page tree in staging site") {
@@ -228,12 +528,124 @@ definition {
 		}
 	}
 
+	@description = "This is a test for LPS-159631. Page opens in new tab when selecting New Tab in advanced tab on staging."
+	@priority = "3"
+	test ViewLinkToURLTypePageWhichSelectingNewTabInAdvancedTab {
+		task ("Given a page creator has a widget page in staging") {
+			JSONLayout.addPublicLayout(
+				groupName = "Test Site Name (Staging)",
+				layoutName = "Test Page Name",
+				site = "false");
+		}
+
+		task ("When adding a Link to URL type page and selecting New Tab in advanced tab") {
+			PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name-staging");
+
+			PagesAdmin.addPage(
+				pageName = "Test Link to URL Page Name",
+				pageTypeURL = "https://www.google.com",
+				sitePageType = "Link to URL",
+				targetType = "New Tab");
+		}
+
+		task ("Then viewing the linked URL page opens in new tab in staging site and live site") {
+			Navigator.gotoStagedSitePage(
+				pageName = "Test Page Name",
+				siteName = "Test Site Name");
+
+			AssertClick.assertPartialTextClickAt(
+				key_pageName = "Test Link to URL Page Name",
+				locator1 = "Home#PAGE",
+				value1 = "Test Link to URL Page Name");
+
+			SelectWindow.selectPopUp(locator1 = "null");
+
+			AssertLocation.assertPartialLocation(value1 = "https://www.google.com");
+
+			Navigator.closeWindow();
+
+			ProductMenu.gotoStagingSite(site = "Test Site Name");
+
+			PagesFinder.goToPagesFinder();
+
+			Click(
+				key_pageName = "Test Link to URL Page Name",
+				locator1 = "PagesFinder#PAGE_NAME",
+				value1 = "${pageName}");
+
+			SelectWindow.selectPopUp(locator1 = "null");
+
+			AssertLocation.assertPartialLocation(value1 = "https://www.google.com");
+
+			Navigator.closeWindow();
+
+			PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name-staging");
+
+			PagesAdmin.gotoPageEllipsisMenuItem(
+				menuItem = "View",
+				pageName = "Test Link to URL Page Name");
+
+			SelectWindow.selectPopUp(locator1 = "null");
+
+			AssertLocation.assertPartialLocation(value1 = "https://www.google.com");
+
+			Navigator.closeWindow();
+
+			ProductMenuHelper.closeProductMenu();
+
+			Staging.openStagingAdmin(siteURLKey = "test-site-name-staging");
+
+			Staging.publishCustomPublication();
+
+			Navigator.openSiteURL(siteName = "Test Site Name");
+
+			Navigator.gotoLiveView();
+
+			AssertClick.assertPartialTextClickAt(
+				key_pageName = "Test Link to URL Page Name",
+				locator1 = "Home#PAGE",
+				value1 = "Test Link to URL Page Name");
+
+			SelectWindow.selectPopUp(locator1 = "null");
+
+			AssertLocation.assertPartialLocation(value1 = "https://www.google.com");
+
+			Navigator.closeWindow();
+
+			Navigator.openSiteURL(siteName = "Test Site Name");
+
+			Navigator.gotoLiveView();
+
+			PagesFinder.goToPagesFinder();
+
+			Click(
+				key_pageName = "Test Link to URL Page Name",
+				locator1 = "PagesFinder#PAGE_NAME",
+				value1 = "${pageName}");
+
+			SelectWindow.selectPopUp(locator1 = "null");
+
+			AssertLocation.assertPartialLocation(value1 = "https://www.google.com");
+
+			Navigator.closeWindow();
+
+			PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
+
+			PagesAdmin.gotoPageEllipsisMenuItem(
+				menuItem = "View",
+				pageName = "Test Link to URL Page Name");
+
+			SelectWindow.selectPopUp(locator1 = "null");
+
+			AssertLocation.assertPartialLocation(value1 = "https://www.google.com");
+
+			Navigator.closeWindow();
+		}
+	}
+
 	@description = "This is a use case for LPS-140253. View no private page in staging."
 	@priority = "4"
 	test ViewNoPrivatePageInStaging {
-		property osgi.module.configuration.file.names = "com.liferay.layout.internal.configuration.FFDisablePrivateLayoutsConfiguration.config";
-		property osgi.module.configurations = "enabled=&quot;true&quot;";
-
 		task ("Go to Publishing > Staging, enable page versioning, assert no public and private page inside to select") {
 			Staging.openStagingAdmin(siteURLKey = "test-site-name-staging");
 

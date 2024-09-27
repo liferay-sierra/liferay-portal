@@ -21,7 +21,7 @@ import com.liferay.asset.kernel.service.AssetCategoryService;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -60,7 +60,8 @@ import org.osgi.service.component.annotations.Reference;
 		"javax.portlet.init-param.view-template=/view.jsp",
 		"javax.portlet.name=" + AssetCategoriesSelectorPortletKeys.ASSET_CATEGORIES_SELECTOR,
 		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=guest,power-user,user"
+		"javax.portlet.security-role-ref=guest,power-user,user",
+		"javax.portlet.version=3.0"
 	},
 	service = Portlet.class
 )
@@ -76,7 +77,7 @@ public class AssetCategoriesSelectorPortlet extends MVCPortlet {
 
 		if (resourceID.equals("getCategories")) {
 			try {
-				JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+				JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 				List<AssetCategory> categories = _getCategories(
 					resourceRequest);
@@ -144,5 +145,8 @@ public class AssetCategoriesSelectorPortlet extends MVCPortlet {
 
 	@Reference
 	private AssetCategoryService _assetCategoryService;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 }

@@ -14,7 +14,6 @@
 
 package com.liferay.trash.internal;
 
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -24,6 +23,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.trash.TrashHandler;
@@ -115,6 +115,11 @@ public class TrashHelperImpl implements TrashHelper {
 	@Override
 	public String getOriginalTitle(String title) {
 		return _getOriginalTitle(title, "title", _TRASH_PREFIX);
+	}
+
+	@Override
+	public String getOriginalTitle(String title, String paramName) {
+		return _getOriginalTitle(title, paramName, _TRASH_PREFIX);
 	}
 
 	@Override

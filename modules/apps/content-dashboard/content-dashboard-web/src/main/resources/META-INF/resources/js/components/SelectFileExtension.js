@@ -18,24 +18,24 @@ import React from 'react';
 import TreeFilter from './TreeFilter/TreeFilter';
 import {nodeTreeArrayMapper} from './TreeFilter/treeUtils';
 
+import '../../css/tree.scss';
+
 const SelectFileExtension = ({
 	fileExtensionGroups,
 	itemSelectorSaveEvent,
 	portletNamespace,
 }) => {
-	const nodes = nodeTreeArrayMapper({
-		childrenPropertyKey: 'fileExtensions',
-		namePropertyKey: 'fileExtension',
-		nodeArray: fileExtensionGroups,
-	});
-
 	return (
 		<TreeFilter
 			childrenPropertyKey="fileExtensions"
 			itemSelectorSaveEvent={itemSelectorSaveEvent}
 			mandatoryFieldsForFiltering={['id']}
 			namePropertyKey="fileExtension"
-			nodes={nodes}
+			nodes={nodeTreeArrayMapper({
+				childrenPropertyKey: 'fileExtensions',
+				namePropertyKey: 'fileExtension',
+				nodeArray: fileExtensionGroups,
+			})}
 			portletNamespace={portletNamespace}
 		/>
 	);

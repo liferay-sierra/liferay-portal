@@ -38,7 +38,6 @@ import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 
 import java.sql.Blob;
@@ -85,9 +84,9 @@ public class CommerceShippingMethodModelImpl
 		{"companyId", Types.BIGINT}, {"userId", Types.BIGINT},
 		{"userName", Types.VARCHAR}, {"createDate", Types.TIMESTAMP},
 		{"modifiedDate", Types.TIMESTAMP}, {"name", Types.VARCHAR},
-		{"description", Types.VARCHAR}, {"imageId", Types.BIGINT},
-		{"engineKey", Types.VARCHAR}, {"priority", Types.DOUBLE},
-		{"active_", Types.BOOLEAN}
+		{"description", Types.VARCHAR}, {"active_", Types.BOOLEAN},
+		{"engineKey", Types.VARCHAR}, {"imageId", Types.BIGINT},
+		{"priority", Types.DOUBLE}, {"trackingURL", Types.VARCHAR}
 	};
 
 	public static final Map<String, Integer> TABLE_COLUMNS_MAP =
@@ -104,14 +103,15 @@ public class CommerceShippingMethodModelImpl
 		TABLE_COLUMNS_MAP.put("modifiedDate", Types.TIMESTAMP);
 		TABLE_COLUMNS_MAP.put("name", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("description", Types.VARCHAR);
-		TABLE_COLUMNS_MAP.put("imageId", Types.BIGINT);
-		TABLE_COLUMNS_MAP.put("engineKey", Types.VARCHAR);
-		TABLE_COLUMNS_MAP.put("priority", Types.DOUBLE);
 		TABLE_COLUMNS_MAP.put("active_", Types.BOOLEAN);
+		TABLE_COLUMNS_MAP.put("engineKey", Types.VARCHAR);
+		TABLE_COLUMNS_MAP.put("imageId", Types.BIGINT);
+		TABLE_COLUMNS_MAP.put("priority", Types.DOUBLE);
+		TABLE_COLUMNS_MAP.put("trackingURL", Types.VARCHAR);
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table CommerceShippingMethod (mvccVersion LONG default 0 not null,commerceShippingMethodId LONG not null primary key,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,name STRING null,description STRING null,imageId LONG,engineKey VARCHAR(75) null,priority DOUBLE,active_ BOOLEAN)";
+		"create table CommerceShippingMethod (mvccVersion LONG default 0 not null,commerceShippingMethodId LONG not null primary key,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,name STRING null,description STRING null,active_ BOOLEAN,engineKey VARCHAR(75) null,imageId LONG,priority DOUBLE,trackingURL STRING null)";
 
 	public static final String TABLE_SQL_DROP =
 		"drop table CommerceShippingMethod";
@@ -127,24 +127,6 @@ public class CommerceShippingMethodModelImpl
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
 
 	public static final String TX_MANAGER = "liferayTransactionManager";
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean ENTITY_CACHE_ENABLED = true;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean FINDER_CACHE_ENABLED = true;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean COLUMN_BITMASK_ENABLED = true;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
@@ -171,9 +153,19 @@ public class CommerceShippingMethodModelImpl
 	@Deprecated
 	public static final long PRIORITY_COLUMN_BITMASK = 8L;
 
-	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(
-		com.liferay.commerce.service.util.ServiceProps.get(
-			"lock.expiration.time.com.liferay.commerce.model.CommerceShippingMethod"));
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
+	public static void setEntityCacheEnabled(boolean entityCacheEnabled) {
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
+	public static void setFinderCacheEnabled(boolean finderCacheEnabled) {
+	}
 
 	public CommerceShippingMethodModelImpl() {
 	}
@@ -261,34 +253,6 @@ public class CommerceShippingMethodModelImpl
 		return _attributeSetterBiConsumers;
 	}
 
-	private static Function<InvocationHandler, CommerceShippingMethod>
-		_getProxyProviderFunction() {
-
-		Class<?> proxyClass = ProxyUtil.getProxyClass(
-			CommerceShippingMethod.class.getClassLoader(),
-			CommerceShippingMethod.class, ModelWrapper.class);
-
-		try {
-			Constructor<CommerceShippingMethod> constructor =
-				(Constructor<CommerceShippingMethod>)proxyClass.getConstructor(
-					InvocationHandler.class);
-
-			return invocationHandler -> {
-				try {
-					return constructor.newInstance(invocationHandler);
-				}
-				catch (ReflectiveOperationException
-							reflectiveOperationException) {
-
-					throw new InternalError(reflectiveOperationException);
-				}
-			};
-		}
-		catch (NoSuchMethodException noSuchMethodException) {
-			throw new InternalError(noSuchMethodException);
-		}
-	}
-
 	private static final Map<String, Function<CommerceShippingMethod, Object>>
 		_attributeGetterFunctions;
 	private static final Map<String, BiConsumer<CommerceShippingMethod, Object>>
@@ -365,11 +329,11 @@ public class CommerceShippingMethodModelImpl
 			(BiConsumer<CommerceShippingMethod, String>)
 				CommerceShippingMethod::setDescription);
 		attributeGetterFunctions.put(
-			"imageId", CommerceShippingMethod::getImageId);
+			"active", CommerceShippingMethod::getActive);
 		attributeSetterBiConsumers.put(
-			"imageId",
-			(BiConsumer<CommerceShippingMethod, Long>)
-				CommerceShippingMethod::setImageId);
+			"active",
+			(BiConsumer<CommerceShippingMethod, Boolean>)
+				CommerceShippingMethod::setActive);
 		attributeGetterFunctions.put(
 			"engineKey", CommerceShippingMethod::getEngineKey);
 		attributeSetterBiConsumers.put(
@@ -377,17 +341,23 @@ public class CommerceShippingMethodModelImpl
 			(BiConsumer<CommerceShippingMethod, String>)
 				CommerceShippingMethod::setEngineKey);
 		attributeGetterFunctions.put(
+			"imageId", CommerceShippingMethod::getImageId);
+		attributeSetterBiConsumers.put(
+			"imageId",
+			(BiConsumer<CommerceShippingMethod, Long>)
+				CommerceShippingMethod::setImageId);
+		attributeGetterFunctions.put(
 			"priority", CommerceShippingMethod::getPriority);
 		attributeSetterBiConsumers.put(
 			"priority",
 			(BiConsumer<CommerceShippingMethod, Double>)
 				CommerceShippingMethod::setPriority);
 		attributeGetterFunctions.put(
-			"active", CommerceShippingMethod::getActive);
+			"trackingURL", CommerceShippingMethod::getTrackingURL);
 		attributeSetterBiConsumers.put(
-			"active",
-			(BiConsumer<CommerceShippingMethod, Boolean>)
-				CommerceShippingMethod::setActive);
+			"trackingURL",
+			(BiConsumer<CommerceShippingMethod, String>)
+				CommerceShippingMethod::setTrackingURL);
 
 		_attributeGetterFunctions = Collections.unmodifiableMap(
 			attributeGetterFunctions);
@@ -772,17 +742,33 @@ public class CommerceShippingMethodModelImpl
 
 	@JSON
 	@Override
-	public long getImageId() {
-		return _imageId;
+	public boolean getActive() {
+		return _active;
+	}
+
+	@JSON
+	@Override
+	public boolean isActive() {
+		return _active;
 	}
 
 	@Override
-	public void setImageId(long imageId) {
+	public void setActive(boolean active) {
 		if (_columnOriginalValues == Collections.EMPTY_MAP) {
 			_setColumnOriginalValues();
 		}
 
-		_imageId = imageId;
+		_active = active;
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getColumnOriginalValue(String)}
+	 */
+	@Deprecated
+	public boolean getOriginalActive() {
+		return GetterUtil.getBoolean(
+			this.<Boolean>getColumnOriginalValue("active_"));
 	}
 
 	@JSON
@@ -816,6 +802,21 @@ public class CommerceShippingMethodModelImpl
 
 	@JSON
 	@Override
+	public long getImageId() {
+		return _imageId;
+	}
+
+	@Override
+	public void setImageId(long imageId) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_imageId = imageId;
+	}
+
+	@JSON
+	@Override
 	public double getPriority() {
 		return _priority;
 	}
@@ -831,33 +832,22 @@ public class CommerceShippingMethodModelImpl
 
 	@JSON
 	@Override
-	public boolean getActive() {
-		return _active;
+	public String getTrackingURL() {
+		if (_trackingURL == null) {
+			return "";
+		}
+		else {
+			return _trackingURL;
+		}
 	}
 
-	@JSON
 	@Override
-	public boolean isActive() {
-		return _active;
-	}
-
-	@Override
-	public void setActive(boolean active) {
+	public void setTrackingURL(String trackingURL) {
 		if (_columnOriginalValues == Collections.EMPTY_MAP) {
 			_setColumnOriginalValues();
 		}
 
-		_active = active;
-	}
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 *             #getColumnOriginalValue(String)}
-	 */
-	@Deprecated
-	public boolean getOriginalActive() {
-		return GetterUtil.getBoolean(
-			this.<Boolean>getColumnOriginalValue("active_"));
+		_trackingURL = trackingURL;
 	}
 
 	public long getColumnBitmask() {
@@ -1017,10 +1007,11 @@ public class CommerceShippingMethodModelImpl
 		commerceShippingMethodImpl.setModifiedDate(getModifiedDate());
 		commerceShippingMethodImpl.setName(getName());
 		commerceShippingMethodImpl.setDescription(getDescription());
-		commerceShippingMethodImpl.setImageId(getImageId());
-		commerceShippingMethodImpl.setEngineKey(getEngineKey());
-		commerceShippingMethodImpl.setPriority(getPriority());
 		commerceShippingMethodImpl.setActive(isActive());
+		commerceShippingMethodImpl.setEngineKey(getEngineKey());
+		commerceShippingMethodImpl.setImageId(getImageId());
+		commerceShippingMethodImpl.setPriority(getPriority());
+		commerceShippingMethodImpl.setTrackingURL(getTrackingURL());
 
 		commerceShippingMethodImpl.resetOriginalValues();
 
@@ -1052,14 +1043,16 @@ public class CommerceShippingMethodModelImpl
 			this.<String>getColumnOriginalValue("name"));
 		commerceShippingMethodImpl.setDescription(
 			this.<String>getColumnOriginalValue("description"));
-		commerceShippingMethodImpl.setImageId(
-			this.<Long>getColumnOriginalValue("imageId"));
-		commerceShippingMethodImpl.setEngineKey(
-			this.<String>getColumnOriginalValue("engineKey"));
-		commerceShippingMethodImpl.setPriority(
-			this.<Double>getColumnOriginalValue("priority"));
 		commerceShippingMethodImpl.setActive(
 			this.<Boolean>getColumnOriginalValue("active_"));
+		commerceShippingMethodImpl.setEngineKey(
+			this.<String>getColumnOriginalValue("engineKey"));
+		commerceShippingMethodImpl.setImageId(
+			this.<Long>getColumnOriginalValue("imageId"));
+		commerceShippingMethodImpl.setPriority(
+			this.<Double>getColumnOriginalValue("priority"));
+		commerceShippingMethodImpl.setTrackingURL(
+			this.<String>getColumnOriginalValue("trackingURL"));
 
 		return commerceShippingMethodImpl;
 	}
@@ -1119,7 +1112,7 @@ public class CommerceShippingMethodModelImpl
 	@Deprecated
 	@Override
 	public boolean isEntityCacheEnabled() {
-		return ENTITY_CACHE_ENABLED;
+		return true;
 	}
 
 	/**
@@ -1128,7 +1121,7 @@ public class CommerceShippingMethodModelImpl
 	@Deprecated
 	@Override
 	public boolean isFinderCacheEnabled() {
-		return FINDER_CACHE_ENABLED;
+		return true;
 	}
 
 	@Override
@@ -1199,7 +1192,7 @@ public class CommerceShippingMethodModelImpl
 			commerceShippingMethodCacheModel.description = null;
 		}
 
-		commerceShippingMethodCacheModel.imageId = getImageId();
+		commerceShippingMethodCacheModel.active = isActive();
 
 		commerceShippingMethodCacheModel.engineKey = getEngineKey();
 
@@ -1209,9 +1202,17 @@ public class CommerceShippingMethodModelImpl
 			commerceShippingMethodCacheModel.engineKey = null;
 		}
 
+		commerceShippingMethodCacheModel.imageId = getImageId();
+
 		commerceShippingMethodCacheModel.priority = getPriority();
 
-		commerceShippingMethodCacheModel.active = isActive();
+		commerceShippingMethodCacheModel.trackingURL = getTrackingURL();
+
+		String trackingURL = commerceShippingMethodCacheModel.trackingURL;
+
+		if ((trackingURL != null) && (trackingURL.length() == 0)) {
+			commerceShippingMethodCacheModel.trackingURL = null;
+		}
 
 		return commerceShippingMethodCacheModel;
 	}
@@ -1266,42 +1267,12 @@ public class CommerceShippingMethodModelImpl
 		return sb.toString();
 	}
 
-	@Override
-	public String toXmlString() {
-		Map<String, Function<CommerceShippingMethod, Object>>
-			attributeGetterFunctions = getAttributeGetterFunctions();
-
-		StringBundler sb = new StringBundler(
-			(5 * attributeGetterFunctions.size()) + 4);
-
-		sb.append("<model><model-name>");
-		sb.append(getModelClassName());
-		sb.append("</model-name>");
-
-		for (Map.Entry<String, Function<CommerceShippingMethod, Object>> entry :
-				attributeGetterFunctions.entrySet()) {
-
-			String attributeName = entry.getKey();
-			Function<CommerceShippingMethod, Object> attributeGetterFunction =
-				entry.getValue();
-
-			sb.append("<column><column-name>");
-			sb.append(attributeName);
-			sb.append("</column-name><column-value><![CDATA[");
-			sb.append(
-				attributeGetterFunction.apply((CommerceShippingMethod)this));
-			sb.append("]]></column-value></column>");
-		}
-
-		sb.append("</model>");
-
-		return sb.toString();
-	}
-
 	private static class EscapedModelProxyProviderFunctionHolder {
 
 		private static final Function<InvocationHandler, CommerceShippingMethod>
-			_escapedModelProxyProviderFunction = _getProxyProviderFunction();
+			_escapedModelProxyProviderFunction =
+				ProxyUtil.getProxyProviderFunction(
+					CommerceShippingMethod.class, ModelWrapper.class);
 
 	}
 
@@ -1318,10 +1289,11 @@ public class CommerceShippingMethodModelImpl
 	private String _nameCurrentLanguageId;
 	private String _description;
 	private String _descriptionCurrentLanguageId;
-	private long _imageId;
-	private String _engineKey;
-	private double _priority;
 	private boolean _active;
+	private String _engineKey;
+	private long _imageId;
+	private double _priority;
+	private String _trackingURL;
 
 	public <T> T getColumnValue(String columnName) {
 		columnName = _attributeNames.getOrDefault(columnName, columnName);
@@ -1363,10 +1335,11 @@ public class CommerceShippingMethodModelImpl
 		_columnOriginalValues.put("modifiedDate", _modifiedDate);
 		_columnOriginalValues.put("name", _name);
 		_columnOriginalValues.put("description", _description);
-		_columnOriginalValues.put("imageId", _imageId);
-		_columnOriginalValues.put("engineKey", _engineKey);
-		_columnOriginalValues.put("priority", _priority);
 		_columnOriginalValues.put("active_", _active);
+		_columnOriginalValues.put("engineKey", _engineKey);
+		_columnOriginalValues.put("imageId", _imageId);
+		_columnOriginalValues.put("priority", _priority);
+		_columnOriginalValues.put("trackingURL", _trackingURL);
 	}
 
 	private static final Map<String, String> _attributeNames;
@@ -1410,13 +1383,15 @@ public class CommerceShippingMethodModelImpl
 
 		columnBitmasks.put("description", 512L);
 
-		columnBitmasks.put("imageId", 1024L);
+		columnBitmasks.put("active_", 1024L);
 
 		columnBitmasks.put("engineKey", 2048L);
 
-		columnBitmasks.put("priority", 4096L);
+		columnBitmasks.put("imageId", 4096L);
 
-		columnBitmasks.put("active_", 8192L);
+		columnBitmasks.put("priority", 8192L);
+
+		columnBitmasks.put("trackingURL", 16384L);
 
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}

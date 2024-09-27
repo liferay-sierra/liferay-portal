@@ -53,12 +53,12 @@ renderResponse.setTitle(LanguageUtil.format(request, "add-new-user-to-x", accoun
 		<aui:input name="accountEntryId" type="hidden" value="<%= String.valueOf(accountEntryDisplay.getAccountEntryId()) %>" />
 
 		<h2 class="sheet-title">
-			<%= LanguageUtil.get(request, "information") %>
+			<liferay-ui:message key="information" />
 		</h2>
 
 		<clay:sheet-section>
 			<h3 class="sheet-subtitle">
-				<%= LanguageUtil.get(request, "user-display-data") %>
+				<liferay-ui:message key="user-display-data" />
 			</h3>
 
 			<clay:row>
@@ -115,28 +115,15 @@ renderResponse.setTitle(LanguageUtil.format(request, "add-new-user-to-x", accoun
 					md="6"
 				>
 					<div class="text-center">
-
-						<%
-						UserFileUploadsConfiguration userFileUploadsConfiguration = (UserFileUploadsConfiguration)request.getAttribute(UserFileUploadsConfiguration.class.getName());
-						%>
-
 						<liferay-ui:logo-selector
 							currentLogoURL='<%= themeDisplay.getPathImage() + "/user_portrait?img_id=0" %>'
 							defaultLogo="<%= true %>"
 							defaultLogoURL='<%= themeDisplay.getPathImage() + "/user_portrait?img_id=0" %>'
-							maxFileSize="<%= userFileUploadsConfiguration.imageMaxSize() %>"
 							tempImageFileName="0"
 						/>
 					</div>
 
-					<aui:input
-						label="job-title"
-						maxlength='<%=
-							ModelHintsUtil.getMaxLength(Contact.class.getName(), "jobTitle")
-						%>'
-						name="jobTitle"
-						type="text"
-					>
+					<aui:input label="job-title" maxlength='<%= ModelHintsUtil.getMaxLength(Contact.class.getName(), "jobTitle") %>' name="jobTitle" type="text">
 					</aui:input>
 				</clay:col>
 			</clay:row>
@@ -144,13 +131,13 @@ renderResponse.setTitle(LanguageUtil.format(request, "add-new-user-to-x", accoun
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button type="submit" />
-
-		<aui:button href="<%= backURL %>" type="cancel" />
+		<liferay-frontend:edit-form-buttons
+			redirect="<%= backURL %>"
+		/>
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>
 
-<c:if test="<%= !Objects.equals(accountEntryDisplay.getType(), AccountConstants.ACCOUNT_ENTRY_TYPE_PERSON) && (accountEntryDisplay.isValidateUserEmailAddress(themeDisplay.getCompanyId()) || Validator.isNotNull(AccountUserDisplay.getBlockedDomains(themeDisplay.getCompanyId()))) %>">
+<c:if test="<%= !Objects.equals(accountEntryDisplay.getType(), AccountConstants.ACCOUNT_ENTRY_TYPE_PERSON) && (accountEntryDisplay.isValidateUserEmailAddress() || Validator.isNotNull(AccountUserDisplay.getBlockedDomains(themeDisplay.getCompanyId()))) %>">
 
 	<%
 	Map<String, Object> context = HashMapBuilder.<String, Object>put(
@@ -161,15 +148,15 @@ renderResponse.setTitle(LanguageUtil.format(request, "add-new-user-to-x", accoun
 		context.put("blockedDomains", AccountUserDisplay.getBlockedDomains(themeDisplay.getCompanyId()));
 	}
 
-	if (accountEntryDisplay.isValidateUserEmailAddress(themeDisplay.getCompanyId())) {
-		context.put("validDomains", StringUtil.merge(accountEntryDisplay.getDomains(), StringPool.COMMA));
+	if (accountEntryDisplay.isValidateUserEmailAddress()) {
+		context.put("validDomains", accountEntryDisplay.getDomains());
 
 		PortletURL viewValidDomainsURL = PortletURLBuilder.createRenderURL(
 			renderResponse
 		).setMVCPath(
 			"/account_users_admin/account_user/view_valid_domains.jsp"
 		).setParameter(
-			"validDomains", StringUtil.merge(accountEntryDisplay.getDomains(), StringPool.COMMA)
+			"validDomains", accountEntryDisplay.getDomains()
 		).setWindowState(
 			LiferayWindowState.POP_UP
 		).buildPortletURL();

@@ -27,7 +27,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Rafael Praxedes
  */
-@Component(immediate = true, service = DDMFormBuilderSettingsRetriever.class)
+@Component(service = DDMFormBuilderSettingsRetriever.class)
 public class DDMFormBuilderSettingsRetrieverImpl
 	implements DDMFormBuilderSettingsRetriever {
 
@@ -41,7 +41,6 @@ public class DDMFormBuilderSettingsRetrieverImpl
 		ddmFormBuilderSettings.setDataProviderInstanceParameterSettingsURL(
 			_ddmFormBuilderSettingsRetrieverHelper.
 				getDDMDataProviderInstanceParameterSettingsURL());
-
 		ddmFormBuilderSettings.setDataProviderInstancesURL(
 			_ddmFormBuilderSettingsRetrieverHelper.
 				getDDMDataProviderInstancesURL());
@@ -64,7 +63,6 @@ public class DDMFormBuilderSettingsRetrieverImpl
 		ddmFormBuilderSettings.setFunctionsMetadata(
 			_ddmFormBuilderSettingsRetrieverHelper.
 				getSerializedDDMExpressionFunctionsMetadata(locale));
-
 		ddmFormBuilderSettings.setFieldSets(
 			_ddmFormBuilderSettingsRetrieverHelper.
 				getFieldSetsMetadataJSONArray(

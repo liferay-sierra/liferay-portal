@@ -41,7 +41,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.xml.Element;
-import com.liferay.sites.kernel.util.SitesUtil;
+import com.liferay.sites.kernel.util.Sites;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -56,7 +56,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Daniela Zapata Riesco
  */
-@Component(immediate = true, service = StagedModelDataHandler.class)
+@Component(service = StagedModelDataHandler.class)
 public class LayoutSetPrototypeStagedModelDataHandler
 	extends BaseStagedModelDataHandler<LayoutSetPrototype> {
 
@@ -203,32 +203,6 @@ public class LayoutSetPrototypeStagedModelDataHandler
 		return true;
 	}
 
-	@Reference(unbind = "-")
-	protected void setGroupLocalService(GroupLocalService groupLocalService) {
-		_groupLocalService = groupLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setLayoutLocalService(
-		LayoutLocalService layoutLocalService) {
-
-		_layoutLocalService = layoutLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setLayoutPrototypeLocalService(
-		LayoutPrototypeLocalService layoutPrototypeLocalService) {
-
-		_layoutPrototypeLocalService = layoutPrototypeLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setLayoutSetPrototypeLocalService(
-		LayoutSetPrototypeLocalService layoutSetPrototypeLocalService) {
-
-		_layoutSetPrototypeLocalService = layoutSetPrototypeLocalService;
-	}
-
 	private void _exportLayoutPrototypes(
 			PortletDataContext portletDataContext,
 			LayoutSetPrototype layoutSetPrototype,
@@ -283,7 +257,7 @@ public class LayoutSetPrototypeStagedModelDataHandler
 		File file = null;
 
 		try {
-			file = SitesUtil.exportLayoutSetPrototype(
+			file = _sites.exportLayoutSetPrototype(
 				layoutSetPrototype, new ServiceContext());
 
 			try (InputStream inputStream = new FileInputStream(file)) {
@@ -347,7 +321,7 @@ public class LayoutSetPrototypeStagedModelDataHandler
 				portletDataContext.getZipEntryAsInputStream(
 					layoutSetPrototypeLARPath)) {
 
-			SitesUtil.importLayoutSetPrototype(
+			_sites.importLayoutSetPrototype(
 				importedLayoutSetPrototype, inputStream, serviceContext);
 		}
 		catch (IOException ioException) {
@@ -360,9 +334,19 @@ public class LayoutSetPrototypeStagedModelDataHandler
 	private static final Log _log = LogFactoryUtil.getLog(
 		LayoutSetPrototypeStagedModelDataHandler.class);
 
+	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
 	private LayoutLocalService _layoutLocalService;
+
+	@Reference
 	private LayoutPrototypeLocalService _layoutPrototypeLocalService;
+
+	@Reference
 	private LayoutSetPrototypeLocalService _layoutSetPrototypeLocalService;
+
+	@Reference
+	private Sites _sites;
 
 }

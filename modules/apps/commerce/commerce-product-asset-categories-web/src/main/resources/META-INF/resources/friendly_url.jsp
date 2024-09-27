@@ -29,7 +29,7 @@ long parentCategoryId = BeanParamUtil.getLong(category, request, "parentCategory
 PortletURL categoryRedirectURL = PortletURLBuilder.createRenderURL(
 	renderResponse
 ).setMVCPath(
-	"/view_categories.jsp"
+	"/view_asset_categories.jsp"
 ).buildPortletURL();
 
 if (parentCategoryId > 0) {
@@ -65,15 +65,15 @@ renderResponse.setTitle(category.getTitle(locale));
 					defaultLanguageId="<%= LocaleUtil.toLanguageId(themeDisplay.getSiteDefaultLocale()) %>"
 					inputAddon="<%= StringUtil.shorten(friendlyURLBase.toString(), 40) %>"
 					name="urlTitleMapAsXML"
-					xml="<%= HttpUtil.decodeURL(titleMapAsXML) %>"
+					xml="<%= HttpComponentsUtil.decodeURL(titleMapAsXML) %>"
 				/>
 			</liferay-frontend:fieldset>
 		</liferay-frontend:fieldset-group>
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button type="submit" />
-
-		<aui:button href="<%= categoryRedirectURL.toString() %>" type="cancel" />
+		<liferay-frontend:edit-form-buttons
+			redirect="<%= categoryRedirectURL.toString() %>"
+		/>
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>

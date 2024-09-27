@@ -15,11 +15,10 @@
 package com.liferay.depot.web.internal.util;
 
 import com.liferay.depot.model.DepotEntry;
-import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.depot.service.DepotEntryService;
 import com.liferay.item.selector.criteria.group.criterion.GroupItemSelectorCriterion;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
@@ -27,7 +26,7 @@ import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.GroupService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
-import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portlet.usersadmin.search.GroupSearch;
 import com.liferay.portlet.usersadmin.search.GroupSearchTerms;
@@ -39,6 +38,7 @@ import java.util.List;
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletURL;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -68,12 +68,10 @@ public class DepotAdminGroupSearchProvider {
 		return _getGroupSearch(portletRequest, portletURL);
 	}
 
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
-	protected void setModuleServiceLifecycle(
-		ModuleServiceLifecycle moduleServiceLifecycle) {
-
+	@Activate
+	protected void activate() {
 		_classNameIds = new long[] {
-			PortalUtil.getClassNameId(DepotEntry.class.getName())
+			_portal.getClassNameId(DepotEntry.class.getName())
 		};
 	}
 
@@ -87,7 +85,7 @@ public class DepotAdminGroupSearchProvider {
 		GroupSearch groupSearch = new GroupSearch(portletRequest, portletURL);
 
 		groupSearch.setEmptyResultsMessage(
-			LanguageUtil.get(
+			_language.get(
 				portletRequest.getLocale(), "no-asset-libraries-were-found"));
 		groupSearch.setResultsAndTotal(
 			() -> {
@@ -129,7 +127,7 @@ public class DepotAdminGroupSearchProvider {
 		GroupSearch groupSearch = new GroupSearch(portletRequest, portletURL);
 
 		groupSearch.setEmptyResultsMessage(
-			LanguageUtil.get(
+			_language.get(
 				portletRequest.getLocale(), "no-asset-libraries-were-found"));
 
 		GroupSearchTerms searchTerms =
@@ -164,12 +162,18 @@ public class DepotAdminGroupSearchProvider {
 	private long[] _classNameIds;
 
 	@Reference
-	private DepotEntryLocalService _depotEntryLocalService;
-
-	@Reference
 	private DepotEntryService _depotEntryService;
 
 	@Reference
 	private GroupService _groupService;
+
+	@Reference
+	private Language _language;
+
+	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
+	private ModuleServiceLifecycle _moduleServiceLifecycle;
+
+	@Reference
+	private Portal _portal;
 
 }

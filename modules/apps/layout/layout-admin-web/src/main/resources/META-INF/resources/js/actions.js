@@ -12,9 +12,15 @@
  * details.
  */
 
-import {openModal} from 'frontend-js-web';
+import {navigate, openConfirmModal, openModal} from 'frontend-js-web';
+
+import openDeleteLayoutModal from './openDeleteLayoutModal';
 
 const ACTIONS = {
+	convertToPageTemplate: () => {
+		Liferay.fire('convertToPageTemplate');
+	},
+
 	copyLayout: ({copyLayoutURL}, portletNamespace) => {
 		openModal({
 			height: '60vh',
@@ -26,23 +32,29 @@ const ACTIONS = {
 	},
 
 	deleteLayout: ({deleteLayoutURL, message}) => {
-		if (confirm(message)) {
-			Liferay.Util.navigate(deleteLayoutURL);
-		}
+		openDeleteLayoutModal({
+			message,
+			onDelete: () => {
+				navigate(deleteLayoutURL);
+			},
+		});
 	},
 
 	discardDraft: ({discardDraftURL}) => {
-		const discardDraftMessage = Liferay.Language.get(
-			'are-you-sure-you-want-to-discard-current-draft-and-apply-latest-published-changes'
-		);
-
-		if (confirm(discardDraftMessage)) {
-			Liferay.Util.navigate(discardDraftURL);
-		}
+		openConfirmModal({
+			message: Liferay.Language.get(
+				'are-you-sure-you-want-to-discard-current-draft-and-apply-latest-published-changes'
+			),
+			onConfirm: (isConfirmed) => {
+				if (isConfirmed) {
+					navigate(discardDraftURL);
+				}
+			},
+		});
 	},
 
 	exportTranslation: ({exportTranslationURL}) => {
-		Liferay.Util.navigate(exportTranslationURL);
+		navigate(exportTranslationURL);
 	},
 
 	permissionLayout: ({permissionLayoutURL}) => {

@@ -12,7 +12,9 @@
  * details.
  */
 
-import React, {useContext, useState} from 'react';
+import React, {useCallback, useContext, useState} from 'react';
+
+import {useConstants} from './ConstantsContext';
 
 const SelectedMenuItemIdContext = React.createContext(null);
 const SetSelectedMenuItemIdContext = React.createContext(() => {});
@@ -26,10 +28,35 @@ export function useSelectedMenuItemId() {
 }
 
 export function SelectedMenuItemIdProvider({children}) {
-	const [selectedMenuItemId, setSelectedMenuItemId] = useState(null);
+	const {portletNamespace} = useConstants();
+	const selectedMenuItemIdKey = `${portletNamespace}_selectedMenuItemId`;
+
+	const [selectedMenuItemId, setSelectedMenuItemId] = useState(() => {
+		const persistedSelectedMenuItemId = window.sessionStorage.getItem(
+			selectedMenuItemIdKey
+		);
+
+		window.sessionStorage.removeItem(selectedMenuItemIdKey);
+
+		return persistedSelectedMenuItemId || null;
+	});
+
+	const updateSelectedMenuItemId = useCallback(
+		(nextMenuItemId, {persist = false} = {}) => {
+			setSelectedMenuItemId(nextMenuItemId);
+
+			if (persist && nextMenuItemId) {
+				window.sessionStorage.setItem(
+					selectedMenuItemIdKey,
+					nextMenuItemId
+				);
+			}
+		},
+		[selectedMenuItemIdKey]
+	);
 
 	return (
-		<SetSelectedMenuItemIdContext.Provider value={setSelectedMenuItemId}>
+		<SetSelectedMenuItemIdContext.Provider value={updateSelectedMenuItemId}>
 			<SelectedMenuItemIdContext.Provider value={selectedMenuItemId}>
 				{children}
 			</SelectedMenuItemIdContext.Provider>

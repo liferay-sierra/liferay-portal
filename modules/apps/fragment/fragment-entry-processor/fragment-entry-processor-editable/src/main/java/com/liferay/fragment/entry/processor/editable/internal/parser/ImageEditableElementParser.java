@@ -23,10 +23,10 @@ import com.liferay.layout.responsive.ViewportSize;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -179,13 +179,14 @@ public class ImageEditableElementParser implements EditableElementParser {
 
 		if (JSONUtil.isValid(value)) {
 			try {
-				JSONObject jsonObject = JSONFactoryUtil.createJSONObject(value);
+				JSONObject jsonObject = _jsonFactory.createJSONObject(value);
 
 				fileEntryId = jsonObject.getLong("fileEntryId");
 				value = jsonObject.getString("url");
 			}
 			catch (JSONException jsonException) {
-				_log.error("Unable to parse JSON value " + value);
+				_log.error(
+					"Unable to parse JSON value " + value, jsonException);
 
 				value = StringPool.BLANK;
 			}
@@ -234,6 +235,10 @@ public class ImageEditableElementParser implements EditableElementParser {
 				"alt", StringUtil.trim(_html.unescape(alt)));
 		}
 
+		if (configJSONObject.getBoolean("lazyLoading")) {
+			replaceableElement.attr("loading", "lazy");
+		}
+
 		String imageLink = configJSONObject.getString("imageLink");
 
 		if (Validator.isNull(imageLink)) {
@@ -270,7 +275,7 @@ public class ImageEditableElementParser implements EditableElementParser {
 				"content.Language", getClass());
 
 			throw new FragmentEntryContentException(
-				LanguageUtil.format(
+				_language.format(
 					resourceBundle,
 					"each-editable-image-element-must-contain-an-img-tag",
 					new Object[] {"<em>", "</em>"}, false));
@@ -280,7 +285,7 @@ public class ImageEditableElementParser implements EditableElementParser {
 	private void _setImageConfiguration(
 		Element element, JSONObject imageConfigurationJSONObject) {
 
-		for (ViewportSize viewportSize : ViewportSize.values()) {
+		for (ViewportSize viewportSize : _viewportSizes) {
 			String imageConfiguration = imageConfigurationJSONObject.getString(
 				viewportSize.getViewportSizeId());
 
@@ -301,11 +306,18 @@ public class ImageEditableElementParser implements EditableElementParser {
 
 	private static final Pattern _pattern = Pattern.compile(
 		"\\[resources:(.+?)\\]");
+	private static final ViewportSize[] _viewportSizes = ViewportSize.values();
 
 	@Reference
 	private FragmentEntryProcessorHelper _fragmentEntryProcessorHelper;
 
 	@Reference
 	private Html _html;
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 }

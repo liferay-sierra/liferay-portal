@@ -16,7 +16,7 @@ import {defaultLanguageId} from '../../../constants';
 import BaseNode from './BaseNode';
 
 export default function JoinXorNode({
-	data: {actions, description, label, newNode} = {},
+	data: {actions, description, label, newNode, notifications} = {},
 	descriptionSidebar,
 	id,
 	...otherProps
@@ -30,13 +30,14 @@ export default function JoinXorNode({
 	return (
 		<BaseNode
 			actions={actions}
-			className="join-xor-node"
 			description={description}
 			descriptionSidebar={descriptionSidebar}
 			icon="arrow-xor"
 			id={id}
 			label={label}
 			newNode={newNode}
+			nodeTypeClassName="join-xor-node"
+			notifications={notifications}
 			type="join-xor"
 			{...otherProps}
 		/>

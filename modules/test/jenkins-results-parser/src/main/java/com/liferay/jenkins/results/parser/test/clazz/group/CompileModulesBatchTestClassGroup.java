@@ -28,6 +28,8 @@ import java.nio.file.PathMatcher;
 import java.util.Collections;
 import java.util.List;
 
+import org.json.JSONObject;
+
 /**
  * @author Leslie Wong
  */
@@ -44,6 +46,12 @@ public class CompileModulesBatchTestClassGroup
 	}
 
 	protected CompileModulesBatchTestClassGroup(
+		JSONObject jsonObject, PortalTestClassJob portalTestClassJob) {
+
+		super(jsonObject, portalTestClassJob);
+	}
+
+	protected CompileModulesBatchTestClassGroup(
 		String batchName, PortalTestClassJob portalTestClassJob) {
 
 		super(batchName, portalTestClassJob);
@@ -56,8 +64,7 @@ public class CompileModulesBatchTestClassGroup
 
 		List<PathMatcher> excludesPathMatchers = getPathMatchers(
 			getExcludesJobProperties());
-		List<PathMatcher> includesPathMatchers = getPathMatchers(
-			getIncludesJobProperties());
+		List<PathMatcher> includesPathMatchers = getIncludesPathMatchers();
 
 		if (testRelevantChanges &&
 			!(includeStableTestSuite && isStableTestSuiteBatch())) {

@@ -16,7 +16,6 @@ package com.liferay.fragment.internal.exportimport.staged.model.repository;
 
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.exportimport.kernel.lar.StagedModelModifiedDateComparator;
-import com.liferay.exportimport.kernel.staging.Staging;
 import com.liferay.exportimport.staged.model.repository.StagedModelRepository;
 import com.liferay.exportimport.staged.model.repository.StagedModelRepositoryHelper;
 import com.liferay.fragment.exception.RequiredFragmentEntryException;
@@ -28,7 +27,7 @@ import com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Layout;
@@ -76,7 +75,8 @@ public class FragmentEntryStagedModelRepository
 			fragmentEntry.getJs(), fragmentEntry.isCacheable(),
 			fragmentEntry.getConfiguration(), fragmentEntry.getIcon(),
 			fragmentEntry.getPreviewFileEntryId(), fragmentEntry.getType(),
-			fragmentEntry.getStatus(), serviceContext);
+			fragmentEntry.getTypeOptions(), fragmentEntry.getStatus(),
+			serviceContext);
 	}
 
 	@Override
@@ -162,7 +162,8 @@ public class FragmentEntryStagedModelRepository
 			fragmentEntry.getCss(), fragmentEntry.getHtml(),
 			fragmentEntry.getJs(), fragmentEntry.isCacheable(),
 			fragmentEntry.getConfiguration(), fragmentEntry.getIcon(),
-			fragmentEntry.getPreviewFileEntryId(), fragmentEntry.getStatus());
+			fragmentEntry.getPreviewFileEntryId(),
+			fragmentEntry.getTypeOptions(), fragmentEntry.getStatus());
 	}
 
 	private void _deleteFragmentEntryLinks(
@@ -184,7 +185,7 @@ public class FragmentEntryStagedModelRepository
 
 		long[] plids = new long[0];
 
-		JSONObject extraDataJSONObject = JSONFactoryUtil.createJSONObject(
+		JSONObject extraDataJSONObject = _jsonFactory.createJSONObject(
 			extraData);
 
 		boolean privateLayout = GetterUtil.getBoolean(
@@ -231,12 +232,12 @@ public class FragmentEntryStagedModelRepository
 	private FragmentEntryLocalService _fragmentEntryLocalService;
 
 	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
 	private LayoutService _layoutService;
 
 	@Reference
 	private StagedModelRepositoryHelper _stagedModelRepositoryHelper;
-
-	@Reference
-	private Staging _staging;
 
 }

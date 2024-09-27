@@ -40,7 +40,6 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.commerce.order.rule.configuration.COREntryConfiguration",
-	enabled = false, immediate = true,
 	service = CheckCOREntryMessageListener.class
 )
 public class CheckCOREntryMessageListener extends BaseMessageListener {
@@ -76,13 +75,11 @@ public class CheckCOREntryMessageListener extends BaseMessageListener {
 		_corEntryLocalService.checkCOREntries();
 	}
 
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
-	protected void setModuleServiceLifecycle(
-		ModuleServiceLifecycle moduleServiceLifecycle) {
-	}
-
 	@Reference
 	private COREntryLocalService _corEntryLocalService;
+
+	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
+	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
 	@Reference
 	private SchedulerEngineHelper _schedulerEngineHelper;

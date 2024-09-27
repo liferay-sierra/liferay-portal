@@ -1,4 +1,4 @@
-@component-name = "portal-collaboration"
+@component-name = "portal-lima"
 definition {
 
 	property portal.acceptance = "true";
@@ -27,9 +27,9 @@ definition {
 		}
 	}
 
+	@e2etest
 	@priority = "5"
 	@refactordone
-	@uitest
 	test CanAddCategory {
 		property portal.acceptance = "true";
 
@@ -73,9 +73,9 @@ definition {
 			threadCount = "0");
 	}
 
+	@e2etest
 	@priority = "5"
 	@refactordone
-	@uitest
 	test CanAddThread {
 		property app.server.types = "jboss,tcserver,tomcat,weblogic,websphere,wildfly";
 		property database.types = "db2,hypersonic,mariadb,mysql,oracle,postgresql,sqlserver,sybase";
@@ -308,6 +308,41 @@ definition {
 			userScreenName = "userfn userln");
 
 		MessageboardsThread.viewNoBannedUsers();
+	}
+
+	@description = "This is a test for LPS-82508. It ensures that the number of threads and categories in a message board reflects the whole hierarchy."
+	@priority = "5"
+	test CanViewCountsFromRootCategory {
+		JSONMBMessage.addCategory(
+			categoryDescription = "MB Category Description",
+			categoryName = "MB Category Name",
+			userEmailAddress = "test@liferay.com");
+
+		var parentCategoryId = JSONMBMessage.getCategoryIdByName(
+			categoryName = "MB Category Name",
+			groupName = "Guest");
+
+		JSONMBMessage.addCategory(
+			categoryDescription = "MB Subcategory Description",
+			categoryName = "MB Subcategory Name",
+			groupName = "Guest",
+			parentCategoryId = "${parentCategoryId}",
+			userEmailAddress = "test@liferay.com");
+
+		for (var threadCount : list "1,2") {
+			JSONMBMessage.addMessage(
+				categoryName = "MB Subcategory Name",
+				groupName = "Guest",
+				threadBody = "MB Thread Message Body${threadCount}",
+				threadSubject = "MB Thread Message Subject${threadCount}");
+		}
+
+		MessageBoardsAdmin.openMessageBoardsAdmin(siteURLKey = "guest");
+
+		MessageboardsCategory.viewCP(
+			categoryCount = "1",
+			categoryName = "MB Category Name",
+			threadCount = "2");
 	}
 
 }

@@ -23,7 +23,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Field;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.search.spi.model.index.contributor.ModelDocumentContributor;
 
 import org.osgi.service.component.annotations.Component;
@@ -33,7 +33,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Rafael Praxedes
  */
 @Component(
-	immediate = true,
 	property = "indexer.class.name=com.liferay.dynamic.data.mapping.model.DDMTemplate",
 	service = ModelDocumentContributor.class
 )
@@ -78,12 +77,12 @@ public class DDMTemplateModelDocumentContributor
 		document.addKeyword("type", ddmTemplate.getType());
 		document.addLocalizedText(
 			Field.DESCRIPTION,
-			LocalizationUtil.populateLocalizationMap(
+			_localization.populateLocalizationMap(
 				ddmTemplate.getDescriptionMap(),
 				ddmTemplate.getDefaultLanguageId(), ddmTemplate.getGroupId()));
 		document.addLocalizedText(
 			Field.NAME,
-			LocalizationUtil.populateLocalizationMap(
+			_localization.populateLocalizationMap(
 				ddmTemplate.getNameMap(), ddmTemplate.getDefaultLanguageId(),
 				ddmTemplate.getGroupId()));
 	}
@@ -91,8 +90,7 @@ public class DDMTemplateModelDocumentContributor
 	protected String[] getLanguageIds(
 		String defaultLanguageId, String content) {
 
-		String[] languageIds = LocalizationUtil.getAvailableLanguageIds(
-			content);
+		String[] languageIds = _localization.getAvailableLanguageIds(content);
 
 		if (languageIds.length == 0) {
 			languageIds = new String[] {defaultLanguageId};
@@ -109,5 +107,8 @@ public class DDMTemplateModelDocumentContributor
 
 	@Reference
 	private DDMPermissionSupport _ddmPermissionSupport;
+
+	@Reference
+	private Localization _localization;
 
 }

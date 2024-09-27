@@ -41,7 +41,6 @@ import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.FriendlyURLNormalizer;
 import com.liferay.portal.kernel.util.FriendlyURLNormalizerUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
-import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
@@ -54,7 +53,6 @@ import com.liferay.portal.util.DigesterImpl;
 import com.liferay.portal.util.FastDateFormatFactoryImpl;
 import com.liferay.portal.util.FileImpl;
 import com.liferay.portal.util.HtmlImpl;
-import com.liferay.portal.util.HttpImpl;
 import com.liferay.portal.util.InitUtil;
 import com.liferay.portal.util.PortalImpl;
 import com.liferay.portal.xml.SAXReaderImpl;
@@ -120,10 +118,6 @@ public class ToolDependencies {
 		HtmlUtil htmlUtil = new HtmlUtil();
 
 		htmlUtil.setHtml(new HtmlImpl());
-
-		HttpUtil httpUtil = new HttpUtil();
-
-		httpUtil.setHttp(new HttpImpl());
 
 		JSONFactoryUtil jsonFactoryUtil = new JSONFactoryUtil();
 
@@ -213,14 +207,9 @@ public class ToolDependencies {
 			return _portalCacheManager.getPortalCache(portalCacheName);
 		}
 
-		/**
-		 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-		 *             #getPortalCache(String)}
-		 */
-		@Deprecated
 		@Override
 		public PortalCache<? extends Serializable, ? extends Serializable>
-			getPortalCache(String portalCacheName, boolean blocking) {
+			getPortalCache(String portalCacheName, boolean mvcc) {
 
 			return getPortalCache(portalCacheName);
 		}
@@ -228,7 +217,7 @@ public class ToolDependencies {
 		@Override
 		public PortalCache<? extends Serializable, ? extends Serializable>
 			getPortalCache(
-				String portalCacheName, boolean blocking, boolean mvcc) {
+				String portalCacheName, boolean mvcc, boolean sharded) {
 
 			return getPortalCache(portalCacheName);
 		}
@@ -283,16 +272,12 @@ public class ToolDependencies {
 			return _portalCacheName;
 		}
 
-		/**
-		 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-		 */
-		@Deprecated
-		@Override
-		public boolean isBlocking() {
+		public boolean isMVCC() {
 			return false;
 		}
 
-		public boolean isMVCC() {
+		@Override
+		public boolean isSharded() {
 			return false;
 		}
 
@@ -407,25 +392,20 @@ public class ToolDependencies {
 		public PortalCache<K, V> getPortalCache(String portalCacheName)
 			throws PortalCacheException {
 
-			return getPortalCache(portalCacheName, false, false);
+			return getPortalCache(portalCacheName, false);
 		}
 
-		/**
-		 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-		 *             #getPortalCache(String)}
-		 */
-		@Deprecated
 		@Override
 		public PortalCache<K, V> getPortalCache(
-				String portalCacheName, boolean blocking)
+				String portalCacheName, boolean mvcc)
 			throws PortalCacheException {
 
-			return getPortalCache(portalCacheName);
+			return getPortalCache(portalCacheName, mvcc, false);
 		}
 
 		@Override
 		public PortalCache<K, V> getPortalCache(
-				String portalCacheName, boolean blocking, boolean mvcc)
+				String portalCacheName, boolean mvcc, boolean sharded)
 			throws PortalCacheException {
 
 			PortalCache<K, V> portalCache = _portalCaches.get(portalCacheName);
@@ -463,15 +443,6 @@ public class ToolDependencies {
 			return false;
 		}
 
-		/**
-		 * @deprecated As of Mueller (7.2.x), replaced by {@link
-		 *             #reconfigurePortalCaches(URL, ClassLoader)}
-		 */
-		@Deprecated
-		@Override
-		public void reconfigurePortalCaches(URL configurationURL) {
-		}
-
 		@Override
 		public void reconfigurePortalCaches(
 			URL configurationURL, ClassLoader classLoader) {
@@ -487,6 +458,10 @@ public class ToolDependencies {
 		@Override
 		public void removePortalCache(String portalCacheName) {
 			_portalCaches.remove(portalCacheName);
+		}
+
+		@Override
+		public void removePortalCaches(long companyId) {
 		}
 
 		@Override
@@ -522,18 +497,6 @@ public class ToolDependencies {
 			String portalCacheName) {
 
 			return _portalCacheManager.getPortalCache(portalCacheName);
-		}
-
-		/**
-		 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-		 *             #getPortalCache(String)}
-		 */
-		@Deprecated
-		@Override
-		public PortalCache<? extends Serializable, ?> getPortalCache(
-			String portalCacheName, boolean blocking) {
-
-			return getPortalCache(portalCacheName);
 		}
 
 		@Override

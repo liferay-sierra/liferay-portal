@@ -32,11 +32,9 @@ import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.security.auth.PasswordModificationThreadLocal;
 import com.liferay.portal.kernel.security.ldap.LDAPSettings;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
-import com.liferay.portal.kernel.security.pwd.PasswordEncryptorUtil;
 import com.liferay.portal.kernel.service.ImageLocalService;
 import com.liferay.portal.kernel.service.ListTypeService;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.Props;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.exportimport.UserOperation;
 import com.liferay.portal.security.ldap.ContactConverterKeys;
@@ -135,12 +133,11 @@ public class DefaultPortalToLDAPConverter implements PortalToLDAPConverter {
 		String rdnType = GetterUtil.getString(
 			groupMappings.getProperty(GroupConverterKeys.GROUP_NAME),
 			_DEFAULT_DN);
-		SafeLdapName groupsDNSafeLdapName =
-			_safePortalLDAP.getGroupsDNSafeLdapName(
-				ldapServerId, userGroup.getCompanyId());
 
 		return SafeLdapNameFactory.from(
-			rdnType, userGroup.getName(), groupsDNSafeLdapName);
+			rdnType, userGroup.getName(),
+			_safePortalLDAP.getGroupsDNSafeLdapName(
+				ldapServerId, userGroup.getCompanyId()));
 	}
 
 	@Override
@@ -459,11 +456,11 @@ public class DefaultPortalToLDAPConverter implements PortalToLDAPConverter {
 			userMappings.getProperty(_userDNFieldName), _DEFAULT_DN);
 		String rdnValue = _beanProperties.getStringSilent(
 			user, _userDNFieldName);
-		SafeLdapName usersDNSafeLdapName =
-			_safePortalLDAP.getUsersDNSafeLdapName(
-				ldapServerId, user.getCompanyId());
 
-		return SafeLdapNameFactory.from(rdnType, rdnValue, usersDNSafeLdapName);
+		return SafeLdapNameFactory.from(
+			rdnType, rdnValue,
+			_safePortalLDAP.getUsersDNSafeLdapName(
+				ldapServerId, user.getCompanyId()));
 	}
 
 	public void setContactReservedFieldNames(
@@ -484,43 +481,6 @@ public class DefaultPortalToLDAPConverter implements PortalToLDAPConverter {
 			_reservedUserFieldNames.put(
 				reservedUserFieldName, reservedUserFieldName);
 		}
-	}
-
-	@Reference(unbind = "-")
-	protected void setImageLocalService(ImageLocalService imageLocalService) {
-		_imageLocalService = imageLocalService;
-	}
-
-	@Reference(
-		target = "(factoryPid=com.liferay.portal.security.ldap.authenticator.configuration.LDAPAuthConfiguration)",
-		unbind = "-"
-	)
-	protected void setLDAPAuthConfigurationProvider(
-		ConfigurationProvider<LDAPAuthConfiguration>
-			ldapAuthConfigurationProvider) {
-
-		_ldapAuthConfigurationProvider = ldapAuthConfigurationProvider;
-	}
-
-	@Reference(
-		target = "(factoryPid=com.liferay.portal.security.ldap.configuration.LDAPServerConfiguration)",
-		unbind = "-"
-	)
-	protected void setLDAPServerConfigurationProvider(
-		ConfigurationProvider<LDAPServerConfiguration>
-			ldapServerConfigurationProvider) {
-
-		_ldapServerConfigurationProvider = ldapServerConfigurationProvider;
-	}
-
-	@Reference(unbind = "-")
-	protected void setLdapSettings(LDAPSettings ldapSettings) {
-		_ldapSettings = ldapSettings;
-	}
-
-	@Reference(unbind = "-")
-	protected void setPasswordEncryptor(PasswordEncryptor passwordEncryptor) {
-		_passwordEncryptor = passwordEncryptor;
 	}
 
 	private void _addAttributeMapping(
@@ -564,11 +524,11 @@ public class DefaultPortalToLDAPConverter implements PortalToLDAPConverter {
 		boolean listTypeFieldName = false;
 
 		if (fieldName.equals(ContactConverterKeys.PREFIX)) {
-			fieldName = "prefixId";
+			fieldName = "prefixListTypeId";
 			listTypeFieldName = true;
 		}
 		else if (fieldName.equals(ContactConverterKeys.SUFFIX)) {
-			fieldName = "suffixId";
+			fieldName = "suffixListTypeId";
 			listTypeFieldName = true;
 		}
 
@@ -602,7 +562,7 @@ public class DefaultPortalToLDAPConverter implements PortalToLDAPConverter {
 		String algorithm = ldapAuthConfiguration.passwordEncryptionAlgorithm();
 
 		if (Validator.isNotNull(algorithm) &&
-			!algorithm.equals(PasswordEncryptorUtil.TYPE_NONE)) {
+			!algorithm.equals(PasswordEncryptor.TYPE_NONE)) {
 
 			try {
 				password = _passwordEncryptor.encrypt(
@@ -748,20 +708,29 @@ public class DefaultPortalToLDAPConverter implements PortalToLDAPConverter {
 	@Reference
 	private BeanProperties _beanProperties;
 
+	@Reference
 	private ImageLocalService _imageLocalService;
+
+	@Reference(
+		target = "(factoryPid=com.liferay.portal.security.ldap.authenticator.configuration.LDAPAuthConfiguration)"
+	)
 	private ConfigurationProvider<LDAPAuthConfiguration>
 		_ldapAuthConfigurationProvider;
+
+	@Reference(
+		target = "(factoryPid=com.liferay.portal.security.ldap.configuration.LDAPServerConfiguration)"
+	)
 	private ConfigurationProvider<LDAPServerConfiguration>
 		_ldapServerConfigurationProvider;
+
+	@Reference
 	private LDAPSettings _ldapSettings;
 
 	@Reference
 	private ListTypeService _listTypeService;
 
-	private PasswordEncryptor _passwordEncryptor;
-
 	@Reference
-	private Props _props;
+	private PasswordEncryptor _passwordEncryptor;
 
 	private final Map<String, String> _reservedContactFieldNames =
 		new HashMap<>();

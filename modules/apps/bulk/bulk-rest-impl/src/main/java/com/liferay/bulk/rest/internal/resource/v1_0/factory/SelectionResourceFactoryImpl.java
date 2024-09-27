@@ -14,6 +14,7 @@
 
 package com.liferay.bulk.rest.internal.resource.v1_0.factory;
 
+import com.liferay.bulk.rest.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.bulk.rest.resource.v1_0.SelectionResource;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -33,14 +34,18 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -58,7 +61,10 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @author Alejandro Tardín
  * @generated
  */
-@Component(immediate = true, service = SelectionResource.Factory.class)
+@Component(
+	property = "resource.locator.key=/bulk/v1.0/Selection",
+	service = SelectionResource.Factory.class
+)
 @Generated("")
 public class SelectionResourceFactoryImpl implements SelectionResource.Factory {
 
@@ -72,9 +78,7 @@ public class SelectionResourceFactoryImpl implements SelectionResource.Factory {
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (SelectionResource)ProxyUtil.newProxyInstance(
-					SelectionResource.class.getClassLoader(),
-					new Class<?>[] {SelectionResource.class},
+				return _selectionResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -133,14 +137,31 @@ public class SelectionResourceFactoryImpl implements SelectionResource.Factory {
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		SelectionResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, SelectionResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		SelectionResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			SelectionResource.class.getClassLoader(), SelectionResource.class);
+
+		try {
+			Constructor<SelectionResource> constructor =
+				(Constructor<SelectionResource>)proxyClass.getConstructor(
+					InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -163,7 +184,7 @@ public class SelectionResourceFactoryImpl implements SelectionResource.Factory {
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		SelectionResource selectionResource =
@@ -187,6 +208,7 @@ public class SelectionResourceFactoryImpl implements SelectionResource.Factory {
 		selectionResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		selectionResource.setRoleLocalService(_roleLocalService);
+		selectionResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(selectionResource, arguments);
@@ -202,6 +224,9 @@ public class SelectionResourceFactoryImpl implements SelectionResource.Factory {
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, SelectionResource>
+		_selectionResourceProxyProviderFunction = _getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -223,9 +248,6 @@ public class SelectionResourceFactoryImpl implements SelectionResource.Factory {
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -234,6 +256,9 @@ public class SelectionResourceFactoryImpl implements SelectionResource.Factory {
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

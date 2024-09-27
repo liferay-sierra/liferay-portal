@@ -134,7 +134,7 @@ public class ThemeBuilderCompareTest {
 
 		ThemeBuilder themeBuilder = new ThemeBuilder(
 			_diffsDir, _name, outputDir, _parentDir, _parentName,
-			_templateExtension, _unstyledJarFile);
+			_templateExtension, null, null, _unstyledJarFile);
 
 		themeBuilder.build();
 
@@ -258,10 +258,8 @@ public class ThemeBuilderCompareTest {
 		}
 
 		for (String pattern : excludePatterns) {
-			PathMatcher pathMatcher = fileSystem.getPathMatcher(
-				"glob:" + dirName + "/" + pattern);
-
-			excludePathMatchers.add(pathMatcher);
+			excludePathMatchers.add(
+				fileSystem.getPathMatcher("glob:" + dirName + "/" + pattern));
 		}
 
 		Files.walkFileTree(

@@ -14,7 +14,7 @@
 
 package com.liferay.fragment.entry.processor.resources;
 
-import com.liferay.document.library.kernel.util.DLUtil;
+import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.fragment.model.FragmentCollection;
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.model.FragmentEntryLink;
@@ -24,7 +24,6 @@ import com.liferay.fragment.service.FragmentCollectionService;
 import com.liferay.fragment.service.FragmentEntryService;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.util.StringUtil;
 
@@ -83,16 +82,17 @@ public class ResourcesFragmentEntryProcessor implements FragmentEntryProcessor {
 		Matcher matcher = _pattern.matcher(code);
 
 		while (matcher.find()) {
-			FileEntry fileEntry =
-				PortletFileRepositoryUtil.fetchPortletFileEntry(
-					fragmentEntry.getGroupId(),
-					fragmentCollection.getResourcesFolderId(),
-					matcher.group(1));
+			if (fragmentEntry.getGroupId() <= 0) {
+				continue;
+			}
+
+			FileEntry fileEntry = fragmentCollection.getResource(
+				matcher.group(1));
 
 			String fileEntryURL = StringPool.BLANK;
 
 			if (fileEntry != null) {
-				fileEntryURL = DLUtil.getDownloadURL(
+				fileEntryURL = _dlURLHelper.getDownloadURL(
 					fileEntry, fileEntry.getFileVersion(), null,
 					StringPool.BLANK, false, false);
 			}
@@ -105,6 +105,9 @@ public class ResourcesFragmentEntryProcessor implements FragmentEntryProcessor {
 
 	private static final Pattern _pattern = Pattern.compile(
 		"\\[resources:(.+?)\\]");
+
+	@Reference
+	private DLURLHelper _dlURLHelper;
 
 	@Reference
 	private FragmentCollectionService _fragmentCollectionService;

@@ -23,22 +23,31 @@ import com.liferay.commerce.product.service.CPInstanceLocalService;
 import com.liferay.commerce.product.service.CommerceCatalogLocalService;
 import com.liferay.commerce.product.type.virtual.model.CPDefinitionVirtualSetting;
 import com.liferay.commerce.product.type.virtual.service.base.CPDefinitionVirtualSettingServiceBaseImpl;
+import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
-import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionFactory;
 import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.spring.extender.service.ServiceReference;
 
 import java.util.Locale;
 import java.util.Map;
+
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Marco Leo
  * @author Alessio Antonio Rendina
  * @author Andrea Di Giorgi
  */
+@Component(
+	property = {
+		"json.web.service.context.name=commerce",
+		"json.web.service.context.path=CPDefinitionVirtualSetting"
+	},
+	service = AopService.class
+)
 public class CPDefinitionVirtualSettingServiceImpl
 	extends CPDefinitionVirtualSettingServiceBaseImpl {
 
@@ -53,7 +62,7 @@ public class CPDefinitionVirtualSettingServiceImpl
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		checkPermission(className, classPK, ActionKeys.UPDATE);
+		_checkPermission(className, classPK, ActionKeys.UPDATE);
 
 		return cpDefinitionVirtualSettingLocalService.
 			addCPDefinitionVirtualSetting(
@@ -75,7 +84,7 @@ public class CPDefinitionVirtualSettingServiceImpl
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		checkPermission(className, classPK, ActionKeys.UPDATE);
+		_checkPermission(className, classPK, ActionKeys.UPDATE);
 
 		return cpDefinitionVirtualSettingLocalService.
 			addCPDefinitionVirtualSetting(
@@ -95,7 +104,7 @@ public class CPDefinitionVirtualSettingServiceImpl
 				fetchCPDefinitionVirtualSetting(className, classPK);
 
 		if (cpDefinitionVirtualSetting != null) {
-			checkPermission(className, classPK, ActionKeys.VIEW);
+			_checkPermission(className, classPK, ActionKeys.VIEW);
 		}
 
 		return cpDefinitionVirtualSetting;
@@ -116,7 +125,7 @@ public class CPDefinitionVirtualSettingServiceImpl
 			cpDefinitionVirtualSettingLocalService.
 				getCPDefinitionVirtualSetting(cpDefinitionVirtualSettingId);
 
-		checkPermission(
+		_checkPermission(
 			cpDefinitionVirtualSetting.getClassName(),
 			cpDefinitionVirtualSetting.getClassPK(), ActionKeys.UPDATE);
 
@@ -144,7 +153,7 @@ public class CPDefinitionVirtualSettingServiceImpl
 			cpDefinitionVirtualSettingLocalService.
 				getCPDefinitionVirtualSetting(cpDefinitionVirtualSettingId);
 
-		checkPermission(
+		_checkPermission(
 			cpDefinitionVirtualSetting.getClassName(),
 			cpDefinitionVirtualSetting.getClassPK(), ActionKeys.UPDATE);
 
@@ -157,26 +166,10 @@ public class CPDefinitionVirtualSettingServiceImpl
 				serviceContext);
 	}
 
-	protected void checkPermission(
-			String className, long classPK, String action)
-		throws PortalException {
-
-		long cpDefinitionId = classPK;
-
-		if (className.equals(CPInstance.class.getName())) {
-			CPInstance cpInstance = _cpInstanceLocalService.getCPInstance(
-				classPK);
-
-			cpDefinitionId = cpInstance.getCPDefinitionId();
-		}
-
-		_checkCommerceCatalog(cpDefinitionId, action);
-	}
-
-	@ServiceReference(type = CommerceCatalogLocalService.class)
+	@Reference
 	protected CommerceCatalogLocalService commerceCatalogLocalService;
 
-	@ServiceReference(type = CPDefinitionLocalService.class)
+	@Reference
 	protected CPDefinitionLocalService cpDefinitionLocalService;
 
 	private void _checkCommerceCatalog(long cpDefinitionId, String actionId)
@@ -201,14 +194,28 @@ public class CPDefinitionVirtualSettingServiceImpl
 			getPermissionChecker(), commerceCatalog, actionId);
 	}
 
-	private static volatile ModelResourcePermission<CommerceCatalog>
-		_commerceCatalogModelResourcePermission =
-			ModelResourcePermissionFactory.getInstance(
-				CPDefinitionVirtualSettingServiceImpl.class,
-				"_commerceCatalogModelResourcePermission",
-				CommerceCatalog.class);
+	private void _checkPermission(String className, long classPK, String action)
+		throws PortalException {
 
-	@ServiceReference(type = CPInstanceLocalService.class)
+		long cpDefinitionId = classPK;
+
+		if (className.equals(CPInstance.class.getName())) {
+			CPInstance cpInstance = _cpInstanceLocalService.getCPInstance(
+				classPK);
+
+			cpDefinitionId = cpInstance.getCPDefinitionId();
+		}
+
+		_checkCommerceCatalog(cpDefinitionId, action);
+	}
+
+	@Reference(
+		target = "(model.class.name=com.liferay.commerce.product.model.CommerceCatalog)"
+	)
+	private ModelResourcePermission<CommerceCatalog>
+		_commerceCatalogModelResourcePermission;
+
+	@Reference
 	private CPInstanceLocalService _cpInstanceLocalService;
 
 }

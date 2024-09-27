@@ -12,8 +12,10 @@
  * details.
  */
 
-import {CONTAINER_DISPLAY_OPTIONS} from '../../config/constants/containerDisplayOptions';
+import {CONTENT_DISPLAY_OPTIONS} from '../../config/constants/contentDisplayOptions';
 import {LAYOUT_DATA_ITEM_TYPES} from '../../config/constants/layoutDataItemTypes';
+import {collectionIsMapped} from '../collectionIsMapped';
+import {formIsMapped} from '../formIsMapped';
 import isItemEmpty from '../isItemEmpty';
 import checkAllowedChild from './checkAllowedChild';
 import {DRAG_DROP_TARGET_TYPE} from './constants/dragDropTargetType';
@@ -23,7 +25,6 @@ import getDropTargetPosition from './getDropTargetPosition';
 import getTargetData from './getTargetData';
 import getTargetPositions from './getTargetPositions';
 import itemIsAncestor from './itemIsAncestor';
-import {initialDragDrop} from './useDragAndDrop';
 
 const ELEVATION_BORDER_SIZE = 15;
 const MAXIMUM_ELEVATION_STEPS = 3;
@@ -48,22 +49,14 @@ export default function defaultComputeHover({
 		return;
 	}
 
-	// Dragging over itself or a descendant
-
-	if (itemIsAncestor(sourceItem, targetItem, layoutDataRef)) {
-		return dispatch({
-			...initialDragDrop.state,
-			type: DRAG_DROP_TARGET_TYPE.DRAGGING_TO_ITSELF,
-		});
-	}
-
 	// Apparently valid drag, calculate position and
 	// nesting validation
 
 	const orientation = getOrientation(
 		siblingItem || targetItem,
 		monitor,
-		targetRefs
+		targetRefs,
+		layoutDataRef
 	);
 
 	const [
@@ -82,28 +75,40 @@ export default function defaultComputeHover({
 	const validDropInsideTarget = (() => {
 		const targetIsColumn =
 			targetItem.type === LAYOUT_DATA_ITEM_TYPES.column;
+		const targetIsCollectionNotMapped =
+			targetItem.type === LAYOUT_DATA_ITEM_TYPES.collection &&
+			!collectionIsMapped(targetItem);
 		const targetIsContainerFlex = itemIsContainerFlex(targetItem);
 		const targetIsFragment =
 			targetItem.type === LAYOUT_DATA_ITEM_TYPES.fragment;
+		const targetIsFormNotMapped =
+			targetItem.type === LAYOUT_DATA_ITEM_TYPES.form &&
+			!formIsMapped(targetItem);
 		const targetIsEmpty = isItemEmpty(
 			layoutDataRef.current.items[targetItem.itemId],
 			layoutDataRef.current
 		);
-		const allowedChild = checkAllowedChild(sourceItem, targetItem);
 
 		return (
 			targetPositionWithMiddle === TARGET_POSITIONS.MIDDLE &&
-			(targetIsEmpty || targetIsColumn || targetIsContainerFlex) &&
-			!targetIsFragment &&
-			allowedChild
+			(targetIsEmpty ||
+				targetIsColumn ||
+				targetIsContainerFlex ||
+				targetIsCollectionNotMapped ||
+				targetIsFormNotMapped) &&
+			!targetIsFragment
 		);
 	})();
 
-	if (!siblingItem && validDropInsideTarget) {
+	if (
+		!siblingItem &&
+		validDropInsideTarget &&
+		!itemIsAncestor(sourceItem, targetItem, layoutDataRef)
+	) {
 		return dispatch({
 			dropItem: sourceItem,
 			dropTargetItem: targetItem,
-			droppable: checkAllowedChild(sourceItem, targetItem),
+			droppable: checkAllowedChild(sourceItem, targetItem, layoutDataRef),
 			elevate: null,
 			targetPositionWithMiddle,
 			targetPositionWithoutMiddle,
@@ -112,20 +117,22 @@ export default function defaultComputeHover({
 	}
 
 	// Valid elevation:
-	// - dropItem should be child of dropTargetItem
-	// - dropItem should be sibling of siblingItem
+	// - sourceItem should be child of dropTargetItem
+	// - sourceItem should be sibling of siblingItem
 	// - siblingItem should have flex parent for horizontal elevation
 	//   and no-flex parent for vertical elevation
+	// - sourceItem should not be ancestor of siblingItem
 
 	if (
 		siblingItem &&
-		checkAllowedChild(sourceItem, targetItem) &&
-		validElevation(siblingItem, orientation, layoutDataRef)
+		!shouldBeIgnoredInElevation(parent) &&
+		validElevation(siblingItem, orientation, layoutDataRef) &&
+		!itemIsAncestor(sourceItem, siblingItem, layoutDataRef)
 	) {
 		return dispatch({
 			dropItem: sourceItem,
 			dropTargetItem: siblingItem,
-			droppable: true,
+			droppable: checkAllowedChild(sourceItem, targetItem, layoutDataRef),
 			elevate: true,
 			targetPositionWithMiddle,
 			targetPositionWithoutMiddle,
@@ -173,7 +180,7 @@ export default function defaultComputeHover({
 					(siblingPositionWithMiddle === targetPositionWithMiddle ||
 						parentPositionWithMiddle ===
 							targetPositionWithMiddle) &&
-					checkAllowedChild(sourceItem, parent)
+					!shouldBeIgnoredInElevation(parent)
 				) {
 					if (maximumDepth > 1) {
 						const [
@@ -215,7 +222,14 @@ export default function defaultComputeHover({
 	}
 }
 
-function getOrientation(item, monitor, targetRefs) {
+function getOrientation(item, monitor, targetRefs, layoutDataRef) {
+	if (
+		!item.parentId ||
+		!itemIsContainerFlex(layoutDataRef.current.items[item.parentId])
+	) {
+		return ORIENTATIONS.vertical;
+	}
+
 	const targetRef = targetRefs.get(item.toControlsId(item.itemId));
 	const targetRect = targetRef.current.getBoundingClientRect();
 	const hoverMiddle = targetRect.left + targetRect.width / 2;
@@ -293,10 +307,23 @@ function getItemPosition(item, monitor, targetRefs, orientation) {
 	];
 }
 
+function shouldBeIgnoredInElevation(item) {
+
+	// Dropping inside a collection or inside a row is illegal
+	// but in those cases we don't want to inform the user about it,
+	// we just want to ignore those cases and try to elevate in the direct parent.
+	// This is why this case is handled separately in the checkAllowedChild function
+
+	return (
+		item.type === LAYOUT_DATA_ITEM_TYPES.collection ||
+		item.type === LAYOUT_DATA_ITEM_TYPES.row
+	);
+}
+
 function itemIsContainerFlex(item) {
 	return (
 		item.type === LAYOUT_DATA_ITEM_TYPES.container &&
-		item.config.contentDisplay === CONTAINER_DISPLAY_OPTIONS.flexRow
+		item.config.contentDisplay === CONTENT_DISPLAY_OPTIONS.flexRow
 	);
 }
 

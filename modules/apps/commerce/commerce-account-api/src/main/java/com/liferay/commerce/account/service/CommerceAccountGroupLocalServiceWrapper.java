@@ -121,10 +121,19 @@ public class CommerceAccountGroupLocalServiceWrapper
 	public java.util.List
 		<com.liferay.commerce.account.model.CommerceAccountGroup>
 			getCommerceAccountGroupsByCommerceAccountId(
-				long commerceAccountId) {
+				long commerceAccountId, int start, int end) {
 
 		return _commerceAccountGroupLocalService.
-			getCommerceAccountGroupsByCommerceAccountId(commerceAccountId);
+			getCommerceAccountGroupsByCommerceAccountId(
+				commerceAccountId, start, end);
+	}
+
+	@Override
+	public int getCommerceAccountGroupsByCommerceAccountIdCount(
+		long commerceAccountId) {
+
+		return _commerceAccountGroupLocalService.
+			getCommerceAccountGroupsByCommerceAccountIdCount(commerceAccountId);
 	}
 
 	@Override
@@ -164,8 +173,8 @@ public class CommerceAccountGroupLocalServiceWrapper
 	}
 
 	@Override
-	public int searchCommerceAccountsGroupCount(long companyId, String keywords)
-		throws com.liferay.portal.kernel.exception.PortalException {
+	public int searchCommerceAccountsGroupCount(
+		long companyId, String keywords) {
 
 		return _commerceAccountGroupLocalService.
 			searchCommerceAccountsGroupCount(companyId, keywords);

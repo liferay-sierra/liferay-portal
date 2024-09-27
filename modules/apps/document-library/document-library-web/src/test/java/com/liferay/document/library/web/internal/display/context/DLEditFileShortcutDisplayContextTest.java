@@ -87,7 +87,8 @@ public class DLEditFileShortcutDisplayContextTest {
 
 		DLEditFileShortcutDisplayContext dlEditFileShortcutDisplayContext =
 			_getDLEditFileShortcutDisplayContext(
-				new MockHttpServletRequestBuilder().withAttribute(
+				new MockHttpServletRequestBuilder(
+				).withAttribute(
 					WebKeys.DOCUMENT_LIBRARY_FILE_SHORTCUT, fileShortcut
 				).build());
 
@@ -116,7 +117,8 @@ public class DLEditFileShortcutDisplayContextTest {
 
 		DLEditFileShortcutDisplayContext dlEditFileShortcutDisplayContext =
 			_getDLEditFileShortcutDisplayContext(
-				new MockHttpServletRequestBuilder().withAttribute(
+				new MockHttpServletRequestBuilder(
+				).withAttribute(
 					WebKeys.DOCUMENT_LIBRARY_FILE_SHORTCUT, fileShortcut
 				).build());
 
@@ -154,7 +156,8 @@ public class DLEditFileShortcutDisplayContextTest {
 
 		DLEditFileShortcutDisplayContext dlEditFileShortcutDisplayContext =
 			_getDLEditFileShortcutDisplayContext(
-				new MockHttpServletRequestBuilder().withAttribute(
+				new MockHttpServletRequestBuilder(
+				).withAttribute(
 					WebKeys.DOCUMENT_LIBRARY_FILE_SHORTCUT, fileShortcut
 				).withParameter(
 					"fileShortcutId", "12356"
@@ -180,7 +183,8 @@ public class DLEditFileShortcutDisplayContextTest {
 	public void testGetFieldsWithParametersAndWithoutAttributes() {
 		DLEditFileShortcutDisplayContext dlEditFileShortcutDisplayContext =
 			_getDLEditFileShortcutDisplayContext(
-				new MockHttpServletRequestBuilder().withParameter(
+				new MockHttpServletRequestBuilder(
+				).withParameter(
 					"fileShortcutId", "12356"
 				).withParameter(
 					"folderId", "23567"
@@ -206,14 +210,15 @@ public class DLEditFileShortcutDisplayContextTest {
 
 		DLEditFileShortcutDisplayContext dlEditFileShortcutDisplayContext =
 			_getDLEditFileShortcutDisplayContext(
-				new MockHttpServletRequestBuilder().withAttribute(
+				new MockHttpServletRequestBuilder(
+				).withAttribute(
 					WebKeys.DOCUMENT_LIBRARY_FILE_SHORTCUT, fileShortcut
 				).build());
 
 		Mockito.when(
 			_language.format(
-				Mockito.any(HttpServletRequest.class),
-				Mockito.eq("shortcut-to-x"), Mockito.anyString(),
+				Mockito.nullable(HttpServletRequest.class),
+				Mockito.eq("shortcut-to-x"), Mockito.nullable(String.class),
 				Mockito.anyBoolean())
 		).thenReturn(
 			"Short Cut To X"

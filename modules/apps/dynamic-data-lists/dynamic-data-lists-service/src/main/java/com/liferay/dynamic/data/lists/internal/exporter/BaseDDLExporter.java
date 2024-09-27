@@ -19,7 +19,7 @@ import com.liferay.dynamic.data.lists.exporter.DDLExporter;
 import com.liferay.dynamic.data.lists.model.DDLRecord;
 import com.liferay.dynamic.data.lists.model.DDLRecordSetVersion;
 import com.liferay.dynamic.data.lists.service.DDLRecordSetVersionService;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueRenderer;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
@@ -33,6 +33,7 @@ import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.util.HtmlParser;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
@@ -127,8 +128,8 @@ public abstract class BaseDDLExporter implements DDLExporter {
 	protected abstract DDLRecordSetVersionService
 		getDDLRecordSetVersionService();
 
-	protected abstract DDMFormFieldTypeServicesTracker
-		getDDMFormFieldTypeServicesTracker();
+	protected abstract DDMFormFieldTypeServicesRegistry
+		getDDMFormFieldTypeServicesRegistry();
 
 	protected abstract DDMFormFieldValueRendererRegistry
 		getDDMFormFieldValueRendererRegistry();
@@ -152,7 +153,7 @@ public abstract class BaseDDLExporter implements DDLExporter {
 
 	protected Map<String, DDMFormFieldRenderedValue> getRenderedValues(
 			int scope, Collection<DDMFormField> ddmFormFields,
-			DDMFormValues ddmFormValues)
+			DDMFormValues ddmFormValues, HtmlParser htmlParser)
 		throws Exception {
 
 		Map<String, List<DDMFormFieldValue>> ddmFormFieldValuesMap =
@@ -165,7 +166,7 @@ public abstract class BaseDDLExporter implements DDLExporter {
 				ddmFormField.getName())
 		).map(
 			ddmFormField -> _getDDMFormFieldRenderedValue(
-				scope, ddmFormField, ddmFormFieldValuesMap)
+				scope, ddmFormField, ddmFormFieldValuesMap, htmlParser)
 		).collect(
 			Collectors.toMap(
 				DDMFormFieldRenderedValue::getFieldName, value -> value)
@@ -207,7 +208,8 @@ public abstract class BaseDDLExporter implements DDLExporter {
 
 	private DDMFormFieldRenderedValue _getDDMFormFieldRenderedValue(
 		int scope, DDMFormField ddmFormField,
-		Map<String, List<DDMFormFieldValue>> ddmFormFieldValuesMap) {
+		Map<String, List<DDMFormFieldValue>> ddmFormFieldValuesMap,
+		HtmlParser htmlParser) {
 
 		List<DDMFormFieldValue> ddmForFieldValues = ddmFormFieldValuesMap.get(
 			ddmFormField.getName());
@@ -218,7 +220,7 @@ public abstract class BaseDDLExporter implements DDLExporter {
 
 		if (scope == DDLRecordSetConstants.SCOPE_FORMS) {
 			DDMFormFieldValueRenderer ddmFormFieldValueRenderer =
-				getDDMFormFieldTypeServicesTracker().
+				getDDMFormFieldTypeServicesRegistry().
 					getDDMFormFieldValueRenderer(ddmFormFieldValue.getType());
 
 			valueString = ddmFormFieldValueRenderer.render(
@@ -248,7 +250,7 @@ public abstract class BaseDDLExporter implements DDLExporter {
 			}
 		}
 
-		valueString = HtmlUtil.render(valueString);
+		valueString = htmlParser.render(valueString);
 
 		return new DDMFormFieldRenderedValue(
 			ddmFormField.getName(), ddmFormField.getLabel(), valueString);

@@ -19,10 +19,6 @@ definition {
 			PortalInstances.tearDownCP();
 		}
 		else {
-			Workflow.tearDownSiteWorkflow();
-
-			KBFolder.tearDownCP();
-
 			KBArticle.tearDownCP();
 
 			JSONUser.tearDownNonAdminUsers();
@@ -35,7 +31,6 @@ definition {
 	@refactorneeded
 	test ViewUnchangedKBArticleTitleViaLocalizedPage {
 		var portalURL = PropsUtil.get("portal.url");
-
 		var siteName = TestCase.getSiteName(siteName = "${siteName}");
 
 		ApplicationsMenu.gotoPortlet(
@@ -48,7 +43,7 @@ definition {
 			portlet = "Pages",
 			site = "${siteName}");
 
-		PagesAdmin.addPublicChildPage(
+		PagesAdmin.addChildPage(
 			childPageName = "Knowledge Base Display Page",
 			parentPageName = "Home");
 
@@ -60,12 +55,10 @@ definition {
 			columnName = "1 Column",
 			pageName = "Knowledge Base Display Page",
 			parentPagesHierarchy = "Home",
-			privacy = "Public Pages",
 			sitePageType = "Widget Page");
 
-		KBAdmin.openKBAdmin(siteURLKey = "guest");
-
-		KBArticle.addCP(
+		JSONKnowledgeBase.addkBArticle(
+			groupName = "Guest",
 			kbArticleContent = "Knowledge Base Article Content",
 			kbArticleTitle = "Knowledge Base Article Title");
 

@@ -16,19 +16,31 @@ import PropTypes from 'prop-types';
 import React from 'react';
 
 import {FRAGMENTS_DISPLAY_STYLES} from '../../../app/config/constants/fragmentsDisplayStyles';
+import {config} from '../../../app/config/index';
 import Collapse from '../../../common/components/Collapse';
+import {useSessionState} from '../../../core/hooks/useSessionState';
 import TabItem from './TabItem';
 
 export default function TabCollection({
 	collection,
 	displayStyle,
+	initialOpen,
 	isSearchResult,
-	open,
 }) {
+	const [open, setOpen] = useSessionState(
+		`${config.portletNamespace}_fragment-collection_${collection.collectionId}_open`,
+		initialOpen
+	);
+
+	const handleOpen = (nextOpen) => {
+		setOpen(nextOpen);
+	};
+
 	return (
 		<Collapse
 			key={collection.collectionId}
 			label={collection.label}
+			onOpen={handleOpen}
 			open={isSearchResult || open}
 		>
 			{collection.collections &&
@@ -36,12 +48,15 @@ export default function TabCollection({
 					<TabCollection
 						collection={collection}
 						displayStyle={displayStyle}
+						initialOpen={false}
 						isSearchResult={isSearchResult}
 						key={index}
 					/>
 				))}
 
-			<ul className="d-flex flex-wrap list-unstyled w-100">
+			<ul
+				className={`list-unstyled page-editor__fragments-widgets__tab-collection-${displayStyle} pb-2 w-100`}
+			>
 				{collection.children.map((item) => (
 					<React.Fragment key={item.itemId}>
 						<TabItem

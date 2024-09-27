@@ -16,6 +16,7 @@ package com.liferay.portal.cache.multiple.internal.cluster.link.messaging;
 
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.cache.multiple.internal.PortalCacheClusterEvent;
 import com.liferay.portal.cache.multiple.internal.PortalCacheClusterEventType;
 import com.liferay.portal.cache.multiple.internal.constants.PortalCacheDestinationNames;
@@ -28,6 +29,7 @@ import com.liferay.portal.kernel.messaging.BaseMessageListener;
 import com.liferay.portal.kernel.messaging.Destination;
 import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.messaging.MessageListener;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.util.SerializableUtil;
 
 import java.io.Serializable;
@@ -87,13 +89,6 @@ public class ClusterLinkPortalCacheClusterListener extends BaseMessageListener {
 		_handlePortalCacheClusterEvent(portalCacheClusterEvent);
 	}
 
-	@Reference(
-		target = "(destination.name=" + PortalCacheDestinationNames.CACHE_REPLICATION + ")",
-		unbind = "-"
-	)
-	protected void setDestination(Destination destination) {
-	}
-
 	private void _handlePortalCacheClusterEvent(
 		PortalCacheClusterEvent portalCacheClusterEvent) {
 
@@ -113,6 +108,25 @@ public class ClusterLinkPortalCacheClusterListener extends BaseMessageListener {
 		if (portalCache == null) {
 			return;
 		}
+
+		if (portalCache.isSharded()) {
+			try (SafeCloseable safeCloseable =
+					CompanyThreadLocal.setWithSafeCloseable(
+						portalCacheClusterEvent.getCompanyId())) {
+
+				_handlePortalCacheClusterEvent(
+					portalCacheClusterEvent, portalCache);
+			}
+
+			return;
+		}
+
+		_handlePortalCacheClusterEvent(portalCacheClusterEvent, portalCache);
+	}
+
+	private void _handlePortalCacheClusterEvent(
+		PortalCacheClusterEvent portalCacheClusterEvent,
+		PortalCache<Serializable, Serializable> portalCache) {
 
 		PortalCacheClusterEventType portalCacheClusterEventType =
 			portalCacheClusterEvent.getEventType();
@@ -147,6 +161,11 @@ public class ClusterLinkPortalCacheClusterListener extends BaseMessageListener {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ClusterLinkPortalCacheClusterListener.class);
+
+	@Reference(
+		target = "(destination.name=" + PortalCacheDestinationNames.CACHE_REPLICATION + ")"
+	)
+	private Destination _destination;
 
 	private ServiceTrackerMap
 		<String, PortalCacheManager<? extends Serializable, ?>>

@@ -41,7 +41,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Michael C. Han
  */
-@Component(immediate = true, service = ExportImportLifecycleManager.class)
+@Component(service = ExportImportLifecycleManager.class)
 public class ExportImportLifecycleManagerImpl
 	implements ExportImportLifecycleManager {
 
@@ -125,30 +125,18 @@ public class ExportImportLifecycleManagerImpl
 		return serviceRegistration;
 	}
 
-	@Reference(unbind = "-")
-	protected void setDestinationFactory(
-		DestinationFactory destinationFactory) {
-
-		_destinationFactory = destinationFactory;
-	}
-
-	@Reference(unbind = "-")
-	protected void setExportImportLifecycleEventFactory(
-		ExportImportLifecycleEventFactory exportImportLifecycleEventFactory) {
-
-		_exportImportLifecycleEventFactory = exportImportLifecycleEventFactory;
-	}
-
-	@Reference(unbind = "-")
-	protected void setMessageBus(MessageBus messageBus) {
-		_messageBus = messageBus;
-	}
-
 	private volatile BundleContext _bundleContext;
+
+	@Reference
 	private DestinationFactory _destinationFactory;
+
+	@Reference
 	private ExportImportLifecycleEventFactory
 		_exportImportLifecycleEventFactory;
+
+	@Reference
 	private MessageBus _messageBus;
+
 	private final Set<ServiceRegistration<Destination>> _serviceRegistrations =
 		new HashSet<>();
 

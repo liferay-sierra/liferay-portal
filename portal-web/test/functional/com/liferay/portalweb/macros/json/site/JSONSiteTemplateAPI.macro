@@ -1,14 +1,14 @@
 definition {
 
 	macro _addSiteTemplateByName {
-		Variables.assertDefined(parameterList = "${siteTemplateName}");
+		Variables.assertDefined(parameterList = "${description},${active},${layoutsUpdateable},${readyForPropagation},${siteTemplateName}");
 
 		var portalURL = JSONCompany.getPortalURL();
 
 		var curl = '''
 			${portalURL}/api/jsonws/layoutsetprototype/add-layout-set-prototype \
 				-u test@liferay.com:test \
-				-d name=${name} \
+				-d name=${siteTemplateName} \
 				-d description=${description} \
 				-d active=${active} \
 				-d layoutsUpdateable=${layoutsUpdateable} \
@@ -65,7 +65,6 @@ definition {
 
 	macro _getAllNonDefaultSiteTemplateId {
 		var companyId = JSONCompany.getCompanyId();
-
 		var portalURL = JSONCompany.getPortalURL();
 
 		var curl = '''
@@ -84,15 +83,15 @@ definition {
 	macro _getSiteTemplateIdByName {
 		Variables.assertDefined(parameterList = "${siteTemplateName}");
 
-		var companyId = JSONCompany.getCompanyId();
-
 		var portalURL = JSONCompany.getPortalURL();
+		var companyId = JSONCompany.getCompanyId();
 
 		var curl = '''
 			${portalURL}/api/jsonws/layoutsetprototype/get-layout-set-prototypes \
                           -u test@liferay.com:test \
                           -d companyId=${companyId}
 		''';
+
 		var layoutSetPrototypeId = JSONCurlUtil.post("${curl}", "$.[?(@['nameCurrentValue'] == '${siteTemplateName}')]['layoutSetPrototypeId']");
 
 		if ("${layoutSetPrototypeId}" == "") {
@@ -106,6 +105,7 @@ definition {
 		Variables.assertDefined(parameterList = "${siteTemplateName}");
 
 		var portalURL = JSONCompany.getPortalURL();
+		var companyId = JSONCompany.getCompanyId();
 
 		var curl = '''
 			${portalURL}/api/jsonws/layoutsetprototype/get-layout-set-prototypes \

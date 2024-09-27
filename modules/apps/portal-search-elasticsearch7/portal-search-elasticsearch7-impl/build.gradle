@@ -4,11 +4,11 @@ import com.liferay.gradle.util.StringUtil
 task cleanSidecar
 task deploySidecar(type: Copy)
 
-String elasticsearchClientVersion = "7.14.1"
-String luceneVersion = "8.9.0"
+String elasticsearchClientVersion = "7.16.3"
+String luceneVersion = "8.11.1"
 String sidecarElasticsearchServerVersion = file('src/main/resources/META-INF/sidecar.version').text
 
-String elasticsearchDownloadURL = "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-oss-${sidecarElasticsearchServerVersion}-no-jdk-linux-x86_64.tar.gz"
+String elasticsearchDownloadURL = "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-${sidecarElasticsearchServerVersion}-no-jdk-linux-x86_64.tar.gz"
 
 File elasticsearchDistributionFile = file("${buildDir}/${elasticsearchDownloadURL.drop(elasticsearchDownloadURL.lastIndexOf('/') + 1)}")
 
@@ -29,14 +29,14 @@ cleanSidecar {
 
 dependencies {
 	compileInclude group: "com.carrotsearch", name: "hppc", version: "0.8.1"
-	compileInclude group: "com.fasterxml.jackson.dataformat", name: "jackson-dataformat-cbor", version: "2.10.4"
-	compileInclude group: "com.fasterxml.jackson.dataformat", name: "jackson-dataformat-smile", version: "2.10.4"
+	compileInclude group: "com.fasterxml.jackson.dataformat", name: "jackson-dataformat-cbor", version: "2.12.6"
+	compileInclude group: "com.fasterxml.jackson.dataformat", name: "jackson-dataformat-smile", version: "2.13.2"
 	compileInclude group: "com.fasterxml.jackson.dataformat", name: "jackson-dataformat-yaml", version: "2.10.4"
-	compileInclude group: "com.google.code.gson", name: "gson", version: "2.8.4"
 	compileInclude group: "com.liferay", name: "org.apache.logging.log4j", version: "2.17.1.LIFERAY-PATCHED-1"
 	compileInclude group: "com.liferay", name: "org.apache.logging.log4j.core", version: "2.17.1.LIFERAY-PATCHED-1"
-	compileInclude group: "commons-codec", name: "commons-codec", version: "1.11"
-	compileInclude group: "commons-io", name: "commons-io", version: "2.8.0"
+	compileInclude group: "com.liferay", name: "org.elasticsearch.plugin.legacy.geo", version: elasticsearchClientVersion
+	compileInclude group: "commons-codec", name: "commons-codec", version: "1.15"
+	compileInclude group: "commons-io", name: "commons-io", version: "2.11.0"
 	compileInclude group: "commons-lang", name: "commons-lang", version: "2.6"
 	compileInclude group: "commons-logging", name: "commons-logging", version: "1.2"
 	compileInclude group: "joda-time", name: "joda-time", version: "2.10.10"
@@ -56,6 +56,7 @@ dependencies {
 	compileInclude group: "org.elasticsearch", name: "elasticsearch-cli", version: elasticsearchClientVersion
 	compileInclude group: "org.elasticsearch", name: "elasticsearch-core", version: elasticsearchClientVersion
 	compileInclude group: "org.elasticsearch", name: "elasticsearch-geo", version: elasticsearchClientVersion
+	compileInclude group: "org.elasticsearch", name: "elasticsearch-lz4", version: elasticsearchClientVersion
 	compileInclude group: "org.elasticsearch", name: "elasticsearch-x-content", version: elasticsearchClientVersion
 	compileInclude group: "org.elasticsearch.client", name: "elasticsearch-rest-client", version: elasticsearchClientVersion
 	compileInclude group: "org.elasticsearch.client", name: "elasticsearch-rest-high-level-client", version: elasticsearchClientVersion
@@ -66,14 +67,15 @@ dependencies {
 	compileInclude group: "org.locationtech.jts", name: "jts-core", version: "1.15.0"
 	compileInclude group: "org.locationtech.spatial4j", name: "spatial4j", version: "0.7"
 	compileInclude group: "org.ow2.asm", name: "asm-debug-all", version: "5.1"
-	compileInclude group: "org.yaml", name: "snakeyaml", version: "1.26"
+	compileInclude group: "org.yaml", name: "snakeyaml", version: "1.32"
 
-	compileOnly group: "com.fasterxml.jackson.core", name: "jackson-core", version: "2.12.4"
-	compileOnly group: "com.fasterxml.woodstox", name: "woodstox-core", version: "6.2.3"
+	compileOnly group: "com.fasterxml.jackson.core", name: "jackson-core", version: "2.13.2"
+	compileOnly group: "com.fasterxml.woodstox", name: "woodstox-core", version: "6.2.6"
+	compileOnly group: "com.google.code.gson", name: "gson", version: "2.9.0"
 	compileOnly group: "com.ibm.icu", name: "icu4j", version: "62.1"
+	compileOnly group: "com.liferay", name: "biz.aQute.bnd.annotation", version: "4.2.0.LIFERAY-PATCHED-2"
 	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.impl", version: "default"
 	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
-	compileOnly group: "commons-collections", name: "commons-collections", version: "3.2.2"
 	compileOnly group: "org.codehaus.woodstox", name: "stax2-api", version: "4.2.1"
 	compileOnly group: "org.osgi", name: "org.osgi.annotation.versioning", version: "1.1.0"
 	compileOnly group: "org.osgi", name: "org.osgi.service.cm", version: "1.6.0"
@@ -100,7 +102,6 @@ dependencies {
 	compileOnly project(":core:petra:petra-reflect")
 	compileOnly project(":core:petra:petra-string")
 
-	testCompile group: "biz.aQute.bnd", name: "biz.aQute.bnd.annotation", version: "4.2.0"
 	testCompile group: "com.liferay.portal", name: "com.liferay.util.java", version: "default"
 	testCompile project(":apps:portal-search:portal-search")
 	testCompile project(":apps:portal-search:portal-search-test-util")
@@ -145,13 +146,7 @@ deploySidecar {
 
 		project.copy {
 			fileMode = 0777
-			includeEmptyDirs = false
-
-			exclude "elasticsearch-${sidecarElasticsearchServerVersion}/modules/ingest-geoip/**"
-			exclude "elasticsearch-${sidecarElasticsearchServerVersion}/modules/x-pack-ml/platform/linux-x86_64/bin/controller"
-			include "elasticsearch-${sidecarElasticsearchServerVersion}/lib/**"
-			include "elasticsearch-${sidecarElasticsearchServerVersion}/modules/**"
-
+			include "elasticsearch-${sidecarElasticsearchServerVersion}/**"
 			into buildDir
 			from tarTree(elasticsearchDistributionFile)
 		}

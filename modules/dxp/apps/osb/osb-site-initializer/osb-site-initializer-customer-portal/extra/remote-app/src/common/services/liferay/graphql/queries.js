@@ -18,6 +18,7 @@ export const getDXPCloudPageInfo = gql`
 				items {
 					accountKey
 					hasDisasterDataCenterRegion
+					externalReferenceCode
 					name
 				}
 			}
@@ -32,34 +33,38 @@ export const getDXPCloudPageInfo = gql`
 	}
 `;
 
-export const getAccountSubscriptionsTerms = gql`
-	query getAccountSubscriptionsTerms(
+export const getCommerceOrderItems = gql`
+	query getCommerceOrderItems(
 		$filter: String
 		$page: Int = 1
 		$pageSize: Int = 20
 	) {
-		c {
-			accountSubscriptionTerms(
-				filter: $filter
-				page: $page
-				pageSize: $pageSize
-			) {
-				items {
-					accountKey
-					accountSubscriptionERC
-					accountSubscriptionGroupERC
-					accountSubscriptionTermId
-					c_accountSubscriptionTermId
-					endDate
-					instanceSize
-					provisioned
-					quantity
-					startDate
-					subscriptionTermStatus
+		orderItems(filter: $filter, page: $page, pageSize: $pageSize) {
+			items {
+				externalReferenceCode
+				quantity
+				customFields {
+					name
+					customValue {
+						data
+					}
 				}
-				totalCount
+				options
 			}
+			totalCount
 		}
+	}
+`;
+
+export const patchOrderItemByExternalReferenceCode = gql`
+	mutation patchOrderItemByExternalReferenceCode(
+		$externalReferenceCode: String
+		$orderItem: InputOrderItem
+	) {
+		patchOrderItemByExternalReferenceCode(
+			externalReferenceCode: $externalReferenceCode
+			orderItem: $orderItem
+		)
 	}
 `;
 
@@ -91,6 +96,7 @@ export const getAccountSubscriptions = gql`
 					accountSubscriptionId
 					c_accountSubscriptionId
 					endDate
+					externalReferenceCode
 					instanceSize
 					name
 					quantity
@@ -104,12 +110,15 @@ export const getAccountSubscriptions = gql`
 
 export const addAccountFlag = gql`
 	mutation addAccountFlag($accountFlag: InputC_AccountFlag!) {
-		c {
-			createAccountFlag(AccountFlag: $accountFlag) {
-				accountKey
-				name
-				finished
-			}
+		createAccountFlag(input: $accountFlag)
+			@rest(
+				method: "POST"
+				type: "C_AccountFlag"
+				path: "/c/accountflags"
+			) {
+			accountKey
+			name
+			finished
 		}
 	}
 `;
@@ -143,29 +152,65 @@ export const getBannedEmailDomains = gql`
 
 export const addDXPCloudEnvironment = gql`
 	mutation addDXPCloudEnvironment(
-		$scopeKey: String!
 		$DXPCloudEnvironment: InputC_DXPCloudEnvironment!
 	) {
-		c {
-			createDXPCloudEnvironment(
-				scopeKey: $scopeKey
-				DXPCloudEnvironment: $DXPCloudEnvironment
+		createDXPCloudEnvironment(input: $DXPCloudEnvironment)
+			@rest(
+				method: "POST"
+				type: "C_DXPCloudEnvironment"
+				path: "/c/dxpcloudenvironments/"
 			) {
-				dxpCloudEnvironmentId
-				accountKey
-				dataCenterRegion
-				disasterDataCenterRegion
-				projectId
-			}
+			accountKey
+			dataCenterRegion
+			disasterDataCenterRegion
+			id
+			projectId
+		}
+	}
+`;
+
+export const addAdminDXPCloud = gql`
+	mutation addAdminDXPCloud($AdminDXPCloud: InputC_AdminDXPCloud!) {
+		createAdminDXPCloud(input: $AdminDXPCloud)
+			@rest(
+				method: "POST"
+				type: "C_AdminDXPCloud"
+				path: "/c/admindxpclouds/"
+			) {
+			emailAddress
+			firstName
+			githubUsername
+			lastName
+			dxpCloudEnvironmentId
+		}
+	}
+`;
+
+export const updateDXPCloudEnvironment = gql`
+	mutation updateDXPCloudProjectId(
+		$dxpCloudEnvironmentId: Long!
+		$DXPCloudEnvironment: InputC_DXPCloudEnvironment!
+	) {
+		updateDXPCloudEnvironment(
+			dxpCloudEnvironmentId: $dxpCloudEnvironmentId
+			input: $DXPCloudEnvironment
+		)
+			@rest(
+				method: "PUT"
+				type: "C_DXPCloudEnvironment"
+				path: "/c/dxpcloudenvironments/{args.dxpCloudEnvironmentId}"
+			) {
+			dxpCloudEnvironmentId
 		}
 	}
 `;
 
 export const getDXPCloudEnvironment = gql`
-	query getDXPCloudEnvironment($scopeKey: String, $filter: String) {
+	query getDXPCloudEnvironment($filter: String) {
 		c {
-			dXPCloudEnvironments(filter: $filter, scopeKey: $scopeKey) {
+			dXPCloudEnvironments(filter: $filter) {
 				items {
+					dxpCloudEnvironmentId
 					projectId
 				}
 			}
@@ -173,21 +218,86 @@ export const getDXPCloudEnvironment = gql`
 	}
 `;
 
-export const addAdminDXPCloud = gql`
-	mutation addAdminDXPCloud(
-		$scopeKey: String!
-		$AdminDXPCloud: InputC_AdminDXPCloud!
+export const addAnalyticsCloudWorkspace = gql`
+	mutation addAnalyticsCloudWorkspace(
+		$analyticsCloudWorkspace: InputC_AnalyticsCloudWorkspace!
 	) {
-		c {
-			createAdminDXPCloud(
-				scopeKey: $scopeKey
-				AdminDXPCloud: $AdminDXPCloud
+		createAnalyticsCloudWorkspace(input: $analyticsCloudWorkspace)
+			@rest(
+				method: "POST"
+				type: "C_AnalyticsCloudWorkspace"
+				path: "/c/analyticscloudworkspaces/"
 			) {
-				emailAddress
-				firstName
-				githubUsername
-				lastName
-				dxpCloudEnvironmentId
+			accountKey
+			dataCenterLocation
+			id
+			ownerEmailAddress
+			workspaceName
+		}
+	}
+`;
+
+export const addIncidentReportAnalyticsCloud = gql`
+	mutation addIncidentReportAnalyticsCloud(
+		$IncidentReportContactAnalyticsCloud: InputC_IncidentReportContactAnalyticsCloud!
+	) {
+		createIncidentReportContactAnalyticsCloud(
+			input: $IncidentReportContactAnalyticsCloud
+		)
+			@rest(
+				method: "POST"
+				type: "C_IncidentReportContactAnalyticsCloud"
+				path: "/c/incidentreportcontactanalyticsclouds/"
+			) {
+			emailAddress
+			analyticsCloudWorkspaceId
+		}
+	}
+`;
+
+export const getAnalyticsCloudWorkspace = gql`
+	query getAnalyticsCloudWorkspace($filter: String) {
+		c {
+			analyticsCloudWorkspaces(filter: $filter) {
+				items {
+					analyticsCloudWorkspaceId
+					workspaceGroupId
+				}
+			}
+		}
+	}
+`;
+
+export const getLiferayExperienceCloudEnvironments = gql`
+	query getLiferayExperienceCloudEnvironments($filter: String) {
+		c {
+			liferayExperienceCloudEnvironments(filter: $filter) {
+				items {
+					liferayExperienceCloudEnvironmentId
+					projectId
+				}
+			}
+		}
+	}
+`;
+
+export const getAnalyticsCloudPageInfo = gql`
+	query getAnalyticsCloudPageInfo($accountSubscriptionsFilter: String) {
+		c {
+			accountSubscriptions(filter: $accountSubscriptionsFilter) {
+				items {
+					accountKey
+					externalReferenceCode
+					hasDisasterDataCenterRegion
+					name
+				}
+			}
+			analyticsCloudDataCenterLocations {
+				items {
+					analyticsCloudDataCenterLocationId
+					name
+					value
+				}
 			}
 		}
 	}
@@ -195,17 +305,16 @@ export const addAdminDXPCloud = gql`
 
 export const addTeamMembersInvitation = gql`
 	mutation addTeamMembersInvitation(
-		$scopeKey: String!
-		$TeamMembersInvitation: InputC_TeamMembersInvitation!
+		$TeamMembersInvitation: [InputC_TeamMembersInvitation]!
 	) {
-		c {
-			createTeamMembersInvitation(
-				scopeKey: $scopeKey
-				TeamMembersInvitation: $TeamMembersInvitation
+		createTeamMembersInvitation(input: $TeamMembersInvitation)
+			@rest(
+				method: "POST"
+				type: "C_TeamMembersInvitation"
+				path: "/c/teammembersinvitations/batch"
 			) {
-				email
-				role
-			}
+			email
+			role
 		}
 	}
 `;
@@ -275,7 +384,11 @@ export const getAccountSubscriptionGroups = gql`
 					accountSubscriptionGroupId
 					accountKey
 					activationStatus
+					externalReferenceCode
+					hasActivation
 					name
+					tabOrder
+					menuOrder
 				}
 			}
 		}
@@ -283,19 +396,30 @@ export const getAccountSubscriptionGroups = gql`
 `;
 
 export const getKoroneikiAccounts = gql`
-	query getKoroneikiAccounts($filter: String, $pageSize: Int = 20) {
+	query getKoroneikiAccounts(
+		$filter: String
+		$pageSize: Int = 20
+		$page: Int = 1
+	) {
 		c {
-			koroneikiAccounts(filter: $filter, pageSize: $pageSize) {
+			koroneikiAccounts(
+				filter: $filter
+				pageSize: $pageSize
+				page: $page
+			) {
 				items {
 					accountKey
+					acWorkspaceGroupId
 					code
 					dxpVersion
+					externalReferenceCode
 					liferayContactEmailAddress
 					liferayContactName
 					liferayContactRole
 					maxRequestors
 					partner
 					region
+					name
 					slaCurrent
 					slaCurrentEndDate
 					slaCurrentStartDate
@@ -306,6 +430,7 @@ export const getKoroneikiAccounts = gql`
 					slaFutureEndDate
 					slaFutureStartDate
 				}
+				totalCount
 			}
 		}
 	}
@@ -346,6 +471,36 @@ export const getAccountByExternalReferenceCode = gql`
 	}
 `;
 
+export const getAccountUserAccountsByExternalReferenceCode = gql`
+	query getAccountUserAccountsByExternalReferenceCode(
+		$externalReferenceCode: String!
+		$pageSize: Int = 20
+		$filter: String
+	) {
+		accountUserAccountsByExternalReferenceCode(
+			externalReferenceCode: $externalReferenceCode
+			pageSize: $pageSize
+			filter: $filter
+		) {
+			items {
+				dateCreated
+				id
+				emailAddress
+				lastLoginDate
+				name
+				accountBriefs {
+					name
+					externalReferenceCode
+					roleBriefs {
+						id
+						name
+					}
+				}
+			}
+		}
+	}
+`;
+
 export const getUserAccount = gql`
 	query getUserAccount($id: Long!) {
 		userAccount(userAccountId: $id) {
@@ -363,6 +518,11 @@ export const getUserAccount = gql`
 			image
 			name
 			roleBriefs {
+				id
+				name
+			}
+			organizationBriefs {
+				id
 				name
 			}
 		}
@@ -374,16 +534,46 @@ export const updateAccountSubscriptionGroups = gql`
 		$id: Long!
 		$accountSubscriptionGroup: InputC_AccountSubscriptionGroup!
 	) {
-		c {
-			updateAccountSubscriptionGroup(
-				accountSubscriptionGroupId: $id
-				AccountSubscriptionGroup: $accountSubscriptionGroup
+		updateAccountSubscriptionGroup(
+			accountSubscriptionGroupId: $id
+			input: $accountSubscriptionGroup
+		)
+			@rest(
+				method: "PUT"
+				type: "C_AccountSubscriptionGroup"
+				path: "/c/accountsubscriptiongroups/{args.accountSubscriptionGroupId}"
 			) {
-				accountSubscriptionGroupId
-				accountKey
-				activationStatus
-				name
-			}
+			accountSubscriptionGroupId
+			accountKey
+			activationStatus
+			externalReferenceCode
+			name
 		}
+	}
+`;
+
+export const deleteAccountUserRoles = gql`
+	mutation deleteAccountUserRoles(
+		$accountRoleId: Long!
+		$emailAddress: String!
+		$accountKey: String!
+	) {
+		deleteAccountByExternalReferenceCodeAccountRoleUserAccountByEmailAddress(
+			accountRoleId: $accountRoleId
+			emailAddress: $emailAddress
+			externalReferenceCode: $accountKey
+		)
+	}
+`;
+
+export const deleteAccountUserAccount = gql`
+	mutation deleteAccountUserAccountByExternalReferenceCodeByEmailAddress(
+		$emailAddress: String!
+		$accountKey: String!
+	) {
+		deleteAccountUserAccountByExternalReferenceCodeByEmailAddress(
+			emailAddress: $emailAddress
+			externalReferenceCode: $accountKey
+		)
 	}
 `;

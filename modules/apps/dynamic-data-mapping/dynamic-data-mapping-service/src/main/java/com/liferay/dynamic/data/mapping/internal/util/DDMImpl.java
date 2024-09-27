@@ -57,14 +57,13 @@ import com.liferay.dynamic.data.mapping.util.comparator.TemplateModifiedDateComp
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Image;
-import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.service.ImageLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
@@ -76,7 +75,7 @@ import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
@@ -115,7 +114,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eduardo García
  * @author Marcellus Tavares
  */
-@Component(immediate = true, service = DDM.class)
+@Component(service = DDM.class)
 public class DDMImpl implements DDM {
 
 	@Override
@@ -284,11 +283,10 @@ public class DDMImpl implements DDM {
 			Boolean valueBoolean = (Boolean)fieldValue;
 
 			if (valueBoolean) {
-				fieldValue = LanguageUtil.get(themeDisplay.getLocale(), "true");
+				fieldValue = _language.get(themeDisplay.getLocale(), "true");
 			}
 			else {
-				fieldValue = LanguageUtil.get(
-					themeDisplay.getLocale(), "false");
+				fieldValue = _language.get(themeDisplay.getLocale(), "false");
 			}
 		}
 		else if (type.equals(DDMFormFieldType.DOCUMENT_LIBRARY)) {
@@ -298,8 +296,7 @@ public class DDMImpl implements DDM {
 
 			String valueString = String.valueOf(fieldValue);
 
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-				valueString);
+			JSONObject jsonObject = _jsonFactory.createJSONObject(valueString);
 
 			String uuid = jsonObject.getString("uuid");
 			long groupId = jsonObject.getLong("groupId");
@@ -318,22 +315,20 @@ public class DDMImpl implements DDM {
 
 			String valueString = String.valueOf(fieldValue);
 
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-				valueString);
+			JSONObject jsonObject = _jsonFactory.createJSONObject(valueString);
 
 			long groupId = jsonObject.getLong("groupId");
 			boolean privateLayout = jsonObject.getBoolean("privateLayout");
 			long layoutId = jsonObject.getLong("layoutId");
 
-			Layout layout = _layoutLocalService.getLayout(
-				groupId, privateLayout, layoutId);
-
-			fieldValue = _portal.getLayoutFriendlyURL(layout, themeDisplay);
+			fieldValue = _portal.getLayoutFriendlyURL(
+				_layoutLocalService.getLayout(groupId, privateLayout, layoutId),
+				themeDisplay);
 		}
 		else if (type.equals(DDMFormFieldType.SELECT)) {
 			String valueString = String.valueOf(fieldValue);
 
-			JSONArray jsonArray = JSONFactoryUtil.createJSONArray(valueString);
+			JSONArray jsonArray = _jsonFactory.createJSONArray(valueString);
 
 			String[] stringArray = ArrayUtil.toStringArray(jsonArray);
 
@@ -463,7 +458,7 @@ public class DDMImpl implements DDM {
 		else if (type.equals(DDMFormFieldType.SELECT)) {
 			String valueString = (String)fieldValue;
 
-			JSONArray jsonArray = JSONFactoryUtil.createJSONArray(valueString);
+			JSONArray jsonArray = _jsonFactory.createJSONArray(valueString);
 
 			String[] stringArray = ArrayUtil.toStringArray(jsonArray);
 
@@ -616,7 +611,6 @@ public class DDMImpl implements DDM {
 		}
 
 		field.setDefaultLocale(defaultLocale);
-
 		field.setName(fieldName);
 		field.setValues(locale, fieldValues);
 
@@ -656,7 +650,7 @@ public class DDMImpl implements DDM {
 		List<DDMFormField> ddmFormFields, Set<Locale> availableLocales,
 		Locale defaultLocale) {
 
-		JSONArray ddmFormFieldsJSONArray = JSONFactoryUtil.createJSONArray();
+		JSONArray ddmFormFieldsJSONArray = _jsonFactory.createJSONArray();
 
 		for (DDMFormField ddmFormField : ddmFormFields) {
 			JSONObject jsonObject = JSONUtil.put(
@@ -690,11 +684,11 @@ public class DDMImpl implements DDM {
 				jsonObject, ddmFormField, availableLocales, defaultLocale);
 
 			JSONObject localizationMapJSONObject =
-				JSONFactoryUtil.createJSONObject();
+				_jsonFactory.createJSONObject();
 
 			for (Locale availableLocale : availableLocales) {
 				JSONObject localeMapJSONObject =
-					JSONFactoryUtil.createJSONObject();
+					_jsonFactory.createJSONObject();
 
 				_addDDMFormFieldLocalizedProperties(
 					localeMapJSONObject, ddmFormField, availableLocale,
@@ -743,37 +737,6 @@ public class DDMImpl implements DDM {
 			ddmStructure, ddmFormValues);
 	}
 
-	@Reference(unbind = "-")
-	protected void setDDMFormValuesToFieldsConverter(
-		DDMFormValuesToFieldsConverter ddmFormValuesToFieldsConverter) {
-
-		_ddmFormValuesToFieldsConverter = ddmFormValuesToFieldsConverter;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDLAppLocalService(DLAppLocalService dlAppLocalService) {
-		_dlAppLocalService = dlAppLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setFieldsToDDMFormValuesConverter(
-		FieldsToDDMFormValuesConverter fieldsToDDMFormValuesConverter) {
-
-		_fieldsToDDMFormValuesConverter = fieldsToDDMFormValuesConverter;
-	}
-
-	@Reference(unbind = "-")
-	protected void setImageLocalService(ImageLocalService imageLocalService) {
-		_imageLocalService = imageLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setLayoutLocalService(
-		LayoutLocalService layoutLocalService) {
-
-		_layoutLocalService = layoutLocalService;
-	}
-
 	protected String[] splitFieldsDisplayValue(Field fieldsDisplayField) {
 		String value = (String)fieldsDisplayField.getValue();
 
@@ -811,8 +774,7 @@ public class DDMImpl implements DDM {
 
 			try {
 				jsonObject.put(
-					propertyName,
-					JSONFactoryUtil.createJSONArray(propertyValue));
+					propertyName, _jsonFactory.createJSONArray(propertyValue));
 			}
 			catch (Exception exception) {
 				if (_log.isDebugEnabled()) {
@@ -840,7 +802,7 @@ public class DDMImpl implements DDM {
 
 		String fieldName = ddmFormField.getName();
 
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 		DDMFormFieldOptions ddmFormFieldOptions =
 			ddmFormField.getDDMFormFieldOptions();
@@ -864,11 +826,11 @@ public class DDMImpl implements DDM {
 				defaultLocale, "option");
 
 			JSONObject localizationMapJSONObject =
-				JSONFactoryUtil.createJSONObject();
+				_jsonFactory.createJSONObject();
 
 			for (Locale availableLocale : availableLocales) {
 				JSONObject localeMapJSONObject =
-					JSONFactoryUtil.createJSONObject();
+					_jsonFactory.createJSONObject();
 
 				_addDDMFormFieldLocalizedProperty(
 					localeMapJSONObject, "label",
@@ -1128,7 +1090,7 @@ public class DDMImpl implements DDM {
 
 					fieldValue = new String[] {String.valueOf(fieldValue)};
 
-					fieldValue = JSONFactoryUtil.serialize(fieldValue);
+					fieldValue = _jsonFactory.serialize(fieldValue);
 				}
 			}
 
@@ -1162,7 +1124,7 @@ public class DDMImpl implements DDM {
 		String url = uploadRequest.getParameter(fieldNameValue + "URL");
 
 		long imageId = GetterUtil.getLong(
-			_http.getParameter(url, "img_id", false));
+			HttpComponentsUtil.getParameter(url, "img_id", false));
 
 		Image image = _imageLocalService.fetchImage(imageId);
 
@@ -1333,17 +1295,19 @@ public class DDMImpl implements DDM {
 
 	private static final Log _log = LogFactoryUtil.getLog(DDMImpl.class);
 
+	@Reference
 	private DDMFormValuesToFieldsConverter _ddmFormValuesToFieldsConverter;
+
+	@Reference
 	private DLAppLocalService _dlAppLocalService;
 
 	@Reference
 	private DLURLHelper _dlURLHelper;
 
+	@Reference
 	private FieldsToDDMFormValuesConverter _fieldsToDDMFormValuesConverter;
 
 	@Reference
-	private Http _http;
-
 	private ImageLocalService _imageLocalService;
 
 	@Reference(target = "(ddm.form.deserializer.type=json)")
@@ -1358,6 +1322,13 @@ public class DDMImpl implements DDM {
 	@Reference(target = "(ddm.form.values.serializer.type=json)")
 	private DDMFormValuesSerializer _jsonDDMFormValuesSerializer;
 
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
+
+	@Reference
 	private LayoutLocalService _layoutLocalService;
 
 	@Reference

@@ -14,14 +14,17 @@
 
 package com.liferay.portal.vulcan.internal.jaxrs.writer.interceptor;
 
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.vulcan.internal.extension.EntityExtensionHandler;
 import com.liferay.portal.vulcan.internal.jaxrs.extension.ExtendedEntity;
-import com.liferay.portal.vulcan.jaxrs.context.ExtensionContext;
 
 import java.io.IOException;
 
-import java.util.Optional;
-
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
 import javax.ws.rs.ext.Providers;
 import javax.ws.rs.ext.WriterInterceptor;
@@ -37,34 +40,62 @@ public class EntityExtensionWriterInterceptor implements WriterInterceptor {
 	public void aroundWriteTo(WriterInterceptorContext writerInterceptorContext)
 		throws IOException {
 
-		Optional.ofNullable(
-			_providers.getContextResolver(
-				ExtensionContext.class, writerInterceptorContext.getMediaType())
-		).map(
-			contextResolver -> contextResolver.getContext(
-				writerInterceptorContext.getType())
-		).ifPresent(
-			extensionContext -> _extendEntity(
-				extensionContext, writerInterceptorContext)
-		);
+		EntityExtensionHandler entityExtensionHandler =
+			_getEntityExtensionHandler(
+				writerInterceptorContext.getType(),
+				writerInterceptorContext.getMediaType());
+
+		if (entityExtensionHandler != null) {
+			_extendEntity(entityExtensionHandler, writerInterceptorContext);
+		}
 
 		writerInterceptorContext.proceed();
 	}
 
 	private void _extendEntity(
-		ExtensionContext extensionContext,
-		WriterInterceptorContext writerInterceptorContext) {
+			EntityExtensionHandler entityExtensionHandler,
+			WriterInterceptorContext writerInterceptorContext)
+		throws IOException {
 
-		writerInterceptorContext.setEntity(
-			ExtendedEntity.extend(
-				writerInterceptorContext.getEntity(),
-				extensionContext.getExtendedProperties(
-					writerInterceptorContext.getEntity()),
-				extensionContext.getFilteredPropertyKeys(
-					writerInterceptorContext.getEntity())));
+		try {
+			writerInterceptorContext.setEntity(
+				ExtendedEntity.extend(
+					writerInterceptorContext.getEntity(),
+					entityExtensionHandler.getExtendedProperties(
+						_company.getCompanyId(),
+						writerInterceptorContext.getEntity()),
+					entityExtensionHandler.getFilteredPropertyNames(
+						_company.getCompanyId(),
+						writerInterceptorContext.getEntity())));
 
-		writerInterceptorContext.setGenericType(ExtendedEntity.class);
+			writerInterceptorContext.setGenericType(ExtendedEntity.class);
+		}
+		catch (Exception exception) {
+			_log.error(exception);
+
+			throw new IOException(exception);
+		}
 	}
+
+	private EntityExtensionHandler _getEntityExtensionHandler(
+		Class<?> clazz, MediaType mediaType) {
+
+		ContextResolver<EntityExtensionHandler> contextResolver =
+			_providers.getContextResolver(
+				EntityExtensionHandler.class, mediaType);
+
+		if (contextResolver == null) {
+			return null;
+		}
+
+		return contextResolver.getContext(clazz);
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		EntityExtensionWriterInterceptor.class);
+
+	@Context
+	private Company _company;
 
 	@Context
 	private Providers _providers;

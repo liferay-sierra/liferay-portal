@@ -16,25 +16,28 @@ import ClayAlert from '@clayui/alert';
 import ClayButton from '@clayui/button';
 import ClayForm from '@clayui/form';
 import ClayModal from '@clayui/modal';
-import {fetch} from 'frontend-js-web';
+import {Observer} from '@clayui/modal/lib/types';
+import {
+	API,
+	FormError,
+	Input,
+	useForm,
+} from '@liferay/object-js-components-web';
 import React, {useState} from 'react';
 
-import useForm from '../hooks/useForm';
-import Input from './Form/Input';
+const defaultLanguageId = Liferay.ThemeDisplay.getDefaultLanguageId();
 
 interface IProps extends React.HTMLAttributes<HTMLElement> {
 	apiURL: string;
 	inputId: string;
 	label: string;
-	observer: any;
+	observer: Observer;
 	onClose: () => void;
 }
 
 type TInitialValues = {
 	name: LocalizedValue<string>;
 };
-
-const defaultLanguageId = Liferay.ThemeDisplay.getDefaultLanguageId();
 
 export function ModalBasicWithFieldName({
 	apiURL,
@@ -44,48 +47,27 @@ export function ModalBasicWithFieldName({
 	onClose,
 }: IProps) {
 	const initialValues: TInitialValues = {
-		name: {
-			[defaultLanguageId]: '',
-		},
+		name: {[defaultLanguageId]: ''},
 	};
 	const [error, setError] = useState<string>('');
 
 	const onSubmit = async ({name}: TInitialValues) => {
-		const response = await fetch(apiURL, {
-			body: JSON.stringify({
-				name: {
-					[defaultLanguageId]: name,
-				},
-			}),
-			headers: new Headers({
-				'Accept': 'application/json',
-				'Content-Type': 'application/json',
-			}),
-			method: 'POST',
-		});
+		try {
+			await API.save(apiURL, {name: {[defaultLanguageId]: name}}, 'POST');
 
-		if (response.status === 401) {
-			window.location.reload();
-		}
-		else if (response.ok) {
 			onClose();
-
 			window.location.reload();
 		}
-		else {
-			const {
-				title = Liferay.Language.get('an-error-occurred'),
-			} = (await response.json()) as {title?: string};
-
-			setError(title);
+		catch (error) {
+			setError((error as Error).message);
 		}
 	};
 
-	const validate = ({name}: any) => {
-		const errors: any = {};
+	const validate = ({name}: TInitialValues) => {
+		const errors: FormError<TInitialValues> = {};
 
 		if (name[defaultLanguageId] === '') {
-			errors.label = Liferay.Language.get('required');
+			errors.name = Liferay.Language.get('required');
 		}
 
 		return errors;
@@ -109,7 +91,7 @@ export function ModalBasicWithFieldName({
 						)}
 
 						<Input
-							error={errors.label}
+							error={errors.name}
 							id={inputId}
 							label={Liferay.Language.get('name')}
 							name="name"

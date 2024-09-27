@@ -20,7 +20,6 @@ import com.liferay.document.library.video.internal.helper.DLVideoExternalShortcu
 import com.liferay.dynamic.data.mapping.kernel.DDMStructureManager;
 import com.liferay.dynamic.data.mapping.kernel.DDMStructureManagerUtil;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
-import com.liferay.dynamic.data.mapping.service.DDMStructureVersionLocalService;
 import com.liferay.dynamic.data.mapping.util.DDMStructurePermissionSupport;
 import com.liferay.dynamic.data.mapping.util.DefaultDDMStructureHelper;
 import com.liferay.petra.reflect.ReflectionUtil;
@@ -76,24 +75,16 @@ public class DLVideoExternalShortcutPortalInstanceLifecycleListener
 		field.set(null, ddmStructureManager);
 	}
 
-	@Reference(
-		target = "(model.class.name=com.liferay.document.library.kernel.model.DLFileEntryMetadata)",
-		unbind = "-"
-	)
-	protected void setDDMStructurePermissionSupport(
-		DDMStructurePermissionSupport ddmStructurePermissionSupport) {
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMStructureVersionLocalService(
-		DDMStructureVersionLocalService ddmStructureVersionLocalService) {
-	}
-
 	@Reference
 	private ClassNameLocalService _classNameLocalService;
 
 	@Reference
 	private DDMStructureLocalService _ddmStructureLocalService;
+
+	@Reference(
+		target = "(model.class.name=com.liferay.document.library.kernel.model.DLFileEntryMetadata)"
+	)
+	private DDMStructurePermissionSupport _ddmStructurePermissionSupport;
 
 	@Reference
 	private DefaultDDMStructureHelper _defaultDDMStructureHelper;

@@ -155,7 +155,7 @@ public class MappedProduct implements Serializable {
 	protected MappedProduct firstAvailableReplacementMappedProduct;
 
 	@DecimalMin("0")
-	@Schema
+	@Schema(example = "33130")
 	public Long getId() {
 		return id;
 	}
@@ -180,35 +180,6 @@ public class MappedProduct implements Serializable {
 	@GraphQLField
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected Long id;
-
-	@Schema
-	@Valid
-	public Map<String, String> getOptions() {
-		return options;
-	}
-
-	public void setOptions(Map<String, String> options) {
-		this.options = options;
-	}
-
-	@JsonIgnore
-	public void setOptions(
-		UnsafeSupplier<Map<String, String>, Exception> optionsUnsafeSupplier) {
-
-		try {
-			options = optionsUnsafeSupplier.get();
-		}
-		catch (RuntimeException re) {
-			throw re;
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	@GraphQLField
-	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected Map<String, String> options;
 
 	@Schema
 	@Valid
@@ -269,7 +240,7 @@ public class MappedProduct implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected ProductConfiguration productConfiguration;
 
-	@Schema
+	@Schema(example = "exampleERC")
 	public String getProductExternalReferenceCode() {
 		return productExternalReferenceCode;
 	}
@@ -302,7 +273,7 @@ public class MappedProduct implements Serializable {
 	protected String productExternalReferenceCode;
 
 	@DecimalMin("0")
-	@Schema
+	@Schema(example = "33131")
 	public Long getProductId() {
 		return productId;
 	}
@@ -330,7 +301,9 @@ public class MappedProduct implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected Long productId;
 
-	@Schema
+	@Schema(
+		example = "{en_US=Hand Saw, hr_HR=Product Name HR, hu_HU=Product Name HU}"
+	)
 	@Valid
 	public Map<String, String> getProductName() {
 		return productName;
@@ -390,7 +363,7 @@ public class MappedProduct implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected ProductOption[] productOptions;
 
-	@Schema
+	@Schema(example = "true")
 	public Boolean getPurchasable() {
 		return purchasable;
 	}
@@ -419,7 +392,7 @@ public class MappedProduct implements Serializable {
 	protected Boolean purchasable;
 
 	@DecimalMin("0")
-	@Schema
+	@Schema(example = "1")
 	public Integer getQuantity() {
 		return quantity;
 	}
@@ -480,7 +453,7 @@ public class MappedProduct implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
 	protected MappedProduct replacementMappedProduct;
 
-	@Schema
+	@Schema(example = "MIN3123 has been replaced by MIN1289")
 	public String getReplacementMessage() {
 		return replacementMessage;
 	}
@@ -508,7 +481,7 @@ public class MappedProduct implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
 	protected String replacementMessage;
 
-	@Schema
+	@Schema(example = "1")
 	public String getSequence() {
 		return sequence;
 	}
@@ -536,7 +509,7 @@ public class MappedProduct implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected String sequence;
 
-	@Schema
+	@Schema(example = "SKU01")
 	public String getSku() {
 		return sku;
 	}
@@ -562,7 +535,7 @@ public class MappedProduct implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected String sku;
 
-	@Schema
+	@Schema(example = "SKU0111")
 	public String getSkuExternalReferenceCode() {
 		return skuExternalReferenceCode;
 	}
@@ -593,7 +566,7 @@ public class MappedProduct implements Serializable {
 	protected String skuExternalReferenceCode;
 
 	@DecimalMin("0")
-	@Schema
+	@Schema(example = "33135")
 	public Long getSkuId() {
 		return skuId;
 	}
@@ -620,6 +593,35 @@ public class MappedProduct implements Serializable {
 	protected Long skuId;
 
 	@Schema
+	@Valid
+	public SkuOption[] getSkuOptions() {
+		return skuOptions;
+	}
+
+	public void setSkuOptions(SkuOption[] skuOptions) {
+		this.skuOptions = skuOptions;
+	}
+
+	@JsonIgnore
+	public void setSkuOptions(
+		UnsafeSupplier<SkuOption[], Exception> skuOptionsUnsafeSupplier) {
+
+		try {
+			skuOptions = skuOptionsUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected SkuOption[] skuOptions;
+
+	@Schema(example = "simple")
 	public String getThumbnail() {
 		return thumbnail;
 	}
@@ -647,7 +649,7 @@ public class MappedProduct implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
 	protected String thumbnail;
 
-	@Schema
+	@Schema(example = "sku")
 	@Valid
 	public Type getType() {
 		return type;
@@ -683,7 +685,9 @@ public class MappedProduct implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected Type type;
 
-	@Schema
+	@Schema(
+		example = "{en_US=product-url-us, hr_HR=product-url-hr, hu_HU=product-url-hu}"
+	)
 	@Valid
 	public Map<String, String> getUrls() {
 		return urls;
@@ -777,16 +781,6 @@ public class MappedProduct implements Serializable {
 			sb.append("\"id\": ");
 
 			sb.append(id);
-		}
-
-		if (options != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
-
-			sb.append("\"options\": ");
-
-			sb.append(_toJSON(options));
 		}
 
 		if (price != null) {
@@ -957,6 +951,26 @@ public class MappedProduct implements Serializable {
 			sb.append("\"skuId\": ");
 
 			sb.append(skuId);
+		}
+
+		if (skuOptions != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"skuOptions\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < skuOptions.length; i++) {
+				sb.append(String.valueOf(skuOptions[i]));
+
+				if ((i + 1) < skuOptions.length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
 		}
 
 		if (thumbnail != null) {

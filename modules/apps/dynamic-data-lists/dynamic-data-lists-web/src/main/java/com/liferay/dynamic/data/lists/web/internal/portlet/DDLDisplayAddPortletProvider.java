@@ -41,7 +41,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Rafael Praxedes
  */
 @Component(
-	immediate = true,
 	property = "model.class.name=com.liferay.dynamic.data.lists.model.DDLRecord",
 	service = AddPortletProvider.class
 )
@@ -84,13 +83,7 @@ public class DDLDisplayAddPortletProvider
 			"recordSetId", String.valueOf(record.getRecordSetId()));
 	}
 
-	@Reference(unbind = "-")
-	protected void setAssetEntryLocalService(
-		AssetEntryLocalService assetEntryLocalService) {
-
-		_assetEntryLocalService = assetEntryLocalService;
-	}
-
+	@Reference
 	private AssetEntryLocalService _assetEntryLocalService;
 
 }

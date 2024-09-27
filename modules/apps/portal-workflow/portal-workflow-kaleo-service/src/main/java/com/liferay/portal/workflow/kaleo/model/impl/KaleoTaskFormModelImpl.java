@@ -33,7 +33,6 @@ import com.liferay.portal.workflow.kaleo.model.KaleoTaskFormModel;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 
 import java.sql.Blob;
@@ -70,11 +69,11 @@ public class KaleoTaskFormModelImpl
 	public static final String TABLE_NAME = "KaleoTaskForm";
 
 	public static final Object[][] TABLE_COLUMNS = {
-		{"mvccVersion", Types.BIGINT}, {"kaleoTaskFormId", Types.BIGINT},
-		{"groupId", Types.BIGINT}, {"companyId", Types.BIGINT},
-		{"userId", Types.BIGINT}, {"userName", Types.VARCHAR},
-		{"createDate", Types.TIMESTAMP}, {"modifiedDate", Types.TIMESTAMP},
-		{"kaleoDefinitionId", Types.BIGINT},
+		{"mvccVersion", Types.BIGINT}, {"ctCollectionId", Types.BIGINT},
+		{"kaleoTaskFormId", Types.BIGINT}, {"groupId", Types.BIGINT},
+		{"companyId", Types.BIGINT}, {"userId", Types.BIGINT},
+		{"userName", Types.VARCHAR}, {"createDate", Types.TIMESTAMP},
+		{"modifiedDate", Types.TIMESTAMP}, {"kaleoDefinitionId", Types.BIGINT},
 		{"kaleoDefinitionVersionId", Types.BIGINT},
 		{"kaleoNodeId", Types.BIGINT}, {"kaleoTaskId", Types.BIGINT},
 		{"kaleoTaskName", Types.VARCHAR}, {"name", Types.VARCHAR},
@@ -89,6 +88,7 @@ public class KaleoTaskFormModelImpl
 
 	static {
 		TABLE_COLUMNS_MAP.put("mvccVersion", Types.BIGINT);
+		TABLE_COLUMNS_MAP.put("ctCollectionId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("kaleoTaskFormId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("groupId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("companyId", Types.BIGINT);
@@ -113,7 +113,7 @@ public class KaleoTaskFormModelImpl
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table KaleoTaskForm (mvccVersion LONG default 0 not null,kaleoTaskFormId LONG not null primary key,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,kaleoDefinitionId LONG,kaleoDefinitionVersionId LONG,kaleoNodeId LONG,kaleoTaskId LONG,kaleoTaskName VARCHAR(200) null,name VARCHAR(200) null,description STRING null,formCompanyId LONG,formDefinition STRING null,formGroupId LONG,formId LONG,formUuid VARCHAR(75) null,metadata STRING null,priority INTEGER)";
+		"create table KaleoTaskForm (mvccVersion LONG default 0 not null,ctCollectionId LONG default 0 not null,kaleoTaskFormId LONG not null,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,kaleoDefinitionId LONG,kaleoDefinitionVersionId LONG,kaleoNodeId LONG,kaleoTaskId LONG,kaleoTaskName VARCHAR(200) null,name VARCHAR(200) null,description STRING null,formCompanyId LONG,formDefinition STRING null,formGroupId LONG,formId LONG,formUuid VARCHAR(75) null,metadata STRING null,priority INTEGER,primary key (kaleoTaskFormId, ctCollectionId))";
 
 	public static final String TABLE_SQL_DROP = "drop table KaleoTaskForm";
 
@@ -265,34 +265,6 @@ public class KaleoTaskFormModelImpl
 		return _attributeSetterBiConsumers;
 	}
 
-	private static Function<InvocationHandler, KaleoTaskForm>
-		_getProxyProviderFunction() {
-
-		Class<?> proxyClass = ProxyUtil.getProxyClass(
-			KaleoTaskForm.class.getClassLoader(), KaleoTaskForm.class,
-			ModelWrapper.class);
-
-		try {
-			Constructor<KaleoTaskForm> constructor =
-				(Constructor<KaleoTaskForm>)proxyClass.getConstructor(
-					InvocationHandler.class);
-
-			return invocationHandler -> {
-				try {
-					return constructor.newInstance(invocationHandler);
-				}
-				catch (ReflectiveOperationException
-							reflectiveOperationException) {
-
-					throw new InternalError(reflectiveOperationException);
-				}
-			};
-		}
-		catch (NoSuchMethodException noSuchMethodException) {
-			throw new InternalError(noSuchMethodException);
-		}
-	}
-
 	private static final Map<String, Function<KaleoTaskForm, Object>>
 		_attributeGetterFunctions;
 	private static final Map<String, BiConsumer<KaleoTaskForm, Object>>
@@ -309,6 +281,11 @@ public class KaleoTaskFormModelImpl
 		attributeSetterBiConsumers.put(
 			"mvccVersion",
 			(BiConsumer<KaleoTaskForm, Long>)KaleoTaskForm::setMvccVersion);
+		attributeGetterFunctions.put(
+			"ctCollectionId", KaleoTaskForm::getCtCollectionId);
+		attributeSetterBiConsumers.put(
+			"ctCollectionId",
+			(BiConsumer<KaleoTaskForm, Long>)KaleoTaskForm::setCtCollectionId);
 		attributeGetterFunctions.put(
 			"kaleoTaskFormId", KaleoTaskForm::getKaleoTaskFormId);
 		attributeSetterBiConsumers.put(
@@ -427,6 +404,20 @@ public class KaleoTaskFormModelImpl
 		}
 
 		_mvccVersion = mvccVersion;
+	}
+
+	@Override
+	public long getCtCollectionId() {
+		return _ctCollectionId;
+	}
+
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_ctCollectionId = ctCollectionId;
 	}
 
 	@Override
@@ -886,6 +877,7 @@ public class KaleoTaskFormModelImpl
 		KaleoTaskFormImpl kaleoTaskFormImpl = new KaleoTaskFormImpl();
 
 		kaleoTaskFormImpl.setMvccVersion(getMvccVersion());
+		kaleoTaskFormImpl.setCtCollectionId(getCtCollectionId());
 		kaleoTaskFormImpl.setKaleoTaskFormId(getKaleoTaskFormId());
 		kaleoTaskFormImpl.setGroupId(getGroupId());
 		kaleoTaskFormImpl.setCompanyId(getCompanyId());
@@ -920,6 +912,8 @@ public class KaleoTaskFormModelImpl
 
 		kaleoTaskFormImpl.setMvccVersion(
 			this.<Long>getColumnOriginalValue("mvccVersion"));
+		kaleoTaskFormImpl.setCtCollectionId(
+			this.<Long>getColumnOriginalValue("ctCollectionId"));
 		kaleoTaskFormImpl.setKaleoTaskFormId(
 			this.<Long>getColumnOriginalValue("kaleoTaskFormId"));
 		kaleoTaskFormImpl.setGroupId(
@@ -1046,6 +1040,8 @@ public class KaleoTaskFormModelImpl
 			new KaleoTaskFormCacheModel();
 
 		kaleoTaskFormCacheModel.mvccVersion = getMvccVersion();
+
+		kaleoTaskFormCacheModel.ctCollectionId = getCtCollectionId();
 
 		kaleoTaskFormCacheModel.kaleoTaskFormId = getKaleoTaskFormId();
 
@@ -1198,45 +1194,17 @@ public class KaleoTaskFormModelImpl
 		return sb.toString();
 	}
 
-	@Override
-	public String toXmlString() {
-		Map<String, Function<KaleoTaskForm, Object>> attributeGetterFunctions =
-			getAttributeGetterFunctions();
-
-		StringBundler sb = new StringBundler(
-			(5 * attributeGetterFunctions.size()) + 4);
-
-		sb.append("<model><model-name>");
-		sb.append(getModelClassName());
-		sb.append("</model-name>");
-
-		for (Map.Entry<String, Function<KaleoTaskForm, Object>> entry :
-				attributeGetterFunctions.entrySet()) {
-
-			String attributeName = entry.getKey();
-			Function<KaleoTaskForm, Object> attributeGetterFunction =
-				entry.getValue();
-
-			sb.append("<column><column-name>");
-			sb.append(attributeName);
-			sb.append("</column-name><column-value><![CDATA[");
-			sb.append(attributeGetterFunction.apply((KaleoTaskForm)this));
-			sb.append("]]></column-value></column>");
-		}
-
-		sb.append("</model>");
-
-		return sb.toString();
-	}
-
 	private static class EscapedModelProxyProviderFunctionHolder {
 
 		private static final Function<InvocationHandler, KaleoTaskForm>
-			_escapedModelProxyProviderFunction = _getProxyProviderFunction();
+			_escapedModelProxyProviderFunction =
+				ProxyUtil.getProxyProviderFunction(
+					KaleoTaskForm.class, ModelWrapper.class);
 
 	}
 
 	private long _mvccVersion;
+	private long _ctCollectionId;
 	private long _kaleoTaskFormId;
 	private long _groupId;
 	private long _companyId;
@@ -1288,6 +1256,7 @@ public class KaleoTaskFormModelImpl
 		_columnOriginalValues = new HashMap<String, Object>();
 
 		_columnOriginalValues.put("mvccVersion", _mvccVersion);
+		_columnOriginalValues.put("ctCollectionId", _ctCollectionId);
 		_columnOriginalValues.put("kaleoTaskFormId", _kaleoTaskFormId);
 		_columnOriginalValues.put("groupId", _groupId);
 		_columnOriginalValues.put("companyId", _companyId);
@@ -1325,47 +1294,49 @@ public class KaleoTaskFormModelImpl
 
 		columnBitmasks.put("mvccVersion", 1L);
 
-		columnBitmasks.put("kaleoTaskFormId", 2L);
+		columnBitmasks.put("ctCollectionId", 2L);
 
-		columnBitmasks.put("groupId", 4L);
+		columnBitmasks.put("kaleoTaskFormId", 4L);
 
-		columnBitmasks.put("companyId", 8L);
+		columnBitmasks.put("groupId", 8L);
 
-		columnBitmasks.put("userId", 16L);
+		columnBitmasks.put("companyId", 16L);
 
-		columnBitmasks.put("userName", 32L);
+		columnBitmasks.put("userId", 32L);
 
-		columnBitmasks.put("createDate", 64L);
+		columnBitmasks.put("userName", 64L);
 
-		columnBitmasks.put("modifiedDate", 128L);
+		columnBitmasks.put("createDate", 128L);
 
-		columnBitmasks.put("kaleoDefinitionId", 256L);
+		columnBitmasks.put("modifiedDate", 256L);
 
-		columnBitmasks.put("kaleoDefinitionVersionId", 512L);
+		columnBitmasks.put("kaleoDefinitionId", 512L);
 
-		columnBitmasks.put("kaleoNodeId", 1024L);
+		columnBitmasks.put("kaleoDefinitionVersionId", 1024L);
 
-		columnBitmasks.put("kaleoTaskId", 2048L);
+		columnBitmasks.put("kaleoNodeId", 2048L);
 
-		columnBitmasks.put("kaleoTaskName", 4096L);
+		columnBitmasks.put("kaleoTaskId", 4096L);
 
-		columnBitmasks.put("name", 8192L);
+		columnBitmasks.put("kaleoTaskName", 8192L);
 
-		columnBitmasks.put("description", 16384L);
+		columnBitmasks.put("name", 16384L);
 
-		columnBitmasks.put("formCompanyId", 32768L);
+		columnBitmasks.put("description", 32768L);
 
-		columnBitmasks.put("formDefinition", 65536L);
+		columnBitmasks.put("formCompanyId", 65536L);
 
-		columnBitmasks.put("formGroupId", 131072L);
+		columnBitmasks.put("formDefinition", 131072L);
 
-		columnBitmasks.put("formId", 262144L);
+		columnBitmasks.put("formGroupId", 262144L);
 
-		columnBitmasks.put("formUuid", 524288L);
+		columnBitmasks.put("formId", 524288L);
 
-		columnBitmasks.put("metadata", 1048576L);
+		columnBitmasks.put("formUuid", 1048576L);
 
-		columnBitmasks.put("priority", 2097152L);
+		columnBitmasks.put("metadata", 2097152L);
+
+		columnBitmasks.put("priority", 4194304L);
 
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}

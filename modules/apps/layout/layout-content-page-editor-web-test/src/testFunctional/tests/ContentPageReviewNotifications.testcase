@@ -1,4 +1,4 @@
-@component-name = "portal-collaboration"
+@component-name = "portal-lima"
 definition {
 
 	property custom.properties = "default.layout.template.id=1_column${line.separator}jsonws.web.service.paths.excludes=";
@@ -102,73 +102,6 @@ definition {
 
 		PageEditor.viewComment(
 			fragmentComment = "Comment by User 2",
-			fromNotifications = "true");
-	}
-
-	@description = "This test covers LPS-101493. It ensures that a user who replies to a comment will receive further reply notifications."
-	@priority = "4"
-	@refactordone
-	test CanViewCommentFurtherReply {
-		JSONLayout.addPublicLayout(
-			groupName = "Test Site Name",
-			layoutName = "Content Page Name",
-			type = "content");
-
-		ContentPagesNavigator.openEditContentPage(
-			pageName = "Content Page Name",
-			siteName = "Test Site Name");
-
-		PageEditor.addFragment(
-			collectionName = "Collection Name",
-			fragmentName = "Title");
-
-		PageEditor.addComment(
-			fragmentComment = "Comment By User 1",
-			fragmentName = "Title");
-
-		User.logoutAndLoginPG(
-			userLoginEmailAddress = "user2@liferay.com",
-			userLoginFullName = "userfn userln");
-
-		ContentPagesNavigator.openEditContentPage(
-			pageName = "Content Page Name",
-			siteName = "Test Site Name");
-
-		PageEditor.gotoCommentViaFragment(fragmentName = "Title");
-
-		PageEditor.replyToComment(commentReply = "Reply from User 2");
-
-		User.logoutAndLoginPG(
-			userLoginEmailAddress = "test@liferay.com",
-			userLoginFullName = "Test Test");
-
-		ContentPagesNavigator.openEditContentPage(
-			pageName = "Content Page Name",
-			siteName = "Test Site Name");
-
-		PageEditor.gotoCommentViaFragment(fragmentName = "Title");
-
-		PageEditor.replyToComment(commentReply = "Reply from User Test");
-
-		User.logoutAndLoginPG(
-			userLoginEmailAddress = "user2@liferay.com",
-			userLoginFullName = "userfn userln");
-
-		Notifications.viewBadgeCount(
-			activePanel = "Notifications",
-			notificationCount = "1");
-
-		Notifications.gotoNotifications();
-
-		Notifications.viewNewComment(
-			contentBody = "Reply from User Test",
-			fragmentName = "Title",
-			user = "Test Test");
-
-		Notifications.navigateToContent(contentBody = "Reply from User Test");
-
-		PageEditor.viewComment(
-			fragmentComment = "Reply from User Test",
 			fromNotifications = "true");
 	}
 
@@ -280,6 +213,73 @@ definition {
 			fragmentComment = "Comment by Test ",
 			mentionsUserFullName = "My Site",
 			mentionsUserScreenName = "user2");
+	}
+
+	@description = "This test covers LPS-101493. It ensures that a user who replies to a comment will receive further reply notifications."
+	@priority = "4"
+	@refactordone
+	test WillReceiveNotificationsFromMultipleUsers {
+		JSONLayout.addPublicLayout(
+			groupName = "Test Site Name",
+			layoutName = "Content Page Name",
+			type = "content");
+
+		ContentPagesNavigator.openEditContentPage(
+			pageName = "Content Page Name",
+			siteName = "Test Site Name");
+
+		PageEditor.addFragment(
+			collectionName = "Collection Name",
+			fragmentName = "Title");
+
+		PageEditor.addComment(
+			fragmentComment = "Comment By User 1",
+			fragmentName = "Title");
+
+		User.logoutAndLoginPG(
+			userLoginEmailAddress = "user2@liferay.com",
+			userLoginFullName = "userfn userln");
+
+		ContentPagesNavigator.openEditContentPage(
+			pageName = "Content Page Name",
+			siteName = "Test Site Name");
+
+		PageEditor.gotoCommentViaFragment(fragmentName = "Title");
+
+		PageEditor.replyToComment(commentReply = "Reply from User 2");
+
+		User.logoutAndLoginPG(
+			userLoginEmailAddress = "test@liferay.com",
+			userLoginFullName = "Test Test");
+
+		ContentPagesNavigator.openEditContentPage(
+			pageName = "Content Page Name",
+			siteName = "Test Site Name");
+
+		PageEditor.gotoCommentViaFragment(fragmentName = "Title");
+
+		PageEditor.replyToComment(commentReply = "Reply from User Test");
+
+		User.logoutAndLoginPG(
+			userLoginEmailAddress = "user2@liferay.com",
+			userLoginFullName = "userfn userln");
+
+		Notifications.viewBadgeCount(
+			activePanel = "Notifications",
+			notificationCount = "1");
+
+		Notifications.gotoNotifications();
+
+		Notifications.viewNewComment(
+			contentBody = "Reply from User Test",
+			fragmentName = "Title",
+			user = "Test Test");
+
+		Notifications.navigateToContent(contentBody = "Reply from User Test");
+
+		PageEditor.viewComment(
+			fragmentComment = "Reply from User Test",
+			fromNotifications = "true");
 	}
 
 }

@@ -12,6 +12,8 @@
  * details.
  */
 
+import {STATUS_CODE, formatStorage, sub} from 'frontend-js-web';
+
 export default function getUploadErrorMessage(error, maxFileSize) {
 	let message = Liferay.Language.get(
 		'an-unexpected-error-occurred-while-uploading-your-file'
@@ -21,15 +23,15 @@ export default function getUploadErrorMessage(error, maxFileSize) {
 		const errorType = error.errorType;
 
 		switch (errorType) {
-			case Liferay.STATUS_CODE.SC_FILE_ANTIVIRUS_EXCEPTION:
+			case STATUS_CODE.SC_FILE_ANTIVIRUS_EXCEPTION:
 				if (error.message) {
 					message = error.message;
 				}
 
 				break;
-			case Liferay.STATUS_CODE.SC_FILE_EXTENSION_EXCEPTION:
+			case STATUS_CODE.SC_FILE_EXTENSION_EXCEPTION:
 				if (error.message) {
-					message = Liferay.Util.sub(
+					message = sub(
 						Liferay.Language.get(
 							'please-enter-a-file-with-a-valid-extension-x'
 						),
@@ -43,31 +45,31 @@ export default function getUploadErrorMessage(error, maxFileSize) {
 				}
 
 				break;
-			case Liferay.STATUS_CODE.SC_FILE_NAME_EXCEPTION:
+			case STATUS_CODE.SC_FILE_NAME_EXCEPTION:
 				message = Liferay.Language.get(
 					'please-enter-a-file-with-a-valid-file-name'
 				);
 
 				break;
-			case Liferay.STATUS_CODE.SC_FILE_SIZE_EXCEPTION:
-			case Liferay.STATUS_CODE.SC_UPLOAD_REQUEST_CONTENT_LENGTH_EXCEPTION:
-				message = Liferay.Util.sub(
+			case STATUS_CODE.SC_FILE_SIZE_EXCEPTION:
+			case STATUS_CODE.SC_UPLOAD_REQUEST_CONTENT_LENGTH_EXCEPTION:
+				message = sub(
 					Liferay.Language.get(
 						'please-enter-a-file-with-a-valid-file-size-no-larger-than-x'
 					),
-					[Liferay.Util.formatStorage(maxFileSize)]
+					[formatStorage(maxFileSize)]
 				);
 
 				break;
-			case Liferay.STATUS_CODE.SC_UPLOAD_REQUEST_SIZE_EXCEPTION: {
+			case STATUS_CODE.SC_UPLOAD_REQUEST_SIZE_EXCEPTION: {
 				const maxUploadRequestSize =
 					Liferay.PropsValues.UPLOAD_SERVLET_REQUEST_IMPL_MAX_SIZE;
 
-				message = Liferay.Util.sub(
+				message = sub(
 					Liferay.Language.get(
 						'request-is-larger-than-x-and-could-not-be-processed'
 					),
-					[Liferay.Util.formatStorage(maxUploadRequestSize)]
+					[formatStorage(maxUploadRequestSize)]
 				);
 
 				break;

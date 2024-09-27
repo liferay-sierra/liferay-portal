@@ -15,13 +15,8 @@
 package com.liferay.portal.upgrade.internal.index.updater.osgi.commands;
 
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.dao.db.DB;
-import com.liferay.portal.kernel.dao.db.DBManagerUtil;
-import com.liferay.portal.kernel.dao.jdbc.DataAccess;
-import com.liferay.portal.kernel.util.LoggingTimer;
-import com.liferay.portal.upgrade.internal.index.updater.IndexUpdaterUtil;
-
-import java.sql.Connection;
+import com.liferay.portal.db.index.IndexUpdaterUtil;
+import com.liferay.portal.module.util.BundleUtil;
 
 import org.apache.felix.service.command.Descriptor;
 
@@ -52,7 +47,7 @@ public class IndexUpdaterOSGiCommands {
 				"Module " + bundleId + " does not exist");
 		}
 
-		if (IndexUpdaterUtil.isLiferayServiceBundle(bundle)) {
+		if (BundleUtil.isLiferayServiceBundle(bundle)) {
 			IndexUpdaterUtil.updateIndexes(bundle);
 
 			return "Completed update of indexes for module " + bundleId;
@@ -65,10 +60,10 @@ public class IndexUpdaterOSGiCommands {
 		"Update database indexes for specific a module via symbolic name"
 	)
 	public String updateIndexes(String bundleSymbolicName) throws Exception {
-		Bundle bundle = IndexUpdaterUtil.getBundle(
+		Bundle bundle = BundleUtil.getBundle(
 			_bundleContext, bundleSymbolicName);
 
-		if (IndexUpdaterUtil.isLiferayServiceBundle(bundle)) {
+		if (BundleUtil.isLiferayServiceBundle(bundle)) {
 			IndexUpdaterUtil.updateIndexes(bundle);
 
 			return "Completed update of indexes for module " +
@@ -81,42 +76,15 @@ public class IndexUpdaterOSGiCommands {
 
 	@Descriptor("Update database indexes for all modules")
 	public String updateIndexesAll() throws Exception {
-		DB db = DBManagerUtil.getDB();
-
-		try (Connection connection = DataAccess.getConnection()) {
-			for (Bundle bundle : _bundleContext.getBundles()) {
-				if (!IndexUpdaterUtil.isLiferayServiceBundle(bundle)) {
-					continue;
-				}
-
-				String indexesSQL = IndexUpdaterUtil.getSQLTemplateString(
-					bundle, "indexes.sql");
-
-				if (indexesSQL == null) {
-					continue;
-				}
-
-				String tablesSQL = IndexUpdaterUtil.getSQLTemplateString(
-					bundle, "tables.sql");
-
-				if (tablesSQL == null) {
-					continue;
-				}
-
-				String loggingTimerName =
-					"Updating database indexes for " + bundle.getSymbolicName();
-
-				try (LoggingTimer loggingTimer = new LoggingTimer(
-						loggingTimerName)) {
-
-					db.updateIndexes(connection, tablesSQL, indexesSQL, true);
-				}
-				catch (Exception exception) {
-					System.out.println(
-						StringBundler.concat(
-							"Unable to update indexes for ",
-							bundle.getSymbolicName(), ": ", exception));
-				}
+		for (Bundle bundle : _bundleContext.getBundles()) {
+			try {
+				IndexUpdaterUtil.updateIndexes(bundle);
+			}
+			catch (Exception exception) {
+				System.out.println(
+					StringBundler.concat(
+						"Unable to update indexes for ",
+						bundle.getSymbolicName(), ": ", exception));
 			}
 		}
 

@@ -17,9 +17,10 @@ definition {
 		}
 
 		task ("Activate local live staging") {
-			Staging.openStagingAdmin(siteURLKey = "test-site-name");
-
-			Staging.activateStagingCP(siteName = "Test Site Name");
+			JSONStaging.enableLocalStaging(
+				branchingPrivate = "false",
+				branchingPublic = "false",
+				groupName = "Test Site Name");
 		}
 
 		task ("Add a style book") {
@@ -54,6 +55,8 @@ definition {
 				locator1 = "TextInput#GROUPED_TEXT_INPUT",
 				value1 = "#00FF00");
 
+			StyleBooks.clickManagementBar();
+
 			StyleBooks.waitForAutoSave();
 
 			StyleBooks.selectForm(formName = "Typography");
@@ -61,9 +64,11 @@ definition {
 			StyleBooks.expandSection(sectionName = "Headings");
 
 			Type(
-				key_fieldLabel = "Heading 1 Font Size",
-				locator1 = "TextInput#GENERIC_TEXT_INPUT",
-				value1 = "2rem");
+				ariaLabel = "Heading 1 Font Size",
+				locator1 = "TextInput#ANY_WITH_AIRA_LABEL",
+				value1 = "2");
+
+			StyleBooks.clickManagementBar();
 
 			StyleBooks.waitForAutoSave();
 
@@ -94,10 +99,9 @@ definition {
 
 			Click(locator1 = "PageEditor#MORE_LINK");
 
-			AssertTextEquals(
+			AssertElementPresent(
 				key_styleBookName = "Styles from Theme",
-				locator1 = "PagesAdmin#STYLE_BOOK_NAME",
-				value1 = "Styles from Theme");
+				locator1 = "PagesAdmin#STYLE_BOOK_NAME");
 
 			AssertClick(
 				key_text = "Change Style Book",
@@ -106,10 +110,9 @@ definition {
 
 			StyleBooks.selectStyleBook(styleBookName = "Test Style Book Name");
 
-			AssertTextEquals(
+			AssertElementPresent(
 				key_styleBookName = "Test Style Book Name",
-				locator1 = "PagesAdmin#STYLE_BOOK_NAME",
-				value1 = "Test Style Book Name");
+				locator1 = "PagesAdmin#STYLE_BOOK_NAME");
 
 			Button.clickSave();
 
@@ -133,7 +136,7 @@ definition {
 				locator2 = "font-size",
 				value1 = "32px");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Assert the new style book is applied to content page in view mode") {
@@ -167,10 +170,9 @@ definition {
 
 			Click(locator1 = "PageEditor#MORE_LINK");
 
-			AssertTextEquals(
+			AssertElementPresent(
 				key_styleBookName = "Test Style Book Name",
-				locator1 = "PagesAdmin#STYLE_BOOK_NAME",
-				value1 = "Test Style Book Name");
+				locator1 = "PagesAdmin#STYLE_BOOK_NAME");
 
 			AssertClick(
 				key_text = "Change Style Book",
@@ -179,10 +181,9 @@ definition {
 
 			StyleBooks.selectStyleBook(styleBookName = "Styles from Theme");
 
-			AssertTextEquals(
+			AssertElementPresent(
 				key_styleBookName = "Styles from Theme",
-				locator1 = "PagesAdmin#STYLE_BOOK_NAME",
-				value1 = "Styles from Theme");
+				locator1 = "PagesAdmin#STYLE_BOOK_NAME");
 
 			Button.clickSave();
 
@@ -206,7 +207,7 @@ definition {
 				locator2 = "font-size",
 				value1 = "26px");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Assert the default style book is applied to content page in view mode") {
@@ -248,6 +249,8 @@ definition {
 				locator1 = "TextInput#GROUPED_TEXT_INPUT",
 				value1 = "#00FF00");
 
+			StyleBooks.clickManagementBar();
+
 			StyleBooks.waitForAutoSave();
 
 			StyleBooks.selectForm(formName = "Typography");
@@ -255,9 +258,11 @@ definition {
 			StyleBooks.expandSection(sectionName = "Headings");
 
 			Type(
-				key_fieldLabel = "Heading 1 Font Size",
-				locator1 = "TextInput#GENERIC_TEXT_INPUT",
-				value1 = "2rem");
+				ariaLabel = "Heading 1 Font Size",
+				locator1 = "TextInput#ANY_WITH_AIRA_LABEL",
+				value1 = "2");
+
+			StyleBooks.clickManagementBar();
 
 			StyleBooks.waitForAutoSave();
 
@@ -308,7 +313,7 @@ definition {
 				locator2 = "font-size",
 				value1 = "32px");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Assert the new style book is applied to content page in view mode") {
@@ -364,7 +369,7 @@ definition {
 				locator2 = "font-size",
 				value1 = "26px");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Assert the new style book is applied to content page in view mode") {
@@ -406,9 +411,9 @@ definition {
 				locator1 = "TextInput#GROUPED_TEXT_INPUT",
 				value1 = "#00FF00");
 
-			StyleBooks.waitForAutoSave();
+			StyleBooks.clickManagementBar();
 
-			Pause(locator1 = "3000");
+			StyleBooks.waitForAutoSave();
 
 			StyleBooks.expandSection(sectionName = "Button Secondary");
 
@@ -418,9 +423,9 @@ definition {
 				locator1 = "TextInput#GROUPED_TEXT_INPUT",
 				value1 = "#FF0000");
 
-			StyleBooks.waitForAutoSave();
+			StyleBooks.clickManagementBar();
 
-			Pause(locator1 = "3000");
+			StyleBooks.waitForAutoSave();
 
 			StyleBooks.expandSection(sectionName = "Button Outline Secondary");
 
@@ -429,6 +434,8 @@ definition {
 				key_groupLabel = "Button Outline Secondary",
 				locator1 = "TextInput#GROUPED_TEXT_INPUT",
 				value1 = "#0000FF");
+
+			StyleBooks.clickManagementBar();
 
 			StyleBooks.waitForAutoSave();
 
@@ -459,10 +466,9 @@ definition {
 
 			Navigator.gotoNavTab(navTab = "Look and Feel");
 
-			AssertTextEquals(
+			AssertElementPresent(
 				key_styleBookName = "Styles from Theme",
-				locator1 = "PagesAdmin#STYLE_BOOK_NAME",
-				value1 = "Styles from Theme");
+				locator1 = "PagesAdmin#STYLE_BOOK_NAME");
 
 			AssertClick(
 				key_text = "Change Style Book",
@@ -471,10 +477,9 @@ definition {
 
 			StyleBooks.selectStyleBook(styleBookName = "Test Style Book Name");
 
-			AssertTextEquals(
+			AssertElementPresent(
 				key_styleBookName = "Test Style Book Name",
-				locator1 = "PagesAdmin#STYLE_BOOK_NAME",
-				value1 = "Test Style Book Name");
+				locator1 = "PagesAdmin#STYLE_BOOK_NAME");
 
 			Button.clickSave();
 
@@ -506,10 +511,9 @@ definition {
 
 			Navigator.gotoNavTab(navTab = "Look and Feel");
 
-			AssertTextEquals(
+			AssertElementPresent(
 				key_styleBookName = "Test Style Book Name",
-				locator1 = "PagesAdmin#STYLE_BOOK_NAME",
-				value1 = "Test Style Book Name");
+				locator1 = "PagesAdmin#STYLE_BOOK_NAME");
 
 			AssertClick(
 				key_text = "Change Style Book",
@@ -518,10 +522,9 @@ definition {
 
 			StyleBooks.selectStyleBook(styleBookName = "Styles from Theme");
 
-			AssertTextEquals(
+			AssertElementPresent(
 				key_styleBookName = "Styles from Theme",
-				locator1 = "PagesAdmin#STYLE_BOOK_NAME",
-				value1 = "Styles from Theme");
+				locator1 = "PagesAdmin#STYLE_BOOK_NAME");
 
 			Button.clickSave();
 
@@ -563,6 +566,8 @@ definition {
 				locator1 = "TextInput#GROUPED_TEXT_INPUT",
 				value1 = "#FF0000");
 
+			StyleBooks.clickManagementBar();
+
 			StyleBooks.waitForAutoSave();
 
 			StyleBooks.selectForm(formName = "Typography");
@@ -570,9 +575,11 @@ definition {
 			StyleBooks.expandSection(sectionName = "Headings");
 
 			Type(
-				key_fieldLabel = "Heading 1 Font Size",
-				locator1 = "TextInput#GENERIC_TEXT_INPUT",
-				value1 = "2rem");
+				ariaLabel = "Heading 1 Font Size",
+				locator1 = "TextInput#ANY_WITH_AIRA_LABEL",
+				value1 = "2");
+
+			StyleBooks.clickManagementBar();
 
 			StyleBooks.waitForAutoSave();
 
@@ -597,7 +604,7 @@ definition {
 				composition = "true",
 				fragmentName = "Banner Center");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Preview style book effect on page in page preview iframe") {
@@ -647,6 +654,8 @@ definition {
 				locator1 = "TextInput#GROUPED_TEXT_INPUT",
 				value1 = "#00FF00");
 
+			StyleBooks.clickManagementBar();
+
 			StyleBooks.waitForAutoSave();
 
 			StyleBooks.selectForm(formName = "Typography");
@@ -654,9 +663,11 @@ definition {
 			StyleBooks.expandSection(sectionName = "Headings");
 
 			Type(
-				key_fieldLabel = "Heading 1 Font Size",
-				locator1 = "TextInput#GENERIC_TEXT_INPUT",
-				value1 = "2rem");
+				ariaLabel = "Heading 1 Font Size",
+				locator1 = "TextInput#ANY_WITH_AIRA_LABEL",
+				value1 = "2");
+
+			StyleBooks.clickManagementBar();
 
 			StyleBooks.waitForAutoSave();
 
@@ -717,7 +728,7 @@ definition {
 				locator2 = "font-size",
 				value1 = "32px");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Assert the new style book is applied to content page in view mode") {
@@ -781,7 +792,7 @@ definition {
 				item = "Edit",
 				styleBookName = "Test Style Book Name");
 
-			Pause(locator1 = "3000");
+			WaitForPageLoad();
 
 			StyleBooks.selectForm(formName = "Buttons");
 
@@ -793,6 +804,8 @@ definition {
 				locator1 = "TextInput#GROUPED_TEXT_INPUT",
 				value1 = "#FF0000");
 
+			StyleBooks.clickManagementBar();
+
 			StyleBooks.waitForAutoSave();
 
 			StyleBooks.selectForm(formName = "Typography");
@@ -800,9 +813,11 @@ definition {
 			StyleBooks.expandSection(sectionName = "Headings");
 
 			Type(
-				key_fieldLabel = "Heading 1 Font Size",
-				locator1 = "TextInput#GENERIC_TEXT_INPUT",
-				value1 = "1.5rem");
+				ariaLabel = "Heading 1 Font Size",
+				locator1 = "TextInput#ANY_WITH_AIRA_LABEL",
+				value1 = "1.5");
+
+			StyleBooks.clickManagementBar();
 
 			StyleBooks.waitForAutoSave();
 

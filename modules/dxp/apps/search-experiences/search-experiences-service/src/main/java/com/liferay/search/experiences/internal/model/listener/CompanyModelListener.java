@@ -25,8 +25,10 @@ import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.transaction.TransactionCommitCallbackUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 import com.liferay.search.experiences.rest.dto.v1_0.SXPElement;
@@ -42,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.osgi.framework.Bundle;
@@ -72,10 +75,12 @@ public class CompanyModelListener extends BaseModelListener<Company> {
 		}
 
 		for (SXPElement sxpElement : _sxpElements) {
-
-			// TODO Should this be en_US or en-US?
-
-			if (titles.contains(
+			if ((!GetterUtil.getBoolean(
+					PropsUtil.get("feature.flag.LPS-163688")) &&
+				 Objects.equals(
+					 MapUtil.getString(sxpElement.getTitle_i18n(), "en_US"),
+					 "Rescore by Text Embedding")) ||
+				titles.contains(
 					MapUtil.getString(sxpElement.getTitle_i18n(), "en_US"))) {
 
 				continue;
@@ -84,7 +89,7 @@ public class CompanyModelListener extends BaseModelListener<Company> {
 			User user = company.getDefaultUser();
 
 			sxpElementLocalService.addSXPElement(
-				user.getUserId(),
+				sxpElement.getExternalReferenceCode(), user.getUserId(),
 				LocalizedMapUtil.getLocalizedMap(
 					sxpElement.getDescription_i18n()),
 				String.valueOf(sxpElement.getElementDefinition()), true,
@@ -92,7 +97,6 @@ public class CompanyModelListener extends BaseModelListener<Company> {
 				LocalizedMapUtil.getLocalizedMap(sxpElement.getTitle_i18n()), 0,
 				new ServiceContext() {
 					{
-						setAddGroupPermissions(true);
 						setAddGuestPermissions(true);
 						setCompanyId(company.getCompanyId());
 						setScopeGroupId(company.getGroupId());

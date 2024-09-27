@@ -37,13 +37,13 @@ import com.liferay.change.tracking.web.internal.security.permission.resource.CTC
 import com.liferay.change.tracking.web.internal.security.permission.resource.CTPermission;
 import com.liferay.change.tracking.web.internal.util.PublicationsPortletURLUtil;
 import com.liferay.petra.lang.HashUtil;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.change.tracking.sql.CTSQLModeThreadLocal;
 import com.liferay.portal.kernel.dao.orm.ORMException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.frontend.icons.FrontendIconsUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -54,8 +54,10 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupedModel;
+import com.liferay.portal.kernel.model.PortletPreferences;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserTable;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.GroupLocalService;
@@ -676,7 +678,7 @@ public class ViewChangesDisplayContext {
 		).put(
 			"sitesFromURL", ParamUtil.getString(_renderRequest, "sites")
 		).put(
-			"spritemap", _themeDisplay.getPathThemeImages() + "/clay/icons.svg"
+			"spritemap", FrontendIconsUtil.getSpritemap(_themeDisplay)
 		).put(
 			"statusLabel",
 			_language.get(
@@ -837,11 +839,11 @@ public class ViewChangesDisplayContext {
 			"everything", everythingJSONObject);
 
 		for (Map.Entry<Long, JSONArray> entry : rootDisplayMap.entrySet()) {
-			String typeName = _getTypeName(
-				_themeDisplay.getLocale(), entry.getKey(), typeNameCacheMap);
-
 			contextViewJSONObject.put(
-				typeName, JSONUtil.put("children", entry.getValue()));
+				_getTypeName(
+					_themeDisplay.getLocale(), entry.getKey(),
+					typeNameCacheMap),
+				JSONUtil.put("children", entry.getValue()));
 		}
 
 		return contextViewJSONObject;
@@ -1049,6 +1051,12 @@ public class ViewChangesDisplayContext {
 			CTEntry ctEntry = ctEntryMap.get(classPK);
 
 			if (ctEntry == null) {
+				if (modelClassNameId == _portal.getClassNameId(
+						PortletPreferences.class)) {
+
+					continue;
+				}
+
 				if (baseModelMap == null) {
 					baseModelMap = _basePersistenceRegistry.fetchBaseModelMap(
 						modelClassNameId, classPKs);
@@ -1155,6 +1163,9 @@ public class ViewChangesDisplayContext {
 					continue;
 				}
 
+				Map<String, Object> modelAttributes =
+					model.getModelAttributes();
+
 				Date modifiedDate = ctEntry.getModifiedDate();
 
 				modelInfo._ctEntry = true;
@@ -1188,6 +1199,8 @@ public class ViewChangesDisplayContext {
 						model, modelClassNameId, typeNameCacheMap)
 				).put(
 					"userId", ctEntry.getUserId()
+				).put(
+					"workflowStatus", (Integer)modelAttributes.get("status")
 				);
 
 				if (model instanceof GroupedModel) {

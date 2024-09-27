@@ -16,17 +16,18 @@ package com.liferay.commerce.product.content.web.internal.product.publisher.fron
 
 import com.liferay.commerce.product.content.web.internal.constants.CPPublisherConstants;
 import com.liferay.frontend.taglib.form.navigator.FormNavigatorCategory;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 
 import java.util.Locale;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, property = "form.navigator.category.order:Integer=20",
+	property = "form.navigator.category.order:Integer=20",
 	service = FormNavigatorCategory.class
 )
 public class RenderSelectionFormNavigatorCategory
@@ -44,7 +45,10 @@ public class RenderSelectionFormNavigatorCategory
 
 	@Override
 	public String getLabel(Locale locale) {
-		return LanguageUtil.get(locale, "render-selection");
+		return _language.get(locale, "render-selection");
 	}
+
+	@Reference
+	private Language _language;
 
 }

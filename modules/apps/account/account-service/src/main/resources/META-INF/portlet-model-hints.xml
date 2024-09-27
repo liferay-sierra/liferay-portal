@@ -3,6 +3,7 @@
 <model-hints>
 	<model name="com.liferay.account.model.AccountEntry">
 		<field name="mvccVersion" type="long" />
+		<field name="uuid" type="String" />
 		<field name="externalReferenceCode" type="String" />
 		<field name="accountEntryId" type="long" />
 		<field name="companyId" type="long" />
@@ -11,8 +12,7 @@
 		<field name="createDate" type="Date" />
 		<field name="modifiedDate" type="Date" />
 		<field name="defaultBillingAddressId" type="long" />
-		<field name="defaultDeliveryCTermEntryId" type="long" />
-		<field name="defaultPaymentCTermEntryId" type="long" />
+		<field name="defaultCPaymentMethodKey" type="String" />
 		<field name="defaultShippingAddressId" type="long" />
 		<field name="parentAccountEntryId" type="long" />
 		<field name="description" type="String">
@@ -30,10 +30,14 @@
 			<hint name="max-length">100</hint>
 			<validator name="required" />
 		</field>
+		<field name="restrictMembership" type="boolean" />
 		<field name="taxExemptionCode" type="String" />
 		<field name="taxIdNumber" type="String" />
 		<field name="type" type="String" />
 		<field name="status" type="int" />
+		<field name="statusByUserId" type="long" />
+		<field name="statusByUserName" type="String" />
+		<field name="statusDate" type="Date" />
 	</model>
 	<model name="com.liferay.account.model.AccountEntryOrganizationRel">
 		<field name="mvccVersion" type="long" />
@@ -51,6 +55,7 @@
 	</model>
 	<model name="com.liferay.account.model.AccountGroup">
 		<field name="mvccVersion" type="long" />
+		<field name="uuid" type="String" />
 		<field name="externalReferenceCode" type="String" />
 		<field name="accountGroupId" type="long" />
 		<field name="companyId" type="long" />
@@ -60,7 +65,9 @@
 		<field name="modifiedDate" type="Date" />
 		<field name="defaultAccountGroup" type="boolean" />
 		<field name="description" type="String" />
-		<field name="name" type="String" />
+		<field name="name" type="String">
+			<validator name="required" />
+		</field>
 		<field name="type" type="String" />
 	</model>
 	<model name="com.liferay.account.model.AccountGroupRel">

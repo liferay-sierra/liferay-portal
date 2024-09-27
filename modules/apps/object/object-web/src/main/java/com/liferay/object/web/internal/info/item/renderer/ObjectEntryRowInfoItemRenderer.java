@@ -18,6 +18,7 @@ import com.liferay.asset.display.page.portlet.AssetDisplayPageFriendlyURLProvide
 import com.liferay.info.item.renderer.InfoItemRenderer;
 import com.liferay.list.type.model.ListTypeEntry;
 import com.liferay.list.type.service.ListTypeEntryLocalService;
+import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectDefinitionLocalService;
@@ -128,6 +129,9 @@ public class ObjectEntryRowInfoItemRenderer
 			_objectFieldLocalService.getObjectFields(
 				objectEntry.getObjectDefinitionId());
 
+		objectFields = _objectFieldLocalService.getActiveObjectFields(
+			objectFields);
+
 		Stream<ObjectField> objectFieldsStream = objectFields.stream();
 
 		Map<String, ObjectField> objectFieldsMap = objectFieldsStream.collect(
@@ -160,7 +164,10 @@ public class ObjectEntryRowInfoItemRenderer
 					else if (Validator.isNull(
 								objectField.getRelationshipType())) {
 
-						if (Objects.equals(objectField.getDBType(), "Date")) {
+						if (Objects.equals(
+								objectField.getDBType(),
+								ObjectFieldConstants.DB_TYPE_DATE)) {
+
 							Format dateFormat =
 								FastDateFormatFactoryUtil.getDate(
 									serviceContext.getLocale());

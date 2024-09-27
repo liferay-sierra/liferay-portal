@@ -48,7 +48,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = {
 		"commerce.checkout.step.name=" + PaymentMethodCommerceCheckoutStep.NAME,
 		"commerce.checkout.step.order:Integer=40"
@@ -124,16 +124,6 @@ public class PaymentMethodCommerceCheckoutStep
 			"/checkout_step/payment_method.jsp");
 	}
 
-	@Reference(
-		target = "(model.class.name=com.liferay.commerce.model.CommerceOrder)",
-		unbind = "-"
-	)
-	protected void setModelResourcePermission(
-		ModelResourcePermission<CommerceOrder> modelResourcePermission) {
-
-		_commerceOrderModelResourcePermission = modelResourcePermission;
-	}
-
 	private void _updateCommerceOrderPaymentMethod(ActionRequest actionRequest)
 		throws Exception {
 
@@ -168,12 +158,16 @@ public class PaymentMethodCommerceCheckoutStep
 		commerceOrder = _commerceOrderLocalService.updateCommerceOrder(
 			null, commerceOrder.getCommerceOrderId(),
 			commerceOrder.getBillingAddressId(),
-			commerceOrder.getShippingAddressId(), commercePaymentMethodKey,
 			commerceOrder.getCommerceShippingMethodId(),
-			commerceOrder.getShippingOptionName(),
-			commerceOrder.getPurchaseOrderNumber(), commerceOrder.getSubtotal(),
-			commerceOrder.getShippingAmount(), commerceOrder.getTotal(),
-			commerceOrder.getAdvanceStatus(), commerceContext);
+			commerceOrder.getShippingAddressId(),
+			commerceOrder.getAdvanceStatus(), commercePaymentMethodKey,
+			commerceOrder.getPurchaseOrderNumber(),
+			commerceOrder.getShippingAmount(),
+			commerceOrder.getShippingOptionName(), commerceOrder.getSubtotal(),
+			commerceOrder.getTotal(), commerceContext);
+
+		_commerceOrderLocalService.resetTermsAndConditions(
+			commerceOrder.getCommerceOrderId(), false, true);
 
 		actionRequest.setAttribute(
 			CommerceCheckoutWebKeys.COMMERCE_ORDER, commerceOrder);
@@ -185,6 +179,9 @@ public class PaymentMethodCommerceCheckoutStep
 	@Reference
 	private CommerceOrderLocalService _commerceOrderLocalService;
 
+	@Reference(
+		target = "(model.class.name=com.liferay.commerce.model.CommerceOrder)"
+	)
 	private ModelResourcePermission<CommerceOrder>
 		_commerceOrderModelResourcePermission;
 

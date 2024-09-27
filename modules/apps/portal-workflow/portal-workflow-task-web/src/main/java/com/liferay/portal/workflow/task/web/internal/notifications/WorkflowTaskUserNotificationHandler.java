@@ -14,11 +14,19 @@
 
 package com.liferay.portal.workflow.task.web.internal.notifications;
 
+import com.liferay.change.tracking.constants.CTConstants;
+import com.liferay.change.tracking.model.CTCollection;
+import com.liferay.change.tracking.service.CTCollectionLocalService;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserNotificationEvent;
 import com.liferay.portal.kernel.notifications.BaseUserNotificationHandler;
 import com.liferay.portal.kernel.notifications.UserNotificationFeedEntry;
@@ -27,6 +35,7 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserNotificationEventLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -35,7 +44,7 @@ import com.liferay.portal.kernel.workflow.WorkflowHandler;
 import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
 import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowTaskManagerUtil;
-import com.liferay.portal.workflow.task.web.internal.permission.WorkflowTaskPermissionChecker;
+import com.liferay.portal.workflow.security.permission.WorkflowTaskPermission;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -48,7 +57,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Leonardo Barros
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + PortletKeys.MY_WORKFLOW_TASK,
 	service = UserNotificationHandler.class
 )
@@ -83,12 +91,45 @@ public class WorkflowTaskUserNotificationHandler
 			StringUtil.replace(
 				_BODY_TEMPLATE_DEFAULT, new String[] {"[$BODY$]", "[$TITLE$]"},
 				new String[] {
-					LanguageUtil.format(
+					_language.format(
 						locale, "notification-for-x-was-deactivated",
 						jsonObject.getString("entryType"), false),
-					LanguageUtil.get(locale, "notification-no-longer-applies")
+					_language.get(locale, "notification-no-longer-applies")
 				}),
 			StringPool.BLANK, false);
+	}
+
+	@Override
+	public boolean isApplicable(
+		UserNotificationEvent userNotificationEvent,
+		ServiceContext serviceContext) {
+
+		try {
+			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
+				userNotificationEvent.getPayload());
+
+			long ctCollectionId = jsonObject.getLong(
+				WorkflowConstants.CONTEXT_CT_COLLECTION_ID);
+
+			try (SafeCloseable safeCloseable =
+					CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+						ctCollectionId)) {
+
+				for (User user :
+						WorkflowTaskManagerUtil.getNotifiableUsers(
+							jsonObject.getLong("workflowTaskId"))) {
+
+					if (user.getUserId() == serviceContext.getUserId()) {
+						return true;
+					}
+				}
+			}
+		}
+		catch (PortalException portalException) {
+			_log.error(portalException);
+		}
+
+		return false;
 	}
 
 	@Override
@@ -100,11 +141,17 @@ public class WorkflowTaskUserNotificationHandler
 		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
 			userNotificationEvent.getPayload());
 
+		String notificationMessage = jsonObject.getString(
+			"notificationMessage");
+
 		long workflowTaskId = jsonObject.getLong("workflowTaskId");
 
 		if (workflowTaskId > 0) {
+			long ctCollectionId = jsonObject.getLong(
+				WorkflowConstants.CONTEXT_CT_COLLECTION_ID);
+
 			WorkflowTask workflowTask = _fetchWorkflowTask(
-				workflowTaskId, serviceContext);
+				ctCollectionId, workflowTaskId);
 
 			if (workflowTask == null) {
 				_userNotificationEventLocalService.deleteUserNotificationEvent(
@@ -112,9 +159,17 @@ public class WorkflowTaskUserNotificationHandler
 
 				return StringPool.BLANK;
 			}
+
+			if (ctCollectionId != CTCollectionThreadLocal.getCTCollectionId()) {
+				String ctCollectionBody = _getCTCollectionBody(
+					ctCollectionId, serviceContext.getLanguageId());
+
+				return HtmlUtil.escape(
+					notificationMessage + " " + ctCollectionBody);
+			}
 		}
 
-		return HtmlUtil.escape(jsonObject.getString("notificationMessage"));
+		return HtmlUtil.escape(notificationMessage);
 	}
 
 	@Override
@@ -126,6 +181,13 @@ public class WorkflowTaskUserNotificationHandler
 		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
 			userNotificationEvent.getPayload());
 
+		long ctCollectionId = jsonObject.getLong(
+			WorkflowConstants.CONTEXT_CT_COLLECTION_ID);
+
+		if (ctCollectionId != CTCollectionThreadLocal.getCTCollectionId()) {
+			return StringPool.BLANK;
+		}
+
 		WorkflowHandler<?> workflowHandler =
 			WorkflowHandlerRegistryUtil.getWorkflowHandler(
 				jsonObject.getString("entryClassName"));
@@ -133,7 +195,7 @@ public class WorkflowTaskUserNotificationHandler
 		long workflowTaskId = jsonObject.getLong("workflowTaskId");
 
 		if ((workflowHandler == null) ||
-			!_hasPermission(workflowTaskId, serviceContext)) {
+			!_hasPermission(ctCollectionId, workflowTaskId, serviceContext)) {
 
 			return StringPool.BLANK;
 		}
@@ -152,31 +214,51 @@ public class WorkflowTaskUserNotificationHandler
 			workflowTaskId, serviceContext);
 	}
 
-	@Reference(unbind = "-")
-	protected void setUserNotificationEventLocalService(
-		UserNotificationEventLocalService userNotificationEventLocalService) {
-
-		_userNotificationEventLocalService = userNotificationEventLocalService;
-	}
-
 	private WorkflowTask _fetchWorkflowTask(
-			long workflowTaskId, ServiceContext serviceContext)
+			long ctCollectionId, long workflowTaskId)
 		throws Exception {
 
 		if (workflowTaskId <= 0) {
 			return null;
 		}
 
-		return WorkflowTaskManagerUtil.fetchWorkflowTask(
-			serviceContext.getCompanyId(), workflowTaskId);
+		try (SafeCloseable safeCloseable =
+				CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+					ctCollectionId)) {
+
+			return WorkflowTaskManagerUtil.fetchWorkflowTask(workflowTaskId);
+		}
+	}
+
+	private String _getCTCollectionBody(
+		long ctCollectionId, String languageId) {
+
+		if (ctCollectionId == CTConstants.CT_COLLECTION_ID_PRODUCTION) {
+			return _language.get(
+				LocaleUtil.fromLanguageId(languageId),
+				"select-production-to-review-the-change");
+		}
+
+		CTCollection ctCollection = _ctCollectionLocalService.fetchCTCollection(
+			ctCollectionId);
+
+		if (ctCollection != null) {
+			return _language.format(
+				LocaleUtil.fromLanguageId(languageId),
+				"select-the-publication-x-to-review-the-change",
+				new String[] {ctCollection.getName()});
+		}
+
+		return StringPool.BLANK;
 	}
 
 	private boolean _hasPermission(
-			long workflowTaskId, ServiceContext serviceContext)
+			long ctCollectionId, long workflowTaskId,
+			ServiceContext serviceContext)
 		throws Exception {
 
 		WorkflowTask workflowTask = _fetchWorkflowTask(
-			workflowTaskId, serviceContext);
+			ctCollectionId, workflowTaskId);
 
 		if (workflowTask == null) {
 			return false;
@@ -188,17 +270,28 @@ public class WorkflowTaskUserNotificationHandler
 			workflowTask.getOptionalAttributes(), "groupId",
 			themeDisplay.getSiteGroupId());
 
-		return _workflowTaskPermissionChecker.hasPermission(
-			groupId, workflowTask, themeDisplay.getPermissionChecker());
+		return _workflowTaskPermission.contains(
+			themeDisplay.getPermissionChecker(), workflowTask, groupId);
 	}
 
 	private static final String _BODY_TEMPLATE_DEFAULT =
 		"<div class=\"title\">[$TITLE$]</div><div class=\"body\">[$BODY$]" +
 			"</div>";
 
+	private static final Log _log = LogFactoryUtil.getLog(
+		WorkflowTaskUserNotificationHandler.class);
+
+	@Reference
+	private CTCollectionLocalService _ctCollectionLocalService;
+
+	@Reference
+	private Language _language;
+
+	@Reference
 	private UserNotificationEventLocalService
 		_userNotificationEventLocalService;
-	private final WorkflowTaskPermissionChecker _workflowTaskPermissionChecker =
-		new WorkflowTaskPermissionChecker();
+
+	@Reference
+	private WorkflowTaskPermission _workflowTaskPermission;
 
 }

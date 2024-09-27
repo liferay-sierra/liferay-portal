@@ -20,6 +20,7 @@ import com.liferay.commerce.term.model.CommerceTermEntryModel;
 import com.liferay.commerce.term.service.CommerceTermEntryLocalServiceUtil;
 import com.liferay.expando.kernel.model.ExpandoBridge;
 import com.liferay.expando.kernel.util.ExpandoBridgeFactoryUtil;
+import com.liferay.exportimport.kernel.lar.StagedModelType;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -32,13 +33,13 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 
 import java.sql.Blob;
@@ -77,7 +78,8 @@ public class CommerceTermEntryModelImpl
 	public static final String TABLE_NAME = "CommerceTermEntry";
 
 	public static final Object[][] TABLE_COLUMNS = {
-		{"mvccVersion", Types.BIGINT}, {"externalReferenceCode", Types.VARCHAR},
+		{"mvccVersion", Types.BIGINT}, {"uuid_", Types.VARCHAR},
+		{"externalReferenceCode", Types.VARCHAR},
 		{"defaultLanguageId", Types.VARCHAR},
 		{"commerceTermEntryId", Types.BIGINT}, {"companyId", Types.BIGINT},
 		{"userId", Types.BIGINT}, {"userName", Types.VARCHAR},
@@ -95,6 +97,7 @@ public class CommerceTermEntryModelImpl
 
 	static {
 		TABLE_COLUMNS_MAP.put("mvccVersion", Types.BIGINT);
+		TABLE_COLUMNS_MAP.put("uuid_", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("externalReferenceCode", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("defaultLanguageId", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("commerceTermEntryId", Types.BIGINT);
@@ -118,7 +121,7 @@ public class CommerceTermEntryModelImpl
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table CommerceTermEntry (mvccVersion LONG default 0 not null,externalReferenceCode VARCHAR(75) null,defaultLanguageId VARCHAR(75) null,commerceTermEntryId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,active_ BOOLEAN,displayDate DATE null,expirationDate DATE null,name VARCHAR(75) null,priority DOUBLE,type_ VARCHAR(75) null,typeSettings VARCHAR(75) null,lastPublishDate DATE null,status INTEGER,statusByUserId LONG,statusByUserName VARCHAR(75) null,statusDate DATE null)";
+		"create table CommerceTermEntry (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,externalReferenceCode VARCHAR(75) null,defaultLanguageId VARCHAR(75) null,commerceTermEntryId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,active_ BOOLEAN,displayDate DATE null,expirationDate DATE null,name VARCHAR(75) null,priority DOUBLE,type_ VARCHAR(75) null,typeSettings VARCHAR(75) null,lastPublishDate DATE null,status INTEGER,statusByUserId LONG,statusByUserName VARCHAR(75) null,statusDate DATE null)";
 
 	public static final String TABLE_SQL_DROP = "drop table CommerceTermEntry";
 
@@ -187,6 +190,12 @@ public class CommerceTermEntryModelImpl
 	 */
 	@Deprecated
 	public static final long TYPE_COLUMN_BITMASK = 256L;
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
+	 */
+	@Deprecated
+	public static final long UUID_COLUMN_BITMASK = 512L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
@@ -287,34 +296,6 @@ public class CommerceTermEntryModelImpl
 		return _attributeSetterBiConsumers;
 	}
 
-	private static Function<InvocationHandler, CommerceTermEntry>
-		_getProxyProviderFunction() {
-
-		Class<?> proxyClass = ProxyUtil.getProxyClass(
-			CommerceTermEntry.class.getClassLoader(), CommerceTermEntry.class,
-			ModelWrapper.class);
-
-		try {
-			Constructor<CommerceTermEntry> constructor =
-				(Constructor<CommerceTermEntry>)proxyClass.getConstructor(
-					InvocationHandler.class);
-
-			return invocationHandler -> {
-				try {
-					return constructor.newInstance(invocationHandler);
-				}
-				catch (ReflectiveOperationException
-							reflectiveOperationException) {
-
-					throw new InternalError(reflectiveOperationException);
-				}
-			};
-		}
-		catch (NoSuchMethodException noSuchMethodException) {
-			throw new InternalError(noSuchMethodException);
-		}
-	}
-
 	private static final Map<String, Function<CommerceTermEntry, Object>>
 		_attributeGetterFunctions;
 	private static final Map<String, BiConsumer<CommerceTermEntry, Object>>
@@ -335,6 +316,10 @@ public class CommerceTermEntryModelImpl
 			"mvccVersion",
 			(BiConsumer<CommerceTermEntry, Long>)
 				CommerceTermEntry::setMvccVersion);
+		attributeGetterFunctions.put("uuid", CommerceTermEntry::getUuid);
+		attributeSetterBiConsumers.put(
+			"uuid",
+			(BiConsumer<CommerceTermEntry, String>)CommerceTermEntry::setUuid);
 		attributeGetterFunctions.put(
 			"externalReferenceCode",
 			CommerceTermEntry::getExternalReferenceCode);
@@ -620,6 +605,35 @@ public class CommerceTermEntryModelImpl
 		}
 
 		_mvccVersion = mvccVersion;
+	}
+
+	@JSON
+	@Override
+	public String getUuid() {
+		if (_uuid == null) {
+			return "";
+		}
+		else {
+			return _uuid;
+		}
+	}
+
+	@Override
+	public void setUuid(String uuid) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_uuid = uuid;
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getColumnOriginalValue(String)}
+	 */
+	@Deprecated
+	public String getOriginalUuid() {
+		return getColumnOriginalValue("uuid_");
 	}
 
 	@JSON
@@ -1087,6 +1101,12 @@ public class CommerceTermEntryModelImpl
 	}
 
 	@Override
+	public StagedModelType getStagedModelType() {
+		return new StagedModelType(
+			PortalUtil.getClassNameId(CommerceTermEntry.class.getName()));
+	}
+
+	@Override
 	public boolean isApproved() {
 		if (getStatus() == WorkflowConstants.STATUS_APPROVED) {
 			return true;
@@ -1224,6 +1244,7 @@ public class CommerceTermEntryModelImpl
 			new CommerceTermEntryImpl();
 
 		commerceTermEntryImpl.setMvccVersion(getMvccVersion());
+		commerceTermEntryImpl.setUuid(getUuid());
 		commerceTermEntryImpl.setExternalReferenceCode(
 			getExternalReferenceCode());
 		commerceTermEntryImpl.setDefaultLanguageId(getDefaultLanguageId());
@@ -1258,6 +1279,8 @@ public class CommerceTermEntryModelImpl
 
 		commerceTermEntryImpl.setMvccVersion(
 			this.<Long>getColumnOriginalValue("mvccVersion"));
+		commerceTermEntryImpl.setUuid(
+			this.<String>getColumnOriginalValue("uuid_"));
 		commerceTermEntryImpl.setExternalReferenceCode(
 			this.<String>getColumnOriginalValue("externalReferenceCode"));
 		commerceTermEntryImpl.setDefaultLanguageId(
@@ -1385,6 +1408,14 @@ public class CommerceTermEntryModelImpl
 			new CommerceTermEntryCacheModel();
 
 		commerceTermEntryCacheModel.mvccVersion = getMvccVersion();
+
+		commerceTermEntryCacheModel.uuid = getUuid();
+
+		String uuid = commerceTermEntryCacheModel.uuid;
+
+		if ((uuid != null) && (uuid.length() == 0)) {
+			commerceTermEntryCacheModel.uuid = null;
+		}
 
 		commerceTermEntryCacheModel.externalReferenceCode =
 			getExternalReferenceCode();
@@ -1571,45 +1602,17 @@ public class CommerceTermEntryModelImpl
 		return sb.toString();
 	}
 
-	@Override
-	public String toXmlString() {
-		Map<String, Function<CommerceTermEntry, Object>>
-			attributeGetterFunctions = getAttributeGetterFunctions();
-
-		StringBundler sb = new StringBundler(
-			(5 * attributeGetterFunctions.size()) + 4);
-
-		sb.append("<model><model-name>");
-		sb.append(getModelClassName());
-		sb.append("</model-name>");
-
-		for (Map.Entry<String, Function<CommerceTermEntry, Object>> entry :
-				attributeGetterFunctions.entrySet()) {
-
-			String attributeName = entry.getKey();
-			Function<CommerceTermEntry, Object> attributeGetterFunction =
-				entry.getValue();
-
-			sb.append("<column><column-name>");
-			sb.append(attributeName);
-			sb.append("</column-name><column-value><![CDATA[");
-			sb.append(attributeGetterFunction.apply((CommerceTermEntry)this));
-			sb.append("]]></column-value></column>");
-		}
-
-		sb.append("</model>");
-
-		return sb.toString();
-	}
-
 	private static class EscapedModelProxyProviderFunctionHolder {
 
 		private static final Function<InvocationHandler, CommerceTermEntry>
-			_escapedModelProxyProviderFunction = _getProxyProviderFunction();
+			_escapedModelProxyProviderFunction =
+				ProxyUtil.getProxyProviderFunction(
+					CommerceTermEntry.class, ModelWrapper.class);
 
 	}
 
 	private long _mvccVersion;
+	private String _uuid;
 	private String _externalReferenceCode;
 	private String _defaultLanguageId;
 	private long _commerceTermEntryId;
@@ -1662,6 +1665,7 @@ public class CommerceTermEntryModelImpl
 		_columnOriginalValues = new HashMap<String, Object>();
 
 		_columnOriginalValues.put("mvccVersion", _mvccVersion);
+		_columnOriginalValues.put("uuid_", _uuid);
 		_columnOriginalValues.put(
 			"externalReferenceCode", _externalReferenceCode);
 		_columnOriginalValues.put("defaultLanguageId", _defaultLanguageId);
@@ -1690,6 +1694,7 @@ public class CommerceTermEntryModelImpl
 	static {
 		Map<String, String> attributeNames = new HashMap<>();
 
+		attributeNames.put("uuid_", "uuid");
 		attributeNames.put("active_", "active");
 		attributeNames.put("type_", "type");
 
@@ -1709,45 +1714,47 @@ public class CommerceTermEntryModelImpl
 
 		columnBitmasks.put("mvccVersion", 1L);
 
-		columnBitmasks.put("externalReferenceCode", 2L);
+		columnBitmasks.put("uuid_", 2L);
 
-		columnBitmasks.put("defaultLanguageId", 4L);
+		columnBitmasks.put("externalReferenceCode", 4L);
 
-		columnBitmasks.put("commerceTermEntryId", 8L);
+		columnBitmasks.put("defaultLanguageId", 8L);
 
-		columnBitmasks.put("companyId", 16L);
+		columnBitmasks.put("commerceTermEntryId", 16L);
 
-		columnBitmasks.put("userId", 32L);
+		columnBitmasks.put("companyId", 32L);
 
-		columnBitmasks.put("userName", 64L);
+		columnBitmasks.put("userId", 64L);
 
-		columnBitmasks.put("createDate", 128L);
+		columnBitmasks.put("userName", 128L);
 
-		columnBitmasks.put("modifiedDate", 256L);
+		columnBitmasks.put("createDate", 256L);
 
-		columnBitmasks.put("active_", 512L);
+		columnBitmasks.put("modifiedDate", 512L);
 
-		columnBitmasks.put("displayDate", 1024L);
+		columnBitmasks.put("active_", 1024L);
 
-		columnBitmasks.put("expirationDate", 2048L);
+		columnBitmasks.put("displayDate", 2048L);
 
-		columnBitmasks.put("name", 4096L);
+		columnBitmasks.put("expirationDate", 4096L);
 
-		columnBitmasks.put("priority", 8192L);
+		columnBitmasks.put("name", 8192L);
 
-		columnBitmasks.put("type_", 16384L);
+		columnBitmasks.put("priority", 16384L);
 
-		columnBitmasks.put("typeSettings", 32768L);
+		columnBitmasks.put("type_", 32768L);
 
-		columnBitmasks.put("lastPublishDate", 65536L);
+		columnBitmasks.put("typeSettings", 65536L);
 
-		columnBitmasks.put("status", 131072L);
+		columnBitmasks.put("lastPublishDate", 131072L);
 
-		columnBitmasks.put("statusByUserId", 262144L);
+		columnBitmasks.put("status", 262144L);
 
-		columnBitmasks.put("statusByUserName", 524288L);
+		columnBitmasks.put("statusByUserId", 524288L);
 
-		columnBitmasks.put("statusDate", 1048576L);
+		columnBitmasks.put("statusByUserName", 1048576L);
+
+		columnBitmasks.put("statusDate", 2097152L);
 
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}

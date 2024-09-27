@@ -32,15 +32,20 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
+import com.liferay.segments.asah.rest.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.segments.asah.rest.resource.v1_0.ExperimentRunResource;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -58,7 +61,10 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @author Javier Gamarra
  * @generated
  */
-@Component(immediate = true, service = ExperimentRunResource.Factory.class)
+@Component(
+	property = "resource.locator.key=/segments-asah/v1.0/ExperimentRun",
+	service = ExperimentRunResource.Factory.class
+)
 @Generated("")
 public class ExperimentRunResourceFactoryImpl
 	implements ExperimentRunResource.Factory {
@@ -73,9 +79,7 @@ public class ExperimentRunResourceFactoryImpl
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (ExperimentRunResource)ProxyUtil.newProxyInstance(
-					ExperimentRunResource.class.getClassLoader(),
-					new Class<?>[] {ExperimentRunResource.class},
+				return _experimentRunResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -134,14 +138,32 @@ public class ExperimentRunResourceFactoryImpl
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		ExperimentRunResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, ExperimentRunResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		ExperimentRunResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			ExperimentRunResource.class.getClassLoader(),
+			ExperimentRunResource.class);
+
+		try {
+			Constructor<ExperimentRunResource> constructor =
+				(Constructor<ExperimentRunResource>)proxyClass.getConstructor(
+					InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -164,7 +186,7 @@ public class ExperimentRunResourceFactoryImpl
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		ExperimentRunResource experimentRunResource =
@@ -189,6 +211,7 @@ public class ExperimentRunResourceFactoryImpl
 		experimentRunResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		experimentRunResource.setRoleLocalService(_roleLocalService);
+		experimentRunResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(experimentRunResource, arguments);
@@ -204,6 +227,10 @@ public class ExperimentRunResourceFactoryImpl
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, ExperimentRunResource>
+		_experimentRunResourceProxyProviderFunction =
+			_getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -226,9 +253,6 @@ public class ExperimentRunResourceFactoryImpl
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -237,6 +261,9 @@ public class ExperimentRunResourceFactoryImpl
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

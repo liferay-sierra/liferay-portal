@@ -14,7 +14,6 @@
 
 package com.liferay.portal.workflow.web.internal.portlet.action;
 
-import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
@@ -44,7 +43,6 @@ import org.osgi.service.component.annotations.Component;
  * @author Inácio Nery
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + WorkflowPortletKeys.CONTROL_PANEL_WORKFLOW,
 		"mvc.command.name=/portal_workflow/revert_workflow_definition"
@@ -130,7 +128,7 @@ public class RevertWorkflowDefinitionMVCActionCommand
 				WorkflowWebKeys.WORKFLOW_DEFINITION_MODIFIED_DATE),
 			dateFormat);
 
-		return LanguageUtil.format(
+		return language.format(
 			resourceBundle, "restored-to-revision-from-x",
 			dateFormat.format(workflowDefinitionModifiedDate));
 	}
@@ -146,7 +144,7 @@ public class RevertWorkflowDefinitionMVCActionCommand
 		catch (WorkflowException workflowException) {
 			DateFormat dateFormat = _getDateFormat(locale);
 
-			String message = LanguageUtil.format(
+			String message = language.format(
 				getResourceBundle(actionRequest),
 				"the-version-from-x-is-not-valid-for-publication",
 				dateFormat.format(previousDateModification));

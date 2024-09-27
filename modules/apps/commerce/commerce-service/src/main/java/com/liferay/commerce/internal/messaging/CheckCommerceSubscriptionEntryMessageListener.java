@@ -43,7 +43,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.commerce.configuration.CommerceSubscriptionConfiguration",
-	enabled = false, immediate = true,
+	immediate = true,
 	service = CheckCommerceSubscriptionEntryMessageListener.class
 )
 public class CheckCommerceSubscriptionEntryMessageListener
@@ -84,7 +84,7 @@ public class CheckCommerceSubscriptionEntryMessageListener
 					getCommerceSubscriptionEntriesToRenew());
 		}
 		catch (Exception exception) {
-			_log.error(exception.getMessage(), exception);
+			_log.error(exception);
 		}
 
 		try {
@@ -94,13 +94,8 @@ public class CheckCommerceSubscriptionEntryMessageListener
 						getCommerceDeliverySubscriptionEntriesToRenew());
 		}
 		catch (Exception exception) {
-			_log.error(exception.getMessage(), exception);
+			_log.error(exception);
 		}
-	}
-
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
-	protected void setModuleServiceLifecycle(
-		ModuleServiceLifecycle moduleServiceLifecycle) {
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
@@ -112,6 +107,9 @@ public class CheckCommerceSubscriptionEntryMessageListener
 	@Reference
 	private CommerceSubscriptionEntryLocalService
 		_commerceSubscriptionEntryLocalService;
+
+	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
+	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
 	@Reference
 	private SchedulerEngineHelper _schedulerEngineHelper;

@@ -16,11 +16,6 @@
 	<td></td>
 </tr>
 <tr>
-	<td>CHECK_INTERVAL_SEGMENTS_INPUT</td>
-	<td>//*[contains(text(),'Check Interval')]/following-sibling::input[contains(@class,'form-control')]</td>
-	<td></td>
-</tr>
-<tr>
 	<td>CHECK_INTERVAL_SEGMENTS_VALUE</td>
 	<td>//*[contains(text(),'Check Interval')]/following-sibling::input[contains(@value,'${key_value}')]</td>
 	<td></td>
@@ -33,6 +28,11 @@
 <tr>
 	<td>DROPDOWN_MENU_OPTION</td>
 	<td>//button[contains(@class,'dropdown-item') and @label='${key_selectOption}']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>KEY</td>
+	<td>//div[@class='form-group']/label[contains(.,'Key')]/following-sibling::textarea[@type='text']</td>
 	<td></td>
 </tr>
 <tr>
@@ -67,16 +67,20 @@
 </tr>
 <tr>
 	<td>SETTINGS_TEXT</td>
-	<td>//span[contains(@class,'form-text')][contains(.,'${key_settingsText}')]</td>
+	<td>//span[contains(@id,'fieldDetails')][contains(.,'${key_settingsText}')]</td>
 	<td></td>
 </tr>
+
 <!--ASSETS-->
+
 <tr>
 	<td>ASSETS_DYNAMIC_EXPORT_LIMIT</td>
 	<td>//div[contains(@data-field-name,'dynamicExportLimit')]//input[@type='text']</td>
 	<td></td>
 </tr>
+
 <!--CORS-->
+
 <tr>
 	<td>CORS_CONFIGURATION</td>
 	<td>//textarea[contains(@name,'${key_configurationValue}')]</td>
@@ -85,6 +89,19 @@
 <tr>
 	<td>CORS_DELETE_RESPONSE_HEADERS</td>
 	<td>//div[@class='position-relative row']//div[2]//div[1]//button[contains(@aria-label,'trash')]</td>
+	<td></td>
+</tr>
+
+<!--WORKFLOW-->
+
+<tr>
+	<td>SLA_DEFINITIONS_JOB_INTERVAL</td>
+	<td>//input[contains(@id, 'checkSLADefinitionsJobInterval')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>CHECK_SLA_JOB_INTERVAL</td>
+	<td>//input[contains(@id, 'checkSLAJobInterval')]</td>
 	<td></td>
 </tr>
 <tr>

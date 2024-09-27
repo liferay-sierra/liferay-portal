@@ -54,7 +54,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Shuyang Zhou
  */
 @Component(
-	enabled = false,
 	property = "javax.portlet.name=" + CPPortletKeys.CP_SEARCH_RESULTS,
 	service = PortletSharedSearchContributor.class
 )
@@ -123,10 +122,9 @@ public class CPSearchResultsPortletSharedSearchContributor
 		SearchContext searchContext =
 			portletSharedSearchSettings.getSearchContext();
 
+		searchContext.setAttribute(CPField.PUBLISHED, Boolean.TRUE);
 		searchContext.setEntryClassNames(
 			new String[] {CPDefinition.class.getName()});
-
-		searchContext.setAttribute(CPField.PUBLISHED, Boolean.TRUE);
 
 		if (commerceChannel != null) {
 			searchContext.setAttribute(
@@ -138,12 +136,10 @@ public class CPSearchResultsPortletSharedSearchContributor
 					_portal.getHttpServletRequest(renderRequest));
 
 			if (commerceAccount != null) {
-				long[] commerceAccountGroupIds =
-					_commerceAccountHelper.getCommerceAccountGroupIds(
-						commerceAccount.getCommerceAccountId());
-
 				searchContext.setAttribute(
-					"commerceAccountGroupIds", commerceAccountGroupIds);
+					"commerceAccountGroupIds",
+					_commerceAccountHelper.getCommerceAccountGroupIds(
+						commerceAccount.getCommerceAccountId()));
 			}
 		}
 
@@ -208,10 +204,8 @@ public class CPSearchResultsPortletSharedSearchContributor
 				portletPreferences.getValue("paginationDelta", null));
 		}
 
-		int paginationDelta = paginationDeltaOptional.orElse(
-			configurationPaginationDelta);
-
-		portletSharedSearchSettings.setPaginationDelta(paginationDelta);
+		portletSharedSearchSettings.setPaginationDelta(
+			paginationDeltaOptional.orElse(configurationPaginationDelta));
 	}
 
 	@Reference

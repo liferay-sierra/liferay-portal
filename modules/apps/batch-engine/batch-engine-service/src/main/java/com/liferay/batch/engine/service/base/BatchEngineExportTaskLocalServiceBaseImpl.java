@@ -43,6 +43,8 @@ import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.PersistedModel;
 import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.search.Indexable;
@@ -289,6 +291,52 @@ public abstract class BatchEngineExportTaskLocalServiceBaseImpl
 	}
 
 	/**
+	 * Returns the batch engine export task with the matching external reference code and company.
+	 *
+	 * @param companyId the primary key of the company
+	 * @param externalReferenceCode the batch engine export task's external reference code
+	 * @return the matching batch engine export task, or <code>null</code> if a matching batch engine export task could not be found
+	 */
+	@Override
+	public BatchEngineExportTask
+		fetchBatchEngineExportTaskByExternalReferenceCode(
+			long companyId, String externalReferenceCode) {
+
+		return batchEngineExportTaskPersistence.fetchByC_ERC(
+			companyId, externalReferenceCode);
+	}
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link #fetchBatchEngineExportTaskByExternalReferenceCode(long, String)}
+	 */
+	@Deprecated
+	@Override
+	public BatchEngineExportTask fetchBatchEngineExportTaskByReferenceCode(
+		long companyId, String externalReferenceCode) {
+
+		return fetchBatchEngineExportTaskByExternalReferenceCode(
+			companyId, externalReferenceCode);
+	}
+
+	/**
+	 * Returns the batch engine export task with the matching external reference code and company.
+	 *
+	 * @param companyId the primary key of the company
+	 * @param externalReferenceCode the batch engine export task's external reference code
+	 * @return the matching batch engine export task
+	 * @throws PortalException if a matching batch engine export task could not be found
+	 */
+	@Override
+	public BatchEngineExportTask
+			getBatchEngineExportTaskByExternalReferenceCode(
+				long companyId, String externalReferenceCode)
+		throws PortalException {
+
+		return batchEngineExportTaskPersistence.findByC_ERC(
+			companyId, externalReferenceCode);
+	}
+
+	/**
 	 * Returns the batch engine export task with the primary key.
 	 *
 	 * @param batchEngineExportTaskId the primary key of the batch engine export task
@@ -437,6 +485,11 @@ public abstract class BatchEngineExportTaskLocalServiceBaseImpl
 	@Override
 	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
 		throws PortalException {
+
+		if (_log.isWarnEnabled()) {
+			_log.warn(
+				"Implement BatchEngineExportTaskLocalServiceImpl#deleteBatchEngineExportTask(BatchEngineExportTask) to avoid orphaned data");
+		}
 
 		return batchEngineExportTaskLocalService.deleteBatchEngineExportTask(
 			(BatchEngineExportTask)persistedModel);
@@ -671,6 +724,9 @@ public abstract class BatchEngineExportTaskLocalServiceBaseImpl
 	@Reference
 	protected com.liferay.counter.kernel.service.CounterLocalService
 		counterLocalService;
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		BatchEngineExportTaskLocalServiceBaseImpl.class);
 
 	@Reference
 	protected File _file;

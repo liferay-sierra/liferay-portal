@@ -16,6 +16,7 @@ package com.liferay.portal.search.tuning.synonyms.web.internal.index.creation.mo
 
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.search.engine.SearchEngineInformation;
 import com.liferay.portal.search.tuning.synonyms.index.name.SynonymSetIndexNameBuilder;
 import com.liferay.portal.search.tuning.synonyms.web.internal.BaseSynonymsWebTestCase;
 import com.liferay.portal.search.tuning.synonyms.web.internal.index.SynonymSetIndexCreator;
@@ -26,8 +27,6 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import org.mockito.Matchers;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 
 /**
@@ -42,13 +41,13 @@ public class SynonymSetIndexCreationCompanyModelListenerTest
 		LiferayUnitTestRule.INSTANCE;
 
 	@Before
-	@Override
 	public void setUp() throws Exception {
-		super.setUp();
-
 		_synonymSetIndexCreationCompanyModelListener =
 			new SynonymSetIndexCreationCompanyModelListener();
 
+		ReflectionTestUtil.setFieldValue(
+			_synonymSetIndexCreationCompanyModelListener,
+			"_searchEngineInformation", _searchEngineInformation);
 		ReflectionTestUtil.setFieldValue(
 			_synonymSetIndexCreationCompanyModelListener,
 			"_synonymSetIndexCreator", _synonymSetIndexCreator);
@@ -70,7 +69,7 @@ public class SynonymSetIndexCreationCompanyModelListenerTest
 		Mockito.verify(
 			_synonymSetIndexCreator, Mockito.times(1)
 		).create(
-			Matchers.anyObject()
+			Mockito.any()
 		);
 	}
 
@@ -84,7 +83,7 @@ public class SynonymSetIndexCreationCompanyModelListenerTest
 		Mockito.verify(
 			_synonymSetIndexCreator, Mockito.never()
 		).create(
-			Matchers.anyObject()
+			Mockito.any()
 		);
 	}
 
@@ -98,7 +97,7 @@ public class SynonymSetIndexCreationCompanyModelListenerTest
 		Mockito.verify(
 			_synonymSetIndexCreator, Mockito.never()
 		).delete(
-			Matchers.anyObject()
+			Mockito.any()
 		);
 
 		setUpSynonymSetIndexReader(true);
@@ -114,17 +113,17 @@ public class SynonymSetIndexCreationCompanyModelListenerTest
 		Mockito.verify(
 			_synonymSetIndexCreator, Mockito.times(1)
 		).delete(
-			Matchers.anyObject()
+			Mockito.any()
 		);
 	}
 
+	private final SearchEngineInformation _searchEngineInformation =
+		Mockito.mock(SearchEngineInformation.class);
 	private SynonymSetIndexCreationCompanyModelListener
 		_synonymSetIndexCreationCompanyModelListener;
-
-	@Mock
-	private SynonymSetIndexCreator _synonymSetIndexCreator;
-
-	@Mock
-	private SynonymSetIndexNameBuilder _synonymSetIndexNameBuilder;
+	private final SynonymSetIndexCreator _synonymSetIndexCreator = Mockito.mock(
+		SynonymSetIndexCreator.class);
+	private final SynonymSetIndexNameBuilder _synonymSetIndexNameBuilder =
+		Mockito.mock(SynonymSetIndexNameBuilder.class);
 
 }

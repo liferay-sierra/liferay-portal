@@ -38,6 +38,7 @@ import com.liferay.source.formatter.check.configuration.SuppressionsLoader;
 import com.liferay.source.formatter.check.util.SourceUtil;
 import com.liferay.source.formatter.processor.BNDRunSourceProcessor;
 import com.liferay.source.formatter.processor.BNDSourceProcessor;
+import com.liferay.source.formatter.processor.CETSourceProcessor;
 import com.liferay.source.formatter.processor.CQLSourceProcessor;
 import com.liferay.source.formatter.processor.CSSSourceProcessor;
 import com.liferay.source.formatter.processor.CodeownersSourceProcessor;
@@ -52,6 +53,7 @@ import com.liferay.source.formatter.processor.JSONSourceProcessor;
 import com.liferay.source.formatter.processor.JSPSourceProcessor;
 import com.liferay.source.formatter.processor.JSSourceProcessor;
 import com.liferay.source.formatter.processor.JavaSourceProcessor;
+import com.liferay.source.formatter.processor.LDIFSourceProcessor;
 import com.liferay.source.formatter.processor.LFRBuildSourceProcessor;
 import com.liferay.source.formatter.processor.MarkdownSourceProcessor;
 import com.liferay.source.formatter.processor.PackageinfoSourceProcessor;
@@ -62,6 +64,7 @@ import com.liferay.source.formatter.processor.SHSourceProcessor;
 import com.liferay.source.formatter.processor.SQLSourceProcessor;
 import com.liferay.source.formatter.processor.SourceProcessor;
 import com.liferay.source.formatter.processor.SoySourceProcessor;
+import com.liferay.source.formatter.processor.TFSourceProcessor;
 import com.liferay.source.formatter.processor.TLDSourceProcessor;
 import com.liferay.source.formatter.processor.TSSourceProcessor;
 import com.liferay.source.formatter.processor.TXTSourceProcessor;
@@ -98,6 +101,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Hugo Huijser
@@ -325,7 +330,6 @@ public class SourceFormatter {
 		_sourceProcessors.add(new CSSSourceProcessor());
 		_sourceProcessors.add(new DockerfileSourceProcessor());
 		_sourceProcessors.add(new DTDSourceProcessor());
-		_sourceProcessors.add(new LFRBuildSourceProcessor());
 		_sourceProcessors.add(new FTLSourceProcessor());
 		_sourceProcessors.add(new GradleSourceProcessor());
 		_sourceProcessors.add(new GroovySourceProcessor());
@@ -334,6 +338,8 @@ public class SourceFormatter {
 		_sourceProcessors.add(new JSONSourceProcessor());
 		_sourceProcessors.add(new JSPSourceProcessor());
 		_sourceProcessors.add(new JSSourceProcessor());
+		_sourceProcessors.add(new LDIFSourceProcessor());
+		_sourceProcessors.add(new LFRBuildSourceProcessor());
 		_sourceProcessors.add(new MarkdownSourceProcessor());
 		_sourceProcessors.add(new PackageinfoSourceProcessor());
 		_sourceProcessors.add(new PoshiSourceProcessor());
@@ -342,12 +348,15 @@ public class SourceFormatter {
 		_sourceProcessors.add(new SHSourceProcessor());
 		_sourceProcessors.add(new SoySourceProcessor());
 		_sourceProcessors.add(new SQLSourceProcessor());
+		_sourceProcessors.add(new TFSourceProcessor());
 		_sourceProcessors.add(new TLDSourceProcessor());
 		_sourceProcessors.add(new TSSourceProcessor());
 		_sourceProcessors.add(new TXTSourceProcessor());
 		_sourceProcessors.add(new UpgradeSourceProcessor());
 		_sourceProcessors.add(new XMLSourceProcessor());
 		_sourceProcessors.add(new YMLSourceProcessor());
+
+		_sourceProcessors.add(new CETSourceProcessor());
 
 		ExecutorService executorService = Executors.newFixedThreadPool(
 			_sourceProcessors.size());
@@ -592,6 +601,13 @@ public class SourceFormatter {
 						"/portal-impl/src/com/liferay/portlet/social/util" +
 							"/SocialConfigurationImpl.java");
 			}
+			else if (_isFrontendPackageChanges(recentChangesFileName)) {
+				dependentFileNames.addAll(
+					SourceFormatterUtil.filterFileNames(
+						_allFileNames, new String[0],
+						new String[] {"**/package.json"},
+						_sourceFormatterExcludes, false));
+			}
 		}
 
 		if (_sourceFormatterArgs.isFormatCurrentBranch()) {
@@ -626,6 +642,15 @@ public class SourceFormatter {
 							"**/source-formatter-suppressions.xml"
 						},
 						_sourceFormatterExcludes, false));
+			}
+
+			if (_isFeatureFlagChanges()) {
+				File portalDir = SourceFormatterUtil.getPortalDir(
+					_sourceFormatterArgs.getBaseDirName(),
+					_sourceFormatterArgs.getMaxLineLength());
+
+				dependentFileNames.add(
+					portalDir + "/portal-impl/src/portal.properties");
 			}
 		}
 
@@ -995,11 +1020,10 @@ public class SourceFormatter {
 		_portalSource = _containsDir("portal-impl");
 
 		if (_portalSource) {
-			File portalDir = SourceFormatterUtil.getPortalDir(
-				_sourceFormatterArgs.getBaseDirName(),
-				_sourceFormatterArgs.getMaxLineLength());
-
-			_excludeWorkingDirCheckoutPrivateApps(portalDir);
+			_excludeWorkingDirCheckoutPrivateApps(
+				SourceFormatterUtil.getPortalDir(
+					_sourceFormatterArgs.getBaseDirName(),
+					_sourceFormatterArgs.getMaxLineLength()));
 		}
 
 		_propertiesMap = new HashMap<>();
@@ -1073,12 +1097,12 @@ public class SourceFormatter {
 
 		_projectPathPrefix = _getProjectPathPrefix();
 
-		List<File> suppressionsFiles = SourceFormatterUtil.getSuppressionsFiles(
-			_sourceFormatterArgs.getBaseDirName(), _allFileNames,
-			_sourceFormatterExcludes, _sourceFormatterArgs.getMaxDirLevel());
-
 		_sourceFormatterSuppressions = SuppressionsLoader.loadSuppressions(
-			_sourceFormatterArgs.getBaseDirName(), suppressionsFiles,
+			_sourceFormatterArgs.getBaseDirName(),
+			SourceFormatterUtil.getSuppressionsFiles(
+				_sourceFormatterArgs.getBaseDirName(), _allFileNames,
+				_sourceFormatterExcludes,
+				_sourceFormatterArgs.getMaxDirLevel()),
 			_propertiesMap);
 
 		_sourceFormatterConfiguration = ConfigurationLoader.loadConfiguration(
@@ -1087,6 +1111,43 @@ public class SourceFormatter {
 		if (_sourceFormatterArgs.isShowDebugInformation()) {
 			DebugUtil.addCheckNames(CheckType.SOURCE_CHECK, _getCheckNames());
 		}
+	}
+
+	private boolean _isFeatureFlagChanges() throws Exception {
+		String currentBranchDiff = GitUtil.getCurrentBranchDiff(
+			_sourceFormatterArgs.getBaseDirName(),
+			_sourceFormatterArgs.getGitWorkingBranchName());
+
+		for (String line : StringUtil.split(currentBranchDiff, "\n")) {
+			if ((line.startsWith(StringPool.MINUS) ||
+				 line.startsWith(StringPool.PLUS)) &&
+				(line.contains("feature.flag") ||
+				 line.contains("Liferay-Site-Initializer-Feature-Flag:"))) {
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private boolean _isFrontendPackageChanges(String recentChangesFileName) {
+		if (recentChangesFileName.endsWith(
+				"/modules/apps/frontend-js/frontend-js-metal-web" +
+					"/package.json") ||
+			recentChangesFileName.endsWith(
+				"/modules/apps/frontend-js/frontend-js-react-web" +
+					"/package.json") ||
+			recentChangesFileName.endsWith(
+				"/modules/apps/frontend-js/frontend-js-spa-web/package.json") ||
+			recentChangesFileName.endsWith(
+				"/modules/apps/frontend-taglib/frontend-taglib-clay" +
+					"/package.json")) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	private boolean _isSubrepository() throws Exception {
@@ -1218,9 +1279,27 @@ public class SourceFormatter {
 			commitMessages, _getPropertyValues("jira.project.keys"));
 		JIRAUtil.validateJIRATicketIds(commitMessages, 20);
 
-		JIRAUtil.validateJIRASecurityKeywords(
-			commitMessages,
-			_getPropertyValues("jira.security.vulnerability.keywords"), 20);
+		for (String commitMessage : commitMessages) {
+			for (String keyword :
+					_getPropertyValues("git.commit.vulnerability.keywords")) {
+
+				Pattern pattern = Pattern.compile(
+					"\\b_*(" + keyword + ")_*\\b", Pattern.CASE_INSENSITIVE);
+
+				Matcher matcher = pattern.matcher(commitMessage);
+
+				if (matcher.find()) {
+					throw new Exception(
+						StringBundler.concat(
+							"Found formatting issues:\n", "The commit '",
+							commitMessage, "' contains the word '", keyword,
+							"', which could reveal potential security ",
+							"vulnerablities. Please see the vulnerability ",
+							"keywords that are specified in source-formatter.",
+							"properties in the liferay-portal repository."));
+				}
+			}
+		}
 	}
 
 	private static final String _PROPERTIES_FILE_NAME =

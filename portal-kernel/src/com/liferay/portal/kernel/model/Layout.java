@@ -171,6 +171,8 @@ public interface Layout extends LayoutModel, PersistedModel {
 
 	public java.util.List<Portlet> getEmbeddedPortlets(long groupId);
 
+	public String getFaviconURL();
+
 	/**
 	 * Returns the layout's friendly URL for the given locale.
 	 *
@@ -221,6 +223,8 @@ public interface Layout extends LayoutModel, PersistedModel {
 	 or the current layout's name if no HTML title is configured
 	 */
 	public String getHTMLTitle(String localeLanguageId);
+
+	public String getIcon();
 
 	/**
 	 * Returns <code>true</code> if the current layout has a configured icon.
@@ -343,6 +347,8 @@ public interface Layout extends LayoutModel, PersistedModel {
 
 	public boolean isDraftLayout();
 
+	public boolean isEmbeddedPersonalApplication();
+
 	/**
 	 * Returns <code>true</code> if the current layout is the first layout in
 	 * its parent's hierarchical list of children layouts.
@@ -399,6 +405,8 @@ public interface Layout extends LayoutModel, PersistedModel {
 	 */
 	public boolean isPublicLayout();
 
+	public boolean isPublished();
+
 	/**
 	 * Returns <code>true</code> if the current layout is the root layout.
 	 *
@@ -420,6 +428,8 @@ public interface Layout extends LayoutModel, PersistedModel {
 	public boolean isSupportsEmbeddedPortlets();
 
 	public boolean isTypeAssetDisplay();
+
+	public boolean isTypeCollection();
 
 	public boolean isTypeContent();
 

@@ -13,7 +13,7 @@
  */
 
 import '@testing-library/jest-dom/extend-expect';
-import {cleanup, fireEvent, render} from '@testing-library/react';
+import {render} from '@testing-library/react';
 import React from 'react';
 
 import {StoreAPIContextProvider} from '../../../../../../../../../src/main/resources/META-INF/resources/page_editor/app/contexts/StoreContext';
@@ -32,6 +32,7 @@ const STATE = {
 			segmentsExperimentURL: 'https//:default-experience.com',
 		},
 	},
+	permissions: {UPDATE: true},
 	segmentsExperienceId: '0',
 	selectedViewportSize: 'desktop',
 };
@@ -108,16 +109,18 @@ jest.mock(
 							name: 'marginLeft',
 							responsive: true,
 							type: 'select',
-							validValues: [
-								{
-									label: '0',
-									value: '0',
-								},
-								{
-									label: '1',
-									value: '1',
-								},
-							],
+							typeOptions: {
+								validValues: [
+									{
+										label: '0',
+										value: '0',
+									},
+									{
+										label: '1',
+										value: '1',
+									},
+								],
+							},
 						},
 						{
 							dataType: 'string',
@@ -128,16 +131,18 @@ jest.mock(
 							name: 'marginRight',
 							responsive: true,
 							type: 'select',
-							validValues: [
-								{
-									label: '0',
-									value: '0',
-								},
-								{
-									label: '1',
-									value: '1',
-								},
-							],
+							typeOptions: {
+								validValues: [
+									{
+										label: '0',
+										value: '0',
+									},
+									{
+										label: '1',
+										value: '1',
+									},
+								],
+							},
 						},
 					],
 				},
@@ -153,27 +158,33 @@ jest.mock(
 	() => jest.fn()
 );
 
+jest.mock('frontend-js-web', () => ({
+	...jest.requireActual('frontend-js-web'),
+	sub: jest.fn((key, args) => {
+		args = Array.isArray(args) ? args : [args];
+
+		return args.reduce((key, arg) => key.replace('x', arg), key);
+	}),
+}));
+
 describe('CommonStyles', () => {
 	afterEach(() => {
-		cleanup();
 		updateItemConfig.mockClear();
 	});
 
 	it('shows common styles panel', async () => {
-		const {getByText} = renderComponent({});
+		const {getByLabelText} = renderComponent({});
 
-		expect(getByText('common-styles')).toBeInTheDocument();
+		expect(getByLabelText('margin-left')).toBeInTheDocument();
 	});
 
 	it('allows changing common styles for a given viewport', async () => {
 		const {getByLabelText} = renderComponent({
 			state: {selectedViewportSize: 'tablet'},
 		});
-		const input = getByLabelText('margin-left');
 
-		await fireEvent.change(input, {
-			target: {value: '1'},
-		});
+		getByLabelText('margin-left').click();
+		getByLabelText('set-margin-left-to-1').click();
 
 		expect(updateItemConfig).toHaveBeenCalledWith({
 			itemConfig: {
@@ -184,7 +195,6 @@ describe('CommonStyles', () => {
 				},
 			},
 			itemId: '0',
-			segmentsExperienceId: '0',
 		});
 	});
 

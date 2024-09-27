@@ -12,17 +12,21 @@
  * details.
  */
 
-import {openSelectionModal, openSimpleInputModal} from 'frontend-js-web';
+import {
+	openSelectionModal,
+	openSimpleInputModal,
+	setFormValues,
+} from 'frontend-js-web';
+
+import openDeleteFragmentModal from './openDeleteFragmentModal';
 
 const ACTIONS = {
 	deleteFragmentComposition({deleteFragmentCompositionURL}) {
-		if (
-			confirm(
-				Liferay.Language.get('are-you-sure-you-want-to-delete-this')
-			)
-		) {
-			submitForm(document.hrefFm, deleteFragmentCompositionURL);
-		}
+		openDeleteFragmentModal({
+			onDelete: () => {
+				submitForm(document.hrefFm, deleteFragmentCompositionURL);
+			},
+		});
 	},
 
 	deleteFragmentCompositionPreview({deleteFragmentCompositionPreviewURL}) {
@@ -45,7 +49,7 @@ const ACTIONS = {
 					);
 
 					if (form) {
-						Liferay.Util.setFormValues(form, {
+						setFormValues(form, {
 							fragmentCollectionId: selectedItem.id,
 							fragmentCompositionId,
 						});
@@ -95,7 +99,7 @@ const ACTIONS = {
 					);
 
 					if (form) {
-						Liferay.Util.setFormValues(form, {
+						setFormValues(form, {
 							fileEntryId: itemValue.fileEntryId,
 							fragmentCompositionId,
 						});
@@ -140,6 +144,6 @@ export default function propsTransformer({
 
 	return {
 		...props,
-		actions: actions.map(transformAction),
+		actions: (actions || []).map(transformAction),
 	};
 }

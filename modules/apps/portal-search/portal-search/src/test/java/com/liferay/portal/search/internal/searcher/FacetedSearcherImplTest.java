@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.IndexerRegistry;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.facet.faceted.searcher.FacetedSearcher;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.search.asset.SearchableAssetClassNamesProvider;
 import com.liferay.portal.search.constants.SearchContextAttributes;
@@ -39,9 +40,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 
 /**
  * @author André de Oliveira
@@ -55,8 +54,6 @@ public class FacetedSearcherImplTest {
 
 	@Before
 	public void setUp() throws Exception {
-		MockitoAnnotations.initMocks(this);
-
 		_documentFixture = new DocumentFixture();
 
 		_documentFixture.setUp();
@@ -121,31 +118,24 @@ public class FacetedSearcherImplTest {
 			_createSearchRequestBuilderFactory());
 	}
 
-	@Mock
 	protected AddSearchKeywordsQueryContributorHelper
-		addSearchKeywordsQueryContributorHelper;
-
-	@Mock
-	protected ExpandoQueryContributorHelper expandoQueryContributorHelper;
-
+		addSearchKeywordsQueryContributorHelper = Mockito.mock(
+			AddSearchKeywordsQueryContributorHelper.class);
+	protected ExpandoQueryContributorHelper expandoQueryContributorHelper =
+		Mockito.mock(ExpandoQueryContributorHelper.class);
 	protected FacetedSearcher facetedSearcher;
-
-	@Mock
-	protected IndexerRegistry indexerRegistry;
-
-	@Mock
-	protected IndexSearcherHelper indexSearcherHelper;
-
-	@Mock
+	protected IndexerRegistry indexerRegistry = Mockito.mock(
+		IndexerRegistry.class);
+	protected IndexSearcherHelper indexSearcherHelper = Mockito.mock(
+		IndexSearcherHelper.class);
 	protected PostProcessSearchQueryContributorHelper
-		postProcessSearchQueryContributorHelper;
-
-	@Mock
-	protected PreFilterContributorHelper preFilterContributorHelper;
-
-	@Mock
+		postProcessSearchQueryContributorHelper = Mockito.mock(
+			PostProcessSearchQueryContributorHelper.class);
+	protected PreFilterContributorHelper preFilterContributorHelper =
+		Mockito.mock(PreFilterContributorHelper.class);
 	protected SearchableAssetClassNamesProvider
-		searchableAssetClassNamesProvider;
+		searchableAssetClassNamesProvider = Mockito.mock(
+			SearchableAssetClassNamesProvider.class);
 
 	private void _assertSearchSkipped(SearchContext searchContext)
 		throws Exception {
@@ -154,14 +144,15 @@ public class FacetedSearcherImplTest {
 
 		Assert.assertEquals(hits.toString(), 0, hits.getLength());
 
-		Mockito.verifyZeroInteractions(indexSearcherHelper);
+		Mockito.verifyNoInteractions(indexSearcherHelper);
 	}
 
 	private SearchRequestBuilderFactory _createSearchRequestBuilderFactory() {
 		SearchRequestBuilderFactoryImpl searchRequestBuilderFactoryImpl =
 			new SearchRequestBuilderFactoryImpl();
 
-		searchRequestBuilderFactoryImpl.setSearchRequestBuilderFactory(
+		ReflectionTestUtil.setFieldValue(
+			searchRequestBuilderFactoryImpl, "_searchRequestBuilderFactory",
 			new com.liferay.portal.search.internal.searcher.
 				SearchRequestBuilderFactoryImpl());
 

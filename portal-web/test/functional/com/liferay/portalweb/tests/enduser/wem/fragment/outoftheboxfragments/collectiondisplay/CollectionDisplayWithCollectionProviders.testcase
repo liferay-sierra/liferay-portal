@@ -106,7 +106,7 @@ definition {
 				columnNumber = "1",
 				fragmentName = "Collection Display",
 				infoListProviderName = "Recent Content",
-				listStyle = "Bordered List");
+				styleDisplay = "Bordered List");
 		}
 
 		task ("Add a Collection Display to the second module") {
@@ -136,7 +136,7 @@ definition {
 				assetListName = "Manual Collection",
 				fragmentName = "Collection Display",
 				index = "3",
-				listStyle = "Bulleted List");
+				styleDisplay = "Bulleted List");
 		}
 
 		task ("View the title of assets are shown in the first module") {
@@ -158,7 +158,7 @@ definition {
 				AssertVisible(locator1 = "xpath=(//div[@aria-label='Collection Display']//div[contains(@class,'page-editor__collection')]//ul[not(contains(@class,'list-group'))]/li[1][normalize-space(text())='Web Content Title'])[${n}]");
 			}
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Navigate to page at view mode") {
@@ -257,7 +257,7 @@ definition {
 				assetListName = "Manual Collection",
 				columnNumber = "1",
 				fragmentName = "Collection Display",
-				listStyle = "Bordered List");
+				styleDisplay = "Bordered List");
 		}
 
 		task ("Add a Collection Display to the second module") {
@@ -287,7 +287,7 @@ definition {
 				fragmentName = "Collection Display",
 				index = "3",
 				infoListProviderName = "Most Viewed Assets",
-				listStyle = "Bulleted List");
+				styleDisplay = "Bulleted List");
 		}
 
 		task ("View the title of web content shown in the first module") {
@@ -311,7 +311,7 @@ definition {
 				var n = ${n} + 1;
 			}
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Navigate to page at view mode") {
@@ -343,9 +343,358 @@ definition {
 		}
 	}
 
-	@description = "This is a test for LPS-126009. The user is able to filter web contents in Collection Display using Tag."
+	@description = "This is a test for LPS-160789. The page creator could add translation to empty collection alert."
 	@priority = "4"
+	test AddTranslationToEmptyCollectionAlert {
+		task ("Given a page creator has a Collection Display without items on a content page") {
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Content Page Name",
+				siteName = "Test Site Name");
+
+			PageEditor.addFragment(
+				collectionName = "Content Display",
+				fragmentName = "Collection Display");
+
+			PageEditor.editCollectionDisplay(
+				fragmentName = "Collection Display",
+				infoListProviderName = "Most Viewed Assets");
+		}
+
+		task ("When the page creator adds translation to the empty collection alert in es-US") {
+			PageEditor.changeLocale(
+				currentLocale = "en-US",
+				locale = "es-ES");
+
+			PageEditor.editCollectionDisplay(
+				emptyCollectionAlert = "No se encontraron artículos",
+				fragmentName = "Collection Display",
+				selectedName = "Most Viewed Assets");
+		}
+
+		task ("Then the page creator sees the translated empty collection alert at preview and view modes") {
+			PageEditor.previewInANewTab();
+
+			AssertTextEquals(
+				index = "1",
+				locator1 = "PageEditor#COLLECTION_DISPLAY_EMPTY_STATE",
+				value1 = "No se encontraron artículos");
+
+			Close.closeWindow();
+
+			PageEditor.publish();
+
+			ContentPagesNavigator.openViewContentPage(
+				pageName = "Content Page Name",
+				siteName = "Test Site Name");
+
+			AssertTextEquals(
+				index = "1",
+				locator1 = "PageEditor#COLLECTION_DISPLAY_EMPTY_STATE",
+				value1 = "No Results Found");
+
+			Navigator.ensureLocaleURL(locale = "es");
+
+			AssertTextEquals(
+				index = "1",
+				locator1 = "PageEditor#COLLECTION_DISPLAY_EMPTY_STATE",
+				value1 = "No se encontraron artículos");
+		}
+	}
+
+	@description = "This is a test for LPS-160789. No empty collection alert shown when the page creator clear the text of empty collection alert."
+	@priority = "4"
+	test ClearEmptyCollectionAlert {
+		task ("Given a page creator has a Collection Display without items on a content page") {
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Content Page Name",
+				siteName = "Test Site Name");
+
+			PageEditor.addFragment(
+				collectionName = "Content Display",
+				fragmentName = "Collection Display");
+
+			PageEditor.editCollectionDisplay(
+				fragmentName = "Collection Display",
+				infoListProviderName = "Most Viewed Assets");
+		}
+
+		task ("When the page creator clear the empty collection alert") {
+			PageEditor.editCollectionDisplay(
+				emptyCollectionAlert = "",
+				fragmentName = "Collection Display",
+				selectedName = "Most Viewed Assets");
+		}
+
+		task ("Then the page creator cannot see the empty collection alert at preview and view modes") {
+			PageEditor.previewInANewTab();
+
+			AssertTextEquals(
+				index = "1",
+				locator1 = "PageEditor#COLLECTION_DISPLAY_EMPTY_STATE",
+				value1 = "");
+
+			Close.closeWindow();
+
+			PageEditor.publish();
+
+			ContentPagesNavigator.openViewContentPage(
+				pageName = "Content Page Name",
+				siteName = "Test Site Name");
+
+			AssertTextEquals(
+				index = "1",
+				locator1 = "PageEditor#COLLECTION_DISPLAY_EMPTY_STATE",
+				value1 = "");
+		}
+	}
+
+	@description = "This is a test for LPS-163440. The page creator could define Flex Column, Align Items and Justify Content of a Collection Display."
+	@priority = "5"
+	test ConfigureFlexColumnCollectionDisplayStyles {
+		task ("Given a page creator has an empty Collection Display on a content page") {
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Content Page Name",
+				siteName = "Test Site Name");
+
+			PageEditor.addFragment(
+				collectionName = "Content Display",
+				fragmentName = "Collection Display");
+		}
+
+		task ("When the page creator chooses the Flex Column style display") {
+			PageEditor.editCollectionDisplay(
+				fragmentName = "Collection Display",
+				infoListProviderName = "Highest Rated Assets",
+				styleDisplay = "Flex Column");
+		}
+
+		task ("Then the page creator sees the empty message shown in Collection Display") {
+			PageEditor.viewFragmentMessageInfo(
+				fragmentName = "Collection Display",
+				messageInfo = "There are no items to display.");
+		}
+
+		task ("When the page creator adds the Heading and Image fragments into Collection Display with collection items") {
+			for (var n : list "1,2,3") {
+				JSONWebcontent.addWebContent(
+					content = "Web Content Content ${n}",
+					groupName = "Test Site Name",
+					title = "Web Content Title ${n}");
+			}
+
+			Refresh();
+
+			PageEditor.addFragmentToCollectionDisplay(
+				collectionName = "Basic Components",
+				entryTitle = "Web Content Title 3",
+				fragmentName = "Heading");
+
+			PageEditor.addFragmentToCollectionDisplay(
+				collectionName = "Basic Components",
+				fragmentName = "Image",
+				targetFragmentName = "Heading");
+		}
+
+		task ("Then the page creator sees the Heading and Image fragments displayed as list inside Collection Display") {
+			AssertElementNotPresent(
+				key_flexWrap = "wrap",
+				key_position = "1",
+				locator1 = "PageEditor#COLLECTION_DISPLAY_CONFIGURATION_FLEX_WRAP");
+
+			AssertElementNotPresent(
+				key_alignItems = "",
+				key_position = "1",
+				locator1 = "PageEditor#COLLECTION_DISPLAY_CONFIGURATION_ALIGN_ITEMS");
+
+			AssertElementNotPresent(
+				key_justifyContent = "",
+				key_position = "1",
+				locator1 = "PageEditor#COLLECTION_DISPLAY_CONFIGURATION_JUSTIFY_CONTENT");
+
+			PageEditor.clickConfigurableField(fragmentName = "Collection Display");
+
+			AssertSelectedLabel(
+				key_fieldLabel = "Flex Wrap",
+				locator1 = "Select#GENERIC_SELECT_FIELD",
+				value1 = "No Wrap");
+
+			AssertSelectedLabel(
+				key_fieldLabel = "Align Items",
+				locator1 = "Select#GENERIC_SELECT_FIELD",
+				value1 = "Stretch");
+
+			AssertSelectedLabel(
+				key_fieldLabel = "Justify Content",
+				locator1 = "Select#GENERIC_SELECT_FIELD",
+				value1 = "Start");
+
+			var blockWidth = selenium.getElementWidth("//div[contains(@class,'page-editor__collection__block')]");
+			var collectionDisplayWidth = selenium.getElementWidth("//div[@aria-label='Collection Display']//div[contains(@class,'page-editor__topper__content')]");
+
+			TestUtils.assertEquals(
+				actual = "${blockWidth}",
+				expected = "${collectionDisplayWidth}");
+		}
+
+		task ("When the page creator changes the align items to End") {
+			PageEditor.editCollectionDisplay(
+				alignItems = "End",
+				fragmentName = "Collection Display",
+				selectedName = "Highest Rated Assets");
+		}
+
+		task ("Then the page creator sees the Heading and Image fragments aligned horizontally with the right of Collection Display") {
+			AssertElementNotPresent(
+				key_flexWrap = "wrap",
+				key_position = "1",
+				locator1 = "PageEditor#COLLECTION_DISPLAY_CONFIGURATION_FLEX_WRAP");
+
+			AssertElementNotPresent(
+				key_justifyContent = "",
+				key_position = "1",
+				locator1 = "PageEditor#COLLECTION_DISPLAY_CONFIGURATION_JUSTIFY_CONTENT");
+
+			PageEditor.viewCollectionDisplayStyle(
+				alignItems = "end",
+				position = "1");
+
+			var blockWidth = selenium.getElementWidth("//div[contains(@class,'page-editor__collection__block')]");
+			var collectionDisplayWidth = selenium.getElementWidth("//div[@aria-label='Collection Display']//div[contains(@class,'page-editor__topper__content')]");
+
+			TestUtils.isLessThan(
+				actual = "${blockWidth}",
+				expected = "${collectionDisplayWidth}");
+		}
+	}
+
+	@description = "This is a test for LPS-163440. The page creator could define Flex Row, Flex Wrap, Align Items and Justify Content of a Collection Display."
+	@priority = "5"
+	test ConfigureFlexRowCollectionDisplayStyles {
+		task ("Given a page creator has an empty Collection Display on a content page") {
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Content Page Name",
+				siteName = "Test Site Name");
+
+			PageEditor.addFragment(
+				collectionName = "Content Display",
+				fragmentName = "Collection Display");
+		}
+
+		task ("When the page creator chooses the Flex Row style display") {
+			PageEditor.editCollectionDisplay(
+				fragmentName = "Collection Display",
+				infoListProviderName = "Highest Rated Assets",
+				styleDisplay = "Flex Row");
+		}
+
+		task ("Then the page creator sees the empty message shown in Collection Display") {
+			PageEditor.viewFragmentMessageInfo(
+				fragmentName = "Collection Display",
+				messageInfo = "There are no items to display.");
+		}
+
+		task ("When the page creator adds the Button and Paragraph fragments into Collection Display with collection items") {
+			for (var n : list "1,2,3") {
+				JSONWebcontent.addWebContent(
+					content = "Web Content Content ${n}",
+					groupName = "Test Site Name",
+					title = "Web Content Title ${n}");
+			}
+
+			Refresh();
+
+			PageEditor.addFragmentToCollectionDisplay(
+				collectionName = "Basic Components",
+				entryTitle = "Web Content Title 3",
+				fragmentName = "Button");
+
+			PageEditor.addFragmentToCollectionDisplay(
+				collectionName = "Basic Components",
+				fragmentName = "Paragraph",
+				targetFragmentName = "Button");
+		}
+
+		task ("Then the page creator sees the Button and Paragraph fragments displayed as line inside Collection Display") {
+			AssertElementNotPresent(
+				key_flexWrap = "wrap",
+				key_position = "1",
+				locator1 = "PageEditor#COLLECTION_DISPLAY_CONFIGURATION_FLEX_WRAP");
+
+			AssertElementNotPresent(
+				key_alignItems = "",
+				key_position = "1",
+				locator1 = "PageEditor#COLLECTION_DISPLAY_CONFIGURATION_ALIGN_ITEMS");
+
+			AssertElementNotPresent(
+				key_justifyContent = "",
+				key_position = "1",
+				locator1 = "PageEditor#COLLECTION_DISPLAY_CONFIGURATION_JUSTIFY_CONTENT");
+
+			PageEditor.clickConfigurableField(fragmentName = "Collection Display");
+
+			AssertSelectedLabel(
+				key_fieldLabel = "Flex Wrap",
+				locator1 = "Select#GENERIC_SELECT_FIELD",
+				value1 = "No Wrap");
+
+			AssertSelectedLabel(
+				key_fieldLabel = "Align Items",
+				locator1 = "Select#GENERIC_SELECT_FIELD",
+				value1 = "Stretch");
+
+			AssertSelectedLabel(
+				key_fieldLabel = "Justify Content",
+				locator1 = "Select#GENERIC_SELECT_FIELD",
+				value1 = "Start");
+		}
+
+		task ("When the page creator changes the Justify Content to Center") {
+			PageEditor.editCollectionDisplay(
+				fragmentName = "Collection Display",
+				justifyContent = "Center",
+				selectedName = "Highest Rated Assets");
+		}
+
+		task ("Then the page creator sees the Button and Paragraph fragments aligned horizontally with center of Collection Display") {
+			AssertElementNotPresent(
+				key_flexWrap = "wrap",
+				key_position = "1",
+				locator1 = "PageEditor#COLLECTION_DISPLAY_CONFIGURATION_FLEX_WRAP");
+
+			AssertElementNotPresent(
+				key_alignItems = "",
+				key_position = "1",
+				locator1 = "PageEditor#COLLECTION_DISPLAY_CONFIGURATION_ALIGN_ITEMS");
+
+			PageEditor.viewCollectionDisplayStyle(
+				justifyContent = "center",
+				position = "1");
+		}
+
+		task ("When the page creator changes the Flex Wrap to Wrap") {
+			PageEditor.editCollectionDisplay(
+				flexWrap = "Wrap",
+				fragmentName = "Collection Display",
+				selectedName = "Highest Rated Assets");
+		}
+
+		task ("Then the page creator sees the Button and Paragraph fragments displayed as list inside Collection Display") {
+			AssertElementNotPresent(
+				key_alignItems = "",
+				key_position = "1",
+				locator1 = "PageEditor#COLLECTION_DISPLAY_CONFIGURATION_ALIGN_ITEMS");
+
+			PageEditor.viewCollectionDisplayStyle(
+				flexWrap = "wrap",
+				justifyContent = "center",
+				position = "1");
+		}
+	}
+
+	@description = "This is a test for LPS-126009 and LPS-147390. The user is able to filter web contents in Collection Display using Tag."
+	@priority = "5"
 	test FilterWebContentByTag {
+		property portal.acceptance = "true";
 		property test.name.skip.portal.instance = "CollectionDisplayWithCollectionProviders#FilterWebContentByTag";
 
 		task ("Enable Basic Web Content flag in Gogo Shell") {
@@ -421,6 +770,13 @@ definition {
 				tagNameList = "tag1");
 		}
 
+		task ("View the text info shown below the Collection field") {
+			AssertTextEquals(
+				key_text = "info-panel-open",
+				locator1 = "Icon#ANY",
+				value1 = "Collection Prefiltered");
+		}
+
 		task ("View only web contents with tag1 are shown in Collection Display") {
 			var n = "1";
 
@@ -449,6 +805,13 @@ definition {
 				fragmentName = "Collection Display",
 				selectedName = "Basic Web Content",
 				tagNameList = "tag2");
+		}
+
+		task ("View the text info shown below the Collection field") {
+			AssertTextEquals(
+				key_text = "info-panel-open",
+				locator1 = "Icon#ANY",
+				value1 = "Collection Prefiltered");
 		}
 
 		task ("View only web contents with tag2 are shown in Collection Display") {
@@ -481,6 +844,13 @@ definition {
 				tagNameList = "tag3");
 		}
 
+		task ("View the text info shown below the Collection field") {
+			AssertTextEquals(
+				key_text = "info-panel-open",
+				locator1 = "Icon#ANY",
+				value1 = "Collection Prefiltered");
+		}
+
 		task ("View only web contents with tag3 are shown in Collection Display") {
 			var n = "1";
 
@@ -509,6 +879,13 @@ definition {
 				fragmentName = "Collection Display",
 				selectedName = "Basic Web Content",
 				tagNameList = "tag1,tag2,tag3");
+		}
+
+		task ("View the text info shown below the Collection field") {
+			AssertTextEquals(
+				key_text = "info-panel-open",
+				locator1 = "Icon#ANY",
+				value1 = "Collection Prefiltered");
 		}
 
 		task ("View only web contents with tag are shown in Collection Display") {
@@ -947,6 +1324,54 @@ definition {
 		}
 	}
 
+	@description = "This is a test for LPS-160243. The page creator could reenable show empty collection alert at preview mode and view mode."
+	@priority = "4"
+	test ReenableEmptyCollectionAlert {
+		task ("Given a page creator has a Collection Display with empty collection alert disabled on a content page") {
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Content Page Name",
+				siteName = "Test Site Name");
+
+			PageEditor.addFragment(
+				collectionName = "Content Display",
+				fragmentName = "Collection Display");
+
+			PageEditor.editCollectionDisplay(
+				fragmentName = "Collection Display",
+				infoListProviderName = "Highest Rated Assets",
+				showEmptyCollectionAlert = "false");
+		}
+
+		task ("When the page creator reenables the empty collection alert") {
+			PageEditor.editCollectionDisplay(
+				fragmentName = "Collection Display",
+				selectedName = "Highest Rated Assets",
+				showEmptyCollectionAlert = "true");
+		}
+
+		task ("Then the page creator sees the empty collection alert at preview and view modes") {
+			PageEditor.previewInANewTab();
+
+			AssertTextEquals(
+				index = "1",
+				locator1 = "PageEditor#COLLECTION_DISPLAY_EMPTY_STATE",
+				value1 = "No Results Found");
+
+			Close.closeWindow();
+
+			PageEditor.publish();
+
+			ContentPagesNavigator.openViewContentPage(
+				pageName = "Content Page Name",
+				siteName = "Test Site Name");
+
+			AssertTextEquals(
+				index = "1",
+				locator1 = "PageEditor#COLLECTION_DISPLAY_EMPTY_STATE",
+				value1 = "No Results Found");
+		}
+	}
+
 	@description = "This is a use case for LPS-114727. The Content Display fragment can display abstract of asset entries in Collection Display."
 	@priority = "5"
 	@uitest
@@ -1011,7 +1436,7 @@ definition {
 				var n = ${n} + 1;
 			}
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("View the description of assets shown in Content Display at view mode") {
@@ -1054,13 +1479,9 @@ definition {
 				navTab = "Blog Images",
 				uploadFileName = "Document_1.jpg");
 
-			Pause(locator1 = "3000");
-
 			Panel.expandPanel(panel = "Configuration");
 
 			BlogsEntry.addCustomAbstract(entryAbstractDescription = "This is a description for blogs entry");
-
-			Pause(locator1 = "3000");
 
 			PortletEntry.publish();
 
@@ -1087,7 +1508,7 @@ definition {
 				fragmentName = "Collection Display",
 				infoListProviderName = "Highest Rated Assets",
 				listItemStyle = "Abstract",
-				listStyle = "Bordered List");
+				styleDisplay = "Bordered List");
 		}
 
 		task ("Assert the Abstract of collection items are shown in Bordered List") {
@@ -1117,7 +1538,7 @@ definition {
 		}
 
 		task ("Assert the Abstract of collection items are shown in Bordered List at view mode") {
-			PageEditor.clickPublish();
+			PageEditor.publish();
 
 			ContentPagesNavigator.openViewContentPage(
 				pageName = "Content Page Name",
@@ -1154,8 +1575,8 @@ definition {
 			PageEditor.editCollectionDisplay(
 				fragmentName = "Collection Display",
 				listItemStyle = "Abstract",
-				listStyle = "Bulleted List",
-				selectedName = "Highest Rated Assets");
+				selectedName = "Highest Rated Assets",
+				styleDisplay = "Bulleted List");
 		}
 
 		task ("Assert the Abstract of collection items are shown in Bulleted List") {
@@ -1185,7 +1606,7 @@ definition {
 		}
 
 		task ("Assert the Abstract of collection items are shown in Bulleted List at view mode") {
-			PageEditor.clickPublish();
+			PageEditor.publish();
 
 			var n = "1";
 
@@ -1218,8 +1639,8 @@ definition {
 			PageEditor.editCollectionDisplay(
 				fragmentName = "Collection Display",
 				listItemStyle = "Abstract",
-				listStyle = "Inline List",
-				selectedName = "Highest Rated Assets");
+				selectedName = "Highest Rated Assets",
+				styleDisplay = "Inline List");
 		}
 
 		task ("Assert the Abstract of collection items are shown in Inline List") {
@@ -1249,7 +1670,7 @@ definition {
 		}
 
 		task ("Assert the Abstract of collection items are shown in Inline List at view mode") {
-			PageEditor.clickPublish();
+			PageEditor.publish();
 
 			var n = "1";
 
@@ -1282,8 +1703,8 @@ definition {
 			PageEditor.editCollectionDisplay(
 				fragmentName = "Collection Display",
 				listItemStyle = "Abstract",
-				listStyle = "Numbered List",
-				selectedName = "Highest Rated Assets");
+				selectedName = "Highest Rated Assets",
+				styleDisplay = "Numbered List");
 		}
 
 		task ("Assert the Abstract of collection items are shown in Numbered List") {
@@ -1313,7 +1734,7 @@ definition {
 		}
 
 		task ("Assert the Abstract of collection items are shown in Numbered List at view mode") {
-			PageEditor.clickPublish();
+			PageEditor.publish();
 
 			var n = "1";
 
@@ -1346,8 +1767,8 @@ definition {
 			PageEditor.editCollectionDisplay(
 				fragmentName = "Collection Display",
 				listItemStyle = "Abstract",
-				listStyle = "Unstyled List",
-				selectedName = "Highest Rated Assets");
+				selectedName = "Highest Rated Assets",
+				styleDisplay = "Unstyled List");
 		}
 
 		task ("Assert the Abstract of collection items are shown in Unstyled List") {
@@ -1377,7 +1798,7 @@ definition {
 		}
 
 		task ("Assert the Abstract of collection items are shown in Unstyled List at view mode") {
-			PageEditor.clickPublish();
+			PageEditor.publish();
 
 			var n = "1";
 
@@ -1460,7 +1881,7 @@ definition {
 				var n = ${n} + 1;
 			}
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("View the title of assets shown in Content Display at view mode") {
@@ -1477,6 +1898,56 @@ definition {
 
 				var n = ${n} + 1;
 			}
+		}
+	}
+
+	@description = "This is a test for LPS-160243. The No Results Found shown at preview mode and view mode by default when selected collection doesn't have items."
+	@priority = "4"
+	test ViewEmptyCollectionAlert {
+		task ("Given a page creator has a Collection Display without items on a content page") {
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Content Page Name",
+				siteName = "Test Site Name");
+
+			PageEditor.addFragment(
+				collectionName = "Content Display",
+				fragmentName = "Collection Display");
+
+			PageEditor.editCollectionDisplay(
+				fragmentName = "Collection Display",
+				infoListProviderName = "Highest Rated Assets");
+
+			AssertVisible(
+				key_infoMessage = "The collection is empty. To display your items, add them to the collection or choose a different collection.",
+				locator1 = "Message#INFO_SPECIFIC");
+		}
+
+		task ("When the page creator previews the draft on a new tab") {
+			PageEditor.previewInANewTab();
+		}
+
+		task ("Then the page creator sees the empty collection alert") {
+			AssertTextEquals(
+				index = "1",
+				locator1 = "PageEditor#COLLECTION_DISPLAY_EMPTY_STATE",
+				value1 = "No Results Found");
+		}
+
+		task ("When the page creator navigates to content page at view mode") {
+			Close.closeWindow();
+
+			PageEditor.publish();
+
+			ContentPagesNavigator.openViewContentPage(
+				pageName = "Content Page Name",
+				siteName = "Test Site Name");
+		}
+
+		task ("Then the page creator sees the empty collection alert") {
+			AssertTextEquals(
+				index = "1",
+				locator1 = "PageEditor#COLLECTION_DISPLAY_EMPTY_STATE",
+				value1 = "No Results Found");
 		}
 	}
 
@@ -1544,7 +2015,7 @@ definition {
 				fragmentName = "Content Display",
 				text = "Web Content Content");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("View full content are shown in Content Display at view mode") {
@@ -1589,8 +2060,6 @@ definition {
 				navTab = "Blog Images",
 				uploadFileName = "Document_1.jpg");
 
-			Pause(locator1 = "3000");
-
 			PortletEntry.publish();
 
 			JSONDocument.addFileWithUploadedFile(
@@ -1615,7 +2084,7 @@ definition {
 				fragmentName = "Collection Display",
 				infoListProviderName = "Highest Rated Assets",
 				listItemStyle = "Full Content",
-				listStyle = "Bordered List");
+				styleDisplay = "Bordered List");
 		}
 
 		task ("Assert the Full Content of collection items are shown in Bordered List") {
@@ -1645,7 +2114,7 @@ definition {
 		}
 
 		task ("Assert the Full Content of collection items are shown in Bordered List at view mode") {
-			PageEditor.clickPublish();
+			PageEditor.publish();
 
 			ContentPagesNavigator.openViewContentPage(
 				pageName = "Content Page Name",
@@ -1682,8 +2151,8 @@ definition {
 			PageEditor.editCollectionDisplay(
 				fragmentName = "Collection Display",
 				listItemStyle = "Full Content",
-				listStyle = "Bulleted List",
-				selectedName = "Highest Rated Assets");
+				selectedName = "Highest Rated Assets",
+				styleDisplay = "Bulleted List");
 		}
 
 		task ("Assert the Full Content of collection items are shown in Bulleted List") {
@@ -1713,7 +2182,7 @@ definition {
 		}
 
 		task ("Assert the Full Content of collection items are shown in Bulleted List at view mode") {
-			PageEditor.clickPublish();
+			PageEditor.publish();
 
 			var n = "2";
 
@@ -1746,8 +2215,8 @@ definition {
 			PageEditor.editCollectionDisplay(
 				fragmentName = "Collection Display",
 				listItemStyle = "Full Content",
-				listStyle = "Inline List",
-				selectedName = "Highest Rated Assets");
+				selectedName = "Highest Rated Assets",
+				styleDisplay = "Inline List");
 		}
 
 		task ("Assert the Full Content of collection items are shown in Inline List") {
@@ -1777,7 +2246,7 @@ definition {
 		}
 
 		task ("Assert the Full Content of collection items are shown in Inline List at view mode") {
-			PageEditor.clickPublish();
+			PageEditor.publish();
 
 			var n = "2";
 
@@ -1810,8 +2279,8 @@ definition {
 			PageEditor.editCollectionDisplay(
 				fragmentName = "Collection Display",
 				listItemStyle = "Full Content",
-				listStyle = "Numbered List",
-				selectedName = "Highest Rated Assets");
+				selectedName = "Highest Rated Assets",
+				styleDisplay = "Numbered List");
 		}
 
 		task ("Assert the Full Content of collection items are shown in Numbered List") {
@@ -1841,7 +2310,7 @@ definition {
 		}
 
 		task ("Assert the Full Content of collection items are shown in Numbered List at view mode") {
-			PageEditor.clickPublish();
+			PageEditor.publish();
 
 			var n = "2";
 
@@ -1874,8 +2343,8 @@ definition {
 			PageEditor.editCollectionDisplay(
 				fragmentName = "Collection Display",
 				listItemStyle = "Full Content",
-				listStyle = "Unstyled List",
-				selectedName = "Highest Rated Assets");
+				selectedName = "Highest Rated Assets",
+				styleDisplay = "Unstyled List");
 		}
 
 		task ("Assert the Full Content of collection items are shown in Unstyled List") {
@@ -1905,7 +2374,7 @@ definition {
 		}
 
 		task ("Assert the Full Content of collection items are shown in Unstyled List at view mode") {
-			PageEditor.clickPublish();
+			PageEditor.publish();
 
 			var n = "2";
 
@@ -2009,7 +2478,7 @@ definition {
 		}
 
 		task ("Rate Third Web Content as 1, Second Web Content as 3, First Web Content as 5") {
-			PageEditor.clickPublish();
+			PageEditor.publish();
 
 			ContentPagesNavigator.openViewContentPage(
 				pageName = "Content Page Name",
@@ -2200,7 +2669,7 @@ definition {
 		}
 
 		task ("View Web Content Article one time via Asset Publisher") {
-			PageEditor.clickPublish();
+			PageEditor.publish();
 
 			ContentPagesNavigator.openViewContentPage(
 				pageName = "Content Page Name",
@@ -2288,6 +2757,138 @@ definition {
 		}
 	}
 
+	@description = "This is a test for LPS-147390. The user could view the prefilter results in Prefilter Collection modal."
+	@priority = "5"
+	test ViewPrefilterResults {
+		property portal.acceptance = "true";
+		property test.name.skip.portal.instance = "CollectionDisplayWithCollectionProviders#ViewPrefilterResults";
+
+		task ("Enable Basic Web Content flag in Gogo Shell") {
+			GogoShell.openGogoShellAdmin();
+
+			GogoShell.executeCommand(commandName = "scr:enable com.liferay.journal.web.internal.info.collection.provider.BasicWebContentSingleFormVariationInfoCollectionProvider");
+
+			GogoShell.viewOutput(outputContent = "true");
+		}
+
+		task ("Add the first web content with the first tag") {
+			JSONWebcontent.addWebContent(
+				assetTagNames = "nba teams",
+				content = "Warriors",
+				groupName = "Test Site Name",
+				title = "Warriors");
+		}
+
+		task ("Add the second and third web contents with second tag") {
+			for (var text : list "Chris Paul,Lebron James") {
+				JSONWebcontent.addWebContent(
+					assetTagNames = "nba players",
+					content = "${text}",
+					groupName = "Test Site Name",
+					title = "${text}");
+			}
+		}
+
+		task ("Add a Collection Display fragment to page") {
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Content Page Name",
+				siteName = "Test Site Name");
+
+			PageEditor.addFragment(
+				collectionName = "Content Display",
+				fragmentName = "Collection Display");
+		}
+
+		task ("Select the Basic Web Content collection provider in Collection Display") {
+			PageEditor.editCollectionDisplay(
+				fragmentName = "Collection Display",
+				infoListProviderName = "Basic Web Content");
+		}
+
+		task ("View all web contents are shown in Collection Display") {
+			var n = "1";
+
+			for (var title : list "Lebron James,Chris Paul,Warriors") {
+				AssertVisible(
+					key_colPosition = "1",
+					key_entryTitle = "${title}",
+					key_fragmentName = "Collection Display",
+					key_rowPosition = "${n}",
+					locator1 = "PageEditor#COLLECTION_ITEM_TITLE");
+
+				var n = ${n} + 1;
+			}
+		}
+
+		task ("Prefilter collection by the first tag") {
+			PageEditor.gotoConfiguration(fragmentName = "Collection Display");
+
+			PageEditor.gotoEllipsisMenuItemInItemSelector(
+				fieldLabel = "Collection",
+				menuItem = "Prefilter Collection");
+
+			Click(
+				key_text = "Select",
+				locator1 = "Button#ANY");
+
+			Check.checkNotVisible(
+				checkboxName = "nba teams",
+				locator1 = "Checkbox#ANY_CHECKBOX");
+		}
+
+		task ("View prefilter results in modal") {
+			AssertTextEquals(
+				locator1 = "Modal#SEARCH_INFO",
+				value1 = "There is 1 result for nba teams.");
+		}
+
+		task ("Prefilter collection by the keywords") {
+			Click(
+				key_text = "Clear",
+				locator1 = "Button#ANY");
+
+			Type(
+				key_text = "Title",
+				locator1 = "TextInput#ANY",
+				value1 = "James");
+
+			Click(locator1 = "Modal#HEADER");
+		}
+
+		task ("View prefilter results in modal") {
+			AssertTextEquals(
+				locator1 = "Modal#SEARCH_INFO",
+				value1 = "There is 1 result for James.");
+		}
+
+		task ("Prefilter collection by the keywords") {
+			Click(
+				key_text = "Clear",
+				locator1 = "Button#ANY");
+
+			Type(
+				key_text = "Title",
+				locator1 = "TextInput#ANY",
+				value1 = "Durant");
+
+			Click(locator1 = "Modal#HEADER");
+		}
+
+		task ("View prefilter results in modal") {
+			AssertTextEquals(
+				locator1 = "Modal#SEARCH_INFO",
+				value1 = "There are 0 results for Durant.");
+		}
+
+		task ("Disable Basic Web Content flag in Gogo Shell") {
+			GogoShell.openGogoShellAdmin();
+
+			GogoShell.executeCommand(commandName = "scr:disable com.liferay.journal.web.internal.info.collection.provider.BasicWebContentSingleFormVariationInfoCollectionProvider");
+
+			GogoShell.viewOutput(outputContent = "true");
+		}
+	}
+
 	@description = "This is a use case for LPS-112360. The asset entries should be ordered by modified time from recent to past in Collection Display when select Recent Content as Collection Provider."
 	@priority = "5"
 	@uitest
@@ -2310,7 +2911,9 @@ definition {
 				entry = "First Web Content",
 				menuItem = "View History");
 
-			Pause(locator1 = "3000");
+			WaitForElementPresent(
+				key_webContentTitle = "First Web Content",
+				locator1 = "WCEditWebContent#VIEW_HISTORY_VERSION_TITLE");
 
 			var firstModifiedDate = selenium.getAttribute("//td[contains(@class,'modified-date')]/span[contains(@class,'tooltip')]@title");
 
@@ -2320,7 +2923,9 @@ definition {
 				entry = "Second Web Content",
 				menuItem = "View History");
 
-			Pause(locator1 = "3000");
+			WaitForElementPresent(
+				key_webContentTitle = "Second Web Content",
+				locator1 = "WCEditWebContent#VIEW_HISTORY_VERSION_TITLE");
 
 			var secondModifiedDate = selenium.getAttribute("//td[contains(@class,'modified-date')]/span[contains(@class,'tooltip')]@title");
 
@@ -2330,7 +2935,9 @@ definition {
 				entry = "Third Web Content",
 				menuItem = "View History");
 
-			Pause(locator1 = "3000");
+			WaitForElementPresent(
+				key_webContentTitle = "Third Web Content",
+				locator1 = "WCEditWebContent#VIEW_HISTORY_VERSION_TITLE");
 
 			var thirdModifiedDate = selenium.getAttribute("//td[contains(@class,'modified-date')]/span[contains(@class,'tooltip')]@title");
 		}
@@ -2406,7 +3013,7 @@ definition {
 		}
 
 		task ("Assert the display order of collection items") {
-			PageEditor.clickPublish();
+			PageEditor.publish();
 
 			ContentPagesNavigator.openViewContentPage(
 				pageName = "Content Page Name",
@@ -2459,7 +3066,9 @@ definition {
 				entry = "First Web Content",
 				menuItem = "View History");
 
-			Pause(locator1 = "3000");
+			WaitForElementPresent(
+				key_webContentTitle = "First Web Content",
+				locator1 = "WCEditWebContent#VIEW_HISTORY_VERSION_TITLE");
 
 			var firstModifiedDate = selenium.getAttribute("//tr[2]//td[contains(@class,'modified-date')]/span[contains(@class,'tooltip')]@title");
 		}

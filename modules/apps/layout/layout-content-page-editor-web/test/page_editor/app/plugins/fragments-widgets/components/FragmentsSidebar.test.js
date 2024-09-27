@@ -13,13 +13,13 @@
  */
 
 import '@testing-library/jest-dom/extend-expect';
-import {act, cleanup, fireEvent, render} from '@testing-library/react';
+import {act, render, screen} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
 
 import {StoreAPIContextProvider} from '../../../../../../src/main/resources/META-INF/resources/page_editor/app/contexts/StoreContext';
-import {useWidgets} from '../../../../../../src/main/resources/META-INF/resources/page_editor/app/contexts/WidgetsContext';
 import {setIn} from '../../../../../../src/main/resources/META-INF/resources/page_editor/app/utils/setIn';
 import FragmentsSidebar from '../../../../../../src/main/resources/META-INF/resources/page_editor/plugins/fragments-widgets/components/FragmentsSidebar';
 import TabsPanel from '../../../../../../src/main/resources/META-INF/resources/page_editor/plugins/fragments-widgets/components/TabsPanel';
@@ -40,51 +40,36 @@ jest.mock(
 	}
 );
 
-jest.mock(
-	'../../../../../../src/main/resources/META-INF/resources/page_editor/app/contexts/WidgetsContext',
-	() => ({
-		WidgetsContext: ({children}) => <>{children}</>,
-		useWidgets: jest.fn(),
-	})
-);
+jest.mock('frontend-js-web', () => ({
+	...jest.requireActual('frontend-js-web'),
+	sub: jest.fn((key, arg) => key.replace('x', arg)),
+}));
 
-const STATE = {
-	fragments: [
-		{
-			fragmentCollectionId: 'collection-1',
-			fragmentEntries: [
-				{
-					fragmentEntryKey: 'fragment-1',
-					groupId: '0',
-					icon: 'fragment-1-icon',
-					imagePreviewURL: '/fragment-1-image.png',
-					label: 'Fragment 1',
-					name: 'Fragment 1',
-					type: 1,
-				},
-				{
-					fragmentEntryKey: 'fragment-2',
-					groupId: '0',
-					icon: 'fragment-2-icon',
-					imagePreviewURL: '/fragment-2-image.png',
-					label: 'Fragment 2',
-					name: 'Fragment 2',
-					type: 1,
-				},
-				{
-					fragmentEntryKey: 'fragment-3',
-					groupId: '0',
-					icon: 'fragment-3-icon',
-					imagePreviewURL: '/fragment-3-image',
-					label: 'Fragment 3',
-					name: 'Fragment 3',
-					type: 1,
-				},
-			],
-			name: 'Collection 1',
-		},
-	],
-};
+const DEFAULT_WIDGETS = [
+	{
+		categories: [],
+		path: 'widget-collection-1',
+		portlets: [
+			{
+				instanceable: true,
+				portletId: 'portlet-1',
+				portletItems: [
+					{
+						instanceable: true,
+						portletId: 'template-portlet-1',
+						portletItemId: '40063',
+						preview: '',
+						title: 'Template Portlet 1',
+						used: false,
+					},
+				],
+				title: 'Portlet 1',
+				used: false,
+			},
+		],
+		title: 'Widget Collection 1',
+	},
+];
 
 const NORMALIZED_PORTLET_ITEMS = [
 	{
@@ -150,7 +135,7 @@ const NORMALIZED_TABS = [
 				label: 'Collection 1',
 			},
 		],
-		id: 'fragments',
+		id: 0,
 		label: 'fragments',
 	},
 	{
@@ -177,17 +162,55 @@ const NORMALIZED_TABS = [
 				label: 'Widget Collection 1',
 			},
 		],
-		id: 'widgets',
+		id: 1,
 		label: 'widgets',
 	},
 ];
 
-const renderComponent = (state = {}) => {
+const renderComponent = (widgets = DEFAULT_WIDGETS) => {
 	return render(
 		<DndProvider backend={HTML5Backend}>
 			<StoreAPIContextProvider
 				dispatch={() => Promise.resolve({})}
-				getState={() => state}
+				getState={() => ({
+					fragmentEntryLinks: [],
+					fragments: [
+						{
+							fragmentCollectionId: 'collection-1',
+							fragmentEntries: [
+								{
+									fragmentEntryKey: 'fragment-1',
+									groupId: '0',
+									icon: 'fragment-1-icon',
+									imagePreviewURL: '/fragment-1-image.png',
+									label: 'Fragment 1',
+									name: 'Fragment 1',
+									type: 1,
+								},
+								{
+									fragmentEntryKey: 'fragment-2',
+									groupId: '0',
+									icon: 'fragment-2-icon',
+									imagePreviewURL: '/fragment-2-image.png',
+									label: 'Fragment 2',
+									name: 'Fragment 2',
+									type: 1,
+								},
+								{
+									fragmentEntryKey: 'fragment-3',
+									groupId: '0',
+									icon: 'fragment-3-icon',
+									imagePreviewURL: '/fragment-3-image',
+									label: 'Fragment 3',
+									name: 'Fragment 3',
+									type: 1,
+								},
+							],
+							name: 'Collection 1',
+						},
+					],
+					widgets,
+				})}
 			>
 				<FragmentsSidebar />
 			</StoreAPIContextProvider>
@@ -197,47 +220,18 @@ const renderComponent = (state = {}) => {
 
 describe('FragmentsSidebar', () => {
 	afterEach(() => {
-		cleanup();
 		TabsPanel.mockClear();
 		jest.useFakeTimers();
 	});
 
-	beforeEach(() => {
-		useWidgets.mockImplementation(() => [
-			{
-				categories: [],
-				path: 'widget-collection-1',
-				portlets: [
-					{
-						instanceable: true,
-						portletId: 'portlet-1',
-						portletItems: [
-							{
-								instanceable: true,
-								portletId: 'template-portlet-1',
-								portletItemId: '40063',
-								preview: '',
-								title: 'Template Portlet 1',
-								used: false,
-							},
-						],
-						title: 'Portlet 1',
-						used: false,
-					},
-				],
-				title: 'Widget Collection 1',
-			},
-		]);
-	});
-
 	it('has a sidebar panel title', () => {
-		const {getByText} = renderComponent(STATE);
+		renderComponent();
 
-		expect(getByText('fragments-and-widgets')).toBeInTheDocument();
+		expect(screen.getByText('fragments-and-widgets')).toBeInTheDocument();
 	});
 
 	it('normalizes fragments and widgets format', () => {
-		renderComponent(STATE);
+		renderComponent();
 
 		expect(TabsPanel).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -249,64 +243,58 @@ describe('FragmentsSidebar', () => {
 	});
 
 	it('filters fragments and widgets according to a input value', () => {
-		const {getByLabelText, queryByText} = renderComponent(STATE);
-		const input = getByLabelText('search-form');
+		renderComponent();
+		const input = screen.getByLabelText('search-fragments-and-widgets');
 
 		act(() => {
-			fireEvent.change(input, {
-				target: {value: 't 1'},
-			});
+			userEvent.type(input, 't 1');
 
 			jest.runAllTimers();
 		});
 
-		expect(queryByText('Portlet 1')).toBeInTheDocument();
-		expect(queryByText('Fragment 1')).toBeInTheDocument();
-		expect(queryByText('Fragment 2')).not.toBeInTheDocument();
-		expect(queryByText('Fragment 3')).not.toBeInTheDocument();
+		expect(screen.queryByText('Portlet 1')).toBeInTheDocument();
+		expect(screen.queryByText('Fragment 1')).toBeInTheDocument();
+		expect(screen.queryByText('Fragment 2')).not.toBeInTheDocument();
+		expect(screen.queryByText('Fragment 3')).not.toBeInTheDocument();
 	});
 
 	it('filters collections according to a input value', () => {
-		const {getByLabelText, queryByText} = renderComponent(STATE);
-		const input = getByLabelText('search-form');
+		renderComponent();
+		const input = screen.getByLabelText('search-fragments-and-widgets');
 
 		act(() => {
-			fireEvent.change(input, {
-				target: {value: 'Widget Collection 1'},
-			});
+			userEvent.type(input, 'Widget Collection 1');
 
 			jest.runAllTimers();
 		});
 
-		expect(queryByText('Widget Collection 1')).toBeInTheDocument();
-		expect(queryByText('Portlet 1')).toBeInTheDocument();
-		expect(queryByText('Fragment 1')).not.toBeInTheDocument();
-		expect(queryByText('Fragment 2')).not.toBeInTheDocument();
-		expect(queryByText('Fragment 3')).not.toBeInTheDocument();
+		expect(screen.queryByText('Widget Collection 1')).toBeInTheDocument();
+		expect(screen.queryByText('Portlet 1')).toBeInTheDocument();
+		expect(screen.queryByText('Fragment 1')).not.toBeInTheDocument();
+		expect(screen.queryByText('Fragment 2')).not.toBeInTheDocument();
+		expect(screen.queryByText('Fragment 3')).not.toBeInTheDocument();
 	});
 
 	it('filters widget template according to a input value', () => {
-		const {getByLabelText, queryByText} = renderComponent(STATE);
-		const input = getByLabelText('search-form');
+		renderComponent();
+		const input = screen.getByLabelText('search-fragments-and-widgets');
 
 		act(() => {
-			fireEvent.change(input, {
-				target: {value: 'Template Portlet 1'},
-			});
+			userEvent.type(input, 'Template Portlet 1');
 
 			jest.runAllTimers();
 		});
 
-		expect(queryByText('Widget Collection 1')).toBeInTheDocument();
-		expect(queryByText('Portlet 1')).toBeInTheDocument();
-		expect(queryByText('Template Portlet 1')).toBeInTheDocument();
-		expect(queryByText('Fragment 1')).not.toBeInTheDocument();
-		expect(queryByText('Fragment 2')).not.toBeInTheDocument();
-		expect(queryByText('Fragment 3')).not.toBeInTheDocument();
+		expect(screen.queryByText('Widget Collection 1')).toBeInTheDocument();
+		expect(screen.queryByText('Portlet 1')).toBeInTheDocument();
+		expect(screen.queryByText('Template Portlet 1')).toBeInTheDocument();
+		expect(screen.queryByText('Fragment 1')).not.toBeInTheDocument();
+		expect(screen.queryByText('Fragment 2')).not.toBeInTheDocument();
+		expect(screen.queryByText('Fragment 3')).not.toBeInTheDocument();
 	});
 
 	it('sets square-hole icon when the widget is not instanceable', () => {
-		useWidgets.mockImplementation(() => [
+		const widgets = [
 			{
 				categories: [],
 				path: 'widget-collection-1',
@@ -330,9 +318,9 @@ describe('FragmentsSidebar', () => {
 				],
 				title: 'Widget Collection 1',
 			},
-		]);
+		];
 
-		renderComponent(STATE);
+		renderComponent(widgets);
 
 		expect(TabsPanel).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -378,7 +366,7 @@ describe('FragmentsSidebar', () => {
 	});
 
 	it('disables a widget when it is not instanceable and it is used', () => {
-		useWidgets.mockImplementation(() => [
+		const widgets = [
 			{
 				categories: [],
 				path: 'widget-collection-1',
@@ -402,9 +390,9 @@ describe('FragmentsSidebar', () => {
 				],
 				title: 'Widget Collection 1',
 			},
-		]);
+		];
 
-		renderComponent(STATE);
+		renderComponent(widgets);
 
 		expect(TabsPanel).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -450,7 +438,7 @@ describe('FragmentsSidebar', () => {
 	});
 
 	it('normalizes collection with portlets items', () => {
-		useWidgets.mockImplementation(() => [
+		const widgets = [
 			{
 				categories: [],
 				path: 'widget-collection-1',
@@ -472,9 +460,9 @@ describe('FragmentsSidebar', () => {
 				],
 				title: 'Widget Collection 1',
 			},
-		]);
+		];
 
-		renderComponent(STATE);
+		renderComponent(widgets);
 
 		expect(TabsPanel).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -506,7 +494,7 @@ describe('FragmentsSidebar', () => {
 	});
 
 	it('normalizes collection with more collections inside', () => {
-		useWidgets.mockImplementation(() => [
+		const widgets = [
 			{
 				categories: [
 					{
@@ -552,9 +540,9 @@ describe('FragmentsSidebar', () => {
 				],
 				title: 'Widget Collection 1',
 			},
-		]);
+		];
 
-		renderComponent(STATE);
+		renderComponent(widgets);
 
 		expect(TabsPanel).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -600,22 +588,22 @@ describe('FragmentsSidebar', () => {
 	});
 
 	describe('Button to switch the display style', () => {
-		Liferay.Util.sub.mockImplementation((langKey, args) =>
-			langKey.replace('x', args)
-		);
-
 		it('shows the card view when the display style is list', () => {
-			const {getByTitle} = renderComponent(STATE);
+			renderComponent();
 
-			expect(getByTitle('switch-to-card-view')).toBeInTheDocument();
+			expect(
+				screen.getByTitle('switch-to-card-view')
+			).toBeInTheDocument();
 		});
 
 		it('shows the list view when the display style is card', () => {
-			const {getByTitle} = renderComponent(STATE);
+			renderComponent();
 
-			fireEvent.click(getByTitle('switch-to-card-view'));
+			userEvent.click(screen.getByTitle('switch-to-card-view'));
 
-			expect(getByTitle('switch-to-list-view')).toBeInTheDocument();
+			expect(
+				screen.getByTitle('switch-to-list-view')
+			).toBeInTheDocument();
 		});
 	});
 });

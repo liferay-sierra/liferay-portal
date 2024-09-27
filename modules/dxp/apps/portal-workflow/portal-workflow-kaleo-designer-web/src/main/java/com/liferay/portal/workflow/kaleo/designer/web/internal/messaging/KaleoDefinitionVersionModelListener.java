@@ -30,7 +30,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Inácio Nery
  */
-@Component(immediate = true, service = ModelListener.class)
+@Component(service = ModelListener.class)
 public class KaleoDefinitionVersionModelListener
 	extends BaseModelListener<KaleoDefinitionVersion> {
 
@@ -53,7 +53,7 @@ public class KaleoDefinitionVersionModelListener
 
 		try {
 			_resourceLocalService.deleteResource(
-				kaleoDefinitionVersion, ResourceConstants.SCOPE_COMPANY);
+				kaleoDefinitionVersion, ResourceConstants.SCOPE_INDIVIDUAL);
 		}
 		catch (PortalException portalException) {
 			throw new ModelListenerException(portalException);

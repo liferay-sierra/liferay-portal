@@ -14,7 +14,7 @@
 
 package com.liferay.style.book.web.internal.portlet;
 
-import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
+import com.liferay.fragment.contributor.FragmentCollectionContributorRegistry;
 import com.liferay.item.selector.ItemSelector;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.style.book.constants.StyleBookPortletKeys;
@@ -49,7 +49,8 @@ import org.osgi.service.component.annotations.Reference;
 		"javax.portlet.init-param.view-template=/view.jsp",
 		"javax.portlet.name=" + StyleBookPortletKeys.STYLE_BOOK,
 		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=administrator"
+		"javax.portlet.security-role-ref=administrator",
+		"javax.portlet.version=3.0"
 	},
 	service = {Portlet.class, StyleBookPortlet.class}
 )
@@ -62,7 +63,7 @@ public class StyleBookPortlet extends MVCPortlet {
 
 		renderRequest.setAttribute(
 			StyleBookWebKeys.FRAGMENT_COLLECTION_CONTRIBUTOR_TRACKER,
-			_fragmentCollectionContributorTracker);
+			_fragmentCollectionContributorRegistry);
 
 		renderRequest.setAttribute(
 			StyleBookWebKeys.ITEM_SELECTOR, _itemSelector);
@@ -71,8 +72,8 @@ public class StyleBookPortlet extends MVCPortlet {
 	}
 
 	@Reference
-	private FragmentCollectionContributorTracker
-		_fragmentCollectionContributorTracker;
+	private FragmentCollectionContributorRegistry
+		_fragmentCollectionContributorRegistry;
 
 	@Reference
 	private ItemSelector _itemSelector;

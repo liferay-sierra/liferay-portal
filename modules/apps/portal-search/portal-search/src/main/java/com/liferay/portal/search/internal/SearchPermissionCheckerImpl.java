@@ -305,7 +305,8 @@ public class SearchPermissionCheckerImpl implements SearchPermissionChecker {
 	}
 
 	private SearchPermissionContext _createSearchPermissionContext(
-			long companyId, long userId, PermissionChecker permissionChecker)
+			long companyId, long[] groupIds, long userId,
+			PermissionChecker permissionChecker)
 		throws Exception {
 
 		UserBag userBag = permissionChecker.getUserBag();
@@ -316,10 +317,17 @@ public class SearchPermissionCheckerImpl implements SearchPermissionChecker {
 
 		Set<Role> roles = new HashSet<>();
 
-		if (permissionChecker.isSignedIn()) {
-			roles.addAll(userBag.getRoles());
+		if (permissionChecker.isSignedIn() && ArrayUtil.isNotEmpty(groupIds)) {
+			for (long groupId : groupIds) {
+				for (Role role :
+						roleLocalService.getRoles(
+							permissionChecker.getRoleIds(userId, groupId))) {
 
-			roles.add(roleLocalService.getRole(companyId, RoleConstants.GUEST));
+					if (role.getType() == RoleConstants.TYPE_REGULAR) {
+						roles.add(role);
+					}
+				}
+			}
 		}
 		else {
 			roles.addAll(
@@ -369,10 +377,8 @@ public class SearchPermissionCheckerImpl implements SearchPermissionChecker {
 			companyId, RoleConstants.SITE_MEMBER);
 
 		for (Group group : groups) {
-			long[] roleIds = permissionChecker.getRoleIds(
-				userId, group.getGroupId());
-
-			List<Role> groupRoles = roleLocalService.getRoles(roleIds);
+			List<Role> groupRoles = roleLocalService.getRoles(
+				permissionChecker.getRoleIds(userId, group.getGroupId()));
 
 			roles.addAll(groupRoles);
 
@@ -440,8 +446,8 @@ public class SearchPermissionCheckerImpl implements SearchPermissionChecker {
 	}
 
 	private BooleanFilter _getPermissionBooleanFilter(
-			long companyId, long[] searchGroupIds, long userId,
-			String className, SearchContext searchContext)
+			long companyId, long[] groupIds, long userId, String className,
+			SearchContext searchContext)
 		throws Exception {
 
 		Indexer<?> indexer = indexerRegistry.getIndexer(className);
@@ -481,7 +487,7 @@ public class SearchPermissionCheckerImpl implements SearchPermissionChecker {
 		}
 		else if (!permissionChecker.isCompanyAdmin(companyId)) {
 			searchPermissionContext = _createSearchPermissionContext(
-				companyId, userId, permissionChecker);
+				companyId, groupIds, userId, permissionChecker);
 		}
 
 		if (searchPermissionContext == null) {
@@ -495,7 +501,7 @@ public class SearchPermissionCheckerImpl implements SearchPermissionChecker {
 			"searchPermissionContext", searchPermissionContext);
 
 		return _getPermissionFilter(
-			companyId, searchGroupIds, userId, permissionChecker,
+			companyId, groupIds, userId, permissionChecker,
 			_getPermissionName(searchContext, className),
 			searchPermissionContext);
 	}

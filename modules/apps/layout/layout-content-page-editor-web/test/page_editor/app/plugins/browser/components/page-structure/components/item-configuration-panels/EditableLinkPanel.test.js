@@ -13,13 +13,7 @@
  */
 
 import '@testing-library/jest-dom/extend-expect';
-import {
-	act,
-	cleanup,
-	fireEvent,
-	getByLabelText,
-	render,
-} from '@testing-library/react';
+import {act, fireEvent, getByLabelText, render} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -33,23 +27,6 @@ import EditableLinkPanel from '../../../../../../../../../src/main/resources/MET
 jest.mock(
 	'../../../../../../../../../src/main/resources/META-INF/resources/page_editor/app/services/serviceFetch',
 	() => jest.fn(() => Promise.resolve({fieldValue: 'fieldValue'}))
-);
-
-jest.mock(
-	'../../../../../../../../../src/main/resources/META-INF/resources/page_editor/app/config',
-	() => ({
-		config: {
-			availableLanguages: {
-				en_US: {
-					default: false,
-					displayName: 'English (United States)',
-					languageIcon: 'en-us',
-					languageId: 'en_US',
-					w3cLanguageId: 'en-US',
-				},
-			},
-		},
-	})
 );
 
 jest.mock(
@@ -105,8 +82,6 @@ function renderLinkPanel(
 
 describe('EditableLinkPanel', () => {
 	afterEach(() => {
-		cleanup();
-
 		serviceFetch.mockClear();
 		updateEditableValues.mockClear();
 	});

@@ -50,7 +50,7 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 
 import java.io.Serializable;
 
@@ -212,7 +212,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<AssetListEntrySegmentsEntryRel>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (AssetListEntrySegmentsEntryRel
@@ -621,7 +621,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 
 			finderArgs = new Object[] {uuid};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -761,7 +761,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = finderCache.getResult(
-				_finderPathFetchByUUID_G, finderArgs);
+				_finderPathFetchByUUID_G, finderArgs, this);
 		}
 
 		if (result instanceof AssetListEntrySegmentsEntryRel) {
@@ -886,7 +886,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 
 			finderArgs = new Object[] {uuid, groupId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1060,7 +1060,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<AssetListEntrySegmentsEntryRel>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (AssetListEntrySegmentsEntryRel
@@ -1494,7 +1494,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 
 			finderArgs = new Object[] {uuid, companyId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1662,7 +1662,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<AssetListEntrySegmentsEntryRel>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (AssetListEntrySegmentsEntryRel
@@ -2048,7 +2048,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 
 			finderArgs = new Object[] {assetListEntryId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2196,7 +2196,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<AssetListEntrySegmentsEntryRel>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (AssetListEntrySegmentsEntryRel
@@ -2582,7 +2582,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 
 			finderArgs = new Object[] {segmentsEntryId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2706,7 +2706,8 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 		Object result = null;
 
 		if (useFinderCache && productionMode) {
-			result = finderCache.getResult(_finderPathFetchByA_S, finderArgs);
+			result = finderCache.getResult(
+				_finderPathFetchByA_S, finderArgs, this);
 		}
 
 		if (result instanceof AssetListEntrySegmentsEntryRel) {
@@ -2819,7 +2820,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 
 			finderArgs = new Object[] {assetListEntryId, segmentsEntryId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2980,7 +2981,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<AssetListEntrySegmentsEntryRel>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (AssetListEntrySegmentsEntryRel
@@ -3428,7 +3429,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 	 * </p>
 	 *
 	 * @param assetListEntryId the asset list entry ID
-	 * @param segmentsEntryId the segments entry ID
+	 * @param segmentsEntryIds the segments entry IDs
 	 * @param start the lower bound of the range of asset list entry segments entry rels
 	 * @param end the upper bound of the range of asset list entry segments entry rels (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
@@ -3479,7 +3480,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<AssetListEntrySegmentsEntryRel>)finderCache.getResult(
-				_finderPathWithPaginationFindByA_S_C, finderArgs);
+				_finderPathWithPaginationFindByA_S_C, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (AssetListEntrySegmentsEntryRel
@@ -3605,7 +3606,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 
 			finderArgs = new Object[] {assetListEntryId, segmentsEntryId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -3678,7 +3679,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 			};
 
 			count = (Long)finderCache.getResult(
-				_finderPathWithPaginationCountByA_S_C, finderArgs);
+				_finderPathWithPaginationCountByA_S_C, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -3926,7 +3927,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 		assetListEntrySegmentsEntryRel.setPrimaryKey(
 			assetListEntrySegmentsEntryRelId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		assetListEntrySegmentsEntryRel.setUuid(uuid);
 
@@ -4062,7 +4063,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 					assetListEntrySegmentsEntryRel;
 
 		if (Validator.isNull(assetListEntrySegmentsEntryRel.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			assetListEntrySegmentsEntryRel.setUuid(uuid);
 		}
@@ -4197,7 +4198,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 		Serializable primaryKey) {
 
 		if (ctPersistenceHelper.isProductionMode(
-				AssetListEntrySegmentsEntryRel.class)) {
+				AssetListEntrySegmentsEntryRel.class, primaryKey)) {
 
 			return super.fetchByPrimaryKey(primaryKey);
 		}
@@ -4427,7 +4428,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<AssetListEntrySegmentsEntryRel>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -4506,7 +4507,7 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 
 		if (productionMode) {
 			count = (Long)finderCache.getResult(
-				_finderPathCountAll, FINDER_ARGS_EMPTY);
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 		}
 
 		if (count == null) {
@@ -4864,7 +4865,6 @@ public class AssetListEntrySegmentsEntryRelPersistenceImpl
 	}
 
 	@Reference
-	private AssetListEntrySegmentsEntryRelModelArgumentsResolver
-		_assetListEntrySegmentsEntryRelModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

@@ -16,21 +16,18 @@ package com.liferay.object.admin.rest.internal.resource.v1_0;
 
 import com.liferay.object.admin.rest.dto.v1_0.ObjectAction;
 import com.liferay.object.admin.rest.dto.v1_0.ObjectDefinition;
-import com.liferay.object.admin.rest.internal.dto.v1_0.util.ObjectActionUtil;
+import com.liferay.object.admin.rest.dto.v1_0.util.ObjectActionUtil;
 import com.liferay.object.admin.rest.resource.v1_0.ObjectActionResource;
 import com.liferay.object.service.ObjectActionService;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.vulcan.fields.NestedField;
 import com.liferay.portal.vulcan.fields.NestedFieldSupport;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.portal.vulcan.util.SearchUtil;
-
-import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -72,11 +69,29 @@ public class ObjectActionResourceImpl
 					com.liferay.object.model.ObjectDefinition.class.getName(),
 					objectDefinitionId)
 			).put(
+				"createBatch",
+				addAction(
+					ActionKeys.UPDATE, "postObjectDefinitionObjectActionBatch",
+					com.liferay.object.model.ObjectDefinition.class.getName(),
+					objectDefinitionId)
+			).put(
+				"deleteBatch",
+				addAction(
+					ActionKeys.DELETE, "deleteObjectActionBatch",
+					com.liferay.object.model.ObjectDefinition.class.getName(),
+					null)
+			).put(
 				"get",
 				addAction(
 					ActionKeys.VIEW, "getObjectDefinitionObjectActionsPage",
 					com.liferay.object.model.ObjectDefinition.class.getName(),
 					objectDefinitionId)
+			).put(
+				"updateBatch",
+				addAction(
+					ActionKeys.UPDATE, "putObjectActionBatch",
+					com.liferay.object.model.ObjectDefinition.class.getName(),
+					null)
 			).build(),
 			booleanQuery -> {
 			},
@@ -104,12 +119,12 @@ public class ObjectActionResourceImpl
 		return _toObjectAction(
 			_objectActionService.addObjectAction(
 				objectDefinitionId, objectAction.getActive(),
-				objectAction.getName(),
+				objectAction.getConditionExpression(),
+				objectAction.getDescription(), objectAction.getName(),
 				objectAction.getObjectActionExecutorKey(),
 				objectAction.getObjectActionTriggerKey(),
-				UnicodePropertiesBuilder.create(
-					(Map<String, String>)objectAction.getParameters(), true
-				).build()));
+				ObjectActionUtil.toParametersUnicodeProperties(
+					objectAction.getParameters())));
 	}
 
 	@Override
@@ -120,10 +135,12 @@ public class ObjectActionResourceImpl
 		return _toObjectAction(
 			_objectActionService.updateObjectAction(
 				objectActionId, objectAction.getActive(),
-				objectAction.getName(),
-				UnicodePropertiesBuilder.create(
-					(Map<String, String>)objectAction.getParameters(), true
-				).build()));
+				objectAction.getConditionExpression(),
+				objectAction.getDescription(), objectAction.getName(),
+				objectAction.getObjectActionExecutorKey(),
+				objectAction.getObjectActionTriggerKey(),
+				ObjectActionUtil.toParametersUnicodeProperties(
+					objectAction.getParameters())));
 	}
 
 	private ObjectAction _toObjectAction(
@@ -149,7 +166,7 @@ public class ObjectActionResourceImpl
 					ActionKeys.UPDATE, "putObjectAction", permissionName,
 					objectAction.getObjectDefinitionId())
 			).build(),
-			objectAction);
+			contextAcceptLanguage.getPreferredLocale(), objectAction);
 	}
 
 	@Reference

@@ -16,18 +16,23 @@ package com.liferay.document.library.web.internal.configuration;
 
 import aQute.bnd.annotation.metatype.Meta;
 
+import com.liferay.portal.configuration.metatype.annotations.ExtendedAttributeDefinition;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
 
 /**
  * @author Adolfo Pérez
  */
-@ExtendedObjectClassDefinition(category = "documents-and-media")
+@ExtendedObjectClassDefinition(
+	category = "documents-and-media",
+	scope = ExtendedObjectClassDefinition.Scope.COMPANY
+)
 @Meta.OCD(
 	id = "com.liferay.document.library.web.internal.configuration.CacheControlConfiguration",
 	localization = "content/Language", name = "cache-control-configuration-name"
 )
 public interface CacheControlConfiguration {
 
+	@ExtendedAttributeDefinition(requiredInput = true)
 	@Meta.AD(
 		deflt = "private", description = "cache-control-description",
 		name = "cache-control", optionLabels = {"private", "public"},
@@ -42,8 +47,8 @@ public interface CacheControlConfiguration {
 	public int maxAge();
 
 	@Meta.AD(
-		description = "not-cacheable-mime-types-description",
-		name = "not-cacheable-mime-types", required = false
+		description = "uncacheable-mime-types-description",
+		name = "uncacheable-mime-types", required = false
 	)
 	public String[] notCacheableMimeTypes();
 

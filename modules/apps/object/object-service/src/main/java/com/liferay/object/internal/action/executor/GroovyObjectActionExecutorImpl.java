@@ -16,12 +16,17 @@ package com.liferay.object.internal.action.executor;
 
 import com.liferay.object.action.executor.ObjectActionExecutor;
 import com.liferay.object.constants.ObjectActionExecutorConstants;
-import com.liferay.object.internal.action.settings.GroovyObjectActionSettings;
+import com.liferay.object.internal.action.util.ObjectEntryVariablesUtil;
+import com.liferay.object.model.ObjectDefinition;
+import com.liferay.object.scripting.executor.ObjectScriptingExecutor;
+import com.liferay.object.service.ObjectDefinitionLocalService;
+import com.liferay.object.system.SystemObjectDefinitionMetadataRegistry;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.scripting.Scripting;
+import com.liferay.portal.kernel.scripting.ScriptingException;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -31,7 +36,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marco Leo
  */
-@Component(enabled = false, service = ObjectActionExecutor.class)
+@Component(service = ObjectActionExecutor.class)
 public class GroovyObjectActionExecutorImpl implements ObjectActionExecutor {
 
 	@Override
@@ -40,7 +45,19 @@ public class GroovyObjectActionExecutorImpl implements ObjectActionExecutor {
 			JSONObject payloadJSONObject, long userId)
 		throws Exception {
 
-		_execute(new HashMap<>(), parametersUnicodeProperties.get("script"));
+		ObjectDefinition objectDefinition =
+			_objectDefinitionLocalService.fetchObjectDefinition(
+				payloadJSONObject.getLong("objectDefinitionId"));
+
+		Map<String, Object> results = _objectScriptingExecutor.execute(
+			ObjectEntryVariablesUtil.getActionVariables(
+				_dtoConverterRegistry, objectDefinition, payloadJSONObject,
+				_systemObjectDefinitionMetadataRegistry),
+			new HashSet<>(), parametersUnicodeProperties.get("script"));
+
+		if (GetterUtil.getBoolean(results.get("invalidScript"))) {
+			throw new ScriptingException();
+		}
 	}
 
 	@Override
@@ -48,34 +65,17 @@ public class GroovyObjectActionExecutorImpl implements ObjectActionExecutor {
 		return ObjectActionExecutorConstants.KEY_GROOVY;
 	}
 
-	@Override
-	public Class<?> getSettings() {
-		return GroovyObjectActionSettings.class;
-	}
-
-	private void _execute(Map<String, Object> inputObjects, String script)
-		throws Exception {
-
-		Thread currentThread = Thread.currentThread();
-
-		ClassLoader contextClassLoader = currentThread.getContextClassLoader();
-
-		Class<?> clazz = getClass();
-
-		ClassLoader classLoader = clazz.getClassLoader();
-
-		try {
-			currentThread.setContextClassLoader(classLoader);
-
-			_scripting.eval(
-				null, inputObjects, new HashSet<>(), "groovy", script);
-		}
-		finally {
-			currentThread.setContextClassLoader(contextClassLoader);
-		}
-	}
+	@Reference
+	private DTOConverterRegistry _dtoConverterRegistry;
 
 	@Reference
-	private Scripting _scripting;
+	private ObjectDefinitionLocalService _objectDefinitionLocalService;
+
+	@Reference(target = "(scripting.language=groovy)")
+	private ObjectScriptingExecutor _objectScriptingExecutor;
+
+	@Reference
+	private SystemObjectDefinitionMetadataRegistry
+		_systemObjectDefinitionMetadataRegistry;
 
 }

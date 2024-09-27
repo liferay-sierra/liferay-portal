@@ -80,24 +80,24 @@ renderResponse.setTitle((formInstance == null) ? LanguageUtil.get(request, "new-
 					<c:choose>
 						<c:when test="<%= disableCopyButton %>">
 							<button class="btn btn-secondary btn-sm disabled lfr-ddm-button lfr-ddm-share-url-button share-form-icon" data-original-title="<liferay-ui:message key="share" />" id="<portlet:namespace />publishIcon" title="<%= disableCopyButton ? LanguageUtil.get(request, "publish-the-form-to-get-its-shareable-link") : "" %>" type="button">
-								<%= LanguageUtil.get(request, "share") %>
+								<liferay-ui:message key="share" />
 							</button>
 						</c:when>
 						<c:otherwise>
 							<button class="btn btn-secondary btn-sm lfr-ddm-button lfr-ddm-share-url-button share-form-icon" id="<portlet:namespace />publishIcon" type="button">
-								<%= LanguageUtil.get(request, "share") %>
+								<liferay-ui:message key="share" />
 							</button>
 						</c:otherwise>
 					</c:choose>
 				</li>
 				<li class="nav-item pr-2">
 					<button class="btn btn-secondary btn-sm lfr-ddm-button lfr-ddm-preview-button" title="<%= LanguageUtil.get(request, "a-form-draft-will-be-saved-before-the-preview") %>">
-						<%= LanguageUtil.get(request, "preview") %>
+						<liferay-ui:message key="preview" />
 					</button>
 				</li>
 				<li class="nav-item pl-2 pr-2">
 					<button class="btn btn-secondary btn-sm lfr-ddm-button lfr-ddm-save-button">
-						<%= LanguageUtil.get(request, "save") %>
+						<liferay-ui:message key="save" />
 					</button>
 				</li>
 				<li class="nav-item pr-2">
@@ -157,11 +157,15 @@ renderResponse.setTitle((formInstance == null) ? LanguageUtil.get(request, "new-
 					).put(
 						"context", formBuilderContextJSONObject
 					).put(
+						"dataEngineModule", ddmFormAdminDisplayContext.getDataEngineModule()
+					).put(
 						"dataProviderInstanceParameterSettingsURL", dataProviderInstanceParameterSettingsURL
 					).put(
 						"dataProviderInstancesURL", dataProviderInstancesURL
 					).put(
 						"defaultLanguageId", ddmFormAdminDisplayContext.getDefaultLanguageId()
+					).put(
+						"displayChartAsTable", ddmFormAdminDisplayContext.isDisplayChartAsTable()
 					).put(
 						"elementSets", ddmFormAdminDisplayContext.getFieldSetsJSONArray()
 					).put(
@@ -185,6 +189,8 @@ renderResponse.setTitle((formInstance == null) ? LanguageUtil.get(request, "new-
 					).put(
 						"localizedName", ddmFormAdminDisplayContext.getFormLocalizedNameJSONObject(formInstance)
 					).put(
+						"mainRequire", ddmFormAdminDisplayContext.getMainRequire()
+					).put(
 						"portletNamespace", liferayPortletResponse.getNamespace()
 					).put(
 						"published", ddmFormAdminDisplayContext.isFormPublished()
@@ -203,7 +209,7 @@ renderResponse.setTitle((formInstance == null) ? LanguageUtil.get(request, "new-
 					).put(
 						"showPublishAlert", ddmFormAdminDisplayContext.isShowPublishAlert()
 					).put(
-						"spritemap", themeDisplay.getPathThemeImages() + "/clay/icons.svg"
+						"spritemap", FrontendIconsUtil.getSpritemap(themeDisplay)
 					).put(
 						"view", "formBuilder"
 					).build()

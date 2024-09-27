@@ -34,15 +34,12 @@ definition {
 			var maliciousUrl1 = '''
 					http://localhost:8080/group/control_panel/manage?p_p_id=132&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_132_struts_action=%2Fplugins_admin%2Fedit_plugin&_132_pluginId=116&_132_pluginType=portlet&_132_title=Activities&_132_moduleId=%3Cscript%3Ealert(%22xss%22);%3C/script%3E
 				''';
-
 			var maliciousUrl2 = '''
 					http://localhost:8080/group/control_panel/manage?p_p_id=132&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_132_struts_action=%2Fplugins_admin%2Fedit_plugin&_132_pluginId=116&_132_pluginType=portlet&_132_title=Activities&_132_moduleId=%3Cscript%3Ealert(%22xss%22);%3C/script%3E&_2_backURL=%22%3E%3Cscript%3Ealert%28%27xss%27%29;%3C/script%3E
 				''';
-
 			var maliciousUrl3 = '''
 					http://localhost:8080/group/control_panel/manage?p_p_id=132&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_132_struts_action=%2Fplugins_admin%2Fedit_plugin&_132_pluginId=116&_132_pluginType=portlet&_132_title=Activities&_132_moduleId=%3Cscript%3Ealert(%22xss%22);%3C/script%3E&_2_backURL=alert%28%27xss%27%29
 				''';
-
 			var maliciousUrl4 = '''
 					http://localhost:8080/html/portal/progress_poller.jsp?ProgressId=a%3D1%3Balert(document.cookie)%3B%2F%2F
 				''';
@@ -72,19 +69,15 @@ definition {
 			var maliciousUrl1 = '''
 					${portalURL}/group/guest/home?p_p_id=82&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_pos=1&p_p_col_count=2&_82_struts_action=%2Flanguage%2Fview&languageId=&lt;/script&gt;&lt;script&gt;alert(document.domain)&lt;/script>
 				''';
-
 			var maliciousUrl2 = '''
 					${portalURL}/group/guest/home?p_p_id=82&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_pos=1&p_p_col_count=2&_82_struts_action=%2Flanguage%2Fview&languageId=&lt;/script&gt;&lt;script&gt;alert(document.domain)&lt;/script&gt;
 				''';
-
 			var maliciousUrl3 = '''
 					${portalURL}/group/guest/home?p_p_id=82&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_pos=1&p_p_col_count=2&_82_struts_action=%2Flanguage%2Fview&languageId=%3C/script%3E%3Cscript%3Ealert(document.domain)%3C/script%3E
 				''';
-
 			var maliciousUrl4 = '''
 					${portalURL}/group/guest/home?p_p_id=82&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_pos=1&p_p_col_count=2&_82_struts_action=%2Flanguage%2Fview&languageId=</script><script>alert(document.domain)</script>
 				''';
-
 			var maliciousUrl5 = '''
 					${portalURL}/web/guest/search?p_p_id=113&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_113_tabs1=background-styles
 				''';
@@ -160,41 +153,6 @@ definition {
 		}
 	}
 
-	@description = "This is a use case for LPS-82204. View blogs entry with XSS custom abstract."
-	@priority = "5"
-	test NoXSSVulnerabilityInBlogsEntryCustomAbstract {
-		var entryAbstractDescription = '''<script>alert(123)</script>''';
-		var key_entryAbstractDescription = "${entryAbstractDescription}";
-
-		task ("Add public layout") {
-			JSONLayout.addPublicLayout(
-				groupName = "Guest",
-				layoutName = "Blogs Page");
-		}
-
-		task ("Add page") {
-			JSONLayout.addWidgetToPublicLayout(
-				groupName = "Guest",
-				layoutName = "Blogs Page",
-				widgetName = "Asset Publisher");
-		}
-
-		task ("Add custom abstract") {
-			JSONBlog.addEntry(
-				entryAbstractDescription = "${entryAbstractDescription}",
-				entryContent = "Blogs Entry Content",
-				entryTitle = "Blogs Entry Title");
-		}
-
-		task ("Assert abstract added successfully") {
-			Navigator.gotoPage(pageName = "Blogs Page");
-
-			AssertAlertNotPresent();
-
-			Blogs.viewContentAbstractDescription(descriptionValue = "${entryAbstractDescription}");
-		}
-	}
-
 	@description = "This is a use case for LPS-90727. Assert no XSS vulnerability when modifying a specific URL from the control panel."
 	@priority = "5"
 	test NoXSSVulnerabilityInControlPanel {
@@ -223,7 +181,6 @@ definition {
 	@priority = "5"
 	test NoXSSVulnerabilityInForms {
 		var formDescription = '''<script>alert(222)</script>''';
-
 		var formName = '''<script>alert(111)</script>''';
 
 		task ("Add a form") {
@@ -235,7 +192,7 @@ definition {
 
 			Form.addTextField(fieldPositionNumber = "0");
 
-			Form.save();
+			Form.publishForm();
 		}
 
 		task ("Add Form page") {
@@ -269,7 +226,6 @@ definition {
 
 		task ("Assert correct HTML source text") {
 			var actualDescriptionScript = '''<script>alert(222)</script>''';
-
 			var escapedDescriptionScript = '''&lt;script&gt;alert(222)&lt;/script&gt;''';
 
 			AssertHTMLSourceTextNotPresent(value1 = "${actualDescriptionScript}");
@@ -277,7 +233,6 @@ definition {
 			AssertHTMLSourceTextPresent(value1 = "${escapedDescriptionScript}");
 
 			var actualNameScript = '''<script>alert(111)</script>''';
-
 			var escapedNameScript = '''&lt;script&gt;alert(111)&lt;/script&gt;''';
 
 			AssertHTMLSourceTextNotPresent(value1 = "${actualNameScript}");
@@ -328,7 +283,6 @@ definition {
 
 		task ("Assert right script present in HTML source text") {
 			var actualScript = '''<script>alert(123);</script>''';
-
 			var escapedScript = '''&lt;script&gt;alert(123);&lt;/script&gt;''';
 
 			AssertHTMLSourceTextNotPresent(value1 = "${actualScript}");
@@ -400,7 +354,6 @@ definition {
 
 		task ("Assert correct HTML source text") {
 			var actualScript = '''<script>alert(123);</script>''';
-
 			var escapedScript = '''&lt;script&gt;alert(123);&lt;/script&gt;''';
 
 			AssertHTMLSourceTextNotPresent(value1 = "${actualScript}");
@@ -409,19 +362,19 @@ definition {
 		}
 	}
 
-	@description = "This is a use case for LPS-123822, LPS-127611 and LPS-133261. View Piwik."
+	@description = "This is a use case for LPS-123822, LPS-127611 and LPS-133261. View Matomo."
 	@priority = "3"
-	test NoXSSVulnerabilityInPiwik {
-		property test.name.skip.portal.instance = "XSS#ViewPiwik";
+	test NoXSSVulnerabilityInMatomo {
+		property test.name.skip.portal.instance = "XSS#NoXSSVulnerabilityInMatomo";
 
-		task ("Edit piwik CP") {
+		task ("Edit matomo CP") {
 			var portalURL = PropsUtil.get("portal.url");
 
 			Site.openSiteSettingsAdmin(siteURLKey = "guest");
 
-			Site.editPiwikCP(
+			Site.editMatomoCP(
 				confirmationText = "123",
-				piwik = '''<script>alert(123);</script>''');
+				matomo = '''<script>alert(123);</script>''');
 		}
 
 		task ("Assert confirm 123") {
@@ -463,7 +416,6 @@ definition {
 
 		task ("Assert correct HTML source text") {
 			var actualScript = '''<script>alert(123);</script>''';
-
 			var escapedScript = '''&lt;script&gt;alert(123);&lt;/script&gt;''';
 
 			AssertHTMLSourceTextNotPresent(value1 = "${actualScript}");
@@ -505,8 +457,7 @@ definition {
 		}
 
 		task ("Assert correct HTML source text") {
-			var actualScript = '''<script>alert(123);</script>''';
-
+			var actualScript = ''' <script>alert(123);</script>''';
 			var escapedScript = '''&lt;script&gt;alert(123);&lt;/script&gt;''';
 
 			AssertHTMLSourceTextNotPresent(value1 = "${actualScript}");
@@ -540,7 +491,6 @@ definition {
 
 		task ("Assert correct HTML source text") {
 			var actualScript = '''<script>alert(123);</script>''';
-
 			var escapedScript = '''&lt;script&gt;alert(123);&lt;/script&gt;''';
 
 			AssertHTMLSourceTextNotPresent(value1 = "${actualScript}");
@@ -552,14 +502,12 @@ definition {
 	@description = "This is a use case for LPS-71236 and LPS-71307. View web content."
 	@priority = "5"
 	test NoXSSVulnerabilityInWebContent {
-		task ("Add CP") {
+		task ("Given: A Web Content is created with a script in the title") {
 			JSONWebcontent.addWebContent(
 				content = "WC WebContent Content",
 				groupName = "Guest",
 				title = '''<script>alert(123);</script>''');
-		}
 
-		task ("Assert correct title") {
 			WebContentNavigator.openWebContentAdmin(siteURLKey = "guest");
 
 			WebContent.viewTitle(
@@ -567,13 +515,11 @@ definition {
 				webContentTitleEscapeCharacter = '''&lt;script&gt;alert(123);&lt;/script&gt;''');
 		}
 
-		task ("Add Web Content Display Page") {
+		task ("And: The created Web Content is added to the Display Page") {
 			JSONLayout.addPublicLayout(
 				groupName = "Guest",
 				layoutName = "Web Content Display Page");
-		}
 
-		task ("Add WC display widget") {
 			JSONLayout.addWidgetToPublicLayout(
 				groupName = "Guest",
 				layoutName = "Web Content Display Page",
@@ -586,7 +532,7 @@ definition {
 			WebContentDisplayPortlet.selectWebContent(webContentTitle = '''<script>alert(123);</script>''');
 		}
 
-		task ("Assert can change WC name") {
+		task ("When: The WC name is changed") {
 			WebContentNavigator.openWebContentAdmin(siteURLKey = "guest");
 
 			WebContentNavigator.gotoEditCP(
@@ -596,17 +542,17 @@ definition {
 			WebContent.editCP(
 				webContentTitle = '''<script>alert(123);</script>''',
 				webContentTitleEdit = "WC WebContent Title");
-
-			WebContentNavigator.gotoEditCP(webContentTitle = "WebContent Title");
 		}
 
-		task ("Publish a non-existing image URL") {
+		task ("And: The WC is published with a non-existing image URL") {
+			WebContentNavigator.gotoEditCP(webContentTitle = "WC WebContent Title");
+
 			WebContent.addFeaturedImageFromURL(imageSourceURL = '''<img src="http://url.to.file.which/not.exist" onerror=alert(123);>''');
 
 			PortletEntry.publish();
 		}
 
-		task ("Change display style and assert alert was not triggered") {
+		task ("Then: It should be possible to change the display style without seeing any alert") {
 			LexiconEntry.changeDisplayStyle(displayStyle = "cards");
 
 			AssertAlertNotPresent();
@@ -648,7 +594,6 @@ definition {
 
 		task ("Assert correct HTML source text") {
 			var actualScript = '''<script>alert(123);</script>''';
-
 			var escapedScript = '''&lt;script&gt;alert(123);&lt;/script&gt;''';
 
 			AssertHTMLSourceTextNotPresent(value1 = "${actualScript}");

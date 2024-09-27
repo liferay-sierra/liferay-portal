@@ -71,7 +71,8 @@ List<Website> websites = WebsiteServiceUtil.getWebsites(className, classPK);
 	total="<%= websites.size() %>"
 >
 	<liferay-ui:search-container-results
-		results="<%= websites.subList(searchContainer.getStart(), searchContainer.getResultEnd()) %>"
+		calculateStartAndEnd="<%= true %>"
+		results="<%= websites %>"
 	/>
 
 	<liferay-ui:search-container-row
@@ -87,15 +88,13 @@ List<Website> websites = WebsiteServiceUtil.getWebsites(className, classPK);
 		/>
 
 		<%
-		ListType websiteListType = ListTypeServiceUtil.getListType(website.getTypeId());
-
-		String websiteTypeKey = websiteListType.getName();
+		ListType listType = website.getListType();
 		%>
 
 		<liferay-ui:search-container-column-text
 			cssClass="table-cell-expand-small"
 			name="type"
-			value="<%= LanguageUtil.get(request, websiteTypeKey) %>"
+			value="<%= LanguageUtil.get(request, listType.getName()) %>"
 		/>
 
 		<liferay-ui:search-container-column-text

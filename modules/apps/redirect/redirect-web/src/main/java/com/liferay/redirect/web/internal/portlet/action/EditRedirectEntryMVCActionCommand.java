@@ -14,8 +14,6 @@
 
 package com.liferay.redirect.web.internal.portlet.action;
 
-import com.liferay.petra.lang.SafeCloseable;
-import com.liferay.portal.kernel.messaging.proxy.ProxyModeThreadLocal;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
@@ -23,7 +21,7 @@ import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -66,10 +64,11 @@ public class EditRedirectEntryMVCActionCommand extends BaseMVCActionCommand {
 			actionRequest, "destinationURL");
 
 		if (Validator.isNotNull(destinationURL) &&
-			!_http.hasProtocol(destinationURL)) {
+			!HttpComponentsUtil.hasProtocol(destinationURL)) {
 
 			destinationURL =
-				_http.getProtocol(actionRequest) + "://" + destinationURL;
+				HttpComponentsUtil.getProtocol(actionRequest) + "://" +
+					destinationURL;
 		}
 
 		Date expirationDate = _getExpirationDate(actionRequest, themeDisplay);
@@ -78,9 +77,7 @@ public class EditRedirectEntryMVCActionCommand extends BaseMVCActionCommand {
 		boolean updateChainedRedirectEntries = ParamUtil.getBoolean(
 			actionRequest, "updateChainedRedirectEntries");
 
-		try (SafeCloseable safeCloseable =
-				ProxyModeThreadLocal.setWithSafeCloseable(true)) {
-
+		try {
 			if (redirectEntryId == 0) {
 				_redirectEntryService.addRedirectEntry(
 					themeDisplay.getScopeGroupId(), destinationURL,
@@ -122,9 +119,6 @@ public class EditRedirectEntryMVCActionCommand extends BaseMVCActionCommand {
 				"yyyy-MM-dd", themeDisplay.getLocale()),
 			null);
 	}
-
-	@Reference
-	private Http _http;
 
 	@Reference
 	private RedirectEntryService _redirectEntryService;

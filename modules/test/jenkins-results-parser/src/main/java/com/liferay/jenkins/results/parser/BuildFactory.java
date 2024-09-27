@@ -27,6 +27,12 @@ import java.util.regex.Matcher;
 public class BuildFactory {
 
 	public static Build newBuild(String url, Build parentBuild) {
+		return newBuild(url, parentBuild, null);
+	}
+
+	public static Build newBuild(
+		String url, Build parentBuild, String jobVariant) {
+
 		url = JenkinsResultsParserUtil.getLocalURL(url);
 
 		Matcher matcher = _buildURLMultiPattern.find(url);
@@ -38,12 +44,20 @@ public class BuildFactory {
 
 		String axisVariable = matcher.group("axisVariable");
 
-		if (axisVariable != null) {
-			String jobVariant = JenkinsResultsParserUtil.getBuildParameter(
-				url, "JOB_VARIANT");
+		if (jobVariant == null) {
+			jobVariant = "";
+		}
 
-			if ((jobVariant != null) && jobVariant.contains("cucumber")) {
-				return new CucumberAxisBuild(url, (BatchBuild)parentBuild);
+		if (axisVariable != null) {
+			if (JenkinsResultsParserUtil.isNullOrEmpty(jobVariant) &&
+				(parentBuild != null)) {
+
+				jobVariant = parentBuild.getJobVariant();
+			}
+
+			if (JenkinsResultsParserUtil.isNullOrEmpty(jobVariant)) {
+				jobVariant = JenkinsResultsParserUtil.getBuildParameter(
+					url, "JOB_VARIANT", parentBuild);
 			}
 
 			if ((jobVariant != null) &&
@@ -61,6 +75,31 @@ public class BuildFactory {
 
 		if (jobName.contains("-controller")) {
 			return new DefaultTopLevelBuild(url, (TopLevelBuild)parentBuild);
+		}
+
+		if (jobName.contains("-downstream")) {
+			String queryString = matcher.group("queryString");
+
+			if ((queryString != null) && queryString.contains("JOB_VARIANT")) {
+				jobVariant = queryString.replaceAll(
+					".*JOB_VARIANT=([^&]+).*", "$1");
+			}
+
+			if (JenkinsResultsParserUtil.isNullOrEmpty(jobVariant)) {
+				jobVariant = JenkinsResultsParserUtil.getBuildParameter(
+					url, "JOB_VARIANT", parentBuild);
+			}
+
+			if ((jobVariant != null) &&
+				(jobVariant.contains("functional") ||
+				 jobVariant.contains("test-portal-environment") ||
+				 jobVariant.contains("test-portal-fixpack-environment"))) {
+
+				return new PoshiDownstreamBuild(
+					url, (TopLevelBuild)parentBuild);
+			}
+
+			return new DownstreamBuild(url, (TopLevelBuild)parentBuild);
 		}
 
 		if (jobName.contains("-source-format")) {
@@ -99,11 +138,6 @@ public class BuildFactory {
 				url, (TopLevelBuild)parentBuild);
 		}
 
-		if (jobName.startsWith("test-portal-acceptance-pullrequest")) {
-			return new PullRequestPortalTopLevelBuild(
-				url, (TopLevelBuild)parentBuild);
-		}
-
 		if (jobName.startsWith("test-plugins-acceptance-pullrequest")) {
 			return new PullRequestPluginsTopLevelBuild(
 				url, (TopLevelBuild)parentBuild);
@@ -121,6 +155,11 @@ public class BuildFactory {
 
 		if (jobName.equals("test-portal-app-release")) {
 			return new PortalAppReleaseTopLevelBuild(
+				url, (TopLevelBuild)parentBuild);
+		}
+
+		if (jobName.startsWith("test-portal-acceptance-pullrequest")) {
+			return new PullRequestPortalTopLevelBuild(
 				url, (TopLevelBuild)parentBuild);
 		}
 
@@ -150,9 +189,7 @@ public class BuildFactory {
 				url, (TopLevelBuild)parentBuild);
 		}
 
-		if (jobName.matches(
-				"test-subrepository-acceptance-pullrequest\\(.*\\)")) {
-
+		if (jobName.matches("test-subrepository-acceptance-pullrequest.*")) {
 			return new PullRequestSubrepositoryTopLevelBuild(
 				url, (TopLevelBuild)parentBuild);
 		}

@@ -1,4 +1,4 @@
-@component-name = "portal-collaboration"
+@component-name = "portal-lima"
 definition {
 
 	property portal.acceptance = "true";
@@ -35,12 +35,11 @@ definition {
 		}
 	}
 
-	@description = "This ensures that the user can customize OG tags."
+	@description = "This ensures that the user can customize OG tags, also covers LPS-134658."
 	@priority = "5"
 	@refactordone
 	test CanCustomizeMetaTags {
 		var portalURL = PropsUtil.get("portal.url");
-
 		var siteId = JSONGroupSetter.setGroupId(groupName = "Test Site Name");
 
 		Navigator.openToGroupPagesPortlet(
@@ -55,6 +54,14 @@ definition {
 			customTitle = "This is a custom title",
 			pageName = "Test Page Name",
 			uploadFileName = "Document_1.jpg");
+
+		Page.viewPreview(
+			description = "This is a custom description",
+			htmlTitle = "This is a custom title",
+			key_imageName = "Document_1.jpg",
+			openGraph = "true",
+			portalURL = "${portalURL}",
+			siteNameURL = "test-site-name");
 
 		Navigator.openSpecificURL(url = "${portalURL}/c/portal/logout");
 
@@ -156,7 +163,6 @@ definition {
 	@refactordone
 	test CanEditMetaTagCustomizations {
 		var portalURL = PropsUtil.get("portal.url");
-
 		var siteId = JSONGroupSetter.setGroupId(groupName = "Test Site Name");
 
 		Navigator.openToGroupPagesPortlet(
@@ -372,9 +378,7 @@ definition {
 		var dmFileEntryId = JSONDocument.getFileEntryId(
 			dmDocumentTitle = "DM Document Title",
 			groupName = "Test Site Name");
-
 		var portalURL = PropsUtil.get("portal.url");
-
 		var siteId = JSONGroupAPI._getGroupIdByName(
 			groupName = "Test Site Name",
 			site = "true");
@@ -447,7 +451,6 @@ definition {
 			siteURLKey = "test-site-name");
 
 		var portalURL = PropsUtil.get("portal.url");
-
 		var siteId = JSONGroupAPI._getGroupIdByName(
 			groupName = "Test Site Name",
 			site = "true");
@@ -593,7 +596,7 @@ definition {
 
 		PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
 
-		PagesAdmin.addPublicPage(
+		PagesAdmin.addPage(
 			customDescription = "This is a new description",
 			customTitle = "This is a new title",
 			openGraph = "true",

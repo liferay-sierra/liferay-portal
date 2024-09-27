@@ -17,7 +17,9 @@ package com.liferay.analytics.reports.blogs.internal.content.dashboard.item.acti
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.asset.display.page.constants.AssetDisplayPageConstants;
 import com.liferay.asset.display.page.service.AssetDisplayPageEntryLocalService;
+import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.service.AssetEntryLocalService;
+import com.liferay.asset.util.LinkedAssetEntryIdsUtil;
 import com.liferay.blogs.model.BlogsEntry;
 import com.liferay.blogs.service.BlogsEntryLocalService;
 import com.liferay.content.dashboard.item.action.ContentDashboardItemAction;
@@ -48,7 +50,7 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -138,16 +140,15 @@ public class ViewInPanelBlogsEntryContentDashboardItemActionProviderTest {
 							LAYOUT_DISPLAY_PAGE_OBJECT_PROVIDER);
 
 		Assert.assertEquals(
-			_portal.getClassName(
-				layoutDisplayPageObjectProvider.getClassNameId()),
-			_http.getParameter(
+			layoutDisplayPageObjectProvider.getClassName(),
+			HttpComponentsUtil.getParameter(
 				contentDashboardItemAction.getURL(),
 				"_com_liferay_analytics_reports_web_internal_portlet_" +
 					"AnalyticsReportsPortlet_className",
 				false));
 		Assert.assertEquals(
 			String.valueOf(layoutDisplayPageObjectProvider.getClassPK()),
-			_http.getParameter(
+			HttpComponentsUtil.getParameter(
 				contentDashboardItemAction.getURL(),
 				"_com_liferay_analytics_reports_web_internal_portlet_" +
 					"AnalyticsReportsPortlet_classPK",
@@ -155,7 +156,7 @@ public class ViewInPanelBlogsEntryContentDashboardItemActionProviderTest {
 
 		Assert.assertEquals(
 			"%2Fanalytics_reports_panel.jsp",
-			_http.getParameter(
+			HttpComponentsUtil.getParameter(
 				contentDashboardItemAction.getURL(),
 				"_com_liferay_analytics_reports_web_internal_portlet_" +
 					"AnalyticsReportsPortlet_mvcPath",
@@ -230,10 +231,16 @@ public class ViewInPanelBlogsEntryContentDashboardItemActionProviderTest {
 			_layoutDisplayPageProvider.getLayoutDisplayPageObjectProvider(
 				new InfoItemReference(
 					BlogsEntry.class.getName(), _blogsEntry.getEntryId())));
+
+		AssetEntry assetEntry = _assetEntryLocalService.getEntry(
+			BlogsEntry.class.getName(), _blogsEntry.getEntryId());
+
 		mockHttpServletRequest.setAttribute(
-			WebKeys.LAYOUT_ASSET_ENTRY,
-			_assetEntryLocalService.getEntry(
-				BlogsEntry.class.getName(), _blogsEntry.getEntryId()));
+			WebKeys.LAYOUT_ASSET_ENTRY, assetEntry);
+
+		LinkedAssetEntryIdsUtil.addLinkedAssetEntryId(
+			mockHttpServletRequest, assetEntry.getEntryId());
+
 		mockHttpServletRequest.setAttribute(
 			WebKeys.THEME_DISPLAY,
 			_getThemeDisplay(mockHttpServletRequest, user));
@@ -284,9 +291,6 @@ public class ViewInPanelBlogsEntryContentDashboardItemActionProviderTest {
 
 	@DeleteAfterTestRun
 	private Group _group;
-
-	@Inject
-	private Http _http;
 
 	private Layout _layout;
 

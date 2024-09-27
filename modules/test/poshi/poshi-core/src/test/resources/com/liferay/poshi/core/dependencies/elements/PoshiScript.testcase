@@ -13,6 +13,7 @@ definition {
 
 	static var userPassword = "password";
 	var userScreenName = "joeblogs";
+	static var integer = ${endYear} - ${numberOfYears};
 
 	setUp {
 		TestCase.setUpPortalInstance();
@@ -73,7 +74,7 @@ definition {
 
 		property portal.release = "false";
 
-		var specialCharacters = "&quot;\&quot;";
+		var specialCharacters = "\"\\"";
 		var userEmailAddress = "userea@liferay.com";
 		var userFirstName = "userfn";
 		var userLastName = "userln";
@@ -100,6 +101,10 @@ definition {
 					locator1 = "Breadcrumb#BREADCRUMB_ENTRY",
 					value1 = "${breadcrumbNameUppercase}");
 			}
+
+			AssertTextEquals(
+				locator1 = "Breadcrumb#BREADCRUMB_ENTRY",
+				value1 = "\"double quoted\"");
 
 			if (isSet(duplicate)) {
 				Alert.viewErrorMessage(errorMessage = "A configuration with this ID already exists. Please enter a unique ID.");
@@ -218,9 +223,9 @@ definition {
 		}
 
 		var siteName = TestCase.getSiteName(siteName = "${siteName}");
-
 		var testCDATA = ''''alert(0)'"alert(0)"><img src=x onerror=alert(0)><script>alert(0)</script>''';
-
+		var testNestedCDATA1 = '''<root available-locales="en_US" default-locale="en_US">%0A%09%09<dynamic-content language-id="en_US">%0A%09%09%09<![CDATA[${content}]]>%0A%09%09</dynamic-content>%0A</root>''';
+		var testNestedCDATA2 = '''<![CDATA[Test Script]]>''';
 		var wikiPageContent = '''<p id='demo'>PASS</p>
 
 <script type='text/javascript'>
@@ -250,7 +255,7 @@ definition {
 			Click(locator1 = "AssetCategorization#TAGS_REMOVE_ICON_GENERIC");
 		}
 
-		while (IsElementPresent(locator1 = "AssetCategorization#TAGS_REMOVE_ICON_GENERIC") && (maxIterations = "16")) {
+		while ((IsElementPresent(locator1 = "AssetCategorization#TAGS_REMOVE_ICON_GENERIC")) && (maxIterations = "16")) {
 			Click(locator1 = "AssetCategorization#TAGS_REMOVE_ICON_GENERIC");
 		}
 

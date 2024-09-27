@@ -47,10 +47,10 @@ BackgroundTask lastCompletedInitialPublicationBackgroundTask = BackgroundTaskMan
 		<%@ include file="/staging_configuration_exceptions.jspf" %>
 
 		<clay:container-fluid
-			cssClass="main-content-body"
+			cssClass="main-content-body mt-4"
 		>
-			<liferay-ui:breadcrumb
-				showLayout="<%= false %>"
+			<liferay-site-navigation:breadcrumb
+				breadcrumbEntries="<%= BreadcrumbEntriesUtil.getBreadcrumbEntries(request, true, false, false, true, true) %>"
 			/>
 
 			<clay:sheet
@@ -95,14 +95,16 @@ BackgroundTask lastCompletedInitialPublicationBackgroundTask = BackgroundTaskMan
 								<div class="btn-group-item">
 									<button class="btn btn-primary">
 										<span class="lfr-btn-label">
-											<%= LanguageUtil.get(request, "save") %>
+											<liferay-ui:message key="save" />
 										</span>
 									</button>
 								</div>
 							</div>
 						</clay:sheet-footer>
 
-						<aui:script require="frontend-js-web/liferay/delegate/delegate.es as delegateModule">
+						<aui:script require="frontend-js-web/index as frontendJsWeb">
+							var {delegate} = frontendJsWeb;
+
 							var pwcWarning = document.getElementById('<portlet:namespace />pwcWarning');
 							var remoteStagingOptions = document.getElementById(
 								'<portlet:namespace />remoteStagingOptions'
@@ -120,8 +122,6 @@ BackgroundTask lastCompletedInitialPublicationBackgroundTask = BackgroundTaskMan
 								remoteStagingOptions &&
 								trashWarning
 							) {
-								var delegate = delegateModule.default;
-
 								delegate(stagingTypes, 'click', 'input', (event) => {
 									var value = event.target.closest('input').value;
 
@@ -174,6 +174,17 @@ BackgroundTask lastCompletedInitialPublicationBackgroundTask = BackgroundTaskMan
 		var form = document.<portlet:namespace />fm;
 		var ok = true;
 
+		function doSubmit() {
+			if (forceDisable) {
+				form.elements['<portlet:namespace />forceDisable'].value = true;
+				form.elements[
+					'<portlet:namespace />stagingType'
+				].value = <%= StagingConstants.TYPE_NOT_STAGED %>;
+			}
+
+			submitForm(form);
+		}
+
 		<c:if test="<%= liveGroup != null %>">
 			var oldValue;
 
@@ -201,41 +212,46 @@ BackgroundTask lastCompletedInitialPublicationBackgroundTask = BackgroundTaskMan
 				}
 
 				if (currentValue != oldValue) {
-					ok = false;
-
 					if (currentValue == <%= StagingConstants.TYPE_NOT_STAGED %>) {
-						ok = confirm(
-							'<%= UnicodeLanguageUtil.format(request, "are-you-sure-you-want-to-deactivate-staging-for-x", liveGroup.getDescriptiveName(locale), false) %>'
-						);
+						Liferay.Util.openConfirmModal({
+							message:
+								'<%= UnicodeLanguageUtil.format(request, "are-you-sure-you-want-to-deactivate-staging-for-x", liveGroup.getDescriptiveName(locale), false) %>',
+							onConfirm: (isConfirmed) => {
+								if (isConfirmed) {
+									doSubmit();
+								}
+							},
+						});
 					}
 					else if (
 						currentValue == <%= StagingConstants.TYPE_LOCAL_STAGING %>
 					) {
-						ok = confirm(
-							'<%= UnicodeLanguageUtil.format(request, "are-you-sure-you-want-to-activate-local-staging-for-x", liveGroup.getDescriptiveName(locale), false) %>'
-						);
+						Liferay.Util.openConfirmModal({
+							message:
+								'<%= UnicodeLanguageUtil.format(request, "are-you-sure-you-want-to-activate-local-staging-for-x", liveGroup.getDescriptiveName(locale), false) %>',
+							onConfirm: (isConfirmed) => {
+								if (isConfirmed) {
+									doSubmit();
+								}
+							},
+						});
 					}
 					else if (
 						currentValue == <%= StagingConstants.TYPE_REMOTE_STAGING %>
 					) {
-						ok = confirm(
-							'<%= UnicodeLanguageUtil.format(request, "are-you-sure-you-want-to-activate-remote-staging-for-x", liveGroup.getDescriptiveName(locale), false) %>'
-						);
+						Liferay.Util.openConfirmModal({
+							message:
+								'<%= UnicodeLanguageUtil.format(request, "are-you-sure-you-want-to-activate-remote-staging-for-x", liveGroup.getDescriptiveName(locale), false) %>',
+							onConfirm: (isConfirmed) => {
+								if (isConfirmed) {
+									doSubmit();
+								}
+							},
+						});
 					}
 				}
 			}
 		</c:if>
-
-		if (ok) {
-			if (forceDisable) {
-				form.elements['<portlet:namespace />forceDisable'].value = true;
-				form.elements[
-					'<portlet:namespace />stagingType'
-				].value = <%= StagingConstants.TYPE_NOT_STAGED %>;
-			}
-
-			submitForm(form);
-		}
 	}
 
 	(function () {

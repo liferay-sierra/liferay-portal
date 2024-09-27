@@ -71,7 +71,8 @@ List<EmailAddress> emailAddresses = EmailAddressServiceUtil.getEmailAddresses(cl
 	total="<%= emailAddresses.size() %>"
 >
 	<liferay-ui:search-container-results
-		results="<%= emailAddresses.subList(searchContainer.getStart(), searchContainer.getResultEnd()) %>"
+		calculateStartAndEnd="<%= true %>"
+		results="<%= emailAddresses %>"
 	/>
 
 	<liferay-ui:search-container-row
@@ -87,7 +88,7 @@ List<EmailAddress> emailAddresses = EmailAddressServiceUtil.getEmailAddresses(cl
 		/>
 
 		<%
-		ListType emailAddressListType = ListTypeServiceUtil.getListType(emailAddress.getTypeId());
+		ListType emailAddressListType = ListTypeServiceUtil.getListType(emailAddress.getListTypeId());
 
 		String emailAddressTypeKey = emailAddressListType.getName();
 		%>

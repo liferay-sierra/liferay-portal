@@ -14,25 +14,31 @@
 
 package com.liferay.product.navigation.control.menu.web.internal;
 
+import com.liferay.asset.kernel.model.AssetEntry;
+import com.liferay.info.field.InfoFieldValue;
+import com.liferay.info.item.InfoItemFieldValues;
+import com.liferay.info.item.InfoItemServiceRegistry;
+import com.liferay.info.item.provider.InfoItemFieldValuesProvider;
+import com.liferay.layout.display.page.LayoutDisplayPageObjectProvider;
+import com.liferay.layout.display.page.constants.LayoutDisplayPageWebKeys;
 import com.liferay.layout.security.permission.resource.LayoutContentModelResourcePermission;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.permission.LayoutPermission;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
-import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.product.navigation.control.menu.BaseProductNavigationControlMenuEntry;
 import com.liferay.product.navigation.control.menu.ProductNavigationControlMenuEntry;
@@ -82,19 +88,23 @@ public class LayoutHeaderProductNavigationControlMenuEntry
 
 		Writer writer = httpServletResponse.getWriter();
 
-		StringBundler sb = new StringBundler(17);
+		StringBundler sb = new StringBundler(18);
 
-		sb.append("<li class=\"");
+		sb.append("<div class=\"");
 		sb.append(_getCssClass(httpServletRequest));
 		sb.append("\"><span class=\"align-items-center ");
 		sb.append("control-menu-level-1-heading d-flex mr-1\" ");
-		sb.append("data-qa-id=\"headerTitle\"><span class=\"");
-		sb.append("lfr-portal-tooltip text-truncate\" title=\"");
-		sb.append(
-			HtmlUtil.escapeAttribute(_getHeaderTitle(httpServletRequest)));
+		sb.append("data-qa-id=\"headerTitle\"><h1 class=\"");
+		sb.append("lfr-portal-tooltip text-truncate h4 mb-0\" title=\"");
+
+		String headerTitle = HtmlUtil.escapeAttribute(
+			_getHeaderTitle(httpServletRequest));
+
+		sb.append(headerTitle);
+
 		sb.append("\">");
-		sb.append(_getHeaderTitle(httpServletRequest));
-		sb.append("</span>");
+		sb.append(headerTitle);
+		sb.append("</h1>");
 
 		if (_hasDraftLayout(httpServletRequest) &&
 			_hasEditPermission(httpServletRequest)) {
@@ -108,9 +118,11 @@ public class LayoutHeaderProductNavigationControlMenuEntry
 			sb.append("<span class=\"bg-transparent flex-shrink-0 label ");
 			sb.append("label-inverse-secondary ml-2 mr-0\">");
 			sb.append("<span class=\"label-item label-item-expand\">");
-			sb.append(LanguageUtil.get(httpServletRequest, "draft"));
+			sb.append(_language.get(httpServletRequest, "draft"));
 			sb.append("</span></span>");
 		}
+
+		sb.append("</div>");
 
 		writer.write(sb.toString());
 
@@ -180,6 +192,53 @@ public class LayoutHeaderProductNavigationControlMenuEntry
 			return _portal.getPortletTitle(portletId, themeDisplay.getLocale());
 		}
 
+		if (layout.isTypeAssetDisplay()) {
+			LayoutDisplayPageObjectProvider<?> layoutDisplayPageObjectProvider =
+				(LayoutDisplayPageObjectProvider<?>)
+					httpServletRequest.getAttribute(
+						LayoutDisplayPageWebKeys.
+							LAYOUT_DISPLAY_PAGE_OBJECT_PROVIDER);
+
+			if (layoutDisplayPageObjectProvider != null) {
+				InfoItemFieldValuesProvider infoItemFieldValuesProvider =
+					_infoItemServiceRegistry.getFirstInfoItemService(
+						InfoItemFieldValuesProvider.class,
+						layoutDisplayPageObjectProvider.getClassName());
+
+				InfoItemFieldValues infoItemFieldValues =
+					infoItemFieldValuesProvider.getInfoItemFieldValues(
+						layoutDisplayPageObjectProvider.getDisplayObject());
+
+				InfoFieldValue<Object> titleInfoFieldValue =
+					infoItemFieldValues.getInfoFieldValue("title");
+
+				if (titleInfoFieldValue != null) {
+					return HtmlUtil.escape(
+						String.valueOf(
+							titleInfoFieldValue.getValue(
+								themeDisplay.getLocale())));
+				}
+
+				InfoFieldValue<Object> nameInfoFieldValue =
+					infoItemFieldValues.getInfoFieldValue("name");
+
+				if (nameInfoFieldValue != null) {
+					return HtmlUtil.escape(
+						String.valueOf(
+							nameInfoFieldValue.getValue(
+								themeDisplay.getLocale())));
+				}
+			}
+
+			AssetEntry assetEntry = (AssetEntry)httpServletRequest.getAttribute(
+				WebKeys.LAYOUT_ASSET_ENTRY);
+
+			if (assetEntry != null) {
+				return HtmlUtil.escape(
+					assetEntry.getTitle(themeDisplay.getLanguageId()));
+			}
+		}
+
 		return HtmlUtil.escape(layout.getName(themeDisplay.getLocale()));
 	}
 
@@ -194,19 +253,24 @@ public class LayoutHeaderProductNavigationControlMenuEntry
 			return false;
 		}
 
-		Layout draftLayout = layout.fetchDraftLayout();
+		Layout draftLayout = null;
 
-		if (draftLayout != null) {
-			layout = draftLayout;
+		if (layout.isDraftLayout()) {
+			draftLayout = layout;
+
+			layout = _layoutLocalService.fetchLayout(draftLayout.getClassPK());
+		}
+		else {
+			draftLayout = layout.fetchDraftLayout();
 		}
 
-		if ((layout.getStatus() != WorkflowConstants.STATUS_DRAFT) &&
-			_isLayoutPublished(layout)) {
+		if (((draftLayout != null) && draftLayout.isDraft()) ||
+			!layout.isPublished()) {
 
-			return false;
+			return true;
 		}
 
-		return true;
+		return false;
 	}
 
 	private boolean _hasEditPermission(HttpServletRequest httpServletRequest) {
@@ -220,12 +284,8 @@ public class LayoutHeaderProductNavigationControlMenuEntry
 			if (_layoutContentModelResourcePermission.contains(
 					themeDisplay.getPermissionChecker(), layout.getPlid(),
 					ActionKeys.UPDATE) ||
-				_layoutPermission.contains(
-					themeDisplay.getPermissionChecker(), layout,
-					ActionKeys.UPDATE) ||
-				_layoutPermission.contains(
-					themeDisplay.getPermissionChecker(), layout,
-					ActionKeys.UPDATE_LAYOUT_CONTENT)) {
+				_layoutPermission.containsLayoutUpdatePermission(
+					themeDisplay.getPermissionChecker(), layout)) {
 
 				return true;
 			}
@@ -248,41 +308,30 @@ public class LayoutHeaderProductNavigationControlMenuEntry
 			return false;
 		}
 
-		Layout draftLayout = layout.fetchDraftLayout();
-
-		if ((draftLayout != null) ||
-			((layout.getStatus() != WorkflowConstants.STATUS_DRAFT) &&
-			 _isLayoutPublished(layout))) {
-
-			return false;
-		}
-
 		String mode = ParamUtil.getString(httpServletRequest, "p_l_mode");
 
-		if (Objects.equals(mode, Constants.EDIT)) {
+		if (Objects.equals(mode, Constants.EDIT) || !layout.isDraftLayout()) {
 			return false;
 		}
 
 		return true;
 	}
 
-	private boolean _isLayoutPublished(Layout layout) {
-		boolean published = GetterUtil.getBoolean(
-			layout.getTypeSettingsProperty("published"));
-
-		if (published) {
-			return true;
-		}
-
-		return false;
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		LayoutHeaderProductNavigationControlMenuEntry.class);
 
 	@Reference
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
+
+	@Reference
+	private Language _language;
+
+	@Reference
 	private LayoutContentModelResourcePermission
 		_layoutContentModelResourcePermission;
+
+	@Reference
+	private LayoutLocalService _layoutLocalService;
 
 	@Reference
 	private LayoutPermission _layoutPermission;

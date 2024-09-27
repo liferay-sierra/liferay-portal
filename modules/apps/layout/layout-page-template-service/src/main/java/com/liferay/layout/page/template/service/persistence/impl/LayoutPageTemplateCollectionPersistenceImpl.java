@@ -51,7 +51,7 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 
 import java.io.Serializable;
 
@@ -213,7 +213,7 @@ public class LayoutPageTemplateCollectionPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<LayoutPageTemplateCollection>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (LayoutPageTemplateCollection layoutPageTemplateCollection :
@@ -618,7 +618,7 @@ public class LayoutPageTemplateCollectionPersistenceImpl
 
 			finderArgs = new Object[] {uuid};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -757,7 +757,7 @@ public class LayoutPageTemplateCollectionPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = finderCache.getResult(
-				_finderPathFetchByUUID_G, finderArgs);
+				_finderPathFetchByUUID_G, finderArgs, this);
 		}
 
 		if (result instanceof LayoutPageTemplateCollection) {
@@ -881,7 +881,7 @@ public class LayoutPageTemplateCollectionPersistenceImpl
 
 			finderArgs = new Object[] {uuid, groupId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1055,7 +1055,7 @@ public class LayoutPageTemplateCollectionPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<LayoutPageTemplateCollection>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (LayoutPageTemplateCollection layoutPageTemplateCollection :
@@ -1487,7 +1487,7 @@ public class LayoutPageTemplateCollectionPersistenceImpl
 
 			finderArgs = new Object[] {uuid, companyId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1650,7 +1650,7 @@ public class LayoutPageTemplateCollectionPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<LayoutPageTemplateCollection>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (LayoutPageTemplateCollection layoutPageTemplateCollection :
@@ -2373,7 +2373,7 @@ public class LayoutPageTemplateCollectionPersistenceImpl
 
 			finderArgs = new Object[] {groupId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2551,7 +2551,7 @@ public class LayoutPageTemplateCollectionPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = finderCache.getResult(
-				_finderPathFetchByG_LPTCK, finderArgs);
+				_finderPathFetchByG_LPTCK, finderArgs, this);
 		}
 
 		if (result instanceof LayoutPageTemplateCollection) {
@@ -2685,7 +2685,7 @@ public class LayoutPageTemplateCollectionPersistenceImpl
 				groupId, layoutPageTemplateCollectionKey
 			};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2832,7 +2832,8 @@ public class LayoutPageTemplateCollectionPersistenceImpl
 		Object result = null;
 
 		if (useFinderCache && productionMode) {
-			result = finderCache.getResult(_finderPathFetchByG_N, finderArgs);
+			result = finderCache.getResult(
+				_finderPathFetchByG_N, finderArgs, this);
 		}
 
 		if (result instanceof LayoutPageTemplateCollection) {
@@ -2955,7 +2956,7 @@ public class LayoutPageTemplateCollectionPersistenceImpl
 
 			finderArgs = new Object[] {groupId, name};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -3118,7 +3119,7 @@ public class LayoutPageTemplateCollectionPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<LayoutPageTemplateCollection>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (LayoutPageTemplateCollection layoutPageTemplateCollection :
@@ -3935,7 +3936,7 @@ public class LayoutPageTemplateCollectionPersistenceImpl
 
 			finderArgs = new Object[] {groupId, name};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -4266,7 +4267,7 @@ public class LayoutPageTemplateCollectionPersistenceImpl
 		layoutPageTemplateCollection.setPrimaryKey(
 			layoutPageTemplateCollectionId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		layoutPageTemplateCollection.setUuid(uuid);
 
@@ -4402,7 +4403,7 @@ public class LayoutPageTemplateCollectionPersistenceImpl
 					layoutPageTemplateCollection;
 
 		if (Validator.isNull(layoutPageTemplateCollection.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			layoutPageTemplateCollection.setUuid(uuid);
 		}
@@ -4537,7 +4538,7 @@ public class LayoutPageTemplateCollectionPersistenceImpl
 		Serializable primaryKey) {
 
 		if (ctPersistenceHelper.isProductionMode(
-				LayoutPageTemplateCollection.class)) {
+				LayoutPageTemplateCollection.class, primaryKey)) {
 
 			return super.fetchByPrimaryKey(primaryKey);
 		}
@@ -4766,7 +4767,7 @@ public class LayoutPageTemplateCollectionPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<LayoutPageTemplateCollection>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -4845,7 +4846,7 @@ public class LayoutPageTemplateCollectionPersistenceImpl
 
 		if (productionMode) {
 			count = (Long)finderCache.getResult(
-				_finderPathCountAll, FINDER_ARGS_EMPTY);
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 		}
 
 		if (count == null) {
@@ -5212,7 +5213,6 @@ public class LayoutPageTemplateCollectionPersistenceImpl
 	}
 
 	@Reference
-	private LayoutPageTemplateCollectionModelArgumentsResolver
-		_layoutPageTemplateCollectionModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

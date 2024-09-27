@@ -23,18 +23,18 @@ import com.liferay.asset.list.model.AssetListEntryUsage;
 import com.liferay.asset.list.service.AssetListEntryLocalServiceUtil;
 import com.liferay.asset.list.service.AssetListEntryUsageLocalServiceUtil;
 import com.liferay.asset.util.AssetPublisherAddItemHolder;
-import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.service.FragmentEntryLinkLocalServiceUtil;
 import com.liferay.info.collection.provider.InfoCollectionProvider;
 import com.liferay.info.collection.provider.RelatedInfoItemCollectionProvider;
 import com.liferay.info.collection.provider.SingleFormVariationInfoCollectionProvider;
 import com.liferay.info.item.InfoItemFormVariation;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFormVariationsProvider;
 import com.liferay.info.list.provider.item.selector.criterion.InfoListProviderItemSelectorReturnType;
 import com.liferay.item.selector.criteria.InfoListItemSelectorReturnType;
-import com.liferay.layout.content.page.editor.web.internal.info.item.InfoItemServiceTrackerUtil;
+import com.liferay.layout.content.page.editor.web.internal.info.item.InfoItemServiceRegistryUtil;
+import com.liferay.layout.content.page.editor.web.internal.info.search.InfoSearchClassMapperRegistryUtil;
 import com.liferay.layout.content.page.editor.web.internal.security.permission.resource.ModelResourcePermissionUtil;
 import com.liferay.layout.content.page.editor.web.internal.util.layout.structure.LayoutStructureUtil;
 import com.liferay.layout.util.structure.LayoutStructure;
@@ -52,16 +52,13 @@ import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
-import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
-import com.liferay.portal.kernel.util.HttpUtil;
-import com.liferay.portal.kernel.util.ListUtil;
-import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -85,13 +82,14 @@ public class AssetListEntryUsagesUtil {
 
 	public static JSONArray getPageContentsJSONArray(
 			HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse, long plid)
+			HttpServletResponse httpServletResponse, long plid,
+			long segmentsExperienceId)
 		throws PortalException {
 
 		JSONArray mappedContentsJSONArray = JSONFactoryUtil.createJSONArray();
 
 		LayoutStructure layoutStructure = _getLayoutStructure(
-			httpServletRequest, plid);
+			httpServletRequest, plid, segmentsExperienceId);
 		Set<String> uniqueAssetListEntryUsagesKeys = new HashSet<>();
 
 		List<AssetListEntryUsage> assetListEntryUsages =
@@ -316,14 +314,10 @@ public class AssetListEntryUsagesUtil {
 	private static AssetRendererFactory<?> _getAssetRendererFactory(
 		String className) {
 
-		// LPS-111037
-
-		if (Objects.equals(className, FileEntry.class.getName())) {
-			className = DLFileEntry.class.getName();
-		}
-
 		return AssetRendererFactoryRegistryUtil.
-			getAssetRendererFactoryByClassName(className);
+			getAssetRendererFactoryByClassName(
+				InfoSearchClassMapperRegistryUtil.getSearchClassName(
+					className));
 	}
 
 	private static JSONObject _getInfoCollectionProviderActionsJSONObject(
@@ -358,11 +352,11 @@ public class AssetListEntryUsagesUtil {
 			return ResourceActionsUtil.getModelResource(locale, className);
 		}
 
-		InfoItemServiceTracker infoItemServiceTracker =
-			InfoItemServiceTrackerUtil.getInfoItemServiceTracker();
+		InfoItemServiceRegistry infoItemServiceRegistry =
+			InfoItemServiceRegistryUtil.getInfoItemServiceRegistry();
 
 		InfoItemFormVariationsProvider<?> infoItemFormVariationsProvider =
-			infoItemServiceTracker.getFirstInfoItemService(
+			infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFormVariationsProvider.class, className);
 
 		if (infoItemFormVariationsProvider == null) {
@@ -426,7 +420,8 @@ public class AssetListEntryUsagesUtil {
 	}
 
 	private static LayoutStructure _getLayoutStructure(
-			HttpServletRequest httpServletRequest, long plid)
+			HttpServletRequest httpServletRequest, long plid,
+			long segmentsExperienceId)
 		throws PortalException {
 
 		ThemeDisplay themeDisplay =
@@ -434,8 +429,7 @@ public class AssetListEntryUsagesUtil {
 				WebKeys.THEME_DISPLAY);
 
 		return LayoutStructureUtil.getLayoutStructure(
-			themeDisplay.getScopeGroupId(), plid,
-			ParamUtil.getLong(httpServletRequest, "segmentsExperienceId"));
+			themeDisplay.getScopeGroupId(), plid, segmentsExperienceId);
 	}
 
 	private static JSONObject _getPageContentJSONObject(
@@ -489,16 +483,16 @@ public class AssetListEntryUsagesUtil {
 				assetListEntryUsage.getClassName(),
 				InfoCollectionProvider.class.getName())) {
 
-			InfoItemServiceTracker infoItemServiceTracker =
-				InfoItemServiceTrackerUtil.getInfoItemServiceTracker();
+			InfoItemServiceRegistry infoItemServiceRegistry =
+				InfoItemServiceRegistryUtil.getInfoItemServiceRegistry();
 
 			InfoCollectionProvider<?> infoCollectionProvider =
-				infoItemServiceTracker.getInfoItemService(
+				infoItemServiceRegistry.getInfoItemService(
 					InfoCollectionProvider.class, assetListEntryUsage.getKey());
 
 			if (infoCollectionProvider == null) {
 				infoCollectionProvider =
-					infoItemServiceTracker.getInfoItemService(
+					infoItemServiceRegistry.getInfoItemService(
 						RelatedInfoItemCollectionProvider.class,
 						assetListEntryUsage.getKey());
 			}
@@ -537,7 +531,7 @@ public class AssetListEntryUsagesUtil {
 		Layout layout = themeDisplay.getLayout();
 
 		try {
-			return HttpUtil.setParameter(
+			return HttpComponentsUtil.setParameter(
 				PortalUtil.getLayoutRelativeURL(layout, themeDisplay),
 				"p_l_mode", Constants.EDIT);
 		}
@@ -579,6 +573,10 @@ public class AssetListEntryUsagesUtil {
 			return classType.getName();
 		}
 		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return StringPool.BLANK;
 		}
 	}
@@ -608,11 +606,9 @@ public class AssetListEntryUsagesUtil {
 			layoutStructure.getLayoutStructureItemByFragmentEntryLinkId(
 				fragmentEntryLink.getFragmentEntryLinkId());
 
-		if (ListUtil.exists(
-				layoutStructure.getDeletedLayoutStructureItems(),
-				deletedLayoutStructureItem ->
-					deletedLayoutStructureItem.containsItemId(
-						layoutStructureItem.getItemId()))) {
+		if ((layoutStructureItem == null) ||
+			layoutStructure.isItemMarkedForDeletion(
+				layoutStructureItem.getItemId())) {
 
 			return true;
 		}

@@ -24,7 +24,10 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.bean.BeanPropertiesUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.service.PersistedModelLocalService;
 import com.liferay.portal.kernel.service.PersistedModelLocalServiceRegistryUtil;
@@ -174,6 +177,25 @@ public class InputTag extends IncludeTag {
 
 	private String _getFallbackValue() {
 		try {
+			if (Objects.equals(getClassName(), FileEntry.class.getName())) {
+				return StringPool.BLANK;
+			}
+
+			if (Objects.equals(getClassName(), Layout.class.getName())) {
+				Layout layout = LayoutLocalServiceUtil.fetchLayout(
+					getClassPK());
+
+				if (layout == null) {
+					return StringPool.BLANK;
+				}
+
+				if (isLocalizable()) {
+					return layout.getFriendlyURLsXML();
+				}
+
+				return layout.getFriendlyURL();
+			}
+
 			String urlTitle = BeanPropertiesUtil.getString(
 				_getModel(), "urlTitle");
 
@@ -195,6 +217,10 @@ public class InputTag extends IncludeTag {
 				languageId, "UrlTitle");
 		}
 		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return StringPool.BLANK;
 		}
 	}
@@ -234,6 +260,10 @@ public class InputTag extends IncludeTag {
 		catch (NoSuchFriendlyURLEntryMappingException
 					noSuchFriendlyURLEntryMappingException) {
 
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchFriendlyURLEntryMappingException);
+			}
+
 			return _getFallbackValue();
 		}
 		catch (PortalException portalException) {
@@ -254,6 +284,8 @@ public class InputTag extends IncludeTag {
 	private static final int _FRIENDLY_URL_MAX_LENGTH = 255;
 
 	private static final String _PAGE = "/input/page.jsp";
+
+	private static final Log _log = LogFactoryUtil.getLog(InputTag.class);
 
 	private String _className;
 	private long _classPK;

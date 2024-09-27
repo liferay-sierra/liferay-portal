@@ -17,13 +17,15 @@ package com.liferay.content.dashboard.web.internal.display.context;
 import com.liferay.asset.kernel.model.AssetVocabulary;
 import com.liferay.asset.kernel.service.AssetVocabularyLocalService;
 import com.liferay.content.dashboard.web.internal.util.ContentDashboardGroupUtil;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -110,7 +112,7 @@ public class ContentDashboardAdminConfigurationDisplayContext {
 						assetVocabularyId);
 				}
 				catch (PortalException portalException) {
-					portalException.printStackTrace();
+					_log.error(portalException);
 
 					return null;
 				}
@@ -194,6 +196,9 @@ public class ContentDashboardAdminConfigurationDisplayContext {
 			"value", assetVocabulary.getVocabularyId()
 		);
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		ContentDashboardAdminConfigurationDisplayContext.class);
 
 	private List<AssetVocabulary> _assetVocabularies;
 	private final long[] _assetVocabularyIds;

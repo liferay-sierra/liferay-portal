@@ -117,7 +117,9 @@ else {
 
 <liferay-ui:error exception="<%= ColumnTypeException.class %>" message="please-select-a-valid-type" />
 <liferay-ui:error exception="<%= DuplicateColumnNameException.class %>" message="please-enter-a-unique-name" />
-<liferay-ui:error exception="<%= ValueDataException.class %>" message="please-enter-a-valid-value" />
+<liferay-ui:error exception="<%= ValueDataException.MismatchColumnType.class %>" message="please-enter-a-valid-value" />
+<liferay-ui:error exception="<%= ValueDataException.MustInformDefaultLocale.class %>" message="please-enter-a-value-for-the-default-locale" />
+<liferay-ui:error exception="<%= ValueDataException.UnsupportedColumnType.class %>" message="please-enter-a-valid-value" />
 
 <portlet:actionURL name='<%= (expandoColumn == null) ? "addExpando" : "updateExpando" %>' var="editExpandoURL">
 	<portlet:param name="mvcPath" value="/edit/expando.jsp" />
@@ -126,11 +128,8 @@ else {
 <clay:container-fluid
 	cssClass="container-view"
 >
-	<liferay-ui:breadcrumb
-		showCurrentGroup="<%= false %>"
-		showGuestGroup="<%= false %>"
-		showLayout="<%= false %>"
-		showPortletBreadcrumb="<%= true %>"
+	<liferay-site-navigation:breadcrumb
+		breadcrumbEntries="<%= BreadcrumbEntriesUtil.getBreadcrumbEntries(request, false, false, false, true, true) %>"
 	/>
 
 	<liferay-frontend:edit-form
@@ -173,9 +172,9 @@ else {
 		</liferay-frontend:edit-form-body>
 
 		<liferay-frontend:edit-form-footer>
-			<aui:button type="submit" />
-
-			<aui:button href="<%= redirect %>" type="cancel" />
+			<liferay-frontend:edit-form-buttons
+				redirect="<%= redirect %>"
+			/>
 		</liferay-frontend:edit-form-footer>
 	</liferay-frontend:edit-form>
 </clay:container-fluid>

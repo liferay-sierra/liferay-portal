@@ -27,11 +27,10 @@ import org.osgi.service.component.annotations.Component;
  * @author Aandrea Sbarra
  */
 @Component(
-	enabled = false,
 	property = {
 		"osgi.jaxrs.application.select=(osgi.jaxrs.name=Liferay.Headless.Commerce.Delivery.Catalog)",
 		"osgi.jaxrs.extension=true",
-		"osgi.jaxrs.name=Liferay.Headless.Commerce.Delivery.Catalog.NoSuchChannelException"
+		"osgi.jaxrs.name=Liferay.Headless.Commerce.Delivery.Catalog.NoSuchChannelExceptionMapper"
 	},
 	service = ExceptionMapper.class
 )

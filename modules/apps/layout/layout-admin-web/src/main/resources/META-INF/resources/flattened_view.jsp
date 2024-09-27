@@ -27,8 +27,9 @@
 	>
 		<liferay-ui:search-container-column-text
 			cssClass="table-cell-expand table-cell-minw-200 table-title"
-			href="<%= layoutsAdminDisplayContext.isShowViewLayoutAction(layout) ? layoutsAdminDisplayContext.getViewLayoutURL(layout) : StringPool.BLANK %>"
+			href="<%= layoutsAdminDisplayContext.getEditOrViewLayoutURL(layout) %>"
 			name="title"
+			target="<%= layoutsAdminDisplayContext.getTarget(layout) %>"
 			value="<%= layout.getName(locale) %>"
 		/>
 
@@ -66,6 +67,7 @@
 			%>
 
 			<clay:dropdown-actions
+				aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 				dropdownItems="<%= layoutActionDropdownItemsProvider.getActionDropdownItems(layout, true) %>"
 				propsTransformer="js/LayoutActionDropdownPropsTransformer"
 			/>

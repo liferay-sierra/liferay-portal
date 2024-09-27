@@ -18,19 +18,19 @@ import ClayForm, {ClayCheckbox} from '@clayui/form';
 import classNames from 'classnames';
 import React, {useState} from 'react';
 
+import {useId} from '../../../core/hooks/useId';
 import {LAYOUT_DATA_ITEM_TYPES} from '../../config/constants/layoutDataItemTypes';
 import {useHoverItem} from '../../contexts/ControlsContext';
 import {useSelectorCallback} from '../../contexts/StoreContext';
 import isEmptyArray from '../../utils/isEmptyArray';
 import {isLayoutDataItemDeleted} from '../../utils/isLayoutDataItemDeleted';
-import {useId} from '../../utils/useId';
 
 export function selectConfiguredCollectionDisplays(state) {
 	return Object.values(state.layoutData.items).filter(
 		(item) =>
 			item.type === LAYOUT_DATA_ITEM_TYPES.collection &&
 			item.config?.collection &&
-			Object.keys(item.config.collection).length > 0 &&
+			!!Object.keys(item.config.collection).length &&
 			!isLayoutDataItemDeleted(state.layoutData, item.itemId)
 	);
 }
@@ -48,7 +48,7 @@ export function TargetCollectionsField({
 
 	const inputValue = useSelectorCallback(
 		(state) => {
-			if (nextValue.length === 0) {
+			if (!nextValue.length) {
 				return '';
 			}
 			else if (nextValue.length === 1) {

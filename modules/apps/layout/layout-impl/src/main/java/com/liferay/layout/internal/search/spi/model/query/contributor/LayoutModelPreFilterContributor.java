@@ -34,7 +34,6 @@ import org.osgi.service.component.annotations.Component;
  * @author Vagner B.C
  */
 @Component(
-	immediate = true,
 	property = "indexer.class.name=com.liferay.portal.kernel.model.Layout",
 	service = ModelPreFilterContributor.class
 )
@@ -49,7 +48,12 @@ public class LayoutModelPreFilterContributor
 		String[] types = GetterUtil.getStringValues(
 			searchContext.getAttribute(Field.TYPE),
 			new String[] {
-				LayoutConstants.TYPE_COLLECTION, LayoutConstants.TYPE_CONTENT
+				LayoutConstants.TYPE_COLLECTION, LayoutConstants.TYPE_CONTENT,
+				LayoutConstants.TYPE_EMBEDDED,
+				LayoutConstants.TYPE_LINK_TO_LAYOUT,
+				LayoutConstants.TYPE_FULL_PAGE_APPLICATION,
+				LayoutConstants.TYPE_PANEL, LayoutConstants.TYPE_PORTLET,
+				LayoutConstants.TYPE_URL
 			});
 
 		if (ArrayUtil.isNotEmpty(types)) {

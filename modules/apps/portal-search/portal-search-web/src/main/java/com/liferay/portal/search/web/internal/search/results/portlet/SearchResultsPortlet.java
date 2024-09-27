@@ -31,7 +31,7 @@ import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.FastDateFormatFactory;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -39,6 +39,7 @@ import com.liferay.portal.search.legacy.document.DocumentBuilderFactory;
 import com.liferay.portal.search.searcher.SearchRequest;
 import com.liferay.portal.search.searcher.SearchResponse;
 import com.liferay.portal.search.summary.SummaryBuilderFactory;
+import com.liferay.portal.search.web.constants.SearchResultsPortletKeys;
 import com.liferay.portal.search.web.internal.display.context.PortletURLFactory;
 import com.liferay.portal.search.web.internal.display.context.PortletURLFactoryImpl;
 import com.liferay.portal.search.web.internal.display.context.SearchResultPreferences;
@@ -47,7 +48,6 @@ import com.liferay.portal.search.web.internal.portlet.shared.search.NullPortletU
 import com.liferay.portal.search.web.internal.portlet.shared.task.helper.PortletSharedRequestHelper;
 import com.liferay.portal.search.web.internal.result.display.context.SearchResultSummaryDisplayContext;
 import com.liferay.portal.search.web.internal.result.display.context.builder.SearchResultSummaryDisplayContextBuilder;
-import com.liferay.portal.search.web.internal.search.results.constants.SearchResultsPortletKeys;
 import com.liferay.portal.search.web.portlet.shared.search.PortletSharedSearchRequest;
 import com.liferay.portal.search.web.portlet.shared.search.PortletSharedSearchResponse;
 import com.liferay.portal.search.web.search.result.SearchResultImageContributor;
@@ -97,7 +97,8 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 		"javax.portlet.init-param.view-template=/search/results/view.jsp",
 		"javax.portlet.name=" + SearchResultsPortletKeys.SEARCH_RESULTS,
 		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=guest,power-user,user"
+		"javax.portlet.security-role-ref=guest,power-user,user",
+		"javax.portlet.version=3.0"
 	},
 	service = Portlet.class
 )
@@ -209,9 +210,6 @@ public class SearchResultsPortlet extends MVCPortlet {
 
 	@Reference
 	protected GroupLocalService groupLocalService;
-
-	@Reference
-	protected Http http;
 
 	@Reference
 	protected IndexerRegistry indexerRegistry;
@@ -471,7 +469,9 @@ public class SearchResultsPortlet extends MVCPortlet {
 					portletURLFactory, searchResultsPortletPreferences,
 					searchResultPreferences);
 
-			if (searchResultSummaryDisplayContext != null) {
+			if ((searchResultSummaryDisplayContext != null) &&
+				!searchResultSummaryDisplayContext.isTemporarilyUnavailable()) {
+
 				searchResultsSummariesHolder.put(
 					document, searchResultSummaryDisplayContext);
 			}
@@ -491,7 +491,7 @@ public class SearchResultsPortlet extends MVCPortlet {
 	private String _getURLString(
 		RenderRequest renderRequest, String paginationStartParameterName) {
 
-		return http.removeParameter(
+		return HttpComponentsUtil.removeParameter(
 			portletSharedRequestHelper.getCompleteURL(renderRequest),
 			paginationStartParameterName);
 	}

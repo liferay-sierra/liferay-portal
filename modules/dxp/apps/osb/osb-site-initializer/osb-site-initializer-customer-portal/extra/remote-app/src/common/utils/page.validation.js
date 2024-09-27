@@ -9,36 +9,29 @@
  * distribution rights of the Software.
  */
 
-import client from '../../apolloClient';
 import {getAccountFlags} from '../services/liferay/graphql/queries';
 import getLiferaySiteName from '../utils/getLiferaySiteName';
-import {API_BASE_URL, ROUTE_TYPES, SEARCH_PARAMS_KEYS} from './constants';
+import {API_BASE_URL, PAGE_ROUTER_TYPES, ROUTE_TYPES} from './constants';
 
 const BASE_API = `${API_BASE_URL}/${getLiferaySiteName()}`;
 
 const getHomeLocation = () => BASE_API;
 
 const getOnboardingLocation = (externalReferenceCode) =>
-	`${BASE_API}/onboarding?${SEARCH_PARAMS_KEYS.accountKey}=${externalReferenceCode}`;
+	PAGE_ROUTER_TYPES.onboarding(externalReferenceCode);
 
 const getOverviewLocation = (externalReferenceCode) => {
-	return `${BASE_API}/overview?${SEARCH_PARAMS_KEYS.accountKey}=${externalReferenceCode}`;
+	return PAGE_ROUTER_TYPES.project(externalReferenceCode);
 };
 
-const isValidPage = async (userAccount, externalReferenceCode, pageKey) => {
-	const validateExternalReferenceCode = (
-		accountBriefs,
-		externalReferenceCode
-	) => {
-		const hasAccountBrief = !!accountBriefs.find(
-			(accountBrief) =>
-				accountBrief.externalReferenceCode === externalReferenceCode
-		);
-
-		return hasAccountBrief;
-	};
-
+const isValidPage = async (
+	client,
+	userAccount,
+	externalReferenceCode,
+	pageKey
+) => {
 	const {data} = await client.query({
+		fetchPolicy: 'network-only',
 		query: getAccountFlags,
 		variables: {
 			filter: `accountKey eq '${externalReferenceCode}' and name eq '${ROUTE_TYPES.onboarding}' and finished eq true`,
@@ -46,31 +39,14 @@ const isValidPage = async (userAccount, externalReferenceCode, pageKey) => {
 	});
 
 	if (data) {
-		const isValidExternalReferenceCode = validateExternalReferenceCode(
-			userAccount.accountBriefs,
-			externalReferenceCode
-		);
 		const hasAccountFlags = !!data.c?.accountFlags?.items?.length;
 		const isAccountAdministrator = userAccount.isAdmin;
-		const hasRoleBriefAdministrator = userAccount?.roleBriefs?.some(
-			(role) => role.name === 'Administrator'
-		);
 
 		if (pageKey === ROUTE_TYPES.onboarding) {
-			if (
-				!(
-					isValidExternalReferenceCode &&
-					isAccountAdministrator &&
-					!hasAccountFlags
-				)
-			) {
+			if (!(isAccountAdministrator && !hasAccountFlags)) {
 				window.location.href =
 					userAccount.accountBriefs.length === 1
-						? getOverviewLocation(
-								isValidExternalReferenceCode
-									? externalReferenceCode
-									: userAccount.accountBriefs[0]
-						  )
+						? getOverviewLocation(externalReferenceCode)
 						: getHomeLocation();
 
 				return false;
@@ -79,13 +55,8 @@ const isValidPage = async (userAccount, externalReferenceCode, pageKey) => {
 			return true;
 		}
 
-		if (pageKey === ROUTE_TYPES.overview) {
-			if (!isValidExternalReferenceCode && !hasRoleBriefAdministrator) {
-				window.location.href = getHomeLocation();
-
-				return false;
-			}
-			else if (!hasAccountFlags && isAccountAdministrator) {
+		if (pageKey === ROUTE_TYPES.project) {
+			if (isAccountAdministrator && !hasAccountFlags) {
 				window.location.href = getOnboardingLocation(
 					externalReferenceCode
 				);

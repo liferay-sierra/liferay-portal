@@ -126,6 +126,10 @@ public class CommerceCatalogPersistenceTest {
 
 		newCommerceCatalog.setMvccVersion(RandomTestUtil.nextLong());
 
+		newCommerceCatalog.setCtCollectionId(RandomTestUtil.nextLong());
+
+		newCommerceCatalog.setUuid(RandomTestUtil.randomString());
+
 		newCommerceCatalog.setExternalReferenceCode(
 			RandomTestUtil.randomString());
 
@@ -158,6 +162,11 @@ public class CommerceCatalogPersistenceTest {
 			existingCommerceCatalog.getMvccVersion(),
 			newCommerceCatalog.getMvccVersion());
 		Assert.assertEquals(
+			existingCommerceCatalog.getCtCollectionId(),
+			newCommerceCatalog.getCtCollectionId());
+		Assert.assertEquals(
+			existingCommerceCatalog.getUuid(), newCommerceCatalog.getUuid());
+		Assert.assertEquals(
 			existingCommerceCatalog.getExternalReferenceCode(),
 			newCommerceCatalog.getExternalReferenceCode());
 		Assert.assertEquals(
@@ -188,6 +197,24 @@ public class CommerceCatalogPersistenceTest {
 			newCommerceCatalog.getCatalogDefaultLanguageId());
 		Assert.assertEquals(
 			existingCommerceCatalog.isSystem(), newCommerceCatalog.isSystem());
+	}
+
+	@Test
+	public void testCountByUuid() throws Exception {
+		_persistence.countByUuid("");
+
+		_persistence.countByUuid("null");
+
+		_persistence.countByUuid((String)null);
+	}
+
+	@Test
+	public void testCountByUuid_C() throws Exception {
+		_persistence.countByUuid_C("", RandomTestUtil.nextLong());
+
+		_persistence.countByUuid_C("null", 0L);
+
+		_persistence.countByUuid_C((String)null, 0L);
 	}
 
 	@Test
@@ -239,11 +266,12 @@ public class CommerceCatalogPersistenceTest {
 
 	protected OrderByComparator<CommerceCatalog> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
-			"CommerceCatalog", "mvccVersion", true, "externalReferenceCode",
-			true, "commerceCatalogId", true, "companyId", true, "userId", true,
-			"userName", true, "createDate", true, "modifiedDate", true, "name",
-			true, "commerceCurrencyCode", true, "catalogDefaultLanguageId",
-			true, "system", true);
+			"CommerceCatalog", "mvccVersion", true, "ctCollectionId", true,
+			"uuid", true, "externalReferenceCode", true, "commerceCatalogId",
+			true, "companyId", true, "userId", true, "userName", true,
+			"createDate", true, "modifiedDate", true, "name", true,
+			"commerceCurrencyCode", true, "catalogDefaultLanguageId", true,
+			"system", true);
 	}
 
 	@Test
@@ -531,6 +559,10 @@ public class CommerceCatalogPersistenceTest {
 		CommerceCatalog commerceCatalog = _persistence.create(pk);
 
 		commerceCatalog.setMvccVersion(RandomTestUtil.nextLong());
+
+		commerceCatalog.setCtCollectionId(RandomTestUtil.nextLong());
+
+		commerceCatalog.setUuid(RandomTestUtil.randomString());
 
 		commerceCatalog.setExternalReferenceCode(RandomTestUtil.randomString());
 

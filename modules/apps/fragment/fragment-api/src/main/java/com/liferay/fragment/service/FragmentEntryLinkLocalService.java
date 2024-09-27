@@ -92,7 +92,7 @@ public interface FragmentEntryLinkLocalService
 			long fragmentEntryId, long segmentsExperienceId, long plid,
 			String css, String html, String js, String configuration,
 			String editableValues, String namespace, int position,
-			String rendererKey, ServiceContext serviceContext)
+			String rendererKey, int type, ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
@@ -141,6 +141,9 @@ public interface FragmentEntryLinkLocalService
 		throws PortalException;
 
 	public void deleteFragmentEntryLinks(long groupId);
+
+	public void deleteFragmentEntryLinks(
+		long groupId, long plid, boolean deleted);
 
 	public void deleteFragmentEntryLinks(long[] fragmentEntryLinkIds)
 		throws PortalException;
@@ -440,6 +443,10 @@ public interface FragmentEntryLinkLocalService
 
 	public void updateClassedModel(long plid);
 
+	public FragmentEntryLink updateDeleted(
+			long fragmentEntryLinkId, boolean deleted)
+		throws PortalException;
+
 	/**
 	 * Updates the fragment entry link in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
@@ -462,7 +469,7 @@ public interface FragmentEntryLinkLocalService
 			long userId, long fragmentEntryLinkId,
 			long originalFragmentEntryLinkId, long fragmentEntryId, long plid,
 			String css, String html, String js, String configuration,
-			String editableValues, String namespace, int position,
+			String editableValues, String namespace, int position, int type,
 			ServiceContext serviceContext)
 		throws PortalException;
 

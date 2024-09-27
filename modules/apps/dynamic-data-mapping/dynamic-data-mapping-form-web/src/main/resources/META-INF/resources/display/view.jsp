@@ -65,12 +65,10 @@ boolean limitToOneSubmissionPerUser = DDMFormInstanceSubmissionLimitStatusUtil.i
 		<%
 		DDMFormInstance formInstance = ddmFormDisplayContext.getFormInstance();
 
-		boolean expired = false;
+		boolean expired = DDMFormInstanceExpirationStatusUtil.isFormExpired(formInstance, timeZone);
 
-		if (ddmFormDisplayContext.isExpirationDateEnabled()) {
-			expired = DDMFormInstanceExpirationStatusUtil.isFormExpired(formInstance, timeZone);
-		}
-
+		boolean formAvailable = ddmFormDisplayContext.isFormAvailable();
+		boolean formShared = ddmFormDisplayContext.isFormShared();
 		boolean preview = ddmFormDisplayContext.isPreview();
 		boolean showSuccessPage = ddmFormDisplayContext.isShowSuccessPage();
 
@@ -95,8 +93,10 @@ boolean limitToOneSubmissionPerUser = DDMFormInstanceSubmissionLimitStatusUtil.i
 					pageTitle = ddmFormDisplayContext.getSuccessPageTitle(displayLocale);
 				}
 				else {
-					pageDescription = LanguageUtil.get(request, "you-can-fill-out-this-form-only-once.-contact-the-owner-of-the-form-if-you-think-this-is-a-mistake");
-					pageTitle = LanguageUtil.get(request, "you-have-already-responded");
+					Map<String, String> limitToOneSubmissionPerUserMap = ddmFormDisplayContext.getLimitToOneSubmissionPerUserMap();
+
+					pageDescription = limitToOneSubmissionPerUserMap.get("limitToOneSubmissionPerUserBody");
+					pageTitle = limitToOneSubmissionPerUserMap.get("limitToOneSubmissionPerUserHeader");
 				}
 				%>
 
@@ -104,6 +104,10 @@ boolean limitToOneSubmissionPerUser = DDMFormInstanceSubmissionLimitStatusUtil.i
 					module="admin/js/components/DefaultPage"
 					props='<%=
 						HashMapBuilder.<String, Object>put(
+							"dataEngineModule", ddmFormDisplayContext.getDataEngineModule()
+						).put(
+							"displayChartAsTable", ddmFormDisplayContext.isDisplayChartAsTable()
+						).put(
 							"formDescription", formInstance.getDescription(displayLocale)
 						).put(
 							"formReportDataURL", formReportDataURL.toString()
@@ -121,7 +125,7 @@ boolean limitToOneSubmissionPerUser = DDMFormInstanceSubmissionLimitStatusUtil.i
 					%>'
 				/>
 			</c:when>
-			<c:when test="<%= ddmFormDisplayContext.isFormAvailable() %>">
+			<c:when test="<%= formAvailable || preview %>">
 				<portlet:actionURL name="/dynamic_data_mapping_form/add_form_instance_record" var="addFormInstanceRecordActionURL" />
 
 				<div class="portlet-forms">
@@ -179,12 +183,25 @@ boolean limitToOneSubmissionPerUser = DDMFormInstanceSubmissionLimitStatusUtil.i
 						<liferay-ui:error exception="<%= NoSuchFormInstanceException.class %>" message="the-selected-form-no-longer-exists" />
 						<liferay-ui:error exception="<%= NoSuchStructureException.class %>" message="unable-to-retrieve-the-definition-of-the-selected-form" />
 						<liferay-ui:error exception="<%= NoSuchStructureLayoutException.class %>" message="unable-to-retrieve-the-layout-of-the-selected-form" />
-						<liferay-ui:error exception="<%= ObjectEntryValuesException.class %>" message="the-maximum-length-is-280-characters-for-text-fields" />
+						<liferay-ui:error exception="<%= ObjectEntryValuesException.ExceedsIntegerSize.class %>" message="object-entry-value-exceeds-integer-field-allowed-size" />
+						<liferay-ui:error exception="<%= ObjectEntryValuesException.ExceedsLongMaxSize.class %>" message="object-entry-value-exceeds-maximum-long-field-allowed-size" />
+						<liferay-ui:error exception="<%= ObjectEntryValuesException.ExceedsLongMinSize.class %>" message="object-entry-value-falls-below-minimum-long-field-allowed-size" />
+						<liferay-ui:error exception="<%= ObjectEntryValuesException.ExceedsLongSize.class %>" message="object-entry-value-exceeds-long-field-allowed-size" />
+
+						<liferay-ui:error exception="<%= ObjectEntryValuesException.ExceedsTextMaxLength.class %>">
+
+							<%
+							ObjectEntryValuesException.ExceedsTextMaxLength etml = (ObjectEntryValuesException.ExceedsTextMaxLength)errorException;
+							%>
+
+							<liferay-ui:message arguments="<%= new String[] {String.valueOf(etml.getMaxLength()), etml.getObjectFieldName()} %>" key="the-entry-value-exceeds-the-maximum-length-of-x-characters-for-object-field-x" translateArguments="<%= false %>" />
+						</liferay-ui:error>
+
 						<liferay-ui:error exception="<%= StorageException.class %>" message="there-was-an-error-when-accessing-the-data-storage" />
 
 						<liferay-ui:error-principal />
 
-						<c:if test="<%= ddmFormDisplayContext.isFormShared() || preview %>">
+						<c:if test="<%= formShared || preview %>">
 							<clay:container-fluid>
 								<div class="locale-actions">
 									<liferay-ui:language
@@ -254,11 +271,13 @@ boolean limitToOneSubmissionPerUser = DDMFormInstanceSubmissionLimitStatusUtil.i
 								module="admin/js/FormView"
 								props='<%=
 									HashMapBuilder.<String, Object>put(
+										"dataEngineModule", ddmFormDisplayContext.getDataEngineModule()
+									).put(
 										"description", StringUtil.trim(formInstance.getDescription(displayLocale))
 									).put(
-										"formReportDataURL", formReportDataURL.toString()
+										"displayChartAsTable", ddmFormDisplayContext.isDisplayChartAsTable()
 									).put(
-										"hasDescription", StringUtils.isNotEmpty(formInstance.getDescription(displayLocale))
+										"formReportDataURL", formReportDataURL.toString()
 									).put(
 										"title", formInstance.getName(displayLocale)
 									).put(
@@ -275,6 +294,8 @@ boolean limitToOneSubmissionPerUser = DDMFormInstanceSubmissionLimitStatusUtil.i
 				</div>
 
 				<aui:script use="aui-base">
+					var <portlet:namespace />form;
+
 					function <portlet:namespace />clearInterval(intervalId) {
 						if (intervalId) {
 							clearInterval(intervalId);
@@ -291,7 +312,7 @@ boolean limitToOneSubmissionPerUser = DDMFormInstanceSubmissionLimitStatusUtil.i
 
 					Liferay.on('destroyPortlet', <portlet:namespace />clearPortletHandlers);
 
-					<c:if test="<%= ddmFormDisplayContext.isFormShared() %>">
+					<c:if test="<%= formShared %>">
 						document.title =
 							'<%= HtmlUtil.escapeJS(formInstance.getName(displayLocale)) %>';
 					</c:if>
@@ -305,8 +326,6 @@ boolean limitToOneSubmissionPerUser = DDMFormInstanceSubmissionLimitStatusUtil.i
 
 					<c:choose>
 						<c:when test="<%= ddmFormDisplayContext.isAutosaveEnabled() %>">
-							var <portlet:namespace />form;
-
 							<liferay-portlet:resourceURL copyCurrentRenderParameters="<%= false %>" id="/dynamic_data_mapping_form/add_form_instance_record" var="autoSaveFormInstanceRecordURL">
 								<portlet:param name="autoSave" value="<%= Boolean.TRUE.toString() %>" />
 								<portlet:param name="languageId" value="<%= languageId %>" />
@@ -336,7 +355,7 @@ boolean limitToOneSubmissionPerUser = DDMFormInstanceSubmissionLimitStatusUtil.i
 							function <portlet:namespace />startAutoSave() {
 								<portlet:namespace />clearInterval(<portlet:namespace />intervalId);
 
-								<portlet:namespace />intervalId = setInterval(
+								window.<portlet:namespace />intervalId = setInterval(
 									<portlet:namespace />autoSave,
 									<%= ddmFormDisplayContext.getAutosaveInterval() %>
 								);
@@ -350,7 +369,7 @@ boolean limitToOneSubmissionPerUser = DDMFormInstanceSubmissionLimitStatusUtil.i
 
 								var time = Liferay.Session.get('sessionLength') || tenSeconds;
 
-								<portlet:namespace />intervalId = setInterval(
+								window.<portlet:namespace />intervalId = setInterval(
 									<portlet:namespace />extendSession,
 									time / 2
 								);
@@ -404,7 +423,7 @@ boolean limitToOneSubmissionPerUser = DDMFormInstanceSubmissionLimitStatusUtil.i
 						var rememberMe = true;
 					</c:if>
 
-					<portlet:namespace />sessionIntervalId = setInterval(() => {
+					window.<portlet:namespace />sessionIntervalId = setInterval(() => {
 						if (Liferay.Session || rememberMe) {
 							clearInterval(<portlet:namespace />sessionIntervalId);
 

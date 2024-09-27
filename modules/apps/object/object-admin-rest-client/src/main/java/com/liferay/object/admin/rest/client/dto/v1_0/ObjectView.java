@@ -204,6 +204,55 @@ public class ObjectView implements Cloneable, Serializable {
 
 	protected ObjectViewColumn[] objectViewColumns;
 
+	public ObjectViewFilterColumn[] getObjectViewFilterColumns() {
+		return objectViewFilterColumns;
+	}
+
+	public void setObjectViewFilterColumns(
+		ObjectViewFilterColumn[] objectViewFilterColumns) {
+
+		this.objectViewFilterColumns = objectViewFilterColumns;
+	}
+
+	public void setObjectViewFilterColumns(
+		UnsafeSupplier<ObjectViewFilterColumn[], Exception>
+			objectViewFilterColumnsUnsafeSupplier) {
+
+		try {
+			objectViewFilterColumns =
+				objectViewFilterColumnsUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected ObjectViewFilterColumn[] objectViewFilterColumns;
+
+	public ObjectViewSortColumn[] getObjectViewSortColumns() {
+		return objectViewSortColumns;
+	}
+
+	public void setObjectViewSortColumns(
+		ObjectViewSortColumn[] objectViewSortColumns) {
+
+		this.objectViewSortColumns = objectViewSortColumns;
+	}
+
+	public void setObjectViewSortColumns(
+		UnsafeSupplier<ObjectViewSortColumn[], Exception>
+			objectViewSortColumnsUnsafeSupplier) {
+
+		try {
+			objectViewSortColumns = objectViewSortColumnsUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected ObjectViewSortColumn[] objectViewSortColumns;
+
 	@Override
 	public ObjectView clone() throws CloneNotSupportedException {
 		return (ObjectView)super.clone();

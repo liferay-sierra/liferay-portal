@@ -14,12 +14,11 @@
 
 package com.liferay.object.internal.validation.rule;
 
+import com.liferay.object.constants.ObjectValidationRuleConstants;
+import com.liferay.object.scripting.executor.ObjectScriptingExecutor;
 import com.liferay.object.validation.rule.ObjectValidationRuleEngine;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.scripting.Scripting;
+import com.liferay.portal.kernel.util.SetUtil;
 
-import java.util.HashSet;
 import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
@@ -28,55 +27,24 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marco Leo
  */
-@Component(immediate = true, service = ObjectValidationRuleEngine.class)
+@Component(service = ObjectValidationRuleEngine.class)
 public class GroovyObjectValidationRuleEngineImpl
 	implements ObjectValidationRuleEngine {
 
 	@Override
-	public boolean evaluate(Map<String, Object> inputObjects, String script) {
-		try {
-			return _evaluate(inputObjects, script);
-		}
-		catch (Exception exception) {
-			_log.error(exception);
+	public Map<String, Object> execute(
+		Map<String, Object> inputObjects, String script) {
 
-			return false;
-		}
+		return _objectScriptingExecutor.execute(
+			inputObjects, SetUtil.fromArray("invalidFields"), script);
 	}
 
 	@Override
 	public String getName() {
-		return "groovy";
+		return ObjectValidationRuleConstants.ENGINE_TYPE_GROOVY;
 	}
 
-	private boolean _evaluate(Map<String, Object> inputObjects, String script)
-		throws Exception {
-
-		Thread currentThread = Thread.currentThread();
-
-		ClassLoader contextClassLoader = currentThread.getContextClassLoader();
-
-		Class<?> clazz = getClass();
-
-		ClassLoader classLoader = clazz.getClassLoader();
-
-		try {
-			currentThread.setContextClassLoader(classLoader);
-
-			_scripting.eval(
-				null, inputObjects, new HashSet<>(), "groovy", script);
-		}
-		finally {
-			currentThread.setContextClassLoader(contextClassLoader);
-		}
-
-		return true;
-	}
-
-	private static final Log _log = LogFactoryUtil.getLog(
-		GroovyObjectValidationRuleEngineImpl.class);
-
-	@Reference
-	private Scripting _scripting;
+	@Reference(target = "(scripting.language=groovy)")
+	private ObjectScriptingExecutor _objectScriptingExecutor;
 
 }

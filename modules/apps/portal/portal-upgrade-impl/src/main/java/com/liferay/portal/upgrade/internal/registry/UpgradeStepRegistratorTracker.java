@@ -16,8 +16,6 @@ package com.liferay.portal.upgrade.internal.registry;
 
 import com.liferay.osgi.util.ServiceTrackerFactory;
 import com.liferay.petra.lang.SafeCloseable;
-import com.liferay.petra.reflect.ReflectionUtil;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.configuration.Configuration;
 import com.liferay.portal.kernel.configuration.ConfigurationFactoryUtil;
 import com.liferay.portal.kernel.dao.db.DBContext;
@@ -30,8 +28,6 @@ import com.liferay.portal.kernel.upgrade.UpgradeException;
 import com.liferay.portal.kernel.upgrade.UpgradeStep;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
-import com.liferay.portal.output.stream.container.constants.OutputStreamContainerConstants;
-import com.liferay.portal.upgrade.internal.executor.SwappedLogExecutor;
 import com.liferay.portal.upgrade.internal.executor.UpgradeExecutor;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 import com.liferay.portal.util.PropsValues;
@@ -39,110 +35,91 @@ import com.liferay.portal.util.PropsValues;
 import java.io.OutputStream;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.Filter;
 import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Reference;
 import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
 /**
  * @author Carlos Sierra Andrés
  */
-@Component(immediate = true, service = {})
 public class UpgradeStepRegistratorTracker {
 
-	@Activate
-	protected void activate(BundleContext bundleContext) {
-		_bundleContext = bundleContext;
+	public UpgradeStepRegistratorTracker(
+		BundleContext bundleContext, ReleaseLocalService releaseLocalService,
+		UpgradeExecutor upgradeExecutor) {
 
-		_serviceTracker = ServiceTrackerFactory.open(
-			bundleContext, UpgradeStepRegistrator.class,
-			new UpgradeStepRegistratorServiceTrackerCustomizer());
+		_bundleContext = bundleContext;
+		_releaseLocalService = releaseLocalService;
+		_upgradeExecutor = upgradeExecutor;
 	}
 
-	@Deactivate
-	protected void deactivate() {
+	public void close() {
 		_serviceTracker.close();
+	}
+
+	public Release fetchUpgradedRelease(String bundleSymbolicName) {
+		Release release = _releaseLocalService.fetchRelease(bundleSymbolicName);
+
+		if (release == null) {
+			List<UpgradeStep> releaseUpgradeSteps = _releaseUpgradeStepsMap.get(
+				bundleSymbolicName);
+
+			if (releaseUpgradeSteps != null) {
+				DBProcessContext dbProcessContext = new DBProcessContext() {
+
+					@Override
+					public DBContext getDBContext() {
+						return new DBContext();
+					}
+
+					@Override
+					public OutputStream getOutputStream() {
+						return null;
+					}
+
+				};
+
+				for (UpgradeStep releaseUpgradeStep : releaseUpgradeSteps) {
+					try {
+						releaseUpgradeStep.upgrade(dbProcessContext);
+					}
+					catch (UpgradeException upgradeException) {
+						_log.error(upgradeException);
+					}
+				}
+
+				release = _releaseLocalService.fetchRelease(bundleSymbolicName);
+			}
+		}
+
+		return release;
+	}
+
+	public void open() {
+		_serviceTracker = ServiceTrackerFactory.open(
+			_bundleContext, UpgradeStepRegistrator.class,
+			new UpgradeStepRegistratorServiceTrackerCustomizer());
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		UpgradeStepRegistratorTracker.class);
 
-	private BundleContext _bundleContext;
-
-	@Reference
-	private ReleaseLocalService _releaseLocalService;
-
+	private final BundleContext _bundleContext;
+	private final ReleaseLocalService _releaseLocalService;
+	private final Map<String, List<UpgradeStep>> _releaseUpgradeStepsMap =
+		new HashMap<>();
 	private ServiceTracker<UpgradeStepRegistrator, SafeCloseable>
 		_serviceTracker;
-
-	@Reference
-	private SwappedLogExecutor _swappedLogExecutor;
-
-	@Reference
-	private UpgradeExecutor _upgradeExecutor;
-
-	private class InitialReleaseServiceTrackerCustomizer
-		implements ServiceTrackerCustomizer<Release, Void> {
-
-		@Override
-		public Void addingService(ServiceReference<Release> serviceReference) {
-			DBProcessContext dbProcessContext = new DBProcessContext() {
-
-				@Override
-				public DBContext getDBContext() {
-					return new DBContext();
-				}
-
-				@Override
-				public OutputStream getOutputStream() {
-					return null;
-				}
-
-			};
-
-			for (UpgradeStep upgradeStep : _initialUpgradeSteps) {
-				try {
-					upgradeStep.upgrade(dbProcessContext);
-				}
-				catch (UpgradeException upgradeException) {
-					_log.error(upgradeException);
-				}
-			}
-
-			return null;
-		}
-
-		@Override
-		public void modifiedService(
-			ServiceReference<Release> serviceReference, Void v) {
-		}
-
-		@Override
-		public void removedService(
-			ServiceReference<Release> serviceReference, Void v) {
-		}
-
-		private InitialReleaseServiceTrackerCustomizer(
-			List<UpgradeStep> initialUpgradeSteps) {
-
-			_initialUpgradeSteps = initialUpgradeSteps;
-		}
-
-		private final List<UpgradeStep> _initialUpgradeSteps;
-
-	}
+	private final UpgradeExecutor _upgradeExecutor;
 
 	private class UpgradeStepRegistratorServiceTrackerCustomizer
 		implements ServiceTrackerCustomizer
@@ -186,21 +163,12 @@ public class UpgradeStepRegistratorTracker {
 
 			upgradeStepRegistrator.register(upgradeStepRegistry);
 
-			List<UpgradeStep> initialUpgradeSteps =
-				upgradeStepRegistry.getInitialUpgradeSteps();
+			List<UpgradeStep> releaseUpgradeSteps =
+				upgradeStepRegistry.getReleaseCreationUpgradeSteps();
 
-			ServiceTracker<Release, Void> releaseServiceTracker;
-
-			if (initialUpgradeSteps.isEmpty()) {
-				releaseServiceTracker = null;
-			}
-			else {
-				releaseServiceTracker = new ServiceTracker<>(
-					_bundleContext, _createFilter(bundleSymbolicName),
-					new InitialReleaseServiceTrackerCustomizer(
-						initialUpgradeSteps));
-
-				releaseServiceTracker.open();
+			if (!releaseUpgradeSteps.isEmpty()) {
+				_releaseUpgradeStepsMap.put(
+					bundleSymbolicName, releaseUpgradeSteps);
 			}
 
 			List<UpgradeInfo> upgradeInfos =
@@ -211,18 +179,13 @@ public class UpgradeStepRegistratorTracker {
 					null)) {
 
 				try {
-					_upgradeExecutor.execute(
-						bundleSymbolicName, upgradeInfos,
-						OutputStreamContainerConstants.FACTORY_NAME_DUMMY);
+					_upgradeExecutor.execute(bundleSymbolicName, upgradeInfos);
 				}
 				catch (Throwable throwable) {
-					_swappedLogExecutor.execute(
-						bundleSymbolicName,
-						() -> _log.error(
-							"Failed upgrade process for module ".concat(
-								bundleSymbolicName),
-							throwable),
-						null);
+					_log.error(
+						"Failed upgrade process for module ".concat(
+							bundleSymbolicName),
+						throwable);
 				}
 			}
 
@@ -242,8 +205,6 @@ public class UpgradeStepRegistratorTracker {
 								"upgrade.bundle.symbolic.name",
 								bundleSymbolicName
 							).put(
-								"upgrade.db.type", "any"
-							).put(
 								"upgrade.from.schema.version",
 								upgradeInfo.getFromSchemaVersionString()
 							).put(
@@ -262,9 +223,7 @@ public class UpgradeStepRegistratorTracker {
 					serviceRegistration.unregister();
 				}
 
-				if (releaseServiceTracker != null) {
-					releaseServiceTracker.close();
-				}
+				_releaseUpgradeStepsMap.remove(bundleSymbolicName);
 			};
 		}
 
@@ -280,19 +239,6 @@ public class UpgradeStepRegistratorTracker {
 			SafeCloseable safeCloseable) {
 
 			safeCloseable.close();
-		}
-
-		private Filter _createFilter(String bundleSymbolicName) {
-			try {
-				return _bundleContext.createFilter(
-					StringBundler.concat(
-						"(&(objectClass=", Release.class.getName(),
-						")(release.bundle.symbolic.name=", bundleSymbolicName,
-						")(release.initial=true))"));
-			}
-			catch (InvalidSyntaxException invalidSyntaxException) {
-				return ReflectionUtil.throwException(invalidSyntaxException);
-			}
 		}
 
 	}

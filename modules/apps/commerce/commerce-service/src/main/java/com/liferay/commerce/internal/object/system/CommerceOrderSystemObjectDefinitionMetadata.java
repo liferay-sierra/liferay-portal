@@ -16,12 +16,15 @@ package com.liferay.commerce.internal.object.system;
 
 import com.liferay.commerce.model.CommerceOrder;
 import com.liferay.commerce.model.CommerceOrderTable;
+import com.liferay.commerce.service.CommerceOrderLocalService;
 import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.system.BaseSystemObjectDefinitionMetadata;
 import com.liferay.object.system.SystemObjectDefinitionMetadata;
 import com.liferay.petra.sql.dsl.Column;
 import com.liferay.petra.sql.dsl.Table;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.BaseModel;
 
 import java.util.Arrays;
 import java.util.List;
@@ -29,17 +32,48 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Marco Leo
  * @author Brian Wing Shun Chan
  */
-@Component(
-	enabled = false, immediate = true,
-	service = SystemObjectDefinitionMetadata.class
-)
+@Component(immediate = true, service = SystemObjectDefinitionMetadata.class)
 public class CommerceOrderSystemObjectDefinitionMetadata
 	extends BaseSystemObjectDefinitionMetadata {
+
+	@Override
+	public BaseModel<?> deleteBaseModel(BaseModel<?> baseModel)
+		throws PortalException {
+
+		return _commerceOrderLocalService.deleteCommerceOrder(
+			(CommerceOrder)baseModel);
+	}
+
+	@Override
+	public BaseModel<?> getBaseModelByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws PortalException {
+
+		return _commerceOrderLocalService.
+			getCommerceOrderByExternalReferenceCode(
+				companyId, externalReferenceCode);
+	}
+
+	@Override
+	public String getExternalReferenceCode(long primaryKey)
+		throws PortalException {
+
+		CommerceOrder commerceOrder =
+			_commerceOrderLocalService.getCommerceOrder(primaryKey);
+
+		return commerceOrder.getExternalReferenceCode();
+	}
+
+	@Override
+	public String getJaxRsApplicationName() {
+		return "Liferay.Headless.Commerce.Admin.Order";
+	}
 
 	@Override
 	public Map<Locale, String> getLabelMap() {
@@ -55,10 +89,11 @@ public class CommerceOrderSystemObjectDefinitionMetadata
 	public List<ObjectField> getObjectFields() {
 		return Arrays.asList(
 			createObjectField(
-				"Integer", "Integer", "order-status", "orderStatus", true),
+				"Integer", "Integer", "order-status", "orderStatus", true,
+				true),
 			createObjectField(
 				"PrecisionDecimal", "BigDecimal", "shipping-amount",
-				"shippingAmount", true));
+				"shippingAmount", true, true));
 	}
 
 	@Override
@@ -90,5 +125,8 @@ public class CommerceOrderSystemObjectDefinitionMetadata
 	public int getVersion() {
 		return 1;
 	}
+
+	@Reference
+	private CommerceOrderLocalService _commerceOrderLocalService;
 
 }

@@ -56,14 +56,13 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 
 import java.io.Serializable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -208,7 +207,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -569,7 +568,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {resourcePrimKey};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -705,7 +704,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -1085,7 +1084,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -1215,7 +1214,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			result = finderCache.getResult(
-				_finderPathFetchByUUID_G, finderArgs);
+				_finderPathFetchByUUID_G, finderArgs, this);
 		}
 
 		if (result instanceof KBArticle) {
@@ -1326,7 +1325,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid, groupId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -1492,7 +1491,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -1904,7 +1903,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid, companyId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -2069,7 +2068,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -2799,7 +2798,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {resourcePrimKey, groupId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -2972,7 +2971,8 @@ public class KBArticlePersistenceImpl
 		Object result = null;
 
 		if (useFinderCache) {
-			result = finderCache.getResult(_finderPathFetchByR_V, finderArgs);
+			result = finderCache.getResult(
+				_finderPathFetchByR_V, finderArgs, this);
 		}
 
 		if (result instanceof KBArticle) {
@@ -3070,7 +3070,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {resourcePrimKey, version};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -3222,7 +3222,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -3649,7 +3649,7 @@ public class KBArticlePersistenceImpl
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>KBArticleModelImpl</code>.
 	 * </p>
 	 *
-	 * @param resourcePrimKey the resource prim key
+	 * @param resourcePrimKeys the resource prim keys
 	 * @param latest the latest
 	 * @param start the lower bound of the range of kb articles
 	 * @param end the upper bound of the range of kb articles (not inclusive)
@@ -3697,7 +3697,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				_finderPathWithPaginationFindByR_L, finderArgs);
+				_finderPathWithPaginationFindByR_L, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -3809,7 +3809,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {resourcePrimKey, latest};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -3871,7 +3871,7 @@ public class KBArticlePersistenceImpl
 		};
 
 		Long count = (Long)finderCache.getResult(
-			_finderPathWithPaginationCountByR_L, finderArgs);
+			_finderPathWithPaginationCountByR_L, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler();
@@ -4039,7 +4039,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -4465,7 +4465,7 @@ public class KBArticlePersistenceImpl
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>KBArticleModelImpl</code>.
 	 * </p>
 	 *
-	 * @param resourcePrimKey the resource prim key
+	 * @param resourcePrimKeys the resource prim keys
 	 * @param main the main
 	 * @param start the lower bound of the range of kb articles
 	 * @param end the upper bound of the range of kb articles (not inclusive)
@@ -4513,7 +4513,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				_finderPathWithPaginationFindByR_M, finderArgs);
+				_finderPathWithPaginationFindByR_M, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -4625,7 +4625,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {resourcePrimKey, main};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -4687,7 +4687,7 @@ public class KBArticlePersistenceImpl
 		};
 
 		Long count = (Long)finderCache.getResult(
-			_finderPathWithPaginationCountByR_M, finderArgs);
+			_finderPathWithPaginationCountByR_M, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler();
@@ -4856,7 +4856,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -5282,7 +5282,7 @@ public class KBArticlePersistenceImpl
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>KBArticleModelImpl</code>.
 	 * </p>
 	 *
-	 * @param resourcePrimKey the resource prim key
+	 * @param resourcePrimKeys the resource prim keys
 	 * @param status the status
 	 * @param start the lower bound of the range of kb articles
 	 * @param end the upper bound of the range of kb articles (not inclusive)
@@ -5330,7 +5330,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				_finderPathWithPaginationFindByR_S, finderArgs);
+				_finderPathWithPaginationFindByR_S, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -5442,7 +5442,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {resourcePrimKey, status};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -5504,7 +5504,7 @@ public class KBArticlePersistenceImpl
 		};
 
 		Long count = (Long)finderCache.getResult(
-			_finderPathWithPaginationCountByR_S, finderArgs);
+			_finderPathWithPaginationCountByR_S, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler();
@@ -5677,7 +5677,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -6464,7 +6464,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {groupId, externalReferenceCode};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -6693,7 +6693,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -7415,7 +7415,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {groupId, latest};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -7617,7 +7617,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -8338,7 +8338,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {groupId, main};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -8540,7 +8540,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -9262,7 +9262,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {groupId, status};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -9465,7 +9465,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -9852,7 +9852,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {companyId, latest};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -10001,7 +10001,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -10387,7 +10387,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {companyId, main};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -10537,7 +10537,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -10924,7 +10924,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {companyId, status};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -11078,7 +11078,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -11509,7 +11509,7 @@ public class KBArticlePersistenceImpl
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>KBArticleModelImpl</code>.
 	 * </p>
 	 *
-	 * @param parentResourcePrimKey the parent resource prim key
+	 * @param parentResourcePrimKeys the parent resource prim keys
 	 * @param latest the latest
 	 * @param start the lower bound of the range of kb articles
 	 * @param end the upper bound of the range of kb articles (not inclusive)
@@ -11559,7 +11559,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				_finderPathWithPaginationFindByP_L, finderArgs);
+				_finderPathWithPaginationFindByP_L, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -11672,7 +11672,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {parentResourcePrimKey, latest};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -11735,7 +11735,7 @@ public class KBArticlePersistenceImpl
 		};
 
 		Long count = (Long)finderCache.getResult(
-			_finderPathWithPaginationCountByP_L, finderArgs);
+			_finderPathWithPaginationCountByP_L, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler();
@@ -11904,7 +11904,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -12334,7 +12334,7 @@ public class KBArticlePersistenceImpl
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>KBArticleModelImpl</code>.
 	 * </p>
 	 *
-	 * @param parentResourcePrimKey the parent resource prim key
+	 * @param parentResourcePrimKeys the parent resource prim keys
 	 * @param main the main
 	 * @param start the lower bound of the range of kb articles
 	 * @param end the upper bound of the range of kb articles (not inclusive)
@@ -12383,7 +12383,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				_finderPathWithPaginationFindByP_M, finderArgs);
+				_finderPathWithPaginationFindByP_M, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -12496,7 +12496,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {parentResourcePrimKey, main};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -12559,7 +12559,7 @@ public class KBArticlePersistenceImpl
 		};
 
 		Long count = (Long)finderCache.getResult(
-			_finderPathWithPaginationCountByP_M, finderArgs);
+			_finderPathWithPaginationCountByP_M, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler();
@@ -12728,7 +12728,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -13159,7 +13159,7 @@ public class KBArticlePersistenceImpl
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>KBArticleModelImpl</code>.
 	 * </p>
 	 *
-	 * @param parentResourcePrimKey the parent resource prim key
+	 * @param parentResourcePrimKeys the parent resource prim keys
 	 * @param status the status
 	 * @param start the lower bound of the range of kb articles
 	 * @param end the upper bound of the range of kb articles (not inclusive)
@@ -13209,7 +13209,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				_finderPathWithPaginationFindByP_S, finderArgs);
+				_finderPathWithPaginationFindByP_S, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -13322,7 +13322,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {parentResourcePrimKey, status};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -13385,7 +13385,7 @@ public class KBArticlePersistenceImpl
 		};
 
 		Long count = (Long)finderCache.getResult(
-			_finderPathWithPaginationCountByP_S, finderArgs);
+			_finderPathWithPaginationCountByP_S, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler();
@@ -13532,7 +13532,8 @@ public class KBArticlePersistenceImpl
 		Object result = null;
 
 		if (useFinderCache) {
-			result = finderCache.getResult(_finderPathFetchByR_G_V, finderArgs);
+			result = finderCache.getResult(
+				_finderPathFetchByR_G_V, finderArgs, this);
 		}
 
 		if (result instanceof KBArticle) {
@@ -13638,7 +13639,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {resourcePrimKey, groupId, version};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -13805,7 +13806,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -14780,7 +14781,7 @@ public class KBArticlePersistenceImpl
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>KBArticleModelImpl</code>.
 	 * </p>
 	 *
-	 * @param resourcePrimKey the resource prim key
+	 * @param resourcePrimKeys the resource prim keys
 	 * @param groupId the group ID
 	 * @param latest the latest
 	 * @param start the lower bound of the range of kb articles
@@ -14830,7 +14831,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				_finderPathWithPaginationFindByR_G_L, finderArgs);
+				_finderPathWithPaginationFindByR_G_L, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -14953,7 +14954,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {resourcePrimKey, groupId, latest};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -15022,7 +15023,7 @@ public class KBArticlePersistenceImpl
 		};
 
 		Long count = (Long)finderCache.getResult(
-			_finderPathWithPaginationCountByR_G_L, finderArgs);
+			_finderPathWithPaginationCountByR_G_L, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler();
@@ -15345,7 +15346,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -16316,7 +16317,7 @@ public class KBArticlePersistenceImpl
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>KBArticleModelImpl</code>.
 	 * </p>
 	 *
-	 * @param resourcePrimKey the resource prim key
+	 * @param resourcePrimKeys the resource prim keys
 	 * @param groupId the group ID
 	 * @param main the main
 	 * @param start the lower bound of the range of kb articles
@@ -16366,7 +16367,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				_finderPathWithPaginationFindByR_G_M, finderArgs);
+				_finderPathWithPaginationFindByR_G_M, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -16487,7 +16488,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {resourcePrimKey, groupId, main};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -16556,7 +16557,7 @@ public class KBArticlePersistenceImpl
 		};
 
 		Long count = (Long)finderCache.getResult(
-			_finderPathWithPaginationCountByR_G_M, finderArgs);
+			_finderPathWithPaginationCountByR_G_M, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler();
@@ -16879,7 +16880,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -17851,7 +17852,7 @@ public class KBArticlePersistenceImpl
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>KBArticleModelImpl</code>.
 	 * </p>
 	 *
-	 * @param resourcePrimKey the resource prim key
+	 * @param resourcePrimKeys the resource prim keys
 	 * @param groupId the group ID
 	 * @param status the status
 	 * @param start the lower bound of the range of kb articles
@@ -17901,7 +17902,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				_finderPathWithPaginationFindByR_G_S, finderArgs);
+				_finderPathWithPaginationFindByR_G_S, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -18020,7 +18021,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {resourcePrimKey, groupId, status};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -18087,7 +18088,7 @@ public class KBArticlePersistenceImpl
 		};
 
 		Long count = (Long)finderCache.getResult(
-			_finderPathWithPaginationCountByR_G_S, finderArgs);
+			_finderPathWithPaginationCountByR_G_S, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler();
@@ -18385,7 +18386,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			result = finderCache.getResult(
-				_finderPathFetchByG_ERC_V, finderArgs);
+				_finderPathFetchByG_ERC_V, finderArgs, this);
 		}
 
 		if (result instanceof KBArticle) {
@@ -18449,23 +18450,6 @@ public class KBArticlePersistenceImpl
 					}
 				}
 				else {
-					if (list.size() > 1) {
-						Collections.sort(list, Collections.reverseOrder());
-
-						if (_log.isWarnEnabled()) {
-							if (!useFinderCache) {
-								finderArgs = new Object[] {
-									groupId, externalReferenceCode, version
-								};
-							}
-
-							_log.warn(
-								"KBArticlePersistenceImpl.fetchByG_ERC_V(long, String, int, boolean) with parameters (" +
-									StringUtil.merge(finderArgs) +
-										") yields a result set with more than 1 result. This violates the logical unique restriction. There is no order guarantee on which result is returned by this finder.");
-						}
-					}
-
 					KBArticle kbArticle = list.get(0);
 
 					result = kbArticle;
@@ -18528,7 +18512,7 @@ public class KBArticlePersistenceImpl
 			groupId, externalReferenceCode, version
 		};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -18713,7 +18697,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -19692,7 +19676,7 @@ public class KBArticlePersistenceImpl
 	 * </p>
 	 *
 	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
+	 * @param parentResourcePrimKeys the parent resource prim keys
 	 * @param latest the latest
 	 * @param start the lower bound of the range of kb articles
 	 * @param end the upper bound of the range of kb articles (not inclusive)
@@ -19742,7 +19726,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				_finderPathWithPaginationFindByG_P_L, finderArgs);
+				_finderPathWithPaginationFindByG_P_L, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -19868,7 +19852,7 @@ public class KBArticlePersistenceImpl
 			groupId, parentResourcePrimKey, latest
 		};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -19938,7 +19922,7 @@ public class KBArticlePersistenceImpl
 		};
 
 		Long count = (Long)finderCache.getResult(
-			_finderPathWithPaginationCountByG_P_L, finderArgs);
+			_finderPathWithPaginationCountByG_P_L, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler();
@@ -20267,7 +20251,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -21246,7 +21230,7 @@ public class KBArticlePersistenceImpl
 	 * </p>
 	 *
 	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
+	 * @param parentResourcePrimKeys the parent resource prim keys
 	 * @param main the main
 	 * @param start the lower bound of the range of kb articles
 	 * @param end the upper bound of the range of kb articles (not inclusive)
@@ -21296,7 +21280,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				_finderPathWithPaginationFindByG_P_M, finderArgs);
+				_finderPathWithPaginationFindByG_P_M, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -21422,7 +21406,7 @@ public class KBArticlePersistenceImpl
 			groupId, parentResourcePrimKey, main
 		};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -21492,7 +21476,7 @@ public class KBArticlePersistenceImpl
 		};
 
 		Long count = (Long)finderCache.getResult(
-			_finderPathWithPaginationCountByG_P_M, finderArgs);
+			_finderPathWithPaginationCountByG_P_M, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler();
@@ -21821,7 +21805,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -22800,7 +22784,7 @@ public class KBArticlePersistenceImpl
 	 * </p>
 	 *
 	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
+	 * @param parentResourcePrimKeys the parent resource prim keys
 	 * @param status the status
 	 * @param start the lower bound of the range of kb articles
 	 * @param end the upper bound of the range of kb articles (not inclusive)
@@ -22850,7 +22834,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				_finderPathWithPaginationFindByG_P_S, finderArgs);
+				_finderPathWithPaginationFindByG_P_S, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -22976,7 +22960,7 @@ public class KBArticlePersistenceImpl
 			groupId, parentResourcePrimKey, status
 		};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -23046,7 +23030,7 @@ public class KBArticlePersistenceImpl
 		};
 
 		Long count = (Long)finderCache.getResult(
-			_finderPathWithPaginationCountByG_P_S, finderArgs);
+			_finderPathWithPaginationCountByG_P_S, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler();
@@ -23370,7 +23354,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -24193,7 +24177,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {groupId, kbFolderId, urlTitle};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -24444,7 +24428,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -25213,7 +25197,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {groupId, kbFolderId, latest};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -25437,7 +25421,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -26204,7 +26188,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {groupId, kbFolderId, status};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -26419,7 +26403,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -27458,7 +27442,7 @@ public class KBArticlePersistenceImpl
 	 * </p>
 	 *
 	 * @param groupId the group ID
-	 * @param sections the sections
+	 * @param sectionses the sectionses
 	 * @param latest the latest
 	 * @param start the lower bound of the range of kb articles
 	 * @param end the upper bound of the range of kb articles (not inclusive)
@@ -27510,7 +27494,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				_finderPathWithPaginationFindByG_LikeS_L, finderArgs);
+				_finderPathWithPaginationFindByG_LikeS_L, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -27649,7 +27633,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {groupId, sections, latest};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -27733,7 +27717,7 @@ public class KBArticlePersistenceImpl
 		};
 
 		Long count = (Long)finderCache.getResult(
-			_finderPathWithPaginationCountByG_LikeS_L, finderArgs);
+			_finderPathWithPaginationCountByG_LikeS_L, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler();
@@ -28099,7 +28083,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -29137,7 +29121,7 @@ public class KBArticlePersistenceImpl
 	 * </p>
 	 *
 	 * @param groupId the group ID
-	 * @param sections the sections
+	 * @param sectionses the sectionses
 	 * @param main the main
 	 * @param start the lower bound of the range of kb articles
 	 * @param end the upper bound of the range of kb articles (not inclusive)
@@ -29189,7 +29173,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				_finderPathWithPaginationFindByG_LikeS_M, finderArgs);
+				_finderPathWithPaginationFindByG_LikeS_M, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -29326,7 +29310,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {groupId, sections, main};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -29410,7 +29394,7 @@ public class KBArticlePersistenceImpl
 		};
 
 		Long count = (Long)finderCache.getResult(
-			_finderPathWithPaginationCountByG_LikeS_M, finderArgs);
+			_finderPathWithPaginationCountByG_LikeS_M, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler();
@@ -29776,7 +29760,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -30815,7 +30799,7 @@ public class KBArticlePersistenceImpl
 	 * </p>
 	 *
 	 * @param groupId the group ID
-	 * @param sections the sections
+	 * @param sectionses the sectionses
 	 * @param status the status
 	 * @param start the lower bound of the range of kb articles
 	 * @param end the upper bound of the range of kb articles (not inclusive)
@@ -30867,7 +30851,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				_finderPathWithPaginationFindByG_LikeS_S, finderArgs);
+				_finderPathWithPaginationFindByG_LikeS_S, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -31004,7 +30988,7 @@ public class KBArticlePersistenceImpl
 
 		Object[] finderArgs = new Object[] {groupId, sections, status};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -31086,7 +31070,7 @@ public class KBArticlePersistenceImpl
 		};
 
 		Long count = (Long)finderCache.getResult(
-			_finderPathWithPaginationCountByG_LikeS_S, finderArgs);
+			_finderPathWithPaginationCountByG_LikeS_S, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler();
@@ -31472,7 +31456,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -32499,7 +32483,7 @@ public class KBArticlePersistenceImpl
 	 * </p>
 	 *
 	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
+	 * @param parentResourcePrimKeys the parent resource prim keys
 	 * @param latest the latest
 	 * @param status the status
 	 * @param start the lower bound of the range of kb articles
@@ -32551,7 +32535,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				_finderPathWithPaginationFindByG_P_L_S, finderArgs);
+				_finderPathWithPaginationFindByG_P_L_S, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -32685,7 +32669,7 @@ public class KBArticlePersistenceImpl
 			groupId, parentResourcePrimKey, latest, status
 		};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(5);
@@ -32761,7 +32745,7 @@ public class KBArticlePersistenceImpl
 		};
 
 		Long count = (Long)finderCache.getResult(
-			_finderPathWithPaginationCountByG_P_L_S, finderArgs);
+			_finderPathWithPaginationCountByG_P_L_S, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler();
@@ -33116,7 +33100,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -34198,7 +34182,7 @@ public class KBArticlePersistenceImpl
 	 * @param groupId the group ID
 	 * @param kbFolderId the kb folder ID
 	 * @param urlTitle the url title
-	 * @param status the status
+	 * @param statuses the statuses
 	 * @param start the lower bound of the range of kb articles
 	 * @param end the upper bound of the range of kb articles (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
@@ -34248,7 +34232,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				_finderPathWithPaginationFindByG_KBFI_UT_ST, finderArgs);
+				_finderPathWithPaginationFindByG_KBFI_UT_ST, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBArticle kbArticle : list) {
@@ -34391,7 +34375,7 @@ public class KBArticlePersistenceImpl
 			groupId, kbFolderId, urlTitle, status
 		};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(5);
@@ -34478,7 +34462,7 @@ public class KBArticlePersistenceImpl
 		};
 
 		Long count = (Long)finderCache.getResult(
-			_finderPathWithPaginationCountByG_KBFI_UT_ST, finderArgs);
+			_finderPathWithPaginationCountByG_KBFI_UT_ST, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler();
@@ -34916,7 +34900,7 @@ public class KBArticlePersistenceImpl
 		kbArticle.setNew(true);
 		kbArticle.setPrimaryKey(kbArticleId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		kbArticle.setUuid(uuid);
 
@@ -35031,9 +35015,13 @@ public class KBArticlePersistenceImpl
 		KBArticleModelImpl kbArticleModelImpl = (KBArticleModelImpl)kbArticle;
 
 		if (Validator.isNull(kbArticle.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			kbArticle.setUuid(uuid);
+		}
+
+		if (Validator.isNull(kbArticle.getExternalReferenceCode())) {
+			kbArticle.setExternalReferenceCode(kbArticle.getUuid());
 		}
 
 		ServiceContext serviceContext =
@@ -35250,7 +35238,7 @@ public class KBArticlePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBArticle>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -35320,7 +35308,7 @@ public class KBArticlePersistenceImpl
 	@Override
 	public int countAll() {
 		Long count = (Long)finderCache.getResult(
-			_finderPathCountAll, FINDER_ARGS_EMPTY);
+			_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -36313,6 +36301,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	@Reference
-	private KBArticleModelArgumentsResolver _kbArticleModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

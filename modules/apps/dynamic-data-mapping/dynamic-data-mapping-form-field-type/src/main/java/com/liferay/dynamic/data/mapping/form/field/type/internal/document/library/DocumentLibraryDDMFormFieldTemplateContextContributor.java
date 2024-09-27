@@ -28,14 +28,13 @@ import com.liferay.item.selector.ItemSelector;
 import com.liferay.item.selector.ItemSelectorCriterion;
 import com.liferay.item.selector.criteria.FileEntryItemSelectorReturnType;
 import com.liferay.item.selector.criteria.file.criterion.FileItemSelectorCriterion;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
@@ -44,6 +43,7 @@ import com.liferay.portal.kernel.model.Repository;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepository;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.Folder;
@@ -79,8 +79,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 
-import javax.portlet.PortletURL;
-
 import javax.servlet.http.HttpServletRequest;
 
 import org.osgi.service.component.annotations.Component;
@@ -90,7 +88,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pedro Queiroz
  */
 @Component(
-	immediate = true,
 	property = "ddm.form.field.type.name=" + DDMFormFieldTypeConstants.DOCUMENT_LIBRARY,
 	service = {
 		DDMFormFieldTemplateContextContributor.class,
@@ -123,6 +120,10 @@ public class DocumentLibraryDDMFormFieldTemplateContextContributor
 			_getMessage(
 				ddmFormFieldRenderingContext.getLocale(),
 				ddmFormFieldRenderingContext.getValue())
+		).put(
+			"objectFieldAcceptedFileExtensions",
+			GetterUtil.getString(
+				ddmFormField.getProperty("objectFieldAcceptedFileExtensions"))
 		).put(
 			"value",
 			() -> {
@@ -189,8 +190,8 @@ public class DocumentLibraryDDMFormFieldTemplateContextContributor
 				DDMFormConstants.DDM_FORM_DEFAULT_USER_FIRST_NAME;
 			String middleName = StringPool.BLANK;
 			String lastName = DDMFormConstants.DDM_FORM_DEFAULT_USER_LAST_NAME;
-			long prefixId = 0;
-			long suffixId = 0;
+			long prefixListTypeId = 0;
+			long suffixListTypeId = 0;
 			boolean male = true;
 			int birthdayMonth = Calendar.JANUARY;
 			int birthdayDay = 1;
@@ -206,9 +207,10 @@ public class DocumentLibraryDDMFormFieldTemplateContextContributor
 			User user = _userLocalService.addUser(
 				creatorUserId, companyId, autoPassword, password1, password2,
 				autoScreenName, screenName, emailAddress, locale, firstName,
-				middleName, lastName, prefixId, suffixId, male, birthdayMonth,
-				birthdayDay, birthdayYear, jobTitle, groupIds, organizationIds,
-				roleIds, userGroupIds, sendEmail, serviceContext);
+				middleName, lastName, prefixListTypeId, suffixListTypeId, male,
+				birthdayMonth, birthdayDay, birthdayYear, jobTitle, groupIds,
+				organizationIds, roleIds, userGroupIds, sendEmail,
+				serviceContext);
 
 			_userLocalService.updateStatus(
 				user.getUserId(), WorkflowConstants.STATUS_INACTIVE,
@@ -251,7 +253,7 @@ public class DocumentLibraryDDMFormFieldTemplateContextContributor
 		try {
 			return _dlAppService.addFolder(
 				repositoryId, parentFolderId, user.getScreenName(),
-				LanguageUtil.get(
+				_language.get(
 					getResourceBundle(user.getLocale()),
 					"this-folder-was-automatically-created-by-forms-to-store-" +
 						"all-your-uploaded-files"),
@@ -337,7 +339,7 @@ public class DocumentLibraryDDMFormFieldTemplateContextContributor
 		}
 		catch (PortalException portalException) {
 			if (_log.isDebugEnabled()) {
-				_log.debug("Unable to retrieve file entry ", portalException);
+				_log.debug("Unable to get file entry", portalException);
 			}
 
 			return null;
@@ -397,6 +399,7 @@ public class DocumentLibraryDDMFormFieldTemplateContextContributor
 	}
 
 	private String _getGuestUploadURL(
+		DDMFormField ddmFormField,
 		DDMFormFieldRenderingContext ddmFormFieldRenderingContext,
 		long folderId, HttpServletRequest httpServletRequest) {
 
@@ -420,10 +423,14 @@ public class DocumentLibraryDDMFormFieldTemplateContextContributor
 					ddmFormFieldRenderingContext.getDDMFormInstanceId()))
 		).setParameter(
 			"groupId", ddmFormFieldRenderingContext.getProperty("groupId")
+		).setParameter(
+			"objectFieldId",
+			GetterUtil.getLong(ddmFormField.getProperty("objectFieldId"))
 		).buildString();
 	}
 
 	private String _getItemSelectorURL(
+		DDMFormField ddmFormField,
 		DDMFormFieldRenderingContext ddmFormFieldRenderingContext,
 		long folderId, long repositoryId, ThemeDisplay themeDisplay) {
 
@@ -450,6 +457,8 @@ public class DocumentLibraryDDMFormFieldTemplateContextContributor
 		ddmUserPersonalFolderItemSelectorCriterion.
 			setDesiredItemSelectorReturnTypes(
 				new FileEntryItemSelectorReturnType());
+		ddmUserPersonalFolderItemSelectorCriterion.setObjectFieldId(
+			GetterUtil.getLong(ddmFormField.getProperty("objectFieldId")));
 		ddmUserPersonalFolderItemSelectorCriterion.setRepositoryId(
 			repositoryId);
 
@@ -472,13 +481,12 @@ public class DocumentLibraryDDMFormFieldTemplateContextContributor
 			itemSelectorCriteria.add(fileItemSelectorCriterion);
 		}
 
-		PortletURL itemSelectorURL = _itemSelector.getItemSelectorURL(
-			RequestBackedPortletURLFactoryUtil.create(
-				ddmFormFieldRenderingContext.getHttpServletRequest()),
-			group, groupId, portletNamespace + "selectDocumentLibrary",
-			itemSelectorCriteria.toArray(new ItemSelectorCriterion[0]));
-
-		return itemSelectorURL.toString();
+		return String.valueOf(
+			_itemSelector.getItemSelectorURL(
+				RequestBackedPortletURLFactoryUtil.create(
+					ddmFormFieldRenderingContext.getHttpServletRequest()),
+				group, groupId, portletNamespace + "selectDocumentLibrary",
+				itemSelectorCriteria.toArray(new ItemSelectorCriterion[0])));
 	}
 
 	private String _getMessage(Locale defaultLocale, String value) {
@@ -495,13 +503,13 @@ public class DocumentLibraryDDMFormFieldTemplateContextContributor
 		FileEntry fileEntry = _getFileEntry(valueJSONObject);
 
 		if (fileEntry == null) {
-			return LanguageUtil.get(
+			return _language.get(
 				getResourceBundle(defaultLocale),
 				"the-selected-document-was-deleted");
 		}
 
 		if (fileEntry.isInTrash()) {
-			return LanguageUtil.get(
+			return _language.get(
 				getResourceBundle(defaultLocale),
 				"the-selected-document-was-moved-to-the-recycle-bin");
 		}
@@ -624,8 +632,8 @@ public class DocumentLibraryDDMFormFieldTemplateContextContributor
 					}
 
 					return _getGuestUploadURL(
-						ddmFormFieldRenderingContext, ddmFormFolderId,
-						httpServletRequest);
+						ddmFormField, ddmFormFieldRenderingContext,
+						ddmFormFolderId, httpServletRequest);
 				}
 			).build();
 		}
@@ -656,8 +664,9 @@ public class DocumentLibraryDDMFormFieldTemplateContextContributor
 				}
 
 				return _getItemSelectorURL(
-					ddmFormFieldRenderingContext, privateUserFolderId,
-					repository.getRepositoryId(), themeDisplay);
+					ddmFormField, ddmFormFieldRenderingContext,
+					privateUserFolderId, repository.getRepositoryId(),
+					themeDisplay);
 			}
 		).build();
 	}
@@ -700,6 +709,9 @@ public class DocumentLibraryDDMFormFieldTemplateContextContributor
 
 	@Reference
 	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

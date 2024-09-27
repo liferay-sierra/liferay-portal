@@ -15,17 +15,14 @@
 package com.liferay.exportimport.web.internal.portlet.configuration.icon;
 
 import com.liferay.exportimport.constants.ExportImportPortletKeys;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.configuration.icon.BasePortletConfigurationIcon;
 import com.liferay.portal.kernel.portlet.configuration.icon.PortletConfigurationIcon;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.WebKeys;
-
-import java.util.ResourceBundle;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletResponse;
@@ -37,7 +34,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Máté Thurzó
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + ExportImportPortletKeys.EXPORT,
 	service = PortletConfigurationIcon.class
 )
@@ -46,10 +42,7 @@ public class ExportTemplatesConfigurationIcon
 
 	@Override
 	public String getMessage(PortletRequest portletRequest) {
-		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-			"content.Language", getLocale(portletRequest), getClass());
-
-		return LanguageUtil.get(resourceBundle, "export-templates");
+		return _language.get(getLocale(portletRequest), "export-templates");
 	}
 
 	@Override
@@ -92,15 +85,8 @@ public class ExportTemplatesConfigurationIcon
 		return true;
 	}
 
-	@Override
-	public boolean isToolTip() {
-		return false;
-	}
-
-	@Override
-	public boolean isUseDialog() {
-		return false;
-	}
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

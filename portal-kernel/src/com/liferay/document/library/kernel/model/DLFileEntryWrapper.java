@@ -536,6 +536,13 @@ public class DLFileEntryWrapper
 	}
 
 	@Override
+	public java.util.List<DLFileVersion> getFileVersions(
+		int status, int start, int end) {
+
+		return model.getFileVersions(status, start, end);
+	}
+
+	@Override
 	public int getFileVersionsCount(int status) {
 		return model.getFileVersionsCount(status);
 	}
@@ -763,18 +770,6 @@ public class DLFileEntryWrapper
 	@Override
 	public long getTrashEntryClassPK() {
 		return model.getTrashEntryClassPK();
-	}
-
-	/**
-	 * Returns the trash handler for this document library file entry.
-	 *
-	 * @return the trash handler for this document library file entry
-	 * @deprecated As of Judson (7.1.x), with no direct replacement
-	 */
-	@Deprecated
-	@Override
-	public com.liferay.portal.kernel.trash.TrashHandler getTrashHandler() {
-		return model.getTrashHandler();
 	}
 
 	/**

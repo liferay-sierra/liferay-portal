@@ -18,12 +18,13 @@ import com.liferay.message.boards.constants.MBPortletKeys;
 import com.liferay.message.boards.model.MBCategory;
 import com.liferay.message.boards.settings.MBGroupServiceSettings;
 import com.liferay.message.boards.web.internal.portlet.action.ActionUtil;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.message.boards.web.internal.util.MBRequestUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.configuration.icon.BasePortletConfigurationIcon;
 import com.liferay.portal.kernel.portlet.configuration.icon.PortletConfigurationIcon;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -70,8 +71,7 @@ public class CategorySubscriptionPortletConfigurationIcon
 			}
 		}
 
-		return LanguageUtil.get(
-			getResourceBundle(getLocale(portletRequest)), key);
+		return _language.get(getLocale(portletRequest), key);
 	}
 
 	@Override
@@ -126,7 +126,8 @@ public class CategorySubscriptionPortletConfigurationIcon
 
 		try {
 			MBGroupServiceSettings mbGroupServiceSettings =
-				MBGroupServiceSettings.getInstance(
+				MBRequestUtil.getMBGroupServiceSettings(
+					_portal.getHttpServletRequest(portletRequest),
 					themeDisplay.getScopeGroupId());
 
 			if (!mbGroupServiceSettings.isEmailMessageAddedEnabled() &&
@@ -146,13 +147,6 @@ public class CategorySubscriptionPortletConfigurationIcon
 		}
 
 		return false;
-	}
-
-	@Reference(unbind = "-")
-	protected void setSubscriptionLocalService(
-		SubscriptionLocalService subscriptionLocalService) {
-
-		_subscriptionLocalService = subscriptionLocalService;
 	}
 
 	private boolean _isSubscribed(
@@ -176,8 +170,12 @@ public class CategorySubscriptionPortletConfigurationIcon
 		_categoryModelResourcePermission;
 
 	@Reference
+	private Language _language;
+
+	@Reference
 	private Portal _portal;
 
+	@Reference
 	private SubscriptionLocalService _subscriptionLocalService;
 
 }

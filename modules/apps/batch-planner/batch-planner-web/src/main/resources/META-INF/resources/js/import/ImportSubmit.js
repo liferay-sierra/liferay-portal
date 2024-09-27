@@ -13,28 +13,37 @@
  */
 
 import ClayButton from '@clayui/button';
-import {useModal} from '@clayui/modal';
+import ClayModal, {useModal} from '@clayui/modal';
 import PropTypes from 'prop-types';
 import React, {useCallback, useState} from 'react';
 
 import ImportModal from './ImportModal';
+import ImportPreviewModalBody from './ImportPreviewModalBody';
 
 function ImportSubmit({
 	evaluateForm,
+	fieldsSelections,
+	fileContent,
 	formDataQuerySelector,
 	formImportURL,
 	formIsValid,
-	portletNamespace,
 }) {
-	const [visible, setVisible] = useState(false);
+	const [modalVisibile, setModalVisibile] = useState(false);
+	const [stage, setStage] = useState('preview');
+
 	const {observer, onClose} = useModal({
-		onClose: () => setVisible(false),
+		onClose: () => {
+			setStage('preview');
+
+			setModalVisibile(false);
+		},
 	});
-	const onButtonClick = useCallback(() => {
-		evaluateForm(true);
+
+	const showPreviewModal = useCallback(() => {
+		evaluateForm();
 
 		if (formIsValid) {
-			setVisible(true);
+			setModalVisibile(true);
 		}
 	}, [evaluateForm, formIsValid]);
 
@@ -42,20 +51,28 @@ function ImportSubmit({
 		<span className="mr-3">
 			<ClayButton
 				displayType="primary"
-				id={`${portletNamespace}-import-submit`}
-				onClick={onButtonClick}
+				onClick={showPreviewModal}
 				type="button"
 			>
-				{Liferay.Language.get('import')}
+				{Liferay.Language.get('next')}
 			</ClayButton>
 
-			{visible && (
+			{modalVisibile && stage === 'preview' && (
+				<ClayModal observer={observer} size="lg">
+					<ImportPreviewModalBody
+						closeModal={onClose}
+						fieldsSelections={fieldsSelections}
+						fileContent={fileContent}
+						startImport={() => setStage('import')}
+					/>
+				</ClayModal>
+			)}
+
+			{modalVisibile && stage === 'import' && (
 				<ImportModal
 					closeModal={onClose}
 					formDataQuerySelector={formDataQuerySelector}
-					formSubmitURL={formImportURL}
-					namespace={portletNamespace}
-					observer={observer}
+					formImportURL={formImportURL}
 				/>
 			)}
 		</span>
@@ -65,7 +82,6 @@ function ImportSubmit({
 ImportSubmit.propTypes = {
 	formDataQuerySelector: PropTypes.string.isRequired,
 	formImportURL: PropTypes.string.isRequired,
-	portletNamespace: PropTypes.string.isRequired,
 };
 
 export default ImportSubmit;

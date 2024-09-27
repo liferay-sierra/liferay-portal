@@ -38,15 +38,11 @@ import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * @author Rafael Praxedes
  */
 @Component(
-	immediate = true,
 	property = "workflow.metrics.index.entity.name=sla-task-result",
 	service = WorkflowMetricsReindexer.class
 )
@@ -58,17 +54,11 @@ public class SLATaskResultWorkflowMetricsReindexer
 		_creatDefaultDocuments(companyId);
 	}
 
-	@Reference(
-		cardinality = ReferenceCardinality.OPTIONAL,
-		policy = ReferencePolicy.DYNAMIC,
-		policyOption = ReferencePolicyOption.GREEDY,
-		target = "(search.engine.impl=Elasticsearch)"
-	)
+	@Reference(target = "(search.engine.impl=Elasticsearch)")
 	protected volatile SearchEngineAdapter searchEngineAdapter;
 
 	private void _creatDefaultDocuments(long companyId) {
-		if ((searchEngineAdapter == null) ||
-			!_hasIndex(
+		if (!_hasIndex(
 				_nodeWorkflowMetricsIndexNameBuilder.getIndexName(companyId))) {
 
 			return;
@@ -146,10 +136,6 @@ public class SLATaskResultWorkflowMetricsReindexer
 	}
 
 	private boolean _hasIndex(String indexName) {
-		if (searchEngineAdapter == null) {
-			return false;
-		}
-
 		IndicesExistsIndexRequest indicesExistsIndexRequest =
 			new IndicesExistsIndexRequest(indexName);
 

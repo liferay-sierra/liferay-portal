@@ -76,7 +76,7 @@ definition {
 			PageEditor.viewFragmentEditableImage(
 				id = "image-square",
 				imageDescription = "",
-				imageFileName = "high_resolution_photo.jpg");
+				imageFileName = "high_resolution_photo-jpg");
 		}
 
 		task ("Take down the File Size of image resolution") {
@@ -89,7 +89,7 @@ definition {
 				locator1 = "Select#GENERIC_SELECT_FIELD",
 				value1 = "Preview-1000x0");
 
-			Pause(locator1 = "3000");
+			PageEditor.waitForAutoSave();
 
 			AssertSelectedLabel(
 				key_fieldLabel = "Resolution",
@@ -99,7 +99,6 @@ definition {
 
 		task ("Take down the Width and File Size of image resolution") {
 			var fileSizeManual = PageEditor.getFileSizeOfSelectedImageResolution();
-
 			var widthManual = PageEditor.getWidthOfSelectedImageResolution();
 		}
 
@@ -138,7 +137,7 @@ definition {
 			PageEditor.viewFragmentEditableImage(
 				id = "image-square",
 				imageDescription = "",
-				imageFileName = "high_resolution_photo.jpg");
+				imageFileName = "high_resolution_photo-jpg");
 
 			WaitForElementPresent(
 				key_resolutionLabel = "File Size",
@@ -156,12 +155,26 @@ definition {
 		}
 
 		task ("Select the Thumbnail-300x300 image resolution") {
+			PageEditor.clickManagementBar();
+
+			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#PAGE_EDITOR_GLOBAL_CONTEXT_IFRAME");
+
+			PageEditor.clickEditableField(
+				fragmentName = "Image",
+				id = "image-square");
+
+			SelectFrameTop();
+
+			WaitForElementPresent(
+				key_resolutionLabel = "File Size",
+				locator1 = "PageEditor#IMAGE_RESOLUTION_LABEL");
+
 			Select(
 				key_fieldLabel = "Resolution",
 				locator1 = "Select#GENERIC_SELECT_FIELD",
 				value1 = "Thumbnail-300x300");
 
-			Pause(locator1 = "3000");
+			PageEditor.waitForAutoSave();
 
 			AssertSelectedLabel(
 				key_fieldLabel = "Resolution",
@@ -171,7 +184,6 @@ definition {
 
 		task ("Take down the Width and File Size of image resolution") {
 			var fileSizeManual = PageEditor.getFileSizeOfSelectedImageResolution();
-
 			var widthManual = PageEditor.getWidthOfSelectedImageResolution();
 		}
 
@@ -211,13 +223,12 @@ definition {
 				uploadFileName = "high_resolution_photo.jpg");
 
 			PageEditor.viewContainerStyle(
-				backgroundImage = "high_resolution_photo.jpg",
+				backgroundImage = "high_resolution_photo-jpg",
 				position = "1");
 		}
 
 		task ("Take down the Width and File Size of image resolution in Desktop viewport") {
 			var fileSizeDesktop = PageEditor.getFileSizeOfSelectedImageResolution();
-
 			var width = PageEditor.getWidthOfSelectedImageResolution();
 		}
 
@@ -236,12 +247,13 @@ definition {
 				key_deviceType = "Tablet",
 				locator1 = "PageEditor#DEVICE_TYPE");
 
-			Pause(locator1 = "3000");
+			WaitForElementPresent(
+				key_deviceType = "Tablet",
+				locator1 = "PageEditor#DEVICE_TYPE_ACTIVE");
 		}
 
 		task ("Take down the Width and File Size of image resolution in Tablet viewport") {
 			var fileSizeTablet = PageEditor.getFileSizeOfSelectedImageResolution();
-
 			var width = PageEditor.getWidthOfSelectedImageResolution();
 		}
 
@@ -279,13 +291,12 @@ definition {
 				position = "2");
 
 			PageEditor.viewContainerStyle(
-				backgroundImage = "high_resolution_photo.jpg",
+				backgroundImage = "high_resolution_photo-jpg",
 				position = "2");
 		}
 
 		task ("Take down the Width and File Size of image resolution in Desktop viewport") {
 			var fileSizeDesktop = PageEditor.getFileSizeOfSelectedImageResolution();
-
 			var width = PageEditor.getWidthOfSelectedImageResolution();
 		}
 
@@ -304,12 +315,13 @@ definition {
 				key_deviceType = "Portrait Phone",
 				locator1 = "PageEditor#DEVICE_TYPE");
 
-			Pause(locator1 = "3000");
+			WaitForElementPresent(
+				key_deviceType = "Portrait Phone",
+				locator1 = "PageEditor#DEVICE_TYPE_ACTIVE");
 		}
 
 		task ("Take down the Width and File Size of image resolution in Portrait Phone viewport") {
 			var fileSizePortraitPhone = PageEditor.getFileSizeOfSelectedImageResolution();
-
 			var width = PageEditor.getWidthOfSelectedImageResolution();
 		}
 
@@ -391,14 +403,12 @@ definition {
 				entryTitle = "Web Content Title",
 				navItem = "Web Content");
 
-			Pause(locator1 = "3000");
+			PageEditor.waitForAutoSave();
 
 			Select(
 				key_fieldLabel = "Field",
 				locator1 = "Select#GENERIC_SELECT_FIELD",
 				value1 = "Image");
-
-			Pause(locator1 = "3000");
 
 			PageEditor.waitForAutoSave();
 		}
@@ -451,12 +461,11 @@ definition {
 				panel = "Styles",
 				uploadFileName = "high_resolution_photo.jpg");
 
-			PageEditor.viewContainerStyle(backgroundImage = "high_resolution_photo.jpg");
+			PageEditor.viewContainerStyle(backgroundImage = "high_resolution_photo\.jpg");
 		}
 
 		task ("Take down the Width and File Size of image resolution in Desktop viewport") {
 			var fileSizeDesktop = PageEditor.getFileSizeOfSelectedImageResolution();
-
 			var width = PageEditor.getWidthOfSelectedImageResolution();
 		}
 
@@ -481,12 +490,13 @@ definition {
 				key_deviceType = "Portrait Phone",
 				locator1 = "PageEditor#DEVICE_TYPE");
 
-			Pause(locator1 = "3000");
+			WaitForElementPresent(
+				key_deviceType = "Portrait Phone",
+				locator1 = "PageEditor#DEVICE_TYPE_ACTIVE");
 		}
 
 		task ("Take down the Width and File Size of image resolution in Portrait Phone viewport") {
 			var fileSizePortraitPhone = PageEditor.getFileSizeOfSelectedImageResolution();
-
 			var width = PageEditor.getWidthOfSelectedImageResolution();
 		}
 
@@ -515,45 +525,22 @@ definition {
 		}
 
 		task ("Open the Preview modal") {
-			PageEditor.openPreviewMode();
+			PageEditor.previewInANewTab();
 		}
 
 		task ("Assert the mapping image is shown in Preview modal") {
-			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_BODY");
-
 			ContentPages.viewFragmentBackgroundImage(image = "high_resolution_photo.jpg");
 		}
 
 		task ("Assert the orignal image is selected automatically") {
 			PageEditor.assertAutoImageResolution(
 				adaptiveMediaName = "/documents/",
-				element = "//div[contains(@class,'bg-gray500Color')][contains(@style,'high_resolution_photo.jpg')]",
-				type = "backgroundImage");
-		}
-
-		task ("Change to the Portrait Phone viewport") {
-			SelectFrameTop();
-
-			PageEditor.switchViewport(
-				deviceType = "Portrait Phone",
-				modal = "true");
-
-			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_BODY");
-		}
-
-		task ("Assert the mapping image is shown in Preview modal") {
-			ContentPages.viewFragmentBackgroundImage(image = "high_resolution_photo.jpg");
-		}
-
-		task ("Assert the Preview-1000x0 is selected automatically") {
-			PageEditor.assertAutoImageResolution(
-				adaptiveMediaName = "/Preview-1000x0/",
-				element = "//div[contains(@class,'bg-gray500Color')][contains(@style,'high_resolution_photo.jpg')]",
+				element = "//div[contains(@class,'lfr-layout-structure-item-container')][contains(@style,'high_resolution_photo.jpg')]",
 				type = "backgroundImage");
 
-			IFrame.closeFrame();
+			Close.closeWindow();
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Navigate to page in view mode") {
@@ -573,7 +560,7 @@ definition {
 		task ("Assert the orignal image is selected automatically") {
 			PageEditor.assertAutoImageResolution(
 				adaptiveMediaName = "/documents/",
-				element = "//div[contains(@class,'bg-gray500Color')][contains(@style,'high_resolution_photo.jpg')]",
+				element = "//div[contains(@class,'lfr-layout-structure-item-container')][contains(@style,'high_resolution_photo.jpg')]",
 				type = "backgroundImage");
 		}
 
@@ -598,7 +585,7 @@ definition {
 		task ("Assert the Preview-1000x0 is selected automatically") {
 			PageEditor.assertAutoImageResolution(
 				adaptiveMediaName = "/Preview-1000x0/",
-				element = "//div[contains(@class,'bg-gray500Color')][contains(@style,'high_resolution_photo.jpg')]",
+				element = "//div[contains(@class,'lfr-layout-structure-item-container')][contains(@style,'high_resolution_photo.jpg')]",
 				type = "backgroundImage");
 		}
 	}
@@ -631,7 +618,7 @@ definition {
 				uploadFileName = "high_resolution_photo.jpg");
 
 			PageEditor.viewContainerStyle(
-				backgroundImage = "high_resolution_photo.jpg",
+				backgroundImage = "high_resolution_photo\.jpg",
 				paddingBottom = "3",
 				paddingTop = "3",
 				position = "1");
@@ -639,7 +626,6 @@ definition {
 
 		task ("Take down the Width and File Size of image resolution in Desktop viewport") {
 			var fileSizeDesktop = PageEditor.getFileSizeOfSelectedImageResolution();
-
 			var width = PageEditor.getWidthOfSelectedImageResolution();
 		}
 
@@ -664,12 +650,13 @@ definition {
 				key_deviceType = "Tablet",
 				locator1 = "PageEditor#DEVICE_TYPE");
 
-			Pause(locator1 = "3000");
+			WaitForElementPresent(
+				key_deviceType = "Tablet",
+				locator1 = "PageEditor#DEVICE_TYPE_ACTIVE");
 		}
 
 		task ("Take down the Width and File Size of image resolution in Tablet viewport") {
 			var fileSizeTablet = PageEditor.getFileSizeOfSelectedImageResolution();
-
 			var width = PageEditor.getWidthOfSelectedImageResolution();
 		}
 
@@ -698,45 +685,22 @@ definition {
 		}
 
 		task ("Open the Preview modal") {
-			PageEditor.openPreviewMode();
+			PageEditor.previewInANewTab();
 		}
 
 		task ("Assert the mapping image is shown in Preview modal") {
-			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_BODY");
-
 			ContentPages.viewFragmentBackgroundImage(image = "high_resolution_photo.jpg");
 		}
 
 		task ("Assert the orignal image is selected automatically") {
 			PageEditor.assertAutoImageResolution(
 				adaptiveMediaName = "/documents/",
-				element = "//div[contains(@class,'pb-3')][contains(@class,'pt-3')][contains(@style,'high_resolution_photo.jpg')]",
-				type = "backgroundImage");
-		}
-
-		task ("Change to the Tablet viewport") {
-			SelectFrameTop();
-
-			PageEditor.switchViewport(
-				deviceType = "Tablet",
-				modal = "true");
-
-			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_BODY");
-		}
-
-		task ("Assert the mapping image is shown in Preview modal") {
-			ContentPages.viewFragmentBackgroundImage(image = "high_resolution_photo.jpg");
-		}
-
-		task ("Assert the Preview-1000x0 is selected automatically") {
-			PageEditor.assertAutoImageResolution(
-				adaptiveMediaName = "/Preview-1000x0/",
-				element = "//div[contains(@class,'pb-3')][contains(@class,'pt-3')][contains(@style,'high_resolution_photo.jpg')]",
+				element = "//div[contains(@class,'lfr-layout-structure-item-container')][contains(@style,'high_resolution_photo.jpg')]",
 				type = "backgroundImage");
 
-			IFrame.closeFrame();
+			Close.closeWindow();
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Navigate to page in view mode") {
@@ -756,7 +720,7 @@ definition {
 		task ("Assert the orignal image is selected automatically") {
 			PageEditor.assertAutoImageResolution(
 				adaptiveMediaName = "/documents/",
-				element = "//div[contains(@class,'pb-3')][contains(@class,'pt-3')][contains(@style,'high_resolution_photo.jpg')]",
+				element = "//div[contains(@class,'lfr-layout-structure-item-container')][contains(@style,'high_resolution_photo.jpg')]",
 				type = "backgroundImage");
 		}
 
@@ -781,7 +745,7 @@ definition {
 		task ("Assert the Preview-1000x0 is selected automatically") {
 			PageEditor.assertAutoImageResolution(
 				adaptiveMediaName = "/Preview-1000x0/",
-				element = "//div[contains(@class,'pb-3')][contains(@class,'pt-3')][contains(@style,'high_resolution_photo.jpg')]",
+				element = "//div[contains(@class,'lfr-layout-structure-item-container')][contains(@style,'high_resolution_photo.jpg')]",
 				type = "backgroundImage");
 		}
 	}
@@ -808,7 +772,7 @@ definition {
 			PageEditor.viewFragmentEditableImage(
 				id = "image-square",
 				imageDescription = "",
-				imageFileName = "analytics-cloud-hero-image.png");
+				imageFileName = "analytics-cloud-hero-image-png");
 
 			WaitForElementPresent(
 				key_resolutionLabel = "File Size",
@@ -820,7 +784,9 @@ definition {
 				key_deviceType = "Landscape Phone",
 				locator1 = "PageEditor#DEVICE_TYPE");
 
-			Pause(locator1 = "3000");
+			WaitForElementPresent(
+				key_deviceType = "Landscape Phone",
+				locator1 = "PageEditor#DEVICE_TYPE_ACTIVE");
 		}
 
 		task ("Assert Auto image resolution is selected") {
@@ -832,7 +798,6 @@ definition {
 
 		task ("Take down the Width and File Size of image resolution in Landscape Phone viewport") {
 			var fileSizeLandscapePhone = PageEditor.getFileSizeOfSelectedImageResolution();
-
 			var widthLandscapePhone = PageEditor.getWidthOfSelectedImageResolution();
 		}
 
@@ -845,7 +810,7 @@ definition {
 		task ("Assert the File Size of image resolution shown") {
 			AssertTextEquals.assertPartialText(
 				key_resolutionLabel = "File Size",
-				locator1 = "PageEditor#IMAGE_RESOLUTION_LABEL",
+				locator1 = "PageEditor#IMAGE_RESOLUTION_VALUE",
 				value1 = "${fileSizeLandscapePhone}");
 		}
 	}
@@ -872,7 +837,7 @@ definition {
 			PageEditor.viewFragmentEditableImage(
 				id = "image-square",
 				imageDescription = "",
-				imageFileName = "analytics-cloud-hero-image.png");
+				imageFileName = "analytics-cloud-hero-image-png");
 
 			WaitForElementPresent(
 				key_resolutionLabel = "File Size",
@@ -884,7 +849,9 @@ definition {
 				key_deviceType = "Tablet",
 				locator1 = "PageEditor#DEVICE_TYPE");
 
-			Pause(locator1 = "3000");
+			WaitForElementPresent(
+				key_deviceType = "Tablet",
+				locator1 = "PageEditor#DEVICE_TYPE_ACTIVE");
 		}
 
 		task ("Assert Auto image resolution is selected") {
@@ -896,7 +863,6 @@ definition {
 
 		task ("Take down the Width and File Size of image resolution in Tablet viewport") {
 			var fileSizeTablet = PageEditor.getFileSizeOfSelectedImageResolution();
-
 			var widthTablet = PageEditor.getWidthOfSelectedImageResolution();
 		}
 
@@ -909,7 +875,7 @@ definition {
 		task ("Assert the File Size of image resolution shown") {
 			AssertTextEquals.assertPartialText(
 				key_resolutionLabel = "File Size",
-				locator1 = "PageEditor#IMAGE_RESOLUTION_LABEL",
+				locator1 = "PageEditor#IMAGE_RESOLUTION_VALUE",
 				value1 = "${fileSizeTablet}");
 		}
 	}
@@ -950,7 +916,7 @@ definition {
 			PageEditor.viewFragmentEditableImage(
 				id = "image-square",
 				imageDescription = "",
-				imageFileName = "Commerce_White.jpg");
+				imageFileName = "commerce_white-jpg");
 		}
 
 		task ("Take down the File Size of image resolution in Desktop viewport") {
@@ -962,7 +928,9 @@ definition {
 				key_deviceType = "Tablet",
 				locator1 = "PageEditor#DEVICE_TYPE");
 
-			Pause(locator1 = "3000");
+			WaitForElementPresent(
+				key_deviceType = "Tablet",
+				locator1 = "PageEditor#DEVICE_TYPE_ACTIVE");
 		}
 
 		task ("Assert Auto image resolution is selected") {
@@ -974,7 +942,6 @@ definition {
 
 		task ("Take down the Width and File Size of image resolution in Tablet viewport") {
 			var fileSizeTablet = PageEditor.getFileSizeOfSelectedImageResolution();
-
 			var widthTablet = PageEditor.getWidthOfSelectedImageResolution();
 		}
 
@@ -1013,7 +980,7 @@ definition {
 			PageEditor.viewFragmentEditableImage(
 				id = "image-square",
 				imageDescription = "",
-				imageFileName = "high_resolution_photo.jpg");
+				imageFileName = "high_resolution_photo-jpg");
 
 			WaitForElementPresent(
 				key_resolutionLabel = "File Size",
@@ -1029,7 +996,6 @@ definition {
 
 		task ("Take down the Width and File Size of image resolution") {
 			var fileSize = PageEditor.getFileSizeOfSelectedImageResolution();
-
 			var width = PageEditor.getWidthOfSelectedImageResolution();
 		}
 
@@ -1077,7 +1043,7 @@ definition {
 			PageEditor.viewFragmentEditableImage(
 				id = "image-square",
 				imageDescription = "",
-				imageFileName = "Document_2.jpg");
+				imageFileName = "document_2-jpg");
 
 			WaitForElementPresent(
 				key_resolutionLabel = "File Size",
@@ -1089,7 +1055,9 @@ definition {
 				key_deviceType = "Tablet",
 				locator1 = "PageEditor#DEVICE_TYPE");
 
-			Pause(locator1 = "3000");
+			WaitForElementPresent(
+				key_deviceType = "Tablet",
+				locator1 = "PageEditor#DEVICE_TYPE_ACTIVE");
 		}
 
 		task ("Assert Auto image resolution is selected") {
@@ -1101,7 +1069,6 @@ definition {
 
 		task ("Take down the Width and File Size of image resolution in Tablet viewport") {
 			var fileSizeTablet = PageEditor.getFileSizeOfSelectedImageResolution();
-
 			var widthTablet = PageEditor.getWidthOfSelectedImageResolution();
 		}
 
@@ -1114,7 +1081,7 @@ definition {
 		task ("Assert the File Size of image resolution shown") {
 			AssertTextEquals.assertPartialText(
 				key_resolutionLabel = "File Size",
-				locator1 = "PageEditor#IMAGE_RESOLUTION_LABEL",
+				locator1 = "PageEditor#IMAGE_RESOLUTION_VALUE",
 				value1 = "${fileSizeTablet}");
 		}
 	}
@@ -1134,6 +1101,8 @@ definition {
 		}
 
 		task ("Add an Image fragment to page") {
+			TestUtils.maximizeWindow();
+
 			ContentPagesNavigator.openEditContentPage(
 				pageName = "Test Page Name",
 				siteName = "Test Site Name");
@@ -1152,7 +1121,7 @@ definition {
 			PageEditor.viewFragmentEditableImage(
 				id = "image-square",
 				imageDescription = "",
-				imageFileName = "analytics-cloud-hero-image.png");
+				imageFileName = "analytics-cloud-hero-image-png");
 
 			WaitForElementPresent(
 				key_resolutionLabel = "File Size",
@@ -1164,7 +1133,9 @@ definition {
 				key_deviceType = "Tablet",
 				locator1 = "PageEditor#DEVICE_TYPE");
 
-			Pause(locator1 = "3000");
+			WaitForElementPresent(
+				key_deviceType = "Tablet",
+				locator1 = "PageEditor#DEVICE_TYPE_ACTIVE");
 		}
 
 		task ("Assert Auto image resolution is selected") {
@@ -1176,7 +1147,6 @@ definition {
 
 		task ("Take down the Width and File Size of image resolution in Tablet viewport") {
 			var fileSizeTablet = PageEditor.getFileSizeOfSelectedImageResolution();
-
 			var widthTablet = PageEditor.getWidthOfSelectedImageResolution();
 		}
 
@@ -1189,7 +1159,7 @@ definition {
 		task ("Assert the File Size of image resolution shown") {
 			AssertTextEquals.assertPartialText(
 				key_resolutionLabel = "File Size",
-				locator1 = "PageEditor#IMAGE_RESOLUTION_LABEL",
+				locator1 = "PageEditor#IMAGE_RESOLUTION_VALUE",
 				value1 = "${fileSizeTablet}");
 		}
 	}

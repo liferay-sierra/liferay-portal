@@ -14,6 +14,7 @@
 
 package com.liferay.headless.commerce.admin.shipment.client.serdes.v1_0;
 
+import com.liferay.headless.commerce.admin.shipment.client.dto.v1_0.CustomField;
 import com.liferay.headless.commerce.admin.shipment.client.dto.v1_0.Shipment;
 import com.liferay.headless.commerce.admin.shipment.client.dto.v1_0.ShipmentItem;
 import com.liferay.headless.commerce.admin.shipment.client.json.BaseJSONParser;
@@ -59,7 +60,7 @@ public class ShipmentSerDes {
 		sb.append("{");
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+			"yyyy-MM-dd'T'HH:mm:ssXX");
 
 		if (shipment.getAccountId() != null) {
 			if (sb.length() > 1) {
@@ -109,6 +110,26 @@ public class ShipmentSerDes {
 			sb.append("\"");
 		}
 
+		if (shipment.getCustomFields() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"customFields\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < shipment.getCustomFields().length; i++) {
+				sb.append(String.valueOf(shipment.getCustomFields()[i]));
+
+				if ((i + 1) < shipment.getCustomFields().length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
 		if (shipment.getExpectedDate() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -120,6 +141,20 @@ public class ShipmentSerDes {
 
 			sb.append(
 				liferayToJSONDateFormat.format(shipment.getExpectedDate()));
+
+			sb.append("\"");
+		}
+
+		if (shipment.getExternalReferenceCode() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"externalReferenceCode\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(shipment.getExternalReferenceCode()));
 
 			sb.append("\"");
 		}
@@ -262,6 +297,20 @@ public class ShipmentSerDes {
 			sb.append("\"");
 		}
 
+		if (shipment.getTrackingURL() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"trackingURL\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(shipment.getTrackingURL()));
+
+			sb.append("\"");
+		}
+
 		if (shipment.getUserName() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -295,7 +344,7 @@ public class ShipmentSerDes {
 		Map<String, String> map = new TreeMap<>();
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+			"yyyy-MM-dd'T'HH:mm:ssXX");
 
 		if (shipment.getAccountId() == null) {
 			map.put("accountId", null);
@@ -327,6 +376,13 @@ public class ShipmentSerDes {
 				liferayToJSONDateFormat.format(shipment.getCreateDate()));
 		}
 
+		if (shipment.getCustomFields() == null) {
+			map.put("customFields", null);
+		}
+		else {
+			map.put("customFields", String.valueOf(shipment.getCustomFields()));
+		}
+
 		if (shipment.getExpectedDate() == null) {
 			map.put("expectedDate", null);
 		}
@@ -334,6 +390,15 @@ public class ShipmentSerDes {
 			map.put(
 				"expectedDate",
 				liferayToJSONDateFormat.format(shipment.getExpectedDate()));
+		}
+
+		if (shipment.getExternalReferenceCode() == null) {
+			map.put("externalReferenceCode", null);
+		}
+		else {
+			map.put(
+				"externalReferenceCode",
+				String.valueOf(shipment.getExternalReferenceCode()));
 		}
 
 		if (shipment.getId() == null) {
@@ -427,6 +492,13 @@ public class ShipmentSerDes {
 				"trackingNumber", String.valueOf(shipment.getTrackingNumber()));
 		}
 
+		if (shipment.getTrackingURL() == null) {
+			map.put("trackingURL", null);
+		}
+		else {
+			map.put("trackingURL", String.valueOf(shipment.getTrackingURL()));
+		}
+
 		if (shipment.getUserName() == null) {
 			map.put("userName", null);
 		}
@@ -478,10 +550,30 @@ public class ShipmentSerDes {
 						toDate((String)jsonParserFieldValue));
 				}
 			}
+			else if (Objects.equals(jsonParserFieldName, "customFields")) {
+				if (jsonParserFieldValue != null) {
+					shipment.setCustomFields(
+						Stream.of(
+							toStrings((Object[])jsonParserFieldValue)
+						).map(
+							object -> CustomFieldSerDes.toDTO((String)object)
+						).toArray(
+							size -> new CustomField[size]
+						));
+				}
+			}
 			else if (Objects.equals(jsonParserFieldName, "expectedDate")) {
 				if (jsonParserFieldValue != null) {
 					shipment.setExpectedDate(
 						toDate((String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "externalReferenceCode")) {
+
+				if (jsonParserFieldValue != null) {
+					shipment.setExternalReferenceCode(
+						(String)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "id")) {
@@ -555,6 +647,11 @@ public class ShipmentSerDes {
 			else if (Objects.equals(jsonParserFieldName, "trackingNumber")) {
 				if (jsonParserFieldValue != null) {
 					shipment.setTrackingNumber((String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "trackingURL")) {
+				if (jsonParserFieldValue != null) {
+					shipment.setTrackingURL((String)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "userName")) {

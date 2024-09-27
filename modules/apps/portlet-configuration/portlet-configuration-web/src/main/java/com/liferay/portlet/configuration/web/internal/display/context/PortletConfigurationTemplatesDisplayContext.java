@@ -15,12 +15,12 @@
 package com.liferay.portlet.configuration.web.internal.display.context;
 
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.portlet.SearchDisplayStyleUtil;
 import com.liferay.portal.kernel.portlet.SearchOrderByUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.PortletLocalServiceUtil;
 import com.liferay.portal.kernel.settings.ArchivedSettings;
 import com.liferay.portal.kernel.settings.SettingsFactoryUtil;
@@ -115,18 +115,12 @@ public class PortletConfigurationTemplatesDisplayContext {
 		Portlet selPortlet = PortletLocalServiceUtil.getPortletById(
 			themeDisplay.getCompanyId(), getPortletResource());
 
-		List<ArchivedSettings> archivedSettingsList =
-			SettingsFactoryUtil.getPortletInstanceArchivedSettingsList(
-				themeDisplay.getScopeGroupId(), selPortlet.getRootPortletId());
-
 		archivedSettingsSearch.setResultsAndTotal(
-			() -> ListUtil.subList(
-				ListUtil.sort(
-					archivedSettingsList,
-					archivedSettingsSearch.getOrderByComparator()),
-				archivedSettingsSearch.getStart(),
-				archivedSettingsSearch.getEnd()),
-			archivedSettingsList.size());
+			ListUtil.sort(
+				SettingsFactoryUtil.getPortletInstanceArchivedSettingsList(
+					themeDisplay.getScopeGroupId(),
+					selPortlet.getRootPortletId()),
+				archivedSettingsSearch.getOrderByComparator()));
 
 		archivedSettingsSearch.setRowChecker(
 			new EmptyOnClickRowChecker(_renderResponse));

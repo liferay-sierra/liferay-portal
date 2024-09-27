@@ -15,9 +15,11 @@
 package com.liferay.account.service;
 
 import com.liferay.account.model.AccountEntry;
+import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.petra.sql.dsl.query.DSLQuery;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Projection;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -40,6 +42,7 @@ import java.io.Serializable;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -69,7 +72,8 @@ public interface AccountEntryLocalService
 	public void activateAccountEntries(long[] accountEntryIds)
 		throws PortalException;
 
-	public AccountEntry activateAccountEntry(AccountEntry accountEntry);
+	public AccountEntry activateAccountEntry(AccountEntry accountEntry)
+		throws PortalException;
 
 	public AccountEntry activateAccountEntry(long accountEntryId)
 		throws PortalException;
@@ -120,7 +124,8 @@ public interface AccountEntryLocalService
 	public void deactivateAccountEntries(long[] accountEntryIds)
 		throws PortalException;
 
-	public AccountEntry deactivateAccountEntry(AccountEntry accountEntry);
+	public AccountEntry deactivateAccountEntry(AccountEntry accountEntry)
+		throws PortalException;
 
 	public AccountEntry deactivateAccountEntry(long accountEntryId)
 		throws PortalException;
@@ -262,6 +267,17 @@ public interface AccountEntryLocalService
 	public AccountEntry fetchAccountEntryByReferenceCode(
 		long companyId, String externalReferenceCode);
 
+	/**
+	 * Returns the account entry with the matching UUID and company.
+	 *
+	 * @param uuid the account entry's UUID
+	 * @param companyId the primary key of the company
+	 * @return the matching account entry, or <code>null</code> if a matching account entry could not be found
+	 */
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public AccountEntry fetchAccountEntryByUuidAndCompanyId(
+		String uuid, long companyId);
+
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public AccountEntry fetchPersonAccountEntry(long userId);
 
@@ -322,8 +338,25 @@ public interface AccountEntryLocalService
 			long companyId, String externalReferenceCode)
 		throws PortalException;
 
+	/**
+	 * Returns the account entry with the matching UUID and company.
+	 *
+	 * @param uuid the account entry's UUID
+	 * @param companyId the primary key of the company
+	 * @return the matching account entry
+	 * @throws PortalException if a matching account entry could not be found
+	 */
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public AccountEntry getAccountEntryByUuidAndCompanyId(
+			String uuid, long companyId)
+		throws PortalException;
+
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ActionableDynamicQuery getActionableDynamicQuery();
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public ExportActionableDynamicQuery getExportActionableDynamicQuery(
+		PortletDataContext portletDataContext);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public AccountEntry getGuestAccountEntry(long companyId)
@@ -414,6 +447,10 @@ public interface AccountEntryLocalService
 		throws PortalException;
 
 	@Indexable(type = IndexableType.REINDEX)
+	public AccountEntry updateDomains(long accountEntryId, String[] domains)
+		throws PortalException;
+
+	@Indexable(type = IndexableType.REINDEX)
 	public AccountEntry updateExternalReferenceCode(
 			AccountEntry accountEntry, String externalReferenceCode)
 		throws PortalException;
@@ -423,11 +460,23 @@ public interface AccountEntryLocalService
 			long accountEntryId, String externalReferenceCode)
 		throws PortalException;
 
+	public AccountEntry updateRestrictMembership(
+			long accountEntryId, boolean restrictMembership)
+		throws PortalException;
+
 	@Indexable(type = IndexableType.REINDEX)
-	public AccountEntry updateStatus(AccountEntry accountEntry, int status);
+	public AccountEntry updateStatus(AccountEntry accountEntry, int status)
+		throws PortalException;
 
 	@Indexable(type = IndexableType.REINDEX)
 	public AccountEntry updateStatus(long accountEntryId, int status)
+		throws PortalException;
+
+	@Indexable(type = IndexableType.REINDEX)
+	public AccountEntry updateStatus(
+			long userId, long accountEntryId, int status,
+			ServiceContext serviceContext,
+			Map<String, Serializable> workflowContext)
 		throws PortalException;
 
 }

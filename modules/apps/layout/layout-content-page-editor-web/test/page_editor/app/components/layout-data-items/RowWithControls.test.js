@@ -26,25 +26,11 @@ import {
 	useSelectItem,
 } from '../../../../../src/main/resources/META-INF/resources/page_editor/app/contexts/ControlsContext';
 import {StoreAPIContextProvider} from '../../../../../src/main/resources/META-INF/resources/page_editor/app/contexts/StoreContext';
+import getLayoutDataItemClassName from '../../../../../src/main/resources/META-INF/resources/page_editor/app/utils/getLayoutDataItemClassName';
+import getLayoutDataItemTopperUniqueClassName from '../../../../../src/main/resources/META-INF/resources/page_editor/app/utils/getLayoutDataItemTopperUniqueClassName';
+import getLayoutDataItemUniqueClassName from '../../../../../src/main/resources/META-INF/resources/page_editor/app/utils/getLayoutDataItemUniqueClassName';
 
-jest.mock(
-	'../../../../../src/main/resources/META-INF/resources/page_editor/app/config',
-	() => ({
-		config: {
-			commonStyles: [
-				{
-					styles: [
-						{
-							defaultValue: 'left',
-							name: 'textAlign',
-						},
-					],
-				},
-			],
-			frontendTokens: {},
-		},
-	})
-);
+const ROW_ID = 'ROW_ID';
 
 const renderRow = ({
 	activeItemId = 'row',
@@ -74,7 +60,7 @@ const renderRow = ({
 	const row = {
 		children: Object.keys(childrenItems),
 		config: rowConfig,
-		itemId: 'row',
+		itemId: ROW_ID,
 		parentId: null,
 		type: LAYOUT_DATA_ITEM_TYPES.row,
 	};
@@ -102,6 +88,7 @@ const renderRow = ({
 			<ControlsProvider>
 				<StoreAPIContextProvider
 					getState={() => ({
+						fragmentEntryLinks: {},
 						layoutData,
 						permissions: {
 							LOCKED_SEGMENTS_EXPERIMENT: lockedExperience,
@@ -173,31 +160,19 @@ describe('RowWithControls', () => {
 		).toBeInTheDocument();
 	});
 
-	it('does not show the row if it has been hidden by the user', async () => {
-		const {baseElement} = renderRow({
-			rowConfig: {
-				styles: {
-					display: 'none',
-				},
-			},
+	it('set classes for referencing the item', () => {
+		const {baseElement} = renderRow();
+
+		const classes = [
+			getLayoutDataItemClassName(LAYOUT_DATA_ITEM_TYPES.row),
+			getLayoutDataItemTopperUniqueClassName(ROW_ID),
+			getLayoutDataItemUniqueClassName(ROW_ID),
+		];
+
+		classes.forEach((className) => {
+			const item = baseElement.querySelector(`.${className}`);
+
+			expect(item).toBeVisible();
 		});
-
-		const row = baseElement.querySelector('.page-editor__row');
-
-		expect(row).not.toBeVisible();
-	});
-
-	it('shows the row if it has not been hidden by the user', async () => {
-		const {baseElement} = renderRow({
-			rowConfig: {
-				styles: {
-					display: 'block',
-				},
-			},
-		});
-
-		const row = baseElement.querySelector('.page-editor__row');
-
-		expect(row).toBeVisible();
 	});
 });

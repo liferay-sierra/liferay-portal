@@ -63,6 +63,68 @@ public class ObjectDefinition implements Serializable {
 	}
 
 	@Schema
+	public Boolean getAccountEntryRestricted() {
+		return accountEntryRestricted;
+	}
+
+	public void setAccountEntryRestricted(Boolean accountEntryRestricted) {
+		this.accountEntryRestricted = accountEntryRestricted;
+	}
+
+	@JsonIgnore
+	public void setAccountEntryRestricted(
+		UnsafeSupplier<Boolean, Exception>
+			accountEntryRestrictedUnsafeSupplier) {
+
+		try {
+			accountEntryRestricted = accountEntryRestrictedUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected Boolean accountEntryRestricted;
+
+	@Schema
+	public String getAccountEntryRestrictedObjectFieldName() {
+		return accountEntryRestrictedObjectFieldName;
+	}
+
+	public void setAccountEntryRestrictedObjectFieldName(
+		String accountEntryRestrictedObjectFieldName) {
+
+		this.accountEntryRestrictedObjectFieldName =
+			accountEntryRestrictedObjectFieldName;
+	}
+
+	@JsonIgnore
+	public void setAccountEntryRestrictedObjectFieldName(
+		UnsafeSupplier<String, Exception>
+			accountEntryRestrictedObjectFieldNameUnsafeSupplier) {
+
+		try {
+			accountEntryRestrictedObjectFieldName =
+				accountEntryRestrictedObjectFieldNameUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String accountEntryRestrictedObjectFieldName;
+
+	@Schema
 	@Valid
 	public Map<String, Map<String, String>> getActions() {
 		return actions;
@@ -175,6 +237,120 @@ public class ObjectDefinition implements Serializable {
 	@GraphQLField
 	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
 	protected Date dateModified;
+
+	@Schema
+	public Boolean getEnableCategorization() {
+		return enableCategorization;
+	}
+
+	public void setEnableCategorization(Boolean enableCategorization) {
+		this.enableCategorization = enableCategorization;
+	}
+
+	@JsonIgnore
+	public void setEnableCategorization(
+		UnsafeSupplier<Boolean, Exception> enableCategorizationUnsafeSupplier) {
+
+		try {
+			enableCategorization = enableCategorizationUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected Boolean enableCategorization;
+
+	@Schema
+	public Boolean getEnableComments() {
+		return enableComments;
+	}
+
+	public void setEnableComments(Boolean enableComments) {
+		this.enableComments = enableComments;
+	}
+
+	@JsonIgnore
+	public void setEnableComments(
+		UnsafeSupplier<Boolean, Exception> enableCommentsUnsafeSupplier) {
+
+		try {
+			enableComments = enableCommentsUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected Boolean enableComments;
+
+	@Schema
+	public Boolean getEnableObjectEntryHistory() {
+		return enableObjectEntryHistory;
+	}
+
+	public void setEnableObjectEntryHistory(Boolean enableObjectEntryHistory) {
+		this.enableObjectEntryHistory = enableObjectEntryHistory;
+	}
+
+	@JsonIgnore
+	public void setEnableObjectEntryHistory(
+		UnsafeSupplier<Boolean, Exception>
+			enableObjectEntryHistoryUnsafeSupplier) {
+
+		try {
+			enableObjectEntryHistory =
+				enableObjectEntryHistoryUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected Boolean enableObjectEntryHistory;
+
+	@Schema
+	public String getExternalReferenceCode() {
+		return externalReferenceCode;
+	}
+
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		this.externalReferenceCode = externalReferenceCode;
+	}
+
+	@JsonIgnore
+	public void setExternalReferenceCode(
+		UnsafeSupplier<String, Exception> externalReferenceCodeUnsafeSupplier) {
+
+		try {
+			externalReferenceCode = externalReferenceCodeUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String externalReferenceCode;
 
 	@Schema
 	public Long getId() {
@@ -462,6 +638,34 @@ public class ObjectDefinition implements Serializable {
 	protected String panelCategoryKey;
 
 	@Schema
+	public Boolean getParameterRequired() {
+		return parameterRequired;
+	}
+
+	public void setParameterRequired(Boolean parameterRequired) {
+		this.parameterRequired = parameterRequired;
+	}
+
+	@JsonIgnore
+	public void setParameterRequired(
+		UnsafeSupplier<Boolean, Exception> parameterRequiredUnsafeSupplier) {
+
+		try {
+			parameterRequired = parameterRequiredUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected Boolean parameterRequired;
+
+	@Schema
 	@Valid
 	public Map<String, String> getPluralLabel() {
 		return pluralLabel;
@@ -518,6 +722,34 @@ public class ObjectDefinition implements Serializable {
 	@GraphQLField
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected Boolean portlet;
+
+	@Schema
+	public String getRestContextPath() {
+		return restContextPath;
+	}
+
+	public void setRestContextPath(String restContextPath) {
+		this.restContextPath = restContextPath;
+	}
+
+	@JsonIgnore
+	public void setRestContextPath(
+		UnsafeSupplier<String, Exception> restContextPathUnsafeSupplier) {
+
+		try {
+			restContextPath = restContextPathUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected String restContextPath;
 
 	@Schema
 	public String getScope() {
@@ -577,6 +809,34 @@ public class ObjectDefinition implements Serializable {
 	protected Status status;
 
 	@Schema
+	public String getStorageType() {
+		return storageType;
+	}
+
+	public void setStorageType(String storageType) {
+		this.storageType = storageType;
+	}
+
+	@JsonIgnore
+	public void setStorageType(
+		UnsafeSupplier<String, Exception> storageTypeUnsafeSupplier) {
+
+		try {
+			storageType = storageTypeUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String storageType;
+
+	@Schema
 	public Boolean getSystem() {
 		return system;
 	}
@@ -605,20 +865,20 @@ public class ObjectDefinition implements Serializable {
 	protected Boolean system;
 
 	@Schema
-	public Long getTitleObjectFieldId() {
-		return titleObjectFieldId;
+	public String getTitleObjectFieldName() {
+		return titleObjectFieldName;
 	}
 
-	public void setTitleObjectFieldId(Long titleObjectFieldId) {
-		this.titleObjectFieldId = titleObjectFieldId;
+	public void setTitleObjectFieldName(String titleObjectFieldName) {
+		this.titleObjectFieldName = titleObjectFieldName;
 	}
 
 	@JsonIgnore
-	public void setTitleObjectFieldId(
-		UnsafeSupplier<Long, Exception> titleObjectFieldIdUnsafeSupplier) {
+	public void setTitleObjectFieldName(
+		UnsafeSupplier<String, Exception> titleObjectFieldNameUnsafeSupplier) {
 
 		try {
-			titleObjectFieldId = titleObjectFieldIdUnsafeSupplier.get();
+			titleObjectFieldName = titleObjectFieldNameUnsafeSupplier.get();
 		}
 		catch (RuntimeException re) {
 			throw re;
@@ -630,7 +890,7 @@ public class ObjectDefinition implements Serializable {
 
 	@GraphQLField
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected Long titleObjectFieldId;
+	protected String titleObjectFieldName;
 
 	@Override
 	public boolean equals(Object object) {
@@ -661,6 +921,30 @@ public class ObjectDefinition implements Serializable {
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+		if (accountEntryRestricted != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"accountEntryRestricted\": ");
+
+			sb.append(accountEntryRestricted);
+		}
+
+		if (accountEntryRestrictedObjectFieldName != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"accountEntryRestrictedObjectFieldName\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(accountEntryRestrictedObjectFieldName));
+
+			sb.append("\"");
+		}
 
 		if (actions != null) {
 			if (sb.length() > 1) {
@@ -706,6 +990,50 @@ public class ObjectDefinition implements Serializable {
 			sb.append("\"");
 
 			sb.append(liferayToJSONDateFormat.format(dateModified));
+
+			sb.append("\"");
+		}
+
+		if (enableCategorization != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"enableCategorization\": ");
+
+			sb.append(enableCategorization);
+		}
+
+		if (enableComments != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"enableComments\": ");
+
+			sb.append(enableComments);
+		}
+
+		if (enableObjectEntryHistory != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"enableObjectEntryHistory\": ");
+
+			sb.append(enableObjectEntryHistory);
+		}
+
+		if (externalReferenceCode != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"externalReferenceCode\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(externalReferenceCode));
 
 			sb.append("\"");
 		}
@@ -872,6 +1200,16 @@ public class ObjectDefinition implements Serializable {
 			sb.append("\"");
 		}
 
+		if (parameterRequired != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"parameterRequired\": ");
+
+			sb.append(parameterRequired);
+		}
+
 		if (pluralLabel != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -890,6 +1228,20 @@ public class ObjectDefinition implements Serializable {
 			sb.append("\"portlet\": ");
 
 			sb.append(portlet);
+		}
+
+		if (restContextPath != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"restContextPath\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(restContextPath));
+
+			sb.append("\"");
 		}
 
 		if (scope != null) {
@@ -916,6 +1268,20 @@ public class ObjectDefinition implements Serializable {
 			sb.append(String.valueOf(status));
 		}
 
+		if (storageType != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"storageType\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(storageType));
+
+			sb.append("\"");
+		}
+
 		if (system != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -926,14 +1292,18 @@ public class ObjectDefinition implements Serializable {
 			sb.append(system);
 		}
 
-		if (titleObjectFieldId != null) {
+		if (titleObjectFieldName != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"titleObjectFieldId\": ");
+			sb.append("\"titleObjectFieldName\": ");
 
-			sb.append(titleObjectFieldId);
+			sb.append("\"");
+
+			sb.append(_escape(titleObjectFieldName));
+
+			sb.append("\"");
 		}
 
 		sb.append("}");

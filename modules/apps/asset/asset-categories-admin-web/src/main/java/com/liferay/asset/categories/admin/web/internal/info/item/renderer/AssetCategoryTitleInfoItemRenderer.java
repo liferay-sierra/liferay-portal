@@ -17,7 +17,7 @@ package com.liferay.asset.categories.admin.web.internal.info.item.renderer;
 import com.liferay.asset.categories.admin.web.internal.constants.AssetCategoriesAdminWebKeys;
 import com.liferay.asset.kernel.model.AssetCategory;
 import com.liferay.info.item.renderer.InfoItemRenderer;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 
 import java.util.Locale;
 
@@ -40,7 +40,7 @@ public class AssetCategoryTitleInfoItemRenderer
 
 	@Override
 	public String getLabel(Locale locale) {
-		return LanguageUtil.get(locale, "title");
+		return _language.get(locale, "title");
 	}
 
 	@Override
@@ -63,14 +63,12 @@ public class AssetCategoryTitleInfoItemRenderer
 		}
 	}
 
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.asset.categories.admin.web)",
-		unbind = "-"
-	)
-	public void setServletContext(ServletContext servletContext) {
-		_servletContext = servletContext;
-	}
+	@Reference
+	private Language _language;
 
+	@Reference(
+		target = "(osgi.web.symbolicname=com.liferay.asset.categories.admin.web)"
+	)
 	private ServletContext _servletContext;
 
 }

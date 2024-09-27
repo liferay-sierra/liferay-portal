@@ -15,14 +15,14 @@
 package com.liferay.commerce.order.web.internal.frontend.taglib.servlet.taglib;
 
 import com.liferay.commerce.model.CommerceOrderType;
+import com.liferay.commerce.order.web.internal.constants.CommerceOrderTypeScreenNavigationConstants;
 import com.liferay.commerce.order.web.internal.display.context.CommerceOrderTypeQualifiersDisplayContext;
-import com.liferay.commerce.order.web.internal.servlet.taglib.ui.constants.CommerceOrderTypeScreenNavigationConstants;
 import com.liferay.commerce.service.CommerceOrderTypeRelService;
 import com.liferay.commerce.service.CommerceOrderTypeService;
 import com.liferay.frontend.taglib.servlet.taglib.ScreenNavigationCategory;
 import com.liferay.frontend.taglib.servlet.taglib.ScreenNavigationEntry;
 import com.liferay.frontend.taglib.servlet.taglib.util.JSPRenderer;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
@@ -48,7 +48,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Riccardo Alberti
  */
 @Component(
-	enabled = false,
 	property = {
 		"screen.navigation.category.order:Integer=20",
 		"screen.navigation.entry.order:Integer=10"
@@ -76,7 +75,7 @@ public class CommerceOrderTypeQualifiersScreenNavigationCategory
 		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
 			"content.Language", locale, getClass());
 
-		return LanguageUtil.get(resourceBundle, "eligibility");
+		return _language.get(resourceBundle, "eligibility");
 	}
 
 	@Override
@@ -147,6 +146,9 @@ public class CommerceOrderTypeQualifiersScreenNavigationCategory
 
 	@Reference
 	private JSPRenderer _jspRenderer;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

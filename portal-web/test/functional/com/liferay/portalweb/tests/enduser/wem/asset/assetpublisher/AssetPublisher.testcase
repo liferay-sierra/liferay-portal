@@ -195,7 +195,6 @@ definition {
 	@description = "Add a bookmarks entry via Asset Publisher."
 	@priority = "4"
 	test AddBookmarksEntryViaAssetPublisher {
-		property portal.release = "false";
 		property testray.component.names = "Asset Publisher,Bookmarks";
 
 		task ("Change Asset Link Behavior to Show Full Content") {
@@ -259,7 +258,7 @@ definition {
 				pageName = "Test Page Name",
 				siteName = "Test Site Name");
 
-			AssetPublisherPortlet.configureAddSiteScopes(otherSite = "Site Name");
+			AssetPublisherPortlet.configureScope(otherSite = "Site Name");
 		}
 
 		task ("View both sites in scope") {
@@ -276,45 +275,43 @@ definition {
 	@description = "Configure the Select More Than One asset types."
 	@priority = "4"
 	test ConfigureSelectMoreThanOneAssetTypes {
-		property portal.release = "false";
-		property testray.component.names = "Asset Publisher,Bookmarks";
+		property testray.component.names = "Asset Publisher";
 
-		task ("Add a bookmarks entry") {
-			JSONBookmarks.addBookmarks(
-				description = "Test Bookmark Description",
+		task ("Add a web content") {
+			JSONWebcontent.addWebContent(
+				content = "Web Content Content",
 				groupName = "Test Site Name",
-				name = "Test Bookmark Name",
-				url = "https://www.liferay.com");
+				title = "Web Content Title");
 		}
 
-		task ("Remove Bookmarks Entry from Asset Type") {
+		task ("Remove Web Content Article from Asset Type") {
 			Navigator.gotoSitePage(
 				pageName = "Test Page Name",
 				siteName = "Test Site Name");
 
-			AssetPublisherPortlet.configureAPSelectMoreThanOnePG(selectContent = "Bookmarks Entry");
+			AssetPublisherPortlet.configureAPSelectMoreThanOnePG(selectContent = "Web Content Article");
 		}
 
-		task ("View the bookmarks entry not shown in Asset Publisher") {
+		task ("View the web content not shown in Asset Publisher") {
 			Navigator.gotoSitePage(
 				pageName = "Test Page Name",
 				siteName = "Test Site Name");
 
-			AssetPublisherPortlet.viewConfigureAPMoveToAvailablePG(assetTitle = "Test Bookmark Name");
+			AssetPublisherPortlet.viewConfigureAPMoveToAvailablePG(assetTitle = "Web Content Title");
 		}
 
-		task ("Add Bookmarks Entry back to Asset Type") {
+		task ("Add Web Content Article back to Asset Type") {
 			AssetPublisherPortlet.configureAPSelectMoreThanOnePG(
 				moveSelected = "true",
-				selectContent = "Bookmarks Entry");
+				selectContent = "Web Content Article");
 		}
 
-		task ("View the bookmarks entry shown in Asset Publisher") {
+		task ("View the web content shown in Asset Publisher") {
 			Navigator.gotoSitePage(
 				pageName = "Test Page Name",
 				siteName = "Test Site Name");
 
-			AssetPublisherPortlet.viewConfigureAPMoveToSelectedPG(assetTitle = "Test Bookmark Name");
+			AssetPublisherPortlet.viewConfigureAPMoveToSelectedPG(assetTitle = "Web Content Title");
 		}
 	}
 
@@ -629,8 +626,6 @@ definition {
 					content = "WebContent Content ${n}",
 					groupName = "Test Site Name",
 					title = "WebContent Title ${n}");
-
-				Pause(locator1 = "65000");
 			}
 		}
 
@@ -768,8 +763,6 @@ definition {
 	@description = "Select the Bookmarks Entry as asset type."
 	@priority = "4"
 	test SelectBookmarksEntryAsAssetType {
-		property portal.release = "false";
-
 		task ("Select the Bookmarks Entry in Asset Publisher") {
 			Navigator.gotoSitePage(
 				pageName = "Test Page Name",
@@ -872,7 +865,6 @@ definition {
 	@description = "View bookmarks entry in Asset Publisher with different display templates."
 	@priority = "4"
 	test ViewBookmarksEntryInAssetPublisherWithDifferentDisplayTemplates {
-		property portal.release = "false";
 		property testray.component.names = "Asset Publisher,Bookmarks,Content and Display Templates";
 
 		task ("Add a bookmarks entry") {
@@ -996,7 +988,7 @@ definition {
 				pageName = "Test Page Name",
 				siteName = "Test Site Name");
 
-			Portlet.viewSpecificPG(portletName = "Asset Publisher");
+			Portlet.viewDefaultTitle(portletName = "Asset Publisher");
 		}
 	}
 
@@ -1017,7 +1009,41 @@ definition {
 		task ("View the default asset link behavior is View in Context") {
 			AssertSelectedLabel(
 				locator1 = "APConfigurationDisplaysettings#ASSET_LINK_BEHAVIOR_SELECT",
-				value1 = "View in Context");
+				value1 = "View on New Page");
+		}
+	}
+
+	@description = "This is a test for LPS-135881. View the order of fieldsets in Asset Selection settings when selection style is dynamic."
+	@priority = "4"
+	@uitest
+	test ViewOrderOfFieldsetsInAssetSelectionWhenSelectionStyleIsDynamic {
+		property asset.publisher.selection.style = "asset-list";
+
+		task ("Navigate to Asset Selection panel of Asset Publisher") {
+			Navigator.gotoSitePage(
+				pageName = "Test Page Name",
+				siteName = "Test Site Name");
+
+			AssetPublisherPortlet.gotoConfigurationPG();
+		}
+
+		task ("Change the selection style to Dynamic") {
+			Click(locator1 = "APConfiguration#ASSET_SELECTION_DYNAMIC");
+
+			Alert.viewSuccessMessage();
+		}
+
+		task ("View the order of fieldsets") {
+			var i = "1";
+
+			for (var fieldset : list "Asset Selection,Scope,Source,Filter,Custom User Attributes,Ordering") {
+				AssertVisible(
+					index = "${i}",
+					key_panel = "${fieldset}",
+					locator1 = "Panel#PANEL_BY_INDEX");
+
+				var i = ${i} + 1;
+			}
 		}
 	}
 
@@ -1037,7 +1063,7 @@ definition {
 		task ("Assert the Web Content Article Structures selector appear.") {
 			ApplicationsMenu.gotoSite(site = "Test Site Name");
 
-			PagesAdmin.addPublicPage(pageName = "Test AP Page");
+			PagesAdmin.addPage(pageName = "Test AP Page");
 
 			Navigator.gotoSitePage(
 				pageName = "Test AP Page",

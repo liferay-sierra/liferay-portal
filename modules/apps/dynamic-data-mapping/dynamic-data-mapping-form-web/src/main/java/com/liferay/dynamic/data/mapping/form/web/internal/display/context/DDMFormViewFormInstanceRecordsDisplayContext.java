@@ -15,7 +15,7 @@
 package com.liferay.dynamic.data.mapping.form.web.internal.display.context;
 
 import com.liferay.dynamic.data.mapping.constants.DDMPortletKeys;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueRenderer;
 import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
 import com.liferay.dynamic.data.mapping.form.web.internal.search.DDMFormInstanceRecordSearch;
@@ -36,7 +36,6 @@ import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.NavigationItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.NavigationItemListBuilder;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
@@ -44,6 +43,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
 import com.liferay.portal.kernel.portlet.SearchOrderByUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.SearchContextFactory;
@@ -51,7 +51,7 @@ import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.HtmlParserUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -87,14 +87,14 @@ public class DDMFormViewFormInstanceRecordsDisplayContext {
 			RenderRequest renderRequest, RenderResponse renderResponse,
 			DDMFormInstance ddmFormInstance,
 			DDMFormInstanceRecordLocalService ddmFormInstanceRecordLocalService,
-			DDMFormFieldTypeServicesTracker ddmFormFieldTypeServicesTracker)
+			DDMFormFieldTypeServicesRegistry ddmFormFieldTypeServicesRegistry)
 		throws PortalException {
 
 		_renderRequest = renderRequest;
 		_renderResponse = renderResponse;
 		_ddmFormInstance = ddmFormInstance;
 		_ddmFormInstanceRecordLocalService = ddmFormInstanceRecordLocalService;
-		_ddmFormFieldTypeServicesTracker = ddmFormFieldTypeServicesTracker;
+		_ddmFormFieldTypeServicesRegistry = ddmFormFieldTypeServicesRegistry;
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)_renderRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
@@ -182,7 +182,7 @@ public class DDMFormViewFormInstanceRecordsDisplayContext {
 		String ddmFormFieldType = ddmFormField.getType();
 
 		final DDMFormFieldValueRenderer ddmFormFieldValueRenderer =
-			_ddmFormFieldTypeServicesTracker.getDDMFormFieldValueRenderer(
+			_ddmFormFieldTypeServicesRegistry.getDDMFormFieldValueRenderer(
 				ddmFormFieldType);
 
 		List<String> renderedDDMFormFieldValues = ListUtil.toList(
@@ -301,7 +301,7 @@ public class DDMFormViewFormInstanceRecordsDisplayContext {
 				DDMFormInstance ddmFormInstance = getDDMFormInstance();
 
 				navigationItem.setLabel(
-					HtmlUtil.extractText(
+					HtmlParserUtil.extractText(
 						ddmFormInstance.getName(_renderRequest.getLocale())));
 			}
 		).build();
@@ -507,9 +507,7 @@ public class DDMFormViewFormInstanceRecordsDisplayContext {
 		return DropdownItemListBuilder.add(
 			dropdownItem -> {
 				dropdownItem.setActive(true);
-
 				dropdownItem.setHref(getPortletURL(), "navigation", "all");
-
 				dropdownItem.setLabel(
 					LanguageUtil.get(
 						PortalUtil.getHttpServletRequest(_renderRequest),
@@ -669,8 +667,8 @@ public class DDMFormViewFormInstanceRecordsDisplayContext {
 	private static final int _MAX_COLUMNS = 5;
 
 	private final List<DDMFormField> _ddmFormFields = new ArrayList<>();
-	private final DDMFormFieldTypeServicesTracker
-		_ddmFormFieldTypeServicesTracker;
+	private final DDMFormFieldTypeServicesRegistry
+		_ddmFormFieldTypeServicesRegistry;
 	private final DDMFormInstance _ddmFormInstance;
 	private final DDMFormInstanceRecordLocalService
 		_ddmFormInstanceRecordLocalService;

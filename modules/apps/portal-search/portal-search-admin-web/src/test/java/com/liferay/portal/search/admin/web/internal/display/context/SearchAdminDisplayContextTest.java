@@ -18,14 +18,12 @@ import com.liferay.frontend.taglib.clay.servlet.taglib.util.NavigationItemList;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
-import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.language.LanguageImpl;
 import com.liferay.portal.search.admin.web.internal.display.context.builder.SearchAdminDisplayContextBuilder;
 import com.liferay.portal.search.index.IndexInformation;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
-import com.liferay.portal.util.HttpImpl;
 import com.liferay.portletmvc4spring.test.mock.web.portlet.MockRenderRequest;
 import com.liferay.portletmvc4spring.test.mock.web.portlet.MockRenderResponse;
 
@@ -36,7 +34,6 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import org.mockito.Matchers;
 import org.mockito.Mockito;
 
 /**
@@ -50,7 +47,6 @@ public class SearchAdminDisplayContextTest {
 
 	@Before
 	public void setUp() {
-		setUpHttpUtil();
 		setUpIndexInformation();
 		_setUpLanguage();
 		setUpPortalUtil();
@@ -201,10 +197,6 @@ public class SearchAdminDisplayContextTest {
 			"connections", searchAdminDisplayContext.getSelectedTab());
 	}
 
-	protected void setUpHttpUtil() {
-		http = new HttpImpl();
-	}
-
 	protected void setUpIndexInformation() {
 		indexInformation = Mockito.mock(IndexInformation.class);
 
@@ -215,7 +207,7 @@ public class SearchAdminDisplayContextTest {
 		);
 
 		Mockito.when(
-			indexInformation.getCompanyIndexName(Matchers.anyLong())
+			indexInformation.getCompanyIndexName(Mockito.anyLong())
 		).thenAnswer(
 			invocation -> "index" + invocation.getArguments()[0]
 		);
@@ -226,7 +218,7 @@ public class SearchAdminDisplayContextTest {
 
 		Mockito.doAnswer(
 			invocation -> new String[] {
-				invocation.getArgumentAt(0, String.class), StringPool.BLANK
+				invocation.getArgument(0, String.class), StringPool.BLANK
 			}
 		).when(
 			_portal
@@ -239,7 +231,6 @@ public class SearchAdminDisplayContextTest {
 		portalUtil.setPortal(_portal);
 	}
 
-	protected Http http;
 	protected IndexInformation indexInformation;
 
 	private RenderRequest _getRenderRequestWithSelectedTab(String selectedTab) {

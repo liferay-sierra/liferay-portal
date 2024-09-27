@@ -12,7 +12,14 @@
  * details.
  */
 
-import {delegate} from 'frontend-js-web';
+import {
+	addParams,
+	delegate,
+	openSelectionModal,
+	sub,
+	toggleDisabled,
+	toggleSelectBox,
+} from 'frontend-js-web';
 
 export default function ({classTypes, namespace}) {
 	const mapDDMStructures = {};
@@ -93,7 +100,7 @@ export default function ({classTypes, namespace}) {
 
 		if (enabledInput) {
 			popupButtons.forEach((popupButton) => {
-				Liferay.Util.toggleDisabled(popupButton, !enabledInputChecked);
+				toggleDisabled(popupButton, !enabledInputChecked);
 			});
 		}
 	};
@@ -224,7 +231,7 @@ export default function ({classTypes, namespace}) {
 	};
 
 	classTypes.forEach(({className, classSubtypes}) => {
-		Liferay.Util.toggleSelectBox(
+		toggleSelectBox(
 			`${namespace}anyClassType${className}`,
 			'false',
 			`${namespace}${className}Boxes`
@@ -355,7 +362,7 @@ export default function ({classTypes, namespace}) {
 		if (fromBox.attr('id') === id || toBox.attr('id') === id) {
 			toggleSubclasses();
 
-			if (document.getElementById(id).options.length === 0) {
+			if (!document.getElementById(id).options.length) {
 				toggleSaveButton(true);
 			}
 			else {
@@ -367,26 +374,26 @@ export default function ({classTypes, namespace}) {
 	const openModal = ({delegateTarget}) => {
 		let url = delegateTarget.dataset.href;
 
-		url = Liferay.Util.addParams(
+		url = addParams(
 			`${namespace}ddmStructureDisplayFieldValue=${encodeURIComponent(
 				ddmStructureDisplayFieldValueInput.value
 			)}`,
 			url
 		);
-		url = Liferay.Util.addParams(
+		url = addParams(
 			`${namespace}ddmStructureFieldName=${encodeURIComponent(
 				ddmStructureFieldNameInput.value
 			)}`,
 			url
 		);
-		url = Liferay.Util.addParams(
+		url = addParams(
 			`${namespace}ddmStructureFieldValue=${encodeURIComponent(
 				ddmStructureFieldValueInput.value
 			)}`,
 			url
 		);
 
-		Liferay.Util.openSelectionModal({
+		openSelectionModal({
 			customSelectEvent: true,
 			id: `${namespace}selectDDMStructure${delegateTarget.id}`,
 			iframeBodyCssClass: '',
@@ -400,7 +407,7 @@ export default function ({classTypes, namespace}) {
 				});
 			},
 			selectEventName: `${namespace}selectDDMStructureField`,
-			title: Liferay.Util.sub(
+			title: sub(
 				Liferay.Language.get('select-x'),
 				Liferay.Language.get('structure-field')
 			),
@@ -417,7 +424,7 @@ export default function ({classTypes, namespace}) {
 
 	eventDelegates.push(clickOpenModal);
 
-	Liferay.Util.toggleSelectBox(
+	toggleSelectBox(
 		`${namespace}anyAssetType`,
 		'false',
 		`${namespace}classNamesBoxes`

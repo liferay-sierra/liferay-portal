@@ -31,10 +31,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alec Sloan
  */
-@Component(
-	enabled = false, immediate = true,
-	service = CommerceWorkflowedModelHelper.class
-)
+@Component(immediate = true, service = CommerceWorkflowedModelHelper.class)
 public class CommerceWorkflowedModelHelperImpl
 	implements CommerceWorkflowedModelHelper {
 
@@ -75,7 +72,7 @@ public class CommerceWorkflowedModelHelperImpl
 
 			List<String> transitionNames =
 				_workflowTaskManager.getNextTransitionNames(
-					companyId, userId, workflowTaskId);
+					userId, workflowTaskId);
 
 			for (String transitionName : transitionNames) {
 				transitionOVPs.add(

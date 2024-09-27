@@ -52,6 +52,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -331,13 +332,11 @@ public class CommerceInventoryEngineTest {
 				_user.getUserId(), _cpInstance1.getSku(), bookQuantity, null,
 				Collections.emptyMap());
 
-		int stockQuantity = _commerceInventoryEngine.getStockQuantity(
-			_group.getCompanyId(), _commerceChannel.getGroupId(),
-			_cpInstance1.getSku());
-
 		Assert.assertEquals(
 			_commerceInventoryWarehouseItem1.getQuantity() - bookQuantity,
-			stockQuantity);
+			_commerceInventoryEngine.getStockQuantity(
+				_group.getCompanyId(), _commerceChannel.getGroupId(),
+				_cpInstance1.getSku()));
 
 		_commerceInventoryEngine.consumeQuantity(
 			_user.getUserId(),
@@ -346,13 +345,11 @@ public class CommerceInventoryEngineTest {
 			commerceBookedQuantity.getCommerceInventoryBookedQuantityId(),
 			Collections.emptyMap());
 
-		stockQuantity = _commerceInventoryEngine.getStockQuantity(
-			_group.getCompanyId(), _commerceChannel.getGroupId(),
-			_cpInstance1.getSku());
-
 		Assert.assertEquals(
 			_commerceInventoryWarehouseItem1.getQuantity() - bookQuantity,
-			stockQuantity);
+			_commerceInventoryEngine.getStockQuantity(
+				_group.getCompanyId(), _commerceChannel.getGroupId(),
+				_cpInstance1.getSku()));
 
 		_commerceBookedQuantityLocalService.getCommerceInventoryBookedQuantity(
 			commerceBookedQuantity.getCommerceInventoryBookedQuantityId());
@@ -436,7 +433,7 @@ public class CommerceInventoryEngineTest {
 			"An exception shall be raised"
 		);
 
-		String name = RandomTestUtil.randomString();
+		Map<Locale, String> name = RandomTestUtil.randomLocaleStringMap();
 
 		CommerceInventoryWarehouse commerceInventoryWarehouse =
 			CommerceInventoryTestUtil.
@@ -445,8 +442,8 @@ public class CommerceInventoryEngineTest {
 
 		_commerceInventoryWarehouseLocalService.addCommerceInventoryWarehouse(
 			commerceInventoryWarehouse.getExternalReferenceCode(),
-			commerceInventoryWarehouse.getName(),
-			commerceInventoryWarehouse.getDescription(),
+			commerceInventoryWarehouse.getNameMap(),
+			commerceInventoryWarehouse.getDescriptionMap(),
 			commerceInventoryWarehouse.isActive(),
 			commerceInventoryWarehouse.getStreet1(),
 			commerceInventoryWarehouse.getStreet2(),
@@ -472,14 +469,14 @@ public class CommerceInventoryEngineTest {
 			"The retrieved warehouse name is equal to the created one"
 		);
 
-		String name = RandomTestUtil.randomString();
+		Map<Locale, String> name = RandomTestUtil.randomLocaleStringMap();
 
 		CommerceInventoryWarehouse commerceInventoryWarehouse =
 			CommerceInventoryTestUtil.
 				addCommerceInventoryWarehouseWithExternalReferenceCode(
 					_user.getGroupId(), name);
 
-		Assert.assertEquals(name, commerceInventoryWarehouse.getName());
+		Assert.assertEquals(name, commerceInventoryWarehouse.getNameMap());
 
 		List<CommerceInventoryWarehouse> commerceInventoryWarehouses =
 			_commerceInventoryWarehouseLocalService.
@@ -635,10 +632,10 @@ public class CommerceInventoryEngineTest {
 				commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
 				_cpInstance1.getSku(), quantity);
 
-		int stockQuantity = _commerceInventoryEngine.getStockQuantity(
-			_group.getCompanyId(), _cpInstance1.getSku());
-
-		Assert.assertEquals(0, stockQuantity);
+		Assert.assertEquals(
+			0,
+			_commerceInventoryEngine.getStockQuantity(
+				_group.getCompanyId(), _cpInstance1.getSku()));
 	}
 
 	@Test
@@ -674,11 +671,11 @@ public class CommerceInventoryEngineTest {
 				commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
 				_cpInstance1.getSku(), quantity);
 
-		int stockQuantity = _commerceInventoryEngine.getStockQuantity(
-			_group.getCompanyId(), _commerceChannel.getGroupId(),
-			_cpInstance1.getSku());
-
-		Assert.assertEquals(0, stockQuantity);
+		Assert.assertEquals(
+			0,
+			_commerceInventoryEngine.getStockQuantity(
+				_group.getCompanyId(), _commerceChannel.getGroupId(),
+				_cpInstance1.getSku()));
 	}
 
 	@Test
@@ -713,11 +710,11 @@ public class CommerceInventoryEngineTest {
 				commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
 				_cpInstance1.getSku(), quantity);
 
-		int stockQuantity = _commerceInventoryEngine.getStockQuantity(
-			_group.getCompanyId(), _commerceChannel.getGroupId(),
-			_cpInstance1.getSku());
-
-		Assert.assertEquals(0, stockQuantity);
+		Assert.assertEquals(
+			0,
+			_commerceInventoryEngine.getStockQuantity(
+				_group.getCompanyId(), _commerceChannel.getGroupId(),
+				_cpInstance1.getSku()));
 	}
 
 	@Test
@@ -738,12 +735,11 @@ public class CommerceInventoryEngineTest {
 				_commerceChannel.getCommerceChannelId(), _cpInstance1.getSku(),
 				10, _serviceContext);
 
-		int stockQuantity = _commerceInventoryEngine.getStockQuantity(
-			_group.getCompanyId(), _commerceChannel.getGroupId(),
-			_cpInstance1.getSku());
-
 		Assert.assertEquals(
-			_commerceInventoryWarehouseItem1.getQuantity(), stockQuantity);
+			_commerceInventoryWarehouseItem1.getQuantity(),
+			_commerceInventoryEngine.getStockQuantity(
+				_group.getCompanyId(), _commerceChannel.getGroupId(),
+				_cpInstance1.getSku()));
 	}
 
 	@Test

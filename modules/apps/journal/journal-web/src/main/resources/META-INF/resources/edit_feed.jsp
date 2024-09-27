@@ -337,11 +337,10 @@ renderResponse.setTitle((feed == null) ? LanguageUtil.get(request, "new-feed") :
 		}
 		%>
 
-		<c:if test="<%= hasSavePermission %>">
-			<aui:button type="submit" />
-		</c:if>
-
-		<aui:button href="<%= redirect %>" type="cancel" />
+		<liferay-frontend:edit-form-buttons
+			redirect="<%= redirect %>"
+			submitDisabled="<%= !hasSavePermission %>"
+		/>
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>
 
@@ -349,38 +348,41 @@ renderResponse.setTitle((feed == null) ? LanguageUtil.get(request, "new-feed") :
 	function <portlet:namespace />openDDMStructureSelector() {
 		Liferay.Util.openSelectionModal({
 			onSelect: function (selectedItem) {
+				const itemValue = JSON.parse(selectedItem.value);
+
 				if (
 					document.<portlet:namespace />fm
 						.<portlet:namespace />ddmStructureKey.value !=
-					selectedItem.ddmstructurekey
+					itemValue.ddmstructurekey
 				) {
-					if (
-						confirm(
-							'<%= UnicodeLanguageUtil.get(request, "selecting-a-new-structure-changes-the-available-templates-and-available-feed-item-content") %>'
-						)
-					) {
-						document.<portlet:namespace />fm.<portlet:namespace />ddmStructureKey.value =
-							selectedItem.ddmstructurekey;
-						document.<portlet:namespace />fm.<portlet:namespace />ddmTemplateKey.value =
-							'';
-						document.<portlet:namespace />fm.<portlet:namespace />ddmRendererTemplateKey.value =
-							'';
-						document.<portlet:namespace />fm.<portlet:namespace />contentField.value =
-							'<%= JournalFeedConstants.WEB_CONTENT_DESCRIPTION %>';
+					Liferay.Util.openConfirmModal({
+						message:
+							'<%= UnicodeLanguageUtil.get(request, "selecting-a-new-structure-changes-the-available-templates-and-available-feed-item-content") %>',
+						onConfirm: (isConfirmed) => {
+							if (isConfirmed) {
+								document.<portlet:namespace />fm.<portlet:namespace />ddmStructureKey.value =
+									itemValue.ddmstructurekey;
+								document.<portlet:namespace />fm.<portlet:namespace />ddmTemplateKey.value =
+									'';
+								document.<portlet:namespace />fm.<portlet:namespace />ddmRendererTemplateKey.value =
+									'';
+								document.<portlet:namespace />fm.<portlet:namespace />contentField.value =
+									'<%= JournalFeedConstants.WEB_CONTENT_DESCRIPTION %>';
 
-						submitForm(
-							document.<portlet:namespace />fm,
-							null,
-							false,
-							false
-						);
-					}
+								submitForm(
+									document.<portlet:namespace />fm,
+									null,
+									false,
+									false
+								);
+							}
+						},
+					});
 				}
 			},
 			selectEventName: '<portlet:namespace />selectDDMStructure',
 			title: '<%= UnicodeLanguageUtil.get(request, "structures") %>',
-			url:
-				'<portlet:renderURL windowState="<%= LiferayWindowState.POP_UP.toString() %>"><portlet:param name="mvcPath" value="/select_ddm_structure.jsp" /></portlet:renderURL>',
+			url: '<%= journalDisplayContext.getSelectDDMStructureURL() %>>',
 		});
 	}
 
@@ -411,11 +413,16 @@ renderResponse.setTitle((feed == null) ? LanguageUtil.get(request, "new-feed") :
 		submitForm(document.<portlet:namespace />fm);
 	}
 
-	Liferay.Util.disableToggleBoxes(
-		'<portlet:namespace />autoFeedId',
-		'<portlet:namespace />newFeedId',
-		true
-	);
+	var autoFeedInput = document.getElementById('<portlet:namespace />autoFeedId');
+	var newFeedCheckbox = document.getElementById('<portlet:namespace />newFeedId');
+
+	if (autoFeedInput && newFeedCheckbox) {
+		newFeedCheckbox.disabled = autoFeedInput.checked;
+
+		autoFeedInput.addEventListener('click', () => {
+			Liferay.Util.toggleDisabled(newFeedCheckbox, !newFeedCheckbox.disabled);
+		});
+	}
 </aui:script>
 
 <aui:script sandbox="<%= true %>">

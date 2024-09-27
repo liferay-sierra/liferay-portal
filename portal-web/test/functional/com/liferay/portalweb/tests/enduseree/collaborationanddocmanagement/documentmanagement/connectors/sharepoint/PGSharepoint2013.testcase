@@ -1,15 +1,18 @@
 @component-name = "portal-document-management-ee"
 definition {
 
+	// Stop running on release until ISIT-32385 fixed
+
 	property cmis.repository.type = "sharepoint2013";
-	property custom.properties = "session.store.password=true${line.separator}company.security.auth.type=screenName${line.separator}default.layout.template.id=1_column";
-	property osgi.app.includes = "sharepoint-soap";
+	property custom.properties = "session.store.password=true${line.separator}company.security.auth.type=screenName${line.separator}default.layout.template.id=1_column${line.separator}dl.actions.visible=true";
+	property osgi.modules.includes = "sharepoint-soap";
 	property portal.release = "false";
+	property portal.upstream = "true";
 	property test.run.environment = "EE";
 	property testray.main.component.name = "Sharepoint";
 
 	setUp {
-		TestCase.setUpPortalInstance();
+		TestCase.setUpPortalInstance(authenticationMethod = "By Screen Name");
 
 		var sharepointVmHostName = PropsUtil.get("cmis.repository.vm.host.name");
 
@@ -17,7 +20,7 @@ definition {
 			locator1 = "build-test-sharepoint.xml",
 			value1 = "clean-sharepoint-repository -Dssh.host=${sharepointVmHostName}");
 
-		User.loginPG(
+		User.firstLoginByScreenNamePG(
 			authenticationMethod = "By Screen Name",
 			userScreenName = "test");
 
@@ -37,7 +40,7 @@ definition {
 
 		User.logoutPG();
 
-		User.loginPG(
+		User.firstLoginUI(
 			authenticationMethod = "By Screen Name",
 			password = "password",
 			userScreenName = "administrator");
@@ -46,19 +49,20 @@ definition {
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(
+		PagesAdmin.addPage(
 			pageName = "Documents and Media Page",
 			sitePageType = "Widget Page");
 
 		PagesAdmin.configurePage(
 			columnName = "1 Column",
 			pageName = "Documents and Media Page",
-			privacy = "Public Pages",
 			sitePageType = "Widget Page");
 
 		Navigator.gotoPage(pageName = "Documents and Media Page");
 
 		Portlet.addPG(portletName = "Documents and Media");
+
+		Navigator.gotoPage(pageName = "Documents and Media Page");
 
 		DMNavigator.gotoAddRepositoryPG();
 
@@ -66,13 +70,12 @@ definition {
 
 		DMRepository.addSharepoint(
 			dmRepositoryLibraryName = "Documents",
+			dmRepositoryLibraryPath = "Shared Documents",
 			dmRepositoryName = "Sharepoint",
 			dmRepositorySiteURL = "http://${sharepointVmHostName}",
 			dmServerVersion = "2013");
 
 		PortletEntry.save();
-
-		DMDocument.enableActionsMenuOnPortlet();
 
 		Navigator.gotoPage(pageName = "Documents and Media Page");
 
@@ -106,7 +109,7 @@ definition {
 
 			User.logoutPG();
 
-			User.loginPG(
+			User.firstLoginUI(
 				authenticationMethod = "By Screen Name",
 				password = "test",
 				userScreenName = "test");
@@ -116,6 +119,8 @@ definition {
 	@priority = "4"
 	@refactorneeded
 	test ViewDocumentAsGuest {
+		property test.name.skip.portal.instance = "PGSharepoint2013#ViewDocumentAsGuest";
+
 		Navigator.gotoPage(pageName = "Documents and Media Page");
 
 		DMNavigator.gotoRepository(dmRepositoryName = "Sharepoint Repository Name");
@@ -142,7 +147,7 @@ definition {
 			dmDocumentTitle = "Document_1.doc",
 			dmRepositoryName = "true");
 
-		User.loginPG(
+		User.firstLoginUI(
 			authenticationMethod = "By Screen Name",
 			password = "password",
 			userScreenName = "administrator");

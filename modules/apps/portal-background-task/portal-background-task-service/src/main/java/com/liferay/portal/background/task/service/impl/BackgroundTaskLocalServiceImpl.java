@@ -110,9 +110,8 @@ public class BackgroundTaskLocalServiceImpl
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		return addBackgroundTask(
-			userId, groupId, name, null, taskExecutorClassName, taskContextMap,
-			serviceContext);
+		return _addBackgroundTask(
+			userId, groupId, name, null, taskExecutorClassName, taskContextMap);
 	}
 
 	@Override
@@ -123,9 +122,9 @@ public class BackgroundTaskLocalServiceImpl
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		return addBackgroundTask(
+		return _addBackgroundTask(
 			userId, groupId, name, servletContextNames,
-			taskExecutorClass.getName(), taskContextMap, serviceContext);
+			taskExecutorClass.getName(), taskContextMap);
 	}
 
 	@Override
@@ -138,10 +137,10 @@ public class BackgroundTaskLocalServiceImpl
 		Folder folder = backgroundTask.addAttachmentsFolder();
 
 		PortletFileRepositoryUtil.addPortletFileEntry(
-			backgroundTask.getGroupId(), userId, BackgroundTask.class.getName(),
-			backgroundTask.getPrimaryKey(), PortletKeys.BACKGROUND_TASK,
-			folder.getFolderId(), file, fileName, ContentTypes.APPLICATION_ZIP,
-			false);
+			null, backgroundTask.getGroupId(), userId,
+			BackgroundTask.class.getName(), backgroundTask.getPrimaryKey(),
+			PortletKeys.BACKGROUND_TASK, folder.getFolderId(), file, fileName,
+			ContentTypes.APPLICATION_ZIP, false);
 	}
 
 	@Override
@@ -155,10 +154,10 @@ public class BackgroundTaskLocalServiceImpl
 		Folder folder = backgroundTask.addAttachmentsFolder();
 
 		PortletFileRepositoryUtil.addPortletFileEntry(
-			backgroundTask.getGroupId(), userId, BackgroundTask.class.getName(),
-			backgroundTask.getPrimaryKey(), PortletKeys.BACKGROUND_TASK,
-			folder.getFolderId(), inputStream, fileName,
-			ContentTypes.APPLICATION_ZIP, false);
+			null, backgroundTask.getGroupId(), userId,
+			BackgroundTask.class.getName(), backgroundTask.getPrimaryKey(),
+			PortletKeys.BACKGROUND_TASK, folder.getFolderId(), inputStream,
+			fileName, ContentTypes.APPLICATION_ZIP, false);
 	}
 
 	@Override
@@ -680,11 +679,10 @@ public class BackgroundTaskLocalServiceImpl
 		_backgroundTaskLockHelper = new BackgroundTaskLockHelper(_lockManager);
 	}
 
-	protected BackgroundTask addBackgroundTask(
+	private BackgroundTask _addBackgroundTask(
 			long userId, long groupId, String name,
 			String[] servletContextNames, String taskExecutorClassName,
-			Map<String, Serializable> taskContextMap,
-			ServiceContext serviceContext)
+			Map<String, Serializable> taskContextMap)
 		throws PortalException {
 
 		User user = null;

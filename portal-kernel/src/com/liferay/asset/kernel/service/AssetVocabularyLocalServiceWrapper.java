@@ -100,25 +100,6 @@ public class AssetVocabularyLocalServiceWrapper
 			userId, groupId, title, serviceContext);
 	}
 
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
-	 #addVocabulary(String, long, long, String, String, Map, Map, String, int, ServiceContext)}
-	 */
-	@Deprecated
-	@Override
-	public AssetVocabulary addVocabulary(
-			long userId, long groupId, String name, String title,
-			java.util.Map<java.util.Locale, String> titleMap,
-			java.util.Map<java.util.Locale, String> descriptionMap,
-			String settings, int visibilityType,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _assetVocabularyLocalService.addVocabulary(
-			userId, groupId, name, title, titleMap, descriptionMap, settings,
-			visibilityType, serviceContext);
-	}
-
 	@Override
 	public AssetVocabulary addVocabulary(
 			long userId, long groupId, String name, String title,
@@ -692,22 +673,13 @@ public class AssetVocabularyLocalServiceWrapper
 	@Override
 	public com.liferay.portal.kernel.search.BaseModelSearchResult
 		<AssetVocabulary> searchVocabularies(
-				long companyId, long groupId, String title, int start, int end)
-			throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _assetVocabularyLocalService.searchVocabularies(
-			companyId, groupId, title, start, end);
-	}
-
-	@Override
-	public com.liferay.portal.kernel.search.BaseModelSearchResult
-		<AssetVocabulary> searchVocabularies(
-				long companyId, long groupId, String title, int start, int end,
+				long companyId, long[] groupIds, String title,
+				int[] visibilityTypes, int start, int end,
 				com.liferay.portal.kernel.search.Sort sort)
 			throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _assetVocabularyLocalService.searchVocabularies(
-			companyId, groupId, title, start, end, sort);
+			companyId, groupIds, title, visibilityTypes, start, end, sort);
 	}
 
 	/**
@@ -761,20 +733,6 @@ public class AssetVocabularyLocalServiceWrapper
 
 		return _assetVocabularyLocalService.updateVocabulary(
 			vocabularyId, title, titleMap, descriptionMap, settings,
-			serviceContext);
-	}
-
-	@Override
-	public AssetVocabulary updateVocabulary(
-			long vocabularyId, String name, String title,
-			java.util.Map<java.util.Locale, String> titleMap,
-			java.util.Map<java.util.Locale, String> descriptionMap,
-			String settings,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _assetVocabularyLocalService.updateVocabulary(
-			vocabularyId, name, title, titleMap, descriptionMap, settings,
 			serviceContext);
 	}
 

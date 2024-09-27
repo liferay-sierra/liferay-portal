@@ -23,18 +23,18 @@ import com.liferay.commerce.product.service.CommerceChannelLocalService;
 import com.liferay.commerce.tax.engine.fixed.configuration.CommerceTaxByAddressTypeConfiguration;
 import com.liferay.commerce.tax.engine.fixed.model.CommerceTaxFixedRateAddressRel;
 import com.liferay.commerce.tax.engine.fixed.service.CommerceTaxFixedRateAddressRelService;
-import com.liferay.commerce.tax.engine.fixed.web.internal.frontend.constants.CommerceTaxRateSettingDataSetConstants;
+import com.liferay.commerce.tax.engine.fixed.web.internal.constants.CommerceTaxRateSettingFDSNames;
 import com.liferay.commerce.tax.engine.fixed.web.internal.frontend.taglib.servlet.taglib.CommerceTaxMethodAddressRateRelsScreenNavigationCategory;
 import com.liferay.commerce.tax.model.CommerceTaxMethod;
 import com.liferay.commerce.tax.service.CommerceTaxMethodService;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Country;
 import com.liferay.portal.kernel.model.Region;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.CountryService;
 import com.liferay.portal.kernel.service.RegionService;
@@ -144,12 +144,10 @@ public class CommerceTaxFixedRateAddressRelsDisplayContext
 		CommerceTaxMethod commerceTaxMethod = getCommerceTaxMethod();
 
 		if (commerceTaxMethod.isPercentage()) {
-			return CommerceTaxRateSettingDataSetConstants.
-				COMMERCE_DATA_SET_KEY_PERCENTAGE_TAX_RATE_SETTING;
+			return CommerceTaxRateSettingFDSNames.PERCENTAGE_TAX_RATE_SETTING;
 		}
 
-		return CommerceTaxRateSettingDataSetConstants.
-			COMMERCE_DATA_SET_KEY_TAX_RATE_SETTING;
+		return CommerceTaxRateSettingFDSNames.TAX_RATE_SETTING;
 	}
 
 	public long getRegionId() throws PortalException {

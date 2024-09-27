@@ -40,8 +40,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.commerce.price.list.configuration.CommercePriceEntryConfiguration",
-	enabled = false, immediate = true,
-	service = CheckCommercePriceEntryMessageListener.class
+	immediate = true, service = CheckCommercePriceEntryMessageListener.class
 )
 public class CheckCommercePriceEntryMessageListener
 	extends BaseMessageListener {
@@ -77,13 +76,11 @@ public class CheckCommercePriceEntryMessageListener
 		_commercePriceEntryLocalService.checkCommercePriceEntries();
 	}
 
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
-	protected void setModuleServiceLifecycle(
-		ModuleServiceLifecycle moduleServiceLifecycle) {
-	}
-
 	@Reference
 	private CommercePriceEntryLocalService _commercePriceEntryLocalService;
+
+	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
+	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
 	@Reference
 	private SchedulerEngineHelper _schedulerEngineHelper;

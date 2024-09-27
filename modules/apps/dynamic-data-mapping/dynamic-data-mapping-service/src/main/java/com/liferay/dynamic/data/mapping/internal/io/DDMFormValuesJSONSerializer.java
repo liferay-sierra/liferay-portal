@@ -45,7 +45,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marcellus Tavares
  */
 @Component(
-	immediate = true, property = "ddm.form.values.serializer.type=json",
+	property = "ddm.form.values.serializer.type=json",
 	service = DDMFormValuesSerializer.class
 )
 public class DDMFormValuesJSONSerializer implements DDMFormValuesSerializer {
@@ -106,11 +106,6 @@ public class DDMFormValuesJSONSerializer implements DDMFormValuesSerializer {
 	@Deactivate
 	protected void deactivate() {
 		_serviceTrackerMap.close();
-	}
-
-	@Reference(unbind = "-")
-	protected void setJSONFactory(JSONFactory jsonFactory) {
-		_jsonFactory = jsonFactory;
 	}
 
 	protected JSONObject toJSONObject(
@@ -220,7 +215,9 @@ public class DDMFormValuesJSONSerializer implements DDMFormValuesSerializer {
 		return jsonArray;
 	}
 
+	@Reference
 	private JSONFactory _jsonFactory;
+
 	private ServiceTrackerMap<String, DDMFormFieldValueJSONSerializer>
 		_serviceTrackerMap;
 

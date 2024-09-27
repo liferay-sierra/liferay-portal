@@ -15,6 +15,7 @@
 import ClayForm, {ClaySelectWithOption} from '@clayui/form';
 import React, {useCallback, useState} from 'react';
 
+import {CheckboxField} from '../../../../../../app/components/fragment-configuration-fields/CheckboxField';
 import {BACKGROUND_IMAGE_FRAGMENT_ENTRY_PROCESSOR} from '../../../../../../app/config/constants/backgroundImageFragmentEntryProcessor';
 import {EDITABLE_FRAGMENT_ENTRY_PROCESSOR} from '../../../../../../app/config/constants/editableFragmentEntryProcessor';
 import {EDITABLE_TYPES} from '../../../../../../app/config/constants/editableTypes';
@@ -27,7 +28,6 @@ import {
 } from '../../../../../../app/contexts/StoreContext';
 import selectEditableValueContent from '../../../../../../app/selectors/selectEditableValueContent';
 import selectLanguageId from '../../../../../../app/selectors/selectLanguageId';
-import selectSegmentsExperienceId from '../../../../../../app/selectors/selectSegmentsExperienceId';
 import updateEditableValuesThunk from '../../../../../../app/thunks/updateEditableValues';
 import isMapped from '../../../../../../app/utils/editable-value/isMapped';
 import isMappedToCollection from '../../../../../../app/utils/editable-value/isMappedToCollection';
@@ -35,10 +35,10 @@ import isMappedToInfoItem from '../../../../../../app/utils/editable-value/isMap
 import {getEditableLocalizedValue} from '../../../../../../app/utils/getEditableLocalizedValue';
 import {setIn} from '../../../../../../app/utils/setIn';
 import {updateIn} from '../../../../../../app/utils/updateIn';
-import {useId} from '../../../../../../app/utils/useId';
 import {ImageSelector} from '../../../../../../common/components/ImageSelector';
 import {ImageSelectorDescription} from '../../../../../../common/components/ImageSelectorDescription';
 import {ImageSelectorSize} from '../../../../../../common/components/ImageSelectorSize';
+import {useId} from '../../../../../../core/hooks/useId';
 import {getEditableItemPropTypes} from '../../../../../../prop-types/index';
 import {MappingPanel} from './MappingPanel';
 
@@ -56,8 +56,6 @@ const SOURCE_OPTIONS = {
 export default function ImageSourcePanel({item}) {
 	const dispatch = useDispatch();
 	const fragmentEntryLinks = useSelector((state) => state.fragmentEntryLinks);
-	const languageId = useSelector(selectLanguageId);
-	const segmentsExperienceId = useSelector(selectSegmentsExperienceId);
 	const sourceSelectionInputId = useId();
 
 	const selectedViewportSize = useSelector(
@@ -94,8 +92,6 @@ export default function ImageSourcePanel({item}) {
 						}
 					),
 					fragmentEntryLinkId: item.fragmentEntryLinkId,
-					languageId,
-					segmentsExperienceId,
 				})
 			);
 		}
@@ -128,6 +124,34 @@ export default function ImageSourcePanel({item}) {
 			)}
 
 			{ConfigurationPanel && <ConfigurationPanel item={item} />}
+
+			{item.type === EDITABLE_TYPES.image && (
+				<CheckboxField
+					field={{
+						defaultValue: false,
+						label: Liferay.Language.get('enable-lazy-loading'),
+						name: 'lazyLoading',
+					}}
+					onValueSelect={(name, value) => {
+						dispatch(
+							updateEditableValuesThunk({
+								editableValues: setIn(
+									editableValues,
+									[
+										EDITABLE_FRAGMENT_ENTRY_PROCESSOR,
+										item.editableId,
+										'config',
+										name,
+									],
+									value
+								),
+								fragmentEntryLinkId: item.fragmentEntryLinkId,
+							})
+						);
+					}}
+					value={editableValue.config.lazyLoading}
+				/>
+			)}
 		</>
 	);
 }
@@ -142,7 +166,6 @@ function DirectImagePanel({item}) {
 	const dispatch = useDispatch();
 	const fragmentEntryLinks = useSelector((state) => state.fragmentEntryLinks);
 	const languageId = useSelector(selectLanguageId);
-	const segmentsExperienceId = useSelector(selectSegmentsExperienceId);
 	const selectedViewportSize = useSelector(
 		(state) => state.selectedViewportSize
 	);
@@ -155,7 +178,7 @@ function DirectImagePanel({item}) {
 	const editableValues =
 		fragmentEntryLinks[fragmentEntryLinkId].editableValues;
 
-	const editableValue = editableValues[processorKey][editableId];
+	const editableValue = editableValues[processorKey]?.[editableId];
 	const editableConfig = editableValue.config || {};
 
 	const editableContent = selectEditableValueContent(
@@ -220,8 +243,6 @@ function DirectImagePanel({item}) {
 					nextEditableValue
 				),
 				fragmentEntryLinkId,
-				languageId,
-				segmentsExperienceId,
 			})
 		);
 	};
@@ -252,7 +273,6 @@ function DirectImagePanel({item}) {
 					{}
 				),
 				fragmentEntryLinkId,
-				segmentsExperienceId,
 			})
 		);
 	};
@@ -314,7 +334,6 @@ function ImagePanelSizeSelector({item}) {
 	const fragmentEntryLinks = useSelector((state) => state.fragmentEntryLinks);
 	const globalContext = useGlobalContext();
 	const languageId = useSelector(selectLanguageId);
-	const segmentsExperienceId = useSelector(selectSegmentsExperienceId);
 	const selectedViewportSize = useSelector(
 		(state) => state.selectedViewportSize
 	);
@@ -327,7 +346,7 @@ function ImagePanelSizeSelector({item}) {
 	const editableValues =
 		fragmentEntryLinks[fragmentEntryLinkId].editableValues;
 
-	const editableValue = editableValues[processorKey][editableId];
+	const editableValue = editableValues[processorKey]?.[editableId];
 	const editableConfig = editableValue.config || {};
 
 	const getEditableElement = useCallback(() => {
@@ -374,7 +393,6 @@ function ImagePanelSizeSelector({item}) {
 					imageSizeId
 				),
 				fragmentEntryLinkId,
-				segmentsExperienceId,
 			})
 		);
 	};

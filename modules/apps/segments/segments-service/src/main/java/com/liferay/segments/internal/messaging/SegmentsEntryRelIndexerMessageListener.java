@@ -40,7 +40,6 @@ import java.util.Map;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
 /**
@@ -48,7 +47,6 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.segments.configuration.SegmentsConfiguration",
-	immediate = true,
 	service = {
 		MessageListener.class, SegmentsEntryRelIndexerMessageListener.class
 	}
@@ -57,7 +55,6 @@ public class SegmentsEntryRelIndexerMessageListener
 	extends BaseMessageListener {
 
 	@Activate
-	@Modified
 	protected void activate(Map<String, Object> properties) {
 		_segmentsConfiguration = ConfigurableUtil.createConfigurable(
 			SegmentsConfiguration.class, properties);
@@ -101,11 +98,6 @@ public class SegmentsEntryRelIndexerMessageListener
 		actionableDynamicQuery.performActions();
 	}
 
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
-	protected void setModuleServiceLifecycle(
-		ModuleServiceLifecycle moduleServiceLifecycle) {
-	}
-
 	private void _reindex(SegmentsEntry segmentsEntry) {
 		Message message = new Message();
 
@@ -119,6 +111,9 @@ public class SegmentsEntryRelIndexerMessageListener
 
 	@Reference
 	private MessageBus _messageBus;
+
+	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
+	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
 	@Reference
 	private SchedulerEngineHelper _schedulerEngineHelper;

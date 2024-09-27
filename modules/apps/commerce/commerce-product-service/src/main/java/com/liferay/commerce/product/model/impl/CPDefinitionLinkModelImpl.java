@@ -36,7 +36,6 @@ import com.liferay.portal.kernel.util.StringUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 
 import java.sql.Blob;
@@ -74,13 +73,13 @@ public class CPDefinitionLinkModelImpl
 	public static final String TABLE_NAME = "CPDefinitionLink";
 
 	public static final Object[][] TABLE_COLUMNS = {
-		{"mvccVersion", Types.BIGINT}, {"uuid_", Types.VARCHAR},
-		{"CPDefinitionLinkId", Types.BIGINT}, {"groupId", Types.BIGINT},
-		{"companyId", Types.BIGINT}, {"userId", Types.BIGINT},
-		{"userName", Types.VARCHAR}, {"createDate", Types.TIMESTAMP},
-		{"modifiedDate", Types.TIMESTAMP}, {"CPDefinitionId", Types.BIGINT},
-		{"CProductId", Types.BIGINT}, {"priority", Types.DOUBLE},
-		{"type_", Types.VARCHAR}
+		{"mvccVersion", Types.BIGINT}, {"ctCollectionId", Types.BIGINT},
+		{"uuid_", Types.VARCHAR}, {"CPDefinitionLinkId", Types.BIGINT},
+		{"groupId", Types.BIGINT}, {"companyId", Types.BIGINT},
+		{"userId", Types.BIGINT}, {"userName", Types.VARCHAR},
+		{"createDate", Types.TIMESTAMP}, {"modifiedDate", Types.TIMESTAMP},
+		{"CPDefinitionId", Types.BIGINT}, {"CProductId", Types.BIGINT},
+		{"priority", Types.DOUBLE}, {"type_", Types.VARCHAR}
 	};
 
 	public static final Map<String, Integer> TABLE_COLUMNS_MAP =
@@ -88,6 +87,7 @@ public class CPDefinitionLinkModelImpl
 
 	static {
 		TABLE_COLUMNS_MAP.put("mvccVersion", Types.BIGINT);
+		TABLE_COLUMNS_MAP.put("ctCollectionId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("uuid_", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("CPDefinitionLinkId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("groupId", Types.BIGINT);
@@ -103,7 +103,7 @@ public class CPDefinitionLinkModelImpl
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table CPDefinitionLink (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,CPDefinitionLinkId LONG not null primary key,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,CPDefinitionId LONG,CProductId LONG,priority DOUBLE,type_ VARCHAR(75) null)";
+		"create table CPDefinitionLink (mvccVersion LONG default 0 not null,ctCollectionId LONG default 0 not null,uuid_ VARCHAR(75) null,CPDefinitionLinkId LONG not null,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,CPDefinitionId LONG,CProductId LONG,priority DOUBLE,type_ VARCHAR(75) null,primary key (CPDefinitionLinkId, ctCollectionId))";
 
 	public static final String TABLE_SQL_DROP = "drop table CPDefinitionLink";
 
@@ -118,24 +118,6 @@ public class CPDefinitionLinkModelImpl
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
 
 	public static final String TX_MANAGER = "liferayTransactionManager";
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean ENTITY_CACHE_ENABLED = true;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean FINDER_CACHE_ENABLED = true;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean COLUMN_BITMASK_ENABLED = true;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
@@ -180,9 +162,19 @@ public class CPDefinitionLinkModelImpl
 	@Deprecated
 	public static final long PRIORITY_COLUMN_BITMASK = 64L;
 
-	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(
-		com.liferay.commerce.product.service.util.ServiceProps.get(
-			"lock.expiration.time.com.liferay.commerce.product.model.CPDefinitionLink"));
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
+	public static void setEntityCacheEnabled(boolean entityCacheEnabled) {
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
+	public static void setFinderCacheEnabled(boolean finderCacheEnabled) {
+	}
 
 	public CPDefinitionLinkModelImpl() {
 	}
@@ -269,34 +261,6 @@ public class CPDefinitionLinkModelImpl
 		return _attributeSetterBiConsumers;
 	}
 
-	private static Function<InvocationHandler, CPDefinitionLink>
-		_getProxyProviderFunction() {
-
-		Class<?> proxyClass = ProxyUtil.getProxyClass(
-			CPDefinitionLink.class.getClassLoader(), CPDefinitionLink.class,
-			ModelWrapper.class);
-
-		try {
-			Constructor<CPDefinitionLink> constructor =
-				(Constructor<CPDefinitionLink>)proxyClass.getConstructor(
-					InvocationHandler.class);
-
-			return invocationHandler -> {
-				try {
-					return constructor.newInstance(invocationHandler);
-				}
-				catch (ReflectiveOperationException
-							reflectiveOperationException) {
-
-					throw new InternalError(reflectiveOperationException);
-				}
-			};
-		}
-		catch (NoSuchMethodException noSuchMethodException) {
-			throw new InternalError(noSuchMethodException);
-		}
-	}
-
 	private static final Map<String, Function<CPDefinitionLink, Object>>
 		_attributeGetterFunctions;
 	private static final Map<String, BiConsumer<CPDefinitionLink, Object>>
@@ -316,6 +280,12 @@ public class CPDefinitionLinkModelImpl
 			"mvccVersion",
 			(BiConsumer<CPDefinitionLink, Long>)
 				CPDefinitionLink::setMvccVersion);
+		attributeGetterFunctions.put(
+			"ctCollectionId", CPDefinitionLink::getCtCollectionId);
+		attributeSetterBiConsumers.put(
+			"ctCollectionId",
+			(BiConsumer<CPDefinitionLink, Long>)
+				CPDefinitionLink::setCtCollectionId);
 		attributeGetterFunctions.put("uuid", CPDefinitionLink::getUuid);
 		attributeSetterBiConsumers.put(
 			"uuid",
@@ -397,6 +367,21 @@ public class CPDefinitionLinkModelImpl
 		}
 
 		_mvccVersion = mvccVersion;
+	}
+
+	@JSON
+	@Override
+	public long getCtCollectionId() {
+		return _ctCollectionId;
+	}
+
+	@Override
+	public void setCtCollectionId(long ctCollectionId) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_ctCollectionId = ctCollectionId;
 	}
 
 	@JSON
@@ -736,6 +721,7 @@ public class CPDefinitionLinkModelImpl
 		CPDefinitionLinkImpl cpDefinitionLinkImpl = new CPDefinitionLinkImpl();
 
 		cpDefinitionLinkImpl.setMvccVersion(getMvccVersion());
+		cpDefinitionLinkImpl.setCtCollectionId(getCtCollectionId());
 		cpDefinitionLinkImpl.setUuid(getUuid());
 		cpDefinitionLinkImpl.setCPDefinitionLinkId(getCPDefinitionLinkId());
 		cpDefinitionLinkImpl.setGroupId(getGroupId());
@@ -760,6 +746,8 @@ public class CPDefinitionLinkModelImpl
 
 		cpDefinitionLinkImpl.setMvccVersion(
 			this.<Long>getColumnOriginalValue("mvccVersion"));
+		cpDefinitionLinkImpl.setCtCollectionId(
+			this.<Long>getColumnOriginalValue("ctCollectionId"));
 		cpDefinitionLinkImpl.setUuid(
 			this.<String>getColumnOriginalValue("uuid_"));
 		cpDefinitionLinkImpl.setCPDefinitionLinkId(
@@ -842,7 +830,7 @@ public class CPDefinitionLinkModelImpl
 	@Deprecated
 	@Override
 	public boolean isEntityCacheEnabled() {
-		return ENTITY_CACHE_ENABLED;
+		return true;
 	}
 
 	/**
@@ -851,7 +839,7 @@ public class CPDefinitionLinkModelImpl
 	@Deprecated
 	@Override
 	public boolean isFinderCacheEnabled() {
-		return FINDER_CACHE_ENABLED;
+		return true;
 	}
 
 	@Override
@@ -869,6 +857,8 @@ public class CPDefinitionLinkModelImpl
 			new CPDefinitionLinkCacheModel();
 
 		cpDefinitionLinkCacheModel.mvccVersion = getMvccVersion();
+
+		cpDefinitionLinkCacheModel.ctCollectionId = getCtCollectionId();
 
 		cpDefinitionLinkCacheModel.uuid = getUuid();
 
@@ -979,45 +969,17 @@ public class CPDefinitionLinkModelImpl
 		return sb.toString();
 	}
 
-	@Override
-	public String toXmlString() {
-		Map<String, Function<CPDefinitionLink, Object>>
-			attributeGetterFunctions = getAttributeGetterFunctions();
-
-		StringBundler sb = new StringBundler(
-			(5 * attributeGetterFunctions.size()) + 4);
-
-		sb.append("<model><model-name>");
-		sb.append(getModelClassName());
-		sb.append("</model-name>");
-
-		for (Map.Entry<String, Function<CPDefinitionLink, Object>> entry :
-				attributeGetterFunctions.entrySet()) {
-
-			String attributeName = entry.getKey();
-			Function<CPDefinitionLink, Object> attributeGetterFunction =
-				entry.getValue();
-
-			sb.append("<column><column-name>");
-			sb.append(attributeName);
-			sb.append("</column-name><column-value><![CDATA[");
-			sb.append(attributeGetterFunction.apply((CPDefinitionLink)this));
-			sb.append("]]></column-value></column>");
-		}
-
-		sb.append("</model>");
-
-		return sb.toString();
-	}
-
 	private static class EscapedModelProxyProviderFunctionHolder {
 
 		private static final Function<InvocationHandler, CPDefinitionLink>
-			_escapedModelProxyProviderFunction = _getProxyProviderFunction();
+			_escapedModelProxyProviderFunction =
+				ProxyUtil.getProxyProviderFunction(
+					CPDefinitionLink.class, ModelWrapper.class);
 
 	}
 
 	private long _mvccVersion;
+	private long _ctCollectionId;
 	private String _uuid;
 	private long _CPDefinitionLinkId;
 	private long _groupId;
@@ -1062,6 +1024,7 @@ public class CPDefinitionLinkModelImpl
 		_columnOriginalValues = new HashMap<String, Object>();
 
 		_columnOriginalValues.put("mvccVersion", _mvccVersion);
+		_columnOriginalValues.put("ctCollectionId", _ctCollectionId);
 		_columnOriginalValues.put("uuid_", _uuid);
 		_columnOriginalValues.put("CPDefinitionLinkId", _CPDefinitionLinkId);
 		_columnOriginalValues.put("groupId", _groupId);
@@ -1100,29 +1063,31 @@ public class CPDefinitionLinkModelImpl
 
 		columnBitmasks.put("mvccVersion", 1L);
 
-		columnBitmasks.put("uuid_", 2L);
+		columnBitmasks.put("ctCollectionId", 2L);
 
-		columnBitmasks.put("CPDefinitionLinkId", 4L);
+		columnBitmasks.put("uuid_", 4L);
 
-		columnBitmasks.put("groupId", 8L);
+		columnBitmasks.put("CPDefinitionLinkId", 8L);
 
-		columnBitmasks.put("companyId", 16L);
+		columnBitmasks.put("groupId", 16L);
 
-		columnBitmasks.put("userId", 32L);
+		columnBitmasks.put("companyId", 32L);
 
-		columnBitmasks.put("userName", 64L);
+		columnBitmasks.put("userId", 64L);
 
-		columnBitmasks.put("createDate", 128L);
+		columnBitmasks.put("userName", 128L);
 
-		columnBitmasks.put("modifiedDate", 256L);
+		columnBitmasks.put("createDate", 256L);
 
-		columnBitmasks.put("CPDefinitionId", 512L);
+		columnBitmasks.put("modifiedDate", 512L);
 
-		columnBitmasks.put("CProductId", 1024L);
+		columnBitmasks.put("CPDefinitionId", 1024L);
 
-		columnBitmasks.put("priority", 2048L);
+		columnBitmasks.put("CProductId", 2048L);
 
-		columnBitmasks.put("type_", 4096L);
+		columnBitmasks.put("priority", 4096L);
+
+		columnBitmasks.put("type_", 8192L);
 
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}

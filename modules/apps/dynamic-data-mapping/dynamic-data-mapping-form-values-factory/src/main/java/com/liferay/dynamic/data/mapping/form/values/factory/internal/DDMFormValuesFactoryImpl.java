@@ -31,7 +31,7 @@ import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -61,7 +61,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marcellus Tavares
  */
-@Component(immediate = true, service = DDMFormValuesFactory.class)
+@Component(service = DDMFormValuesFactory.class)
 public class DDMFormValuesFactoryImpl implements DDMFormValuesFactory {
 
 	@Override
@@ -123,14 +123,11 @@ public class DDMFormValuesFactoryImpl implements DDMFormValuesFactory {
 				_filterDDMFormFieldParameterNames(
 					ddmFormField, ddmFormFieldParameterNames);
 
-			String ddmFormFieldParameterPrefix =
-				_getDDMFormFieldParameterPrefix(
-					ddmFormField, parentDDMFormFieldParameterName);
-
 			boolean containsDefaultDDMFormFieldParameterName =
 				_containsDefaultDDMFormFieldParameterName(
 					filteredDDMFormFieldParameterNames,
-					ddmFormFieldParameterPrefix);
+					_getDDMFormFieldParameterPrefix(
+						ddmFormField, parentDDMFormFieldParameterName));
 
 			if (!containsDefaultDDMFormFieldParameterName) {
 				String defaultDDMFormFieldParameterName =
@@ -417,7 +414,7 @@ public class DDMFormValuesFactoryImpl implements DDMFormValuesFactory {
 		}
 
 		Locale httpServletRequestLocale = LocaleUtil.fromLanguageId(
-			LanguageUtil.getLanguageId(httpServletRequest));
+			_language.getLanguageId(httpServletRequest));
 
 		if (availableLocales.contains(httpServletRequestLocale)) {
 			return httpServletRequestLocale;
@@ -544,7 +541,7 @@ public class DDMFormValuesFactoryImpl implements DDMFormValuesFactory {
 		else {
 			long groupId = ParamUtil.getLong(httpServletRequest, "groupId");
 
-			Set<Locale> siteAvailableLocales = LanguageUtil.getAvailableLocales(
+			Set<Locale> siteAvailableLocales = _language.getAvailableLocales(
 				groupId);
 
 			String[] siteAvailableLocaleStrings = LocaleUtil.toLanguageIds(
@@ -575,6 +572,9 @@ public class DDMFormValuesFactoryImpl implements DDMFormValuesFactory {
 	private final DDMFormFieldValueRequestParameterRetriever
 		_defaultDDMFormFieldValueRequestParameterRetriever =
 			new DefaultDDMFormFieldValueRequestParameterRetriever();
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

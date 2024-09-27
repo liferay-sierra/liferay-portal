@@ -14,6 +14,7 @@
 
 package com.liferay.account.admin.web.internal.portlet.action;
 
+import com.liferay.account.constants.AccountActionKeys;
 import com.liferay.account.constants.AccountPortletKeys;
 import com.liferay.account.model.AccountEntry;
 import com.liferay.account.service.AccountEntryService;
@@ -21,7 +22,6 @@ import com.liferay.portal.kernel.model.Address;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
-import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.AddressLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -39,12 +39,13 @@ import javax.portlet.ActionResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * @author Pei-Jung Lan
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + AccountPortletKeys.ACCOUNT_ENTRIES_ADMIN,
 		"javax.portlet.name=" + AccountPortletKeys.ACCOUNT_ENTRIES_MANAGEMENT,
@@ -123,7 +124,8 @@ public class EditAccountEntryAddressMVCActionCommand
 			actionRequest, "addressRegionId");
 		long addressCountryId = ParamUtil.getLong(
 			actionRequest, "addressCountryId");
-		long addressTypeId = ParamUtil.getLong(actionRequest, "addressTypeId");
+		long addressListTypeId = ParamUtil.getLong(
+			actionRequest, "addressListTypeId");
 		String phoneNumber = ParamUtil.getString(actionRequest, "phoneNumber");
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
@@ -135,8 +137,8 @@ public class EditAccountEntryAddressMVCActionCommand
 		return _addressLocalService.addAddress(
 			null, themeDisplay.getUserId(), AccountEntry.class.getName(),
 			accountEntryId, name, description, street1, street2, street3, city,
-			zip, addressRegionId, addressCountryId, addressTypeId, false, false,
-			phoneNumber, serviceContext);
+			zip, addressRegionId, addressCountryId, addressListTypeId, false,
+			false, phoneNumber, serviceContext);
 	}
 
 	private void _checkPermission(ActionRequest actionRequest)
@@ -148,7 +150,7 @@ public class EditAccountEntryAddressMVCActionCommand
 		_accountEntryModelResourcePermission.check(
 			themeDisplay.getPermissionChecker(),
 			ParamUtil.getLong(actionRequest, "accountEntryId"),
-			ActionKeys.UPDATE);
+			AccountActionKeys.MANAGE_ADDRESSES);
 	}
 
 	private void _updateAccountEntryAddress(ActionRequest actionRequest)
@@ -168,19 +170,22 @@ public class EditAccountEntryAddressMVCActionCommand
 			actionRequest, "addressRegionId");
 		long addressCountryId = ParamUtil.getLong(
 			actionRequest, "addressCountryId");
-		long addressTypeId = ParamUtil.getLong(actionRequest, "addressTypeId");
+		long addressListTypeId = ParamUtil.getLong(
+			actionRequest, "addressListTypeId");
 		String phoneNumber = ParamUtil.getString(actionRequest, "phoneNumber");
 
 		_addressLocalService.updateAddress(
 			accountEntryAddressId, name, description, street1, street2, street3,
-			city, zip, addressRegionId, addressCountryId, addressTypeId, false,
-			false, phoneNumber);
+			city, zip, addressRegionId, addressCountryId, addressListTypeId,
+			false, false, phoneNumber);
 	}
 
 	@Reference(
+		policy = ReferencePolicy.DYNAMIC,
+		policyOption = ReferencePolicyOption.GREEDY,
 		target = "(model.class.name=com.liferay.account.model.AccountEntry)"
 	)
-	private ModelResourcePermission<AccountEntry>
+	private volatile ModelResourcePermission<AccountEntry>
 		_accountEntryModelResourcePermission;
 
 	@Reference

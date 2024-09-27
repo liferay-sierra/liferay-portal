@@ -14,6 +14,7 @@
 
 package com.liferay.analytics.reports.web.internal.product.navigation.control.menu.test;
 
+import com.liferay.analytics.reports.constants.AnalyticsReportsWebKeys;
 import com.liferay.analytics.reports.test.MockObject;
 import com.liferay.analytics.reports.test.analytics.reports.info.item.MockObjectAnalyticsReportsInfoItem;
 import com.liferay.analytics.reports.test.util.MockContextUtil;
@@ -72,19 +73,19 @@ public class AnalyticsReportsProductNavigationControlMenuEntryTest {
 	public void setUp() throws Exception {
 		_group = GroupTestUtil.addGroup();
 
-		_layout = LayoutTestUtil.addLayout(_group.getGroupId());
+		_layout = LayoutTestUtil.addTypePortletLayout(_group.getGroupId());
 	}
 
 	@Test
 	public void testIsShow() throws Exception {
 		MockContextUtil.testWithMockContext(
-			new MockContextUtil.MockContext.Builder().
-				mockObjectAnalyticsReportsInfoItem(
-					MockObjectAnalyticsReportsInfoItem.builder(
-					).show(
-						true
-					).build()
-				).build(),
+			new MockContextUtil.MockContext.Builder(
+			).mockObjectAnalyticsReportsInfoItem(
+				MockObjectAnalyticsReportsInfoItem.builder(
+				).show(
+					true
+				).build()
+			).build(),
 			() -> Assert.assertTrue(
 				_productNavigationControlMenuEntry.isShow(
 					_getHttpServletRequest())));
@@ -95,13 +96,13 @@ public class AnalyticsReportsProductNavigationControlMenuEntryTest {
 		throws Exception {
 
 		MockContextUtil.testWithMockContext(
-			new MockContextUtil.MockContext.Builder().
-				mockObjectAnalyticsReportsInfoItem(
-					MockObjectAnalyticsReportsInfoItem.builder(
-					).show(
-						false
-					).build()
-				).build(),
+			new MockContextUtil.MockContext.Builder(
+			).mockObjectAnalyticsReportsInfoItem(
+				MockObjectAnalyticsReportsInfoItem.builder(
+				).show(
+					false
+				).build()
+			).build(),
 			() -> Assert.assertFalse(
 				_productNavigationControlMenuEntry.isShow(
 					_getHttpServletRequest())));
@@ -121,13 +122,13 @@ public class AnalyticsReportsProductNavigationControlMenuEntryTest {
 
 		try {
 			MockContextUtil.testWithMockContext(
-				new MockContextUtil.MockContext.Builder().
-					mockObjectAnalyticsReportsInfoItem(
-						MockObjectAnalyticsReportsInfoItem.builder(
-						).show(
-							true
-						).build()
-					).build(),
+				new MockContextUtil.MockContext.Builder(
+				).mockObjectAnalyticsReportsInfoItem(
+					MockObjectAnalyticsReportsInfoItem.builder(
+					).show(
+						true
+					).build()
+				).build(),
 				() -> Assert.assertTrue(
 					_productNavigationControlMenuEntry.isShow(
 						_getHttpServletRequest())));
@@ -152,13 +153,13 @@ public class AnalyticsReportsProductNavigationControlMenuEntryTest {
 
 		try {
 			MockContextUtil.testWithMockContext(
-				new MockContextUtil.MockContext.Builder().
-					mockObjectAnalyticsReportsInfoItem(
-						MockObjectAnalyticsReportsInfoItem.builder(
-						).show(
-							true
-						).build()
-					).build(),
+				new MockContextUtil.MockContext.Builder(
+				).mockObjectAnalyticsReportsInfoItem(
+					MockObjectAnalyticsReportsInfoItem.builder(
+					).show(
+						true
+					).build()
+				).build(),
 				() -> Assert.assertTrue(
 					_productNavigationControlMenuEntry.isShow(
 						_getHttpServletRequest())));
@@ -191,13 +192,13 @@ public class AnalyticsReportsProductNavigationControlMenuEntryTest {
 
 		try {
 			MockContextUtil.testWithMockContext(
-				new MockContextUtil.MockContext.Builder().
-					mockObjectAnalyticsReportsInfoItem(
-						MockObjectAnalyticsReportsInfoItem.builder(
-						).show(
-							true
-						).build()
-					).build(),
+				new MockContextUtil.MockContext.Builder(
+				).mockObjectAnalyticsReportsInfoItem(
+					MockObjectAnalyticsReportsInfoItem.builder(
+					).show(
+						true
+					).build()
+				).build(),
 				() -> Assert.assertFalse(
 					_productNavigationControlMenuEntry.isShow(
 						httpServletRequest)));
@@ -213,11 +214,10 @@ public class AnalyticsReportsProductNavigationControlMenuEntryTest {
 			new MockHttpServletRequest();
 
 		mockHttpServletRequest.setAttribute(
-			WebKeys.THEME_DISPLAY, _getThemeDisplay());
-
-		mockHttpServletRequest.setAttribute(
-			"INFO_ITEM_REFERENCE",
+			AnalyticsReportsWebKeys.ANALYTICS_INFO_ITEM_REFERENCE,
 			new InfoItemReference(MockObject.class.getName(), 0));
+		mockHttpServletRequest.setAttribute(
+			WebKeys.THEME_DISPLAY, _getThemeDisplay());
 
 		return mockHttpServletRequest;
 	}

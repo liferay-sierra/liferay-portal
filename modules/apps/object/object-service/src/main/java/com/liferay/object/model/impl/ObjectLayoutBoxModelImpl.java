@@ -40,7 +40,6 @@ import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 
 import java.sql.Blob;
@@ -85,7 +84,8 @@ public class ObjectLayoutBoxModelImpl
 		{"userId", Types.BIGINT}, {"userName", Types.VARCHAR},
 		{"createDate", Types.TIMESTAMP}, {"modifiedDate", Types.TIMESTAMP},
 		{"objectLayoutTabId", Types.BIGINT}, {"collapsable", Types.BOOLEAN},
-		{"name", Types.VARCHAR}, {"priority", Types.INTEGER}
+		{"name", Types.VARCHAR}, {"priority", Types.INTEGER},
+		{"type_", Types.VARCHAR}
 	};
 
 	public static final Map<String, Integer> TABLE_COLUMNS_MAP =
@@ -104,10 +104,11 @@ public class ObjectLayoutBoxModelImpl
 		TABLE_COLUMNS_MAP.put("collapsable", Types.BOOLEAN);
 		TABLE_COLUMNS_MAP.put("name", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("priority", Types.INTEGER);
+		TABLE_COLUMNS_MAP.put("type_", Types.VARCHAR);
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table ObjectLayoutBox (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,objectLayoutBoxId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,objectLayoutTabId LONG,collapsable BOOLEAN,name STRING null,priority INTEGER)";
+		"create table ObjectLayoutBox (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,objectLayoutBoxId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,objectLayoutTabId LONG,collapsable BOOLEAN,name STRING null,priority INTEGER,type_ VARCHAR(75) null)";
 
 	public static final String TABLE_SQL_DROP = "drop table ObjectLayoutBox";
 
@@ -247,34 +248,6 @@ public class ObjectLayoutBoxModelImpl
 		return _attributeSetterBiConsumers;
 	}
 
-	private static Function<InvocationHandler, ObjectLayoutBox>
-		_getProxyProviderFunction() {
-
-		Class<?> proxyClass = ProxyUtil.getProxyClass(
-			ObjectLayoutBox.class.getClassLoader(), ObjectLayoutBox.class,
-			ModelWrapper.class);
-
-		try {
-			Constructor<ObjectLayoutBox> constructor =
-				(Constructor<ObjectLayoutBox>)proxyClass.getConstructor(
-					InvocationHandler.class);
-
-			return invocationHandler -> {
-				try {
-					return constructor.newInstance(invocationHandler);
-				}
-				catch (ReflectiveOperationException
-							reflectiveOperationException) {
-
-					throw new InternalError(reflectiveOperationException);
-				}
-			};
-		}
-		catch (NoSuchMethodException noSuchMethodException) {
-			throw new InternalError(noSuchMethodException);
-		}
-	}
-
 	private static final Map<String, Function<ObjectLayoutBox, Object>>
 		_attributeGetterFunctions;
 	private static final Map<String, BiConsumer<ObjectLayoutBox, Object>>
@@ -346,6 +319,10 @@ public class ObjectLayoutBoxModelImpl
 		attributeSetterBiConsumers.put(
 			"priority",
 			(BiConsumer<ObjectLayoutBox, Integer>)ObjectLayoutBox::setPriority);
+		attributeGetterFunctions.put("type", ObjectLayoutBox::getType);
+		attributeSetterBiConsumers.put(
+			"type",
+			(BiConsumer<ObjectLayoutBox, String>)ObjectLayoutBox::setType);
 
 		_attributeGetterFunctions = Collections.unmodifiableMap(
 			attributeGetterFunctions);
@@ -680,6 +657,25 @@ public class ObjectLayoutBoxModelImpl
 	}
 
 	@Override
+	public String getType() {
+		if (_type == null) {
+			return "";
+		}
+		else {
+			return _type;
+		}
+	}
+
+	@Override
+	public void setType(String type) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_type = type;
+	}
+
+	@Override
 	public StagedModelType getStagedModelType() {
 		return new StagedModelType(
 			PortalUtil.getClassNameId(ObjectLayoutBox.class.getName()));
@@ -819,6 +815,7 @@ public class ObjectLayoutBoxModelImpl
 		objectLayoutBoxImpl.setCollapsable(isCollapsable());
 		objectLayoutBoxImpl.setName(getName());
 		objectLayoutBoxImpl.setPriority(getPriority());
+		objectLayoutBoxImpl.setType(getType());
 
 		objectLayoutBoxImpl.resetOriginalValues();
 
@@ -853,6 +850,8 @@ public class ObjectLayoutBoxModelImpl
 			this.<String>getColumnOriginalValue("name"));
 		objectLayoutBoxImpl.setPriority(
 			this.<Integer>getColumnOriginalValue("priority"));
+		objectLayoutBoxImpl.setType(
+			this.<String>getColumnOriginalValue("type_"));
 
 		return objectLayoutBoxImpl;
 	}
@@ -987,6 +986,14 @@ public class ObjectLayoutBoxModelImpl
 
 		objectLayoutBoxCacheModel.priority = getPriority();
 
+		objectLayoutBoxCacheModel.type = getType();
+
+		String type = objectLayoutBoxCacheModel.type;
+
+		if ((type != null) && (type.length() == 0)) {
+			objectLayoutBoxCacheModel.type = null;
+		}
+
 		return objectLayoutBoxCacheModel;
 	}
 
@@ -1039,41 +1046,12 @@ public class ObjectLayoutBoxModelImpl
 		return sb.toString();
 	}
 
-	@Override
-	public String toXmlString() {
-		Map<String, Function<ObjectLayoutBox, Object>>
-			attributeGetterFunctions = getAttributeGetterFunctions();
-
-		StringBundler sb = new StringBundler(
-			(5 * attributeGetterFunctions.size()) + 4);
-
-		sb.append("<model><model-name>");
-		sb.append(getModelClassName());
-		sb.append("</model-name>");
-
-		for (Map.Entry<String, Function<ObjectLayoutBox, Object>> entry :
-				attributeGetterFunctions.entrySet()) {
-
-			String attributeName = entry.getKey();
-			Function<ObjectLayoutBox, Object> attributeGetterFunction =
-				entry.getValue();
-
-			sb.append("<column><column-name>");
-			sb.append(attributeName);
-			sb.append("</column-name><column-value><![CDATA[");
-			sb.append(attributeGetterFunction.apply((ObjectLayoutBox)this));
-			sb.append("]]></column-value></column>");
-		}
-
-		sb.append("</model>");
-
-		return sb.toString();
-	}
-
 	private static class EscapedModelProxyProviderFunctionHolder {
 
 		private static final Function<InvocationHandler, ObjectLayoutBox>
-			_escapedModelProxyProviderFunction = _getProxyProviderFunction();
+			_escapedModelProxyProviderFunction =
+				ProxyUtil.getProxyProviderFunction(
+					ObjectLayoutBox.class, ModelWrapper.class);
 
 	}
 
@@ -1091,6 +1069,7 @@ public class ObjectLayoutBoxModelImpl
 	private String _name;
 	private String _nameCurrentLanguageId;
 	private int _priority;
+	private String _type;
 
 	public <T> T getColumnValue(String columnName) {
 		columnName = _attributeNames.getOrDefault(columnName, columnName);
@@ -1133,6 +1112,7 @@ public class ObjectLayoutBoxModelImpl
 		_columnOriginalValues.put("collapsable", _collapsable);
 		_columnOriginalValues.put("name", _name);
 		_columnOriginalValues.put("priority", _priority);
+		_columnOriginalValues.put("type_", _type);
 	}
 
 	private static final Map<String, String> _attributeNames;
@@ -1141,6 +1121,7 @@ public class ObjectLayoutBoxModelImpl
 		Map<String, String> attributeNames = new HashMap<>();
 
 		attributeNames.put("uuid_", "uuid");
+		attributeNames.put("type_", "type");
 
 		_attributeNames = Collections.unmodifiableMap(attributeNames);
 	}
@@ -1179,6 +1160,8 @@ public class ObjectLayoutBoxModelImpl
 		columnBitmasks.put("name", 1024L);
 
 		columnBitmasks.put("priority", 2048L);
+
+		columnBitmasks.put("type_", 4096L);
 
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}

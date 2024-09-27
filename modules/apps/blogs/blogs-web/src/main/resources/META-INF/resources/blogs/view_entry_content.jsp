@@ -28,7 +28,7 @@ BlogsPortletInstanceConfiguration blogsPortletInstanceConfiguration = BlogsPortl
 	<c:when test="<%= entry.isVisible() || (entry.getUserId() == user.getUserId()) || BlogsEntryPermission.contains(permissionChecker, entry, ActionKeys.UPDATE) %>">
 		<portlet:renderURL var="viewEntryURL">
 			<portlet:param name="mvcRenderCommandName" value="/blogs/view_entry" />
-			<portlet:param name="redirect" value="<%= currentURL %>" />
+			<portlet:param name="redirect" value='<%= ParamUtil.getString(request, "redirect", currentURL) %>' />
 
 			<c:choose>
 				<c:when test="<%= Validator.isNotNull(entry.getUrlTitle()) %>">
@@ -72,6 +72,7 @@ BlogsPortletInstanceConfiguration blogsPortletInstanceConfiguration = BlogsPortl
 								"trashEnabled", trashHelper.isTrashEnabled(themeDisplay.getScopeGroupId())
 							).build()
 						%>'
+						aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 						dropdownItems="<%= blogsEntryActionDropdownItemsProvider.getActionDropdownItems(entry) %>"
 						propsTransformer="blogs_admin/js/ElementsPropsTransformer"
 					/>
@@ -112,7 +113,7 @@ BlogsPortletInstanceConfiguration blogsPortletInstanceConfiguration = BlogsPortl
 							</div>
 
 							<div class="text-secondary">
-								<span class="hide-accessible"><liferay-ui:message key="published-date" /></span><liferay-ui:message arguments="<%= LanguageUtil.getTimeDescription(request, System.currentTimeMillis() - entry.getStatusDate().getTime(), true) %>" key="x-ago" translateArguments="<%= false %>" />
+								<span class="hide-accessible sr-only"><liferay-ui:message key="published-date" /></span><liferay-ui:message arguments="<%= LanguageUtil.getTimeDescription(request, System.currentTimeMillis() - entry.getStatusDate().getTime(), true) %>" key="x-ago" translateArguments="<%= false %>" />
 
 								<c:if test="<%= blogsPortletInstanceConfiguration.enableReadingTime() %>">
 									- <liferay-reading-time:reading-time displayStyle="descriptive" model="<%= entry %>" />
@@ -224,7 +225,7 @@ BlogsPortletInstanceConfiguration blogsPortletInstanceConfiguration = BlogsPortl
 
 		<%
 		if (searchContainer != null) {
-			searchContainer.setTotal(searchContainer.getTotal() - 1);
+			searchContainer.setResultsAndTotal(searchContainer::getResults, searchContainer.getTotal() - 1);
 		}
 		%>
 

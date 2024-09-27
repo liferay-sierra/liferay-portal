@@ -134,9 +134,19 @@ renderResponse.setTitle(headerTitle);
 	}
 	%>
 
-	<liferay-frontend:info-bar>
-		<aui:workflow-status markupView="lexicon" model="<%= DLFileEntry.class %>" showHelpMessage="<%= false %>" showIcon="<%= false %>" showLabel="<%= false %>" status="<%= fileVersion.getStatus() %>" version="<%= version %>" />
-	</liferay-frontend:info-bar>
+	<div class="management-bar management-bar-light navbar navbar-expand-md">
+		<clay:container-fluid>
+			<ul class="m-auto navbar-nav"></ul>
+
+			<ul class="middle navbar-nav">
+				<li class="nav-item">
+					<aui:workflow-status markupView="lexicon" model="<%= DLFileEntry.class %>" showHelpMessage="<%= false %>" showIcon="<%= false %>" showLabel="<%= false %>" status="<%= fileVersion.getStatus() %>" version="<%= version %>" />
+				</li>
+			</ul>
+
+			<ul class="end m-auto navbar-nav"></ul>
+		</clay:container-fluid>
+	</div>
 </c:if>
 
 <clay:container-fluid
@@ -195,10 +205,19 @@ renderResponse.setTitle(headerTitle);
 			<liferay-ui:error exception="<%= AntivirusScannerException.class %>">
 
 				<%
-				AntivirusScannerException ase = (AntivirusScannerException)errorException;
+				AntivirusScannerException antivirusScannerException = (AntivirusScannerException)errorException;
 				%>
 
-				<liferay-ui:message key="<%= ase.getMessageKey() %>" />
+				<liferay-ui:message key="<%= antivirusScannerException.getMessageKey() %>" />
+			</liferay-ui:error>
+
+			<liferay-ui:error exception="<%= AntivirusVirusFoundException.class %>">
+
+				<%
+				AntivirusVirusFoundException antivirusVirusFoundException = (AntivirusVirusFoundException)errorException;
+				%>
+
+				<liferay-ui:message key="<%= antivirusVirusFoundException.getMessageKey() %>" />
 			</liferay-ui:error>
 
 			<liferay-ui:error exception="<%= DLStorageQuotaExceededException.class %>">
@@ -209,7 +228,7 @@ renderResponse.setTitle(headerTitle);
 			<liferay-ui:error exception="<%= DuplicateFolderNameException.class %>" message="please-enter-a-unique-document-name" />
 
 			<liferay-ui:error exception="<%= LiferayFileItemException.class %>">
-				<liferay-ui:message arguments="<%= LanguageUtil.formatStorageSize(LiferayFileItem.THRESHOLD_SIZE, locale) %>" key="please-enter-valid-content-with-valid-content-size-no-larger-than-x" translateArguments="<%= false %>" />
+				<liferay-ui:message arguments="<%= LanguageUtil.formatStorageSize(FileItem.THRESHOLD_SIZE, locale) %>" key="please-enter-valid-content-with-valid-content-size-no-larger-than-x" translateArguments="<%= false %>" />
 			</liferay-ui:error>
 
 			<liferay-ui:error exception="<%= FileExtensionException.class %>">
@@ -224,17 +243,19 @@ renderResponse.setTitle(headerTitle);
 			<liferay-ui:error exception="<%= FileNameExtensionException.class %>" message="the-file-name-cannot-be-empty-or-without-extension" />
 			<liferay-ui:error exception="<%= NoSuchFolderException.class %>" message="please-enter-a-valid-folder" />
 			<liferay-ui:error exception="<%= RequiredFileException.class %>" message="please-select-the-file-again" />
+			<liferay-ui:error exception="<%= ValueDataException.MustInformDefaultLocale.class %>" message="please-enter-a-value-for-the-default-locale-of-custom-attributes" />
 
 			<liferay-ui:error exception="<%= SourceFileNameException.class %>">
 				<liferay-ui:message key="the-source-file-does-not-have-the-same-extension-as-the-original-file" />
 			</liferay-ui:error>
 
-			<%
-			long fileMaxSize = dlEditFileEntryDisplayContext.getMaximumUploadSize();
-			%>
-
 			<liferay-ui:error exception="<%= FileSizeException.class %>">
-				<liferay-ui:message arguments="<%= LanguageUtil.formatStorageSize(fileMaxSize, locale) %>" key="please-enter-a-file-with-a-valid-file-size-no-larger-than-x" translateArguments="<%= false %>" />
+
+				<%
+				FileSizeException fileSizeException = (FileSizeException)errorException;
+				%>
+
+				<liferay-ui:message arguments="<%= LanguageUtil.formatStorageSize(fileSizeException.getMaxSize(), locale) %>" key="please-enter-a-file-with-a-valid-file-size-no-larger-than-x" translateArguments="<%= false %>" />
 			</liferay-ui:error>
 
 			<liferay-ui:error exception="<%= UploadRequestSizeException.class %>">
@@ -249,6 +270,11 @@ renderResponse.setTitle(headerTitle);
 
 			<aui:fieldset-group markupView="lexicon">
 				<aui:fieldset>
+
+					<%
+					long fileMaxSize = dlEditFileEntryDisplayContext.getMaximumUploadSize();
+					%>
+
 					<c:if test="<%= fileMaxSize != 0 %>">
 						<div class="alert alert-info">
 							<liferay-ui:message arguments="<%= LanguageUtil.formatStorageSize(fileMaxSize, locale) %>" key="upload-documents-no-larger-than-x" translateArguments="<%= false %>" />
@@ -332,24 +358,24 @@ renderResponse.setTitle(headerTitle);
 
 					<aui:input label="title" name="title" />
 
-					<div>
-						<aui:input label="file-name" name="fileName" type='<%= dlEditFileEntryDisplayContext.isFileNameVisible() ? "text" : "hidden" %>' />
+					<c:if test="<%= dlEditFileEntryDisplayContext.isFileNameVisible() %>">
+						<div>
+							<aui:input label="file-name" name="fileName" type="text" />
 
-						<c:if test="<%= fileVersion != null %>">
-							<react:component
-								module="document_library/js/FileNameInput.es"
-								props='<%=
-									HashMapBuilder.<String, Object>put(
-										"initialValue", fileVersion.getFileName()
-									).put(
-										"required", Validator.isNotNull(fileVersion.getExtension())
-									).put(
-										"visible", dlEditFileEntryDisplayContext.isFileNameVisible()
-									).build()
-								%>'
-							/>
-						</c:if>
-					</div>
+							<c:if test="<%= fileVersion != null %>">
+								<react:component
+									module="document_library/js/FileNameInput.es"
+									props='<%=
+										HashMapBuilder.<String, Object>put(
+											"initialValue", fileVersion.getFileName()
+										).put(
+											"required", Validator.isNotNull(fileVersion.getExtension())
+										).build()
+									%>'
+								/>
+							</c:if>
+						</div>
+					</c:if>
 
 					<c:if test="<%= (folder == null) || folder.isSupportsMetadata() %>">
 						<aui:input name="description" />
@@ -435,15 +461,7 @@ renderResponse.setTitle(headerTitle);
 									boolean localizable = true;
 
 									for (DDMStructure ddmStructure : dlFileEntryType.getDDMStructures()) {
-										com.liferay.dynamic.data.mapping.storage.DDMFormValues ddmFormValues = null;
-
-										try {
-											DLFileEntryMetadata fileEntryMetadata = DLFileEntryMetadataLocalServiceUtil.getFileEntryMetadata(ddmStructure.getStructureId(), fileVersionId);
-
-											ddmFormValues = dlEditFileEntryDisplayContext.getDDMFormValues(fileEntryMetadata.getDDMStorageId());
-										}
-										catch (Exception e) {
-										}
+										com.liferay.dynamic.data.mapping.storage.DDMFormValues ddmFormValues = dlEditFileEntryDisplayContext.getDDMFormValues(ddmStructure, fileVersionId);
 								%>
 
 										<div class="<%= !dlEditFileEntryDisplayContext.isDDMStructureVisible(ddmStructure) ? "hide" : "" %> file-entry-type-fields">
@@ -456,6 +474,7 @@ renderResponse.setTitle(headerTitle);
 												containerId='<%= liferayPortletResponse.getNamespace() + "dataEngineLayoutRenderer" + ddmStructure.getStructureId() %>'
 												dataDefinitionId="<%= ddmStructure.getStructureId() %>"
 												dataRecordValues="<%= ddmFormValuesToMapConverter.convert(ddmFormValues, DDMStructureLocalServiceUtil.getStructure(ddmStructure.getStructureId())) %>"
+												languageId="<%= dlEditFileEntryDisplayContext.getDLFileEntryTypeLanguageId(ddmStructure, PortalUtil.getLocale(request)) %>"
 												namespace="<%= liferayPortletResponse.getNamespace() + ddmStructure.getStructureId() + StringPool.UNDERLINE %>"
 												persistDefaultValues="<%= true %>"
 												persisted="<%= fileEntry != null %>"
@@ -466,8 +485,8 @@ renderResponse.setTitle(headerTitle);
 										localizable = false;
 									}
 								}
-								catch (Exception e) {
-									_log.error(e);
+								catch (Exception exception) {
+									_log.error(exception);
 								}
 								%>
 
@@ -545,6 +564,21 @@ renderResponse.setTitle(headerTitle);
 							className="<%= DLFileEntry.class.getName() %>"
 							classPK="<%= assetClassPK %>"
 						/>
+
+						<c:if test="<%= (fileEntry != null) && dlAdminDisplayContext.isAutoTaggingEnabled() %>">
+							<clay:checkbox
+								checked="<%= dlAdminDisplayContext.isUpdateAutoTags() %>"
+								id='<%= liferayPortletResponse.getNamespace() + "updateAutoTags" %>'
+								label='<%= LanguageUtil.get(request, "update-auto-tags") %>'
+								name='<%= liferayPortletResponse.getNamespace() + "updateAutoTags" %>'
+							/>
+
+							<div class="ml-4">
+								<small class="text-secondary">
+									<liferay-ui:message key="update-auto-tags-help" />
+								</small>
+							</div>
+						</c:if>
 					</aui:fieldset>
 				</c:if>
 
@@ -562,6 +596,19 @@ renderResponse.setTitle(headerTitle);
 						<aui:input dateTogglerCheckboxLabel="never-review" disabled="<%= dlEditFileEntryDisplayContext.isNeverReview() %>" name="reviewDate" wrapperCssClass="review-date" />
 					</aui:fieldset>
 				</c:if>
+
+				<aui:fieldset collapsed="<%= true %>" collapsible="<%= true %>" label="friendly-url">
+					<liferay-friendly-url:input
+						className="<%= FileEntry.class.getName() %>"
+						classPK="<%= fileEntryId %>"
+						inputAddon="<%= dlEditFileEntryDisplayContext.getFriendlyURLBase() %>"
+						localizable="<%= false %>"
+						name="urlTitle"
+						showHistory="<%= true %>"
+					/>
+
+					<p class="text-secondary"><liferay-ui:message key="the-friendly-url-may-be-modified-to-ensure-uniqueness" /></p>
+				</aui:fieldset>
 
 				<c:if test="<%= (folder == null) || folder.isSupportsSocial() %>">
 					<aui:fieldset collapsed="<%= true %>" collapsible="<%= true %>" label="related-assets">
@@ -632,11 +679,38 @@ renderResponse.setTitle(headerTitle);
 	var form = document.<portlet:namespace />fm;
 
 	function <portlet:namespace />changeFileEntryType() {
-		Liferay.Util.setFormValues(form, {
-			<%= Constants.CMD %>: '<%= Constants.PREVIEW %>',
-		});
+		function updateFileEntryType() {
+			Liferay.Util.setFormValues(form, {
+				<%= Constants.CMD %>: '<%= Constants.PREVIEW %>',
+			});
 
-		form.submit();
+			form.submit();
+		}
+
+		var fileElement = Liferay.Util.getFormElement(form, 'file');
+
+		if (
+			(fileElement && fileElement.value) ||
+			document.querySelector('.file-entry-type-fields:not(.hide)')
+		) {
+			Liferay.Util.openConfirmModal({
+				message:
+					'<liferay-ui:message key="changing-the-document-type-will-cause-data-loss" />',
+				onConfirm: (isConfirmed) => {
+					if (isConfirmed) {
+						updateFileEntryType();
+					}
+					else {
+						Liferay.Util.setFormValues(form, {
+							fileEntryTypeId: '<%= fileEntryTypeId %>',
+						});
+					}
+				},
+			});
+		}
+		else {
+			updateFileEntryType();
+		}
 	}
 
 	function <portlet:namespace />cancelCheckOut() {
@@ -706,6 +780,11 @@ renderResponse.setTitle(headerTitle);
 
 	function <portlet:namespace />updateFileNameAndTitle() {
 		var titleElement = document.getElementById('<portlet:namespace />title');
+
+		var urlTitleElement = document.getElementById(
+			'<portlet:namespace />urlTitle'
+		);
+
 		var fileNameElement = document.getElementById(
 			'<portlet:namespace />fileName'
 		);
@@ -720,6 +799,10 @@ renderResponse.setTitle(headerTitle);
 
 			if (fileNameElement && !fileNameElement.value) {
 				fileNameElement.value = fileFileName;
+			}
+
+			if (urlTitleElement && !urlTitleElement.value) {
+				urlTitleElement.value = fileFileName.replace(/\.[^.]*$/, '');
 			}
 		}
 

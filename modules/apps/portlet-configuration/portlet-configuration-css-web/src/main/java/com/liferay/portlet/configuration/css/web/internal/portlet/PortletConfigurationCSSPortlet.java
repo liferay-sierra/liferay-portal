@@ -17,7 +17,7 @@ package com.liferay.portlet.configuration.css.web.internal.portlet;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
@@ -30,7 +30,7 @@ import com.liferay.portal.kernel.service.permission.PortletPermissionUtil;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
@@ -68,7 +68,8 @@ import org.osgi.service.component.annotations.Reference;
 		"javax.portlet.init-param.template-path=/META-INF/resources/",
 		"javax.portlet.init-param.view-template=/view.jsp",
 		"javax.portlet.name=" + PortletConfigurationCSSPortletKeys.PORTLET_CONFIGURATION_CSS,
-		"javax.portlet.resource-bundle=content.Language"
+		"javax.portlet.resource-bundle=content.Language",
+		"javax.portlet.version=3.0"
 	},
 	service = Portlet.class
 )
@@ -106,12 +107,12 @@ public class PortletConfigurationCSSPortlet extends MVCPortlet {
 
 		String portletDecoratorId = ParamUtil.getString(
 			actionRequest, "portletDecoratorId");
-		Map<Locale, String> customTitleMap =
-			LocalizationUtil.getLocalizationMap(actionRequest, "customTitle");
+		Map<Locale, String> customTitleMap = _localization.getLocalizationMap(
+			actionRequest, "customTitle");
 		boolean useCustomTitle = ParamUtil.getBoolean(
 			actionRequest, "useCustomTitle");
 
-		Set<Locale> locales = LanguageUtil.getAvailableLocales(
+		Set<Locale> locales = _language.getAvailableLocales(
 			themeDisplay.getSiteGroupId());
 
 		for (Locale locale : locales) {
@@ -158,13 +159,6 @@ public class PortletConfigurationCSSPortlet extends MVCPortlet {
 			_portal.getPortletId(actionRequest) +
 				SessionMessages.KEY_SUFFIX_REFRESH_PORTLET,
 			portletId);
-	}
-
-	@Reference(
-		target = "(&(release.bundle.symbolic.name=com.liferay.portlet.configuration.css.web)(&(release.schema.version>=1.0.0)(!(release.schema.version>=2.0.0))))",
-		unbind = "-"
-	)
-	protected void setRelease(Release release) {
 	}
 
 	private JSONObject _getAdvancedDataJSONObject(ActionRequest actionRequest) {
@@ -414,6 +408,17 @@ public class PortletConfigurationCSSPortlet extends MVCPortlet {
 		PortletConfigurationCSSPortlet.class);
 
 	@Reference
+	private Language _language;
+
+	@Reference
+	private Localization _localization;
+
+	@Reference
 	private Portal _portal;
+
+	@Reference(
+		target = "(&(release.bundle.symbolic.name=com.liferay.portlet.configuration.css.web)(&(release.schema.version>=1.0.0)(!(release.schema.version>=2.0.0))))"
+	)
+	private Release _release;
 
 }

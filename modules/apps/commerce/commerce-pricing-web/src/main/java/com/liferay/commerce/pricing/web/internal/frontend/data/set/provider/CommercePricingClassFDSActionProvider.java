@@ -16,17 +16,17 @@ package com.liferay.commerce.pricing.web.internal.frontend.data.set.provider;
 
 import com.liferay.commerce.pricing.constants.CommercePricingPortletKeys;
 import com.liferay.commerce.pricing.model.CommercePricingClass;
+import com.liferay.commerce.pricing.web.internal.constants.CommercePricingClassScreenNavigationConstants;
 import com.liferay.commerce.pricing.web.internal.constants.CommercePricingFDSNames;
 import com.liferay.commerce.pricing.web.internal.model.PricingClass;
-import com.liferay.commerce.pricing.web.internal.servlet.taglib.ui.constants.CommercePricingClassScreenNavigationConstants;
 import com.liferay.frontend.data.set.provider.FDSActionProvider;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.PortletQName;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
@@ -49,7 +49,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Riccardo Alberti
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "fds.data.provider.key=" + CommercePricingFDSNames.PRICING_CLASSES,
 	service = FDSActionProvider.class
 )
@@ -72,7 +71,7 @@ public class CommercePricingClassFDSActionProvider
 					_getPricingClassEditURL(
 						pricingClass.getPricingClassId(), httpServletRequest));
 				dropdownItem.setLabel(
-					LanguageUtil.get(httpServletRequest, "edit"));
+					_language.get(httpServletRequest, "edit"));
 			}
 		).add(
 			() -> _commercePricingClassModelResourcePermission.contains(
@@ -83,7 +82,7 @@ public class CommercePricingClassFDSActionProvider
 					_getManageCatalogPermissionsURL(
 						pricingClass, httpServletRequest));
 				dropdownItem.setLabel(
-					LanguageUtil.get(httpServletRequest, "permissions"));
+					_language.get(httpServletRequest, "permissions"));
 				dropdownItem.setTarget("modal-permissions");
 			}
 		).add(
@@ -96,7 +95,7 @@ public class CommercePricingClassFDSActionProvider
 					_getPricingClassDeleteURL(
 						pricingClass.getPricingClassId()));
 				dropdownItem.setLabel(
-					LanguageUtil.get(httpServletRequest, "delete"));
+					_language.get(httpServletRequest, "delete"));
 				dropdownItem.setTarget("async");
 			}
 		).build();
@@ -165,6 +164,9 @@ public class CommercePricingClassFDSActionProvider
 	)
 	private ModelResourcePermission<CommercePricingClass>
 		_commercePricingClassModelResourcePermission;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

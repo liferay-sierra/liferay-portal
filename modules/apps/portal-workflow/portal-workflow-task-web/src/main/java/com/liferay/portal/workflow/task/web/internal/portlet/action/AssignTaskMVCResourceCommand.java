@@ -14,6 +14,8 @@
 
 package com.liferay.portal.workflow.task.web.internal.portlet.action;
 
+import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCResourceCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCResourceCommand;
 import com.liferay.portal.kernel.servlet.SessionMessages;
@@ -24,7 +26,7 @@ import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowTaskManager;
-import com.liferay.portal.workflow.task.web.internal.permission.WorkflowTaskPermissionChecker;
+import com.liferay.portal.workflow.security.permission.WorkflowTaskPermission;
 
 import javax.portlet.ResourceRequest;
 import javax.portlet.ResourceResponse;
@@ -36,7 +38,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Leonardo Barros
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + PortletKeys.MY_WORKFLOW_TASK,
 		"mvc.command.name=/portal_workflow_task/assign_task"
@@ -60,11 +61,26 @@ public class AssignTaskMVCResourceCommand extends BaseMVCResourceCommand {
 			resourceRequest, "assigneeUserId");
 		String comment = ParamUtil.getString(resourceRequest, "comment");
 
-		_checkWorkflowTaskAssignmentPermission(workflowTaskId, themeDisplay);
+		WorkflowTask workflowTask = workflowTaskManager.getWorkflowTask(
+			workflowTaskId);
 
-		workflowTaskManager.assignWorkflowTaskToUser(
-			themeDisplay.getCompanyId(), themeDisplay.getUserId(),
-			workflowTaskId, assigneeUserId, comment, null, null);
+		long groupId = MapUtil.getLong(
+			workflowTask.getOptionalAttributes(), "groupId",
+			themeDisplay.getSiteGroupId());
+
+		_workflowTaskPermission.check(
+			themeDisplay.getPermissionChecker(), workflowTask, groupId);
+
+		JSONPortletResponseUtil.writeJSON(
+			resourceRequest, resourceResponse,
+			JSONUtil.put(
+				"hasPermission",
+				_workflowTaskPermission.contains(
+					themeDisplay.getPermissionChecker(),
+					workflowTaskManager.assignWorkflowTaskToUser(
+						themeDisplay.getCompanyId(), themeDisplay.getUserId(),
+						workflowTaskId, assigneeUserId, comment, null, null),
+					groupId)));
 
 		SessionMessages.add(resourceRequest, "requestProcessed", "");
 	}
@@ -72,22 +88,7 @@ public class AssignTaskMVCResourceCommand extends BaseMVCResourceCommand {
 	@Reference
 	protected WorkflowTaskManager workflowTaskManager;
 
-	private void _checkWorkflowTaskAssignmentPermission(
-			long workflowTaskId, ThemeDisplay themeDisplay)
-		throws Exception {
-
-		WorkflowTask workflowTask = workflowTaskManager.getWorkflowTask(
-			themeDisplay.getCompanyId(), workflowTaskId);
-
-		long groupId = MapUtil.getLong(
-			workflowTask.getOptionalAttributes(), "groupId",
-			themeDisplay.getSiteGroupId());
-
-		_workflowTaskPermissionChecker.check(
-			groupId, workflowTask, themeDisplay.getPermissionChecker());
-	}
-
-	private final WorkflowTaskPermissionChecker _workflowTaskPermissionChecker =
-		new WorkflowTaskPermissionChecker();
+	@Reference
+	private WorkflowTaskPermission _workflowTaskPermission;
 
 }

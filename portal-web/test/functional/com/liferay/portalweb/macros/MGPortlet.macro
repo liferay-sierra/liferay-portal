@@ -7,7 +7,7 @@ definition {
 
 		SelectFrame(locator1 = "IFrame#CONFIGURATION");
 
-		Pause(locator1 = "5000");
+		WaitForElementPresent.waitForLastScript();
 
 		WaitForElementPresent(locator1 = "Checkbox#SHOW_ACTIONS_CHECKBOX");
 
@@ -59,15 +59,17 @@ definition {
 			}
 
 			if ("${selectHomeFolder}" == "true") {
-				if (IsElementPresent(key_breadcrumbName = "Home", locator1 = "BreadcrumbPortlet#BREADCRUMB_FOLDER")) {
+				var siteName = TestCase.getSiteName(siteName = "${siteName}");
+
+				if (IsElementPresent(key_breadcrumbName = "${siteName}", locator1 = "BreadcrumbPortlet#BREADCRUMB_FOLDER")) {
 					AssertVisible(
 						key_text = "Select This Folder",
 						locator1 = "Button#ANY_DISABLED");
 
 					AssertClick(
-						key_breadcrumbName = "Home",
+						key_breadcrumbName = "${siteName}",
 						locator1 = "BreadcrumbPortlet#BREADCRUMB_FOLDER",
-						value1 = "Home");
+						value1 = "${siteName}");
 				}
 			}
 
@@ -78,10 +80,25 @@ definition {
 					value1 = "${dmFolderName}");
 			}
 
-			AssertClick(
-				key_dmFolderName = "${dmRootFolderName}",
-				locator1 = "DocumentsAndMedia#SELECT_FOLDER_BUTTON",
-				value1 = "Select");
+			if (isSet(selectRootFolder)) {
+				AssertClick(
+					key_text = "Select This Folder",
+					locator1 = "Button#ANY",
+					value1 = "Select This Folder");
+			}
+			else {
+				if (isSet(selectBreadcrumb)) {
+					AssertClick(
+						key_breadcrumbName = "${breadcrumbName}",
+						locator1 = "BreadcrumbPortlet#BREADCRUMB_FOLDER",
+						value1 = "${breadcrumbName}");
+				}
+
+				AssertClick(
+					key_dmFolderName = "${dmRootFolderName}",
+					locator1 = "DocumentsAndMedia#SELECT_FOLDER_BUTTON",
+					value1 = "Select");
+			}
 
 			SelectFrame(locator1 = "relative=top");
 
@@ -96,7 +113,7 @@ definition {
 	macro viewCustomADTCarouselPG {
 		AssertElementPresent(locator1 = "MediaGallery#ADT_CAROUSEL_ITEM");
 
-		AssertElementPresent(locator1 = "MediaGallery#ADT_CAROUSEL_PLAY_PAUSE");
+		AssertElementPresent(locator1 = "MediaGallery#ADT_CAROUSEL_ITEM_ICON");
 
 		AssertElementPresent(locator1 = "MediaGallery#ADT_CAROUSEL_PREVIOUS_ARROW");
 
@@ -111,8 +128,8 @@ definition {
 			value1 = "There are no media files in this folder.");
 	}
 
-	macro viewShowAllPG {
-		Click.waitForMenuToggleJSClick(locator1 = "Icon#BODY_VERTICAL_ELLIPSIS");
+	macro viewFolderItemsPG {
+		LexiconEntry.openEntryMenu(rowEntry = "${mgFolderName}");
 
 		for (var menuItem : list "Permissions,Multiple Media,Add Shortcut,Access from Desktop") {
 			MenuItem.viewPresent(menuItem = "${menuItem}");

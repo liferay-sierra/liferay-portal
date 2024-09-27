@@ -19,7 +19,7 @@ import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTy
 import com.liferay.dynamic.data.mapping.form.field.type.internal.select.SelectDDMFormFieldTemplateContextContributor;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.render.DDMFormFieldRenderingContext;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 
 import java.util.HashMap;
@@ -35,7 +35,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Rodrigo Paulino
  */
 @Component(
-	immediate = true,
 	property = "ddm.form.field.type.name=" + DDMFormFieldTypeConstants.MULTI_LANGUAGE_OPTION_SELECT,
 	service = DDMFormFieldTemplateContextContributor.class
 )
@@ -47,7 +46,7 @@ public class MultiLanguageOptionSelectDDMFormFieldTemplateContextContributor
 		DDMFormField ddmFormField,
 		DDMFormFieldRenderingContext ddmFormFieldRenderingContext) {
 
-		Set<Locale> availableLocales = LanguageUtil.getAvailableLocales();
+		Set<Locale> availableLocales = _language.getAvailableLocales();
 
 		Map<String, Object> parameters =
 			_selectDDMFormFieldTemplateContextContributor.getParameters(
@@ -62,8 +61,8 @@ public class MultiLanguageOptionSelectDDMFormFieldTemplateContextContributor
 
 			for (Locale availableLocale : availableLocales) {
 				labelsMap.put(
-					LanguageUtil.getLanguageId(availableLocale),
-					LanguageUtil.get(
+					_language.getLanguageId(availableLocale),
+					_language.get(
 						ResourceBundleUtil.getModuleAndPortalResourceBundle(
 							availableLocale, getClass()),
 						(String)option.get("value")));
@@ -72,6 +71,9 @@ public class MultiLanguageOptionSelectDDMFormFieldTemplateContextContributor
 
 		return parameters;
 	}
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private SelectDDMFormFieldTemplateContextContributor

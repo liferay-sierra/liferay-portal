@@ -19,12 +19,12 @@ import com.liferay.commerce.inventory.model.CommerceInventoryWarehouse;
 import com.liferay.commerce.inventory.service.CommerceInventoryWarehouseService;
 import com.liferay.headless.commerce.admin.site.setting.dto.v1_0.Warehouse;
 import com.liferay.headless.commerce.admin.site.setting.internal.mapper.v1_0.DTOMapper;
+import com.liferay.headless.commerce.core.util.LanguageUtils;
 import com.liferay.headless.commerce.core.util.ServiceContextHelper;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
@@ -36,7 +36,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  * @author Zoltán Takács
  */
-@Component(enabled = false, immediate = true, service = WarehouseHelper.class)
+@Component(immediate = true, service = WarehouseHelper.class)
 public class WarehouseHelper {
 
 	public Warehouse addOrUpdateWarehouse(
@@ -58,17 +58,17 @@ public class WarehouseHelper {
 			}
 		}
 
-		ServiceContext serviceContext = _serviceContextHelper.getServiceContext(
-			groupId, new long[0], user, true);
-
 		CommerceInventoryWarehouse commerceInventoryWarehouse =
 			_commerceInventoryWarehouseService.addCommerceInventoryWarehouse(
-				null, warehouse.getName(), warehouse.getDescription(),
+				null, LanguageUtils.getLocalizedMap(warehouse.getName()),
+				LanguageUtils.getLocalizedMap(warehouse.getDescription()),
 				GetterUtil.get(warehouse.getActive(), false),
 				warehouse.getStreet1(), warehouse.getStreet2(),
 				warehouse.getStreet3(), warehouse.getCity(), warehouse.getZip(),
 				"", "", GetterUtil.get(warehouse.getLatitude(), 0D),
-				GetterUtil.get(warehouse.getLongitude(), 0D), serviceContext);
+				GetterUtil.get(warehouse.getLongitude(), 0D),
+				_serviceContextHelper.getServiceContext(
+					groupId, new long[0], user, true));
 
 		return _dtoMapper.modelToDTO(commerceInventoryWarehouse);
 	}
@@ -130,16 +130,11 @@ public class WarehouseHelper {
 			_commerceInventoryWarehouseService.getCommerceInventoryWarehouse(
 				id);
 
-		ServiceContext serviceContext = _serviceContextHelper.getServiceContext(
-			0, new long[0], user, true);
-
 		return _commerceInventoryWarehouseService.
 			updateCommerceInventoryWarehouse(
 				commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
-				warehouse.getName(),
-				GetterUtil.get(
-					warehouse.getDescription(),
-					commerceInventoryWarehouse.getDescription()),
+				LanguageUtils.getLocalizedMap(warehouse.getName()),
+				LanguageUtils.getLocalizedMap(warehouse.getDescription()),
 				GetterUtil.get(
 					warehouse.getActive(),
 					commerceInventoryWarehouse.isActive()),
@@ -166,7 +161,8 @@ public class WarehouseHelper {
 				GetterUtil.get(
 					warehouse.getMvccVersion(),
 					commerceInventoryWarehouse.getMvccVersion()),
-				serviceContext);
+				_serviceContextHelper.getServiceContext(
+					0, new long[0], user, true));
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

@@ -30,30 +30,46 @@ const BASE_PROPS = {
 	portletNamespace: 'test',
 };
 
-const SCHEMA = {
-	'currencyCode': {
+const SCHEMA = [
+	{
+		name: 'currencyCode',
 		type: 'string',
 	},
-	'id': {
-		format: 'int64',
+	{
+		name: 'id',
 		type: 'integer',
 	},
-	'name': {
+	{
+		name: 'name',
 		type: 'string',
 	},
-	'type': {
+	{
+		name: 'type',
 		type: 'string',
 	},
-	'x-class-name': {
-		default: 'com.liferay.headless.commerce.admin.channel.dto.v1_0.Channel',
+	{
+		name: 'x-class-name',
 		readOnly: true,
 		type: 'string',
 	},
-};
+];
 
-const fileSchema = ['currencyCode', 'type', 'name'];
+const FILE_SCHEMA = ['currencyCode', 'type', 'name'];
+const fileContent = [
+	['USD', 'bike', 'default'],
+	['EUR', 'truck', 'default'],
+];
 
 describe('ImportForm', () => {
+	beforeEach(() => {
+		const mockDiv = document.createElement('div');
+		mockDiv.setAttribute(
+			'id',
+			`${BASE_PROPS.portletNamespace}downloadTemplateAlert`
+		);
+		document.body.appendChild(mockDiv);
+	});
+
 	afterEach(cleanup);
 
 	it('must render', () => {
@@ -67,12 +83,14 @@ describe('ImportForm', () => {
 			Liferay.fire(SCHEMA_SELECTED_EVENT, {
 				schema: SCHEMA,
 			});
+
 			Liferay.fire(FILE_SCHEMA_EVENT, {
-				schema: fileSchema,
+				fileContent,
+				schema: FILE_SCHEMA,
 			});
 		});
 
-		fileSchema.forEach((field) => getByLabelText(field));
+		FILE_SCHEMA.forEach((field) => getByLabelText(field));
 	});
 
 	it('must automatically map matching field names', () => {
@@ -84,7 +102,8 @@ describe('ImportForm', () => {
 			});
 
 			Liferay.fire(FILE_SCHEMA_EVENT, {
-				schema: fileSchema,
+				fileContent,
+				schema: FILE_SCHEMA,
 			});
 		});
 
@@ -94,10 +113,10 @@ describe('ImportForm', () => {
 			}
 
 			if (dbFieldSelect.value) {
-				expect(fileSchema).toContain(dbFieldSelect.value);
+				expect(FILE_SCHEMA).toContain(dbFieldSelect.value);
 			}
 			else {
-				expect(fileSchema).not.toContain(dbFieldSelect.value);
+				expect(FILE_SCHEMA).not.toContain(dbFieldSelect.value);
 			}
 		});
 	});

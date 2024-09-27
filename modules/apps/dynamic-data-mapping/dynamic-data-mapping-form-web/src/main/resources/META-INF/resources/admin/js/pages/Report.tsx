@@ -20,8 +20,12 @@ import React from 'react';
 
 import './Report.scss';
 
-export function Report() {
-	const {formReportDataURL} = useConfig();
+export default function Report() {
+	const {
+		dataEngineModule,
+		displayChartAsTable,
+		formReportDataURL,
+	} = useConfig();
 	const {resource} = useResource({link: formReportDataURL});
 	const {
 		data,
@@ -58,24 +62,21 @@ export function Report() {
 				triggerLabel={Liferay.Language.get('summary')}
 			>
 				<ClayNavigationBar.Item active>
-					<ClayLink className="nav-link" displayType="unstyled">
-						{Liferay.Language.get('summary')}
-					</ClayLink>
+					<ClayLink>{Liferay.Language.get('summary')}</ClayLink>
 				</ClayNavigationBar.Item>
 			</ClayNavigationBar>
 
 			<hr className="m-0" />
-
-			<div className="container-fluid container-fluid-max-xl">
-				<FormReport
-					data={data}
-					fields={fields}
-					formReportRecordsFieldValuesURL={
-						formReportRecordsFieldValuesURL
-					}
-					portletNamespace={portletNamespace}
-				/>
-			</div>
+			<FormReport
+				data={data}
+				dataEngineModule={dataEngineModule}
+				displayChartAsTable={displayChartAsTable}
+				fields={fields}
+				formReportRecordsFieldValuesURL={
+					formReportRecordsFieldValuesURL
+				}
+				portletNamespace={portletNamespace}
+			/>
 		</>
 	);
 }

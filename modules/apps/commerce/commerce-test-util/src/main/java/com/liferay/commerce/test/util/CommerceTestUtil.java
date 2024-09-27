@@ -31,6 +31,7 @@ import com.liferay.commerce.payment.model.CommercePaymentMethodGroupRel;
 import com.liferay.commerce.payment.service.CommercePaymentMethodGroupRelLocalServiceUtil;
 import com.liferay.commerce.payment.test.util.TestCommercePaymentMethod;
 import com.liferay.commerce.product.constants.CPConstants;
+import com.liferay.commerce.product.constants.CommerceChannelConstants;
 import com.liferay.commerce.product.model.CPDefinition;
 import com.liferay.commerce.product.model.CPInstance;
 import com.liferay.commerce.product.model.CommerceCatalog;
@@ -249,11 +250,10 @@ public class CommerceTestUtil {
 		CommerceShippingFixedOption commerceShippingFixedOption =
 			addCommerceShippingFixedOption(commerceShippingMethod);
 
-		commerceOrder.setShippingOptionName(
-			commerceShippingFixedOption.getName());
-
 		commerceOrder.setShippingAmount(
 			commerceShippingFixedOption.getAmount());
+		commerceOrder.setShippingOptionName(
+			commerceShippingFixedOption.getName());
 
 		return CommerceOrderLocalServiceUtil.updateCommerceOrder(commerceOrder);
 	}
@@ -276,7 +276,8 @@ public class CommerceTestUtil {
 
 		return CommerceChannelLocalServiceUtil.addCommerceChannel(
 			StringPool.BLANK, groupId, RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), null, commerceCurrencyCode,
+			CommerceChannelConstants.CHANNEL_TYPE_SITE, null,
+			commerceCurrencyCode,
 			ServiceContextTestUtil.getServiceContext(groupId));
 	}
 
@@ -286,7 +287,8 @@ public class CommerceTestUtil {
 
 		return CommerceChannelLocalServiceUtil.addCommerceChannel(
 			StringPool.BLANK, RandomTestUtil.nextLong(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(), null,
+			RandomTestUtil.randomString(),
+			CommerceChannelConstants.CHANNEL_TYPE_SITE, null,
 			commerceCurrencyCode, ServiceContextTestUtil.getServiceContext());
 	}
 
@@ -337,13 +339,10 @@ public class CommerceTestUtil {
 		CommerceOrder commerceOrder =
 			CommerceOrderLocalServiceUtil.getCommerceOrder(commerceOrderId);
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(
-				commerceOrder.getGroupId());
-
 		return CommerceOrderItemLocalServiceUtil.addCommerceOrderItem(
 			commerceOrderId, cpInstanceId, null, quantity, 0, commerceContext,
-			serviceContext);
+			ServiceContextTestUtil.getServiceContext(
+				commerceOrder.getGroupId()));
 	}
 
 	public static CommercePaymentMethodGroupRel
@@ -378,10 +377,10 @@ public class CommerceTestUtil {
 
 		return CommerceShippingFixedOptionLocalServiceUtil.
 			addCommerceShippingFixedOption(
-				commerceShippingMethod.getCommerceShippingMethodId(),
-				RandomTestUtil.randomLocaleStringMap(),
-				RandomTestUtil.randomLocaleStringMap(), value, 1,
-				serviceContext);
+				serviceContext.getUserId(), serviceContext.getScopeGroupId(),
+				commerceShippingMethod.getCommerceShippingMethodId(), value,
+				RandomTestUtil.randomLocaleStringMap(), null,
+				RandomTestUtil.randomLocaleStringMap(), 1);
 	}
 
 	public static CommerceShippingMethod addCommerceShippingMethod(
@@ -390,8 +389,8 @@ public class CommerceTestUtil {
 
 		return CommerceShippingMethodLocalServiceUtil.addCommerceShippingMethod(
 			userId, groupId, RandomTestUtil.randomLocaleStringMap(),
-			RandomTestUtil.randomLocaleStringMap(), null, "fixedPrice", 1,
-			true);
+			RandomTestUtil.randomLocaleStringMap(), true, "fixedPrice", null, 1,
+			RandomTestUtil.randomString());
 	}
 
 	public static CommerceShippingMethod addFixedRateCommerceShippingMethod(
@@ -434,13 +433,11 @@ public class CommerceTestUtil {
 			CommerceChannelLocalServiceUtil.getCommerceChannel(
 				commerceChannelId);
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(
-				commerceChannel.getGroupId());
-
 		return CommerceChannelRelLocalServiceUtil.addCommerceChannelRel(
 			CommerceInventoryWarehouse.class.getName(), warehouseId,
-			commerceChannelId, serviceContext);
+			commerceChannelId,
+			ServiceContextTestUtil.getServiceContext(
+				commerceChannel.getGroupId()));
 	}
 
 	public static CommerceOrder createCommerceOrderForShipping(
@@ -478,11 +475,10 @@ public class CommerceTestUtil {
 		CommerceShippingFixedOption commerceShippingFixedOption =
 			addCommerceShippingFixedOption(commerceShippingMethod, value);
 
-		commerceOrder.setShippingOptionName(
-			commerceShippingFixedOption.getNameCurrentValue());
-
 		commerceOrder.setShippingAmount(
 			commerceShippingFixedOption.getAmount());
+		commerceOrder.setShippingOptionName(
+			commerceShippingFixedOption.getNameCurrentValue());
 
 		return CommerceOrderLocalServiceUtil.updateCommerceOrder(commerceOrder);
 	}

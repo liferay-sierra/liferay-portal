@@ -16,10 +16,15 @@ import classNames from 'classnames';
 import React, {useRef} from 'react';
 
 import {getLayoutDataItemPropTypes} from '../../../prop-types/index';
+import {useMovementTarget} from '../../contexts/KeyboardMovementContext';
 import {useSelector} from '../../contexts/StoreContext';
 import selectCanUpdatePageStructure from '../../selectors/selectCanUpdatePageStructure';
 import {TARGET_POSITIONS} from '../../utils/drag-and-drop/constants/targetPositions';
-import {useDropTarget} from '../../utils/drag-and-drop/useDragAndDrop';
+import {
+	useDropTarget,
+	useIsDroppable,
+} from '../../utils/drag-and-drop/useDragAndDrop';
+import useDropContainerId from '../../utils/useDropContainerId';
 
 export default function ({children, ...props}) {
 	const canUpdatePageStructure = useSelector(selectCanUpdatePageStructure);
@@ -31,13 +36,25 @@ export default function ({children, ...props}) {
 	);
 }
 
-function TopperEmpty({children, item}) {
+function TopperEmpty({children, className, item}) {
 	const containerRef = useRef(null);
 
 	const {isOverTarget, targetPosition, targetRef} = useDropTarget(item);
+	const {
+		itemId: movementTargetItemId,
+		position: movementTargetPosition,
+	} = useMovementTarget();
+
+	const dropTargetPosition = targetPosition || movementTargetPosition;
 
 	const isFragment = children.type === React.Fragment;
 	const realChildren = isFragment ? children.props.children : children;
+
+	const dropContainerId = useDropContainerId();
+	const isDroppable = useIsDroppable();
+
+	const isValidDrop =
+		(isDroppable && isOverTarget) || movementTargetItemId === item.itemId;
 
 	return React.Children.map(realChildren, (child) => {
 		if (!child) {
@@ -48,16 +65,17 @@ function TopperEmpty({children, item}) {
 			<>
 				{React.cloneElement(child, {
 					...child.props,
-					className: classNames(child.props.className, {
+					className: classNames(child.props.className, className, {
 						'drag-over-bottom':
-							isOverTarget &&
-							targetPosition === TARGET_POSITIONS.BOTTOM,
+							isValidDrop &&
+							dropTargetPosition === TARGET_POSITIONS.BOTTOM,
 						'drag-over-middle':
-							isOverTarget &&
-							targetPosition === TARGET_POSITIONS.MIDDLE,
+							isValidDrop &&
+							dropTargetPosition === TARGET_POSITIONS.MIDDLE,
 						'drag-over-top':
-							isOverTarget &&
-							targetPosition === TARGET_POSITIONS.TOP,
+							isValidDrop &&
+							dropTargetPosition === TARGET_POSITIONS.TOP,
+						'drop-container': dropContainerId === item.itemId,
 						'page-editor__topper': true,
 					}),
 					ref: (node) => {

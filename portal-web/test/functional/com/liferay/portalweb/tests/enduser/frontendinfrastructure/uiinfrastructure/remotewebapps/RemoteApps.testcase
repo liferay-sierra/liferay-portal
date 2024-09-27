@@ -18,9 +18,21 @@ definition {
 			PortalInstances.tearDownCP();
 		}
 		else {
-			PortalInstances.tearDownCP();
-
 			RemoteApps.tearDown();
+
+			Navigator.gotoPage(pageName = "Home");
+
+			while (IsElementPresent(locator1 = "Navigation#ANY_SITE_NAV_BUT_HOME")) {
+				var layoutName = selenium.getText("Navigation#ANY_SITE_NAV_BUT_HOME");
+
+				JSONLayout.deletePublicLayout(
+					groupName = "Guest",
+					layoutName = "${layoutName}");
+
+				Navigator.gotoPage(pageName = "Home");
+
+				PortalInstances.tearDownCP();
+			}
 		}
 	}
 
@@ -52,15 +64,15 @@ definition {
 
 			Navigator.gotoNavTab(navTab = "Widgets");
 
-			Pause(locator1 = "3000");
+			WaitForElementPresent(locator1 = "NavBar#APPLICATION_SEARCH_FIELD");
 
 			Type(
 				locator1 = "NavBar#APPLICATION_SEARCH_FIELD",
 				value1 = "Test Remote App");
 
 			AssertElementPresent(
-				key_assetItem = "Collaboration",
-				locator1 = "ControlMenuAddPanel#ASSET_ITEM");
+				key_category = "Collaboration",
+				locator1 = "ControlMenuAddPanel#WIDGET_CATEGORY");
 		}
 	}
 
@@ -81,7 +93,41 @@ definition {
 
 		RemoteApps.deleteRemoteApp(tableEntry = "${remoteAppName}");
 
-		RemoteApps.assertTableEntryNameNotPresent(entryName = "${remoteAppName}");
+		RemoteApps.viewEmptyRemoteTable();
+	}
+
+	@description = "This is a test for LPS-162031. The site administrator could add a CSS remote app."
+	@priority = "3"
+	test CSSCanBeCreated {
+		task ("Given a site administrator accesses to the Remote Apps admin") {
+			JSONGroup.addGroup(groupName = "Test Site Name");
+
+			JSONDocument.addFileWithUploadedFile(
+				dmDocumentTitle = "Font Family",
+				groupName = "Test Site Name",
+				mimeType = "text/css",
+				sourceFileName = "font_family.css");
+
+			var url = JSONDocument.getLatestVersionURL(
+				dmDocumentTitle = "Font Family",
+				groupName = "Test Site Name");
+
+			RemoteApps.goToRemoteAppsPortlet();
+		}
+
+		task ("When the site administrator creates a CSS remote app") {
+			RemoteApps.addType(type = "Add CSS");
+
+			RemoteApps.addApp(
+				entryName = "Font Family",
+				entryURL = "${url}");
+		}
+
+		task ("Then the site administrator sees the created CSS remote app") {
+			RemoteApps.viewTableEntryName(entryName = "Font Family");
+
+			JSONGroup.deleteGroupByName(groupName = "Test Site Name");
+		}
 	}
 
 	@description = "Verify that remote app of type Custom Element can be created"
@@ -124,6 +170,80 @@ definition {
 		}
 	}
 
+	@description = "LPS-158083 Remote App using non-root portal context"
+	@priority = "4"
+	test CustomElementCanBeCreatedInNonRootContext {
+		property app.server.types = "tomcat";
+		property database.types = "mysql";
+		property portal.acceptance = "true";
+		property portal.context = "liferay";
+		property skip.clean-app-server-deploy-dir = "true";
+		property test.assert.warning.exceptions = "true";
+		property test.name.skip.portal.instance = "RemoteApps#CustomElementCanBeCreatedInNonRootContext";
+		property testray.component.names = "Frontend Dataset,Remote Apps";
+
+		task ("Given a non-root portal context") {
+			var portalURL = JSONCompany.getPortalURL();
+
+			var portalContextIsCorrect = StringUtil.extractLast("${portalURL}", "/");
+
+			TestUtils.assertEquals(
+				actual = "${portalContextIsCorrect}",
+				expected = "liferay");
+		}
+
+		task ("Given a Custom Element with relative path URLs") {
+			task ("create es-element files in Documents") {
+				JSONDocument.addFileWithUploadedFile(
+					dmDocumentTitle = "index",
+					groupName = "Guest",
+					mimeType = "text/javascript",
+					sourceFileName = "index.js");
+
+				JSONDocument.addFileWithUploadedFile(
+					dmDocumentTitle = "main",
+					groupName = "Guest",
+					mimeType = "text/css",
+					sourceFileName = "main.css");
+			}
+
+			task ("create custom element") {
+				JSONRemoteApp.addCustomElementRemoteAppEntry(
+					customElementCssurl = "/documents/d/guest/main",
+					customElementHtmlName = "es-element",
+					customElementName = "ES Element",
+					customElementProperties = "test-data-user=QAuser",
+					customElementURL = "/documents/d/guest/index",
+					customElementUseESM = "true");
+			}
+		}
+
+		task ("When ES Element is added to widget page") {
+			JSONLayout.addPublicLayout(
+				groupName = "Guest",
+				layoutName = "My Widget Page");
+
+			Navigator.gotoPage(pageName = "My Widget Page");
+
+			Click(locator1 = "ControlMenu#ADD");
+
+			Type(
+				locator1 = "NavBar#APPLICATION_SEARCH_FIELD",
+				value1 = "ES Element");
+
+			Portlet._clickAddPortlet(portletName = "ES Element");
+
+			Refresh();
+		}
+
+		task ("Then remote app src is rendered with non-root context") {
+			AssertAttributeValue(
+				attribute1 = "src",
+				locator1 = "RemoteAppsEntry#CUSTOM_ELEMENT_MODULE_SCRIPT",
+				value1 = "${portalURL}/documents/d/guest/index");
+		}
+	}
+
 	@description = "Verify that remote app of type Custom Element can be deleted"
 	@priority = "4"
 	test CustomElementCanBeDeleted {
@@ -144,41 +264,6 @@ definition {
 
 		task ("Assert that Vanilla Counter has been deleted") {
 			RemoteApps.assertTableEntryNameNotPresent(entryName = "${customElementName}");
-		}
-	}
-
-	@description = "LPS-143552. Verify that remote app of type Custom Element can be displayed by portal instance"
-	@ignore = "true"
-	@priority = "5"
-	test CustomElementCanBeDisplayedByInstance {
-		property portal.acceptance = "true";
-		property test.assert.warning.exceptions = "true";
-		property test.name.skip.portal.instance = "RemoteApps#CustomElementCanBeDisplayedByInstance";
-
-		task ("Create virtual instance") {
-			HeadlessPortalInstanceAPI.addPortalInstance(
-				domain = "www.able.com",
-				portalInstanceId = "www.able.com",
-				virtualHost = "www.able.com");
-		}
-
-		task ("Navigate to virtual instance") {
-			User.firstLoginUI(
-				password = "test",
-				specificURL = "http://www.able.com:8080",
-				userEmailAddress = "test@www.able.com");
-		}
-
-		task ("Assert custom remote app is present") {
-			RemoteApps.goToRemoteAppsPortlet();
-
-			RemoteApps.viewTableEntries(
-				entryName = "Vanilla Counter",
-				entryType = "Custom Element");
-		}
-
-		task ("Navigate back to default instance") {
-			Navigator.openURL();
 		}
 	}
 
@@ -214,7 +299,7 @@ definition {
 
 			PageEditor.addWidget(portletName = "Vanilla Counter");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Assert Vanilla Counter is displayed") {
@@ -306,7 +391,7 @@ definition {
 		task ("Change the Number of Modules to 2") {
 			PageEditor.editLayoutGrid(
 				columnCount = "2",
-				panel = "General");
+				panelList = "General");
 		}
 
 		task ("Add Vanilla Counter in each module") {
@@ -317,7 +402,7 @@ definition {
 					portletName = "Vanilla Counter");
 			}
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Assert Vanilla Counter is instanceable") {
@@ -350,12 +435,12 @@ definition {
 		}
 
 		task ("Obtain Vanilla Counter's remoteAppEntryId") {
-			var remoteAppEntryIdValue = RemoteApps.getRemoteAppEntryIdValue();
+			var remoteAppEntryId = RemoteApps.getRemoteAppEntryId();
 
 			JSONLayout.addWidgetToPublicLayout(
 				groupName = "Guest",
 				layoutName = "Test Page",
-				remoteAppEntryId = "${remoteAppEntryIdValue}",
+				remoteAppEntryId = "${remoteAppEntryId}",
 				widgetName = "Vanilla Counter");
 		}
 
@@ -383,7 +468,7 @@ definition {
 
 			Navigator.gotoNavTab(navTab = "Widgets");
 
-			Pause(locator1 = "3000");
+			WaitForElementPresent(locator1 = "NavBar#APPLICATION_SEARCH_FIELD");
 
 			Type(
 				locator1 = "NavBar#APPLICATION_SEARCH_FIELD",
@@ -413,7 +498,7 @@ definition {
 		}
 
 		task ("Create Vanilla Counter as a Custom Element") {
-			JSONRemoteApp.addCustomElementRemoteAppAllFields(
+			JSONRemoteApp.addCustomElementRemoteAppEntry(
 				customElementCssurl = "http://remote-component-test.wincent.com/index.css",
 				customElementHtmlName = "vanilla-counter",
 				customElementName = "Vanilla Counter",
@@ -422,12 +507,12 @@ definition {
 		}
 
 		task ("Add Vanilla Counter to Test Page") {
-			var remoteAppEntryIdValue = RemoteApps.getRemoteAppEntryIdValue();
+			var remoteAppEntryId = RemoteApps.getRemoteAppEntryId();
 
 			JSONLayout.addWidgetToPublicLayout(
 				groupName = "Guest",
 				layoutName = "Test Page",
-				remoteAppEntryId = "${remoteAppEntryIdValue}",
+				remoteAppEntryId = "${remoteAppEntryId}",
 				widgetName = "Vanilla Counter");
 		}
 
@@ -463,6 +548,225 @@ definition {
 		}
 	}
 
+	@description = "LPS-159013 ES module custom element portlets render incorrect script node when dragged in the UI"
+	@priority = "4"
+	test CustomElementRendersCorrectlyWhenPlacedOnWidgetPage {
+		property portal.acceptance = "true";
+		property testray.component.names = "Remote Apps";
+
+		task ("Given a custom element with "Use ES Modules" option created") {
+			JSONRemoteApp.addCustomElementRemoteAppEntry(
+				customElementCssurl = "https://liferay.github.io/liferay-frontend-projects/index.css",
+				customElementHtmlName = "vanilla-counter",
+				customElementName = "Vanilla Counter",
+				customElementProperties = "test-data-user=QAuser",
+				customElementURL = "https://liferay.github.io/liferay-frontend-projects/vanilla-counter/index.js",
+				customElementUseESM = "true");
+		}
+
+		task ("And Given a widget page created") {
+			JSONLayout.addPublicLayout(
+				groupName = "Guest",
+				layoutName = "My Widget Page");
+		}
+
+		task ("When adding the app portlet to the page") {
+			Navigator.gotoPage(pageName = "My Widget Page");
+
+			Click(locator1 = "ControlMenu#ADD");
+
+			Type(
+				locator1 = "NavBar#APPLICATION_SEARCH_FIELD",
+				value1 = "Vanilla Counter");
+
+			Portlet._clickAddPortlet(portletName = "Vanilla Counter");
+
+			WaitForElementPresent(locator1 = "Message#SUCCESS");
+		}
+
+		task ("Then the custom element renders correctly") {
+			AssertElementPresent(locator1 = "//vanilla-counter[@test-data-user='QAuser']");
+
+			Refresh();
+
+			AssertAttributeValue(
+				attribute1 = "src",
+				locator1 = "RemoteAppsEntry#CUSTOM_ELEMENT_MODULE_SCRIPT",
+				value1 = "https://liferay.github.io/liferay-frontend-projects/vanilla-counter/index.js");
+		}
+	}
+
+	@description = "LPS-165425. Validate that HTML eror is thrown if left empty."
+	@priority = "3"
+	test ErrorAppearsWhenHTMLBlank {
+		task ("Given Add Custom Element Remote Apps admin page") {
+			RemoteApps.goToRemoteAppsPortlet();
+
+			RemoteApps.addType(type = "Custom Element");
+		}
+
+		task ("When required fields Name, HTML Element Name, and JS URL are blank and When attempt to save remote app") {
+			Button.clickPublish();
+		}
+
+		task ("Then error message 'HTML element name is empty'") {
+			AssertElementPresent(
+				locator1 = "RemoteAppsEntry#REMOTE_APPS_ERROR_WITH_MESSAGE",
+				text = "HTML element name is empty.");
+		}
+
+		task ("And Then Remote App is not added") {
+			Navigator.gotoBack();
+
+			AssertElementPresent(
+				locator1 = "Message#EMPTY_STATE_INFO",
+				value1 = "No Results Found");
+		}
+	}
+
+	@description = "LPS-163525. Validate Remote Apps UI has an understandable error message when user inputs an invalid URL."
+	@priority = "4"
+	test HasAnUnderstandableErrorMessageWhenURLInvalid {
+		task ("Given Add IFrame Remote Apps") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Custom Apps",
+				panel = "Applications",
+				portlet = "Remote Apps");
+
+			RemoteApps.addType(type = "IFrame");
+		}
+
+		task ("When type testurl in URL field and a valid name is entered") {
+			RemoteApps.addApp(
+				entryName = "Test Name",
+				entryURL = "$testurl");
+		}
+
+		task ("And When attempt to save the remote app") {
+			Button.clickPublish();
+		}
+
+		task ("Then error message 'Please enter a valid URL' appears") {
+			AssertTextEquals.assertPartialText(
+				locator1 = "Message#ERROR_ENTER_A_VALID_URL",
+				value1 = "Please enter a valid URL.");
+		}
+	}
+
+	@description = "LPS-163525. Validate Remote apps UI has a clear error message when all the mandatory fields are empty."
+	@priority = "4"
+	test HasMandatoryFieldErrorMessagesWhenEmpty {
+		task ("Given Add IFrame Remote Apps admin page") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Custom Apps",
+				panel = "Applications",
+				portlet = "Remote Apps");
+
+			RemoteApps.addType(type = "IFrame");
+		}
+
+		task ("When attempt to save remote app") {
+			Button.clickPublish();
+		}
+
+		task ("Then an error message 'field is required' appears under URL") {
+			AssertTextEquals.assertPartialText(
+				locator1 = "Message#WARNING_FEEDBACK",
+				value1 = "This field is required.");
+		}
+
+		task ("And then Remote App is not added") {
+			Navigator.gotoBack();
+
+			AssertTextEquals(
+				locator1 = "Message#EMPTY_STATE_INFO",
+				value1 = "No Results Found");
+		}
+	}
+
+	@description = "LPS-165745. Error thrown when HTML Element contains empty/white space."
+	@priority = "3"
+	test HTMLElementConatinsInvlaidCharacters {
+		task ("Given Add Custom Element Remote Apps") {
+			RemoteApps.goToRemoteAppsPortlet();
+
+			RemoteApps.addType(type = "Custom Element");
+		}
+
+		task ("When type 'vanilla counter' in HTML Element field") {
+			Type(
+				key_text = "HTML Element Name",
+				locator1 = "TextInput#ANY",
+				value1 = "vanilla counter");
+		}
+
+		task ("When attempt to save the remote app") {
+			Button.clickPublish();
+		}
+
+		task ("Then error message 'HTML Element name contains invalid character' with empty/white space appears under HTML Element field") {
+			AssertElementPresent(
+				locator1 = "RemoteAppsEntry#REMOTE_APPS_ERROR_WITH_MESSAGE",
+				text = "HTML element name contains invalid character");
+		}
+	}
+
+	@description = "LPS-165835. Error thrown when HTML Element doesn't have at least one hyphen."
+	@priority = "3"
+	test HTMLElementMustHaveOneHyphen {
+		task ("Given Add Custom Element Remote Apps") {
+			RemoteApps.goToRemoteAppsPortlet();
+
+			RemoteApps.addType(type = "Custom Element");
+		}
+
+		task ("When type 'vanilla.counter' in HTML Element Name field") {
+			Type(
+				key_text = "HTML Element Name",
+				locator1 = "TextInput#ANY",
+				value1 = "vanilla.counter");
+		}
+
+		task ("And When attempt to save the remote app") {
+			Button.clickPublish();
+		}
+
+		task ("Then error message 'HTML element name must contain at least one hyphen' appears under HTML Element field") {
+			AssertElementPresent(
+				locator1 = "RemoteAppsEntry#REMOTE_APPS_ERROR_WITH_MESSAGE",
+				text = "HTML element name must contain at least one hyphen");
+		}
+	}
+
+	@description = "LPS-165834. Error thrown when HTML Element doesn't start with a lowercase letter."
+	@priority = "3"
+	test HTMLElementMustStartWithLowercase {
+		task ("Given Add Custom Element Remote Apps") {
+			RemoteApps.goToRemoteAppsPortlet();
+
+			RemoteApps.addType(type = "Custom Element");
+		}
+
+		task ("When type 'Vanilla counter' in HTML Element Name field") {
+			Type(
+				key_text = "HTML Element Name",
+				locator1 = "TextInput#ANY",
+				value1 = "Vanilla counter");
+
+			Button.clickPublish();
+		}
+
+		task ("And When attempt to save the remote app") {
+			Button.clickPublish();
+		}
+
+		task ("Then error message 'HTML element name must start with a lowercase letter' appears under HTML Element field") {
+			AssertElementPresent(
+				locator1 = "RemoteAppsEntry#REMOTE_APPS_ERROR_WITH_MESSAGE",
+				text = "HTML element name must start with a lowercase letter");
+		}
+	}
+
 	@description = "Verify an iframe remote app can be created"
 	@priority = "5"
 	test IFrameCanBeCreated {
@@ -470,6 +774,8 @@ definition {
 		property testray.component.names = "Frontend Dataset,Remote Apps";
 
 		RemoteApps.goToRemoteAppsPortlet();
+
+		RemoteApps.addType(type = "IFrame");
 
 		RemoteApps.addApp(
 			entryName = "Test Remote App",
@@ -483,34 +789,27 @@ definition {
 	test IframeTypeCanDisplayProperFields {
 		property portal.acceptance = "true";
 
-		var customElementType = "Custom Element";
-		var iFrameType = "IFrame";
-
 		RemoteApps.goToRemoteAppsPortlet();
 
-		LexiconEntry.gotoAdd();
+		RemoteApps.addType(type = "Custom Element");
 
-		Select(
-			locator1 = "Select#TYPE",
-			value1 = "${iFrameType}");
-
-		AssertNotVisible(
+		AssertVisible(
 			key_text = "HTML Element Name",
 			locator1 = "TextInput#ANY");
 
-		AssertNotVisible(
+		AssertVisible(
 			key_text = "CSS URL",
 			locator1 = "TextInput#ANY");
 
-		Select(
-			locator1 = "Select#TYPE",
-			value1 = "${customElementType}");
+		Click(locator1 = "Button#BACK");
 
-		AssertVisible(
+		RemoteApps.addType(type = "IFrame");
+
+		AssertElementNotPresent(
 			key_text = "HTML Element Name",
 			locator1 = "TextInput#ANY");
 
-		AssertVisible(
+		AssertElementNotPresent(
 			key_text = "CSS URL",
 			locator1 = "TextInput#ANY");
 	}

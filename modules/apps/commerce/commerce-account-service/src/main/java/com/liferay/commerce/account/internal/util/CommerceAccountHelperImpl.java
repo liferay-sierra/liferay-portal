@@ -58,9 +58,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marco Leo
  * @author Alessio Antonio Rendina
  */
-@Component(
-	enabled = false, immediate = true, service = CommerceAccountHelper.class
-)
+@Component(immediate = true, service = CommerceAccountHelper.class)
 public class CommerceAccountHelperImpl implements CommerceAccountHelper {
 
 	@Override
@@ -162,6 +160,11 @@ public class CommerceAccountHelperImpl implements CommerceAccountHelper {
 					commerceAccount.getCommerceAccountId());
 			}
 		}
+		else {
+			setCurrentCommerceAccount(
+				httpServletRequest, commerceChannelGroupId,
+				commerceAccount.getCommerceAccountId());
+		}
 
 		return commerceAccount;
 	}
@@ -200,9 +203,12 @@ public class CommerceAccountHelperImpl implements CommerceAccountHelper {
 			_commerceChannelLocalService.getCommerceChannelByGroupId(
 				commerceChannelGroupId);
 
+		long userId = _portal.getUserId(httpServletRequest);
+
 		_currentAccountEntryManager.setCurrentAccountEntry(
-			commerceAccountId, commerceChannel.getSiteGroupId(),
-			_portal.getUserId(httpServletRequest));
+			commerceAccountId, commerceChannel.getGroupId(), userId);
+		_currentAccountEntryManager.setCurrentAccountEntry(
+			commerceAccountId, commerceChannel.getSiteGroupId(), userId);
 	}
 
 	private void _checkAccountType(

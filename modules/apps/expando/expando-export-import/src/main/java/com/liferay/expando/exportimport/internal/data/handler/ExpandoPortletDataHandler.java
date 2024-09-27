@@ -41,7 +41,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Akos Thurzo
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + ExpandoPortletKeys.EXPANDO,
 	service = PortletDataHandler.class
 )
@@ -168,31 +167,14 @@ public class ExpandoPortletDataHandler extends BasePortletDataHandler {
 	}
 
 	@Reference(
-		target = "(model.class.name=com.liferay.expando.kernel.model.adapter.StagedExpandoColumn)",
-		unbind = "-"
+		target = "(model.class.name=com.liferay.expando.kernel.model.adapter.StagedExpandoColumn)"
 	)
-	protected void setStagedExpandoColumnStagedModelRepository(
-		StagedModelRepository<StagedExpandoColumn>
-			stagedExpandoColumnStagedModelRepository) {
-
-		_stagedExpandoColumnStagedModelRepository =
-			stagedExpandoColumnStagedModelRepository;
-	}
-
-	@Reference(
-		target = "(model.class.name=com.liferay.expando.kernel.model.adapter.StagedExpandoTable)",
-		unbind = "-"
-	)
-	protected void setStagedExpandoTableStagedModelRepository(
-		StagedModelRepository<StagedExpandoTable>
-			stagedExpandoTableStagedModelRepository) {
-
-		_stagedExpandoTableStagedModelRepository =
-			stagedExpandoTableStagedModelRepository;
-	}
-
 	private StagedModelRepository<StagedExpandoColumn>
 		_stagedExpandoColumnStagedModelRepository;
+
+	@Reference(
+		target = "(model.class.name=com.liferay.expando.kernel.model.adapter.StagedExpandoTable)"
+	)
 	private StagedModelRepository<StagedExpandoTable>
 		_stagedExpandoTableStagedModelRepository;
 

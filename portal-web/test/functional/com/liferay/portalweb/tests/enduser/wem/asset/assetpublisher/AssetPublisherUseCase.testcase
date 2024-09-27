@@ -42,7 +42,10 @@ definition {
 	@description = "Add and edit web content via Asset Publisher in organization site with virtual host."
 	@priority = "4"
 	test AddAndEditWebContentViaAssetPublisherInOrganizationSiteWithVirtualHost {
-		property custom.properties = "auth.login.prompt.enabled=true${line.separator}virtual.hosts.valid.hosts=localhost,127.0.0.1,www.able.com,www.baker.com";
+		property custom.properties = "virtual.hosts.valid.hosts=localhost,127.0.0.1,www.able.com,www.baker.com";
+		property osgi.module.configuration.file.names = "com.liferay.login.web.internal.configuration.AuthLoginConfiguration.config";
+		property osgi.module.configurations = "promptEnabled=\"true\"";
+		property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
 		property test.name.skip.portal.instance = "AssetPublisherUseCase#AddAndEditWebContentViaAssetPublisherInOrganizationSiteWithVirtualHost";
 
 		task ("Add an organization with site") {
@@ -180,9 +183,9 @@ definition {
 	@description = "Add and edit web content via Asset Publisher in organization site with virtual host. This is a use case for LPS-140253. View no private page in  site settings's virtual host."
 	@priority = "4"
 	test AddAndEditWebContentViaAssetPublisherInOrganizationSiteWithVirtualHostFF {
-		property custom.properties = "auth.login.prompt.enabled=true${line.separator}virtual.hosts.valid.hosts=localhost,127.0.0.1,www.able.com,www.baker.com";
-		property osgi.module.configuration.file.names = "com.liferay.layout.internal.configuration.FFDisablePrivateLayoutsConfiguration.config";
-		property osgi.module.configurations = "enabled=&quot;true&quot;";
+		property custom.properties = "virtual.hosts.valid.hosts=localhost,127.0.0.1,www.able.com,www.baker.com";
+		property osgi.module.configuration.file.names = "com.liferay.login.web.internal.configuration.AuthLoginConfiguration.config";
+		property osgi.module.configurations = "promptEnabled=\"true\"";
 		property test.name.skip.portal.instance = "AssetPublisherUseCase#AddAndEditWebContentViaAssetPublisherInOrganizationSiteWithVirtualHost";
 
 		task ("Add an organization with site") {
@@ -378,6 +381,7 @@ definition {
 	@description = "Configure the Asset Publisher as Site Administrator."
 	@priority = "4"
 	test ConfigureAssetPublisherAsSiteAdministrater {
+		property asset.publisher.selection.style = "asset-list";
 		property custom.properties = "jsonws.web.service.paths.excludes=";
 
 		task ("Add a new user") {
@@ -412,11 +416,22 @@ definition {
 				userLoginFullName = "userfn userln");
 		}
 
-		task ("View the Asset Publisher using Dynamic Selection") {
+		task ("View the Asset Publisher using Collection") {
 			Navigator.gotoSitePage(
 				pageName = "Asset Publisher Page",
 				siteName = "Test Site Name");
 
+			AssertVisible(
+				key_portletName = "Asset Publisher",
+				key_text = "Select a collection to make it visible.",
+				locator1 = "Portlet#PORTLET_SELECTOR");
+		}
+
+		task ("Configure the Asset Publisher to Manual Selection") {
+			AssetPublisherPortlet.configureDynamicAssetSelectionPG();
+		}
+
+		task ("View the Asset Publisher using Dynamic Selection") {
 			AssetPublisherPortlet.viewDynamicAssetSelectionConfigurationPG();
 		}
 
@@ -449,7 +464,7 @@ definition {
 				siteName = "Test Site Name");
 
 			AssetPublisherPortlet.configureAssetLinkBehaviorPG(
-				assetLinkBehavior = "View in Context",
+				assetLinkBehavior = "View on New Page",
 				disableConfiguration = "Show Add Content Button");
 		}
 
@@ -459,6 +474,46 @@ definition {
 				siteName = "Test Site Name");
 
 			AssetPublisherPortlet.viewPlusIconNotPresentPG();
+		}
+	}
+
+	@description = "This is a test for LPS-132428. The default selection style of Asset Publisher is Collection."
+	@priority = "5"
+	test DisplayCollectionInAssetPublisher {
+		property asset.publisher.selection.style = "asset-list";
+		property portal.acceptance = "true";
+
+		task ("Add a dynamic collection for Web Content Article and Basic Web Content") {
+			JSONAssetlist.addDynamicAssetListEntryWithItemType(
+				groupName = "Test Site Name",
+				itemSubtype = "Basic Web Content",
+				itemType = "Web Content Article",
+				title = "Dynamic Collection");
+		}
+
+		task ("Add a web content") {
+			JSONWebcontent.addWebContent(
+				content = "Web Content Content",
+				groupName = "Test Site Name",
+				title = "Web Content Title");
+		}
+
+		task ("Select the dynamic collection in Asset Publisher") {
+			Navigator.gotoSitePage(
+				pageName = "Asset Publisher Page",
+				siteName = "Test Site Name");
+
+			AssetPublisherPortlet.gotoSelectCollection();
+
+			AssetPublisherPortlet.selectAssetList(assetListName = "Dynamic Collection");
+
+			IFrame.closeFrame();
+		}
+
+		task ("View the web content shown in Asset Publisher") {
+			AssetPublisherPortlet.viewAssetPG(
+				assetContent = "Web Content Content",
+				assetTitle = "Web Content Title");
 		}
 	}
 
@@ -481,7 +536,7 @@ definition {
 		}
 
 		task ("Add the Global site to Site Scope") {
-			AssetPublisherPortlet.configureAddSiteScopes(globalSite = "true");
+			AssetPublisherPortlet.configureScope(globalSite = "true");
 		}
 
 		task ("View the global web content shown in Asset Publisher") {
@@ -517,64 +572,56 @@ definition {
 		}
 	}
 
-	@description = "This is a use case for LPS-120568."
+	@description = "This is a use case for LPS-120568. The user could edit message board thread reply via Asset Publisher."
 	@priority = "5"
-	test EditMessageBoardPostsViaAP {
-		JSONLayout.addPublicLayout(
-			groupName = "Test Site Name",
-			layoutName = "Message Boards Page");
+	test EditMessageBoardThreadReplyViaAP {
+		property portal.acceptance = "true";
 
-		JSONLayout.addWidgetToPublicLayout(
-			column = "1",
-			groupName = "Test Site Name",
-			layoutName = "Message Boards Page",
-			widgetName = "Message Boards");
+		task ("Add a Message Boards to page") {
+			JSONLayout.addWidgetToPublicLayout(
+				groupName = "Test Site Name",
+				layoutName = "Asset Publisher Page",
+				widgetName = "Message Boards");
+		}
 
-		Navigator.gotoSitePage(
-			pageName = "Message Boards Page",
-			siteName = "Test Site Name");
+		task ("Add a message board thread") {
+			JSONMBMessage.addMessage(
+				groupName = "Test Site Name",
+				threadBody = "MB Thread Message Body",
+				threadSubject = "MB Thread Message Subject");
+		}
 
-		MessageboardsThread.addPG(
-			threadBody = "MB Thread Message Body",
-			threadSubject = "MB Thread Message Subject");
+		task ("Add a reply under thread") {
+			JSONMBMessage.addMessageReply(
+				groupName = "Test Site Name",
+				replyBody = "MB Thread Reply Body",
+				threadSubject = "MB Thread Message Subject");
+		}
 
-		Navigator.gotoSitePage(
-			pageName = "Message Boards Page",
-			siteName = "Test Site Name");
+		task ("Select the message board thread in Asset Publisher") {
+			Navigator.gotoSitePage(
+				pageName = "Asset Publisher Page",
+				siteName = "Test Site Name");
 
-		MessageboardsThread.replyPG(
-			threadBody = "MB Thread Message Body",
-			threadReplyBody = "MB Thread Reply Body",
-			threadSubject = "MB Thread Message Subject");
+			AssetPublisherPortlet.configureSelectedPG(selectedAsset = "Message Boards Message");
+		}
 
-		Navigator.gotoSitePage(
-			pageName = "Asset Publisher Page",
-			siteName = "Test Site Name");
+		task ("Edit the reply via Asset Publisher") {
+			Navigator.gotoSitePage(
+				pageName = "Asset Publisher Page",
+				siteName = "Test Site Name");
 
-		AssetPublisherPortlet.gotoConfigurationPG();
+			MessageboardsThread.editReplyViaAP(
+				threadBody = "MB Thread Reply Body Edit",
+				threadReplySubject = "RE: MB Thread Message Subject",
+				threadSubject = "RE: MB Thread Message Subject Edit");
+		}
 
-		Navigator.gotoNavTab(navTab = "Asset Selection");
-
-		Click(locator1 = "APConfiguration#ASSET_SELECTION_DYNAMIC");
-
-		PortletEntry.save();
-
-		IFrame.closeFrame();
-
-		AssetPublisherPortlet.configureSelectedPG(selectedAsset = "Message Boards Message");
-
-		Navigator.gotoSitePage(
-			pageName = "Asset Publisher Page",
-			siteName = "Test Site Name");
-
-		MessageboardsThread.editReplyViaAP(
-			threadBody = "MB Thread Reply Body Edit",
-			threadReplySubject = "RE: MB Thread Message Subject",
-			threadSubject = "RE: MB Thread Message Subject Edit");
-
-		AssetPublisherPortlet.viewPG(
-			assetContent = "MB Thread Reply Body Edit",
-			assetTitle = "RE: MB Thread Message Subject Edit");
+		task ("View edited message board reply shown in Asset Publisher") {
+			AssetPublisherPortlet.viewPG(
+				assetContent = "MB Thread Reply Body Edit",
+				assetTitle = "RE: MB Thread Message Subject Edit");
+		}
 	}
 
 	@description = "Filter and order the displayed assets by field."
@@ -1033,6 +1080,85 @@ definition {
 		}
 	}
 
+	@description = "This is a test for LPS-159046. The page creator should see the tags on Asset Publisher filter selector under scoped page."
+	@priority = "3"
+	test FilterAssetsFromPageScopeByTag {
+		task ("Given a page creator has an Asset Publisher and Blogs widget with scoped page") {
+			task ("Add a Blogs widget to page") {
+				JSONLayout.addWidgetToPublicLayout(
+					groupName = "Test Site Name",
+					layoutName = "Asset Publisher Page",
+					widgetName = "Blogs");
+			}
+
+			task ("Select current page as Scope on Blogs widget") {
+				Navigator.gotoSitePage(
+					pageName = "Asset Publisher Page",
+					siteName = "Test Site Name");
+
+				Portlet.selectScopePG(
+					portletIndex = "2",
+					portletName = "Blogs",
+					scope = "Asset Publisher Page");
+			}
+
+			task ("Select the page as default scope in Content & Data") {
+				ProductMenu.gotoPortlet(
+					category = "Content & Data",
+					portlet = "Blogs");
+
+				Click(
+					key_text = "cog",
+					locator1 = "Icon#ANY");
+
+				MenuItem.click(menuItem = "Asset Publisher Page");
+			}
+
+			task ("Add two Blogs with tag under scoped page") {
+				for (var i : list "1,2") {
+					Blogs.addEntryWithTag(
+						entryContent = "Blogs Entry Content ${i}",
+						entryTitle = "Blogs Entry Title ${i}",
+						tagName = "tagname${i}");
+				}
+			}
+		}
+
+		task ("When the page creator configures the scope and source of Asset Publisher") {
+			Navigator.gotoSitePage(
+				pageName = "Asset Publisher Page",
+				siteName = "Test Site Name");
+
+			AssetPublisherPortlet.configureScope(pageName = "Asset Publisher Page");
+
+			IFrame.closeFrame();
+
+			AssetPublisherPortlet.configureSelectedPG(selectedAsset = "Blogs Entry");
+
+			IFrame.closeFrame();
+		}
+
+		task ("Then the page creator should see both blogs on Asset Publisher") {
+			for (var i : list "1,2") {
+				AssetPublisherPortlet.viewAssetPG(
+					assetContent = "Blogs Entry Content ${i}",
+					assetTitle = "Blogs Entry Title ${i}");
+			}
+		}
+
+		task ("When the page creator selects the first tag on filter panel") {
+			AssetPublisherPortlet.configureTagsFilterPG(tagNameList = "tagname1");
+
+			IFrame.closeFrame();
+		}
+
+		task ("Then the page creator should see only blogs with first tag") {
+			AssetPublisherPortlet.viewAssetPG(assetTitle = "Blogs Entry Title 1");
+
+			AssetPublisherPortlet.viewAssetNotPresentPG(assetTitle = "Blogs Entry Title 2");
+		}
+	}
+
 	@description = "This is a test for LPS-113996. The user could filter documents by field in Asset Publisher."
 	@priority = "4"
 	test FilterDocumentsByField {
@@ -1100,6 +1226,8 @@ definition {
 				value1 = "Option 1");
 
 			Button.click(button = "Apply");
+
+			SelectFrameTop();
 
 			AssertTextEquals.assertPartialText(
 				key_text = "Select from List: Value1",
@@ -1177,7 +1305,7 @@ definition {
 
 			AssetPublisherPortlet.configureManualAssetSelectionPG(
 				assetType = "Basic Web Content",
-				searchInfo = "3 Results for Web Content",
+				searchInfo = "3 Results for \"Web Content\"",
 				searchTerm = "Web Content");
 		}
 
@@ -1214,6 +1342,93 @@ definition {
 			AssertVisible(
 				key_assetTitle = "Web Content Title 1",
 				locator1 = "AssetLists#ASSET_TITLE_ROW");
+		}
+	}
+
+	@description = "This is a test for LPS-158221. The Asset Publisher widget should not lose the layout article reference after edit associated content page."
+	@priority = "4"
+	test RepublishAssociatedContentPage {
+		task ("Given a page creator has a web content with an associated content page") {
+			task ("Add two content pages") {
+				for (var i : list "1,2") {
+					JSONLayout.addPublicLayout(
+						groupName = "Test Site Name",
+						layoutName = "Test Page Name ${i}",
+						type = "content");
+				}
+			}
+
+			task ("Add an Asset Publisher to each page") {
+				for (var i : list "1,2") {
+					ContentPagesNavigator.openEditContentPage(
+						pageName = "Test Page Name ${i}",
+						siteName = "Test Site Name");
+
+					PageEditor.addWidget(portletName = "Asset Publisher");
+
+					PageEditor.publish();
+				}
+			}
+
+			task ("Select Content Editing") {
+				ContentPagesNavigator.openEditContentPage(
+					pageName = "Test Page Name 2",
+					siteName = "Test Site Name");
+
+				Click(locator1 = "PageEditor#EDIT_MODE_SELECTOR");
+
+				MenuItem.click(menuItem = "Content Editing");
+			}
+
+			task ("Set the Asset Publisher as default for second page") {
+				AssetPublisherPortlet.configureDisplaySettings(displaySettings = "Set as the Default Asset Publisher for This Page");
+
+				IFrame.closeFrame();
+
+				PageEditor.publish();
+			}
+
+			task ("Add a web content") {
+				JSONWebcontent.addWebContent(
+					content = "Web Content Content",
+					groupName = "Test Site Name",
+					title = "Web Content Title");
+			}
+
+			task ("Select the second page as display template in the web content") {
+				WebContentNavigator.openWebContentAdmin(siteURLKey = "test-site-name");
+
+				WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
+
+				WebContent.editDisplayPage(
+					pageName = "Test Page Name 2",
+					pageType = "Pages",
+					webContentTitle = "Web Content Title");
+
+				PortletEntry.publish();
+			}
+		}
+
+		task ("When the page creator republish the associated content page") {
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Test Page Name 2",
+				siteName = "Test Site Name");
+
+			PortletEntry.publish();
+		}
+
+		task ("Then page creator should be redirected to the associated content page after clicking the web content title on Asset Publisher") {
+			ContentPagesNavigator.openViewContentPage(
+				pageName = "Test Page Name 1",
+				siteName = "Test Site Name");
+
+			AssetPublisherPortlet.clickAssetTitle(assetTitle = "Web Content Title");
+
+			AssetPublisherPortlet.viewAssetPG(
+				assetContent = "Web Content Content",
+				assetTitle = "Web Content Title");
+
+			ControlMenu.viewHeaderTitle(headerTitle = "Test Page Name 2");
 		}
 	}
 
@@ -1296,6 +1511,8 @@ definition {
 	@description = "This is a use case for LPS-133629. The user can select folder when create web content based on Basic Web Content via Asset Publisher."
 	@priority = "5"
 	test SelectFolderWhenCreateWebContentViaAssetPublisher {
+		property portal.acceptance = "true";
+
 		task ("Add a web content folder") {
 			JSONWebcontent.addFolder(
 				folderDescription = "WC Folder Description",
@@ -1381,7 +1598,7 @@ definition {
 
 			WebContent.editDisplayPage(
 				pageName = "Asset Publisher Page",
-				pageType = "Public Pages",
+				pageType = "Pages",
 				webContentTitle = "Web Content Title");
 
 			PortletEntry.publish();
@@ -1559,7 +1776,7 @@ definition {
 		}
 
 		task ("Add the Global site to Site Scope") {
-			AssetPublisherPortlet.configureAddSiteScopes(globalSite = "Global");
+			AssetPublisherPortlet.configureScope(globalSite = "Global");
 		}
 
 		task ("View displayed assets in Asset Publisher") {
@@ -1721,7 +1938,7 @@ definition {
 				pageName = "Asset Publisher Page",
 				siteName = "Test Site Name");
 
-			AssetPublisherPortlet.configureAddSiteScopes(globalSite = "true");
+			AssetPublisherPortlet.configureScope(globalSite = "true");
 		}
 
 		task ("View the global web content shown in Asset Publisher") {
@@ -1755,7 +1972,7 @@ definition {
 
 		AssetPublisherPortlet.configureDisplaySettings(displaySettings = "Set as the Default Asset Publisher for This Page");
 
-		AssetPublisherPortlet.configureAssetLinkBehaviorPG(assetLinkBehavior = "View in Context");
+		AssetPublisherPortlet.configureAssetLinkBehaviorPG(assetLinkBehavior = "View on New Page");
 
 		WebContentNavigator.openWebContentAdmin(siteURLKey = "test-site-name");
 
@@ -1767,7 +1984,7 @@ definition {
 
 		WebContent.editDisplayPage(
 			pageName = "Asset Publisher Page",
-			pageType = "Public Pages");
+			pageType = "Pages");
 
 		WebContent.editFriendlyURL(webContentFriendlyURL = "webcontentenglish");
 
@@ -2041,7 +2258,9 @@ catch (Exception e) {
 	e.printStackTrace(out);
 }
 			''';
+
 			var script = StringUtil.trimLeading("${script}");
+
 			var script = StringUtil.trimTrailing("${script}");
 
 			ServerAdministration.executeScript(
@@ -2151,6 +2370,81 @@ catch (Exception e) {
 				documentTypes = "doc,odt,pdf,rtf,sxw,txt",
 				webContentContent = "WC WebContent Content",
 				webContentTitle = "WC WebContent Title");
+		}
+	}
+
+	@description = "This is a use case for LPS-146343. View the pagination with 2 Asset Publisher widgets on a Content Page."
+	@priority = "3"
+	test ViewPaginationWithTwoAssetPublisherWidgetsInContentPage {
+		task ("Add 3 web contents") {
+			for (var i : list "1,2,3") {
+				JSONWebcontent.addWebContent(
+					content = "WC WebContent${i} Content",
+					groupName = "Test Site Name",
+					title = "WC WebContent${i} Title");
+			}
+		}
+
+		task ("Add a content page") {
+			JSONLayout.addPublicLayout(
+				groupName = "Test Site Name",
+				layoutName = "Test Content Page Name",
+				type = "content");
+		}
+
+		task ("Add two Asset Publisher widgets to page and configure the pagination type to Regular") {
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Test Content Page Name",
+				siteName = "Test Site Name");
+
+			PageEditor.addWidget(portletName = "Asset Publisher");
+
+			AssetPublisherPortlet.configurePaginationPG(
+				paginationNumber = "1",
+				paginationType = "Regular");
+
+			IFrame.closeFrame();
+
+			PageEditor.addWidget(
+				portletName = "Asset Publisher",
+				targetFragmentName = "Asset Publisher");
+
+			AssetPublisherPortlet.configurePaginationPG(
+				paginationNumber = "1",
+				paginationType = "Regular",
+				portletIndex = "2");
+
+			IFrame.closeFrame();
+
+			PageEditor.publish();
+		}
+
+		task ("View the pagination in two Asset Publisher widgets") {
+			ContentPagesNavigator.openViewContentPage(
+				pageName = "Test Content Page Name",
+				siteName = "Test Site Name");
+
+			Click(locator1 = "Pagination#NEXT_LINK");
+
+			AssertTextEquals(
+				locator1 = "Pagination#CURRENT_PAGE_MENU",
+				value1 = "Page 2 of 3");
+
+			AssertTextEquals(
+				key_index = "2",
+				locator1 = "Pagination#CURRENT_PAGE_MENU_INDEX",
+				value1 = "Page 1 of 3");
+
+			Click(locator1 = "Pagination#NEXT_LINK_2");
+
+			AssertTextEquals(
+				locator1 = "Pagination#CURRENT_PAGE_MENU",
+				value1 = "Page 2 of 3");
+
+			AssertTextEquals(
+				key_index = "2",
+				locator1 = "Pagination#CURRENT_PAGE_MENU_INDEX",
+				value1 = "Page 2 of 3");
 		}
 	}
 
@@ -2365,7 +2659,7 @@ catch (Exception e) {
 
 			IFrame.closeFrame();
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Add a web content") {
@@ -2382,7 +2676,7 @@ catch (Exception e) {
 
 			WebContent.editDisplayPage(
 				pageName = "Content Page Name",
-				pageType = "Public Pages");
+				pageType = "Pages");
 
 			PortletEntry.publish();
 		}
@@ -2446,7 +2740,7 @@ catch (Exception e) {
 
 			WebContent.editDisplayPage(
 				pageName = "Asset Publisher Page",
-				pageType = "Public Pages");
+				pageType = "Pages");
 
 			PortletEntry.publish();
 		}

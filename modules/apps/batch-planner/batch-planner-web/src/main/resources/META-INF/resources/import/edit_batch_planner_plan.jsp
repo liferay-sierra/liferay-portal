@@ -17,15 +17,16 @@
 <%@ include file="/init.jsp" %>
 
 <%
-String backURL = ParamUtil.getString(request, "backURL", String.valueOf(renderResponse.createRenderURL()));
-
 long batchPlannerPlanId = ParamUtil.getLong(renderRequest, "batchPlannerPlanId");
 
 boolean editable = ParamUtil.getBoolean(renderRequest, "editable");
 
-renderResponse.setTitle(editable ? LanguageUtil.get(request, "edit-template") : LanguageUtil.get(request, "import"));
-
 EditBatchPlannerPlanDisplayContext editBatchPlannerPlanDisplayContext = (EditBatchPlannerPlanDisplayContext)request.getAttribute(WebKeys.PORTLET_DISPLAY_CONTEXT);
+
+portletDisplay.setShowBackIcon(true);
+portletDisplay.setURLBack(ParamUtil.getString(request, "backURL", String.valueOf(renderResponse.createRenderURL())));
+
+renderResponse.setTitle(editable ? LanguageUtil.get(request, "edit-template") : LanguageUtil.get(request, "import"));
 %>
 
 <clay:container
@@ -39,32 +40,68 @@ EditBatchPlannerPlanDisplayContext editBatchPlannerPlanDisplayContext = (EditBat
 		<div class="row">
 			<div class="col-lg-6 d-flex flex-column">
 				<div class="card flex-fill">
-					<h4 class="card-header"><%= LanguageUtil.get(request, "import-settings") %></h4>
+					<h4 class="card-header"><liferay-ui:message key="import-settings" /></h4>
 
 					<div class="card-body">
 						<liferay-frontend:edit-form-body>
-							<div id="<portlet:namespace />templateSelect"></div>
+							<aui:input name="name" />
 
-							<clay:select
-								id='<%= liferayPortletResponse.getNamespace() + "headlessEndpoint" %>'
-								label='<%= LanguageUtil.get(request, "headless-endpoint") %>'
-								name="headlessEndpoint"
-								options="<%= editBatchPlannerPlanDisplayContext.getSelectOptions() %>"
-							/>
+							<clay:row>
+								<clay:col
+									md="6"
+								>
+									<div id="<portlet:namespace />templateSelect"></div>
+								</clay:col>
 
-							<div class="mt-2">
-								<clay:select
-									disabled="<%= true %>"
-									id='<%= liferayPortletResponse.getNamespace() + "internalClassName" %>'
-									label='<%= LanguageUtil.get(request, "entity-name") %>'
-									name="internalClassName"
-									options="<%= editBatchPlannerPlanDisplayContext.getSelectOptions() %>"
+								<clay:col
+									md="6"
+								>
+									<clay:select
+										id='<%= liferayPortletResponse.getNamespace() + "internalClassName" %>'
+										label='<%= LanguageUtil.get(request, "entity-type") %>'
+										name="internalClassName"
+										options="<%= editBatchPlannerPlanDisplayContext.getInternalClassNameSelectOptions() %>"
+									/>
+								</clay:col>
+							</clay:row>
+
+							<clay:row>
+								<clay:col>
+									<react:component
+										module="js/components/Scope"
+									/>
+								</clay:col>
+							</clay:row>
+
+							<clay:alert
+								cssClass="hide"
+								displayType="info"
+								id='<%= liferayPortletResponse.getNamespace() + "downloadTemplateAlert" %>'
+								title="download-a-sample-file-for-this-entity"
+							>
+								<clay:link
+									cssClass="link-primary single-link"
+									href="#"
+									id='<%= liferayPortletResponse.getNamespace() + "downloadBatchPlannerPlanTemplate" %>'
+									label="download"
 								/>
-							</div>
+
+								<liferay-frontend:component
+									context='<%=
+										HashMapBuilder.<String, Object>put(
+											"HTMLElementId", liferayPortletResponse.getNamespace() + "downloadBatchPlannerPlanTemplate"
+										).put(
+											"type", "batchPlannerTemplate"
+										).build()
+									%>'
+									module="js/DownloadHelper"
+								/>
+							</clay:alert>
 
 							<div class="mt-2">
 								<clay:checkbox
-									checked="<%= true %>"
+									checked="<%= false %>"
+									disabled="<%= true %>"
 									label='<%= LanguageUtil.get(request, "detect-category-names-from-CSV-file") %>'
 									name="headerCheckbox"
 								/>
@@ -72,17 +109,29 @@ EditBatchPlannerPlanDisplayContext editBatchPlannerPlanDisplayContext = (EditBat
 
 							<div class="mt-2">
 								<clay:checkbox
-									checked="<%= true %>"
+									checked="<%= false %>"
+									id='<%= liferayPortletResponse.getNamespace() + "allowUpdate" %>'
 									label='<%= LanguageUtil.get(request, "override-existing-records") %>'
-									name="headerCheckbox"
+									name='<%= liferayPortletResponse.getNamespace() + "allowUpdate" %>'
 								/>
 							</div>
 
 							<div class="mt-2">
 								<clay:checkbox
 									checked="<%= true %>"
+									disabled="<%= true %>"
+									id='<%= liferayPortletResponse.getNamespace() + "onUpdateDoPatch" %>'
 									label='<%= LanguageUtil.get(request, "ignore-blank-field-values-during-import") %>'
-									name="headerCheckbox"
+									name='<%= liferayPortletResponse.getNamespace() + "onUpdateDoPatch" %>'
+								/>
+							</div>
+
+							<div class="mt-2">
+								<clay:checkbox
+									checked="<%= true %>"
+									id='<%= liferayPortletResponse.getNamespace() + "onErrorFail" %>'
+									label='<%= LanguageUtil.get(request, "stop-the-import-on-error") %>'
+									name='<%= liferayPortletResponse.getNamespace() + "onErrorFail" %>'
 								/>
 							</div>
 						</liferay-frontend:edit-form-body>
@@ -92,7 +141,7 @@ EditBatchPlannerPlanDisplayContext editBatchPlannerPlanDisplayContext = (EditBat
 
 			<div class="col-lg-6 d-flex flex-column">
 				<div class="card flex-fill">
-					<h4 class="card-header"><%= LanguageUtil.get(request, "file-settings") %></h4>
+					<h4 class="card-header"><liferay-ui:message key="file-settings" /></h4>
 
 					<div class="card-body">
 						<liferay-frontend:edit-form-body>
@@ -130,8 +179,6 @@ EditBatchPlannerPlanDisplayContext editBatchPlannerPlanDisplayContext = (EditBat
 				module="js/import/ImportForm"
 				props='<%=
 					HashMapBuilder.<String, Object>put(
-						"backUrl", backURL
-					).put(
 						"formDataQuerySelector", "#" + liferayPortletResponse.getNamespace() + "fm"
 					).put(
 						"formImportURL",
@@ -147,7 +194,7 @@ EditBatchPlannerPlanDisplayContext editBatchPlannerPlanDisplayContext = (EditBat
 						ActionURLBuilder.createActionURL(
 							renderResponse
 						).setActionName(
-							"/batch_planner/edit_import_batch_planner_plan"
+							"/batch_planner/edit_import_batch_planner_plan_template"
 						).setCMD(
 							Constants.ADD
 						).setParameter(
@@ -167,9 +214,9 @@ EditBatchPlannerPlanDisplayContext editBatchPlannerPlanDisplayContext = (EditBat
 		HashMapBuilder.<String, Object>put(
 			"initialTemplateClassName", editBatchPlannerPlanDisplayContext.getSelectedInternalClassName()
 		).put(
-			"initialTemplateHeadlessEndpoint", editBatchPlannerPlanDisplayContext.getSelectedHeadlessEndpoint()
-		).put(
 			"initialTemplateMapping", editBatchPlannerPlanDisplayContext.getSelectedBatchPlannerPlanMappings()
+		).put(
+			"isExport", false
 		).put(
 			"templatesOptions", editBatchPlannerPlanDisplayContext.getTemplateSelectOptions()
 		).build()

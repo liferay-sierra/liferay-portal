@@ -34,7 +34,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Adam Brandizzi
  */
 @Component(
-	immediate = true,
 	property = "portal.workflow.tabs.name=" + WorkflowWebKeys.WORKFLOW_TAB_DEFINITION_LINK,
 	service = WorkflowPortletTab.class
 )
@@ -48,6 +47,11 @@ public class WorkflowDefinitionLinkPortletTab extends BaseWorkflowPortletTab {
 	@Override
 	public String getSearchJspPath() {
 		return "/definition_link/workflow_definition_link_search.jsp";
+	}
+
+	@Override
+	public ServletContext getServletContext() {
+		return _servletContext;
 	}
 
 	@Override
@@ -71,17 +75,13 @@ public class WorkflowDefinitionLinkPortletTab extends BaseWorkflowPortletTab {
 		return "/definition_link/view.jsp";
 	}
 
-	@Override
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.portal.workflow.web)",
-		unbind = "-"
-	)
-	protected void setServletContext(ServletContext servletContext) {
-		super.setServletContext(servletContext);
-	}
-
 	@Reference(unbind = "-")
 	protected WorkflowDefinitionLinkLocalService
 		workflowDefinitionLinkLocalService;
+
+	@Reference(
+		target = "(osgi.web.symbolicname=com.liferay.portal.workflow.web)"
+	)
+	private ServletContext _servletContext;
 
 }

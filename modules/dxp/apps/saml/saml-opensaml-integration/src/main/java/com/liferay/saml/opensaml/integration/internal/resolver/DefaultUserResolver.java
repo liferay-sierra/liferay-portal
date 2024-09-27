@@ -30,12 +30,10 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.security.exportimport.UserImporter;
 import com.liferay.saml.opensaml.integration.field.expression.handler.UserFieldExpressionHandler;
 import com.liferay.saml.opensaml.integration.field.expression.handler.registry.UserFieldExpressionHandlerRegistry;
 import com.liferay.saml.opensaml.integration.field.expression.resolver.UserFieldExpressionResolver;
 import com.liferay.saml.opensaml.integration.field.expression.resolver.registry.UserFieldExpressionResolverRegistry;
-import com.liferay.saml.opensaml.integration.internal.metadata.MetadataManager;
 import com.liferay.saml.opensaml.integration.processor.UserProcessor;
 import com.liferay.saml.opensaml.integration.processor.factory.UserProcessorFactory;
 import com.liferay.saml.opensaml.integration.resolver.UserResolver;
@@ -151,10 +149,7 @@ public class DefaultUserResolver implements UserResolver {
 					samlSpIdpConnection.getNormalizedUserAttributeMappings());
 		}
 		catch (Exception exception) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(exception.getMessage(), exception);
-			}
-			else if (_log.isWarnEnabled()) {
+			if (_log.isWarnEnabled()) {
 				_log.warn(exception);
 			}
 		}
@@ -399,9 +394,6 @@ public class DefaultUserResolver implements UserResolver {
 	private CompanyLocalService _companyLocalService;
 
 	@Reference
-	private MetadataManager _metadataManager;
-
-	@Reference
 	private SamlPeerBindingLocalService _samlPeerBindingLocalService;
 
 	@Reference
@@ -417,9 +409,6 @@ public class DefaultUserResolver implements UserResolver {
 	@Reference
 	private UserFieldExpressionResolverRegistry
 		_userFieldExpressionResolverRegistry;
-
-	@Reference
-	private UserImporter _userImporter;
 
 	@Reference
 	private UserLocalService _userLocalService;

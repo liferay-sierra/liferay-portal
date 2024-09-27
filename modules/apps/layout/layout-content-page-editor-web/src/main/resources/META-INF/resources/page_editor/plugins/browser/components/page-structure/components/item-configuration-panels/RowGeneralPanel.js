@@ -13,6 +13,7 @@
  */
 
 import ClayForm, {ClayCheckbox, ClaySelectWithOption} from '@clayui/form';
+import {sub} from 'frontend-js-web';
 import PropTypes from 'prop-types';
 import React, {useMemo} from 'react';
 
@@ -23,18 +24,17 @@ import {
 	useDispatch,
 	useSelector,
 } from '../../../../../../app/contexts/StoreContext';
-import selectSegmentsExperienceId from '../../../../../../app/selectors/selectSegmentsExperienceId';
 import updateItemConfig from '../../../../../../app/thunks/updateItemConfig';
 import updateRowColumns from '../../../../../../app/thunks/updateRowColumns';
 import {deepEqual} from '../../../../../../app/utils/checkDeepEqual';
 import {getResponsiveColumnSize} from '../../../../../../app/utils/getResponsiveColumnSize';
 import {getResponsiveConfig} from '../../../../../../app/utils/getResponsiveConfig';
-import {useId} from '../../../../../../app/utils/useId';
 import Collapse from '../../../../../../common/components/Collapse';
+import {useId} from '../../../../../../core/hooks/useId';
 import {getLayoutDataItemPropTypes} from '../../../../../../prop-types/index';
 import {CommonStyles} from './CommonStyles';
 
-const NUMBER_OF_COLUMNS_OPTIONS = ['1', '2', '3', '4', '5', '6'];
+const NUMBER_OF_COLUMNS_OPTIONS = [1, 2, 3, 4, 5, 6, 12];
 
 const ROW_CONFIGURATION_IDENTIFIERS = {
 	gutters: 'gutters',
@@ -50,6 +50,7 @@ const MODULES_PER_ROW_OPTIONS = [
 	[1, 2, 4],
 	[1, 2, 5],
 	[1, 2, 3, 6],
+	[1, 2, 3, 6, 12],
 ];
 const MODULES_PER_ROW_OPTIONS_WITH_CUSTOM = MODULES_PER_ROW_OPTIONS.map(
 	(option) => [CUSTOM_ROW, ...option]
@@ -70,7 +71,6 @@ const ROW_STYLE_IDENTIFIERS = {
 export function RowGeneralPanel({item}) {
 	const dispatch = useDispatch();
 	const layoutData = useSelector((state) => state.layoutData);
-	const segmentsExperienceId = useSelector(selectSegmentsExperienceId);
 	const selectedViewportSize = useSelector(
 		(state) => state.selectedViewportSize
 	);
@@ -104,8 +104,6 @@ export function RowGeneralPanel({item}) {
 					updateRowColumns({
 						itemId: item.itemId,
 						numberOfColumns: newNumberOfColumns,
-						segmentsExperienceId,
-						viewportSizeId: selectedViewportSize,
 					})
 				);
 			}
@@ -117,7 +115,6 @@ export function RowGeneralPanel({item}) {
 			updateItemConfig({
 				itemConfig,
 				itemId: item.itemId,
-				segmentsExperienceId,
 			})
 		);
 	};
@@ -149,8 +146,6 @@ export function RowGeneralPanel({item}) {
 					updateRowColumns({
 						itemId: item.itemId,
 						numberOfColumns: newNumberOfColumns,
-						segmentsExperienceId,
-						viewportSizeId: selectedViewportSize,
 					})
 				);
 			}
@@ -162,7 +157,6 @@ export function RowGeneralPanel({item}) {
 			updateItemConfig({
 				itemConfig: itemStyles,
 				itemId: item.itemId,
-				segmentsExperienceId,
 			})
 		);
 	};
@@ -246,13 +240,15 @@ export function RowGeneralPanel({item}) {
 						handleChange={onCustomStylesValueSelect}
 						label={Liferay.Language.get('layout')}
 						options={modulesPerRowOptions[
-							rowConfig.numberOfColumns - 1
+							NUMBER_OF_COLUMNS_OPTIONS.indexOf(
+								rowConfig.numberOfColumns
+							)
 						].map((option) => ({
 							disabled: option === CUSTOM_ROW,
 							label:
 								option === CUSTOM_ROW
 									? Liferay.Language.get('custom')
-									: Liferay.Util.sub(
+									: sub(
 											getModulesPerRowOptionLabel(option),
 											option
 									  ),
@@ -335,7 +331,7 @@ Select.propTypes = {
 	label: PropTypes.string.isRequired,
 	options: PropTypes.arrayOf(
 		PropTypes.shape({
-			label: PropTypes.string,
+			label: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
 			value: PropTypes.oneOfType([
 				PropTypes.string.isRequired,
 				PropTypes.number.isRequired,

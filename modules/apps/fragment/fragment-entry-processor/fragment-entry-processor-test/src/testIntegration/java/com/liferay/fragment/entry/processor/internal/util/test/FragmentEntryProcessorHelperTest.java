@@ -26,7 +26,12 @@ import com.liferay.dynamic.data.mapping.model.DDMTemplate;
 import com.liferay.dynamic.data.mapping.storage.StorageType;
 import com.liferay.dynamic.data.mapping.test.util.DDMStructureTestHelper;
 import com.liferay.dynamic.data.mapping.test.util.DDMTemplateTestUtil;
+import com.liferay.fragment.constants.FragmentEntryLinkConstants;
 import com.liferay.fragment.entry.processor.helper.FragmentEntryProcessorHelper;
+import com.liferay.fragment.processor.DefaultFragmentEntryProcessorContext;
+import com.liferay.fragment.processor.FragmentEntryProcessorContext;
+import com.liferay.info.item.ClassPKInfoItemIdentifier;
+import com.liferay.info.item.InfoItemReference;
 import com.liferay.journal.constants.JournalArticleConstants;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.service.JournalArticleLocalService;
@@ -35,6 +40,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.repository.LocalRepository;
@@ -65,6 +71,7 @@ import java.io.InputStream;
 
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -95,13 +102,117 @@ public class FragmentEntryProcessorHelperTest {
 	}
 
 	@Test
+	public void testGetFieldValueFromCollectionValue() throws Exception {
+		JournalArticle journalArticle = _addJournalArticle(
+			_addImageFileEntry(), "ImageFieldName",
+			RandomTestUtil.randomString());
+
+		Assert.assertEquals(
+			"one, two, three",
+			_getFieldValue(
+				JSONUtil.put(
+					"className", JournalArticle.class.getName()
+				).put(
+					"classNameId",
+					_portal.getClassNameId(JournalArticle.class.getName())
+				).put(
+					"classPK", journalArticle.getResourcePrimKey()
+				).put(
+					"fieldId", "AssetTag_tagNames"
+				)));
+	}
+
+	@Test
+	public void testGetFieldValueFromEmptyCollectionValue() throws Exception {
+		JournalArticle journalArticle = _addJournalArticle(
+			_addImageFileEntry(), "ImageFieldName",
+			RandomTestUtil.randomString());
+
+		Assert.assertEquals(
+			StringPool.BLANK,
+			_getFieldValue(
+				JSONUtil.put(
+					"className", JournalArticle.class.getName()
+				).put(
+					"classNameId",
+					_portal.getClassNameId(JournalArticle.class.getName())
+				).put(
+					"classPK", journalArticle.getResourcePrimKey()
+				).put(
+					"fieldId", "AssetCategory_categories"
+				)));
+	}
+
+	@Test
+	public void testGetFieldValueFromLabeledValue() throws Exception {
+		JournalArticle journalArticle = _addJournalArticle(
+			_addImageFileEntry(), "ImageFieldName", "Custom Title");
+
+		Assert.assertEquals(
+			"Custom Title",
+			_getFieldValue(
+				JSONUtil.put(
+					"className", JournalArticle.class.getName()
+				).put(
+					"classNameId",
+					_portal.getClassNameId(JournalArticle.class.getName())
+				).put(
+					"classPK", journalArticle.getResourcePrimKey()
+				).put(
+					"fieldId", "title"
+				)));
+	}
+
+	@Test
+	public void testGetFieldValueFromNullValue() throws Exception {
+		JournalArticle journalArticle = _addJournalArticle(
+			_addImageFileEntry(), "ImageFieldName",
+			RandomTestUtil.randomString());
+
+		Assert.assertNull(
+			_getFieldValue(
+				JSONUtil.put(
+					"className", JournalArticle.class.getName()
+				).put(
+					"classNameId",
+					_portal.getClassNameId(JournalArticle.class.getName())
+				).put(
+					"classPK", journalArticle.getResourcePrimKey()
+				).put(
+					"fieldId", "NoExistingFieldId"
+				)));
+	}
+
+	@Test
+	public void testGetFieldValueFromWebImage() throws Exception {
+		String fieldId = "ImageFieldName";
+
+		JournalArticle journalArticle = _addJournalArticle(
+			_addImageFileEntry(), fieldId, RandomTestUtil.randomString());
+
+		Object actual = _getFieldValue(
+			JSONUtil.put(
+				"className", JournalArticle.class.getName()
+			).put(
+				"classNameId",
+				_portal.getClassNameId(JournalArticle.class.getName())
+			).put(
+				"classPK", journalArticle.getResourcePrimKey()
+			).put(
+				"fieldId", fieldId
+			));
+
+		Assert.assertTrue(actual instanceof JSONObject);
+	}
+
+	@Test
 	public void testGetFileEntryIdClassNameClassPKDLImage() throws Exception {
 		FileEntry fileEntry = _addImageFileEntry();
 
-		long fileEntryId = _fragmentEntryProcessorHelper.getFileEntryId(
-			FileEntry.class.getName(), fileEntry.getFileEntryId());
-
-		Assert.assertEquals(fileEntry.getFileEntryId(), fileEntryId);
+		Assert.assertEquals(
+			fileEntry.getFileEntryId(),
+			_fragmentEntryProcessorHelper.getFileEntryId(
+				FileEntry.class.getName(), fileEntry.getFileEntryId()));
 	}
 
 	@Test
@@ -109,24 +220,26 @@ public class FragmentEntryProcessorHelperTest {
 		throws Exception {
 
 		JournalArticle journalArticle = _addJournalArticle(
-			_addImageFileEntry(), "ImageFieldName");
+			_addImageFileEntry(), "ImageFieldName",
+			RandomTestUtil.randomString());
 
-		long fileEntryId = _fragmentEntryProcessorHelper.getFileEntryId(
-			JournalArticle.class.getName(),
-			journalArticle.getResourcePrimKey());
-
-		Assert.assertEquals(0L, fileEntryId);
+		Assert.assertEquals(
+			0L,
+			_fragmentEntryProcessorHelper.getFileEntryId(
+				JournalArticle.class.getName(),
+				journalArticle.getResourcePrimKey()));
 	}
 
 	@Test
 	public void testGetFileEntryIdClassPKDLImage() throws Exception {
 		FileEntry fileEntry = _addImageFileEntry();
 
-		long fileEntryId = _fragmentEntryProcessorHelper.getFileEntryId(
-			_portal.getClassNameId(FileEntry.class.getName()),
-			fileEntry.getFileEntryId(), "fileURL", LocaleUtil.getSiteDefault());
-
-		Assert.assertEquals(fileEntry.getFileEntryId(), fileEntryId);
+		Assert.assertEquals(
+			fileEntry.getFileEntryId(),
+			_fragmentEntryProcessorHelper.getFileEntryId(
+				_portal.getClassNameId(FileEntry.class.getName()),
+				fileEntry.getFileEntryId(), "fileURL",
+				LocaleUtil.getSiteDefault()));
 	}
 
 	@Test
@@ -135,14 +248,15 @@ public class FragmentEntryProcessorHelperTest {
 
 		String fieldId = "ImageFieldName";
 
-		JournalArticle journalArticle = _addJournalArticle(fileEntry, fieldId);
+		JournalArticle journalArticle = _addJournalArticle(
+			fileEntry, fieldId, RandomTestUtil.randomString());
 
-		long fileEntryId = _fragmentEntryProcessorHelper.getFileEntryId(
-			_portal.getClassNameId(JournalArticle.class.getName()),
-			journalArticle.getResourcePrimKey(), fieldId,
-			LocaleUtil.getSiteDefault());
-
-		Assert.assertEquals(fileEntry.getFileEntryId(), fileEntryId);
+		Assert.assertEquals(
+			fileEntry.getFileEntryId(),
+			_fragmentEntryProcessorHelper.getFileEntryId(
+				_portal.getClassNameId(JournalArticle.class.getName()),
+				journalArticle.getResourcePrimKey(), fieldId,
+				LocaleUtil.getSiteDefault()));
 	}
 
 	@Test
@@ -153,12 +267,17 @@ public class FragmentEntryProcessorHelperTest {
 
 		String fieldId = "ImageFieldName";
 
-		JournalArticle journalArticle = _addJournalArticle(fileEntry, fieldId);
+		JournalArticle journalArticle = _addJournalArticle(
+			fileEntry, fieldId, RandomTestUtil.randomString());
 
-		long fileEntryId = _fragmentEntryProcessorHelper.getFileEntryId(
-			journalArticle, fieldId, LocaleUtil.getSiteDefault());
-
-		Assert.assertEquals(fileEntry.getFileEntryId(), fileEntryId);
+		Assert.assertEquals(
+			fileEntry.getFileEntryId(),
+			_fragmentEntryProcessorHelper.getFileEntryId(
+				new InfoItemReference(
+					JournalArticle.class.getName(),
+					new ClassPKInfoItemIdentifier(
+						journalArticle.getResourcePrimKey())),
+				fieldId, LocaleUtil.getSiteDefault()));
 	}
 
 	private DDMStructure _addDDMStructure(Group group, String content)
@@ -193,12 +312,14 @@ public class FragmentEntryProcessorHelperTest {
 			null, TestPropsValues.getUserId(),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), ContentTypes.IMAGE_JPEG,
-			RandomTestUtil.randomString(), StringPool.BLANK, StringPool.BLANK,
-			inputStream, bytes.length, null, null, serviceContext);
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			StringPool.BLANK, StringPool.BLANK, inputStream, bytes.length, null,
+			null, serviceContext);
 	}
 
 	private JournalArticle _addJournalArticle(
-			DDMStructure ddmStructure, String fieldId, FileEntry fileEntry)
+			DDMStructure ddmStructure, String fieldId, FileEntry fileEntry,
+			String title)
 		throws Exception {
 
 		User user = TestPropsValues.getUser();
@@ -226,12 +347,17 @@ public class FragmentEntryProcessorHelperTest {
 		Calendar displayCalendar = CalendarFactoryUtil.getCalendar(
 			user.getTimeZone());
 
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
+
+		serviceContext.setAssetTagNames(new String[] {"one", "two", "three"});
+
 		return _journalArticleLocalService.addArticle(
 			null, user.getUserId(), _group.getGroupId(), 0,
 			JournalArticleConstants.CLASS_NAME_ID_DEFAULT, 0, StringPool.BLANK,
 			true, JournalArticleConstants.VERSION_DEFAULT,
 			HashMapBuilder.put(
-				defaultLocale, RandomTestUtil.randomString()
+				defaultLocale, title
 			).build(),
 			HashMapBuilder.put(
 				defaultLocale, defaultLocale.toString()
@@ -252,12 +378,11 @@ public class FragmentEntryProcessorHelperTest {
 			displayCalendar.get(Calendar.YEAR),
 			displayCalendar.get(Calendar.HOUR_OF_DAY),
 			displayCalendar.get(Calendar.MINUTE), 0, 0, 0, 0, 0, true, 0, 0, 0,
-			0, 0, true, true, false, null, null, null, null,
-			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+			0, 0, true, true, false, null, null, null, null, serviceContext);
 	}
 
 	private JournalArticle _addJournalArticle(
-			FileEntry fileEntry, String fieldId)
+			FileEntry fileEntry, String fieldId, String title)
 		throws Exception {
 
 		String ddmStructureContent = _readJSONFileToString(
@@ -269,7 +394,7 @@ public class FragmentEntryProcessorHelperTest {
 		DDMStructure ddmStructure = _addDDMStructure(
 			_group, ddmStructureContent);
 
-		return _addJournalArticle(ddmStructure, fieldId, fileEntry);
+		return _addJournalArticle(ddmStructure, fieldId, fileEntry, title);
 	}
 
 	private Document _createDocument(
@@ -295,6 +420,18 @@ public class FragmentEntryProcessorHelperTest {
 				_jsonDDMFormDeserializer.deserialize(builder.build());
 
 		return ddmFormDeserializerDeserializeResponse.getDDMForm();
+	}
+
+	private Object _getFieldValue(JSONObject editableValuesJSONObject)
+		throws Exception {
+
+		FragmentEntryProcessorContext fragmentEntryProcessorContext =
+			new DefaultFragmentEntryProcessorContext(
+				null, null, FragmentEntryLinkConstants.EDIT, LocaleUtil.SPAIN);
+
+		return _fragmentEntryProcessorHelper.getFieldValue(
+			editableValuesJSONObject, new HashMap<>(),
+			fragmentEntryProcessorContext);
 	}
 
 	private String _getJournalArticleStructuredContent(

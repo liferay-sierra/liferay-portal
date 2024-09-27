@@ -77,10 +77,12 @@ public class AccountEntryCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(45);
+		StringBundler sb = new StringBundler(53);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", uuid=");
+		sb.append(uuid);
 		sb.append(", externalReferenceCode=");
 		sb.append(externalReferenceCode);
 		sb.append(", accountEntryId=");
@@ -97,10 +99,8 @@ public class AccountEntryCacheModel
 		sb.append(modifiedDate);
 		sb.append(", defaultBillingAddressId=");
 		sb.append(defaultBillingAddressId);
-		sb.append(", defaultDeliveryCTermEntryId=");
-		sb.append(defaultDeliveryCTermEntryId);
-		sb.append(", defaultPaymentCTermEntryId=");
-		sb.append(defaultPaymentCTermEntryId);
+		sb.append(", defaultCPaymentMethodKey=");
+		sb.append(defaultCPaymentMethodKey);
 		sb.append(", defaultShippingAddressId=");
 		sb.append(defaultShippingAddressId);
 		sb.append(", parentAccountEntryId=");
@@ -115,6 +115,8 @@ public class AccountEntryCacheModel
 		sb.append(logoId);
 		sb.append(", name=");
 		sb.append(name);
+		sb.append(", restrictMembership=");
+		sb.append(restrictMembership);
 		sb.append(", taxExemptionCode=");
 		sb.append(taxExemptionCode);
 		sb.append(", taxIdNumber=");
@@ -123,6 +125,12 @@ public class AccountEntryCacheModel
 		sb.append(type);
 		sb.append(", status=");
 		sb.append(status);
+		sb.append(", statusByUserId=");
+		sb.append(statusByUserId);
+		sb.append(", statusByUserName=");
+		sb.append(statusByUserName);
+		sb.append(", statusDate=");
+		sb.append(statusDate);
 		sb.append("}");
 
 		return sb.toString();
@@ -133,6 +141,13 @@ public class AccountEntryCacheModel
 		AccountEntryImpl accountEntryImpl = new AccountEntryImpl();
 
 		accountEntryImpl.setMvccVersion(mvccVersion);
+
+		if (uuid == null) {
+			accountEntryImpl.setUuid("");
+		}
+		else {
+			accountEntryImpl.setUuid(uuid);
+		}
 
 		if (externalReferenceCode == null) {
 			accountEntryImpl.setExternalReferenceCode("");
@@ -167,10 +182,15 @@ public class AccountEntryCacheModel
 		}
 
 		accountEntryImpl.setDefaultBillingAddressId(defaultBillingAddressId);
-		accountEntryImpl.setDefaultDeliveryCTermEntryId(
-			defaultDeliveryCTermEntryId);
-		accountEntryImpl.setDefaultPaymentCTermEntryId(
-			defaultPaymentCTermEntryId);
+
+		if (defaultCPaymentMethodKey == null) {
+			accountEntryImpl.setDefaultCPaymentMethodKey("");
+		}
+		else {
+			accountEntryImpl.setDefaultCPaymentMethodKey(
+				defaultCPaymentMethodKey);
+		}
+
 		accountEntryImpl.setDefaultShippingAddressId(defaultShippingAddressId);
 		accountEntryImpl.setParentAccountEntryId(parentAccountEntryId);
 
@@ -204,6 +224,8 @@ public class AccountEntryCacheModel
 			accountEntryImpl.setName(name);
 		}
 
+		accountEntryImpl.setRestrictMembership(restrictMembership);
+
 		if (taxExemptionCode == null) {
 			accountEntryImpl.setTaxExemptionCode("");
 		}
@@ -226,6 +248,21 @@ public class AccountEntryCacheModel
 		}
 
 		accountEntryImpl.setStatus(status);
+		accountEntryImpl.setStatusByUserId(statusByUserId);
+
+		if (statusByUserName == null) {
+			accountEntryImpl.setStatusByUserName("");
+		}
+		else {
+			accountEntryImpl.setStatusByUserName(statusByUserName);
+		}
+
+		if (statusDate == Long.MIN_VALUE) {
+			accountEntryImpl.setStatusDate(null);
+		}
+		else {
+			accountEntryImpl.setStatusDate(new Date(statusDate));
+		}
 
 		accountEntryImpl.resetOriginalValues();
 
@@ -235,6 +272,7 @@ public class AccountEntryCacheModel
 	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
+		uuid = objectInput.readUTF();
 		externalReferenceCode = objectInput.readUTF();
 
 		accountEntryId = objectInput.readLong();
@@ -247,10 +285,7 @@ public class AccountEntryCacheModel
 		modifiedDate = objectInput.readLong();
 
 		defaultBillingAddressId = objectInput.readLong();
-
-		defaultDeliveryCTermEntryId = objectInput.readLong();
-
-		defaultPaymentCTermEntryId = objectInput.readLong();
+		defaultCPaymentMethodKey = objectInput.readUTF();
 
 		defaultShippingAddressId = objectInput.readLong();
 
@@ -261,16 +296,29 @@ public class AccountEntryCacheModel
 
 		logoId = objectInput.readLong();
 		name = objectInput.readUTF();
+
+		restrictMembership = objectInput.readBoolean();
 		taxExemptionCode = objectInput.readUTF();
 		taxIdNumber = objectInput.readUTF();
 		type = objectInput.readUTF();
 
 		status = objectInput.readInt();
+
+		statusByUserId = objectInput.readLong();
+		statusByUserName = objectInput.readUTF();
+		statusDate = objectInput.readLong();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		if (uuid == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(uuid);
+		}
 
 		if (externalReferenceCode == null) {
 			objectOutput.writeUTF("");
@@ -297,9 +345,12 @@ public class AccountEntryCacheModel
 
 		objectOutput.writeLong(defaultBillingAddressId);
 
-		objectOutput.writeLong(defaultDeliveryCTermEntryId);
-
-		objectOutput.writeLong(defaultPaymentCTermEntryId);
+		if (defaultCPaymentMethodKey == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(defaultCPaymentMethodKey);
+		}
 
 		objectOutput.writeLong(defaultShippingAddressId);
 
@@ -335,6 +386,8 @@ public class AccountEntryCacheModel
 			objectOutput.writeUTF(name);
 		}
 
+		objectOutput.writeBoolean(restrictMembership);
+
 		if (taxExemptionCode == null) {
 			objectOutput.writeUTF("");
 		}
@@ -357,9 +410,21 @@ public class AccountEntryCacheModel
 		}
 
 		objectOutput.writeInt(status);
+
+		objectOutput.writeLong(statusByUserId);
+
+		if (statusByUserName == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(statusByUserName);
+		}
+
+		objectOutput.writeLong(statusDate);
 	}
 
 	public long mvccVersion;
+	public String uuid;
 	public String externalReferenceCode;
 	public long accountEntryId;
 	public long companyId;
@@ -368,8 +433,7 @@ public class AccountEntryCacheModel
 	public long createDate;
 	public long modifiedDate;
 	public long defaultBillingAddressId;
-	public long defaultDeliveryCTermEntryId;
-	public long defaultPaymentCTermEntryId;
+	public String defaultCPaymentMethodKey;
 	public long defaultShippingAddressId;
 	public long parentAccountEntryId;
 	public String description;
@@ -377,9 +441,13 @@ public class AccountEntryCacheModel
 	public String emailAddress;
 	public long logoId;
 	public String name;
+	public boolean restrictMembership;
 	public String taxExemptionCode;
 	public String taxIdNumber;
 	public String type;
 	public int status;
+	public long statusByUserId;
+	public String statusByUserName;
+	public long statusDate;
 
 }

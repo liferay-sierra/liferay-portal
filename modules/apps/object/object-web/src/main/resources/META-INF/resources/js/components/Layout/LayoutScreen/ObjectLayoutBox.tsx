@@ -15,45 +15,50 @@
 import ClayButton from '@clayui/button';
 import {ClayToggle} from '@clayui/form';
 import {useModal} from '@clayui/modal';
-import React, {useContext, useState} from 'react';
+import {Panel, PanelBody, PanelHeader} from '@liferay/object-js-components-web';
+import React, {useState} from 'react';
 
-import Panel from '../../Panel/Panel';
-import LayoutContext, {TYPES} from '../context';
-import {TObjectLayoutRow} from '../types';
-import DropdownWithDeleteButton from './DropdownWithDeleteButton';
+import {TYPES, useLayoutContext} from '../objectLayoutContext';
+import {BoxType, TObjectLayoutRow} from '../types';
+import {HeaderDropdown} from './HeaderDropdown';
 import ModalAddObjectLayoutField from './ModalAddObjectLayoutField';
-import ObjectLayoutRows from './ObjectLayoutRows';
+import {ObjectLayoutRows} from './ObjectLayoutRows';
 
-interface IObjectLayoutBoxProps extends React.HTMLAttributes<HTMLElement> {
+interface ObjectLayoutBoxProps extends React.HTMLAttributes<HTMLElement> {
 	boxIndex: number;
 	collapsable: boolean;
 	label: string;
 	objectLayoutRows?: TObjectLayoutRow[];
 	tabIndex: number;
+	type: BoxType;
 }
 
-const ObjectLayoutBox: React.FC<IObjectLayoutBoxProps> = ({
+export function ObjectLayoutBox({
 	boxIndex,
 	collapsable,
 	label,
 	objectLayoutRows,
 	tabIndex,
-}) => {
-	const [{isViewOnly}, dispatch] = useContext(LayoutContext);
+	type,
+}: ObjectLayoutBoxProps) {
+	const [{enableCategorization, isViewOnly}, dispatch] = useLayoutContext();
 	const [visibleModal, setVisibleModal] = useState(false);
 	const {observer, onClose} = useModal({
 		onClose: () => setVisibleModal(false),
 	});
 
+	const disabled =
+		(type === 'categorization' && !enableCategorization) || isViewOnly;
+
 	return (
 		<>
 			<Panel>
-				<Panel.Header
+				<PanelHeader
 					contentRight={
 						<>
 							<ClayToggle
 								aria-label={Liferay.Language.get('collapsible')}
-								disabled={isViewOnly}
+								disabled={disabled}
 								label={Liferay.Language.get('collapsible')}
 								onToggle={(value) => {
 									dispatch({
@@ -72,40 +77,48 @@ const ObjectLayoutBox: React.FC<IObjectLayoutBoxProps> = ({
 								toggled={collapsable}
 							/>
 
-							<ClayButton
-								className="ml-4"
-								disabled={isViewOnly}
-								displayType="secondary"
-								onClick={() => setVisibleModal(true)}
-								small
-							>
-								{Liferay.Language.get('add-field')}
-							</ClayButton>
+							{type === 'regular' && (
+								<ClayButton
+									className="ml-4"
+									disabled={isViewOnly}
+									displayType="secondary"
+									onClick={() => setVisibleModal(true)}
+									small
+								>
+									{Liferay.Language.get('add-field')}
+								</ClayButton>
+							)}
 
-							<DropdownWithDeleteButton
-								onClick={() => {
+							<HeaderDropdown
+								deleteElement={() => {
 									dispatch({
 										payload: {
 											boxIndex,
 											tabIndex,
 										},
-										type: TYPES.DELETE_OBJECT_LAYOUT_BOX,
+										type:
+											type === 'categorization'
+												? TYPES.DELETE_OBJECT_LAYOUT_BOX_CATEGORIZATION
+												: TYPES.DELETE_OBJECT_LAYOUT_BOX_CATEGORIZATION,
 									});
 								}}
+								disabled={disabled}
 							/>
 						</>
 					}
+					disabled={disabled}
 					title={label}
+					type={type}
 				/>
 
 				{!!objectLayoutRows?.length && (
-					<Panel.Body>
+					<PanelBody>
 						<ObjectLayoutRows
 							boxIndex={boxIndex}
 							objectLayoutRows={objectLayoutRows}
 							tabIndex={tabIndex}
 						/>
-					</Panel.Body>
+					</PanelBody>
 				)}
 			</Panel>
 
@@ -119,6 +132,4 @@ const ObjectLayoutBox: React.FC<IObjectLayoutBoxProps> = ({
 			)}
 		</>
 	);
-};
-
-export default ObjectLayoutBox;
+}

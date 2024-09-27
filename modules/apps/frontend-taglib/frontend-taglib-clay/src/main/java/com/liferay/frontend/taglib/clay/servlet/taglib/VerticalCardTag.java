@@ -15,7 +15,6 @@
 package com.liferay.frontend.taglib.clay.servlet.taglib;
 
 import com.liferay.frontend.taglib.clay.internal.servlet.taglib.util.DropdownItemListUtil;
-import com.liferay.frontend.taglib.clay.servlet.taglib.soy.VerticalCard;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.LabelItem;
 import com.liferay.portal.kernel.language.LanguageUtil;
@@ -349,7 +348,7 @@ public class VerticalCardTag extends BaseCardTag {
 
 	@Override
 	protected String getHydratedModuleName() {
-		return "frontend-taglib-clay/cards/VerticalCard";
+		return "{VerticalCard} from frontend-taglib-clay";
 	}
 
 	@Override
@@ -586,7 +585,7 @@ public class VerticalCardTag extends BaseCardTag {
 
 		List<LabelItem> labels = getLabels();
 
-		if (!ListUtil.isEmpty(labels)) {
+		if (ListUtil.isNotEmpty(labels)) {
 			jspWriter.write("<div class=\"card-detail\">");
 
 			for (LabelItem labelItem : labels) {

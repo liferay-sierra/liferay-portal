@@ -284,6 +284,11 @@ public class ObjectViewWrapper
 		return model.getObjectViewColumns();
 	}
 
+	@Override
+	public java.util.List<ObjectViewFilterColumn> getObjectViewFilterColumns() {
+		return model.getObjectViewFilterColumns();
+	}
+
 	/**
 	 * Returns the object view ID of this object view.
 	 *
@@ -292,6 +297,11 @@ public class ObjectViewWrapper
 	@Override
 	public long getObjectViewId() {
 		return model.getObjectViewId();
+	}
+
+	@Override
+	public java.util.List<ObjectViewSortColumn> getObjectViewSortColumns() {
+		return model.getObjectViewSortColumns();
 	}
 
 	/**
@@ -504,6 +514,13 @@ public class ObjectViewWrapper
 		model.setObjectViewColumns(objectViewColumns);
 	}
 
+	@Override
+	public void setObjectViewFilterColumns(
+		java.util.List<ObjectViewFilterColumn> objectViewFilterColumns) {
+
+		model.setObjectViewFilterColumns(objectViewFilterColumns);
+	}
+
 	/**
 	 * Sets the object view ID of this object view.
 	 *
@@ -512,6 +529,13 @@ public class ObjectViewWrapper
 	@Override
 	public void setObjectViewId(long objectViewId) {
 		model.setObjectViewId(objectViewId);
+	}
+
+	@Override
+	public void setObjectViewSortColumns(
+		java.util.List<ObjectViewSortColumn> objectViewSortColumns) {
+
+		model.setObjectViewSortColumns(objectViewSortColumns);
 	}
 
 	/**

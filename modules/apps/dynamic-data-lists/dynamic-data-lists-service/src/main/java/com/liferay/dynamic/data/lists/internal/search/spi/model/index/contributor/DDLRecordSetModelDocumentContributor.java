@@ -19,7 +19,7 @@ import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.search.spi.model.index.contributor.ModelDocumentContributor;
 
 import java.util.Locale;
@@ -31,7 +31,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marcela Cunha
  */
 @Component(
-	immediate = true,
 	property = "indexer.class.name=com.liferay.dynamic.data.lists.model.DDLRecordSet",
 	service = ModelDocumentContributor.class
 )
@@ -49,7 +48,7 @@ public class DDLRecordSetModelDocumentContributor
 
 		for (String descriptionLanguageId : descriptionLanguageIds) {
 			document.addText(
-				LocalizationUtil.getLocalizedName(
+				_localization.getLocalizedName(
 					Field.DESCRIPTION, descriptionLanguageId),
 				ddlRecordSet.getDescription(descriptionLanguageId));
 		}
@@ -59,7 +58,7 @@ public class DDLRecordSetModelDocumentContributor
 
 		for (String nameLanguageId : nameLanguageIds) {
 			document.addText(
-				LocalizationUtil.getLocalizedName(Field.NAME, nameLanguageId),
+				_localization.getLocalizedName(Field.NAME, nameLanguageId),
 				ddlRecordSet.getName(nameLanguageId));
 		}
 
@@ -72,8 +71,7 @@ public class DDLRecordSetModelDocumentContributor
 	protected ClassNameLocalService classNameLocalService;
 
 	private String[] _getLanguageIds(String defaultLanguageId, String content) {
-		String[] languageIds = LocalizationUtil.getAvailableLanguageIds(
-			content);
+		String[] languageIds = _localization.getAvailableLanguageIds(content);
 
 		if (languageIds.length == 0) {
 			languageIds = new String[] {defaultLanguageId};
@@ -81,5 +79,8 @@ public class DDLRecordSetModelDocumentContributor
 
 		return languageIds;
 	}
+
+	@Reference
+	private Localization _localization;
 
 }

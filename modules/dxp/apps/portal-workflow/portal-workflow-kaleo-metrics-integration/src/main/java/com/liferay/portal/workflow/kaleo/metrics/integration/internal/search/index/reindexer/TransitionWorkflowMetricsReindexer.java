@@ -22,8 +22,6 @@ import com.liferay.portal.workflow.kaleo.metrics.integration.internal.helper.Ind
 import com.liferay.portal.workflow.kaleo.model.KaleoDefinitionVersion;
 import com.liferay.portal.workflow.kaleo.model.KaleoTransition;
 import com.liferay.portal.workflow.kaleo.service.KaleoDefinitionVersionLocalService;
-import com.liferay.portal.workflow.kaleo.service.KaleoNodeLocalService;
-import com.liferay.portal.workflow.kaleo.service.KaleoTaskLocalService;
 import com.liferay.portal.workflow.kaleo.service.KaleoTransitionLocalService;
 import com.liferay.portal.workflow.metrics.search.background.task.WorkflowMetricsReindexStatusMessageSender;
 import com.liferay.portal.workflow.metrics.search.index.TransitionWorkflowMetricsIndexer;
@@ -38,7 +36,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Rafael Praxedes
  */
 @Component(
-	immediate = true,
 	property = "workflow.metrics.index.entity.name=transition",
 	service = WorkflowMetricsReindexer.class
 )
@@ -90,12 +87,6 @@ public class TransitionWorkflowMetricsReindexer
 	@Reference
 	private KaleoDefinitionVersionLocalService
 		_kaleoDefinitionVersionLocalService;
-
-	@Reference
-	private KaleoNodeLocalService _kaleoNodeLocalService;
-
-	@Reference
-	private KaleoTaskLocalService _kaleoTaskLocalService;
 
 	@Reference
 	private KaleoTransitionLocalService _kaleoTransitionLocalService;

@@ -12,11 +12,16 @@
  * details.
  */
 
+import {Observer} from '@clayui/modal/lib/types';
 import React from 'react';
 interface IModalAddObjectLayoutBoxProps
 	extends React.HTMLAttributes<HTMLElement> {
-	observer: any;
+	observer: Observer;
 	onClose: () => void;
 }
-declare const ModalAddObjectLayoutBox: React.FC<IModalAddObjectLayoutBoxProps>;
-export default ModalAddObjectLayoutBox;
+export declare function ModalAddObjectLayoutBox({
+	observer,
+	onClose,
+	tabIndex,
+}: IModalAddObjectLayoutBoxProps): JSX.Element;
+export {};

@@ -54,10 +54,11 @@ import com.liferay.headless.delivery.internal.dto.v1_0.util.DisplayPageRendererU
 import com.liferay.headless.delivery.internal.dto.v1_0.util.RelatedContentUtil;
 import com.liferay.headless.delivery.internal.dto.v1_0.util.TaxonomyCategoryBriefUtil;
 import com.liferay.headless.delivery.internal.resource.v1_0.BaseDocumentResourceImpl;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.journal.service.JournalArticleService;
-import com.liferay.layout.display.page.LayoutDisplayPageProviderTracker;
+import com.liferay.layout.display.page.LayoutDisplayPageProviderRegistry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryService;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.comment.CommentManager;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.repository.model.FileEntry;
@@ -71,8 +72,8 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
 import com.liferay.portal.vulcan.util.GroupUtil;
+import com.liferay.portal.vulcan.util.JaxRsLinkUtil;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
-import com.liferay.portal.vulcan.util.TransformUtil;
 import com.liferay.ratings.kernel.service.RatingsStatsLocalService;
 
 import java.util.ArrayList;
@@ -102,6 +103,13 @@ public class DocumentDTOConverter
 	@Override
 	public String getContentType() {
 		return Document.class.getSimpleName();
+	}
+
+	@Override
+	public String getJaxRsLink(long classPK, UriInfo uriInfo) {
+		return JaxRsLinkUtil.getJaxRsLink(
+			"headless-delivery", BaseDocumentResourceImpl.class, "getDocument",
+			uriInfo, classPK);
 	}
 
 	@Override
@@ -176,8 +184,8 @@ public class DocumentDTOConverter
 						FileEntry.class.getName(), fileEntry.getFileEntryId(),
 						_getDDMStructureId(fileEntry), dtoConverterContext,
 						fileEntry.getGroupId(), fileEntry,
-						_infoItemServiceTracker,
-						_layoutDisplayPageProviderTracker, _layoutLocalService,
+						_infoItemServiceRegistry,
+						_layoutDisplayPageProviderRegistry, _layoutLocalService,
 						_layoutPageTemplateEntryService,
 						"getDocumentRenderedContentByDisplayPageDisplayPage" +
 							"Key"));
@@ -403,13 +411,14 @@ public class DocumentDTOConverter
 	private GroupLocalService _groupLocalService;
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
 	private JournalArticleService _journalArticleService;
 
 	@Reference
-	private LayoutDisplayPageProviderTracker _layoutDisplayPageProviderTracker;
+	private LayoutDisplayPageProviderRegistry
+		_layoutDisplayPageProviderRegistry;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;

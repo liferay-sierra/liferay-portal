@@ -20,7 +20,6 @@ import com.liferay.frontend.data.set.view.table.BaseTableFDSView;
 import com.liferay.frontend.data.set.view.table.FDSTableSchema;
 import com.liferay.frontend.data.set.view.table.FDSTableSchemaBuilder;
 import com.liferay.frontend.data.set.view.table.FDSTableSchemaBuilderFactory;
-import com.liferay.frontend.data.set.view.table.FDSTableSchemaField;
 
 import java.util.Locale;
 
@@ -31,7 +30,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "frontend.data.set.name=" + CommercePricingFDSNames.PRICE_MODIFIERS,
 	service = FDSView.class
 )
@@ -42,22 +40,19 @@ public class CommercePriceModifierTableFDSView extends BaseTableFDSView {
 		FDSTableSchemaBuilder fdsTableSchemaBuilder =
 			_fdsTableSchemaBuilderFactory.create();
 
-		FDSTableSchemaField nameFDSTableSchemaField =
-			fdsTableSchemaBuilder.addFDSTableSchemaField("name", "name");
-
-		nameFDSTableSchemaField.setContentRenderer("actionLink");
-
-		fdsTableSchemaBuilder.addFDSTableSchemaField("target", "target");
-
-		fdsTableSchemaBuilder.addFDSTableSchemaField("modifier", "modifier");
-
-		fdsTableSchemaBuilder.addFDSTableSchemaField(
-			"startDate", "publish-date");
-
-		fdsTableSchemaBuilder.addFDSTableSchemaField(
-			"endDate", "expiration-date");
-
-		return fdsTableSchemaBuilder.build();
+		return fdsTableSchemaBuilder.add(
+			"name", "name",
+			fdsTableSchemaField -> fdsTableSchemaField.setContentRenderer(
+				"actionLink")
+		).add(
+			"target", "target"
+		).add(
+			"modifier", "modifier"
+		).add(
+			"startDate", "publish-date"
+		).add(
+			"endDate", "expiration-date"
+		).build();
 	}
 
 	@Reference

@@ -45,8 +45,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.commerce.punchout.oauth2.provider.rest.internal.bearer.token.provider.configuration.PunchOutAccessTokenProviderConfiguration",
-	enabled = false, property = "timeout:Integer=15",
-	service = PunchOutAccessTokenProvider.class
+	property = "timeout:Integer=15", service = PunchOutAccessTokenProvider.class
 )
 public class PunchOutAccessTokenProviderImpl
 	implements PunchOutAccessTokenProvider {
@@ -191,11 +190,8 @@ public class PunchOutAccessTokenProviderImpl
 		PunchOutAccessToken punchOutAccessToken = new PunchOutAccessToken();
 
 		punchOutAccessToken.setGroupId(groupId);
-
 		punchOutAccessToken.setCommerceAccountId(commerceAccountId);
-
 		punchOutAccessToken.setCurrencyCode(currencyCode);
-
 		punchOutAccessToken.setIssuedAt(System.currentTimeMillis());
 
 		int expiresInSeconds =
@@ -206,15 +202,12 @@ public class PunchOutAccessTokenProviderImpl
 
 		punchOutAccessToken.setExpiresIn(expiresInMilliseconds);
 
-		byte[] token = _generateSecureRandomBytes(
-			_punchOutAccessTokenProviderConfiguration.accessTokenKeyByteSize());
-
-		punchOutAccessToken.setToken(token);
-
+		punchOutAccessToken.setToken(
+			_generateSecureRandomBytes(
+				_punchOutAccessTokenProviderConfiguration.
+					accessTokenKeyByteSize()));
 		punchOutAccessToken.setUserEmailAddress(userEmailAddress);
-
 		punchOutAccessToken.setCommerceOrderUuid(commerceOrderUuid);
-
 		punchOutAccessToken.setPunchOutSessionAttributes(
 			punchOutSessionAttributes);
 

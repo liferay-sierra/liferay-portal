@@ -38,7 +38,7 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 import com.liferay.portal.lock.exception.NoSuchLockException;
 import com.liferay.portal.lock.model.Lock;
 import com.liferay.portal.lock.model.LockTable;
@@ -193,7 +193,8 @@ public class LockPersistenceImpl
 		List<Lock> list = null;
 
 		if (useFinderCache) {
-			list = (List<Lock>)finderCache.getResult(finderPath, finderArgs);
+			list = (List<Lock>)finderCache.getResult(
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (Lock lock : list) {
@@ -571,7 +572,7 @@ public class LockPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -727,7 +728,8 @@ public class LockPersistenceImpl
 		List<Lock> list = null;
 
 		if (useFinderCache) {
-			list = (List<Lock>)finderCache.getResult(finderPath, finderArgs);
+			list = (List<Lock>)finderCache.getResult(
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (Lock lock : list) {
@@ -1137,7 +1139,7 @@ public class LockPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid, companyId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -1294,7 +1296,8 @@ public class LockPersistenceImpl
 		List<Lock> list = null;
 
 		if (useFinderCache) {
-			list = (List<Lock>)finderCache.getResult(finderPath, finderArgs);
+			list = (List<Lock>)finderCache.getResult(
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (Lock lock : list) {
@@ -1675,7 +1678,7 @@ public class LockPersistenceImpl
 
 		Object[] finderArgs = new Object[] {className};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -1815,7 +1818,8 @@ public class LockPersistenceImpl
 		List<Lock> list = null;
 
 		if (useFinderCache) {
-			list = (List<Lock>)finderCache.getResult(finderPath, finderArgs);
+			list = (List<Lock>)finderCache.getResult(
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (Lock lock : list) {
@@ -2199,7 +2203,7 @@ public class LockPersistenceImpl
 
 		Object[] finderArgs = new Object[] {_getTime(expirationDate)};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -2331,7 +2335,8 @@ public class LockPersistenceImpl
 		Object result = null;
 
 		if (useFinderCache) {
-			result = finderCache.getResult(_finderPathFetchByC_K, finderArgs);
+			result = finderCache.getResult(
+				_finderPathFetchByC_K, finderArgs, this);
 		}
 
 		if (result instanceof Lock) {
@@ -2454,7 +2459,7 @@ public class LockPersistenceImpl
 
 		Object[] finderArgs = new Object[] {className, key};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -2647,7 +2652,7 @@ public class LockPersistenceImpl
 		lock.setNew(true);
 		lock.setPrimaryKey(lockId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		lock.setUuid(uuid);
 
@@ -2759,7 +2764,7 @@ public class LockPersistenceImpl
 		LockModelImpl lockModelImpl = (LockModelImpl)lock;
 
 		if (Validator.isNull(lock.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			lock.setUuid(uuid);
 		}
@@ -2940,7 +2945,8 @@ public class LockPersistenceImpl
 		List<Lock> list = null;
 
 		if (useFinderCache) {
-			list = (List<Lock>)finderCache.getResult(finderPath, finderArgs);
+			list = (List<Lock>)finderCache.getResult(
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -3010,7 +3016,7 @@ public class LockPersistenceImpl
 	@Override
 	public int countAll() {
 		Long count = (Long)finderCache.getResult(
-			_finderPathCountAll, FINDER_ARGS_EMPTY);
+			_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -3254,6 +3260,6 @@ public class LockPersistenceImpl
 	}
 
 	@Reference
-	private LockModelArgumentsResolver _lockModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

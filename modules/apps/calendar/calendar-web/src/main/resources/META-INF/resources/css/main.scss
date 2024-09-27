@@ -215,6 +215,7 @@
 	}
 
 	.scheduler-event-content,
+	.scheduler-event-name,
 	.scheduler-event-title {
 		font-family: inherit;
 		font-size: inherit;
@@ -569,6 +570,7 @@
 
 .simple-menu {
 	position: absolute;
+	z-index: 100 !important;
 
 	.simple-menu-content {
 		background: none repeat scroll 0 0 #fff;
@@ -652,7 +654,7 @@
 
 // ---------- YUI calendar ----------
 
-.yui3-skin-sam .calendar-portlet {
+.yui3-skin-sam .calendar-portlet-mini-calendar {
 	.yui3-calendar-day,
 	.yui3-calendar-header-label,
 	.yui3-calendar-weekday {
@@ -1056,5 +1058,30 @@
 @media (min-width: 767px) {
 	.portal-popup .calendar-portlet .dialog-footer {
 		position: relative;
+	}
+}
+
+.definition-of-terms {
+	dt {
+		color: $dark;
+		font-weight: normal;
+		margin-bottom: 2em;
+		width: 25em;
+		word-break: break-word;
+	}
+
+	@include media-breakpoint-up(sm) {
+		dt {
+			float: left;
+			width: auto;
+		}
+
+		dd:after {
+			clear: both;
+			content: '';
+			display: block;
+			height: 0;
+			visibility: hidden;
+		}
 	}
 }

@@ -15,6 +15,8 @@
 import {
 	delegate,
 	fetch,
+	getOpener,
+	getWindow,
 	objectToFormData,
 	runScriptsInElement,
 } from 'frontend-js-web';
@@ -54,7 +56,7 @@ export default function ({
 				if (response.success) {
 					message.classList.add('hide');
 
-					Liferay.Util.getOpener().Liferay.fire(eventName, {
+					getOpener().Liferay.fire(eventName, {
 						data: {
 							className: assetClassName,
 							displayValue: response.displayValue,
@@ -67,7 +69,7 @@ export default function ({
 						},
 					});
 
-					Liferay.Util.getWindow().destroy();
+					getWindow().destroy();
 				}
 				else {
 					message.classList.remove('hide');

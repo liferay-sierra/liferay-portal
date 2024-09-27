@@ -209,11 +209,6 @@ public class UpgradeKaleoProcessTemplateLinkTest {
 					}
 				}
 
-				@Override
-				public void registerInitialUpgradeSteps(
-					UpgradeStep... upgradeSteps) {
-				}
-
 			});
 	}
 
@@ -231,7 +226,7 @@ public class UpgradeKaleoProcessTemplateLinkTest {
 	private Timestamp _timestamp;
 
 	@Inject(
-		filter = "component.name=com.liferay.portal.workflow.kaleo.forms.internal.upgrade.KaleoFormsServiceUpgrade"
+		filter = "component.name=com.liferay.portal.workflow.kaleo.forms.internal.upgrade.registry.KaleoFormsServiceUpgradeStepRegistrator"
 	)
 	private UpgradeStepRegistrator _upgradeStepRegistrator;
 

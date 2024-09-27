@@ -39,7 +39,7 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 import com.liferay.sync.exception.NoSuchDeviceException;
 import com.liferay.sync.model.SyncDevice;
 import com.liferay.sync.model.SyncDeviceTable;
@@ -194,7 +194,7 @@ public class SyncDevicePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<SyncDevice>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SyncDevice syncDevice : list) {
@@ -574,7 +574,7 @@ public class SyncDevicePersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -733,7 +733,7 @@ public class SyncDevicePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<SyncDevice>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SyncDevice syncDevice : list) {
@@ -1145,7 +1145,7 @@ public class SyncDevicePersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid, companyId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -1299,7 +1299,7 @@ public class SyncDevicePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<SyncDevice>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SyncDevice syncDevice : list) {
@@ -1654,7 +1654,7 @@ public class SyncDevicePersistenceImpl
 
 		Object[] finderArgs = new Object[] {userId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -1788,7 +1788,7 @@ public class SyncDevicePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<SyncDevice>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SyncDevice syncDevice : list) {
@@ -2204,7 +2204,7 @@ public class SyncDevicePersistenceImpl
 
 		Object[] finderArgs = new Object[] {companyId, userName};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -2372,7 +2372,7 @@ public class SyncDevicePersistenceImpl
 		syncDevice.setNew(true);
 		syncDevice.setPrimaryKey(syncDeviceId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		syncDevice.setUuid(uuid);
 
@@ -2488,7 +2488,7 @@ public class SyncDevicePersistenceImpl
 			(SyncDeviceModelImpl)syncDevice;
 
 		if (Validator.isNull(syncDevice.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			syncDevice.setUuid(uuid);
 		}
@@ -2681,7 +2681,7 @@ public class SyncDevicePersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<SyncDevice>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -2751,7 +2751,7 @@ public class SyncDevicePersistenceImpl
 	@Override
 	public int countAll() {
 		Long count = (Long)finderCache.getResult(
-			_finderPathCountAll, FINDER_ARGS_EMPTY);
+			_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -2979,6 +2979,6 @@ public class SyncDevicePersistenceImpl
 	}
 
 	@Reference
-	private SyncDeviceModelArgumentsResolver _syncDeviceModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

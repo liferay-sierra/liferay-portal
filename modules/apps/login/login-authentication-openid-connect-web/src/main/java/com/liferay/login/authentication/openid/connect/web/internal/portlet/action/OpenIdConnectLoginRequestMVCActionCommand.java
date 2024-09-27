@@ -14,18 +14,17 @@
 
 package com.liferay.login.authentication.openid.connect.web.internal.portlet.action;
 
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.exception.UserEmailAddressException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.security.sso.openid.connect.OpenIdConnect;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectAuthenticationHandler;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceException;
 import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectWebKeys;
@@ -117,10 +116,6 @@ public class OpenIdConnectLoginRequestMVCActionCommand
 		throws Exception {
 
 		try {
-			String openIdConnectProviderName = ParamUtil.getString(
-				actionRequest,
-				OpenIdConnectWebKeys.OPEN_ID_CONNECT_PROVIDER_NAME);
-
 			HttpServletRequest httpServletRequest =
 				_portal.getHttpServletRequest(actionRequest);
 
@@ -153,9 +148,21 @@ public class OpenIdConnectLoginRequestMVCActionCommand
 					"saveLastPath", false
 				).buildString());
 
+			String openIdConnectProviderName = ParamUtil.getString(
+				actionRequest,
+				OpenIdConnectWebKeys.OPEN_ID_CONNECT_PROVIDER_NAME);
+
+			if (Validator.isNotNull(openIdConnectProviderName)) {
+				_openIdConnectAuthenticationHandler.requestAuthentication(
+					openIdConnectProviderName, httpServletRequest,
+					httpServletResponse);
+			}
+
+			long oAuthClientEntryId = ParamUtil.getLong(
+				actionRequest, "oAuthClientEntryId");
+
 			_openIdConnectAuthenticationHandler.requestAuthentication(
-				openIdConnectProviderName, httpServletRequest,
-				httpServletResponse);
+				oAuthClientEntryId, httpServletRequest, httpServletResponse);
 		}
 		catch (Exception exception) {
 			actionResponse.setRenderParameter(
@@ -199,9 +206,6 @@ public class OpenIdConnectLoginRequestMVCActionCommand
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		OpenIdConnectLoginRequestMVCActionCommand.class);
-
-	@Reference
-	private OpenIdConnect _openIdConnect;
 
 	@Reference
 	private OpenIdConnectAuthenticationHandler

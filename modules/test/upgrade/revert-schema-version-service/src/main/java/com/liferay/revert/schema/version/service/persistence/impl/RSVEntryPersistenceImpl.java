@@ -443,7 +443,7 @@ public class RSVEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<RSVEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -513,7 +513,7 @@ public class RSVEntryPersistenceImpl
 	@Override
 	public int countAll() {
 		Long count = (Long)finderCache.getResult(
-			_finderPathCountAll, FINDER_ARGS_EMPTY);
+			_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -654,8 +654,5 @@ public class RSVEntryPersistenceImpl
 	protected FinderCache getFinderCache() {
 		return finderCache;
 	}
-
-	@Reference
-	private RSVEntryModelArgumentsResolver _rsvEntryModelArgumentsResolver;
 
 }

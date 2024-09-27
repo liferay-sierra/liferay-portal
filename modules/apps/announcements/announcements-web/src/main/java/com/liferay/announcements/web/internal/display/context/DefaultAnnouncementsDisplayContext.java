@@ -15,9 +15,11 @@
 package com.liferay.announcements.web.internal.display.context;
 
 import com.liferay.announcements.constants.AnnouncementsPortletKeys;
+import com.liferay.announcements.kernel.model.AnnouncementsEntry;
+import com.liferay.announcements.kernel.model.AnnouncementsFlagConstants;
+import com.liferay.announcements.kernel.service.AnnouncementsEntryLocalServiceUtil;
 import com.liferay.announcements.kernel.util.AnnouncementsUtil;
 import com.liferay.announcements.web.internal.display.context.helper.AnnouncementsRequestHelper;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -28,6 +30,7 @@ import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.UserGroup;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.OrganizationLocalServiceUtil;
@@ -38,12 +41,20 @@ import com.liferay.portal.kernel.service.permission.OrganizationPermissionUtil;
 import com.liferay.portal.kernel.service.permission.PortletPermissionUtil;
 import com.liferay.portal.kernel.service.permission.UserGroupPermissionUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PrefsParamUtil;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.segments.SegmentsEntryRetriever;
+import com.liferay.segments.configuration.provider.SegmentsConfigurationProvider;
+import com.liferay.segments.context.RequestContextMapper;
+import com.liferay.segments.model.SegmentsEntryRole;
+import com.liferay.segments.service.SegmentsEntryRoleLocalServiceUtil;
 
 import java.text.DateFormat;
 import java.text.Format;
@@ -51,9 +62,15 @@ import java.text.Format;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.portlet.PortletPreferences;
+import javax.portlet.PortletURL;
+import javax.portlet.RenderRequest;
+import javax.portlet.RenderResponse;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Adolfo Pérez
@@ -63,16 +80,35 @@ public class DefaultAnnouncementsDisplayContext
 	implements AnnouncementsDisplayContext {
 
 	public DefaultAnnouncementsDisplayContext(
-		AnnouncementsRequestHelper announcementsRequestHelper) {
+		AnnouncementsRequestHelper announcementsRequestHelper,
+		HttpServletRequest httpServletRequest, String portletName,
+		RenderRequest renderRequest, RenderResponse renderResponse,
+		RequestContextMapper requestContextMapper,
+		SegmentsEntryRetriever segmentsEntryRetriever,
+		SegmentsConfigurationProvider segmentsConfigurationProvider) {
 
 		_announcementsRequestHelper = announcementsRequestHelper;
+		_httpServletRequest = httpServletRequest;
+		_portletName = portletName;
+		_renderRequest = renderRequest;
+		_renderResponse = renderResponse;
+		_requestContextMapper = requestContextMapper;
+		_segmentsEntryRetriever = segmentsEntryRetriever;
+		_segmentsConfigurationProvider = segmentsConfigurationProvider;
+
+		_themeDisplay = (ThemeDisplay)_httpServletRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
 	}
 
 	@Override
 	public LinkedHashMap<Long, long[]> getAnnouncementScopes()
 		throws PortalException {
 
-		LinkedHashMap<Long, long[]> scopes = new LinkedHashMap<>();
+		if (_announcementScopes != null) {
+			return _announcementScopes;
+		}
+
+		_announcementScopes = new LinkedHashMap<>();
 
 		if (isCustomizeAnnouncementsDisplayed()) {
 			long[] selectedScopeGroupIdsArray = GetterUtil.getLongValues(
@@ -85,37 +121,72 @@ public class DefaultAnnouncementsDisplayContext
 				StringUtil.split(_getSelectedScopeUserGroupIds()));
 
 			if (selectedScopeGroupIdsArray.length != 0) {
-				scopes.put(
+				_announcementScopes.put(
 					PortalUtil.getClassNameId(Group.class.getName()),
 					selectedScopeGroupIdsArray);
 			}
 
 			if (selectedScopeOrganizationIdsArray.length != 0) {
-				scopes.put(
+				_announcementScopes.put(
 					PortalUtil.getClassNameId(Organization.class.getName()),
 					selectedScopeOrganizationIdsArray);
 			}
 
 			if (selectedScopeRoleIdsArray.length != 0) {
-				scopes.put(
+				_announcementScopes.put(
 					PortalUtil.getClassNameId(Role.class.getName()),
 					selectedScopeRoleIdsArray);
 			}
 
 			if (selectedScopeUserGroupIdsArray.length != 0) {
-				scopes.put(
+				_announcementScopes.put(
 					PortalUtil.getClassNameId(UserGroup.class.getName()),
 					selectedScopeUserGroupIdsArray);
 			}
 		}
 		else {
-			scopes = AnnouncementsUtil.getAnnouncementScopes(
-				_announcementsRequestHelper.getUser());
+			LinkedHashMap<Long, long[]> announcementScopes =
+				AnnouncementsUtil.getAnnouncementScopes(
+					_announcementsRequestHelper.getUser());
+
+			if (_segmentsConfigurationProvider.isRoleSegmentationEnabled(
+					_announcementsRequestHelper.getCompanyId())) {
+
+				long roleClassNameId = PortalUtil.getClassNameId(
+					Role.class.getName());
+
+				Set<Long> roleIds = SetUtil.fromArray(
+					announcementScopes.get(roleClassNameId));
+
+				long[] segmentsEntryIds =
+					_segmentsEntryRetriever.getSegmentsEntryIds(
+						_announcementsRequestHelper.getScopeGroupId(),
+						_themeDisplay.getUserId(),
+						_requestContextMapper.map(_httpServletRequest),
+						new long[0]);
+
+				for (long segmentsEntryId : segmentsEntryIds) {
+					List<SegmentsEntryRole> segmentsEntryRoles =
+						SegmentsEntryRoleLocalServiceUtil.getSegmentsEntryRoles(
+							segmentsEntryId);
+
+					for (SegmentsEntryRole segmentsEntryRole :
+							segmentsEntryRoles) {
+
+						roleIds.add(segmentsEntryRole.getRoleId());
+					}
+				}
+
+				announcementScopes.put(
+					roleClassNameId, ArrayUtil.toLongArray(roleIds));
+			}
+
+			_announcementScopes = announcementScopes;
 		}
 
-		scopes.put(0L, new long[] {0});
+		_announcementScopes.put(0L, new long[] {0});
 
-		return scopes;
+		return _announcementScopes;
 	}
 
 	@Override
@@ -230,6 +301,31 @@ public class DefaultAnnouncementsDisplayContext
 		}
 
 		return selectedRoles;
+	}
+
+	public SearchContainer<AnnouncementsEntry> getSearchContainer()
+		throws PortalException {
+
+		if (_searchContainer != null) {
+			return _searchContainer;
+		}
+
+		_searchContainer = new SearchContainer(
+			_renderRequest, null, null, "cur1", getPageDelta(),
+			_getPortletURL(), null, "no-entries-were-found");
+
+		_searchContainer.setResultsAndTotal(
+			() -> AnnouncementsEntryLocalServiceUtil.getEntries(
+				_themeDisplay.getUserId(), getAnnouncementScopes(),
+				_portletName.equals(AnnouncementsPortletKeys.ALERTS),
+				_getFlag(), _searchContainer.getStart(),
+				_searchContainer.getEnd()),
+			AnnouncementsEntryLocalServiceUtil.getEntriesCount(
+				_themeDisplay.getUserId(), getAnnouncementScopes(),
+				_portletName.equals(AnnouncementsPortletKeys.ALERTS),
+				_getFlag()));
+
+		return _searchContainer;
 	}
 
 	@Override
@@ -372,6 +468,33 @@ public class DefaultAnnouncementsDisplayContext
 		return false;
 	}
 
+	private int _getFlag() {
+		if (_flag != null) {
+			return _flag;
+		}
+
+		_flag = isShowReadEntries() ? AnnouncementsFlagConstants.HIDDEN :
+			AnnouncementsFlagConstants.NOT_HIDDEN;
+
+		return _flag;
+	}
+
+	private PortletURL _getPortletURL() {
+		if (_portletURL != null) {
+			return _portletURL;
+		}
+
+		_portletURL = PortletURLBuilder.createRenderURL(
+			_renderResponse
+		).setMVCRenderCommandName(
+			"/announcements/view"
+		).setTabs1(
+			_announcementsRequestHelper.getTabs1()
+		).buildPortletURL();
+
+		return _portletURL;
+	}
+
 	private String _getSelectedScopeGroupIds() {
 		Layout layout = _announcementsRequestHelper.getLayout();
 
@@ -408,6 +531,18 @@ public class DefaultAnnouncementsDisplayContext
 	private static final Log _log = LogFactoryUtil.getLog(
 		DefaultAnnouncementsDisplayContext.class);
 
+	private LinkedHashMap<Long, long[]> _announcementScopes;
 	private final AnnouncementsRequestHelper _announcementsRequestHelper;
+	private Integer _flag;
+	private final HttpServletRequest _httpServletRequest;
+	private final String _portletName;
+	private PortletURL _portletURL;
+	private final RenderRequest _renderRequest;
+	private final RenderResponse _renderResponse;
+	private final RequestContextMapper _requestContextMapper;
+	private SearchContainer<AnnouncementsEntry> _searchContainer;
+	private final SegmentsConfigurationProvider _segmentsConfigurationProvider;
+	private final SegmentsEntryRetriever _segmentsEntryRetriever;
+	private final ThemeDisplay _themeDisplay;
 
 }

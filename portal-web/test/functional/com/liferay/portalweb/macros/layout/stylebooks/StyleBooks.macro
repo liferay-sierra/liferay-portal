@@ -1,19 +1,35 @@
 definition {
 
 	macro clickManagementBar {
-		if (IsElementPresent(locator1 = "StyleBookEditor#MANAGEMENT_BAR")) {
-			Click(locator1 = "StyleBookEditor#MANAGEMENT_BAR");
-		}
-		else {
-			Click(locator1 = "Message#SUBTITLE");
-		}
+		Click(locator1 = "StyleBookEditor#MANAGEMENT_BAR");
 	}
 
 	macro clickPublish {
-		Button.clickNoError(button = "Publish");
+		Button.click(button = "Publish");
 
-		if (IsAlertPresent(locator1 = "//body")) {
-			AssertConfirm.assertConfirmationNoError(value1 = "Once published, these changes will affect all instances of the site using these properties. Do you want to publish now?");
+		if (IsTextEqual(locator1 = "Modal#HEADER", value1 = "Style Errors Detected")) {
+			AssertTextEquals(
+				locator1 = "Modal#BODY",
+				value1 = "Some of the fields have invalid values. If you continue publishing, the latest valid values will display.");
+
+			if ("${publishing}" == "Cancel") {
+				Click(
+					key_text = "Cancel",
+					locator1 = "Modal#MODAL_FOOTER_BUTTON");
+			}
+			else {
+				Click(
+					key_text = "Continue",
+					locator1 = "Modal#MODAL_FOOTER_BUTTON");
+
+				AssertTextEquals(
+					locator1 = "Modal#BODY",
+					value1 = "Once published, these changes will affect all instances of the site using these properties. Do you want to publish now?");
+
+				Click(
+					key_text = "Publish",
+					locator1 = "Modal#MODAL_FOOTER_BUTTON");
+			}
 		}
 		else {
 			AssertTextEquals(
@@ -21,14 +37,26 @@ definition {
 				value1 = "Once published, these changes will affect all instances of the site using these properties. Do you want to publish now?");
 
 			Click(
-				key_text = "Continue",
+				key_text = "Publish",
 				locator1 = "Modal#MODAL_FOOTER_BUTTON");
 		}
 
 		Alert.viewSuccessMessage();
 	}
 
+	macro configureUnit {
+		Click(
+			key_fieldLabel = "${fieldLabel}",
+			locator1 = "Dropdown#DROPDOWN_TOGGLE_BUTTON_WITH_LABEL");
+
+		MenuItem.click(menuItem = "${unit}");
+	}
+
 	macro expandSection {
+		WaitForVisible(
+			key_panel = "${sectionName}",
+			locator1 = "Panel#PANEL");
+
 		if (IsElementPresent(key_sectionName = "${sectionName}", locator1 = "StyleBookEditor#STYLE_BOOK_EDITOR_SIDEBAR_COLLAPSED")) {
 			AssertClick(
 				key_sectionName = "${sectionName}",
@@ -39,12 +67,6 @@ definition {
 		AssertElementPresent(
 			key_sectionName = "${sectionName}",
 			locator1 = "StyleBookEditor#STYLE_BOOK_EDITOR_SIDEBAR_EXPANDED");
-	}
-
-	macro goToPageViaPagePreviewInfoBar {
-		Click(locator1 = "StyleBookEditor#PAGE_PREVIEW_INFO_BAR_TOGGLE");
-
-		MenuItem.click(menuItem = "${pageName}");
 	}
 
 	macro linkValueFromStyleBook {
@@ -77,9 +99,11 @@ definition {
 			locator1 = "StyleBookEditor#PREVIEW_SELECTOR");
 
 		if ((IsElementNotPresent(key_menuItem = "${previewItem}", locator1 = "MenuItem#ANY_MENU_ITEM")) && (IsElementPresent(key_text = "More", locator1 = "Button#ANY"))) {
-			AssertElementPresent(
-				key_caption = "${caption}",
-				locator1 = "Dropdown#CAPTION");
+			if (isSet(caption)) {
+				AssertElementPresent(
+					key_caption = "${caption}",
+					locator1 = "Dropdown#CAPTION");
+			}
 
 			WaitForLiferayEvent.initializeLiferayEventLog();
 
@@ -87,7 +111,20 @@ definition {
 
 			SelectFrame(locator1 = "IFrame#MODAL_BODY");
 
-			LexiconCard.clickCard(card = "${previewItem}");
+			if (isSet(scope)) {
+				NavItem.click(navItem = "${scope}");
+			}
+
+			if ("${previewType}" == "Pages") {
+				Portlet.expandTree();
+
+				Click(
+					key_nodeName = "${previewItem}",
+					locator1 = "Treeview#NODE_UNSELECTED");
+			}
+			else {
+				LexiconCard.clickCard(card = "${previewItem}");
+			}
 
 			SelectFrameTop();
 		}
@@ -145,7 +182,7 @@ definition {
 	}
 
 	macro waitForAutoSave {
-		Pause(locator1 = "1000");
+		WaitForElementNotPresent(locator1 = "StyleBookEditor#DRAFT_SAVING_MESSAGE");
 
 		AssertVisible(locator1 = "StyleBookEditor#DRAFT_SAVED_MESSAGE");
 	}

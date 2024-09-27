@@ -58,6 +58,7 @@ PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "view-at
 	additionalProps="<%= expandoDisplayContext.getAdditionalProps() %>"
 	creationMenu="<%= expandoDisplayContext.getCreationMenu() %>"
 	disabled="<%= attributeNames.size() == 0 %>"
+	itemsTotal="<%= attributeNames.size() %>"
 	propsTransformer="js/ExpandoManagementToolbarPropsTransformer"
 	searchContainerId="customFields"
 	selectable="<%= true %>"
@@ -70,11 +71,8 @@ PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "view-at
 	<aui:input name="columnIds" type="hidden" />
 
 	<clay:container-fluid>
-		<liferay-ui:breadcrumb
-			showCurrentGroup="<%= false %>"
-			showGuestGroup="<%= false %>"
-			showLayout="<%= false %>"
-			showPortletBreadcrumb="<%= true %>"
+		<liferay-site-navigation:breadcrumb
+			breadcrumbEntries="<%= BreadcrumbEntriesUtil.getBreadcrumbEntries(request, false, false, false, true, true) %>"
 		/>
 	</clay:container-fluid>
 

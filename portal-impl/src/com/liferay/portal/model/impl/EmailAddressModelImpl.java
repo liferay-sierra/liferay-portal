@@ -38,7 +38,6 @@ import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 
 import java.sql.Blob;
@@ -81,7 +80,7 @@ public class EmailAddressModelImpl
 		{"userId", Types.BIGINT}, {"userName", Types.VARCHAR},
 		{"createDate", Types.TIMESTAMP}, {"modifiedDate", Types.TIMESTAMP},
 		{"classNameId", Types.BIGINT}, {"classPK", Types.BIGINT},
-		{"address", Types.VARCHAR}, {"typeId", Types.BIGINT},
+		{"address", Types.VARCHAR}, {"listTypeId", Types.BIGINT},
 		{"primary_", Types.BOOLEAN}
 	};
 
@@ -100,12 +99,12 @@ public class EmailAddressModelImpl
 		TABLE_COLUMNS_MAP.put("classNameId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("classPK", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("address", Types.VARCHAR);
-		TABLE_COLUMNS_MAP.put("typeId", Types.BIGINT);
+		TABLE_COLUMNS_MAP.put("listTypeId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("primary_", Types.BOOLEAN);
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table EmailAddress (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,emailAddressId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,classNameId LONG,classPK LONG,address VARCHAR(254) null,typeId LONG,primary_ BOOLEAN)";
+		"create table EmailAddress (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,emailAddressId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,classNameId LONG,classPK LONG,address VARCHAR(254) null,listTypeId LONG,primary_ BOOLEAN)";
 
 	public static final String TABLE_SQL_DROP = "drop table EmailAddress";
 
@@ -271,34 +270,6 @@ public class EmailAddressModelImpl
 		return _attributeSetterBiConsumers;
 	}
 
-	private static Function<InvocationHandler, EmailAddress>
-		_getProxyProviderFunction() {
-
-		Class<?> proxyClass = ProxyUtil.getProxyClass(
-			EmailAddress.class.getClassLoader(), EmailAddress.class,
-			ModelWrapper.class);
-
-		try {
-			Constructor<EmailAddress> constructor =
-				(Constructor<EmailAddress>)proxyClass.getConstructor(
-					InvocationHandler.class);
-
-			return invocationHandler -> {
-				try {
-					return constructor.newInstance(invocationHandler);
-				}
-				catch (ReflectiveOperationException
-							reflectiveOperationException) {
-
-					throw new InternalError(reflectiveOperationException);
-				}
-			};
-		}
-		catch (NoSuchMethodException noSuchMethodException) {
-			throw new InternalError(noSuchMethodException);
-		}
-	}
-
 	private static final Map<String, Function<EmailAddress, Object>>
 		_attributeGetterFunctions;
 	private static final Map<String, BiConsumer<EmailAddress, Object>>
@@ -356,9 +327,10 @@ public class EmailAddressModelImpl
 		attributeSetterBiConsumers.put(
 			"address",
 			(BiConsumer<EmailAddress, String>)EmailAddress::setAddress);
-		attributeGetterFunctions.put("typeId", EmailAddress::getTypeId);
+		attributeGetterFunctions.put("listTypeId", EmailAddress::getListTypeId);
 		attributeSetterBiConsumers.put(
-			"typeId", (BiConsumer<EmailAddress, Long>)EmailAddress::setTypeId);
+			"listTypeId",
+			(BiConsumer<EmailAddress, Long>)EmailAddress::setListTypeId);
 		attributeGetterFunctions.put("primary", EmailAddress::getPrimary);
 		attributeSetterBiConsumers.put(
 			"primary",
@@ -641,17 +613,17 @@ public class EmailAddressModelImpl
 
 	@JSON
 	@Override
-	public long getTypeId() {
-		return _typeId;
+	public long getListTypeId() {
+		return _listTypeId;
 	}
 
 	@Override
-	public void setTypeId(long typeId) {
+	public void setListTypeId(long listTypeId) {
 		if (_columnOriginalValues == Collections.EMPTY_MAP) {
 			_setColumnOriginalValues();
 		}
 
-		_typeId = typeId;
+		_listTypeId = listTypeId;
 	}
 
 	@JSON
@@ -759,7 +731,7 @@ public class EmailAddressModelImpl
 		emailAddressImpl.setClassNameId(getClassNameId());
 		emailAddressImpl.setClassPK(getClassPK());
 		emailAddressImpl.setAddress(getAddress());
-		emailAddressImpl.setTypeId(getTypeId());
+		emailAddressImpl.setListTypeId(getListTypeId());
 		emailAddressImpl.setPrimary(isPrimary());
 
 		emailAddressImpl.resetOriginalValues();
@@ -791,7 +763,8 @@ public class EmailAddressModelImpl
 			this.<Long>getColumnOriginalValue("classPK"));
 		emailAddressImpl.setAddress(
 			this.<String>getColumnOriginalValue("address"));
-		emailAddressImpl.setTypeId(this.<Long>getColumnOriginalValue("typeId"));
+		emailAddressImpl.setListTypeId(
+			this.<Long>getColumnOriginalValue("listTypeId"));
 		emailAddressImpl.setPrimary(
 			this.<Boolean>getColumnOriginalValue("primary_"));
 
@@ -925,7 +898,7 @@ public class EmailAddressModelImpl
 			emailAddressCacheModel.address = null;
 		}
 
-		emailAddressCacheModel.typeId = getTypeId();
+		emailAddressCacheModel.listTypeId = getListTypeId();
 
 		emailAddressCacheModel.primary = isPrimary();
 
@@ -981,41 +954,12 @@ public class EmailAddressModelImpl
 		return sb.toString();
 	}
 
-	@Override
-	public String toXmlString() {
-		Map<String, Function<EmailAddress, Object>> attributeGetterFunctions =
-			getAttributeGetterFunctions();
-
-		StringBundler sb = new StringBundler(
-			(5 * attributeGetterFunctions.size()) + 4);
-
-		sb.append("<model><model-name>");
-		sb.append(getModelClassName());
-		sb.append("</model-name>");
-
-		for (Map.Entry<String, Function<EmailAddress, Object>> entry :
-				attributeGetterFunctions.entrySet()) {
-
-			String attributeName = entry.getKey();
-			Function<EmailAddress, Object> attributeGetterFunction =
-				entry.getValue();
-
-			sb.append("<column><column-name>");
-			sb.append(attributeName);
-			sb.append("</column-name><column-value><![CDATA[");
-			sb.append(attributeGetterFunction.apply((EmailAddress)this));
-			sb.append("]]></column-value></column>");
-		}
-
-		sb.append("</model>");
-
-		return sb.toString();
-	}
-
 	private static class EscapedModelProxyProviderFunctionHolder {
 
 		private static final Function<InvocationHandler, EmailAddress>
-			_escapedModelProxyProviderFunction = _getProxyProviderFunction();
+			_escapedModelProxyProviderFunction =
+				ProxyUtil.getProxyProviderFunction(
+					EmailAddress.class, ModelWrapper.class);
 
 	}
 
@@ -1031,7 +975,7 @@ public class EmailAddressModelImpl
 	private long _classNameId;
 	private long _classPK;
 	private String _address;
-	private long _typeId;
+	private long _listTypeId;
 	private boolean _primary;
 
 	public <T> T getColumnValue(String columnName) {
@@ -1074,7 +1018,7 @@ public class EmailAddressModelImpl
 		_columnOriginalValues.put("classNameId", _classNameId);
 		_columnOriginalValues.put("classPK", _classPK);
 		_columnOriginalValues.put("address", _address);
-		_columnOriginalValues.put("typeId", _typeId);
+		_columnOriginalValues.put("listTypeId", _listTypeId);
 		_columnOriginalValues.put("primary_", _primary);
 	}
 
@@ -1122,7 +1066,7 @@ public class EmailAddressModelImpl
 
 		columnBitmasks.put("address", 1024L);
 
-		columnBitmasks.put("typeId", 2048L);
+		columnBitmasks.put("listTypeId", 2048L);
 
 		columnBitmasks.put("primary_", 4096L);
 

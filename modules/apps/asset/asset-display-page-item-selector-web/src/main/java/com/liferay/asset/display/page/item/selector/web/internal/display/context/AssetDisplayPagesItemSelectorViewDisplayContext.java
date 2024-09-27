@@ -20,9 +20,9 @@ import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryServiceUtil;
 import com.liferay.layout.page.template.util.comparator.LayoutPageTemplateEntryCreateDateComparator;
 import com.liferay.layout.page.template.util.comparator.LayoutPageTemplateEntryNameComparator;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.OrderByComparator;
@@ -47,11 +47,10 @@ public class AssetDisplayPagesItemSelectorViewDisplayContext {
 	public AssetDisplayPagesItemSelectorViewDisplayContext(
 		HttpServletRequest httpServletRequest,
 		AssetDisplayPageSelectorCriterion assetDisplayPageSelectorCriterion,
-		String itemSelectedEventName, PortletURL portletURL) {
+		PortletURL portletURL) {
 
 		_httpServletRequest = httpServletRequest;
 		_assetDisplayPageSelectorCriterion = assetDisplayPageSelectorCriterion;
-		_itemSelectedEventName = itemSelectedEventName;
 		_portletURL = portletURL;
 
 		_portletRequest = (PortletRequest)httpServletRequest.getAttribute(
@@ -86,7 +85,7 @@ public class AssetDisplayPagesItemSelectorViewDisplayContext {
 				() ->
 					LayoutPageTemplateEntryServiceUtil.
 						getLayoutPageTemplateEntries(
-							_themeDisplay.getScopeGroupId(),
+							_getGroupId(),
 							_assetDisplayPageSelectorCriterion.getClassNameId(),
 							_assetDisplayPageSelectorCriterion.getClassTypeId(),
 							_getKeywords(),
@@ -99,7 +98,7 @@ public class AssetDisplayPagesItemSelectorViewDisplayContext {
 								getOrderByComparator()),
 				LayoutPageTemplateEntryServiceUtil.
 					getLayoutPageTemplateEntriesCount(
-						_themeDisplay.getScopeGroupId(),
+						_getGroupId(),
 						_assetDisplayPageSelectorCriterion.getClassNameId(),
 						_assetDisplayPageSelectorCriterion.getClassTypeId(),
 						_getKeywords(),
@@ -111,7 +110,7 @@ public class AssetDisplayPagesItemSelectorViewDisplayContext {
 				() ->
 					LayoutPageTemplateEntryServiceUtil.
 						getLayoutPageTemplateEntries(
-							_themeDisplay.getScopeGroupId(),
+							_getGroupId(),
 							_assetDisplayPageSelectorCriterion.getClassNameId(),
 							_assetDisplayPageSelectorCriterion.getClassTypeId(),
 							LayoutPageTemplateEntryTypeConstants.
@@ -123,7 +122,7 @@ public class AssetDisplayPagesItemSelectorViewDisplayContext {
 								getOrderByComparator()),
 				LayoutPageTemplateEntryServiceUtil.
 					getLayoutPageTemplateEntriesCount(
-						_themeDisplay.getScopeGroupId(),
+						_getGroupId(),
 						_assetDisplayPageSelectorCriterion.getClassNameId(),
 						_assetDisplayPageSelectorCriterion.getClassTypeId(),
 						LayoutPageTemplateEntryTypeConstants.TYPE_DISPLAY_PAGE,
@@ -135,10 +134,6 @@ public class AssetDisplayPagesItemSelectorViewDisplayContext {
 		return _assetDisplayPageSearchContainer;
 	}
 
-	public String getItemSelectedEventName() {
-		return _itemSelectedEventName;
-	}
-
 	public String getOrderByType() {
 		if (Validator.isNotNull(_orderByType)) {
 			return _orderByType;
@@ -148,6 +143,17 @@ public class AssetDisplayPagesItemSelectorViewDisplayContext {
 			_httpServletRequest, "orderByType", "asc");
 
 		return _orderByType;
+	}
+
+	private long _getGroupId() {
+		if (_groupId != null) {
+			return _groupId;
+		}
+
+		_groupId = ParamUtil.getLong(
+			_httpServletRequest, "groupId", _themeDisplay.getScopeGroupId());
+
+		return _groupId;
 	}
 
 	private String _getKeywords() {
@@ -211,8 +217,8 @@ public class AssetDisplayPagesItemSelectorViewDisplayContext {
 		_assetDisplayPageSearchContainer;
 	private final AssetDisplayPageSelectorCriterion
 		_assetDisplayPageSelectorCriterion;
+	private Long _groupId;
 	private final HttpServletRequest _httpServletRequest;
-	private final String _itemSelectedEventName;
 	private String _keywords;
 	private String _orderByCol;
 	private String _orderByType;

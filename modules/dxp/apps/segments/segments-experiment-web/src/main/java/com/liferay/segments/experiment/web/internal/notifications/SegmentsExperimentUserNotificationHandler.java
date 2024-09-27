@@ -15,7 +15,7 @@
 package com.liferay.segments.experiment.web.internal.notifications;
 
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -28,7 +28,7 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserNotificationEventLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HtmlUtil;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -50,7 +50,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eduardo García
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + SegmentsPortletKeys.SEGMENTS_EXPERIMENT,
 	service = UserNotificationHandler.class
 )
@@ -67,7 +66,7 @@ public class SegmentsExperimentUserNotificationHandler
 			ServiceContext serviceContext)
 		throws Exception {
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
+		JSONObject jsonObject = _jsonFactory.createJSONObject(
 			userNotificationEvent.getPayload());
 
 		long segmentsExperimentId = jsonObject.getLong("classPK");
@@ -116,7 +115,7 @@ public class SegmentsExperimentUserNotificationHandler
 			ServiceContext serviceContext)
 		throws Exception {
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
+		JSONObject jsonObject = _jsonFactory.createJSONObject(
 			userNotificationEvent.getPayload());
 
 		long referrerClassNameId = jsonObject.getLong("referrerClassNameId");
@@ -156,11 +155,9 @@ public class SegmentsExperimentUserNotificationHandler
 				WebKeys.THEME_DISPLAY);
 
 		try {
-			String layoutURL = _portal.getLayoutURL(
-				layout, themeDisplay, false);
-
-			return _http.addParameter(
-				layoutURL, "segmentsExperimentKey", segmentsExperimentKey);
+			return HttpComponentsUtil.addParameter(
+				_portal.getLayoutURL(layout, themeDisplay, false),
+				"segmentsExperimentKey", segmentsExperimentKey);
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
@@ -175,7 +172,7 @@ public class SegmentsExperimentUserNotificationHandler
 		SegmentsExperimentUserNotificationHandler.class);
 
 	@Reference
-	private Http _http;
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;

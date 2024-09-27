@@ -102,18 +102,6 @@ public class CounterLocalServiceTest {
 							objectName, "softEvictConnections", null, null);
 					}
 
-					// Tomcat
-
-					for (ObjectName objectName :
-							mBeanServer.queryNames(
-								null,
-								new ObjectName(
-									"TomcatJDBCPool:type=ConnectionPool," +
-										"name=*"))) {
-
-						mBeanServer.invoke(objectName, "purge", null, null);
-					}
-
 					return null;
 				}
 
@@ -239,25 +227,13 @@ public class CounterLocalServiceTest {
 		public Long[] call() throws ProcessException {
 			System.setProperty(
 				PropsKeys.COUNTER_INCREMENT + "." + _counterName, "1");
-
 			System.setProperty("catalina.base", _catalinaBase);
-
-			// C3PO
-
-			System.setProperty("portal:jdbc.default.maxPoolSize", "1");
-			System.setProperty("portal:jdbc.default.minPoolSize", "0");
+			System.setProperty("portal:hibernate.hbm.jaxb.cache", "false");
 
 			// HikariCP
 
 			System.setProperty("portal:jdbc.default.maximumPoolSize", "1");
 			System.setProperty("portal:jdbc.default.minimumIdle", "0");
-
-			// Tomcat
-
-			System.setProperty("portal:jdbc.default.initialSize", "0");
-			System.setProperty("portal:jdbc.default.maxActive", "1");
-			System.setProperty("portal:jdbc.default.maxIdle", "0");
-			System.setProperty("portal:jdbc.default.minIdle", "0");
 
 			CacheKeyGeneratorUtil cacheKeyGeneratorUtil =
 				new CacheKeyGeneratorUtil();

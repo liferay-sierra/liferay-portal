@@ -17,9 +17,6 @@ package com.liferay.asset.publisher.util.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.service.persistence.AssetEntryQuery;
-import com.liferay.asset.list.constants.AssetListEntryTypeConstants;
-import com.liferay.asset.list.model.AssetListEntry;
-import com.liferay.asset.list.service.AssetListEntryLocalService;
 import com.liferay.asset.publisher.util.AssetEntryResult;
 import com.liferay.asset.publisher.util.AssetPublisherHelper;
 import com.liferay.asset.publisher.util.AssetQueryRule;
@@ -34,36 +31,26 @@ import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
-import com.liferay.portal.kernel.test.portlet.MockLiferayPortletRenderRequest;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
-import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.portletmvc4spring.test.mock.web.portlet.MockPortletPreferences;
-import com.liferay.segments.constants.SegmentsEntryConstants;
-import com.liferay.segments.criteria.Criteria;
-import com.liferay.segments.criteria.CriteriaSerializer;
 import com.liferay.segments.criteria.contributor.SegmentsCriteriaContributor;
-import com.liferay.segments.model.SegmentsEntry;
-import com.liferay.segments.test.util.SegmentsTestUtil;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import javax.portlet.PortletPreferences;
@@ -304,65 +291,6 @@ public class AssetPublisherHelperTest {
 	}
 
 	@Test
-	public void testGetAssetEntries() throws Exception {
-		AssetListEntry assetListEntry = _addAssetListEntry(
-			_group1.getGroupId());
-
-		SegmentsEntry segmentsEntry = _addSegmentsEntry(
-			_group1.getGroupId(), TestPropsValues.getUser());
-
-		MockLiferayPortletRenderRequest mockLiferayPortletRenderRequest =
-			new MockLiferayPortletRenderRequest();
-
-		ThemeDisplay themeDisplay = new ThemeDisplay();
-
-		themeDisplay.setLayout(LayoutTestUtil.addLayout(_group1));
-		themeDisplay.setScopeGroupId(_group1.getGroupId());
-		themeDisplay.setUser(TestPropsValues.getUser());
-
-		mockLiferayPortletRenderRequest.setAttribute(
-			WebKeys.THEME_DISPLAY, themeDisplay);
-
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(
-				_group1, TestPropsValues.getUserId());
-
-		serviceContext.setRequest(
-			mockLiferayPortletRenderRequest.getHttpServletRequest());
-
-		ServiceContextThreadLocal.pushServiceContext(serviceContext);
-
-		try {
-			PortletPreferences portletPreferences =
-				mockLiferayPortletRenderRequest.getPreferences();
-
-			portletPreferences.setValues(
-				"assetListEntryId",
-				String.valueOf(assetListEntry.getAssetListEntryId()));
-			portletPreferences.setValue("selectionStyle", "asset-list");
-
-			_assetPublisherHelper.getAssetEntries(
-				mockLiferayPortletRenderRequest, portletPreferences,
-				PermissionCheckerFactoryUtil.create(TestPropsValues.getUser()),
-				new long[0], new long[0], new String[0], false, true);
-
-			long[] segmentsEntryIds =
-				(long[])mockLiferayPortletRenderRequest.getAttribute(
-					"SEGMENTS_ENTRY_IDS");
-
-			Assert.assertEquals(
-				Arrays.toString(segmentsEntryIds), 2, segmentsEntryIds.length);
-			Assert.assertEquals(
-				segmentsEntry.getSegmentsEntryId(), segmentsEntryIds[0]);
-			Assert.assertEquals(
-				SegmentsEntryConstants.ID_DEFAULT, segmentsEntryIds[1]);
-		}
-		finally {
-			ServiceContextThreadLocal.popServiceContext();
-		}
-	}
-
-	@Test
 	public void testGetAssetTagNamesContainsAllTagName() throws Exception {
 		String assetTagName = RandomTestUtil.randomString();
 
@@ -537,7 +465,8 @@ public class AssetPublisherHelperTest {
 			_group1.getGroupId(),
 			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID, serviceContext);
 
-		Layout layout = LayoutTestUtil.addLayout(_group2.getGroupId());
+		Layout layout = LayoutTestUtil.addTypePortletLayout(
+			_group2.getGroupId());
 
 		String assetTagName2 = RandomTestUtil.randomString();
 
@@ -575,7 +504,7 @@ public class AssetPublisherHelperTest {
 
 		SearchContainer<AssetEntry> searchContainer = new SearchContainer<>();
 
-		searchContainer.setTotal(10);
+		searchContainer.setResultsAndTotal(Collections::emptyList, 10);
 
 		List<AssetEntryResult> assetEntryResults =
 			_assetPublisherHelper.getAssetEntryResults(
@@ -611,35 +540,10 @@ public class AssetPublisherHelperTest {
 		return portletPreferences;
 	}
 
-	private AssetListEntry _addAssetListEntry(long groupId) throws Exception {
-		return _assetListEntryLocalService.addAssetListEntry(
-			TestPropsValues.getUserId(), groupId, RandomTestUtil.randomString(),
-			AssetListEntryTypeConstants.TYPE_DYNAMIC,
-			ServiceContextTestUtil.getServiceContext(
-				groupId, TestPropsValues.getUserId()));
-	}
-
-	private SegmentsEntry _addSegmentsEntry(long groupId, User user)
-		throws Exception {
-
-		Criteria criteria = new Criteria();
-
-		_segmentsCriteriaContributor.contribute(
-			criteria, String.format("(firstName eq '%s')", user.getFirstName()),
-			Criteria.Conjunction.AND);
-
-		return SegmentsTestUtil.addSegmentsEntry(
-			groupId, CriteriaSerializer.serialize(criteria),
-			User.class.getName());
-	}
-
 	private static Configuration _assetPublisherWebConfiguration;
 
 	@Inject
 	private static ConfigurationAdmin _configurationAdmin;
-
-	@Inject
-	private AssetListEntryLocalService _assetListEntryLocalService;
 
 	@Inject
 	private AssetPublisherHelper _assetPublisherHelper;

@@ -42,7 +42,7 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.ListUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
@@ -76,7 +76,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Rafael Praxedes
  */
 @Component(
-	immediate = true,
 	property = "indexer.class.name=com.liferay.portal.workflow.kaleo.model.KaleoTaskInstanceToken",
 	service = ModelPreFilterContributor.class
 )
@@ -138,7 +137,7 @@ public class KaleoTaskInstanceTokenModelPreFilterContributor
 			return;
 		}
 
-		String assetTitleLocalizedName = LocalizationUtil.getLocalizedName(
+		String assetTitleLocalizedName = _localization.getLocalizedName(
 			KaleoTaskInstanceTokenField.ASSET_TITLE,
 			searchContext.getLanguageId());
 
@@ -735,5 +734,8 @@ public class KaleoTaskInstanceTokenModelPreFilterContributor
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		KaleoTaskInstanceTokenModelPreFilterContributor.class);
+
+	@Reference
+	private Localization _localization;
 
 }

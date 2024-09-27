@@ -16,16 +16,19 @@ package com.liferay.translation.translator.google.cloud.internal.configuration.p
 
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListener;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListenerException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.translation.translator.google.cloud.internal.configuration.GoogleCloudTranslatorConfiguration;
 
 import java.util.Dictionary;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Adolfo Pérez
@@ -48,9 +51,8 @@ public class GoogleCloudTranslatorConfigurationModelListener
 
 		if (enabled && !_isValid(serviceAccountPrivateKey)) {
 			throw new ConfigurationModelListenerException(
-				ResourceBundleUtil.getString(
-					ResourceBundleUtil.getBundle(
-						LocaleThreadLocal.getThemeDisplayLocale(), getClass()),
+				_language.get(
+					LocaleThreadLocal.getThemeDisplayLocale(),
 					"the-service-account-private-key-must-be-in-json-format"),
 				GoogleCloudTranslatorConfiguration.class, getClass(),
 				properties);
@@ -59,7 +61,7 @@ public class GoogleCloudTranslatorConfigurationModelListener
 
 	private boolean _isValid(String serviceAccountPrivateKey) {
 		try {
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
+			JSONObject jsonObject = _jsonFactory.createJSONObject(
 				serviceAccountPrivateKey);
 
 			if (jsonObject.length() > 0) {
@@ -69,8 +71,21 @@ public class GoogleCloudTranslatorConfigurationModelListener
 			return false;
 		}
 		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
 			return false;
 		}
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		GoogleCloudTranslatorConfigurationModelListener.class);
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 }

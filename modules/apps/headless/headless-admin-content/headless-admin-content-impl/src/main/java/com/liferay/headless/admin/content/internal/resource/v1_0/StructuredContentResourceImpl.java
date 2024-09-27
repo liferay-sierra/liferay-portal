@@ -79,7 +79,6 @@ import com.liferay.portal.vulcan.util.EntityExtensionUtil;
 import com.liferay.portal.vulcan.util.LocalDateTimeUtil;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 import com.liferay.portal.vulcan.util.SearchUtil;
-import com.liferay.portal.vulcan.util.TransformUtil;
 
 import java.io.Serializable;
 
@@ -90,6 +89,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.ws.rs.BadRequestException;
@@ -305,6 +305,12 @@ public class StructuredContentResourceImpl
 				contextHttpServletRequest,
 				structuredContent.getViewableByAsString());
 
+		Optional.ofNullable(
+			structuredContent.getPriority()
+		).ifPresent(
+			serviceContext::setAssetPriority
+		);
+
 		serviceContext.setWorkflowAction(WorkflowConstants.ACTION_SAVE_DRAFT);
 
 		return _toExtensionStructuredContent(
@@ -314,7 +320,7 @@ public class StructuredContentResourceImpl
 				StructuredContentUtil.getJournalArticleContent(
 					_ddm,
 					DDMFormValuesUtil.toDDMFormValues(
-						structuredContent.getContentFields(),
+						titleMap.keySet(), structuredContent.getContentFields(),
 						ddmStructure.getDDMForm(), _dlAppService, siteId,
 						_journalArticleService, _layoutLocalService,
 						contextAcceptLanguage.getPreferredLocale(),
@@ -354,7 +360,7 @@ public class StructuredContentResourceImpl
 	private List<DDMFormField> _getRootDDMFormFields(
 		DDMStructure ddmStructure) {
 
-		return TransformUtil.transform(
+		return transform(
 			ddmStructure.getRootFieldNames(),
 			fieldName -> DDMFormFieldUtil.getDDMFormField(
 				_ddmStructureService, ddmStructure, fieldName));

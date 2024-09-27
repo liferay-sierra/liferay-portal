@@ -85,11 +85,8 @@ public class MicroblogsUserNotificationHandler
 					MicroblogsEntryConstants.
 						NOTIFICATION_TYPE_REPLY_TO_REPLIED) {
 
-			long parentMicroblogsEntryUserId =
-				microblogsEntry.fetchParentMicroblogsEntryUserId();
-
 			User user = _userLocalService.fetchUser(
-				parentMicroblogsEntryUserId);
+				microblogsEntry.fetchParentMicroblogsEntryUserId());
 
 			if (user != null) {
 				title = ResourceBundleUtil.getString(
@@ -115,23 +112,13 @@ public class MicroblogsUserNotificationHandler
 		return title;
 	}
 
-	@Reference(unbind = "-")
-	protected void setMicroblogsEntryLocalService(
-		MicroblogsEntryLocalService microblogsEntryLocalService) {
-
-		_microblogsEntryLocalService = microblogsEntryLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setUserLocalService(UserLocalService userLocalService) {
-		_userLocalService = userLocalService;
-	}
-
+	@Reference
 	private MicroblogsEntryLocalService _microblogsEntryLocalService;
 
 	@Reference
 	private Portal _portal;
 
+	@Reference
 	private UserLocalService _userLocalService;
 
 }

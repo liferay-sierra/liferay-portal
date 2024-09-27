@@ -19,11 +19,11 @@ import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTy
 import com.liferay.dynamic.data.mapping.form.field.type.internal.util.DDMFormFieldTypeUtil;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.render.DDMFormFieldRenderingContext;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 
@@ -32,12 +32,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Rodrigo Paulino
  */
 @Component(
-	immediate = true,
 	property = "ddm.form.field.type.name=" + DDMFormFieldTypeConstants.REDIRECT_BUTTON,
 	service = DDMFormFieldTemplateContextContributor.class
 )
@@ -64,7 +64,7 @@ public class RedirectButtonDDMFormFieldTemplateContextContributor
 					return message;
 				}
 
-				return LanguageUtil.format(
+				return _language.format(
 					ddmFormFieldRenderingContext.getLocale(),
 					GetterUtil.getString(
 						((Object[])ddmFormField.getProperty("messageKey"))[0]),
@@ -119,5 +119,8 @@ public class RedirectButtonDDMFormFieldTemplateContextContributor
 				[0]
 		).build();
 	}
+
+	@Reference
+	private Language _language;
 
 }

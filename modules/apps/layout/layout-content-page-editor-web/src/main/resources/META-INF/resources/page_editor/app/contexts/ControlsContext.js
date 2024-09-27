@@ -14,10 +14,10 @@
 
 import React, {useCallback, useContext, useReducer} from 'react';
 
-import switchSidebarPanel from '../actions/switchSidebarPanel';
 import {fromControlsId} from '../components/layout-data-items/Collection';
 import {ITEM_ACTIVATION_ORIGINS} from '../config/constants/itemActivationOrigins';
 import {ITEM_TYPES} from '../config/constants/itemTypes';
+import switchSidebarPanel from '../thunks/switchSidebarPanel';
 import {useToControlsId} from './CollectionItemContext';
 import {useDispatch, useSelector} from './StoreContext';
 
@@ -186,7 +186,13 @@ const useSelectItem = () => {
 				type: SELECT_ITEM,
 			});
 
-			if (itemId && !['browser', 'comments'].includes(sidebarPanelId)) {
+			if (
+				itemId &&
+				sidebarPanelId &&
+				!['browser', 'comments', 'page-content'].includes(
+					sidebarPanelId
+				)
+			) {
 				storeDispatch(
 					switchSidebarPanel({
 						sidebarOpen: true,

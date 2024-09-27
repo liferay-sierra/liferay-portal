@@ -14,7 +14,7 @@
 
 package com.liferay.bookmarks.internal.search.spi.model.index.contributor;
 
-import com.liferay.bookmarks.internal.search.util.BookmarksFolderBatchReindexer;
+import com.liferay.bookmarks.internal.search.BookmarksFolderBatchReindexer;
 import com.liferay.bookmarks.model.BookmarksEntry;
 import com.liferay.bookmarks.service.BookmarksEntryLocalService;
 import com.liferay.portal.kernel.dao.orm.Property;
@@ -55,7 +55,6 @@ public class BookmarksEntryModelIndexerWriterContributor
 							WorkflowConstants.STATUS_IN_TRASH
 						}));
 			});
-
 		batchIndexingActionable.setPerformActionMethod(
 			(BookmarksEntry bookmarksEntry) -> {
 				batchIndexingActionable.addDocuments(

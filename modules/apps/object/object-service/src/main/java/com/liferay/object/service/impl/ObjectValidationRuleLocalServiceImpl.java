@@ -14,22 +14,46 @@
 
 package com.liferay.object.service.impl;
 
-import com.liferay.object.exception.ObjectValidationException;
+import com.liferay.dynamic.data.mapping.expression.CreateExpressionRequest;
+import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
+import com.liferay.object.constants.ObjectValidationRuleConstants;
+import com.liferay.object.exception.ObjectValidationRuleEngineException;
+import com.liferay.object.exception.ObjectValidationRuleNameException;
+import com.liferay.object.exception.ObjectValidationRuleScriptException;
+import com.liferay.object.internal.action.util.ObjectEntryVariablesUtil;
+import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectValidationRule;
+import com.liferay.object.scripting.exception.ObjectScriptingException;
+import com.liferay.object.scripting.validator.ObjectScriptingValidator;
+import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.base.ObjectValidationRuleLocalServiceBaseImpl;
+import com.liferay.object.service.persistence.ObjectDefinitionPersistence;
+import com.liferay.object.system.SystemObjectDefinitionMetadataRegistry;
 import com.liferay.object.validation.rule.ObjectValidationRuleEngine;
-import com.liferay.object.validation.rule.ObjectValidationRuleEngineServicesTracker;
+import com.liferay.object.validation.rule.ObjectValidationRuleEngineRegistry;
 import com.liferay.portal.aop.AopService;
-import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModel;
+import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.search.Indexable;
+import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.service.UserLocalService;
-import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.systemevent.SystemEvent;
+import com.liferay.portal.kernel.transaction.Transactional;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -44,75 +68,266 @@ import org.osgi.service.component.annotations.Reference;
 public class ObjectValidationRuleLocalServiceImpl
 	extends ObjectValidationRuleLocalServiceBaseImpl {
 
+	@Indexable(type = IndexableType.REINDEX)
 	@Override
-	public List<ObjectValidationRule> getObjectValidationRules(
-		long objectDefinitionId, boolean active, int start, int end) {
+	public ObjectValidationRule addObjectValidationRule(
+			long userId, long objectDefinitionId, boolean active, String engine,
+			Map<Locale, String> errorLabelMap, Map<Locale, String> nameMap,
+			String script)
+		throws PortalException {
 
-		return objectValidationRulePersistence.findByODI_A(
-			objectDefinitionId, active, start, end);
+		_validateEngine(engine);
+		_validateName(nameMap);
+		_validateScript(engine, script);
+
+		ObjectValidationRule objectValidationRule =
+			objectValidationRulePersistence.create(
+				counterLocalService.increment());
+
+		User user = _userLocalService.getUser(userId);
+
+		objectValidationRule.setCompanyId(user.getCompanyId());
+		objectValidationRule.setUserId(user.getUserId());
+		objectValidationRule.setUserName(user.getFullName());
+
+		objectValidationRule.setObjectDefinitionId(objectDefinitionId);
+		objectValidationRule.setActive(active);
+		objectValidationRule.setEngine(engine);
+		objectValidationRule.setErrorLabelMap(errorLabelMap);
+		objectValidationRule.setNameMap(nameMap);
+		objectValidationRule.setScript(script);
+
+		return objectValidationRulePersistence.update(objectValidationRule);
+	}
+
+	@Indexable(type = IndexableType.DELETE)
+	@Override
+	public ObjectValidationRule deleteObjectValidationRule(
+			long objectValidationRuleId)
+		throws PortalException {
+
+		ObjectValidationRule objectValidationRule =
+			objectValidationRulePersistence.findByPrimaryKey(
+				objectValidationRuleId);
+
+		return deleteObjectValidationRule(objectValidationRule);
+	}
+
+	@Indexable(type = IndexableType.DELETE)
+	@Override
+	@SystemEvent(type = SystemEventConstants.TYPE_DELETE)
+	public ObjectValidationRule deleteObjectValidationRule(
+		ObjectValidationRule objectValidationRule) {
+
+		return objectValidationRulePersistence.remove(objectValidationRule);
 	}
 
 	@Override
-	public void validate(
-			long userId, long objectDefinitionId,
-			BaseModel<?> originalBaseModel, BaseModel<?> baseModel)
+	public void deleteObjectValidationRules(Long objectDefinitionId)
 		throws PortalException {
+
+		for (ObjectValidationRule objectValidationRule :
+				objectValidationRulePersistence.findByObjectDefinitionId(
+					objectDefinitionId)) {
+
+			objectValidationRuleLocalService.deleteObjectValidationRule(
+				objectValidationRule);
+		}
+	}
+
+	@Override
+	public ObjectValidationRule getObjectValidationRule(
+			long objectValidationRuleId)
+		throws PortalException {
+
+		return objectValidationRulePersistence.findByPrimaryKey(
+			objectValidationRuleId);
+	}
+
+	@Override
+	public List<ObjectValidationRule> getObjectValidationRules(
+		long objectDefinitionId) {
+
+		return objectValidationRulePersistence.findByObjectDefinitionId(
+			objectDefinitionId);
+	}
+
+	@Override
+	public List<ObjectValidationRule> getObjectValidationRules(
+		long objectDefinitionId, boolean active) {
+
+		return objectValidationRulePersistence.findByODI_A(
+			objectDefinitionId, active);
+	}
+
+	@Indexable(type = IndexableType.REINDEX)
+	@Override
+	public ObjectValidationRule updateObjectValidationRule(
+			long objectValidationRuleId, boolean active, String engine,
+			Map<Locale, String> errorLabelMap, Map<Locale, String> nameMap,
+			String script)
+		throws PortalException {
+
+		_validateEngine(engine);
+		_validateName(nameMap);
+		_validateScript(engine, script);
+
+		ObjectValidationRule objectValidationRule =
+			objectValidationRulePersistence.findByPrimaryKey(
+				objectValidationRuleId);
+
+		objectValidationRule.setActive(active);
+		objectValidationRule.setEngine(engine);
+		objectValidationRule.setErrorLabelMap(errorLabelMap);
+		objectValidationRule.setNameMap(nameMap);
+		objectValidationRule.setScript(script);
+
+		return objectValidationRulePersistence.update(objectValidationRule);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public void validate(
+			BaseModel<?> baseModel, long objectDefinitionId,
+			JSONObject payloadJSONObject, long userId)
+		throws PortalException {
+
+		if (baseModel == null) {
+			return;
+		}
 
 		List<ObjectValidationRule> objectValidationRules =
 			objectValidationRuleLocalService.getObjectValidationRules(
-				objectDefinitionId, true, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+				objectDefinitionId, true);
+
+		if (ListUtil.isEmpty(objectValidationRules)) {
+			return;
+		}
+
+		ObjectDefinition objectDefinition =
+			_objectDefinitionPersistence.fetchByPrimaryKey(objectDefinitionId);
+
+		Map<String, Object> variables =
+			ObjectEntryVariablesUtil.getValidationRuleVariables(
+				baseModel, _dtoConverterRegistry, objectDefinition,
+				_objectEntryLocalService, payloadJSONObject,
+				_systemObjectDefinitionMetadataRegistry);
 
 		for (ObjectValidationRule objectValidationRule :
 				objectValidationRules) {
 
 			ObjectValidationRuleEngine objectValidationRuleEngine =
-				_objectValidationRuleEngineServicesTracker.
+				_objectValidationRuleEngineRegistry.
 					getObjectValidationRuleEngine(
 						objectValidationRule.getEngine());
 
-			HashMapBuilder.HashMapWrapper<String, Object> hashMapWrapper =
-				HashMapBuilder.<String, Object>putAll(
-					baseModel.getModelAttributes());
+			Map<String, Object> results = objectValidationRuleEngine.execute(
+				variables, objectValidationRule.getScript());
 
-			if (originalBaseModel != null) {
-				Map<String, Object> modelAttributes =
-					originalBaseModel.getModelAttributes();
-
-				for (Map.Entry<String, Object> entry :
-						modelAttributes.entrySet()) {
-
-					hashMapWrapper.put(
-						"original." + entry.getKey(), entry.getValue());
-				}
+			if (GetterUtil.getBoolean(results.get("invalidScript"))) {
+				throw new ObjectValidationRuleScriptException(
+					"Script is invalid");
 			}
 
-			if (userId > 0) {
-				User user = _userLocalService.getUser(userId);
-
-				hashMapWrapper.put(
-					"user.emailAddress", user.getEmailAddress()
-				).put(
-					"user.firstName", user.getFirstName()
-				).put(
-					"user.lastName", user.getLastName()
-				).put(
-					"userId", userId
-				);
-			}
-
-			if (!objectValidationRuleEngine.evaluate(
-					hashMapWrapper.build(), objectValidationRule.getScript())) {
-
-				throw new ObjectValidationException(
+			if (GetterUtil.getBoolean(results.get("invalidFields"))) {
+				throw new ObjectValidationRuleEngineException(
 					objectValidationRule.getErrorLabel(
 						LocaleUtil.getMostRelevantLocale()));
 			}
 		}
 	}
 
+	private void _validateEngine(String engine) throws PortalException {
+		if (Validator.isNull(engine)) {
+			throw new ObjectValidationRuleEngineException("Engine is null");
+		}
+
+		ObjectValidationRuleEngine objectValidationRuleEngine =
+			_objectValidationRuleEngineRegistry.getObjectValidationRuleEngine(
+				engine);
+
+		if (objectValidationRuleEngine == null) {
+			throw new ObjectValidationRuleEngineException(
+				"Engine \"" + engine + "\" does not exist");
+		}
+	}
+
+	private void _validateName(Map<Locale, String> nameMap)
+		throws PortalException {
+
+		Locale locale = LocaleUtil.getSiteDefault();
+
+		if ((nameMap == null) || Validator.isNull(nameMap.get(locale))) {
+			throw new ObjectValidationRuleNameException(
+				"Name is null for locale " + locale.getDisplayName());
+		}
+	}
+
+	private void _validateScript(String engine, String script)
+		throws PortalException {
+
+		if (Validator.isNull(script)) {
+			throw new ObjectValidationRuleScriptException("required");
+		}
+
+		try {
+			if (Objects.equals(
+					engine, ObjectValidationRuleConstants.ENGINE_TYPE_DDM)) {
+
+				_ddmExpressionFactory.createExpression(
+					CreateExpressionRequest.Builder.newBuilder(
+						script
+					).build());
+			}
+			else if (Objects.equals(
+						engine,
+						ObjectValidationRuleConstants.ENGINE_TYPE_GROOVY)) {
+
+				_objectScriptingValidator.validate("groovy", script);
+			}
+		}
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(portalException);
+			}
+
+			if (portalException instanceof ObjectScriptingException) {
+				ObjectScriptingException objectScriptingException =
+					(ObjectScriptingException)portalException;
+
+				throw new ObjectValidationRuleScriptException(
+					objectScriptingException.getMessageKey());
+			}
+
+			throw new ObjectValidationRuleScriptException("syntax-error");
+		}
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		ObjectValidationRuleLocalServiceImpl.class);
+
 	@Reference
-	private ObjectValidationRuleEngineServicesTracker
-		_objectValidationRuleEngineServicesTracker;
+	private DDMExpressionFactory _ddmExpressionFactory;
+
+	@Reference
+	private DTOConverterRegistry _dtoConverterRegistry;
+
+	@Reference
+	private ObjectDefinitionPersistence _objectDefinitionPersistence;
+
+	@Reference
+	private ObjectEntryLocalService _objectEntryLocalService;
+
+	@Reference
+	private ObjectScriptingValidator _objectScriptingValidator;
+
+	@Reference
+	private ObjectValidationRuleEngineRegistry
+		_objectValidationRuleEngineRegistry;
+
+	@Reference
+	private SystemObjectDefinitionMetadataRegistry
+		_systemObjectDefinitionMetadataRegistry;
 
 	@Reference
 	private UserLocalService _userLocalService;

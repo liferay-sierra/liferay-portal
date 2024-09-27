@@ -20,6 +20,9 @@ import com.liferay.asset.kernel.model.AssetRenderer;
 import com.liferay.asset.kernel.model.AssetRendererFactory;
 import com.liferay.asset.kernel.service.AssetEntryLocalServiceUtil;
 import com.liferay.asset.kernel.service.AssetEntryServiceUtil;
+import com.liferay.asset.util.LinkedAssetEntryIdsUtil;
+import com.liferay.dynamic.data.mapping.item.selector.DDMTemplateItemSelectorReturnType;
+import com.liferay.dynamic.data.mapping.item.selector.criterion.DDMTemplateItemSelectorCriterion;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalServiceUtil;
@@ -28,6 +31,7 @@ import com.liferay.item.selector.ItemSelector;
 import com.liferay.item.selector.criteria.AssetEntryItemSelectorReturnType;
 import com.liferay.item.selector.criteria.asset.criterion.AssetEntryItemSelectorCriterion;
 import com.liferay.item.selector.criteria.constants.ItemSelectorCriteriaConstants;
+import com.liferay.journal.constants.JournalContentPortletKeys;
 import com.liferay.journal.constants.JournalPortletKeys;
 import com.liferay.journal.constants.JournalWebKeys;
 import com.liferay.journal.content.asset.addon.entry.ContentMetadataAssetAddonEntry;
@@ -43,7 +47,6 @@ import com.liferay.journal.service.JournalArticleResourceLocalServiceUtil;
 import com.liferay.journal.util.JournalContent;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
@@ -54,8 +57,10 @@ import com.liferay.portal.kernel.portlet.LiferayRenderRequest;
 import com.liferay.portal.kernel.portlet.LiferayRenderResponse;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.PortletRequestModel;
+import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
@@ -66,6 +71,7 @@ import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.trash.TrashHandlerRegistryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -86,6 +92,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import javax.portlet.PortletMode;
@@ -107,7 +114,8 @@ public class JournalContentDisplayContext {
 			PortletRequest portletRequest, PortletResponse portletResponse,
 			long ddmStructureClassNameId,
 			ModelResourcePermission<DDMTemplate>
-				ddmTemplateModelResourcePermission)
+				ddmTemplateModelResourcePermission,
+			ItemSelector itemSelector)
 		throws PortalException {
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
@@ -128,7 +136,8 @@ public class JournalContentDisplayContext {
 			journalContentDisplayContext = new JournalContentDisplayContext(
 				portletRequest, portletResponse, themeDisplay,
 				journalContentPortletInstanceConfiguration,
-				ddmStructureClassNameId, ddmTemplateModelResourcePermission);
+				ddmStructureClassNameId, ddmTemplateModelResourcePermission,
+				itemSelector);
 
 			portletRequest.setAttribute(
 				getRequestAttributeName(portletDisplay.getId()),
@@ -265,21 +274,11 @@ public class JournalContentDisplayContext {
 	}
 
 	public long getAssetEntryId() throws PortalException {
-		JournalArticle article = getArticle();
+		AssetEntry assetEntry = _getAssetEntry();
 
-		if (article == null) {
+		if (assetEntry == null) {
 			return 0;
 		}
-
-		AssetRendererFactory<JournalArticle> assetRendererFactory =
-			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClass(
-				JournalArticle.class);
-
-		AssetRenderer<JournalArticle> assetRenderer =
-			assetRendererFactory.getAssetRenderer(article, 0);
-
-		AssetEntry assetEntry = AssetEntryLocalServiceUtil.fetchEntry(
-			JournalArticle.class.getName(), assetRenderer.getClassPK());
 
 		return assetEntry.getEntryId();
 	}
@@ -504,9 +503,9 @@ public class JournalContentDisplayContext {
 		return groupId;
 	}
 
-	public PortletURL getItemSelectorURL() throws PortalException {
+	public PortletURL getItemSelectorURL() {
 		ItemSelector itemSelector = (ItemSelector)_portletRequest.getAttribute(
-			JournalWebKeys.ITEM_SELECTOR);
+			ItemSelector.class.getName());
 
 		LiferayRenderRequest liferayRenderRequest =
 			(LiferayRenderRequest)LiferayPortletUtil.getLiferayPortletRequest(
@@ -537,6 +536,67 @@ public class JournalContentDisplayContext {
 			requestBackedPortletURLFactory,
 			liferayRenderResponse.getNamespace() + "selectedItem",
 			assetEntryItemSelectorCriterion);
+	}
+
+	public Map<String, Object> getJournalTemplateContext() {
+		return HashMapBuilder.<String, Object>put(
+			"actionURL",
+			() -> PortletURLBuilder.create(
+				PortletURLFactoryUtil.create(
+					_portletRequest, JournalContentPortletKeys.JOURNAL_CONTENT,
+					PortletRequest.RESOURCE_PHASE)
+			).setMVCPath(
+				"/journal_template_resources.jsp"
+			).setParameter(
+				"articleResourcePrimKey",
+				() -> {
+					AssetRendererFactory<JournalArticle> assetRendererFactory =
+						AssetRendererFactoryRegistryUtil.
+							getAssetRendererFactoryByClass(
+								JournalArticle.class);
+
+					AssetRenderer<JournalArticle> assetRenderer =
+						assetRendererFactory.getAssetRenderer(getArticle(), 0);
+
+					return assetRenderer.getClassPK();
+				}
+			).setWindowState(
+				LiferayWindowState.EXCLUSIVE
+			).buildString()
+		).put(
+			"portletNamespace",
+			PortalUtil.getPortletNamespace(
+				JournalContentPortletKeys.JOURNAL_CONTENT)
+		).put(
+			"portletURL",
+			() -> {
+				RequestBackedPortletURLFactory requestBackedPortletURLFactory =
+					RequestBackedPortletURLFactoryUtil.create(_portletRequest);
+
+				DDMTemplateItemSelectorCriterion
+					ddmTemplateItemSelectorCriterion =
+						new DDMTemplateItemSelectorCriterion();
+
+				ddmTemplateItemSelectorCriterion.setClassNameId(
+					PortalUtil.getClassNameId(JournalArticle.class.getName()));
+
+				DDMStructure ddmStructure = getDDMStructure();
+
+				if (ddmStructure != null) {
+					ddmTemplateItemSelectorCriterion.setDDMStructureId(
+						ddmStructure.getStructureId());
+				}
+
+				ddmTemplateItemSelectorCriterion.
+					setDesiredItemSelectorReturnTypes(
+						new DDMTemplateItemSelectorReturnType());
+
+				return String.valueOf(
+					_itemSelector.getItemSelectorURL(
+						requestBackedPortletURLFactory, "selectDDMTemplate",
+						ddmTemplateItemSelectorCriterion));
+			}
+		).build();
 	}
 
 	public JournalArticle getLatestArticle() throws PortalException {
@@ -605,8 +665,7 @@ public class JournalContentDisplayContext {
 	}
 
 	public List<ContentMetadataAssetAddonEntry>
-			getSelectedContentMetadataAssetAddonEntries()
-		throws PortalException {
+		getSelectedContentMetadataAssetAddonEntries() {
 
 		if (_contentMetadataAssetAddonEntries != null) {
 			return _contentMetadataAssetAddonEntries;
@@ -641,24 +700,8 @@ public class JournalContentDisplayContext {
 		return _contentMetadataAssetAddonEntries;
 	}
 
-	public long[] getSelectedGroupIds() {
-		Group scopeGroup = _themeDisplay.getScopeGroup();
-
-		if (scopeGroup.isStagingGroup() &&
-			!scopeGroup.isInStagingPortlet(JournalPortletKeys.JOURNAL)) {
-
-			return new long[] {scopeGroup.getLiveGroupId()};
-		}
-
-		if (_themeDisplay.getScopeGroupId() != _themeDisplay.getSiteGroupId()) {
-			return new long[] {_themeDisplay.getScopeGroupId()};
-		}
-
-		return null;
-	}
-
-	public List<UserToolAssetAddonEntry> getSelectedUserToolAssetAddonEntries()
-		throws PortalException {
+	public List<UserToolAssetAddonEntry>
+		getSelectedUserToolAssetAddonEntries() {
 
 		if (_userToolAssetAddonEntries != null) {
 			return _userToolAssetAddonEntries;
@@ -746,12 +789,11 @@ public class JournalContentDisplayContext {
 		try {
 			JournalArticle article = getArticle();
 
-			Group group = GroupLocalServiceUtil.fetchGroup(
-				article.getGroupId());
-
 			return PortletURLBuilder.create(
 				PortalUtil.getControlPanelPortletURL(
-					_portletRequest, group, JournalPortletKeys.JOURNAL, 0, 0,
+					_portletRequest,
+					GroupLocalServiceUtil.fetchGroup(article.getGroupId()),
+					JournalPortletKeys.JOURNAL, 0, 0,
 					PortletRequest.RENDER_PHASE)
 			).setMVCPath(
 				"/view_article_history.jsp"
@@ -894,19 +936,15 @@ public class JournalContentDisplayContext {
 
 		JournalArticleDisplay articleDisplay = getArticleDisplay();
 
-		if ((articleDisplay == null) || !hasViewPermission() || isExpired()) {
+		if ((articleDisplay == null) || !hasViewPermission()) {
 			_showArticle = false;
 
 			return _showArticle;
 		}
 
-		if (article.isScheduled() && !isPreview()) {
-			_showArticle = false;
+		if ((article.isPending() || article.isScheduled() || isExpired()) &&
+			!isPreview()) {
 
-			return _showArticle;
-		}
-
-		if (article.isPending() && !isPreview()) {
 			_showArticle = false;
 
 			return _showArticle;
@@ -1010,7 +1048,8 @@ public class JournalContentDisplayContext {
 				journalContentPortletInstanceConfiguration,
 			long ddmStructureClassNameId,
 			ModelResourcePermission<DDMTemplate>
-				ddmTemplateModelResourcePermission)
+				ddmTemplateModelResourcePermission,
+			ItemSelector itemSelector)
 		throws PortalException {
 
 		_portletRequest = portletRequest;
@@ -1021,6 +1060,14 @@ public class JournalContentDisplayContext {
 		_ddmStructureClassNameId = ddmStructureClassNameId;
 		_ddmTemplateModelResourcePermission =
 			ddmTemplateModelResourcePermission;
+		_itemSelector = itemSelector;
+
+		AssetEntry assetEntry = _getAssetEntry();
+
+		if (isShowArticle() && (assetEntry != null)) {
+			LinkedAssetEntryIdsUtil.addLinkedAssetEntryId(
+				portletRequest, assetEntry.getEntryId());
+		}
 
 		if (Validator.isNull(getPortletResource()) && !isShowArticle()) {
 			portletRequest.setAttribute(
@@ -1072,6 +1119,24 @@ public class JournalContentDisplayContext {
 		return null;
 	}
 
+	private AssetEntry _getAssetEntry() throws PortalException {
+		JournalArticle article = getArticle();
+
+		if (article == null) {
+			return null;
+		}
+
+		AssetRendererFactory<JournalArticle> assetRendererFactory =
+			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClass(
+				JournalArticle.class);
+
+		AssetRenderer<JournalArticle> assetRenderer =
+			assetRendererFactory.getAssetRenderer(article, 0);
+
+		return AssetEntryLocalServiceUtil.fetchEntry(
+			JournalArticle.class.getName(), assetRenderer.getClassPK());
+	}
+
 	private DDMTemplate _getDDMTemplate(String ddmTemplateKey)
 		throws PortalException {
 
@@ -1094,19 +1159,8 @@ public class JournalContentDisplayContext {
 		JournalContentDisplayContext.class);
 
 	private static final Comparator<AssetAddonEntry>
-		_assetAddonEntryComparator = new Comparator<AssetAddonEntry>() {
-
-			@Override
-			public int compare(
-				AssetAddonEntry assetAddonEntry1,
-				AssetAddonEntry assetAddonEntry2) {
-
-				return Double.compare(
-					assetAddonEntry1.getWeight(), assetAddonEntry2.getWeight());
-			}
-
-		};
-
+		_assetAddonEntryComparator = Comparator.comparingDouble(
+			AssetAddonEntry::getWeight);
 	private static final ServiceTrackerMap
 		<String, ContentMetadataAssetAddonEntry>
 			_contentMetadataAssetAddonEntryMap;
@@ -1156,6 +1210,7 @@ public class JournalContentDisplayContext {
 	private DDMTemplate _defaultDDMTemplate;
 	private Boolean _expired;
 	private Boolean _hasViewPermission;
+	private final ItemSelector _itemSelector;
 	private final JournalContentPortletInstanceConfiguration
 		_journalContentPortletInstanceConfiguration;
 	private JournalArticle _latestArticle;

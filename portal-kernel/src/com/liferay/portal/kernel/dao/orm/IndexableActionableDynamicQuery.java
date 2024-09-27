@@ -18,11 +18,9 @@ import com.liferay.portal.kernel.backgroundtask.BackgroundTaskThreadLocal;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.IndexWriterHelper;
-import com.liferay.portal.kernel.search.SearchEngineHelperUtil;
 import com.liferay.portal.kernel.search.background.task.ReindexStatusMessageSenderUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ServiceProxyFactory;
-import com.liferay.portal.kernel.util.Validator;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -88,15 +86,9 @@ public class IndexableActionableDynamicQuery
 		}
 	}
 
-	public void setSearchEngineId(String searchEngineId) {
-		_searchEngineId = searchEngineId;
-	}
-
 	@Override
 	protected void actionsCompleted() throws PortalException {
-		if (Validator.isNotNull(_searchEngineId)) {
-			_indexWriterHelper.commit(_searchEngineId, getCompanyId());
-		}
+		_indexWriterHelper.commit(getCompanyId());
 	}
 
 	@Override
@@ -111,23 +103,13 @@ public class IndexableActionableDynamicQuery
 		}
 	}
 
-	protected String getSearchEngineId() {
-		return _searchEngineId;
-	}
-
 	protected void indexInterval() throws PortalException {
 		if ((_documents == null) || _documents.isEmpty()) {
 			return;
 		}
 
-		if (Validator.isNull(_searchEngineId)) {
-			_searchEngineId = SearchEngineHelperUtil.getSearchEngineId(
-				_documents);
-		}
-
 		_indexWriterHelper.updateDocuments(
-			_searchEngineId, getCompanyId(), new ArrayList<>(_documents),
-			false);
+			getCompanyId(), new ArrayList<>(_documents), false);
 
 		_count += _documents.size();
 
@@ -161,7 +143,6 @@ public class IndexableActionableDynamicQuery
 	private long _count;
 	private Collection<Document> _documents = new ArrayList<>();
 	private IndexWriterHelper _indexWriterHelper = _indexWriterHelperProxy;
-	private String _searchEngineId;
 	private long _total;
 
 }

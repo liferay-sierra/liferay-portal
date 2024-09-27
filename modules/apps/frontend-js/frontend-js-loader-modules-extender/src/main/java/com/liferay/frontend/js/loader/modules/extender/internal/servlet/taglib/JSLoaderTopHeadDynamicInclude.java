@@ -17,6 +17,7 @@ package com.liferay.frontend.js.loader.modules.extender.internal.servlet.taglib;
 import com.liferay.frontend.js.loader.modules.extender.internal.configuration.Details;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
+import com.liferay.portal.kernel.frontend.esm.FrontendESMUtil;
 import com.liferay.portal.kernel.servlet.PortalWebResourceConstants;
 import com.liferay.portal.kernel.servlet.PortalWebResourcesUtil;
 import com.liferay.portal.kernel.servlet.taglib.BaseDynamicInclude;
@@ -33,10 +34,11 @@ import java.io.PrintWriter;
 
 import java.util.Map;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Modified;
@@ -78,6 +80,8 @@ public class JSLoaderTopHeadDynamicInclude extends BaseDynamicInclude {
 		printWriter.write(Boolean.toString(_details.exposeGlobal()));
 		printWriter.write(", logLevel: '");
 		printWriter.write(_details.logLevel());
+		printWriter.write("', moduleType: '");
+		printWriter.write(FrontendESMUtil.getScriptType());
 		printWriter.write("', namespace:'Liferay', ");
 		printWriter.write(
 			"reportMismatchedAnonymousModules: 'warn', resolvePath: '");
@@ -88,8 +92,17 @@ public class JSLoaderTopHeadDynamicInclude extends BaseDynamicInclude {
 		printWriter.write(String.valueOf(_details.waitTimeout() * 1000));
 		printWriter.write(
 			"};</script><script data-senna-track=\"permanent\" src=\"");
-		printWriter.write(_servletContext.getContextPath());
-		printWriter.write("/loader.js\" type=\"");
+
+		AbsolutePortalURLBuilder absolutePortalURLBuilder =
+			_absolutePortalURLBuilderFactory.getAbsolutePortalURLBuilder(
+				httpServletRequest);
+
+		printWriter.write(
+			absolutePortalURLBuilder.forBundleScript(
+				_bundle, "/loader.js"
+			).build());
+
+		printWriter.write("\" type=\"");
 		printWriter.write(ContentTypes.TEXT_JAVASCRIPT);
 		printWriter.write("\"></script>");
 	}
@@ -102,9 +115,14 @@ public class JSLoaderTopHeadDynamicInclude extends BaseDynamicInclude {
 
 	@Activate
 	@Modified
-	protected void activate(Map<String, Object> properties) {
+	protected void activate(
+		BundleContext bundleContext, Map<String, Object> properties) {
+
+		_bundle = bundleContext.getBundle();
+
 		_details = ConfigurableUtil.createConfigurable(
 			Details.class, properties);
+		_lastModified = String.valueOf(System.currentTimeMillis());
 	}
 
 	private String _getDefaultURLParams(ThemeDisplay themeDisplay) {
@@ -120,7 +138,7 @@ public class JSLoaderTopHeadDynamicInclude extends BaseDynamicInclude {
 			_absolutePortalURLBuilderFactory.getAbsolutePortalURLBuilder(
 				httpServletRequest);
 
-		return absolutePortalURLBuilder.forWhiteboard(
+		return absolutePortalURLBuilder.forServlet(
 			"/js_resolve_modules"
 		).build();
 	}
@@ -133,7 +151,7 @@ public class JSLoaderTopHeadDynamicInclude extends BaseDynamicInclude {
 				httpServletRequest,
 				themeDisplay.getCDNDynamicResourcesHost() +
 					themeDisplay.getPathContext() + "/combo/",
-				"minifierType=",
+				"minifierType=js",
 				PortalWebResourcesUtil.getLastModified(
 					PortalWebResourceConstants.RESOURCE_TYPE_JS));
 
@@ -146,14 +164,11 @@ public class JSLoaderTopHeadDynamicInclude extends BaseDynamicInclude {
 	@Reference
 	private AbsolutePortalURLBuilderFactory _absolutePortalURLBuilderFactory;
 
+	private volatile Bundle _bundle;
 	private volatile Details _details;
+	private volatile String _lastModified;
 
 	@Reference
 	private Portal _portal;
-
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.frontend.js.loader.modules.extender)"
-	)
-	private ServletContext _servletContext;
 
 }

@@ -28,7 +28,7 @@ import com.liferay.commerce.order.CommerceDefinitionTermContributor;
 import com.liferay.commerce.service.CommerceOrderItemLocalService;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserGroup;
@@ -36,14 +36,12 @@ import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.UserGroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.ResourceBundle;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -52,7 +50,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Luca Pellizzon
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = {
 		"commerce.definition.term.contributor.key=" + CommerceRecipientCommerceDefinitionTermContributor.KEY,
 		"commerce.notification.type.key=" + CommerceOrderConstants.ORDER_NOTIFICATION_AWAITING_SHIPMENT,
@@ -141,10 +139,9 @@ public class CommerceRecipientCommerceDefinitionTermContributor
 
 			String userGroupName = StringUtil.removeChars(s[2], '%', ']');
 
-			UserGroup userGroup = _userGroupLocalService.getUserGroup(
-				commerceOrder.getCompanyId(), userGroupName);
-
-			return _getUserIds(userGroup);
+			return _getUserIds(
+				_userGroupLocalService.getUserGroup(
+					commerceOrder.getCompanyId(), userGroupName));
 		}
 
 		return term;
@@ -152,16 +149,12 @@ public class CommerceRecipientCommerceDefinitionTermContributor
 
 	@Override
 	public String getLabel(String term, Locale locale) {
-		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-			"content.Language", locale, getClass());
-
-		return LanguageUtil.get(
-			resourceBundle, _commerceOrderDefinitionTermsMap.get(term));
+		return _language.get(locale, _languageKeys.get(term));
 	}
 
 	@Override
 	public List<String> getTerms() {
-		return new ArrayList<>(_commerceOrderDefinitionTermsMap.keySet());
+		return new ArrayList<>(_languageKeys.keySet());
 	}
 
 	private String _getUserIds(CommerceAccount commerceAccount, Role role)
@@ -214,16 +207,15 @@ public class CommerceRecipientCommerceDefinitionTermContributor
 
 	private static final String _USER_GROUP_NAME = "[%USER_GROUP_NAME%]";
 
-	private static final Map<String, String> _commerceOrderDefinitionTermsMap =
-		HashMapBuilder.put(
-			_ACCOUNT_ROLE_ADMINISTRATOR, "account-role-administrator"
-		).put(
-			_ACCOUNT_ROLE_ORDER_MANAGER, "account-role-order-manager"
-		).put(
-			_ORDER_CREATOR, "order-creator-definition-term"
-		).put(
-			_USER_GROUP_NAME, "user-group-name"
-		).build();
+	private static final Map<String, String> _languageKeys = HashMapBuilder.put(
+		_ACCOUNT_ROLE_ADMINISTRATOR, "account-role-administrator"
+	).put(
+		_ACCOUNT_ROLE_ORDER_MANAGER, "account-role-order-manager"
+	).put(
+		_ORDER_CREATOR, "order-creator-definition-term"
+	).put(
+		_USER_GROUP_NAME, "user-group-name"
+	).build();
 
 	@Reference
 	private CommerceAccountUserRelLocalService
@@ -231,6 +223,9 @@ public class CommerceRecipientCommerceDefinitionTermContributor
 
 	@Reference
 	private CommerceOrderItemLocalService _commerceOrderItemLocalService;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private RoleLocalService _roleLocalService;

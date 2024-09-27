@@ -23,12 +23,31 @@ definition {
 			locator1 = "Portlet#HEADER",
 			value1 = "Search");
 
-		var port = Elasticsearch.getServerPort();
+		if ("${executionScope}" == "All Instances") {
+			Check.checkNotVisible(
+				locator1 = "Radio#ANY",
+				radioLabel = "${executionScope}");
 
+			AssertElementNotPresent(
+				key_executionScope = "System",
+				locator1 = "SearchAdmin#SELECTED_INSTANCE_INDEX_CHECKBOX");
+		}
+		else if (isSet(executionScope)) {
+			Check.checkNotVisible(
+				locator1 = "Radio#ANY",
+				radioLabel = "Selected Instances");
+
+			Check.checkNotVisible(
+				key_executionScope = "${executionScope}",
+				locator1 = "SearchAdmin#SELECTED_INSTANCE_INDEX_CHECKBOX");
+		}
+
+		var port = Elasticsearch.getServerPort();
 		var portalHostname = PropsUtil.get("portal.hostname");
+
 		var curl = "http://${portalHostname}:${port}/_tasks";
 
-		while (!(isSet(reindexStartTime)) || ("${retryReindex}" == "true") && (maxIterations = "2")) {
+		while ((!(isSet(reindexStartTime)) || ("${retryReindex}" == "true")) && (maxIterations = "2")) {
 			if (isSet(action)) {
 				Click(
 					key_action = "${action}",
@@ -61,7 +80,7 @@ definition {
 
 			var reindexElapsedTime = "0";
 
-			while ((contains("${elasticsearchTasks}", "indices:data/write/bulk") || (IsElementPresent.isElementPresentNoSPARefresh(locator1 = "ControlMenu#RELOAD_TOOLTIP")) || (IsElementPresent.isElementPresentNoSPARefresh(locator1 = "//html[contains(@class,'lfr-spa-loading')]"))) && ("${reindexElapsedTime}" != "240") && (maxIterations = "24")) {
+			while (((contains("${elasticsearchTasks}", "indices:data/write/bulk") || (IsElementPresent.isElementPresentNoSPARefresh(locator1 = "ControlMenu#RELOAD_TOOLTIP")) || (IsElementPresent.isElementPresentNoSPARefresh(locator1 = "//html[contains(@class,'lfr-spa-loading')]"))) && ("${reindexElapsedTime}" != "240")) && (maxIterations = "24")) {
 				Pause.pauseNoSPARefresh(locator1 = "10000");
 
 				var reindexElapsedTime = ${reindexElapsedTime} + 10;

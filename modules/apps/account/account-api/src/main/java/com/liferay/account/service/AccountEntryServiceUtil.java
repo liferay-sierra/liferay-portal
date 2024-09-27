@@ -161,12 +161,27 @@ public class AccountEntryServiceUtil {
 			serviceContext);
 	}
 
+	public static AccountEntry updateDomains(
+			long accountEntryId, String[] domains)
+		throws PortalException {
+
+		return getService().updateDomains(accountEntryId, domains);
+	}
+
 	public static AccountEntry updateExternalReferenceCode(
 			long accountEntryId, String externalReferenceCode)
 		throws PortalException {
 
 		return getService().updateExternalReferenceCode(
 			accountEntryId, externalReferenceCode);
+	}
+
+	public static AccountEntry updateRestrictMembership(
+			long accountEntryId, boolean restrictMembership)
+		throws PortalException {
+
+		return getService().updateRestrictMembership(
+			accountEntryId, restrictMembership);
 	}
 
 	public static AccountEntryService getService() {

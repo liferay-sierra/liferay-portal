@@ -18,9 +18,8 @@ import com.liferay.change.tracking.constants.CTPortletKeys;
 import com.liferay.change.tracking.model.CTCollection;
 import com.liferay.change.tracking.service.CTCollectionLocalService;
 import com.liferay.change.tracking.web.internal.constants.PublicationRoleConstants;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Group;
@@ -29,6 +28,7 @@ import com.liferay.portal.kernel.model.UserGroupRole;
 import com.liferay.portal.kernel.model.UserNotificationEvent;
 import com.liferay.portal.kernel.notifications.BaseUserNotificationHandler;
 import com.liferay.portal.kernel.notifications.UserNotificationHandler;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -45,7 +45,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Samuel Trong Tran
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + CTPortletKeys.PUBLICATIONS,
 	service = UserNotificationHandler.class
 )
@@ -62,7 +61,7 @@ public class PublicationInviteUserNotificationHandler
 			ServiceContext serviceContext)
 		throws Exception {
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
+		JSONObject jsonObject = _jsonFactory.createJSONObject(
 			userNotificationEvent.getPayload());
 
 		long ctCollectionId = jsonObject.getLong("classPK");
@@ -110,8 +109,7 @@ public class PublicationInviteUserNotificationHandler
 			new Object[] {
 				userName, ctCollection.getName(),
 				_language.get(
-					serviceContext.getLocale(),
-					PublicationRoleConstants.getRoleLabel(roleValue))
+					serviceContext.getLocale(), _getRoleLabel(roleValue))
 			},
 			false);
 	}
@@ -122,7 +120,7 @@ public class PublicationInviteUserNotificationHandler
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
+		JSONObject jsonObject = _jsonFactory.createJSONObject(
 			userNotificationEvent.getPayload());
 
 		long ctCollectionId = jsonObject.getLong("classPK");
@@ -145,11 +143,28 @@ public class PublicationInviteUserNotificationHandler
 		).buildString();
 	}
 
+	private String _getRoleLabel(int role) {
+		if (role == PublicationRoleConstants.ROLE_ADMIN) {
+			return PublicationRoleConstants.LABEL_ADMIN;
+		}
+		else if (role == PublicationRoleConstants.ROLE_EDITOR) {
+			return PublicationRoleConstants.LABEL_EDITOR;
+		}
+		else if (role == PublicationRoleConstants.ROLE_PUBLISHER) {
+			return PublicationRoleConstants.LABEL_PUBLISHER;
+		}
+
+		return PublicationRoleConstants.LABEL_VIEWER;
+	}
+
 	@Reference
 	private CTCollectionLocalService _ctCollectionLocalService;
 
 	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Language _language;

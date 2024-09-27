@@ -12,7 +12,8 @@
  * details.
  */
 
-import {cleanup, render} from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
+import {render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -30,7 +31,6 @@ jest.mock(
 
 describe('CollectionSelector', () => {
 	afterEach(() => {
-		cleanup();
 		openItemSelector.mockClear();
 	});
 
@@ -38,11 +38,7 @@ describe('CollectionSelector', () => {
 		const CUSTOM_COLLECTION_SELECTOR_URL = 'CUSTOM_COLLECTION_SELECTOR_URL';
 		const DEFAULT_ITEM_SELECTOR_URL = 'DEFAULT_ITEM_SELECTOR_URL';
 
-		Liferay.Util.sub.mockImplementation((langKey, args) =>
-			[langKey, ...args].join('-')
-		);
-
-		const {getByLabelText} = render(
+		render(
 			<StoreAPIContextProvider dispatch={() => {}} getState={() => ({})}>
 				<CollectionItemContextProvider
 					value={{
@@ -51,14 +47,14 @@ describe('CollectionSelector', () => {
 				>
 					<CollectionSelector
 						itemSelectorURL={DEFAULT_ITEM_SELECTOR_URL}
-						label=""
+						label="something"
 						onCollectionSelect={() => {}}
 					/>
 				</CollectionItemContextProvider>
 			</StoreAPIContextProvider>
 		);
 
-		const button = getByLabelText('select-x');
+		const button = screen.getByLabelText('select-x');
 
 		userEvent.click(button);
 
@@ -72,21 +68,17 @@ describe('CollectionSelector', () => {
 	it('uses passed item selector URL when not inside a collection item context', () => {
 		const DEFAULT_ITEM_SELECTOR_URL = 'DEFAULT_ITEM_SELECTOR_URL';
 
-		Liferay.Util.sub.mockImplementation((langKey, args) =>
-			[langKey, ...args].join('-')
-		);
-
-		const {getByLabelText} = render(
+		render(
 			<StoreAPIContextProvider dispatch={() => {}} getState={() => ({})}>
 				<CollectionSelector
 					itemSelectorURL={DEFAULT_ITEM_SELECTOR_URL}
-					label=""
+					label="something"
 					onCollectionSelect={() => {}}
 				/>
 			</StoreAPIContextProvider>
 		);
 
-		const button = getByLabelText('select-x');
+		const button = screen.getByLabelText('select-x');
 
 		userEvent.click(button);
 
@@ -95,5 +87,37 @@ describe('CollectionSelector', () => {
 				itemSelectorURL: DEFAULT_ITEM_SELECTOR_URL,
 			})
 		);
+	});
+
+	it('does not show collection prefilter label when the filter is not configured', () => {
+		render(
+			<StoreAPIContextProvider dispatch={() => {}} getState={() => ({})}>
+				<CollectionSelector label="" onCollectionSelect={() => {}} />
+			</StoreAPIContextProvider>
+		);
+
+		expect(
+			screen.queryByText('collection-prefiltered')
+		).not.toBeInTheDocument();
+	});
+
+	it('shows collection prefilter label when the filter is not configured', () => {
+		render(
+			<StoreAPIContextProvider dispatch={() => {}} getState={() => ({})}>
+				<CollectionSelector
+					collectionItem={{
+						config: {
+							title: 'test',
+						},
+					}}
+					label=""
+					onCollectionSelect={() => {}}
+				/>
+			</StoreAPIContextProvider>
+		);
+
+		expect(
+			screen.queryByText('collection-prefiltered')
+		).toBeInTheDocument();
 	});
 });

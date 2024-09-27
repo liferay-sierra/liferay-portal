@@ -40,8 +40,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.commerce.configuration.CommerceOrderTypeConfiguration",
-	enabled = false, immediate = true,
-	service = CheckCommerceOrderTypeMessageListener.class
+	immediate = true, service = CheckCommerceOrderTypeMessageListener.class
 )
 public class CheckCommerceOrderTypeMessageListener extends BaseMessageListener {
 
@@ -76,13 +75,11 @@ public class CheckCommerceOrderTypeMessageListener extends BaseMessageListener {
 		_commerceOrderTypeLocalService.checkCommerceOrderTypes();
 	}
 
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
-	protected void setModuleServiceLifecycle(
-		ModuleServiceLifecycle moduleServiceLifecycle) {
-	}
-
 	@Reference
 	private CommerceOrderTypeLocalService _commerceOrderTypeLocalService;
+
+	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
+	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
 	@Reference
 	private SchedulerEngineHelper _schedulerEngineHelper;

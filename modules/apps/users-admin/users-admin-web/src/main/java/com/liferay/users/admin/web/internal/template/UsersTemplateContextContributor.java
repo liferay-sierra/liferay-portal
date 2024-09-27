@@ -38,7 +38,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Julio Camarero
  */
 @Component(
-	immediate = true,
 	property = "type=" + TemplateContextContributor.TYPE_THEME,
 	service = TemplateContextContributor.class
 )
@@ -103,14 +102,10 @@ public class UsersTemplateContextContributor
 			LocaleUtil.toW3cLanguageId(themeDisplay.getLanguageId()));
 	}
 
-	@Reference(unbind = "-")
-	protected void setUserLocalService(UserLocalService userLocalService) {
-		_userLocalService = userLocalService;
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		UsersTemplateContextContributor.class);
 
+	@Reference
 	private UserLocalService _userLocalService;
 
 }

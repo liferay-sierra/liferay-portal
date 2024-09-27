@@ -178,7 +178,7 @@ public class DDMFormInstanceReportPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = finderCache.getResult(
-				_finderPathFetchByFormInstanceId, finderArgs);
+				_finderPathFetchByFormInstanceId, finderArgs, this);
 		}
 
 		if (result instanceof DDMFormInstanceReport) {
@@ -294,7 +294,7 @@ public class DDMFormInstanceReportPersistenceImpl
 
 			finderArgs = new Object[] {formInstanceId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -731,7 +731,9 @@ public class DDMFormInstanceReportPersistenceImpl
 	 */
 	@Override
 	public DDMFormInstanceReport fetchByPrimaryKey(Serializable primaryKey) {
-		if (ctPersistenceHelper.isProductionMode(DDMFormInstanceReport.class)) {
+		if (ctPersistenceHelper.isProductionMode(
+				DDMFormInstanceReport.class, primaryKey)) {
+
 			return super.fetchByPrimaryKey(primaryKey);
 		}
 
@@ -954,7 +956,7 @@ public class DDMFormInstanceReportPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<DDMFormInstanceReport>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -1030,7 +1032,7 @@ public class DDMFormInstanceReportPersistenceImpl
 
 		if (productionMode) {
 			count = (Long)finderCache.getResult(
-				_finderPathCountAll, FINDER_ARGS_EMPTY);
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 		}
 
 		if (count == null) {
@@ -1263,9 +1265,5 @@ public class DDMFormInstanceReportPersistenceImpl
 	protected FinderCache getFinderCache() {
 		return finderCache;
 	}
-
-	@Reference
-	private DDMFormInstanceReportModelArgumentsResolver
-		_ddmFormInstanceReportModelArgumentsResolver;
 
 }

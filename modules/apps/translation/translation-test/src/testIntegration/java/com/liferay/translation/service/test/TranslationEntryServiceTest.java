@@ -17,7 +17,7 @@ package com.liferay.translation.service.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.info.item.InfoItemFieldValues;
 import com.liferay.info.item.InfoItemReference;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFieldValuesProvider;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.service.JournalArticleService;
@@ -107,20 +107,18 @@ public class TranslationEntryServiceTest {
 				InfoItemFieldValuesProvider<JournalArticle>
 					infoItemFieldValuesProvider =
 						(InfoItemFieldValuesProvider<JournalArticle>)
-							_infoItemServiceTracker.getFirstInfoItemService(
+							_infoItemServiceRegistry.getFirstInfoItemService(
 								InfoItemFieldValuesProvider.class,
 								JournalArticle.class.getName());
-
-				InfoItemFieldValues infoItemFieldValues =
-					infoItemFieldValuesProvider.getInfoItemFieldValues(
-						journalArticle);
 
 				_translationEntry =
 					_translationEntryService.addOrUpdateTranslationEntry(
 						_group.getGroupId(),
 						LocaleUtil.toBCP47LanguageId(
 							LocaleUtil.SIMPLIFIED_CHINESE),
-						infoItemReference, infoItemFieldValues,
+						infoItemReference,
+						infoItemFieldValuesProvider.getInfoItemFieldValues(
+							journalArticle),
 						ServiceContextTestUtil.getServiceContext());
 			});
 	}
@@ -150,19 +148,17 @@ public class TranslationEntryServiceTest {
 				InfoItemFieldValuesProvider<JournalArticle>
 					infoItemFieldValuesProvider =
 						(InfoItemFieldValuesProvider<JournalArticle>)
-							_infoItemServiceTracker.getFirstInfoItemService(
+							_infoItemServiceRegistry.getFirstInfoItemService(
 								InfoItemFieldValuesProvider.class,
 								JournalArticle.class.getName());
-
-				InfoItemFieldValues infoItemFieldValues =
-					infoItemFieldValuesProvider.getInfoItemFieldValues(
-						journalArticle);
 
 				_translationEntry =
 					_translationEntryService.addOrUpdateTranslationEntry(
 						_group.getGroupId(),
 						LocaleUtil.toLanguageId(LocaleUtil.SPAIN),
-						infoItemReference, infoItemFieldValues,
+						infoItemReference,
+						infoItemFieldValuesProvider.getInfoItemFieldValues(
+							journalArticle),
 						ServiceContextTestUtil.getServiceContext());
 			});
 	}
@@ -274,7 +270,7 @@ public class TranslationEntryServiceTest {
 				InfoItemFieldValuesProvider<JournalArticle>
 					infoItemFieldValuesProvider =
 						(InfoItemFieldValuesProvider<JournalArticle>)
-							_infoItemServiceTracker.getFirstInfoItemService(
+							_infoItemServiceRegistry.getFirstInfoItemService(
 								InfoItemFieldValuesProvider.class,
 								JournalArticle.class.getName());
 
@@ -329,7 +325,7 @@ public class TranslationEntryServiceTest {
 				InfoItemFieldValuesProvider<JournalArticle>
 					infoItemFieldValuesProvider =
 						(InfoItemFieldValuesProvider<JournalArticle>)
-							_infoItemServiceTracker.getFirstInfoItemService(
+							_infoItemServiceRegistry.getFirstInfoItemService(
 								InfoItemFieldValuesProvider.class,
 								JournalArticle.class.getName());
 
@@ -482,7 +478,7 @@ public class TranslationEntryServiceTest {
 	private Group _group;
 
 	@Inject
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Inject
 	private JournalArticleService _journalArticleService;

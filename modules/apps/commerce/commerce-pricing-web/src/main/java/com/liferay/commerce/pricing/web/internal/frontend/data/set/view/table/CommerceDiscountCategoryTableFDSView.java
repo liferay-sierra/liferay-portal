@@ -30,7 +30,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Riccardo Alberti
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "frontend.data.set.name=" + CommercePricingFDSNames.DISCOUNT_CATEGORIES,
 	service = FDSView.class
 )
@@ -41,14 +40,13 @@ public class CommerceDiscountCategoryTableFDSView extends BaseTableFDSView {
 		FDSTableSchemaBuilder fdsTableSchemaBuilder =
 			_fdsTableSchemaBuilderFactory.create();
 
-		fdsTableSchemaBuilder.addFDSTableSchemaField("category.name", "name");
-
-		fdsTableSchemaBuilder.addFDSTableSchemaField(
-			"category.vocabulary", "vocabulary");
-
-		fdsTableSchemaBuilder.addFDSTableSchemaField("category.path", "path");
-
-		return fdsTableSchemaBuilder.build();
+		return fdsTableSchemaBuilder.add(
+			"category.name", "name"
+		).add(
+			"category.vocabulary", "vocabulary"
+		).add(
+			"category.path", "path"
+		).build();
 	}
 
 	@Reference

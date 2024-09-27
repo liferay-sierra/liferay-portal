@@ -21,21 +21,17 @@ import com.liferay.commerce.currency.model.CommerceCurrency;
 import com.liferay.commerce.model.CommerceOrder;
 import com.liferay.commerce.product.constants.CPPortletKeys;
 import com.liferay.commerce.product.model.CPDefinition;
-import com.liferay.commerce.product.portlet.action.ActionHelper;
 import com.liferay.commerce.product.url.CPFriendlyURL;
-import com.liferay.commerce.shop.by.diagram.admin.web.internal.frontend.taglib.clay.data.set.constants.CSDiagramDataSetConstants;
+import com.liferay.commerce.shop.by.diagram.admin.web.internal.constants.CSDiagramFDSNames;
 import com.liferay.commerce.shop.by.diagram.admin.web.internal.util.CSDiagramSettingUtil;
 import com.liferay.commerce.shop.by.diagram.configuration.CSDiagramSettingImageConfiguration;
 import com.liferay.commerce.shop.by.diagram.constants.CSDiagramWebKeys;
 import com.liferay.commerce.shop.by.diagram.model.CSDiagramSetting;
-import com.liferay.commerce.shop.by.diagram.service.CSDiagramSettingService;
 import com.liferay.commerce.shop.by.diagram.type.CSDiagramType;
-import com.liferay.commerce.shop.by.diagram.type.CSDiagramTypeRegistry;
 import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.frontend.taglib.servlet.taglib.util.JSPRenderer;
-import com.liferay.item.selector.ItemSelector;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.theme.PortletDisplay;
@@ -63,7 +59,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.commerce.shop.by.diagram.configuration.CSDiagramSettingImageConfiguration",
-	enabled = false, immediate = true,
+	immediate = true,
 	property = {
 		"commerce.product.definition.diagram.type.key=" + SVGCSDiagramType.KEY,
 		"commerce.product.definition.diagram.type.order:Integer=200"
@@ -84,7 +80,7 @@ public class SVGCSDiagramType implements CSDiagramType {
 		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
 			"content.Language", locale, getClass());
 
-		return LanguageUtil.get(resourceBundle, "svg");
+		return _language.get(resourceBundle, "svg");
 	}
 
 	@Override
@@ -141,9 +137,7 @@ public class SVGCSDiagramType implements CSDiagramType {
 
 		HashMapBuilder.HashMapWrapper<String, Object> hashMapWrapper =
 			HashMapBuilder.<String, Object>put(
-				"datasetDisplayId",
-				CSDiagramDataSetConstants.
-					CS_DIAGRAM_MAPPED_PRODUCTS_DATA_SET_KEY
+				"datasetDisplayId", CSDiagramFDSNames.MAPPED_PRODUCTS
 			).put(
 				"diagramId", csDiagramSetting.getCSDiagramSettingId()
 			).put(
@@ -207,28 +201,19 @@ public class SVGCSDiagramType implements CSDiagramType {
 	}
 
 	@Reference
-	private ActionHelper _actionHelper;
-
-	@Reference
 	private CPFriendlyURL _cpFriendlyURL;
 
 	private volatile CSDiagramSettingImageConfiguration
 		_csDiagramSettingImageConfiguration;
 
 	@Reference
-	private CSDiagramSettingService _csDiagramSettingService;
-
-	@Reference
-	private CSDiagramTypeRegistry _csDiagramTypeRegistry;
-
-	@Reference
 	private DLURLHelper _dlURLHelper;
 
 	@Reference
-	private ItemSelector _itemSelector;
+	private JSPRenderer _jspRenderer;
 
 	@Reference
-	private JSPRenderer _jspRenderer;
+	private Language _language;
 
 	@Reference(
 		target = "(osgi.web.symbolicname=com.liferay.commerce.shop.by.diagram.web)"

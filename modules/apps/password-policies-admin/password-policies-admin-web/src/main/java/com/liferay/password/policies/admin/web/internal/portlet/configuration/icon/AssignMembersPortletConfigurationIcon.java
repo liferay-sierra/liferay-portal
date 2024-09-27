@@ -15,13 +15,13 @@
 package com.liferay.password.policies.admin.web.internal.portlet.configuration.icon;
 
 import com.liferay.password.policies.admin.constants.PasswordPoliciesAdminPortletKeys;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.PortletURLFactory;
 import com.liferay.portal.kernel.portlet.configuration.icon.BasePortletConfigurationIcon;
 import com.liferay.portal.kernel.portlet.configuration.icon.PortletConfigurationIcon;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
-import com.liferay.portal.kernel.service.permission.PasswordPolicyPermissionUtil;
+import com.liferay.portal.kernel.service.permission.PasswordPolicyPermission;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -49,8 +49,7 @@ public class AssignMembersPortletConfigurationIcon
 
 	@Override
 	public String getMessage(PortletRequest portletRequest) {
-		return LanguageUtil.get(
-			getResourceBundle(getLocale(portletRequest)), "assign-members");
+		return _language.get(getLocale(portletRequest), "assign-members");
 	}
 
 	@Override
@@ -85,7 +84,7 @@ public class AssignMembersPortletConfigurationIcon
 		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
-		if (PasswordPolicyPermissionUtil.contains(
+		if (_passwordPolicyPermission.contains(
 				themeDisplay.getPermissionChecker(),
 				_getPasswordPolicyId(portletRequest),
 				ActionKeys.ASSIGN_MEMBERS)) {
@@ -100,6 +99,12 @@ public class AssignMembersPortletConfigurationIcon
 		return ParamUtil.getLong(
 			_portal.getHttpServletRequest(portletRequest), "passwordPolicyId");
 	}
+
+	@Reference
+	private Language _language;
+
+	@Reference
+	private PasswordPolicyPermission _passwordPolicyPermission;
 
 	@Reference
 	private Portal _portal;

@@ -68,7 +68,7 @@ renderResponse.setTitle(editDisplayContext.getPageTitle());
 							</c:when>
 							<c:otherwise>
 								<div class="form-group">
-									<aui:input name="key" pattern="[^ ]+" required="<%= true %>" value="<%= editDisplayContext.getKey() %>" wrapperCssClass="mb-0" />
+									<aui:input maxlength='<%= ModelHintsUtil.getMaxLength(PLOEntry.class.getName(), "key") %>' name="key" pattern="[^ ]+" required="<%= true %>" value="<%= editDisplayContext.getKey() %>" wrapperCssClass="mb-0" />
 
 									<div class="form-feedback-group">
 										<div class="form-text">
@@ -115,12 +115,6 @@ renderResponse.setTitle(editDisplayContext.getPageTitle());
 
 				<clay:content-row>
 					<div class="sheet-text">
-						<liferay-ui:icon
-							cssClass="font-weight-normal text-info"
-							icon="info-circle"
-							localizeMessage="<%= true %>"
-						/>
-
 						<span class="font-weight-bold text-info">
 							<clay:icon cssClass="mr-2" symbol="info-circle" /><liferay-ui:message key="please-add-at-least-one-translation-below" />
 						</span>
@@ -141,8 +135,8 @@ renderResponse.setTitle(editDisplayContext.getPageTitle());
 							String languageId = LanguageUtil.getLanguageId(availableLocale);
 						%>
 
-							<div class="form-group" dir="<%= LanguageUtil.get(availableLocale, "lang.dir") %>" lang="<%= LocaleUtil.toW3cLanguageId(availableLocale) %>">
-								<aui:input label="<%= TextFormatter.format(languageId, TextFormatter.O) %>" name='<%= "value_" + availableLocale %>' value="<%= valuesLocalizedValuesMap.get(availableLocale) %>" wrappedField="<%= true %>" />
+							<div class="form-group" dir="<%= LanguageUtil.get(request, "lang.dir") %>" lang="<%= LocaleUtil.toW3cLanguageId(availableLocale) %>">
+								<aui:input dir='<%= LanguageUtil.get(availableLocale, "lang.dir") %>' label="<%= TextFormatter.format(languageId, TextFormatter.O) %>" name='<%= "value_" + availableLocale %>' value="<%= valuesLocalizedValuesMap.get(availableLocale) %>" wrappedField="<%= true %>" />
 
 								<c:if test="<%= editDisplayContext.isShowOriginalValues() %>">
 									<div class="form-feedback-group">
@@ -168,8 +162,9 @@ renderResponse.setTitle(editDisplayContext.getPageTitle());
 		</liferay-frontend:edit-form-body>
 
 		<liferay-frontend:edit-form-footer>
-			<aui:button name="save" type="submit" />
-			<aui:button href="<%= editDisplayContext.getBackURL() %>" type="cancel" />
+			<liferay-frontend:edit-form-buttons
+				redirect="<%= editDisplayContext.getBackURL() %>"
+			/>
 		</liferay-frontend:edit-form-footer>
 	</liferay-frontend:edit-form>
 </clay:container-fluid>

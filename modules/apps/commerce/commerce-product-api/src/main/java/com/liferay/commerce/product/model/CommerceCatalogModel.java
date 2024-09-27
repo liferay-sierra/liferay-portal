@@ -15,10 +15,11 @@
 package com.liferay.commerce.product.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
-import com.liferay.portal.kernel.model.AuditedModel;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ShardedModel;
+import com.liferay.portal.kernel.model.StagedAuditedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import java.util.Date;
 
@@ -37,7 +38,8 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface CommerceCatalogModel
-	extends AuditedModel, BaseModel<CommerceCatalog>, MVCCModel, ShardedModel {
+	extends BaseModel<CommerceCatalog>, CTModel<CommerceCatalog>, MVCCModel,
+			ShardedModel, StagedAuditedModel {
 
 	/*
 	 * NOTE FOR DEVELOPERS:
@@ -50,6 +52,7 @@ public interface CommerceCatalogModel
 	 *
 	 * @return the primary key of this commerce catalog
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -57,6 +60,7 @@ public interface CommerceCatalogModel
 	 *
 	 * @param primaryKey the primary key of this commerce catalog
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -74,6 +78,39 @@ public interface CommerceCatalogModel
 	 */
 	@Override
 	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this commerce catalog.
+	 *
+	 * @return the ct collection ID of this commerce catalog
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this commerce catalog.
+	 *
+	 * @param ctCollectionId the ct collection ID of this commerce catalog
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
+
+	/**
+	 * Returns the uuid of this commerce catalog.
+	 *
+	 * @return the uuid of this commerce catalog
+	 */
+	@AutoEscape
+	@Override
+	public String getUuid();
+
+	/**
+	 * Sets the uuid of this commerce catalog.
+	 *
+	 * @param uuid the uuid of this commerce catalog
+	 */
+	@Override
+	public void setUuid(String uuid);
 
 	/**
 	 * Returns the external reference code of this commerce catalog.

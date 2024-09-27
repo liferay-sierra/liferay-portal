@@ -17,10 +17,8 @@ package com.liferay.portal.vulcan.yaml.openapi;
 import java.util.Map;
 
 /**
- * @author     Peter Shin
- * @deprecated As of Athanasius (7.3.x)
+ * @author Peter Shin
  */
-@Deprecated
 public class Components {
 
 	public Map<String, Parameter> getParameters() {

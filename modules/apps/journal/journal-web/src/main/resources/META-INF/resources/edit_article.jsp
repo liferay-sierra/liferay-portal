@@ -98,7 +98,7 @@ JournalEditArticleDisplayContext journalEditArticleDisplayContext = new JournalE
 								<portlet:param name="ddmStructureKey" value="<%= ddmStructure.getStructureKey() %>" />
 							</portlet:actionURL>
 
-							<aui:button cssClass="btn-secondary btn-sm mr-3" data-url="<%= resetValuesDDMStructureURL %>" name="resetValuesButton" value="reset-values" />
+							<aui:button cssClass="btn-sm mr-3" data-url="<%= resetValuesDDMStructureURL %>" name="resetValuesButton" value="reset-values" />
 						</c:if>
 
 						<c:if test="<%= journalEditArticleDisplayContext.hasSavePermission() %>">
@@ -114,6 +114,7 @@ JournalEditArticleDisplayContext journalEditArticleDisplayContext = new JournalE
 							icon="cog"
 							id='<%= liferayPortletResponse.getNamespace() + "contextualSidebarButton" %>'
 							small="<%= true %>"
+							title='<%= LanguageUtil.get(request, "configuration") %>'
 							type="button"
 						/>
 					</div>
@@ -127,6 +128,10 @@ JournalEditArticleDisplayContext journalEditArticleDisplayContext = new JournalE
 
 			<%
 			String tabs1Names = "properties,usages";
+
+			if (GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-161038"))) {
+				tabs1Names += ",timeline";
+			}
 
 			if ((article == null) || (journalEditArticleDisplayContext.getClassNameId() != JournalArticleConstants.CLASS_NAME_ID_DEFAULT)) {
 				tabs1Names = "properties";
@@ -154,6 +159,15 @@ JournalEditArticleDisplayContext journalEditArticleDisplayContext = new JournalE
 							classPK="<%= article.getResourcePrimKey() %>"
 						/>
 					</liferay-ui:section>
+
+					<c:if test='<%= GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-161038")) %>'>
+						<liferay-ui:section>
+							<liferay-change-tracking:timeline
+								className="<%= JournalArticle.class.getName() %>"
+								classPK="<%= article.getPrimaryKey() %>"
+							/>
+						</liferay-ui:section>
+					</c:if>
 				</c:if>
 			</liferay-ui:tabs>
 		</div>
@@ -216,13 +230,18 @@ JournalEditArticleDisplayContext journalEditArticleDisplayContext = new JournalE
 			</liferay-ui:error>
 
 			<liferay-ui:error exception="<%= FileSizeException.class %>">
-				<liferay-ui:message arguments="<%= LanguageUtil.formatStorageSize(DLValidatorUtil.getMaxAllowableSize(), locale) %>" key="please-enter-a-file-with-a-valid-file-size-no-larger-than-x" translateArguments="<%= false %>" />
+
+				<%
+				FileSizeException fileSizeException = (FileSizeException)errorException;
+				%>
+
+				<liferay-ui:message arguments="<%= LanguageUtil.formatStorageSize(fileSizeException.getMaxSize(), locale) %>" key="please-enter-a-file-with-a-valid-file-size-no-larger-than-x" translateArguments="<%= false %>" />
 			</liferay-ui:error>
 
 			<liferay-ui:error exception="<%= InvalidDDMStructureException.class %>" message="the-structure-you-selected-is-not-valid-for-this-folder" />
 
 			<liferay-ui:error exception="<%= LiferayFileItemException.class %>">
-				<liferay-ui:message arguments="<%= LanguageUtil.formatStorageSize(LiferayFileItem.THRESHOLD_SIZE, locale) %>" key="please-enter-valid-content-with-valid-content-size-no-larger-than-x" translateArguments="<%= false %>" />
+				<liferay-ui:message arguments="<%= LanguageUtil.formatStorageSize(FileItem.THRESHOLD_SIZE, locale) %>" key="please-enter-valid-content-with-valid-content-size-no-larger-than-x" translateArguments="<%= false %>" />
 			</liferay-ui:error>
 
 			<liferay-ui:error exception="<%= LocaleException.class %>">
@@ -232,7 +251,7 @@ JournalEditArticleDisplayContext journalEditArticleDisplayContext = new JournalE
 				%>
 
 				<c:if test="<%= le.getType() == LocaleException.TYPE_CONTENT %>">
-					<liferay-ui:message arguments="<%= new String[] {StringUtil.merge(le.getSourceAvailableLocales(), StringPool.COMMA_AND_SPACE), StringUtil.merge(le.getTargetAvailableLocales(), StringPool.COMMA_AND_SPACE)} %>" key="the-default-language-x-does-not-match-the-portal's-available-languages-x" />
+					<liferay-ui:message arguments="<%= new String[] {StringUtil.merge(le.getSourceAvailableLanguageIds(), StringPool.COMMA_AND_SPACE), StringUtil.merge(le.getTargetAvailableLanguageIds(), StringPool.COMMA_AND_SPACE)} %>" key="the-default-language-x-does-not-match-the-portal's-available-languages-x" />
 				</c:if>
 			</liferay-ui:error>
 

@@ -35,13 +35,13 @@ import com.liferay.item.selector.ItemSelectorReturnType;
 import com.liferay.item.selector.criteria.FileEntryItemSelectorReturnType;
 import com.liferay.item.selector.criteria.file.criterion.FileItemSelectorCriterion;
 import com.liferay.item.selector.criteria.image.criterion.ImageItemSelectorCriterion;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.taglib.util.CustomAttributesUtil;
@@ -96,11 +96,10 @@ public class CPAttachmentFileEntriesDisplayContext
 			Collections.<ItemSelectorReturnType>singletonList(
 				new FileEntryItemSelectorReturnType()));
 
-		PortletURL itemSelectorURL = _itemSelector.getItemSelectorURL(
-			requestBackedPortletURLFactory, "addCPAttachmentFileEntry",
-			fileItemSelectorCriterion);
-
-		return itemSelectorURL.toString();
+		return String.valueOf(
+			_itemSelector.getItemSelectorURL(
+				requestBackedPortletURLFactory, "addCPAttachmentFileEntry",
+				fileItemSelectorCriterion));
 	}
 
 	public CPAttachmentFileEntry getCPAttachmentFileEntry()
@@ -207,11 +206,10 @@ public class CPAttachmentFileEntriesDisplayContext
 			Collections.<ItemSelectorReturnType>singletonList(
 				new FileEntryItemSelectorReturnType()));
 
-		PortletURL itemSelectorURL = _itemSelector.getItemSelectorURL(
-			requestBackedPortletURLFactory, "addCPAttachmentFileEntry",
-			imageItemSelectorCriterion);
-
-		return itemSelectorURL.toString();
+		return String.valueOf(
+			_itemSelector.getItemSelectorURL(
+				requestBackedPortletURLFactory, "addCPAttachmentFileEntry",
+				imageItemSelectorCriterion));
 	}
 
 	public long getImageMaxSize() {
@@ -269,7 +267,7 @@ public class CPAttachmentFileEntriesDisplayContext
 			return Collections.emptyMap();
 		}
 
-		return _cpInstanceHelper.getCPDefinitionOptionRelsMap(
+		return _cpInstanceHelper.getCPDefinitionOptionValueRelsMap(
 			cpAttachmentFileEntry.getClassPK(),
 			cpAttachmentFileEntry.getJson());
 	}
@@ -291,7 +289,7 @@ public class CPAttachmentFileEntriesDisplayContext
 		return _ddmHelper.renderCPAttachmentFileEntryOptions(
 			getCPDefinitionId(), json, pageContext, renderRequest,
 			renderResponse,
-			_cpInstanceHelper.getCPDefinitionOptionRelsMap(
+			_cpInstanceHelper.getCPDefinitionOptionValueRelsMap(
 				getCPDefinitionId(), true, false));
 	}
 

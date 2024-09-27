@@ -21,7 +21,6 @@ import com.liferay.commerce.payment.method.mercanet.internal.connector.Environme
 import com.liferay.commerce.payment.method.mercanet.internal.connector.PaypageClient;
 import com.liferay.commerce.payment.method.mercanet.internal.constants.MercanetCommercePaymentMethodConstants;
 import com.liferay.commerce.payment.util.CommercePaymentHttpHelper;
-import com.liferay.commerce.product.service.CommerceChannelLocalService;
 import com.liferay.commerce.service.CommerceOrderLocalService;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
@@ -29,7 +28,6 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
-import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.servlet.PortalSessionThreadLocal;
@@ -65,7 +63,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Luca Pellizzon
  */
 @Component(
-	enabled = false, immediate = true,
 	property = {
 		"osgi.http.whiteboard.context.path=/" + MercanetCommercePaymentMethodConstants.SERVLET_PATH,
 		"osgi.http.whiteboard.servlet.name=com.liferay.commerce.payment.method.mercanet.internal.servlet.MercanetServlet",
@@ -121,11 +118,9 @@ public class MercanetServlet extends HttpServlet {
 						httpServletRequest.getSession());
 				}
 
-				PermissionChecker permissionChecker =
+				PermissionThreadLocal.setPermissionChecker(
 					PermissionCheckerFactoryUtil.create(
-						_portal.getUser(httpServletRequest));
-
-				PermissionThreadLocal.setPermissionChecker(permissionChecker);
+						_portal.getUser(httpServletRequest)));
 
 				String redirect = ParamUtil.getString(
 					httpServletRequest, "redirect");
@@ -236,9 +231,6 @@ public class MercanetServlet extends HttpServlet {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		MercanetServlet.class);
-
-	@Reference
-	private CommerceChannelLocalService _commerceChannelLocalService;
 
 	@Reference
 	private CommerceOrderLocalService _commerceOrderLocalService;

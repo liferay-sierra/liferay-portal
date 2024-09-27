@@ -14,11 +14,11 @@
 
 package com.liferay.user.associated.data.web.internal.display;
 
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.KeyValuePair;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -125,11 +125,9 @@ public class UADHierarchyDisplay {
 		UADDisplay<Object> uadDisplay =
 			(UADDisplay<Object>)_getUADDisplayByTypeClassName(className);
 
-		String applicationName = UADLanguageUtil.getApplicationName(
-			uadDisplay, locale);
-
 		PortalUtil.addPortletBreadcrumbEntry(
-			httpServletRequest, applicationName,
+			httpServletRequest,
+			UADLanguageUtil.getApplicationName(uadDisplay, locale),
 			PortletURLBuilder.create(
 				PortletURLUtil.clone(baseURL, renderResponse)
 			).setMVCRenderCommandName(
@@ -217,12 +215,11 @@ public class UADHierarchyDisplay {
 				Class<?> containerItemTypeClass =
 					containerItemUADDisplay.getTypeClass();
 
-				List<Serializable> containerItemPKs = _getContainerItemPKs(
-					parentContainerClass, parentContainerId,
-					containerItemTypeClass, userId);
-
 				_addEntities(
-					containerItemPKsMap, containerItemPKs,
+					containerItemPKsMap,
+					_getContainerItemPKs(
+						parentContainerClass, parentContainerId,
+						containerItemTypeClass, userId),
 					containerItemTypeClass);
 			}
 		}

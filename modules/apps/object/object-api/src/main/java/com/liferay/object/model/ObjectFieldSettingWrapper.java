@@ -53,7 +53,6 @@ public class ObjectFieldSettingWrapper
 		attributes.put("modifiedDate", getModifiedDate());
 		attributes.put("objectFieldId", getObjectFieldId());
 		attributes.put("name", getName());
-		attributes.put("required", isRequired());
 		attributes.put("value", getValue());
 
 		return attributes;
@@ -120,12 +119,6 @@ public class ObjectFieldSettingWrapper
 
 		if (name != null) {
 			setName(name);
-		}
-
-		Boolean required = (Boolean)attributes.get("required");
-
-		if (required != null) {
-			setRequired(required);
 		}
 
 		String value = (String)attributes.get("value");
@@ -210,6 +203,16 @@ public class ObjectFieldSettingWrapper
 		return model.getObjectFieldSettingId();
 	}
 
+	@Override
+	public java.util.List<ObjectFilter> getObjectFilters() {
+		return model.getObjectFilters();
+	}
+
+	@Override
+	public ObjectStateFlow getObjectStateFlow() {
+		return model.getObjectStateFlow();
+	}
+
 	/**
 	 * Returns the primary key of this object field setting.
 	 *
@@ -218,16 +221,6 @@ public class ObjectFieldSettingWrapper
 	@Override
 	public long getPrimaryKey() {
 		return model.getPrimaryKey();
-	}
-
-	/**
-	 * Returns the required of this object field setting.
-	 *
-	 * @return the required of this object field setting
-	 */
-	@Override
-	public boolean getRequired() {
-		return model.getRequired();
 	}
 
 	/**
@@ -278,16 +271,6 @@ public class ObjectFieldSettingWrapper
 	@Override
 	public String getValue() {
 		return model.getValue();
-	}
-
-	/**
-	 * Returns <code>true</code> if this object field setting is required.
-	 *
-	 * @return <code>true</code> if this object field setting is required; <code>false</code> otherwise
-	 */
-	@Override
-	public boolean isRequired() {
-		return model.isRequired();
 	}
 
 	@Override
@@ -365,6 +348,16 @@ public class ObjectFieldSettingWrapper
 		model.setObjectFieldSettingId(objectFieldSettingId);
 	}
 
+	@Override
+	public void setObjectFilters(java.util.List<ObjectFilter> objectFilters) {
+		model.setObjectFilters(objectFilters);
+	}
+
+	@Override
+	public void setObjectStateFlow(ObjectStateFlow objectStateFlow) {
+		model.setObjectStateFlow(objectStateFlow);
+	}
+
 	/**
 	 * Sets the primary key of this object field setting.
 	 *
@@ -373,16 +366,6 @@ public class ObjectFieldSettingWrapper
 	@Override
 	public void setPrimaryKey(long primaryKey) {
 		model.setPrimaryKey(primaryKey);
-	}
-
-	/**
-	 * Sets whether this object field setting is required.
-	 *
-	 * @param required the required of this object field setting
-	 */
-	@Override
-	public void setRequired(boolean required) {
-		model.setRequired(required);
 	}
 
 	/**

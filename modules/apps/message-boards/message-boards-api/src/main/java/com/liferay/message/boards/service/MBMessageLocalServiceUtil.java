@@ -56,15 +56,15 @@ public class MBMessageLocalServiceUtil {
 	}
 
 	public static MBMessage addDiscussionMessage(
-			long userId, String userName, long groupId, String className,
-			long classPK, long threadId, long parentMessageId, String subject,
-			String body,
+			String externalReferenceCode, long userId, String userName,
+			long groupId, String className, long classPK, long threadId,
+			long parentMessageId, String subject, String body,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws PortalException {
 
 		return getService().addDiscussionMessage(
-			userId, userName, groupId, className, classPK, threadId,
-			parentMessageId, subject, body, serviceContext);
+			externalReferenceCode, userId, userName, groupId, className,
+			classPK, threadId, parentMessageId, subject, body, serviceContext);
 	}
 
 	/**
@@ -983,18 +983,18 @@ public class MBMessageLocalServiceUtil {
 		getService().unsubscribeMessage(userId, messageId);
 	}
 
-	public static void updateAnswer(
+	public static MBMessage updateAnswer(
 			long messageId, boolean answer, boolean cascade)
 		throws PortalException {
 
-		getService().updateAnswer(messageId, answer, cascade);
+		return getService().updateAnswer(messageId, answer, cascade);
 	}
 
-	public static void updateAnswer(
+	public static MBMessage updateAnswer(
 			MBMessage message, boolean answer, boolean cascade)
 		throws PortalException {
 
-		getService().updateAnswer(message, answer, cascade);
+		return getService().updateAnswer(message, answer, cascade);
 	}
 
 	public static void updateAsset(

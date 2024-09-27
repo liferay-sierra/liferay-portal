@@ -25,7 +25,7 @@ import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.servlet.ProtectedServletRequest;
 import com.liferay.portal.kernel.servlet.ServletContextPool;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
@@ -236,10 +236,10 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			String authVerifierPropertyName = propertyName.substring(
 				PropsKeys.AUTH_VERIFIER.length());
 
-			int indexOf = authVerifierPropertyName.indexOf('.');
+			int index = authVerifierPropertyName.indexOf('.');
 
 			String authVerifierClassName = authVerifierPropertyName.substring(
-				0, indexOf);
+				0, index);
 
 			Integer authVerifierConfigurationIndex =
 				authVerifierConfigurationIndexs.get(authVerifierClassName);
@@ -269,7 +269,7 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			Properties properties = authVerifierConfiguration.getProperties();
 
 			properties.put(
-				authVerifierPropertyName.substring(indexOf + 1),
+				authVerifierPropertyName.substring(index + 1),
 				entry.getValue());
 		}
 
@@ -314,7 +314,8 @@ public class AuthVerifierFilter extends BasePortalFilter {
 		}
 
 		if (_log.isDebugEnabled()) {
-			String completeURL = HttpUtil.getCompleteURL(httpServletRequest);
+			String completeURL = HttpComponentsUtil.getCompleteURL(
+				httpServletRequest);
 
 			_log.debug("Securing " + completeURL);
 		}

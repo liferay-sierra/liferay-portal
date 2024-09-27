@@ -33,7 +33,6 @@ import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileEntryWrapper;
 import com.liferay.portal.kernel.repository.model.FileVersion;
@@ -65,11 +64,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.adaptive.media.document.library.thumbnails.internal.configuration.AMSystemImagesConfiguration",
-	immediate = true,
-	property = {
-		"service.ranking:Integer=100",
-		"type=" + DLProcessorConstants.IMAGE_PROCESSOR
-	},
+	immediate = true, property = "type=" + DLProcessorConstants.IMAGE_PROCESSOR,
 	service = {
 		AMImageEntryProcessor.class, DLProcessor.class, ImageProcessor.class
 	}
@@ -126,7 +121,7 @@ public class AMImageEntryProcessor implements DLProcessor, ImageProcessor {
 		Optional<AdaptiveMedia<AMImageProcessor>> adaptiveMediaOptional =
 			adaptiveMediaStream.findFirst();
 
-		if (!adaptiveMediaOptional.isPresent()) {
+		if (_isProcessingRequired(adaptiveMediaOptional, fileVersion)) {
 			_processAMImage(fileVersion);
 
 			return fileVersion.getContentStream(false);
@@ -152,7 +147,7 @@ public class AMImageEntryProcessor implements DLProcessor, ImageProcessor {
 		Optional<AdaptiveMedia<AMImageProcessor>> adaptiveMediaOptional =
 			adaptiveMediaStream.findFirst();
 
-		if (!adaptiveMediaOptional.isPresent()) {
+		if (_isProcessingRequired(adaptiveMediaOptional, fileVersion)) {
 			_processAMImage(fileVersion);
 
 			return fileVersion.getSize();
@@ -181,7 +176,7 @@ public class AMImageEntryProcessor implements DLProcessor, ImageProcessor {
 		Optional<AdaptiveMedia<AMImageProcessor>> adaptiveMediaOptional =
 			adaptiveMediaStream.findFirst();
 
-		if (!adaptiveMediaOptional.isPresent()) {
+		if (_isProcessingRequired(adaptiveMediaOptional, fileVersion)) {
 			_processAMImage(fileVersion);
 		}
 
@@ -202,7 +197,7 @@ public class AMImageEntryProcessor implements DLProcessor, ImageProcessor {
 		Optional<AdaptiveMedia<AMImageProcessor>> adaptiveMediaOptional =
 			adaptiveMediaStream.findFirst();
 
-		if (!adaptiveMediaOptional.isPresent()) {
+		if (_isProcessingRequired(adaptiveMediaOptional, fileVersion)) {
 			_processAMImage(fileVersion);
 		}
 
@@ -233,7 +228,7 @@ public class AMImageEntryProcessor implements DLProcessor, ImageProcessor {
 			Optional<AdaptiveMedia<AMImageProcessor>> adaptiveMediaOptional =
 				adaptiveMediaStream.findFirst();
 
-			if (adaptiveMediaOptional.isPresent()) {
+			if (!_isProcessingRequired(adaptiveMediaOptional, fileVersion)) {
 				return true;
 			}
 
@@ -363,6 +358,26 @@ public class AMImageEntryProcessor implements DLProcessor, ImageProcessor {
 		return _amImageMimeTypeProvider.isMimeTypeSupported(mimeType);
 	}
 
+	private boolean _isProcessingRequired(
+		Optional<AdaptiveMedia<AMImageProcessor>> adaptiveMediaOptional,
+		FileVersion fileVersion) {
+
+		if (!adaptiveMediaOptional.isPresent()) {
+			return true;
+		}
+
+		AdaptiveMedia<AMImageProcessor> adaptiveMedia =
+			adaptiveMediaOptional.get();
+
+		if (_amImageValidator.isProcessingRequired(
+				adaptiveMedia, fileVersion)) {
+
+			return true;
+		}
+
+		return false;
+	}
+
 	private void _processAMImage(FileVersion fileVersion) {
 		if (!_amImageValidator.isValid(fileVersion)) {
 			return;
@@ -404,10 +419,6 @@ public class AMImageEntryProcessor implements DLProcessor, ImageProcessor {
 	private AMImageValidator _amImageValidator;
 
 	private volatile AMSystemImagesConfiguration _amSystemImagesConfiguration;
-
-	@Reference
-	private ConfigurationProvider _configurationProvider;
-
 	private final ImageProcessor _imageProcessor = new ImageProcessorImpl();
 
 	@Reference

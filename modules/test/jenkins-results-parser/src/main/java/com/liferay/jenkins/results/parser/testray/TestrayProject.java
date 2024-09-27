@@ -79,11 +79,20 @@ public class TestrayProject {
 
 		try {
 			JSONObject jsonObject = JenkinsResultsParserUtil.toJSONObject(
-				productVersionAddURL, sb.toString());
+				productVersionAddURL, sb.toString(),
+				_testrayServer.getHTTPAuthorization());
 
 			if (jsonObject.has("data")) {
-				return new TestrayProductVersion(
-					this, jsonObject.getJSONObject("data"));
+				TestrayProductVersion newTestrayProductVersion =
+					new TestrayProductVersion(
+						this, jsonObject.getJSONObject("data"));
+
+				_testrayProductVersionsByID.put(
+					getID(), newTestrayProductVersion);
+				_testrayProductVersionsByName.put(
+					testrayProductVersionName, newTestrayProductVersion);
+
+				return newTestrayProductVersion;
 			}
 
 			throw new RuntimeException("Failed to create a product version");
@@ -118,7 +127,8 @@ public class TestrayProject {
 
 		try {
 			JSONObject jsonObject = JenkinsResultsParserUtil.toJSONObject(
-				routineAddURL, sb.toString());
+				routineAddURL, sb.toString(),
+				_testrayServer.getHTTPAuthorization());
 
 			if (jsonObject.has("data")) {
 				return new TestrayRoutine(
@@ -203,7 +213,8 @@ public class TestrayProject {
 					"&testrayProjectId=", String.valueOf(getID()));
 
 				JSONObject jsonObject = JenkinsResultsParserUtil.toJSONObject(
-					productVersionAPIURL, true);
+					productVersionAPIURL, true,
+					_testrayServer.getHTTPAuthorization());
 
 				JSONArray dataJSONArray = jsonObject.getJSONArray("data");
 
@@ -256,7 +267,7 @@ public class TestrayProject {
 					String.valueOf(getID()));
 
 				JSONObject jsonObject = JenkinsResultsParserUtil.toJSONObject(
-					routineAPIURL, true);
+					routineAPIURL, true, _testrayServer.getHTTPAuthorization());
 
 				JSONArray dataJSONArray = jsonObject.getJSONArray("data");
 

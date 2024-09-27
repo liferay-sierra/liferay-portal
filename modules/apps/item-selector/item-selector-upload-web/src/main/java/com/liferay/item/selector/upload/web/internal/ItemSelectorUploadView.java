@@ -21,7 +21,7 @@ import com.liferay.item.selector.criteria.DownloadFileEntryItemSelectorReturnTyp
 import com.liferay.item.selector.criteria.FileEntryItemSelectorReturnType;
 import com.liferay.item.selector.criteria.upload.criterion.UploadItemSelectorCriterion;
 import com.liferay.item.selector.upload.web.internal.display.context.ItemSelectorUploadViewDisplayContext;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.util.ListUtil;
 
 import java.io.IOException;
@@ -69,7 +69,7 @@ public class ItemSelectorUploadView
 
 	@Override
 	public String getTitle(Locale locale) {
-		return LanguageUtil.get(locale, "upload-image");
+		return _language.get(locale, "upload-image");
 	}
 
 	@Override
@@ -97,14 +97,6 @@ public class ItemSelectorUploadView
 		requestDispatcher.include(servletRequest, servletResponse);
 	}
 
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.item.selector.upload.web)",
-		unbind = "-"
-	)
-	public void setServletContext(ServletContext servletContext) {
-		_servletContext = servletContext;
-	}
-
 	private static final List<ItemSelectorReturnType>
 		_supportedItemSelectorReturnTypes = Collections.unmodifiableList(
 			ListUtil.fromArray(
@@ -115,6 +107,12 @@ public class ItemSelectorUploadView
 	private ItemSelectorReturnTypeResolverHandler
 		_itemSelectorReturnTypeResolverHandler;
 
+	@Reference
+	private Language _language;
+
+	@Reference(
+		target = "(osgi.web.symbolicname=com.liferay.item.selector.upload.web)"
+	)
 	private ServletContext _servletContext;
 
 }

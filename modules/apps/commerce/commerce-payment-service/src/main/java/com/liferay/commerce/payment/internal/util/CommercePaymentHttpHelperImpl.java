@@ -18,13 +18,12 @@ import com.liferay.commerce.model.CommerceOrder;
 import com.liferay.commerce.payment.util.CommercePaymentHttpHelper;
 import com.liferay.commerce.service.CommerceOrderLocalService;
 import com.liferay.commerce.service.CommerceOrderService;
-import com.liferay.petra.encryptor.Encryptor;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.encryptor.Encryptor;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
-import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -41,9 +40,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alec Sloan
  */
-@Component(
-	enabled = false, immediate = true, service = CommercePaymentHttpHelper.class
-)
+@Component(service = CommercePaymentHttpHelper.class)
 public class CommercePaymentHttpHelperImpl
 	implements CommercePaymentHttpHelper {
 
@@ -84,11 +81,9 @@ public class CommercePaymentHttpHelperImpl
 				PermissionCheckerFactoryUtil.create(defaultUser));
 		}
 		else {
-			PermissionChecker permissionChecker =
+			PermissionThreadLocal.setPermissionChecker(
 				PermissionCheckerFactoryUtil.create(
-					_portal.getUser(httpServletRequest));
-
-			PermissionThreadLocal.setPermissionChecker(permissionChecker);
+					_portal.getUser(httpServletRequest)));
 
 			commerceOrder =
 				_commerceOrderService.getCommerceOrderByUuidAndGroupId(
@@ -103,7 +98,7 @@ public class CommercePaymentHttpHelperImpl
 
 		Key key = company.getKeyObj();
 
-		return Encryptor.encrypt(key, String.valueOf(commerceOrderId));
+		return _encryptor.encrypt(key, String.valueOf(commerceOrderId));
 	}
 
 	@Reference
@@ -111,6 +106,9 @@ public class CommercePaymentHttpHelperImpl
 
 	@Reference
 	private CommerceOrderService _commerceOrderService;
+
+	@Reference
+	private Encryptor _encryptor;
 
 	@Reference
 	private Portal _portal;

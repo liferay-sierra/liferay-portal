@@ -60,7 +60,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Raymond Augé
  */
 @Component(
-	immediate = true,
 	property = "destination.name=" + DestinationNames.HOT_DEPLOY,
 	service = MessageListener.class
 )
@@ -127,25 +126,6 @@ public class ResourcesImporterHotDeployMessageListener
 	@Override
 	protected void onDeploy(Message message) throws Exception {
 		_initialize(message);
-	}
-
-	@Reference(
-		target = "(destination.name=" + DestinationNames.HOT_DEPLOY + ")",
-		unbind = "-"
-	)
-	protected void setDestination(Destination destination) {
-	}
-
-	@Reference(unbind = "-")
-	protected void setImporterFactory(ImporterFactory importerFactory) {
-		_importerFactory = importerFactory;
-	}
-
-	@Reference(
-		target = "(&(release.bundle.symbolic.name=com.liferay.exportimport.service)(release.schema.version=1.0.2))",
-		unbind = "-"
-	)
-	protected void setRelease(Release release) {
 	}
 
 	private void _importResources(
@@ -284,15 +264,24 @@ public class ResourcesImporterHotDeployMessageListener
 	@Reference
 	private CompanyLocalService _companyLocalService;
 
+	@Reference(
+		target = "(destination.name=" + DestinationNames.HOT_DEPLOY + ")"
+	)
 	private Destination _destination;
 
 	@Reference
 	private DestinationFactory _destinationFactory;
 
+	@Reference
 	private ImporterFactory _importerFactory;
 
 	@Reference
 	private MessageBus _messageBus;
+
+	@Reference(
+		target = "(&(release.bundle.symbolic.name=com.liferay.exportimport.service)(release.schema.version=1.0.2))"
+	)
+	private Release _release;
 
 	private ServiceRegistration<Destination> _serviceRegistration;
 	private ServiceTrackerMap<String, ServletContext> _serviceTrackerMap;

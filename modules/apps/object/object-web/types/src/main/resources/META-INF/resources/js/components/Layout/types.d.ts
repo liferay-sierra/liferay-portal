@@ -12,53 +12,38 @@
  * details.
  */
 
-export declare type TName = {
-	[key: string]: string;
-};
+export declare type BoxType = 'regular' | 'categorization';
 export declare type TObjectLayout = {
 	defaultObjectLayout: boolean;
-	name: TName;
+	name: LocalizedValue<string>;
+	objectDefinitionId: number;
 	objectLayoutTabs: TObjectLayoutTab[];
 };
 export declare type TObjectLayoutTab = {
-	name: TName;
+	name: LocalizedValue<string>;
 	objectLayoutBoxes: TObjectLayoutBox[];
 	objectRelationshipId: number;
 	priority: number;
 };
 export declare type TObjectLayoutBox = {
 	collapsable: boolean;
-	name: TName;
+	name: LocalizedValue<string>;
 	objectLayoutRows: TObjectLayoutRow[];
 	priority: number;
+	type: BoxType;
 };
 export declare type TObjectLayoutRow = {
 	objectLayoutColumns: TObjectLayoutColumn[];
 	priority: number;
 };
 export declare type TObjectLayoutColumn = {
-	objectFieldId: number;
+	objectFieldName: string;
 	priority: number;
 	size: number;
 };
-export declare type TObjectField = {
-	DBType: string;
-	id: number;
-	indexed: boolean;
-	indexedAsKeyword: boolean;
-	indexedLanguageId: string;
+export interface TObjectField extends ObjectField {
 	inLayout?: boolean;
-	label: TName;
-	listTypeDefinitionId: boolean;
-	name: string;
-	required: boolean;
-};
-export declare type TObjectRelationship = {
-	id: number;
+}
+export interface TObjectRelationship extends ObjectRelationship {
 	inLayout?: boolean;
-	label: TName;
-	name: string;
-	objectDefinitionId1: number;
-	objectDefinitionId2: number;
-	type: string;
-};
+}

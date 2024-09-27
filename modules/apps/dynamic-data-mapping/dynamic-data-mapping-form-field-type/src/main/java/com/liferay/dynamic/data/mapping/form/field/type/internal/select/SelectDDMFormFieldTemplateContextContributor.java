@@ -25,7 +25,7 @@ import com.liferay.dynamic.data.mapping.render.DDMFormFieldRenderingContext;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactory;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.AggregateResourceBundle;
@@ -52,7 +52,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marcellus Tavares
  */
 @Component(
-	immediate = true,
 	property = "ddm.form.field.type.name=" + DDMFormFieldTypeConstants.SELECT,
 	service = {
 		DDMFormFieldTemplateContextContributor.class,
@@ -72,6 +71,9 @@ public class SelectDDMFormFieldTemplateContextContributor
 			GetterUtil.getBoolean(ddmFormField.getProperty("alphabeticalOrder"))
 		).put(
 			"dataSourceType", ddmFormField.getDataSourceType()
+		).put(
+			"defaultSearch",
+			GetterUtil.getBoolean(ddmFormField.getProperty("defaultSearch"))
 		).put(
 			"multiple", getMultiple(ddmFormField, ddmFormFieldRenderingContext)
 		).put(
@@ -233,21 +235,23 @@ public class SelectDDMFormFieldTemplateContextContributor
 		ResourceBundle resourceBundle = getResourceBundle(displayLocale);
 
 		return HashMapBuilder.put(
-			"chooseAnOption",
-			LanguageUtil.get(resourceBundle, "choose-an-option")
+			"chooseAnOption", _language.get(resourceBundle, "choose-an-option")
 		).put(
-			"chooseOptions", LanguageUtil.get(resourceBundle, "choose-options")
+			"chooseOptions", _language.get(resourceBundle, "choose-options")
 		).put(
 			"dynamicallyLoadedData",
-			LanguageUtil.get(resourceBundle, "dynamically-loaded-data")
+			_language.get(resourceBundle, "dynamically-loaded-data")
 		).put(
-			"emptyList", LanguageUtil.get(resourceBundle, "empty-list")
+			"emptyList", _language.get(resourceBundle, "empty-list")
 		).put(
-			"search", LanguageUtil.get(resourceBundle, "search")
+			"search", _language.get(resourceBundle, "search")
 		).build();
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		SelectDDMFormFieldTemplateContextContributor.class);
+
+	@Reference
+	private Language _language;
 
 }

@@ -54,7 +54,7 @@ if (Validator.isNotNull(onInitMethod)) {
 }
 
 String placeholder = GetterUtil.getString((String)request.getAttribute(CKEditorConstants.ATTRIBUTE_NAMESPACE + ":placeholder"));
-
+boolean required = GetterUtil.getBoolean((String)request.getAttribute(CKEditorConstants.ATTRIBUTE_NAMESPACE + ":required"));
 boolean skipEditorLoading = GetterUtil.getBoolean((String)request.getAttribute(CKEditorConstants.ATTRIBUTE_NAMESPACE + ":skipEditorLoading"));
 String toolbarSet = (String)request.getAttribute(CKEditorConstants.ATTRIBUTE_NAMESPACE + ":toolbarSet");
 
@@ -105,8 +105,12 @@ if (inlineEdit && Validator.isNotNull(inlineEditSaveURL)) {
 	var="editor"
 >
 	<c:if test="<%= Validator.isNotNull(placeholder) %>">
-		<label class="control-label" for="<%= name %>">
+		<label class="control-label" for="<%= HtmlUtil.escapeAttribute(name) %>">
 			<liferay-ui:message key="<%= placeholder %>" />
+
+			<c:if test="<%= required %>">
+				<span class="text-warning">*</span>
+			</c:if>
 		</label>
 	</c:if>
 
@@ -273,21 +277,6 @@ name = HtmlUtil.escapeJS(name);
 				window['<%= HtmlUtil.escapeJS(onBlurMethod) %>'](
 					CKEDITOR.instances['<%= name %>']
 				);
-			},
-		</c:if>
-
-		<c:if test="<%= Validator.isNotNull(onChangeMethod) %>">
-			onChangeCallback: function () {
-				var ckEditor = CKEDITOR.instances['<%= name %>'];
-				var dirty = ckEditor.checkDirty();
-
-				if (dirty) {
-					window['<%= HtmlUtil.escapeJS(onChangeMethod) %>'](
-						window['<%= name %>'].getHTML()
-					);
-
-					ckEditor.resetDirty();
-				}
 			},
 		</c:if>
 
@@ -558,25 +547,6 @@ name = HtmlUtil.escapeJS(name);
 				);
 			</c:if>
 
-			<c:if test="<%= Validator.isNotNull(onChangeMethod) %>">
-				var contentChangeHandle = setInterval(() => {
-					try {
-						window['<%= name %>'].onChangeCallback();
-					}
-					catch (e) {}
-				}, 300);
-
-				var clearContentChangeHandle = function (event) {
-					if (event.portletId === '<%= portletId %>') {
-						clearInterval(contentChangeHandle);
-
-						Liferay.detach('destroyPortlet', clearContentChangeHandle);
-					}
-				};
-
-				Liferay.on('destroyPortlet', clearContentChangeHandle);
-			</c:if>
-
 			<c:if test="<%= Validator.isNotNull(onFocusMethod) %>">
 				CKEDITOR.instances['<%= name %>'].on(
 					'focus',
@@ -611,7 +581,9 @@ name = HtmlUtil.escapeJS(name);
 
 										window['<%= name %>'].create();
 
-										window['<%= name %>'].setHTML(ckEditorContent);
+										CKEDITOR.instances['<%= name %>'].setData(
+											ckEditorContent
+										);
 
 										initialEditor =
 											CKEDITOR.instances['<%= name %>'].id;
@@ -623,6 +595,14 @@ name = HtmlUtil.escapeJS(name);
 				);
 			</c:if>
 		});
+
+		<c:if test="<%= Validator.isNotNull(onChangeMethod) %>">
+			ckEditor.on('change', (event) => {
+				window['<%= HtmlUtil.escapeJS(onChangeMethod) %>'](
+					window['<%= name %>'].getHTML()
+				);
+			});
+		</c:if>
 
 		ckEditor.on('dataReady', (event) => {
 			if (instancePendingData !== null) {

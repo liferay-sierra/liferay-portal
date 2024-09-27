@@ -36,13 +36,14 @@ import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.search.filter.TermFilter;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
-import com.liferay.portal.kernel.service.LayoutFriendlyURLLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.LayoutService;
 import com.liferay.portal.kernel.servlet.DummyHttpServletResponse;
 import com.liferay.portal.kernel.servlet.DynamicServletRequest;
 import com.liferay.portal.kernel.servlet.ServletContextPool;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.theme.ThemeUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Portal;
@@ -56,22 +57,18 @@ import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.portal.vulcan.util.JaxRsLinkUtil;
 import com.liferay.portal.vulcan.util.SearchUtil;
-import com.liferay.portal.vulcan.util.TransformUtil;
 import com.liferay.segments.SegmentsEntryRetriever;
-import com.liferay.segments.constants.SegmentsEntryConstants;
+import com.liferay.segments.constants.SegmentsExperienceConstants;
 import com.liferay.segments.constants.SegmentsWebKeys;
 import com.liferay.segments.context.RequestContextMapper;
 import com.liferay.segments.model.SegmentsExperience;
 import com.liferay.segments.processor.SegmentsExperienceRequestProcessorRegistry;
 import com.liferay.segments.service.SegmentsExperienceLocalService;
 import com.liferay.segments.service.SegmentsExperienceService;
-import com.liferay.taglib.util.ThemeUtil;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
@@ -140,7 +137,7 @@ public class SitePageResourceImpl extends BaseSitePageResourceImpl {
 		Layout layout = _getLayout(siteId, friendlyUrlPath);
 
 		return Page.of(
-			TransformUtil.transform(
+			transform(
 				_getSegmentsExperiences(layout),
 				segmentsExperience -> _toSitePage(
 					_isEmbeddedPageDefinition(), layout,
@@ -233,21 +230,6 @@ public class SitePageResourceImpl extends BaseSitePageResourceImpl {
 		).build();
 	}
 
-	private SegmentsExperience _getDefaultSegmentsExperience(long groupId) {
-		SegmentsExperience segmentsExperience =
-			_segmentsExperienceLocalService.createSegmentsExperience(
-				SegmentsEntryConstants.ID_DEFAULT);
-
-		segmentsExperience.setGroupId(groupId);
-		segmentsExperience.setSegmentsExperienceKey(
-			String.valueOf(SegmentsEntryConstants.ID_DEFAULT));
-		segmentsExperience.setName(
-			SegmentsEntryConstants.getDefaultSegmentsEntryName(
-				contextUser.getLocale()));
-
-		return segmentsExperience;
-	}
-
 	private Map<String, Map<String, String>> _getExperienceActions(
 		Layout layout) {
 
@@ -288,15 +270,9 @@ public class SitePageResourceImpl extends BaseSitePageResourceImpl {
 			return _getUserSegmentsExperience(layout);
 		}
 
-		if (Objects.equals(
-				String.valueOf(SegmentsEntryConstants.ID_DEFAULT),
-				segmentsExperienceKey)) {
-
-			return _getDefaultSegmentsExperience(layout.getGroupId());
-		}
-
 		return _segmentsExperienceService.fetchSegmentsExperience(
-			layout.getGroupId(), segmentsExperienceKey);
+			layout.getGroupId(), segmentsExperienceKey,
+			_portal.getClassNameId(Layout.class), layout.getPlid());
 	}
 
 	private List<SegmentsExperience> _getSegmentsExperiences(Layout layout)
@@ -306,16 +282,9 @@ public class SitePageResourceImpl extends BaseSitePageResourceImpl {
 			return Collections.emptyList();
 		}
 
-		List<SegmentsExperience> segmentsExperiences = new ArrayList<>(
-			_segmentsExperienceLocalService.getSegmentsExperiences(
-				layout.getGroupId(),
-				_portal.getClassNameId(Layout.class.getName()),
-				layout.getPlid(), true));
-
-		segmentsExperiences.add(
-			_getDefaultSegmentsExperience(layout.getGroupId()));
-
-		return segmentsExperiences;
+		return _segmentsExperienceLocalService.getSegmentsExperiences(
+			layout.getGroupId(), _portal.getClassNameId(Layout.class.getName()),
+			layout.getPlid(), true);
 	}
 
 	private ThemeDisplay _getThemeDisplay(Layout layout) throws Exception {
@@ -361,12 +330,15 @@ public class SitePageResourceImpl extends BaseSitePageResourceImpl {
 					_portal.getClassNameId(Layout.class.getName()),
 					layout.getPlid(), segmentsEntryIds);
 
-		if (segmentsExperienceIds.length > 0) {
-			return _segmentsExperienceLocalService.getSegmentsExperience(
-				segmentsExperienceIds[0]);
+		if (ArrayUtil.isEmpty(segmentsExperienceIds)) {
+			return _segmentsExperienceLocalService.fetchSegmentsExperience(
+				layout.getGroupId(), SegmentsExperienceConstants.KEY_DEFAULT,
+				_portal.getClassNameId(Layout.class.getName()),
+				layout.getPlid());
 		}
 
-		return _getDefaultSegmentsExperience(layout.getGroupId());
+		return _segmentsExperienceLocalService.getSegmentsExperience(
+			segmentsExperienceIds[0]);
 	}
 
 	private boolean _isEmbeddedPageDefinition() {
@@ -394,9 +366,11 @@ public class SitePageResourceImpl extends BaseSitePageResourceImpl {
 		SegmentsExperience segmentsExperience = _getSegmentsExperience(
 			layout, segmentsExperienceKey);
 
-		contextHttpServletRequest.setAttribute(
-			SegmentsWebKeys.SEGMENTS_EXPERIENCE_IDS,
-			new long[] {segmentsExperience.getSegmentsExperienceId()});
+		if (segmentsExperience != null) {
+			contextHttpServletRequest.setAttribute(
+				SegmentsWebKeys.SEGMENTS_EXPERIENCE_IDS,
+				new long[] {segmentsExperience.getSegmentsExperienceId()});
+		}
 
 		contextHttpServletRequest.setAttribute(
 			WebKeys.THEME_DISPLAY, _getThemeDisplay(layout));
@@ -475,9 +449,6 @@ public class SitePageResourceImpl extends BaseSitePageResourceImpl {
 
 	@Reference
 	private FriendlyURLEntryLocalService _friendlyURLEntryLocalService;
-
-	@Reference
-	private LayoutFriendlyURLLocalService _layoutFriendlyURLLocalService;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;

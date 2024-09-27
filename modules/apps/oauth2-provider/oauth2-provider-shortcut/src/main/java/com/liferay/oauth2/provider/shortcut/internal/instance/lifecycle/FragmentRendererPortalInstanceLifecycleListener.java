@@ -18,8 +18,6 @@ import com.liferay.oauth2.provider.constants.ClientProfile;
 import com.liferay.oauth2.provider.constants.GrantType;
 import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
-import com.liferay.oauth2.provider.service.OAuth2ApplicationScopeAliasesLocalService;
-import com.liferay.oauth2.provider.service.OAuth2ScopeGrantLocalService;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.instance.lifecycle.BasePortalInstanceLifecycleListener;
 import com.liferay.portal.instance.lifecycle.PortalInstanceLifecycleListener;
@@ -70,9 +68,10 @@ public class FragmentRendererPortalInstanceLifecycleListener
 					add(GrantType.RESOURCE_OWNER_PASSWORD);
 				}
 			},
-			user.getUserId(), _clientId, ClientProfile.NATIVE_APPLICATION.id(),
-			StringPool.BLANK, null, null, null, 0, _applicationName, null,
-			Collections.emptyList(),
+			"none", user.getUserId(), _clientId,
+			ClientProfile.NATIVE_APPLICATION.id(), StringPool.BLANK, null, null,
+			null, 0, null, _applicationName, null, Collections.emptyList(),
+			false, false,
 			builder -> builder.forApplication(
 				"liferay-json-web-services",
 				"com.liferay.oauth2.provider.jsonws",
@@ -97,13 +96,6 @@ public class FragmentRendererPortalInstanceLifecycleListener
 
 	@Reference
 	private OAuth2ApplicationLocalService _oAuth2ApplicationLocalService;
-
-	@Reference
-	private OAuth2ApplicationScopeAliasesLocalService
-		_oAuth2ApplicationScopeAliasesLocalService;
-
-	@Reference
-	private OAuth2ScopeGrantLocalService _oAuth2ScopeGrantLocalService;
 
 	@Reference
 	private UserLocalService _userLocalService;

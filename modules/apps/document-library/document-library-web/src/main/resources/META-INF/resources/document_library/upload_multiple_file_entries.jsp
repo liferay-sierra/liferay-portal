@@ -78,7 +78,8 @@ if (portletTitleBasedNavigation) {
 									'<liferay-portlet:actionURL name="/document_library/upload_multiple_file_entries"><portlet:param name="<%= Constants.CMD %>" value="<%= Constants.DELETE_TEMP %>" /><portlet:param name="folderId" value="<%= String.valueOf(folderId) %>" /></liferay-portlet:actionURL>',
 								fileDescription:
 									'<%= StringUtil.merge(dlConfiguration.fileExtensions()) %>',
-								maxFileSize: '<%= dlConfiguration.fileMaxSize() %> B',
+								maxFileSize:
+									'<%= DLValidatorUtil.getMaxAllowableSize(themeDisplay.getScopeGroupId(), null) %> B',
 								metadataContainer: '#<portlet:namespace />commonFileMetadataContainer',
 								metadataExplanationContainer:
 									'#<portlet:namespace />metadataExplanationContainer',
@@ -111,7 +112,9 @@ if (portletTitleBasedNavigation) {
 						PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "add-multiple-file-entries"), currentURL);
 						%>
 
-						<aui:script require="frontend-js-web/liferay/util/run_scripts_in_element.es as runScriptsInElement">
+						<aui:script require="frontend-js-web/index as frontendJsWeb">
+							var {runScriptsInElement} = frontendJsWeb;
+
 							AUI().use('aui-base', 'aui-loading-mask-deprecated', 'node-load', (A) => {
 								Liferay.on('tempFileRemoved', () => {
 									Liferay.Util.openToast({
@@ -232,7 +235,7 @@ if (portletTitleBasedNavigation) {
 													'<%= uploadMultipleFileEntries %>',
 													undefined,
 													() => {
-														runScriptsInElement.default(
+														runScriptsInElement(
 															document.getElementById(
 																'<portlet:namespace />commonFileMetadataContainer'
 															)

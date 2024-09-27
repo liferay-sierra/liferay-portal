@@ -34,7 +34,7 @@ String portletNamespace = PortalUtil.getPortletNamespace(ProductNavigationContro
 		data-type-mobile="fixed"
 		data-url="<%=
 			PortletURLBuilder.create(
-				PortletURLFactoryUtil.create(request, ProductNavigationControlMenuPortletKeys.PRODUCT_NAVIGATION_CONTROL_MENU, PortletRequest.RENDER_PHASE)
+				PortletURLFactoryUtil.create(request, ProductNavigationControlMenuPortletKeys.PRODUCT_NAVIGATION_CONTROL_MENU, PortletRequest.RESOURCE_PHASE)
 			).setMVCPath(
 				"/add_panel.jsp"
 			).setParameter(
@@ -43,7 +43,7 @@ String portletNamespace = PortalUtil.getPortletNamespace(ProductNavigationContro
 				LiferayWindowState.EXCLUSIVE
 			).buildString()
 		%>"
-		href="javascript:;"
+		href="javascript:void(0);"
 		id="<%= portletNamespace %>addToggleId"
 	>
 		<aui:icon cssClass="icon-monospaced" image="plus" markupView="lexicon" />

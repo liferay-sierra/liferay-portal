@@ -17,7 +17,7 @@ package com.liferay.map.google.maps.internal;
 import com.liferay.frontend.js.loader.modules.extender.npm.NPMResolver;
 import com.liferay.map.BaseJSPMapProvider;
 import com.liferay.map.MapProvider;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 
 import java.util.Locale;
@@ -60,22 +60,18 @@ public class GoogleMapsMapProvider extends BaseJSPMapProvider {
 		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
 			"content.Language", locale, getClass());
 
-		return LanguageUtil.get(resourceBundle, "google-maps");
+		return _language.get(resourceBundle, "google-maps");
 	}
 
 	@Override
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.map.google.maps)",
-		unbind = "-"
-	)
-	public void setServletContext(ServletContext servletContext) {
-		super.setServletContext(servletContext);
+	protected ServletContext getServletContext() {
+		return _servletContext;
 	}
 
 	@Override
 	protected void prepareRequest(HttpServletRequest httpServletRequest) {
 		String resolvedModuleName = _npmResolver.resolveModuleName(
-			"@liferay/map-google-maps/js/MapGoogleMaps.es");
+			"@liferay/map-google-maps/js/MapGoogleMaps");
 
 		httpServletRequest.setAttribute(
 			"liferay-map:map:bootstrapRequire",
@@ -83,6 +79,12 @@ public class GoogleMapsMapProvider extends BaseJSPMapProvider {
 	}
 
 	@Reference
+	private Language _language;
+
+	@Reference
 	private NPMResolver _npmResolver;
+
+	@Reference(target = "(osgi.web.symbolicname=com.liferay.map.google.maps)")
+	private ServletContext _servletContext;
 
 }

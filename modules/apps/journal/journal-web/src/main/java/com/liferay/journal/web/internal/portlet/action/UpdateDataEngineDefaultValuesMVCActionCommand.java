@@ -38,14 +38,16 @@ import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.upload.LiferayFileItemException;
 import com.liferay.portal.kernel.upload.UploadException;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.util.PropsValues;
 
 import java.io.File;
 
+import java.util.Calendar;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -105,7 +107,7 @@ public class UpdateDataEngineDefaultValuesMVCActionCommand
 		long groupId = ParamUtil.getLong(uploadPortletRequest, "groupId");
 		String articleId = ParamUtil.getString(
 			uploadPortletRequest, "articleId");
-		Map<Locale, String> titleMap = LocalizationUtil.getLocalizationMap(
+		Map<Locale, String> titleMap = _localization.getLocalizationMap(
 			actionRequest, "titleMapAsXML");
 
 		String ddmStructureKey = ParamUtil.getString(
@@ -128,9 +130,8 @@ public class UpdateDataEngineDefaultValuesMVCActionCommand
 		String content = _journalConverter.getContent(
 			ddmStructure, fields, groupId);
 
-		Map<Locale, String> descriptionMap =
-			LocalizationUtil.getLocalizationMap(
-				actionRequest, "descriptionMapAsXML");
+		Map<Locale, String> descriptionMap = _localization.getLocalizationMap(
+			actionRequest, "descriptionMapAsXML");
 
 		String ddmTemplateKey = ParamUtil.getString(
 			uploadPortletRequest, "ddmTemplateKey");
@@ -168,6 +169,71 @@ public class UpdateDataEngineDefaultValuesMVCActionCommand
 			layoutUuid = null;
 		}
 
+		int displayDateMonth = ParamUtil.getInteger(
+			uploadPortletRequest, "displayDateMonth");
+		int displayDateDay = ParamUtil.getInteger(
+			uploadPortletRequest, "displayDateDay");
+		int displayDateYear = ParamUtil.getInteger(
+			uploadPortletRequest, "displayDateYear");
+		int displayDateHour = ParamUtil.getInteger(
+			uploadPortletRequest, "displayDateHour");
+		int displayDateMinute = ParamUtil.getInteger(
+			uploadPortletRequest, "displayDateMinute");
+		int displayDateAmPm = ParamUtil.getInteger(
+			uploadPortletRequest, "displayDateAmPm");
+
+		if (displayDateAmPm == Calendar.PM) {
+			displayDateHour += 12;
+		}
+
+		int expirationDateMonth = ParamUtil.getInteger(
+			uploadPortletRequest, "expirationDateMonth");
+		int expirationDateDay = ParamUtil.getInteger(
+			uploadPortletRequest, "expirationDateDay");
+		int expirationDateYear = ParamUtil.getInteger(
+			uploadPortletRequest, "expirationDateYear");
+		int expirationDateHour = ParamUtil.getInteger(
+			uploadPortletRequest, "expirationDateHour");
+		int expirationDateMinute = ParamUtil.getInteger(
+			uploadPortletRequest, "expirationDateMinute");
+		int expirationDateAmPm = ParamUtil.getInteger(
+			uploadPortletRequest, "expirationDateAmPm");
+
+		boolean neverExpire = ParamUtil.getBoolean(
+			uploadPortletRequest, "neverExpire", displayDateYear == 0);
+
+		if (!PropsValues.SCHEDULER_ENABLED) {
+			neverExpire = true;
+		}
+
+		if (expirationDateAmPm == Calendar.PM) {
+			expirationDateHour += 12;
+		}
+
+		int reviewDateMonth = ParamUtil.getInteger(
+			uploadPortletRequest, "reviewDateMonth");
+		int reviewDateDay = ParamUtil.getInteger(
+			uploadPortletRequest, "reviewDateDay");
+		int reviewDateYear = ParamUtil.getInteger(
+			uploadPortletRequest, "reviewDateYear");
+		int reviewDateHour = ParamUtil.getInteger(
+			uploadPortletRequest, "reviewDateHour");
+		int reviewDateMinute = ParamUtil.getInteger(
+			uploadPortletRequest, "reviewDateMinute");
+		int reviewDateAmPm = ParamUtil.getInteger(
+			uploadPortletRequest, "reviewDateAmPm");
+
+		boolean neverReview = ParamUtil.getBoolean(
+			uploadPortletRequest, "neverReview", displayDateYear == 0);
+
+		if (!PropsValues.SCHEDULER_ENABLED) {
+			neverReview = true;
+		}
+
+		if (reviewDateAmPm == Calendar.PM) {
+			reviewDateHour += 12;
+		}
+
 		boolean indexable = ParamUtil.getBoolean(
 			uploadPortletRequest, "indexable");
 
@@ -199,8 +265,14 @@ public class UpdateDataEngineDefaultValuesMVCActionCommand
 
 			article = _journalArticleService.addArticleDefaultValues(
 				groupId, classNameId, classPK, titleMap, descriptionMap,
-				content, ddmStructureKey, ddmTemplateKey, layoutUuid, indexable,
-				smallImage, smallImageURL, smallFile, serviceContext);
+				content, ddmStructureKey, ddmTemplateKey, layoutUuid,
+				displayDateMonth, displayDateDay, displayDateYear,
+				displayDateHour, displayDateMinute, expirationDateMonth,
+				expirationDateDay, expirationDateYear, expirationDateHour,
+				expirationDateMinute, neverExpire, reviewDateMonth,
+				reviewDateDay, reviewDateYear, reviewDateHour, reviewDateMinute,
+				neverReview, indexable, smallImage, smallImageURL, smallFile,
+				serviceContext);
 		}
 		else if (actionName.equals(
 					"/journal/update_data_engine_default_values")) {
@@ -209,7 +281,12 @@ public class UpdateDataEngineDefaultValuesMVCActionCommand
 
 			article = _journalArticleService.updateArticleDefaultValues(
 				groupId, articleId, titleMap, descriptionMap, content,
-				ddmStructureKey, ddmTemplateKey, layoutUuid, indexable,
+				ddmStructureKey, ddmTemplateKey, layoutUuid, displayDateMonth,
+				displayDateDay, displayDateYear, displayDateHour,
+				displayDateMinute, expirationDateMonth, expirationDateDay,
+				expirationDateYear, expirationDateHour, expirationDateMinute,
+				neverExpire, reviewDateMonth, reviewDateDay, reviewDateYear,
+				reviewDateHour, reviewDateMinute, neverReview, indexable,
 				smallImage, smallImageURL, smallFile, serviceContext);
 		}
 
@@ -241,6 +318,9 @@ public class UpdateDataEngineDefaultValuesMVCActionCommand
 
 	@Reference
 	private JournalHelper _journalHelper;
+
+	@Reference
+	private Localization _localization;
 
 	@Reference
 	private Portal _portal;

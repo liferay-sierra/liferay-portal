@@ -15,7 +15,7 @@
 package com.liferay.translation.web.internal.portlet.action;
 
 import com.liferay.info.field.InfoFieldValue;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFieldValuesProvider;
 import com.liferay.info.item.provider.InfoItemObjectProvider;
 import com.liferay.petra.string.StringPool;
@@ -26,6 +26,7 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.segments.service.SegmentsExperienceLocalService;
 import com.liferay.translation.constants.TranslationPortletKeys;
 import com.liferay.translation.service.TranslationEntryLocalService;
 import com.liferay.translation.web.internal.display.context.ImportTranslationDisplayContext;
@@ -63,7 +64,8 @@ public class ImportTranslationMVCRenderCommand implements MVCRenderCommand {
 
 			TranslationRequestHelper translationRequestHelper =
 				new TranslationRequestHelper(
-					_infoItemServiceTracker, renderRequest);
+					_infoItemServiceRegistry, renderRequest,
+					_segmentsExperienceLocalService);
 
 			renderRequest.setAttribute(
 				ImportTranslationDisplayContext.class.getName(),
@@ -92,7 +94,7 @@ public class ImportTranslationMVCRenderCommand implements MVCRenderCommand {
 		throws PortalException {
 
 		InfoItemObjectProvider<Object> infoItemObjectProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemObjectProvider.class, className);
 
 		return infoItemObjectProvider.getInfoItem(classPK);
@@ -106,7 +108,7 @@ public class ImportTranslationMVCRenderCommand implements MVCRenderCommand {
 		}
 
 		InfoItemFieldValuesProvider<Object> infoItemFieldValuesProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFieldValuesProvider.class, className);
 
 		InfoFieldValue<Object> infoFieldValue = _getTitleInfoFieldValue(
@@ -130,10 +132,13 @@ public class ImportTranslationMVCRenderCommand implements MVCRenderCommand {
 	}
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private SegmentsExperienceLocalService _segmentsExperienceLocalService;
 
 	@Reference
 	private TranslationEntryLocalService _translationEntryLocalService;

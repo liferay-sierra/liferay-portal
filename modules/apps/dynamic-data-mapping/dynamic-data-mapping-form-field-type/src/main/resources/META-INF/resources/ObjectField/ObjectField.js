@@ -59,7 +59,13 @@ const ObjectField = ({
 
 	const options = useMemo(() => {
 		const filteredObjectFields = objectFields.filter(
-			({listTypeDefinitionId, relationshipType, type}) => {
+			({
+				businessType,
+				listTypeDefinitionId,
+				relationshipType,
+				system,
+				type,
+			}) => {
 				if (
 					!listTypeDefinitionId &&
 					(focusedFieldType === 'radio' ||
@@ -79,11 +85,21 @@ const ObjectField = ({
 				) {
 					return false;
 				}
-				else if (focusedFieldType === 'text' && type === 'Clob') {
+				else if (
+					(focusedFieldType === 'rich_text' ||
+						focusedFieldType === 'text') &&
+					type === 'Clob'
+				) {
 					return true;
 				}
-				else if (relationshipType) {
+				else if (relationshipType || system) {
 					return false;
+				}
+				else if (
+					businessType === 'Attachment' &&
+					focusedFieldType === 'document_library'
+				) {
+					return true;
 				}
 
 				return normalizedDataType.includes(type.toLowerCase());

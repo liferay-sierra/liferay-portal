@@ -64,7 +64,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Daniel Kocsis
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + DDMPortletKeys.DYNAMIC_DATA_MAPPING,
 	service = StagedModelDataHandler.class
 )
@@ -258,10 +257,10 @@ public class DDMTemplateStagedModelDataHandler
 
 		template.setScript(script);
 
-		long defaultUserId = _userLocalService.getDefaultUserId(
-			template.getCompanyId());
+		if (_isPreloadedTemplate(
+				_userLocalService.getDefaultUserId(template.getCompanyId()),
+				template)) {
 
-		if (_isPreloadedTemplate(defaultUserId, template)) {
 			templateElement.addAttribute("preloaded", "true");
 		}
 
@@ -500,46 +499,6 @@ public class DDMTemplateStagedModelDataHandler
 			template.getResourceClassName());
 	}
 
-	@Reference(unbind = "-")
-	protected void setDDMStructureLocalService(
-		DDMStructureLocalService ddmStructureLocalService) {
-
-		_ddmStructureLocalService = ddmStructureLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMTemplateExportImportContentProcessor(
-		DDMTemplateExportImportContentProcessor
-			ddmTemplateExportImportContentProcessor) {
-
-		_ddmTemplateExportImportContentProcessor =
-			ddmTemplateExportImportContentProcessor;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMTemplateLocalService(
-		DDMTemplateLocalService ddmTemplateLocalService) {
-
-		_ddmTemplateLocalService = ddmTemplateLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMTemplateVersionLocalService(
-		DDMTemplateVersionLocalService ddmTemplateVersionLocalService) {
-
-		_ddmTemplateVersionLocalService = ddmTemplateVersionLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setImageLocalService(ImageLocalService imageLocalService) {
-		_imageLocalService = imageLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setUserLocalService(UserLocalService userLocalService) {
-		_userLocalService = userLocalService;
-	}
-
 	@Reference
 	protected DDMPermissionSupport ddmPermissionSupport;
 
@@ -625,20 +584,29 @@ public class DDMTemplateStagedModelDataHandler
 	private static final Log _log = LogFactoryUtil.getLog(
 		DDMTemplateStagedModelDataHandler.class);
 
+	@Reference
 	private DDMStructureLocalService _ddmStructureLocalService;
+
+	@Reference
 	private DDMTemplateExportImportContentProcessor
 		_ddmTemplateExportImportContentProcessor;
+
+	@Reference
 	private DDMTemplateLocalService _ddmTemplateLocalService;
+
+	@Reference
 	private DDMTemplateVersionLocalService _ddmTemplateVersionLocalService;
 
 	@Reference
 	private GroupLocalService _groupLocalService;
 
+	@Reference
 	private ImageLocalService _imageLocalService;
 
 	@Reference
 	private Portal _portal;
 
+	@Reference
 	private UserLocalService _userLocalService;
 
 }

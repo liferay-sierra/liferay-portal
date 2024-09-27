@@ -14,6 +14,8 @@
 
 package com.liferay.portal.kernel.jsonwebservice;
 
+import com.liferay.portal.kernel.util.ServiceProxyFactory;
+
 import java.lang.reflect.Method;
 
 import java.util.List;
@@ -63,27 +65,10 @@ public class JSONWebServiceActionsManagerUtil {
 			contextName);
 	}
 
-	public static int getJSONWebServiceActionsCount(String contextName) {
-		return _jsonWebServiceActionsManager.getJSONWebServiceActionsCount(
-			contextName);
-	}
-
 	public static JSONWebServiceActionsManager
 		getJSONWebServiceActionsManager() {
 
 		return _jsonWebServiceActionsManager;
-	}
-
-	public static JSONWebServiceNaming getJSONWebServiceNaming() {
-		return _jsonWebServiceActionsManager.getJSONWebServiceNaming();
-	}
-
-	public static void registerJSONWebServiceAction(
-		String contextName, String contextPath, Class<?> actionClass,
-		Method actionMethod, String path, String method) {
-
-		_jsonWebServiceActionsManager.registerJSONWebServiceAction(
-			contextName, contextPath, actionClass, actionMethod, path, method);
 	}
 
 	public static void registerJSONWebServiceAction(
@@ -105,22 +90,16 @@ public class JSONWebServiceActionsManagerUtil {
 			actionObject);
 	}
 
-	public static int unregisterJSONWebServiceActions(String contextPath) {
-		return _jsonWebServiceActionsManager.unregisterJSONWebServiceActions(
-			contextPath);
-	}
-
 	public static int unregisterServletContext(ServletContext servletContext) {
 		return _jsonWebServiceActionsManager.unregisterServletContext(
 			servletContext);
 	}
 
-	public void setJSONWebServiceActionsManager(
-		JSONWebServiceActionsManager jsonWebServiceActionsManager) {
-
-		_jsonWebServiceActionsManager = jsonWebServiceActionsManager;
-	}
-
-	private static JSONWebServiceActionsManager _jsonWebServiceActionsManager;
+	private static volatile JSONWebServiceActionsManager
+		_jsonWebServiceActionsManager =
+			ServiceProxyFactory.newServiceTrackedInstance(
+				JSONWebServiceActionsManager.class,
+				JSONWebServiceActionsManagerUtil.class,
+				"_jsonWebServiceActionsManager", true);
 
 }

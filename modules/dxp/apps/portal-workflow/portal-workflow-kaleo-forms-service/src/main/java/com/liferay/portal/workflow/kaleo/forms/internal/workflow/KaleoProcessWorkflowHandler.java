@@ -43,7 +43,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marcellus Tavares
  */
-@Component(immediate = true, service = WorkflowHandler.class)
+@Component(service = WorkflowHandler.class)
 public class KaleoProcessWorkflowHandler
 	extends BaseWorkflowHandler<KaleoProcess> {
 
@@ -126,33 +126,16 @@ public class KaleoProcessWorkflowHandler
 			ddlRecord.getRecordSetId());
 	}
 
-	@Reference(unbind = "-")
-	protected void setDDLRecordLocalService(
-		DDLRecordLocalService ddlRecordLocalService) {
-
-		_ddlRecordLocalService = ddlRecordLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setKaleoProcessLocalService(
-		KaleoProcessLocalService kaleoProcessLocalService) {
-
-		_kaleoProcessLocalService = kaleoProcessLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setWorkflowDefinitionLinkLocalService(
-		WorkflowDefinitionLinkLocalService workflowDefinitionLinkLocalService) {
-
-		_workflowDefinitionLinkLocalService =
-			workflowDefinitionLinkLocalService;
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		KaleoProcessWorkflowHandler.class);
 
+	@Reference
 	private DDLRecordLocalService _ddlRecordLocalService;
+
+	@Reference
 	private KaleoProcessLocalService _kaleoProcessLocalService;
+
+	@Reference
 	private WorkflowDefinitionLinkLocalService
 		_workflowDefinitionLinkLocalService;
 

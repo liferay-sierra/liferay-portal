@@ -18,13 +18,13 @@ import com.liferay.message.boards.constants.MBPortletKeys;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.BaseJSPSettingsConfigurationAction;
 import com.liferay.portal.kernel.portlet.ConfigurationAction;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.NaturalOrderStringComparator;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -42,6 +42,7 @@ import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Brian Wing Shun Chan
@@ -91,8 +92,7 @@ public class MBAdminConfigurationAction
 			WebKeys.THEME_DISPLAY);
 
 		for (Locale locale :
-				LanguageUtil.getAvailableLocales(
-					themeDisplay.getSiteGroupId())) {
+				_language.getAvailableLocales(themeDisplay.getSiteGroupId())) {
 
 			String languageId = LocaleUtil.toLanguageId(locale);
 
@@ -119,7 +119,7 @@ public class MBAdminConfigurationAction
 				}
 			}
 
-			String preferenceName = LocalizationUtil.getLocalizedName(
+			String preferenceName = _localization.getLocalizedName(
 				"priorities", languageId);
 
 			setPreference(
@@ -133,8 +133,7 @@ public class MBAdminConfigurationAction
 			WebKeys.THEME_DISPLAY);
 
 		for (Locale locale :
-				LanguageUtil.getAvailableLocales(
-					themeDisplay.getSiteGroupId())) {
+				_language.getAvailableLocales(themeDisplay.getSiteGroupId())) {
 
 			String languageId = LocaleUtil.toLanguageId(locale);
 
@@ -170,11 +169,17 @@ public class MBAdminConfigurationAction
 				ranks[count++] = kvpName + StringPool.EQUAL + kvpValue;
 			}
 
-			String preferenceName = LocalizationUtil.getLocalizedName(
+			String preferenceName = _localization.getLocalizedName(
 				"ranks", languageId);
 
 			setPreference(actionRequest, preferenceName, ranks);
 		}
 	}
+
+	@Reference
+	private Language _language;
+
+	@Reference
+	private Localization _localization;
 
 }

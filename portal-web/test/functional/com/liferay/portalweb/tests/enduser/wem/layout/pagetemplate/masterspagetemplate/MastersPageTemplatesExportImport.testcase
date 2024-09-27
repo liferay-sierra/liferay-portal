@@ -56,7 +56,9 @@ definition {
 		task ("Assert Export button is disabled") {
 			MastersPageTemplatesAdmin.selectMasters(masterLayoutName = "Custom Masters Page Template");
 
-			AssertElementPresent(locator1 = "Icon#EXPORT_DISABLED");
+			AssertElementPresent(
+				key_text = "upload",
+				locator1 = "Icon#ANY_DISABLED");
 		}
 	}
 
@@ -114,9 +116,7 @@ definition {
 				key_position = "1",
 				locator1 = "PageEditor#GRID_COLUMN_NESTED_ELEMENT");
 
-			Button.click(button = "Publish Master");
-
-			Alert.viewSuccessMessage();
+			MastersPageTemplates.publishMaster();
 		}
 
 		task ("Export custom master") {
@@ -189,7 +189,7 @@ definition {
 				uploadFileName = "Document_1.png");
 
 			PageEditor.viewContainerStyle(
-				backgroundImage = "Document_1.png",
+				backgroundImage = "document_1-png",
 				position = "1");
 
 			PageEditor.addFragment(
@@ -201,7 +201,7 @@ definition {
 			PageEditor.gotoStyle(fragmentName = "Heading");
 
 			PageEditor.configureFragment(
-				alignment = "Center",
+				alignment = "Align Center",
 				textColor = "Danger");
 
 			PageEditor.gotoConfiguration(fragmentName = "Heading");
@@ -210,13 +210,11 @@ definition {
 
 			PageEditor.viewFragmentStyle(
 				alignment = "center",
-				fragmentName = "heading",
+				fragmentName = "Heading",
 				headingLevel = "h2",
 				textColor = "danger");
 
-			Button.click(button = "Publish Master");
-
-			Alert.viewSuccessMessage();
+			MastersPageTemplates.publishMaster();
 		}
 
 		task ("Export custom master") {
@@ -243,12 +241,12 @@ definition {
 			MastersPageTemplatesAdmin.gotoMasters(masterLayoutName = "Custom Masters Page Template");
 
 			PageEditor.viewContainerStyle(
-				backgroundImage = "Document_1.png",
+				backgroundImage = "document_1-png",
 				position = "1");
 
 			PageEditor.viewFragmentStyle(
 				alignment = "center",
-				fragmentName = "heading",
+				fragmentName = "Heading",
 				headingLevel = "h2",
 				textColor = "danger");
 		}
@@ -290,9 +288,7 @@ definition {
 
 			PageEditor.assertFragmentSidebarLoaded();
 
-			Button.click(button = "Publish Master");
-
-			Alert.viewSuccessMessage();
+			MastersPageTemplates.publishMaster();
 		}
 
 		task ("Export custom master") {
@@ -322,7 +318,7 @@ definition {
 
 			Click(locator1 = "PageEditor#MORE_LINK");
 
-			Pause(locator1 = "3000");
+			WaitForPageLoad();
 
 			AssertChecked.assertCheckedNotVisible(locator1 = "Radio#SPECIFIC_LOOK");
 
@@ -411,11 +407,9 @@ definition {
 			PageEditor.viewFragmentEditableImage(
 				id = "image",
 				imageDescription = "This is Document 1 png",
-				imageFileName = "Document_1.png");
+				imageFileName = "document_1-png");
 
-			Button.click(button = "Publish Master");
-
-			Alert.viewSuccessMessage();
+			MastersPageTemplates.publishMaster();
 		}
 
 		task ("Export custom master") {
@@ -458,22 +452,13 @@ definition {
 			PageEditor.viewFragmentEditableImage(
 				id = "image",
 				imageDescription = "This is Document 1 png",
-				imageFileName = "Document_1.png");
+				imageFileName = "document_1-png");
 		}
 	}
 
 	@description = "This is a use case for LPS-106815. The Organization Role permission settings of widgets will be exported and imported with master page template."
 	@priority = "4"
 	test ExportImportMastersPageTemplateWithOrganizationRolePermissionSettingsOfWidgets {
-		property osgi.app.includes = "account";
-		property test.name.skip.portal.instance = "MastersPageTemplatesExportImport#ExportImportMastersPageTemplateWithOrganizationRolePermissionSettingsOfWidgets";
-
-		task ("Restart the server") {
-			Portlet.shutdownServer();
-
-			Portlet.startServer(deleteLiferayHome = "false");
-		}
-
 		task ("Add a organization and organization site") {
 			JSONOrganization.addOrganization(
 				organizationName = "Organization Name 1",
@@ -512,7 +497,7 @@ definition {
 
 			IFrame.selectPermissionsFrame();
 
-			Check(
+			Check.checkNotVisible(
 				key_roleTitle = "account-manager",
 				locator1 = "Permissions#CONFIGURATION_PERMISSIONS_VIEW_CHECKBOX");
 
@@ -524,9 +509,7 @@ definition {
 
 			Click(locator1 = "Icon#CLOSE");
 
-			Button.click(button = "Publish Master");
-
-			Alert.viewSuccessMessage();
+			MastersPageTemplates.publishMaster();
 		}
 
 		task ("Export custom master") {
@@ -570,7 +553,7 @@ definition {
 
 			IFrame.selectPermissionsFrame();
 
-			AssertChecked(
+			AssertChecked.assertCheckedNotVisible(
 				key_roleTitle = "account-manager",
 				locator1 = "Permissions#CONFIGURATION_PERMISSIONS_VIEW_CHECKBOX");
 		}
@@ -588,9 +571,7 @@ definition {
 
 			MastersPageTemplatesAdmin.gotoMasters(masterLayoutName = "Custom Masters Page Template");
 
-			Button.click(button = "Publish Master");
-
-			Alert.viewSuccessMessage();
+			MastersPageTemplates.publishMaster();
 		}
 
 		task ("Change thumbnail of custom master") {
@@ -644,9 +625,7 @@ definition {
 
 			MastersPageTemplatesAdmin.gotoMasters(masterLayoutName = "Custom Masters Page Template");
 
-			Button.click(button = "Publish Master");
-
-			Alert.viewSuccessMessage();
+			MastersPageTemplates.publishMaster();
 		}
 
 		task ("Change thumbnail of custom master") {

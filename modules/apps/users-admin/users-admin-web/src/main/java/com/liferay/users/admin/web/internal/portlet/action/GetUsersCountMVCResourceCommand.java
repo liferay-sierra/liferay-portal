@@ -40,7 +40,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pei-Jung Lan
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + UsersAdminPortletKeys.USERS_ADMIN,
 		"mvc.command.name=/users_admin/get_users_count"
@@ -64,11 +63,6 @@ public class GetUsersCountMVCResourceCommand implements MVCResourceCommand {
 		catch (Exception exception) {
 			throw new PortletException(exception);
 		}
-	}
-
-	@Reference(unbind = "-")
-	protected void setUserLocalService(UserLocalService userLocalService) {
-		_userLocalService = userLocalService;
 	}
 
 	private int _getOrganizationUsersCount(
@@ -132,6 +126,7 @@ public class GetUsersCountMVCResourceCommand implements MVCResourceCommand {
 	@Reference
 	private Portal _portal;
 
+	@Reference
 	private UserLocalService _userLocalService;
 
 }

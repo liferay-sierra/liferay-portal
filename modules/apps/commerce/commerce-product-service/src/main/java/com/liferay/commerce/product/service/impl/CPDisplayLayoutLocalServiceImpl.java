@@ -16,9 +16,11 @@ package com.liferay.commerce.product.service.impl;
 
 import com.liferay.commerce.product.exception.CPDisplayLayoutEntryException;
 import com.liferay.commerce.product.exception.CPDisplayLayoutLayoutUuidException;
+import com.liferay.commerce.product.internal.util.CPDefinitionLocalServiceCircularDependencyUtil;
 import com.liferay.commerce.product.model.CPDefinition;
 import com.liferay.commerce.product.model.CPDisplayLayout;
 import com.liferay.commerce.product.service.base.CPDisplayLayoutLocalServiceBaseImpl;
+import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.model.User;
@@ -34,6 +36,8 @@ import com.liferay.portal.kernel.search.QueryConfig;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.SearchException;
 import com.liferay.portal.kernel.search.Sort;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
@@ -44,10 +48,17 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+
 /**
  * @author Marco Leo
  * @author Alessio Antonio Rendina
  */
+@Component(
+	property = "model.class.name=com.liferay.commerce.product.model.CPDisplayLayout",
+	service = AopService.class
+)
 public class CPDisplayLayoutLocalServiceImpl
 	extends CPDisplayLayoutLocalServiceBaseImpl {
 
@@ -58,20 +69,22 @@ public class CPDisplayLayoutLocalServiceImpl
 			String layoutUuid)
 		throws PortalException {
 
-		validate(classPK, layoutUuid);
+		_validate(classPK, layoutUuid);
 
-		long classNameId = classNameLocalService.getClassNameId(clazz);
+		long classNameId = _classNameLocalService.getClassNameId(clazz);
 
 		CPDisplayLayout oldCPDisplayLayout =
 			cpDisplayLayoutPersistence.fetchByG_C_C(
 				groupId, classNameId, classPK);
 
 		if ((clazz == CPDefinition.class) &&
-			cpDefinitionLocalService.isVersionable(classPK)) {
+			CPDefinitionLocalServiceCircularDependencyUtil.isVersionable(
+				classPK)) {
 
 			try {
 				CPDefinition newCPDefinition =
-					cpDefinitionLocalService.copyCPDefinition(classPK);
+					CPDefinitionLocalServiceCircularDependencyUtil.
+						copyCPDefinition(classPK);
 
 				classPK = newCPDefinition.getCPDefinitionId();
 			}
@@ -96,7 +109,7 @@ public class CPDisplayLayoutLocalServiceImpl
 
 		cpDisplayLayout.setGroupId(groupId);
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		cpDisplayLayout.setCompanyId(user.getCompanyId());
 
@@ -112,9 +125,11 @@ public class CPDisplayLayoutLocalServiceImpl
 	public CPDisplayLayout deleteCPDisplayLayout(Class<?> clazz, long classPK) {
 		try {
 			if ((clazz == CPDefinition.class) &&
-				cpDefinitionLocalService.isVersionable(classPK)) {
+				CPDefinitionLocalServiceCircularDependencyUtil.isVersionable(
+					classPK)) {
 
-				cpDefinitionLocalService.copyCPDefinition(classPK);
+				CPDefinitionLocalServiceCircularDependencyUtil.copyCPDefinition(
+					classPK);
 			}
 		}
 		catch (PortalException portalException) {
@@ -130,7 +145,7 @@ public class CPDisplayLayoutLocalServiceImpl
 	public void deleteCPDisplayLayouts(Class<?> clazz, long classPK) {
 		List<CPDisplayLayout> cpDisplayLayouts =
 			cpDisplayLayoutPersistence.findByC_C(
-				classNameLocalService.getClassNameId(clazz), classPK);
+				_classNameLocalService.getClassNameId(clazz), classPK);
 
 		for (CPDisplayLayout cpDisplayLayout : cpDisplayLayouts) {
 			cpDisplayLayoutLocalService.deleteCPDisplayLayout(cpDisplayLayout);
@@ -142,7 +157,7 @@ public class CPDisplayLayoutLocalServiceImpl
 		long groupId, Class<?> clazz, long classPK) {
 
 		return cpDisplayLayoutPersistence.fetchByG_C_C(
-			groupId, classNameLocalService.getClassNameId(clazz), classPK);
+			groupId, _classNameLocalService.getClassNameId(clazz), classPK);
 	}
 
 	@Override
@@ -166,10 +181,10 @@ public class CPDisplayLayoutLocalServiceImpl
 			int start, int end, Sort sort)
 		throws PortalException {
 
-		SearchContext searchContext = buildSearchContext(
+		SearchContext searchContext = _buildSearchContext(
 			companyId, groupId, className, keywords, start, end, sort);
 
-		return searchCPDisplayLayout(searchContext);
+		return _searchCPDisplayLayout(searchContext);
 	}
 
 	@Indexable(type = IndexableType.REINDEX)
@@ -181,7 +196,7 @@ public class CPDisplayLayoutLocalServiceImpl
 		CPDisplayLayout cpDisplayLayout =
 			cpDisplayLayoutPersistence.findByPrimaryKey(cpDisplayLayoutId);
 
-		validate(cpDisplayLayout.getClassPK(), layoutUuid);
+		_validate(cpDisplayLayout.getClassPK(), layoutUuid);
 
 		cpDisplayLayout.setClassPK(classPK);
 		cpDisplayLayout.setLayoutUuid(layoutUuid);
@@ -189,7 +204,7 @@ public class CPDisplayLayoutLocalServiceImpl
 		return cpDisplayLayoutPersistence.update(cpDisplayLayout);
 	}
 
-	protected SearchContext buildSearchContext(
+	private SearchContext _buildSearchContext(
 		long companyId, long groupId, String className, String keywords,
 		int start, int end, Sort sort) {
 
@@ -206,7 +221,6 @@ public class CPDisplayLayoutLocalServiceImpl
 			).put(
 				"searchFilterEnabled", true
 			).build());
-
 		searchContext.setCompanyId(companyId);
 		searchContext.setEnd(end);
 		searchContext.setGroupIds(new long[] {groupId});
@@ -229,7 +243,7 @@ public class CPDisplayLayoutLocalServiceImpl
 		return searchContext;
 	}
 
-	protected List<CPDisplayLayout> getCPDisplayLayouts(Hits hits)
+	private List<CPDisplayLayout> _getCPDisplayLayouts(Hits hits)
 		throws PortalException {
 
 		List<Document> documents = hits.toList();
@@ -261,7 +275,7 @@ public class CPDisplayLayoutLocalServiceImpl
 		return cpDisplayLayouts;
 	}
 
-	protected BaseModelSearchResult<CPDisplayLayout> searchCPDisplayLayout(
+	private BaseModelSearchResult<CPDisplayLayout> _searchCPDisplayLayout(
 			SearchContext searchContext)
 		throws PortalException {
 
@@ -271,7 +285,7 @@ public class CPDisplayLayoutLocalServiceImpl
 		for (int i = 0; i < 10; i++) {
 			Hits hits = indexer.search(searchContext, _SELECTED_FIELD_NAMES);
 
-			List<CPDisplayLayout> cpDisplayLayouts = getCPDisplayLayouts(hits);
+			List<CPDisplayLayout> cpDisplayLayouts = _getCPDisplayLayouts(hits);
 
 			if (cpDisplayLayouts != null) {
 				return new BaseModelSearchResult<>(
@@ -283,7 +297,7 @@ public class CPDisplayLayoutLocalServiceImpl
 			"Unable to fix the search index after 10 attempts");
 	}
 
-	protected void validate(long classPK, String layoutUuid)
+	private void _validate(long classPK, String layoutUuid)
 		throws PortalException {
 
 		if (classPK <= 0) {
@@ -298,5 +312,11 @@ public class CPDisplayLayoutLocalServiceImpl
 	private static final String[] _SELECTED_FIELD_NAMES = {
 		Field.ENTRY_CLASS_PK, Field.COMPANY_ID, Field.GROUP_ID, Field.UID
 	};
+
+	@Reference
+	private ClassNameLocalService _classNameLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

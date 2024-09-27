@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.search.SearchResult;
 import com.liferay.portal.kernel.search.SearchResultManager;
 import com.liferay.portal.kernel.search.SummaryFactory;
 import com.liferay.portal.kernel.search.result.SearchResultTranslator;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.search.internal.result.SearchResultManagerImpl;
 import com.liferay.portal.search.internal.result.SearchResultTranslatorImpl;
@@ -41,16 +42,16 @@ import java.util.logging.Level;
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletResponse;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import org.mockito.Matchers;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+
+import org.osgi.framework.BundleContext;
 
 /**
  * @author André de Oliveira
@@ -66,8 +67,13 @@ public class SearchResultUtilJournalArticleTest
 	@Before
 	@Override
 	public void setUp() throws Exception {
-		MockitoAnnotations.initMocks(this);
 		super.setUp();
+	}
+
+	@After
+	public void tearDown() {
+		ReflectionTestUtil.invoke(
+			_searchResultManagerImpl, "deactivate", new Class<?>[0]);
 	}
 
 	@Test
@@ -86,8 +92,8 @@ public class SearchResultUtilJournalArticleTest
 		).when(
 			_indexer
 		).getSummary(
-			(Document)Matchers.any(), Matchers.anyString(),
-			(PortletRequest)Matchers.any(), (PortletResponse)Matchers.any()
+			(Document)Mockito.any(), Mockito.anyString(),
+			(PortletRequest)Mockito.any(), (PortletResponse)Mockito.any()
 		);
 
 		Mockito.when(
@@ -151,12 +157,16 @@ public class SearchResultUtilJournalArticleTest
 	}
 
 	protected SearchResultManager createSearchResultManager() {
-		SearchResultManagerImpl searchResultManagerImpl =
-			new SearchResultManagerImpl();
+		_searchResultManagerImpl = new SearchResultManagerImpl();
 
-		searchResultManagerImpl.setSummaryFactory(createSummaryFactory());
+		ReflectionTestUtil.setFieldValue(
+			_searchResultManagerImpl, "_summaryFactory",
+			createSummaryFactory());
+		ReflectionTestUtil.invoke(
+			_searchResultManagerImpl, "activate",
+			new Class<?>[] {BundleContext.class}, bundleContext);
 
-		return searchResultManagerImpl;
+		return _searchResultManagerImpl;
 	}
 
 	@Override
@@ -164,7 +174,8 @@ public class SearchResultUtilJournalArticleTest
 		SearchResultTranslatorImpl searchResultTranslatorImpl =
 			new SearchResultTranslatorImpl();
 
-		searchResultTranslatorImpl.setSearchResultManager(
+		ReflectionTestUtil.setFieldValue(
+			searchResultTranslatorImpl, "_searchResultManager",
 			createSearchResultManager());
 
 		return searchResultTranslatorImpl;
@@ -173,7 +184,8 @@ public class SearchResultUtilJournalArticleTest
 	protected SummaryFactory createSummaryFactory() {
 		SummaryFactoryImpl summaryFactoryImpl = new SummaryFactoryImpl();
 
-		summaryFactoryImpl.setIndexerRegistry(_indexerRegistry);
+		ReflectionTestUtil.setFieldValue(
+			summaryFactoryImpl, "_indexerRegistry", _indexerRegistry);
 
 		return summaryFactoryImpl;
 	}
@@ -184,10 +196,9 @@ public class SearchResultUtilJournalArticleTest
 	private static final String _DOCUMENT_VERSION = String.valueOf(
 		RandomTestUtil.randomInt());
 
-	@Mock
-	private Indexer<Object> _indexer;
-
-	@Mock
-	private IndexerRegistry _indexerRegistry;
+	private final Indexer<Object> _indexer = Mockito.mock(Indexer.class);
+	private final IndexerRegistry _indexerRegistry = Mockito.mock(
+		IndexerRegistry.class);
+	private SearchResultManagerImpl _searchResultManagerImpl;
 
 }

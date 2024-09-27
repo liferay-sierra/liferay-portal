@@ -37,7 +37,7 @@ public class ShoppingUpgradeProcess extends BaseUpgradeProcess {
 		_deleteFromShoppingItem("largeImage");
 
 		removePortletData(
-			new String[] {"com.liferay.shopping.web"}, null,
+			new String[] {"com.liferay.shopping.web"}, new String[] {"34"},
 			new String[] {
 				"com_liferay_shopping_web_portlet_ShoppingPortlet",
 				"com.liferay.portlet.shopping"
@@ -46,6 +46,7 @@ public class ShoppingUpgradeProcess extends BaseUpgradeProcess {
 		removeServiceData(
 			"Shopping", new String[] {"com.liferay.shopping.service"},
 			new String[] {
+				"com.liferay.portlet.shopping",
 				"com.liferay.portlet.shopping.model.ShoppingCart",
 				"com.liferay.portlet.shopping.model.ShoppingCategory",
 				"com.liferay.portlet.shopping.model.ShoppingCoupon",

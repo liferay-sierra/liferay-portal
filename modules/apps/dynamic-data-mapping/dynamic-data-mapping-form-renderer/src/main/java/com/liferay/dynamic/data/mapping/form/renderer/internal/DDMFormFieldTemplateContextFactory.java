@@ -17,7 +17,7 @@ package com.liferay.dynamic.data.mapping.form.renderer.internal;
 import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormEvaluator;
 import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormEvaluatorFieldContextKey;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTemplateContextContributor;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueAccessor;
 import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderingContext;
@@ -52,6 +52,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.HtmlParser;
 import com.liferay.portal.kernel.util.KeyValuePair;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -67,6 +68,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -85,8 +87,9 @@ public class DDMFormFieldTemplateContextFactory {
 		DDMFormRenderingContext ddmFormRenderingContext,
 		DDMStructureLayoutLocalService ddmStructureLayoutLocalService,
 		DDMStructureLocalService ddmStructureLocalService,
-		GroupLocalService groupLocalService, JSONFactory jsonFactory,
-		boolean pageEnabled, DDMFormLayout parentDDMFormLayout) {
+		GroupLocalService groupLocalService, HtmlParser htmlParser,
+		JSONFactory jsonFactory, boolean pageEnabled,
+		DDMFormLayout parentDDMFormLayout) {
 
 		_ddmFormEvaluator = ddmFormEvaluator;
 		_ddmFormFieldName = ddmFormFieldName;
@@ -97,6 +100,7 @@ public class DDMFormFieldTemplateContextFactory {
 		_ddmStructureLayoutLocalService = ddmStructureLayoutLocalService;
 		_ddmStructureLocalService = ddmStructureLocalService;
 		_groupLocalService = groupLocalService;
+		_htmlParser = htmlParser;
 		_jsonFactory = jsonFactory;
 		_pageEnabled = pageEnabled;
 		_parentDDMFormLayout = parentDDMFormLayout;
@@ -109,10 +113,10 @@ public class DDMFormFieldTemplateContextFactory {
 			_ddmFormFieldValues, StringPool.BLANK);
 	}
 
-	protected void setDDMFormFieldTypeServicesTracker(
-		DDMFormFieldTypeServicesTracker ddmFormFieldTypeServicesTracker) {
+	protected void setDDMFormFieldTypeServicesRegistry(
+		DDMFormFieldTypeServicesRegistry ddmFormFieldTypeServicesRegistry) {
 
-		_ddmFormFieldTypeServicesTracker = ddmFormFieldTypeServicesTracker;
+		_ddmFormFieldTypeServicesRegistry = ddmFormFieldTypeServicesRegistry;
 	}
 
 	private boolean _addProperty(
@@ -293,7 +297,13 @@ public class DDMFormFieldTemplateContextFactory {
 
 			LocalizedValue localizedValue = entry.getValue();
 
-			option.put("label", localizedValue.getString(_locale));
+			option.put(
+				"label",
+				Optional.ofNullable(
+					localizedValue.getString(_locale)
+				).orElseGet(
+					() -> localizedValue.getString(LocaleUtil.getDefault())
+				));
 
 			option.put("reference", optionsReferences.get(entry.getKey()));
 			option.put("value", entry.getKey());
@@ -509,13 +519,13 @@ public class DDMFormFieldTemplateContextFactory {
 						_ddmFormRenderingContext,
 						_ddmStructureLayoutLocalService,
 						_ddmStructureLocalService, _groupLocalService,
-						_jsonFactory);
+						_htmlParser, _jsonFactory);
 
 			ddmFormPagesTemplateContextFactory.setDDMFormEvaluator(
 				_ddmFormEvaluator);
 			ddmFormPagesTemplateContextFactory.
-				setDDMFormFieldTypeServicesTracker(
-					_ddmFormFieldTypeServicesTracker);
+				setDDMFormFieldTypeServicesRegistry(
+					_ddmFormFieldTypeServicesRegistry);
 
 			ddmFormFieldRenderingContext.setProperty(
 				"nestedFields",
@@ -531,7 +541,7 @@ public class DDMFormFieldTemplateContextFactory {
 
 		DDMFormFieldTemplateContextContributor
 			ddmFormFieldTemplateContextContributor =
-				_ddmFormFieldTypeServicesTracker.
+				_ddmFormFieldTypeServicesRegistry.
 					getDDMFormFieldTemplateContextContributor(
 						ddmFormField.getType());
 
@@ -546,6 +556,13 @@ public class DDMFormFieldTemplateContextFactory {
 		if (_isFieldSetField(ddmFormField)) {
 			_setDDMFormFieldFieldSetTemplateContextContributedParameters(
 				ddmFormField, ddmFormFieldRenderingContext);
+		}
+		else if (StringUtil.equals(
+					ddmFormField.getType(), "object-relationship")) {
+
+			ddmFormFieldRenderingContext.setProperty(
+				"objectEntryId",
+				_ddmFormRenderingContext.getProperty("objectEntryId"));
 		}
 
 		Map<String, Object> contributedParameters =
@@ -886,7 +903,7 @@ public class DDMFormFieldTemplateContextFactory {
 			ddmFormFieldValue.getName());
 
 		DDMFormFieldValueAccessor<?> ddmFormFieldValueAccessor =
-			_ddmFormFieldTypeServicesTracker.getDDMFormFieldValueAccessor(
+			_ddmFormFieldTypeServicesRegistry.getDDMFormFieldValueAccessor(
 				ddmFormField.getType());
 
 		Map<String, Object> localizedValues = new HashMap<>();
@@ -1119,13 +1136,14 @@ public class DDMFormFieldTemplateContextFactory {
 	private final Map<String, DDMFormField> _ddmFormFieldsMap;
 	private final Map<DDMFormEvaluatorFieldContextKey, Map<String, Object>>
 		_ddmFormFieldsPropertyChanges;
-	private DDMFormFieldTypeServicesTracker _ddmFormFieldTypeServicesTracker;
+	private DDMFormFieldTypeServicesRegistry _ddmFormFieldTypeServicesRegistry;
 	private final List<DDMFormFieldValue> _ddmFormFieldValues;
 	private final DDMFormRenderingContext _ddmFormRenderingContext;
 	private final DDMStructureLayoutLocalService
 		_ddmStructureLayoutLocalService;
 	private final DDMStructureLocalService _ddmStructureLocalService;
 	private final GroupLocalService _groupLocalService;
+	private final HtmlParser _htmlParser;
 	private final JSONFactory _jsonFactory;
 	private final Locale _locale;
 	private final boolean _pageEnabled;

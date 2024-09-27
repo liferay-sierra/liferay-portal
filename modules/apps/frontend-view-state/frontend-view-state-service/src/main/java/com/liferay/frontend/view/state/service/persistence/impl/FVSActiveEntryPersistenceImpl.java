@@ -46,7 +46,7 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 
 import java.io.Serializable;
 
@@ -194,7 +194,7 @@ public class FVSActiveEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<FVSActiveEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (FVSActiveEntry fvsActiveEntry : list) {
@@ -577,7 +577,7 @@ public class FVSActiveEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -736,7 +736,7 @@ public class FVSActiveEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<FVSActiveEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (FVSActiveEntry fvsActiveEntry : list) {
@@ -1152,7 +1152,7 @@ public class FVSActiveEntryPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid, companyId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -1311,7 +1311,7 @@ public class FVSActiveEntryPersistenceImpl
 
 		if (useFinderCache) {
 			result = finderCache.getResult(
-				_finderPathFetchByU_CDSDI_P_P, finderArgs);
+				_finderPathFetchByU_CDSDI_P_P, finderArgs, this);
 		}
 
 		if (result instanceof FVSActiveEntry) {
@@ -1457,7 +1457,7 @@ public class FVSActiveEntryPersistenceImpl
 			userId, clayDataSetDisplayId, plid, portletId
 		};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(5);
@@ -1682,7 +1682,7 @@ public class FVSActiveEntryPersistenceImpl
 		fvsActiveEntry.setNew(true);
 		fvsActiveEntry.setPrimaryKey(fvsActiveEntryId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		fvsActiveEntry.setUuid(uuid);
 
@@ -1802,7 +1802,7 @@ public class FVSActiveEntryPersistenceImpl
 			(FVSActiveEntryModelImpl)fvsActiveEntry;
 
 		if (Validator.isNull(fvsActiveEntry.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			fvsActiveEntry.setUuid(uuid);
 		}
@@ -1999,7 +1999,7 @@ public class FVSActiveEntryPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<FVSActiveEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -2069,7 +2069,7 @@ public class FVSActiveEntryPersistenceImpl
 	@Override
 	public int countAll() {
 		Long count = (Long)finderCache.getResult(
-			_finderPathCountAll, FINDER_ARGS_EMPTY);
+			_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -2289,7 +2289,6 @@ public class FVSActiveEntryPersistenceImpl
 	}
 
 	@Reference
-	private FVSActiveEntryModelArgumentsResolver
-		_fvsActiveEntryModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

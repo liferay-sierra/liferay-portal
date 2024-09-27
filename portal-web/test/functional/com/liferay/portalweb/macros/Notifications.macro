@@ -18,12 +18,28 @@ definition {
 			value1 = "${key_notificationsTitle}");
 	}
 
+	macro deleteAllNotifications {
+		Refresh();
+
+		if (IsElementPresent(locator1 = "Notifications#PROFILE_BADGE_COUNT")) {
+			Navigator.gotoNotifications();
+
+			PortletEntry.selectAll();
+
+			ClickNoError(locator1 = "Icon#DELETE");
+
+			Alert.viewSuccessMessage();
+		}
+	}
+
 	macro deleteNotification {
 		var key_contentBody = "${contentBody}";
 
 		Click(locator1 = "Notifications#NOTIFICATIONS_VERTICAL_ELLIPSIS");
 
 		MenuItem.clickNoError(menuItem = "Delete");
+
+		Alert.viewSuccessMessage();
 
 		AssertElementNotPresent(locator1 = "Notifications#NOTIFICATIONS_CONTENT");
 	}
@@ -155,6 +171,23 @@ definition {
 			value1 = "You do not have any notifications.");
 	}
 
+	macro viewDeletedContent {
+		AssertTextEquals(
+			locator1 = "Notifications#NOTIFICATIONS_TITLE",
+			value1 = "Notification no longer applies.");
+
+		AssertTextEquals(
+			key_contentBody = "${contentBody}",
+			locator1 = "Notifications#NOTIFICATIONS_CONTENT",
+			value1 = "${contentBody}");
+
+		if (isSet(noOptions)) {
+			AssertElementNotPresent(
+				key_contentBody = "${contentBody}",
+				locator1 = "Notifications#NOTIFICATIONS_VERTICAL_ELLIPSIS");
+		}
+	}
+
 	macro viewExpiredContent {
 		AssertTextEquals(
 			locator1 = "Notifications#NOTIFICATIONS_TITLE",
@@ -177,7 +210,7 @@ definition {
 
 			AssertTextEquals.assertPartialText(
 				locator1 = "Notifications#NOTIFICATIONS_TITLE",
-				value1 = "in the &quot;Content Page Name&quot; page.");
+				value1 = "in the \"Content Page Name\" page.");
 		}
 		else if (isSet(mentioned)) {
 			AssertTextEquals.assertPartialText(
@@ -332,9 +365,13 @@ definition {
 	}
 
 	macro waitForNotificationFlexibly {
-		Pause(locator1 = "${waitingTime}");
+		var i = "0";
 
-		while (IsElementNotPresent(locator1 = "Notifications#PROFILE_BADGE_COUNT")) {
+		while ((IsElementNotPresent(locator1 = "Notifications#PROFILE_BADGE_COUNT")) && ("${i}" != "5")) {
+			var i = ${i} + 1;
+
+			// We need to wait for the system time to pass by some time in order to verify the user is notified. There is currently no easy way to manipulate the system time in CI for automation. See LPS-157957.
+
 			Pause(locator1 = "${flexibleRefreshingTime}");
 
 			Refresh();

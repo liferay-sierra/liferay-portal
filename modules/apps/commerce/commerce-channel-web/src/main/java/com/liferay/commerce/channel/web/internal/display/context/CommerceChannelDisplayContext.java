@@ -19,6 +19,7 @@ import com.liferay.commerce.account.constants.CommerceAccountConstants;
 import com.liferay.commerce.channel.web.internal.display.context.helper.CommerceChannelRequestHelper;
 import com.liferay.commerce.configuration.CommerceOrderCheckoutConfiguration;
 import com.liferay.commerce.configuration.CommerceOrderFieldsConfiguration;
+import com.liferay.commerce.configuration.CommerceOrderImporterDateFormatConfiguration;
 import com.liferay.commerce.constants.CommerceConstants;
 import com.liferay.commerce.currency.model.CommerceCurrency;
 import com.liferay.commerce.currency.service.CommerceCurrencyService;
@@ -42,7 +43,6 @@ import com.liferay.item.selector.ItemSelector;
 import com.liferay.item.selector.ItemSelectorReturnType;
 import com.liferay.item.selector.criteria.FileEntryItemSelectorReturnType;
 import com.liferay.item.selector.criteria.file.criterion.FileItemSelectorCriterion;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.NoSuchWorkflowDefinitionLinkException;
@@ -58,6 +58,7 @@ import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
@@ -211,7 +212,6 @@ public class CommerceChannelDisplayContext
 			PortletRequest.RENDER_PHASE);
 
 		portletURL.setParameter("backURL", portletURL.toString());
-
 		portletURL.setParameter(
 			"commerceChannelId",
 			String.valueOf(commerceChannel.getCommerceChannelId()));
@@ -319,11 +319,26 @@ public class CommerceChannelDisplayContext
 			Collections.<ItemSelectorReturnType>singletonList(
 				new FileEntryItemSelectorReturnType()));
 
-		PortletURL itemSelectorURL = _itemSelector.getItemSelectorURL(
-			requestBackedPortletURLFactory, "addFileEntry",
-			fileItemSelectorCriterion);
+		return String.valueOf(
+			_itemSelector.getItemSelectorURL(
+				requestBackedPortletURLFactory, "addFileEntry",
+				fileItemSelectorCriterion));
+	}
 
-		return itemSelectorURL.toString();
+	public String getOrderImporterDateFormat() throws PortalException {
+		CommerceChannel commerceChannel = getCommerceChannel();
+
+		CommerceOrderImporterDateFormatConfiguration
+			commerceOrderImporterDateFormatConfiguration =
+				_configurationProvider.getConfiguration(
+					CommerceOrderImporterDateFormatConfiguration.class,
+					new GroupServiceSettingsLocator(
+						commerceChannel.getGroupId(),
+						CommerceConstants.
+							SERVICE_NAME_COMMERCE_ORDER_IMPORTER_DATE_FORMAT));
+
+		return commerceOrderImporterDateFormatConfiguration.
+			orderImporterDateFormat();
 	}
 
 	@Override
@@ -458,6 +473,19 @@ public class CommerceChannelDisplayContext
 		return commerceOrderCheckoutConfiguration.guestCheckoutEnabled();
 	}
 
+	public boolean isHideShippingPriceZero() throws PortalException {
+		CommerceChannel commerceChannel = getCommerceChannel();
+
+		CommerceOrderCheckoutConfiguration commerceOrderCheckoutConfiguration =
+			_configurationProvider.getConfiguration(
+				CommerceOrderCheckoutConfiguration.class,
+				new GroupServiceSettingsLocator(
+					commerceChannel.getGroupId(),
+					CommerceConstants.SERVICE_NAME_COMMERCE_ORDER));
+
+		return commerceOrderCheckoutConfiguration.hideShippingPriceZero();
+	}
+
 	public boolean isShowPurchaseOrderNumber() throws PortalException {
 		CommerceChannel commerceChannel = getCommerceChannel();
 
@@ -469,22 +497,6 @@ public class CommerceChannelDisplayContext
 					CommerceConstants.SERVICE_NAME_COMMERCE_ORDER));
 
 		return commerceOrderFieldsConfiguration.showPurchaseOrderNumber();
-	}
-
-	public boolean isViewPaymentTermCheckoutStepEnabled()
-		throws PortalException {
-
-		CommerceChannel commerceChannel = getCommerceChannel();
-
-		CommerceOrderCheckoutConfiguration commerceOrderCheckoutConfiguration =
-			_configurationProvider.getConfiguration(
-				CommerceOrderCheckoutConfiguration.class,
-				new GroupServiceSettingsLocator(
-					commerceChannel.getGroupId(),
-					CommerceConstants.SERVICE_NAME_COMMERCE_ORDER));
-
-		return commerceOrderCheckoutConfiguration.
-			viewPaymentTermCheckoutStepEnabled();
 	}
 
 	private CommerceAccountGroupServiceConfiguration

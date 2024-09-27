@@ -14,9 +14,9 @@
 
 import ClayLabel from '@clayui/label';
 import ClayLink from '@clayui/link';
-import {ClayResultsBar} from '@clayui/management-toolbar';
-import {navigate} from 'frontend-js-web';
-import React from 'react';
+import {ManagementToolbar} from 'frontend-js-components-web';
+import {navigate, sub} from 'frontend-js-web';
+import React, {useEffect, useRef} from 'react';
 
 const ResultsBar = ({
 	clearResultsURL,
@@ -24,23 +24,40 @@ const ResultsBar = ({
 	itemsTotal,
 	searchValue,
 }) => {
+	const resultsBarRef = useRef();
+
+	useEffect(() => {
+		resultsBarRef.current?.focus();
+	}, [searchValue]);
+
 	return (
 		<>
-			<ClayResultsBar>
-				<ClayResultsBar.Item expand={!(filterLabelItems?.length > 0)}>
-					<span className="component-text text-truncate-inline">
+			<ManagementToolbar.ResultsBar>
+				<ManagementToolbar.ResultsBarItem
+					expand={!(filterLabelItems?.length > 0)}
+				>
+					<span
+						className="component-text text-truncate-inline"
+						ref={resultsBarRef}
+						tabIndex={0}
+					>
 						<span className="text-truncate">
-							{Liferay.Util.sub(
-								Liferay.Language.get('x-results-for-x'),
-								itemsTotal,
-								searchValue || ''
+							{sub(
+								itemsTotal === 1
+									? Liferay.Language.get('x-result-for')
+									: Liferay.Language.get('x-results-for'),
+								itemsTotal
+							)}
+
+							{searchValue && (
+								<strong>{` "${searchValue}"`}</strong>
 							)}
 						</span>
 					</span>
-				</ClayResultsBar.Item>
+				</ManagementToolbar.ResultsBarItem>
 
 				{filterLabelItems?.map((item, index) => (
-					<ClayResultsBar.Item
+					<ManagementToolbar.ResultsBarItem
 						expand={index === filterLabelItems.length - 1}
 						key={index}
 					>
@@ -57,18 +74,25 @@ const ResultsBar = ({
 						>
 							{item.label}
 						</ClayLabel>
-					</ClayResultsBar.Item>
+					</ManagementToolbar.ResultsBarItem>
 				))}
 
-				<ClayResultsBar.Item>
+				<ManagementToolbar.ResultsBarItem>
 					<ClayLink
+						aria-label={sub(
+							itemsTotal === 1
+								? Liferay.Language.get('clear-x-result-for-x')
+								: Liferay.Language.get('clear-x-results-for-x'),
+							itemsTotal,
+							searchValue
+						)}
 						className="component-link tbar-link"
 						href={clearResultsURL}
 					>
 						{Liferay.Language.get('clear')}
 					</ClayLink>
-				</ClayResultsBar.Item>
-			</ClayResultsBar>
+				</ManagementToolbar.ResultsBarItem>
+			</ManagementToolbar.ResultsBar>
 		</>
 	);
 };

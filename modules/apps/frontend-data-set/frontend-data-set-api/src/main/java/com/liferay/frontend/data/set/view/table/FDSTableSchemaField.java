@@ -52,40 +52,68 @@ public class FDSTableSchemaField {
 		return _expand;
 	}
 
+	public boolean isLocalizeLabel() {
+		return _localizeLabel;
+	}
+
 	public boolean isSortable() {
 		return _sortable;
 	}
 
-	public void setActionId(String actionId) {
+	public FDSTableSchemaField setActionId(String actionId) {
 		_actionId = actionId;
+
+		return this;
 	}
 
-	public void setContentRenderer(String contentRenderer) {
+	public FDSTableSchemaField setContentRenderer(String contentRenderer) {
 		_contentRenderer = contentRenderer;
+
+		return this;
 	}
 
-	public void setContentRendererModuleURL(String contentRendererModuleURL) {
+	public FDSTableSchemaField setContentRendererModuleURL(
+		String contentRendererModuleURL) {
+
 		_contentRendererModuleURL = contentRendererModuleURL;
+
+		return this;
 	}
 
-	public void setExpand(boolean expand) {
+	public FDSTableSchemaField setExpand(boolean expand) {
 		_expand = expand;
+
+		return this;
 	}
 
-	public void setFieldName(String fieldName) {
+	public FDSTableSchemaField setFieldName(String fieldName) {
 		_fieldName = fieldName;
+
+		return this;
 	}
 
-	public void setLabel(String label) {
+	public FDSTableSchemaField setLabel(String label) {
 		_label = label;
+
+		return this;
 	}
 
-	public void setSortable(boolean sortable) {
+	public FDSTableSchemaField setLocalizeLabel(boolean localizeLabel) {
+		_localizeLabel = localizeLabel;
+
+		return this;
+	}
+
+	public FDSTableSchemaField setSortable(boolean sortable) {
 		_sortable = sortable;
+
+		return this;
 	}
 
-	public void setSortingOrder(SortingOrder sortingOrder) {
+	public FDSTableSchemaField setSortingOrder(SortingOrder sortingOrder) {
 		_sortingOrder = sortingOrder;
+
+		return this;
 	}
 
 	public JSONObject toJSONObject() {
@@ -108,6 +136,8 @@ public class FDSTableSchemaField {
 
 				return fieldName;
 			}
+		).put(
+			"localizeLabel", isLocalizeLabel()
 		).put(
 			"sortable", isSortable()
 		).put(
@@ -137,6 +167,7 @@ public class FDSTableSchemaField {
 	private boolean _expand;
 	private String _fieldName;
 	private String _label;
+	private boolean _localizeLabel = true;
 	private boolean _sortable;
 	private SortingOrder _sortingOrder;
 

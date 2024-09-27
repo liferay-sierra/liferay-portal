@@ -16,12 +16,11 @@ package com.liferay.alloy.mvc;
 
 import com.liferay.alloy.mvc.internal.json.web.service.AlloyControllerInvokerManager;
 import com.liferay.alloy.mvc.internal.json.web.service.AlloyMockUtil;
+import com.liferay.alloy.mvc.internal.util.ConstantsBeanFactoryUtil;
 import com.liferay.counter.kernel.service.CounterLocalServiceUtil;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.bean.BeanPropertiesUtil;
-import com.liferay.portal.kernel.bean.ConstantsBeanFactoryUtil;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
@@ -53,6 +52,7 @@ import com.liferay.portal.kernel.portlet.LiferayPortletConfig;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.PortletConfigFactoryUtil;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.scheduler.SchedulerEngineHelperUtil;
 import com.liferay.portal.kernel.scheduler.StorageType;
 import com.liferay.portal.kernel.scheduler.TimeUnit;
@@ -926,7 +926,7 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 			if (enableScheduler) {
 				SchedulerEngineHelperUtil.schedule(
 					getSchedulerTrigger(), getSchedulerStorageType(), null,
-					destinationName, null, 0);
+					destinationName, null);
 			}
 		}
 		catch (Exception exception) {
@@ -957,10 +957,9 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 		Method[] methods = clazz.getMethods();
 
 		for (Method method : methods) {
-			String methodKey = getMethodKey(
-				method.getName(), method.getParameterTypes());
-
-			methodsMap.put(methodKey, method);
+			methodsMap.put(
+				getMethodKey(method.getName(), method.getParameterTypes()),
+				method);
 		}
 	}
 
@@ -1174,10 +1173,8 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 		}
 
 		portletRequest.setAttribute("arguments", arguments);
-
 		portletRequest.setAttribute(
 			"data", getStackTrace((Exception)rootCauseThrowable));
-
 		portletRequest.setAttribute("pattern", pattern);
 		portletRequest.setAttribute("status", status);
 

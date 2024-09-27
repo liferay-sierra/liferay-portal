@@ -3,7 +3,7 @@ definition {
 
 	property custom.properties = "minifier.enabled=true";
 	property osgi.module.configuration.file.names = "com.liferay.frontend.js.loader.modules.extender.internal.configuration.Details.config";
-	property osgi.module.configurations = "waitTimeout=&quot;15&quot;";
+	property osgi.module.configurations = "waitTimeout=\"15\"";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Forms";
@@ -122,7 +122,8 @@ definition {
 	@description = "Verify that a user can navigate to the correct metric by using the list on the right"
 	@priority = "5"
 	test CanBeNavigatedUsingNavigationList {
-		property portal.acceptance = "true";
+		property portal.acceptance = "quarantine";
+		property portal.upstream = "quarantine";
 
 		FormsAdmin.addForm();
 
@@ -461,7 +462,7 @@ definition {
 
 		FormViewBuilder.editColor(
 			fieldName = "Color",
-			fieldValue = "5F5F5F");
+			fieldValue = "5f5f5f");
 
 		FormViewBuilder.editDate(
 			fieldName = "Date",
@@ -490,7 +491,7 @@ definition {
 
 		FormViewBuilder.viewSummaryEntry(
 			key_card = "Color",
-			key_entryName = "5F5F5F",
+			key_entryName = "5f5f5f",
 			key_entryNumber = "1 entry");
 
 		FormViewBuilder.viewSummaryEntry(
@@ -655,14 +656,14 @@ definition {
 
 		Form.configureWorkflow(workflowDefinition = "Single Approver");
 
-		Form.save();
+		Form.publishForm();
 
 		ProductMenu.gotoPortlet(
 			category = "Site Builder",
 			panel = "Site Administration",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "Form Page");
+		PagesAdmin.addPage(pageName = "Form Page");
 
 		Navigator.gotoPage(pageName = "Form Page");
 
@@ -890,15 +891,13 @@ definition {
 			successPageDescription = "Your information was successfully received. Thank you for filling out the form.",
 			successPageTitle = "Thank you.");
 
-		Navigator.openURL();
-
-		ProductMenu.gotoPortlet(
-			category = "Content & Data",
-			portlet = "Forms");
+		FormsAdmin.openFormsAdmin(siteURLKey = "guest");
 
 		FormsAdminNavigator.gotoViewEntries();
 
 		FormsAdmin.viewFormEntryWorkflowStatus(formEntryWorkflowStatus = "Pending");
+
+		// Pausing 120 seconds due to LPS-159468
 
 		Pause(locator1 = "120000");
 

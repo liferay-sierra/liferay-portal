@@ -16,6 +16,7 @@ definition {
 			-u ${userName}:test \
 			-H Content-Type: application/json
 		''';
+
 		var json = JSONCurlUtil.get("${curl}");
 
 		return "${json}";
@@ -26,21 +27,20 @@ definition {
 		Variables.assertDefined(parameterList = "${domain},${virtualHost},${portalInstanceId}");
 
 		var portalURL = JSONCompany.getDefaultPortalURL();
-
 		var parameters = JSONUtil2._addJSONObject(
 			json = "{}",
 			key = "domain",
-			value = "&quot;${domain}&quot;");
+			value = "\"${domain}\"");
 
 		var parameters = JSONUtil2._addJSONObject(
 			json = "${parameters}",
 			key = "virtualHost",
-			value = "&quot;${virtualHost}&quot;");
+			value = "\"${virtualHost}\"");
 
 		var parameters = JSONUtil2._addJSONObject(
 			json = "${parameters}",
 			key = "portalInstanceId",
-			value = "&quot;${portalInstanceId}&quot;");
+			value = "\"${portalInstanceId}\"");
 
 		if ("${authenticationMethod}" == "By Screen Name") {
 			var userName = "test";
@@ -64,26 +64,25 @@ definition {
 		Variables.assertDefined(parameterList = "${domain},${virtualHost},${portalInstanceId},${siteInitializerKey}");
 
 		var portalURL = JSONCompany.getPortalURL();
-
 		var parameters = JSONUtil2._addJSONObject(
 			json = "{}",
 			key = "domain",
-			value = "&quot;${domain}&quot;");
+			value = "\"${domain}\"");
 
 		var parameters = JSONUtil2._addJSONObject(
 			json = "${parameters}",
 			key = "virtualHost",
-			value = "&quot;${virtualHost}&quot;");
+			value = "\"${virtualHost}\"");
 
 		var parameters = JSONUtil2._addJSONObject(
 			json = "${parameters}",
 			key = "portalInstanceId",
-			value = "&quot;${portalInstanceId}&quot;");
+			value = "\"${portalInstanceId}\"");
 
 		var parameters = JSONUtil2._addJSONObject(
 			json = "${parameters}",
 			key = "siteInitializerKey",
-			value = "&quot;${siteInitializerKey}&quot;");
+			value = "\"${siteInitializerKey}\"");
 
 		if ("${authenticationMethod}" == "By Screen Name") {
 			var userName = "test";
@@ -122,7 +121,6 @@ definition {
 		Variables.assertDefined(parameterList = "${portalInstanceId}");
 
 		var portalURL = JSONCompany.getDefaultPortalURL();
-
 		var portalInstanceId = StringUtil.replace("${portalInstanceId}", " ", "%20");
 
 		if ("${authenticationMethod}" == "By Screen Name") {

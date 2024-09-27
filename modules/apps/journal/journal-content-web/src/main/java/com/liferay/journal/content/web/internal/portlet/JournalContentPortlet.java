@@ -16,6 +16,7 @@ package com.liferay.journal.content.web.internal.portlet;
 
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
+import com.liferay.item.selector.ItemSelector;
 import com.liferay.journal.constants.JournalContentPortletKeys;
 import com.liferay.journal.constants.JournalWebKeys;
 import com.liferay.journal.content.web.internal.display.context.JournalContentDisplayContext;
@@ -25,7 +26,7 @@ import com.liferay.journal.service.JournalArticleLocalService;
 import com.liferay.journal.util.ExportArticleHelper;
 import com.liferay.journal.util.JournalContent;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Release;
@@ -88,7 +89,8 @@ import org.osgi.service.component.annotations.Reference;
 		"javax.portlet.name=" + JournalContentPortletKeys.JOURNAL_CONTENT,
 		"javax.portlet.portlet-mode=application/vnd.wap.xhtml+xml;view",
 		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=guest,power-user,user"
+		"javax.portlet.security-role-ref=guest,power-user,user",
+		"javax.portlet.version=3.0"
 	},
 	service = Portlet.class
 )
@@ -133,7 +135,7 @@ public class JournalContentPortlet extends MVCPortlet {
 		}
 		else if ((articleGroupId > 0) && Validator.isNotNull(articleId)) {
 			String viewMode = ParamUtil.getString(renderRequest, "viewMode");
-			String languageId = LanguageUtil.getLanguageId(renderRequest);
+			String languageId = _language.getLanguageId(renderRequest);
 			int page = ParamUtil.getInteger(renderRequest, "page", 1);
 
 			article = _journalArticleLocalService.fetchLatestArticle(
@@ -193,7 +195,7 @@ public class JournalContentPortlet extends MVCPortlet {
 		try {
 			JournalContentDisplayContext.create(
 				renderRequest, renderResponse, _CLASS_NAME_ID,
-				_ddmTemplateModelResourcePermission);
+				_ddmTemplateModelResourcePermission, _itemSelector);
 		}
 		catch (PortalException portalException) {
 			if (_log.isDebugEnabled()) {
@@ -250,7 +252,7 @@ public class JournalContentPortlet extends MVCPortlet {
 			try {
 				JournalContentDisplayContext.create(
 					resourceRequest, resourceResponse, _CLASS_NAME_ID,
-					_ddmTemplateModelResourcePermission);
+					_ddmTemplateModelResourcePermission, _itemSelector);
 			}
 			catch (PortalException portalException) {
 				if (_log.isDebugEnabled()) {
@@ -260,13 +262,6 @@ public class JournalContentPortlet extends MVCPortlet {
 
 			super.serveResource(resourceRequest, resourceResponse);
 		}
-	}
-
-	@Reference(
-		target = "(&(release.bundle.symbolic.name=com.liferay.journal.content.web)(&(release.schema.version>=1.0.0)(!(release.schema.version>=2.0.0))))",
-		unbind = "-"
-	)
-	protected void setRelease(Release release) {
 	}
 
 	private static final long _CLASS_NAME_ID = PortalUtil.getClassNameId(
@@ -285,10 +280,21 @@ public class JournalContentPortlet extends MVCPortlet {
 	private ExportArticleHelper _exportArticleHelper;
 
 	@Reference
+	private ItemSelector _itemSelector;
+
+	@Reference
 	private JournalArticleLocalService _journalArticleLocalService;
 
 	@Reference
 	private JournalContent _journalContent;
+
+	@Reference
+	private Language _language;
+
+	@Reference(
+		target = "(&(release.bundle.symbolic.name=com.liferay.journal.content.web)(&(release.schema.version>=1.0.0)(!(release.schema.version>=2.0.0))))"
+	)
+	private Release _release;
 
 	@Reference
 	private TrashEntryService _trashEntryService;

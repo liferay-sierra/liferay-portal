@@ -14,14 +14,14 @@
 
 package com.liferay.portal.search.admin.web.internal.portlet.action;
 
+import com.liferay.osgi.service.tracker.collections.map.ServiceReferenceMapperFactory;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
 import com.liferay.portal.instances.service.PortalInstancesLocalService;
-import com.liferay.portal.kernel.backgroundtask.BackgroundTaskManager;
 import com.liferay.portal.kernel.backgroundtask.constants.BackgroundTaskConstants;
 import com.liferay.portal.kernel.messaging.DestinationNames;
-import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.messaging.MessageBus;
 import com.liferay.portal.kernel.messaging.MessageListener;
-import com.liferay.portal.kernel.messaging.MessageListenerException;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.search.IndexWriterHelper;
@@ -30,7 +30,7 @@ import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Time;
@@ -44,7 +44,6 @@ import java.io.Serializable;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -52,11 +51,11 @@ import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletSession;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * @author Wade Cao
@@ -107,35 +106,37 @@ public class EditMVCActionCommand extends BaseMVCActionCommand {
 
 		String redirect = ParamUtil.getString(actionRequest, "redirect");
 
-		redirect = _http.setParameter(
+		redirect = HttpComponentsUtil.setParameter(
 			redirect, actionResponse.getNamespace() + "companyIds",
 			StringUtil.merge(
 				ParamUtil.getLongValues(actionRequest, "companyIds")));
-		redirect = _http.setParameter(
+		redirect = HttpComponentsUtil.setParameter(
 			redirect, actionResponse.getNamespace() + "scope",
 			ParamUtil.getString(actionRequest, "scope"));
 
 		sendRedirect(actionRequest, actionResponse, redirect);
 	}
 
-	@Reference(
-		cardinality = ReferenceCardinality.MULTIPLE,
-		policy = ReferencePolicy.DYNAMIC,
-		policyOption = ReferencePolicyOption.GREEDY
-	)
-	protected void addIndexReindexer(IndexReindexer indexReindexer) {
-		Class<?> clazz = indexReindexer.getClass();
+	@Activate
+	protected void activate(BundleContext bundleContext) {
+		_serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
+			bundleContext, IndexReindexer.class, null,
+			ServiceReferenceMapperFactory.create(
+				bundleContext,
+				(indexReindexer, emitter) -> {
+					Class<? extends IndexReindexer> clazz =
+						indexReindexer.getClass();
 
-		_indexReindexers.put(clazz.getName(), indexReindexer);
+					emitter.emit(clazz.getName());
+				}));
 	}
 
-	protected void removeIndexReindexer(IndexReindexer indexReindexer) {
-		Class<?> clazz = indexReindexer.getClass();
-
-		_indexReindexers.remove(clazz.getName());
+	@Deactivate
+	protected void deactivate() {
+		_serviceTrackerMap.close();
 	}
 
-	private void _reindex(final ActionRequest actionRequest) throws Exception {
+	private void _reindex(ActionRequest actionRequest) throws Exception {
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
@@ -153,46 +154,37 @@ public class EditMVCActionCommand extends BaseMVCActionCommand {
 			return;
 		}
 
-		final String jobName = "reindex-".concat(_portalUUID.generate());
+		String jobName = "reindex-".concat(_portalUUID.generate());
 
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
+		CountDownLatch countDownLatch = new CountDownLatch(1);
 
-		MessageListener messageListener = new MessageListener() {
+		MessageListener messageListener = message -> {
+			int status = message.getInteger("status");
 
-			@Override
-			public void receive(Message message)
-				throws MessageListenerException {
+			if ((status != BackgroundTaskConstants.STATUS_CANCELLED) &&
+				(status != BackgroundTaskConstants.STATUS_FAILED) &&
+				(status != BackgroundTaskConstants.STATUS_SUCCESSFUL)) {
 
-				int status = message.getInteger("status");
-
-				if ((status != BackgroundTaskConstants.STATUS_CANCELLED) &&
-					(status != BackgroundTaskConstants.STATUS_FAILED) &&
-					(status != BackgroundTaskConstants.STATUS_SUCCESSFUL)) {
-
-					return;
-				}
-
-				if (!jobName.equals(message.getString("name"))) {
-					return;
-				}
-
-				PortletSession portletSession =
-					actionRequest.getPortletSession();
-
-				long lastAccessedTime = portletSession.getLastAccessedTime();
-				int maxInactiveInterval =
-					portletSession.getMaxInactiveInterval();
-
-				int extendedMaxInactiveIntervalTime =
-					(int)(System.currentTimeMillis() - lastAccessedTime +
-						maxInactiveInterval);
-
-				portletSession.setMaxInactiveInterval(
-					extendedMaxInactiveIntervalTime);
-
-				countDownLatch.countDown();
+				return;
 			}
 
+			if (!jobName.equals(message.getString("name"))) {
+				return;
+			}
+
+			PortletSession portletSession = actionRequest.getPortletSession();
+
+			long lastAccessedTime = portletSession.getLastAccessedTime();
+			int maxInactiveInterval = portletSession.getMaxInactiveInterval();
+
+			int extendedMaxInactiveIntervalTime =
+				(int)(System.currentTimeMillis() - lastAccessedTime +
+					maxInactiveInterval);
+
+			portletSession.setMaxInactiveInterval(
+				extendedMaxInactiveIntervalTime);
+
+			countDownLatch.countDown();
 		};
 
 		_messageBus.registerMessageListener(
@@ -228,7 +220,8 @@ public class EditMVCActionCommand extends BaseMVCActionCommand {
 
 		String className = ParamUtil.getString(actionRequest, "className");
 
-		IndexReindexer indexReindexer = _indexReindexers.get(className);
+		IndexReindexer indexReindexer = _serviceTrackerMap.getService(
+			className);
 
 		indexReindexer.reindex(
 			ParamUtil.getLongValues(actionRequest, "companyIds"));
@@ -237,20 +230,11 @@ public class EditMVCActionCommand extends BaseMVCActionCommand {
 	private void _reindexIndexReindexers(ActionRequest actionRequest)
 		throws Exception {
 
-		for (IndexReindexer indexReindexer : _indexReindexers.values()) {
+		for (IndexReindexer indexReindexer : _serviceTrackerMap.values()) {
 			indexReindexer.reindex(
 				ParamUtil.getLongValues(actionRequest, "companyIds"));
 		}
 	}
-
-	@Reference
-	private BackgroundTaskManager _backgroundTaskManager;
-
-	@Reference
-	private Http _http;
-
-	private final Map<String, IndexReindexer> _indexReindexers =
-		new ConcurrentHashMap<>();
 
 	@Reference
 	private IndexWriterHelper _indexWriterHelper;
@@ -263,5 +247,7 @@ public class EditMVCActionCommand extends BaseMVCActionCommand {
 
 	@Reference
 	private PortalUUID _portalUUID;
+
+	private ServiceTrackerMap<String, IndexReindexer> _serviceTrackerMap;
 
 }

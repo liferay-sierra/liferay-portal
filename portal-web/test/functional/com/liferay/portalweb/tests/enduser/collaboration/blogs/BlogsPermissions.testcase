@@ -1,4 +1,4 @@
-@component-name = "portal-collaboration"
+@component-name = "portal-lima"
 definition {
 
 	property portal.acceptance = "true";
@@ -102,6 +102,62 @@ definition {
 		BlogsNavigator.openBlogsAdmin(siteURLKey = "site-name");
 
 		BlogsConfiguration.viewNoPermissionCP();
+	}
+
+	@description = "This test covers LPS-143574. It validates that a user with permissions can view and delete a Blogs image."
+	@priority = "3"
+	test CanDeleteImageWithRegRole {
+		property custom.properties = "jsonws.web.service.paths.excludes=";
+
+		JSONUser.addUser(
+			userEmailAddress = "userea@liferay.com",
+			userFirstName = "userfn",
+			userLastName = "userln",
+			userScreenName = "usersn");
+
+		JSONUser.setFirstPassword(
+			agreeToTermsAndAnswerReminderQuery = "true",
+			requireReset = "false",
+			userEmailAddress = "userea@liferay.com");
+
+		JSONRole.addRegularRole(roleTitle = "Test Regrole Name");
+
+		JSONRole.assignRoleToUser(
+			roleTitle = "Test Regrole Name",
+			userEmailAddress = "userea@liferay.com");
+
+		for (var resourceActionIndex : list "ACCESS_IN_CONTROL_PANEL,VIEW") {
+			Permissions.definePermissionViaJSONAPI(
+				resourceAction = "${resourceActionIndex}",
+				resourceName = "com_liferay_blogs_web_portlet_BlogsAdminPortlet",
+				roleTitle = "Test Regrole Name");
+		}
+
+		Permissions.definePermissionViaJSONAPI(
+			resourceAction = "VIEW_SITE_ADMINISTRATION",
+			resourceName = "com.liferay.portal.kernel.model.Group",
+			roleTitle = "Test Regrole Name");
+
+		Permissions.definePermissionViaJSONAPI(
+			resourceAction = "ADD_ENTRY",
+			resourceName = "com.liferay.blogs",
+			roleTitle = "Test Regrole Name");
+
+		JSONBlog.uploadBlogImage(
+			groupName = "Guest",
+			sourceFileName = "Document_1.jpg");
+
+		User.logoutAndLoginPG(
+			userLoginEmailAddress = "userea@liferay.com",
+			userLoginFullName = "userfn userln");
+
+		BlogsNavigator.openBlogsImages(siteURLKey = "guest");
+
+		LexiconEntry.gotoEntryMenuItem(
+			menuItem = "Delete",
+			rowEntry = "Document_1.jpg");
+
+		LexiconEntry.viewNoEntry(rowEntry = "Document_1.jpg");
 	}
 
 	@priority = "5"
@@ -363,10 +419,18 @@ definition {
 	@priority = "4"
 	@refactorneeded
 	test CannotAddEntryWhenTeamRoleHasNoPermissions {
+		JSONGroup.addGroup(groupName = "Site Name");
+
+		JSONLayout.addPublicLayout(
+			groupName = "Site Name",
+			layoutName = "Blogs Page");
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Site Name",
+			layoutName = "Blogs Page",
+			widgetName = "Blogs");
+
 		Permissions.setUpSiteTeamRoleLoginUserPG(
-			page = "Public Pages",
-			pageName = "Blogs Page",
-			portletName = "Blogs",
 			siteName = "Site Name",
 			teamDescription = "Site Team Description",
 			teamName = "Site Team Name",
@@ -451,7 +515,8 @@ definition {
 	@refactorneeded
 	test CannotCommentAsGuestAfterRemovingPermissions {
 		property osgi.module.configuration.file.names = "com.liferay.portal.bundle.blacklist.internal.configuration.BundleBlacklistConfiguration.config";
-		property osgi.module.configurations = "blacklistBundleSymbolicNames=&quot;com.liferay.saml.addon.keep.alive.web,com.liferay.saml.api,com.liferay.saml.impl,com.liferay.saml.opensaml.integration,com.liferay.saml.persistence.api,com.liferay.saml.persistence.service,com.liferay.saml.web,saml-hook&quot;";
+		property osgi.module.configurations = "blacklistBundleSymbolicNames=\"com.liferay.saml.addon.keep.alive.web,com.liferay.saml.api,com.liferay.saml.impl,com.liferay.saml.opensaml.integration,com.liferay.saml.persistence.api,com.liferay.saml.persistence.service,com.liferay.saml.web,saml-hook\"";
+		property portal.acceptance = "false";
 
 		task ("Add a comment to a blog as a guest and ensure comments can still be added.") {
 			JSONLayout.addPublicLayout(
@@ -540,7 +605,7 @@ definition {
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "Blogs Page");
+		PagesAdmin.addPage(pageName = "Blogs Page");
 
 		Navigator.gotoPage(pageName = "Blogs Page");
 
@@ -579,7 +644,7 @@ definition {
 			userLoginFullName = "Test Test",
 			userScreenName = "usersn");
 
-		Permissions.addBlogsEntryLoginUserPG(
+		Blogs.addBlogsEntryLoginUserPG(
 			entryContent = "Blogs Entry Content",
 			entryTitle = "Blogs Entry Title",
 			pageName = "Blogs Page",
@@ -621,7 +686,7 @@ definition {
 			entryContent = "Blogs Entry Content",
 			entryTitle = "Blogs Entry Title");
 
-		Permissions.addBlogsEntryLoginUserPG(
+		Blogs.addBlogsEntryLoginUserPG(
 			entryContent = "Blogs Entry Content",
 			entryTitle = "Blogs Entry Title",
 			pageName = "Blogs Page",
@@ -746,7 +811,7 @@ definition {
 			userLoginFullName = "Test Test",
 			userScreenName = "usersn");
 
-		Permissions.addBlogsEntryLoginUserPG(
+		Blogs.addBlogsEntryLoginUserPG(
 			entryContent = "Blogs Entry Content",
 			entryTitle = "Blogs Entry Title",
 			pageName = "Blogs Page",
@@ -780,7 +845,7 @@ definition {
 			entryContent = "Blogs Entry Content",
 			entryTitle = "Blogs Entry Title");
 
-		Permissions.addBlogsEntryLoginUserPG(
+		Blogs.addBlogsEntryLoginUserPG(
 			entryContent = "Blogs Entry Content",
 			entryTitle = "Blogs Entry Title",
 			pageName = "Blogs Page",
@@ -825,7 +890,7 @@ definition {
 			userLoginFullName = "Test Test",
 			userScreenName = "usersn");
 
-		Permissions.addBlogsEntryLoginUserPG(
+		Blogs.addBlogsEntryLoginUserPG(
 			entryContent = "Blogs Entry Content",
 			entryTitle = "Blogs Entry Title",
 			pageName = "Blogs Page",
@@ -867,7 +932,7 @@ definition {
 			entryContent = "Blogs Entry Content",
 			entryTitle = "Blogs Entry Title");
 
-		Permissions.addBlogsEntryLoginUserPG(
+		Blogs.addBlogsEntryLoginUserPG(
 			entryContent = "Blogs Entry Content",
 			entryTitle = "Blogs Entry Title",
 			pageName = "Blogs Page",
@@ -904,10 +969,18 @@ definition {
 	@priority = "4"
 	@refactorneeded
 	test CannotDeleteEntryWhenTeamRoleHasNoPermissions {
+		JSONGroup.addGroup(groupName = "Site Name");
+
+		JSONLayout.addPublicLayout(
+			groupName = "Site Name",
+			layoutName = "Blogs Page");
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Site Name",
+			layoutName = "Blogs Page",
+			widgetName = "Blogs");
+
 		Permissions.setUpSiteTeamRoleLoginUserPG(
-			page = "Public Pages",
-			pageName = "Blogs Page",
-			portletName = "Blogs",
 			siteName = "Site Name",
 			teamDescription = "Site Team Description",
 			teamName = "Site Team Name",
@@ -918,7 +991,7 @@ definition {
 			userLoginFullName = "Test Test",
 			userScreenName = "usersn");
 
-		Permissions.addBlogsEntryLoginUserPG(
+		Blogs.addBlogsEntryLoginUserPG(
 			entryContent = "Blogs Entry Content",
 			entryTitle = "Blogs Entry Title",
 			pageName = "Blogs Page",
@@ -960,7 +1033,7 @@ definition {
 			entryContent = "Blogs Entry Content",
 			entryTitle = "Blogs Entry Title");
 
-		Permissions.addBlogsEntryLoginUserPG(
+		Blogs.addBlogsEntryLoginUserPG(
 			entryContent = "Blogs Entry Content",
 			entryTitle = "Blogs Entry Title",
 			pageName = "Blogs Page",
@@ -1010,7 +1083,7 @@ definition {
 			userLoginFullName = "Test Test",
 			userScreenName = "usersn");
 
-		Permissions.addBlogsEntryLoginUserPG(
+		Blogs.addBlogsEntryLoginUserPG(
 			entryContent = "Blogs Entry Content",
 			entryTitle = "Blogs Entry Title",
 			pageName = "Blogs Page",

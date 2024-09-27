@@ -15,6 +15,8 @@
 package com.liferay.fragment.renderer;
 
 import com.liferay.fragment.model.FragmentEntryLink;
+import com.liferay.info.form.InfoForm;
+import com.liferay.info.item.InfoItemReference;
 
 import java.util.Locale;
 import java.util.Optional;
@@ -27,11 +29,13 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface FragmentRendererContext {
 
-	public Optional<Object> getDisplayObjectOptional();
+	public Optional<InfoItemReference> getContextInfoItemReferenceOptional();
 
 	public String getFragmentElementId();
 
 	public FragmentEntryLink getFragmentEntryLink();
+
+	public Optional<InfoForm> getInfoFormOptional();
 
 	public Locale getLocale();
 

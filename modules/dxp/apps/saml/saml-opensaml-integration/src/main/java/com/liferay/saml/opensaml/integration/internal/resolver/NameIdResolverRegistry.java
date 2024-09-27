@@ -38,7 +38,7 @@ public class NameIdResolverRegistry {
 	public NameIdResolver getNameIdResolver(String entityId) {
 		long companyId = CompanyThreadLocal.getCompanyId();
 
-		NameIdResolver nameIdResolver = _nameIdResolvers.getService(
+		NameIdResolver nameIdResolver = _serviceTrackerMap.getService(
 			companyId + "," + entityId);
 
 		if (nameIdResolver == null) {
@@ -55,30 +55,26 @@ public class NameIdResolverRegistry {
 		return nameIdResolver;
 	}
 
-	@Reference(
-		policyOption = ReferencePolicyOption.GREEDY,
-		target = "(!(companyId=*))", unbind = "-"
-	)
-	public void setDefaultNameIdResolver(NameIdResolver defaultNameIdResolver) {
-		_defaultNameIdResolver = defaultNameIdResolver;
-	}
-
 	@Activate
 	protected void activate(BundleContext bundleContext) {
-		_nameIdResolvers = ServiceTrackerMapFactory.openSingleValueMap(
+		_serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
 			bundleContext, NameIdResolver.class, "(companyId=*)",
 			new DefaultServiceReferenceMapper(_log));
 	}
 
 	@Deactivate
 	protected void deactivate() {
-		_nameIdResolvers.close();
+		_serviceTrackerMap.close();
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		NameIdResolverRegistry.class);
 
+	@Reference(
+		policyOption = ReferencePolicyOption.GREEDY, target = "(!(companyId=*))"
+	)
 	private NameIdResolver _defaultNameIdResolver;
-	private ServiceTrackerMap<String, NameIdResolver> _nameIdResolvers;
+
+	private ServiceTrackerMap<String, NameIdResolver> _serviceTrackerMap;
 
 }

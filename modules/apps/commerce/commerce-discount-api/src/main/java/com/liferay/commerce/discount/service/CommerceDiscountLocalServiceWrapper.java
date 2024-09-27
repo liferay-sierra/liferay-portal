@@ -611,6 +611,16 @@ public class CommerceDiscountLocalServiceWrapper
 	}
 
 	@Override
+	public com.liferay.commerce.discount.model.CommerceDiscount
+		fetchDefaultCommerceDiscount(
+			long commerceChannelAccountEntryRelId, long cpDefinitionId,
+			long cpInstanceId) {
+
+		return _commerceDiscountLocalService.fetchDefaultCommerceDiscount(
+			commerceChannelAccountEntryRelId, cpDefinitionId, cpInstanceId);
+	}
+
+	@Override
 	public java.util.List<com.liferay.commerce.discount.model.CommerceDiscount>
 		getAccountAndChannelAndOrderTypeCommerceDiscounts(
 			long commerceAccountId, long commerceChannelId,
@@ -930,6 +940,15 @@ public class CommerceDiscountLocalServiceWrapper
 			companyId, couponCode);
 	}
 
+	@Override
+	public java.util.List<com.liferay.commerce.discount.model.CommerceDiscount>
+		getCommerceDiscounts(
+			long companyId, String level, boolean active, int status) {
+
+		return _commerceDiscountLocalService.getCommerceDiscounts(
+			companyId, level, active, status);
+	}
+
 	/**
 	 * Returns the number of commerce discounts.
 	 *
@@ -1039,6 +1058,14 @@ public class CommerceDiscountLocalServiceWrapper
 
 		return _commerceDiscountLocalService.getUnqualifiedCommerceDiscounts(
 			companyId, target);
+	}
+
+	@Override
+	public int getValidCommerceDiscountsCount(
+		long commerceDiscountId, long cpDefinitionId, long cpInstanceId) {
+
+		return _commerceDiscountLocalService.getValidCommerceDiscountsCount(
+			commerceDiscountId, cpDefinitionId, cpInstanceId);
 	}
 
 	@Override

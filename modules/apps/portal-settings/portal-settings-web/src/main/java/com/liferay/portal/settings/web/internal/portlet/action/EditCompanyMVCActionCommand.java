@@ -37,7 +37,7 @@ import com.liferay.portal.kernel.exception.PhoneNumberExtensionException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.exception.WebsiteURLException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Address;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.EmailAddress;
@@ -70,7 +70,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.settings.web.internal.exception.RequiredLocaleException;
-import com.liferay.users.admin.kernel.util.UsersAdminUtil;
+import com.liferay.users.admin.kernel.util.UsersAdmin;
 
 import java.util.Enumeration;
 import java.util.List;
@@ -179,16 +179,6 @@ public class EditCompanyMVCActionCommand extends BaseFormMVCActionCommand {
 		throws Exception {
 	}
 
-	@Reference(unbind = "-")
-	protected void setCompanyService(CompanyService companyService) {
-		_companyService = companyService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDLAppLocalService(DLAppLocalService dlAppLocalService) {
-		_dlAppLocalService = dlAppLocalService;
-	}
-
 	private void _updateCompany(ActionRequest actionRequest) throws Exception {
 		long companyId = _portal.getCompanyId(actionRequest);
 
@@ -206,14 +196,14 @@ public class EditCompanyMVCActionCommand extends BaseFormMVCActionCommand {
 
 		User defaultUser = _userLocalService.getDefaultUser(companyId);
 
-		List<Address> addresses = UsersAdminUtil.getAddresses(actionRequest);
+		List<Address> addresses = _usersAdmin.getAddresses(actionRequest);
 
 		if (addresses.isEmpty()) {
 			addresses = _addressLocalService.getAddresses(
 				companyId, Company.class.getName(), company.getCompanyId());
 		}
 
-		List<EmailAddress> emailAddresses = UsersAdminUtil.getEmailAddresses(
+		List<EmailAddress> emailAddresses = _usersAdmin.getEmailAddresses(
 			actionRequest);
 
 		if (emailAddresses.isEmpty()) {
@@ -221,14 +211,14 @@ public class EditCompanyMVCActionCommand extends BaseFormMVCActionCommand {
 				companyId, Company.class.getName(), company.getCompanyId());
 		}
 
-		List<Phone> phones = UsersAdminUtil.getPhones(actionRequest);
+		List<Phone> phones = _usersAdmin.getPhones(actionRequest);
 
 		if (phones.isEmpty()) {
 			phones = _phoneLocalService.getPhones(
 				companyId, Company.class.getName(), company.getCompanyId());
 		}
 
-		List<Website> websites = UsersAdminUtil.getWebsites(actionRequest);
+		List<Website> websites = _usersAdmin.getWebsites(actionRequest);
 
 		if (websites.isEmpty()) {
 			websites = _websiteLocalService.getWebsites(
@@ -330,7 +320,7 @@ public class EditCompanyMVCActionCommand extends BaseFormMVCActionCommand {
 
 		String[] removedLanguageIds = ArrayUtil.filter(
 			LocaleUtil.toLanguageIds(
-				LanguageUtil.getCompanyAvailableLocales(companyId)),
+				_language.getCompanyAvailableLocales(companyId)),
 			languageId -> !StringUtil.contains(
 				newLanguageIds, languageId, StringPool.COMMA));
 
@@ -396,7 +386,10 @@ public class EditCompanyMVCActionCommand extends BaseFormMVCActionCommand {
 	@Reference
 	private AddressLocalService _addressLocalService;
 
+	@Reference
 	private CompanyService _companyService;
+
+	@Reference
 	private DLAppLocalService _dlAppLocalService;
 
 	@Reference
@@ -404,6 +397,9 @@ public class EditCompanyMVCActionCommand extends BaseFormMVCActionCommand {
 
 	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private PhoneLocalService _phoneLocalService;
@@ -416,6 +412,9 @@ public class EditCompanyMVCActionCommand extends BaseFormMVCActionCommand {
 
 	@Reference
 	private UserLocalService _userLocalService;
+
+	@Reference
+	private UsersAdmin _usersAdmin;
 
 	@Reference
 	private WebsiteLocalService _websiteLocalService;

@@ -11,6 +11,13 @@
 
 export const actionTypes = {
 	CHANGE_STEP: 'CHANGE_STEP',
+	UPDATE_ANALYTICS_CLOUD_ACTIVATION_SUBMITTED_STATUS:
+		'UPDATE_ANALYTICS_CLOUD_ACTIVATION_SUBMITTED_STATUS',
+	UPDATE_CURRENT_TOTAL_ADMINISTRATORS: 'UPDATE_CURRENT_TOTAL_ADMINISTRATORS',
+	UPDATE_DXP_CLOUD_ACTIVATION_SUBMITTED_STATUS:
+		'UPDATE_DXP_CLOUD_ACTIVATION_SUBMITTED_STATUS',
+	UPDATE_LIFERAY_EXPERIENCE_CLOUD_ACTIVATION_SUBMITTED_STATUS:
+		'UPDATE_LIFERAY_EXPERIENCE_CLOUD_ACTIVATION_SUBMITTED_STATUS',
 	UPDATE_PROJECT: 'UPDATE_PROJECT',
 	UPDATE_SESSION_ID: 'UPDATE_SESSION_ID',
 	UPDATE_SUBSCRIPTION_GROUPS: 'UPDATE_SUBSCRIPTION_GROUPS',
@@ -23,6 +30,12 @@ const reducer = (state, action) => {
 			return {
 				...state,
 				step: action.payload,
+			};
+		}
+		case actionTypes.UPDATE_CURRENT_TOTAL_ADMINISTRATORS: {
+			return {
+				...state,
+				totalAdministratorAccounts: action.payload,
 			};
 		}
 		case actionTypes.UPDATE_PROJECT: {
@@ -47,6 +60,24 @@ const reducer = (state, action) => {
 			return {
 				...state,
 				subscriptionGroups: action.payload,
+			};
+		}
+		case actionTypes.UPDATE_DXP_CLOUD_ACTIVATION_SUBMITTED_STATUS: {
+			return {
+				...state,
+				dxpCloudActivationSubmittedStatus: action.payload,
+			};
+		}
+		case actionTypes.UPDATE_LIFERAY_EXPERIENCE_CLOUD_ACTIVATION_SUBMITTED_STATUS: {
+			return {
+				...state,
+				liferayExperienceCloudActivationSubmittedStatus: action.payload,
+			};
+		}
+		case actionTypes.UPDATE_ANALYTICS_CLOUD_ACTIVATION_SUBMITTED_STATUS: {
+			return {
+				...state,
+				analyticsCloudActivationSubmittedStatus: action.payload,
 			};
 		}
 		default: {

@@ -19,12 +19,10 @@ import com.liferay.analytics.reports.info.item.ClassNameClassPKInfoItemIdentifie
 import com.liferay.analytics.reports.web.internal.constants.AnalyticsReportsPortletKeys;
 import com.liferay.analytics.reports.web.internal.display.context.AnalyticsReportsDisplayContext;
 import com.liferay.info.item.InfoItemReference;
-import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
-import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
@@ -50,7 +48,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Sarai Díaz
  */
 @Component(
-	configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true,
+	configurationPolicy = ConfigurationPolicy.OPTIONAL,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.display-category=category.hidden",
@@ -61,9 +59,9 @@ import org.osgi.service.component.annotations.Reference;
 		"com.liferay.portlet.system=true",
 		"com.liferay.portlet.use-default-template=false",
 		"javax.portlet.display-name=Content Performance",
-		"javax.portlet.init-param.view-template=/view.jsp",
 		"javax.portlet.name=" + AnalyticsReportsPortletKeys.ANALYTICS_REPORTS,
-		"javax.portlet.resource-bundle=content.Language"
+		"javax.portlet.resource-bundle=content.Language",
+		"javax.portlet.version=3.0"
 	},
 	service = {AnalyticsReportsPortlet.class, Portlet.class}
 )
@@ -89,15 +87,11 @@ public class AnalyticsReportsPortlet extends MVCPortlet {
 
 		InfoItemReference infoItemReference = _getInfoItemReference(
 			httpServletRequest);
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)httpServletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
 
 		renderRequest.setAttribute(
 			AnalyticsReportsWebKeys.ANALYTICS_REPORTS_DISPLAY_CONTEXT,
 			new AnalyticsReportsDisplayContext(
-				infoItemReference, renderRequest, renderResponse,
-				themeDisplay));
+				infoItemReference, _portal, renderRequest, renderResponse));
 
 		super.doDispatch(renderRequest, renderResponse);
 	}
@@ -135,7 +129,7 @@ public class AnalyticsReportsPortlet extends MVCPortlet {
 
 		return Optional.ofNullable(
 			(InfoItemReference)httpServletRequest.getAttribute(
-				AnalyticsReportsWebKeys.INFO_ITEM_REFERENCE)
+				AnalyticsReportsWebKeys.ANALYTICS_INFO_ITEM_REFERENCE)
 		).orElseGet(
 			() -> Optional.ofNullable(
 				_getClassTypeName(httpServletRequest)
@@ -153,12 +147,6 @@ public class AnalyticsReportsPortlet extends MVCPortlet {
 			)
 		);
 	}
-
-	@Reference
-	private Http _http;
-
-	@Reference
-	private Language _language;
 
 	@Reference
 	private Portal _portal;

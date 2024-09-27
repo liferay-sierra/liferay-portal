@@ -24,9 +24,10 @@ import com.liferay.asset.kernel.model.AssetEntryTable;
 import com.liferay.asset.kernel.model.AssetRendererFactory;
 import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.info.item.InfoItemReference;
+import com.liferay.info.search.InfoSearchClassMapperRegistry;
 import com.liferay.layout.display.page.LayoutDisplayPageObjectProvider;
 import com.liferay.layout.display.page.LayoutDisplayPageProvider;
-import com.liferay.layout.display.page.LayoutDisplayPageProviderTracker;
+import com.liferay.layout.display.page.LayoutDisplayPageProviderRegistry;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
 import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
@@ -40,7 +41,6 @@ import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
@@ -93,11 +93,8 @@ public class AssetDisplayPageEntryLocalServiceImpl
 		assetDisplayPageEntry.setLayoutPageTemplateEntryId(
 			layoutPageTemplateEntryId);
 		assetDisplayPageEntry.setType(type);
-
-		long plid = _getPlid(
-			groupId, classNameId, classPK, layoutPageTemplateEntryId);
-
-		assetDisplayPageEntry.setPlid(plid);
+		assetDisplayPageEntry.setPlid(
+			_getPlid(groupId, classNameId, classPK, layoutPageTemplateEntryId));
 
 		assetDisplayPageEntry = assetDisplayPageEntryPersistence.update(
 			assetDisplayPageEntry);
@@ -266,7 +263,7 @@ public class AssetDisplayPageEntryLocalServiceImpl
 		String className = _portal.getClassName(classNameId);
 
 		LayoutDisplayPageProvider<?> layoutDisplayPageProvider =
-			_layoutDisplayPageProviderTracker.
+			_layoutDisplayPageProviderRegistry.
 				getLayoutDisplayPageProviderByClassName(className);
 
 		if (layoutDisplayPageProvider == null) {
@@ -348,16 +345,12 @@ public class AssetDisplayPageEntryLocalServiceImpl
 			classNameId
 		).and(
 			() -> {
-				if (classNameId == _portal.getClassNameId(
-						FileEntry.class.getName())) {
+				String searchClassName =
+					_infoSearchClassMapperRegistry.getSearchClassName(
+						_portal.getClassName(classNameId));
 
-					return AssetEntryTable.INSTANCE.classNameId.eq(
-						_portal.getClassNameId(
-							"com.liferay.document.library.kernel.model." +
-								"DLFileEntry"));
-				}
-
-				return AssetEntryTable.INSTANCE.classNameId.eq(classNameId);
+				return AssetEntryTable.INSTANCE.classNameId.eq(
+					_portal.getClassNameId(searchClassName));
 			}
 		).and(
 			AssetDisplayPageEntryTable.INSTANCE.layoutPageTemplateEntryId.eq(
@@ -394,7 +387,11 @@ public class AssetDisplayPageEntryLocalServiceImpl
 	private AssetEntryLocalService _assetEntryLocalService;
 
 	@Reference
-	private LayoutDisplayPageProviderTracker _layoutDisplayPageProviderTracker;
+	private InfoSearchClassMapperRegistry _infoSearchClassMapperRegistry;
+
+	@Reference
+	private LayoutDisplayPageProviderRegistry
+		_layoutDisplayPageProviderRegistry;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;

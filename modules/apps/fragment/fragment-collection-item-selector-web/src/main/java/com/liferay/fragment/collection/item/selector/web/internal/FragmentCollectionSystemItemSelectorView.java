@@ -16,11 +16,11 @@ package com.liferay.fragment.collection.item.selector.web.internal;
 
 import com.liferay.fragment.collection.item.selector.FragmentCollectionItemSelectorReturnType;
 import com.liferay.fragment.collection.item.selector.criterion.FragmentCollectionItemSelectorCriterion;
-import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
+import com.liferay.fragment.contributor.FragmentCollectionContributorRegistry;
 import com.liferay.item.selector.ItemSelectorReturnType;
 import com.liferay.item.selector.ItemSelectorView;
 import com.liferay.item.selector.ItemSelectorViewDescriptorRenderer;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.CompanyConstants;
 
 import java.io.IOException;
@@ -63,7 +63,7 @@ public class FragmentCollectionSystemItemSelectorView
 
 	@Override
 	public String getTitle(Locale locale) {
-		return LanguageUtil.get(locale, "default");
+		return _language.get(locale, "default");
 	}
 
 	@Override
@@ -82,7 +82,7 @@ public class FragmentCollectionSystemItemSelectorView
 			fragmentCollectionItemSelectorCriterion, portletURL,
 			itemSelectedEventName, search,
 			new FragmentCollectionContributorItemSelectorViewDescriptor(
-				_fragmentCollectionContributorTracker,
+				_fragmentCollectionContributorRegistry,
 				(HttpServletRequest)servletRequest, portletURL));
 	}
 
@@ -91,12 +91,15 @@ public class FragmentCollectionSystemItemSelectorView
 			new FragmentCollectionItemSelectorReturnType());
 
 	@Reference
-	private FragmentCollectionContributorTracker
-		_fragmentCollectionContributorTracker;
+	private FragmentCollectionContributorRegistry
+		_fragmentCollectionContributorRegistry;
 
 	@Reference
 	private ItemSelectorViewDescriptorRenderer
 		<FragmentCollectionItemSelectorCriterion>
 			_itemSelectorViewDescriptorRenderer;
+
+	@Reference
+	private Language _language;
 
 }

@@ -32,15 +32,20 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
+import com.liferay.portal.workflow.metrics.rest.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.portal.workflow.metrics.rest.resource.v1_0.AssigneeMetricResource;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -58,7 +61,10 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @author Rafael Praxedes
  * @generated
  */
-@Component(immediate = true, service = AssigneeMetricResource.Factory.class)
+@Component(
+	property = "resource.locator.key=/portal-workflow-metrics/v1.0/AssigneeMetric",
+	service = AssigneeMetricResource.Factory.class
+)
 @Generated("")
 public class AssigneeMetricResourceFactoryImpl
 	implements AssigneeMetricResource.Factory {
@@ -73,9 +79,7 @@ public class AssigneeMetricResourceFactoryImpl
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (AssigneeMetricResource)ProxyUtil.newProxyInstance(
-					AssigneeMetricResource.class.getClassLoader(),
-					new Class<?>[] {AssigneeMetricResource.class},
+				return _assigneeMetricResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -134,14 +138,32 @@ public class AssigneeMetricResourceFactoryImpl
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		AssigneeMetricResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, AssigneeMetricResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		AssigneeMetricResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			AssigneeMetricResource.class.getClassLoader(),
+			AssigneeMetricResource.class);
+
+		try {
+			Constructor<AssigneeMetricResource> constructor =
+				(Constructor<AssigneeMetricResource>)proxyClass.getConstructor(
+					InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -164,7 +186,7 @@ public class AssigneeMetricResourceFactoryImpl
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		AssigneeMetricResource assigneeMetricResource =
@@ -189,6 +211,7 @@ public class AssigneeMetricResourceFactoryImpl
 		assigneeMetricResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		assigneeMetricResource.setRoleLocalService(_roleLocalService);
+		assigneeMetricResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(assigneeMetricResource, arguments);
@@ -204,6 +227,10 @@ public class AssigneeMetricResourceFactoryImpl
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, AssigneeMetricResource>
+		_assigneeMetricResourceProxyProviderFunction =
+			_getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -226,9 +253,6 @@ public class AssigneeMetricResourceFactoryImpl
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -237,6 +261,9 @@ public class AssigneeMetricResourceFactoryImpl
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

@@ -29,7 +29,6 @@ import org.osgi.service.component.annotations.Component;
  * @author Gavin Wan
  */
 @Component(
-	immediate = true,
 	property = {
 		"com.liferay.portlet.css-class-wrapper=reports-portlet",
 		"com.liferay.portlet.display-category=category.bi",
@@ -46,7 +45,8 @@ import org.osgi.service.component.annotations.Component;
 		"javax.portlet.portlet-info.short-title=Reports Display",
 		"javax.portlet.portlet-info.title=Reports Display",
 		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=administrator,guest,power-user,user"
+		"javax.portlet.security-role-ref=administrator,guest,power-user,user",
+		"javax.portlet.version=3.0"
 	},
 	service = Portlet.class
 )

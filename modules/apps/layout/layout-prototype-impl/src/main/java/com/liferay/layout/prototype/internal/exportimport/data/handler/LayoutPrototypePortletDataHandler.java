@@ -40,7 +40,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Daniela Zapata Riesco
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + LayoutPrototypePortletKeys.LAYOUT_PROTOTYPE,
 	service = PortletDataHandler.class
 )
@@ -141,18 +140,10 @@ public class LayoutPrototypePortletDataHandler extends BasePortletDataHandler {
 		layoutPrototypeExportActionableDynamicQuery.performCount();
 	}
 
-	@Reference(unbind = "-")
-	protected void setLayoutPrototypeLocalService(
-		LayoutPrototypeLocalService layoutPrototypeLocalService) {
-
-		_layoutPrototypeLocalService = layoutPrototypeLocalService;
-	}
-
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
-	protected void setModuleServiceLifecycle(
-		ModuleServiceLifecycle moduleServiceLifecycle) {
-	}
-
+	@Reference
 	private LayoutPrototypeLocalService _layoutPrototypeLocalService;
+
+	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
+	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
 }

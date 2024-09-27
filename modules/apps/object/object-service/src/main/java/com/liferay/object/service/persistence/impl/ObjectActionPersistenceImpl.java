@@ -46,7 +46,7 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 
 import java.io.Serializable;
 
@@ -194,7 +194,7 @@ public class ObjectActionPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<ObjectAction>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (ObjectAction objectAction : list) {
@@ -574,7 +574,7 @@ public class ObjectActionPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -733,7 +733,7 @@ public class ObjectActionPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<ObjectAction>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (ObjectAction objectAction : list) {
@@ -1147,7 +1147,7 @@ public class ObjectActionPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid, companyId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -1310,7 +1310,7 @@ public class ObjectActionPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<ObjectAction>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (ObjectAction objectAction : list) {
@@ -1677,7 +1677,7 @@ public class ObjectActionPersistenceImpl
 
 		Object[] finderArgs = new Object[] {objectDefinitionId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -1838,7 +1838,7 @@ public class ObjectActionPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<ObjectAction>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (ObjectAction objectAction : list) {
@@ -2293,7 +2293,7 @@ public class ObjectActionPersistenceImpl
 			objectDefinitionId, active, objectActionTriggerKey
 		};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -2471,7 +2471,7 @@ public class ObjectActionPersistenceImpl
 		objectAction.setNew(true);
 		objectAction.setPrimaryKey(objectActionId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		objectAction.setUuid(uuid);
 
@@ -2590,7 +2590,7 @@ public class ObjectActionPersistenceImpl
 			(ObjectActionModelImpl)objectAction;
 
 		if (Validator.isNull(objectAction.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			objectAction.setUuid(uuid);
 		}
@@ -2783,7 +2783,7 @@ public class ObjectActionPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<ObjectAction>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -2853,7 +2853,7 @@ public class ObjectActionPersistenceImpl
 	@Override
 	public int countAll() {
 		Long count = (Long)finderCache.getResult(
-			_finderPathCountAll, FINDER_ARGS_EMPTY);
+			_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -3103,7 +3103,6 @@ public class ObjectActionPersistenceImpl
 	}
 
 	@Reference
-	private ObjectActionModelArgumentsResolver
-		_objectActionModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

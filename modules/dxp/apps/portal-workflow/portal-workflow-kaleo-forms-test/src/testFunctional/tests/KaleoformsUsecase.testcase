@@ -2117,9 +2117,23 @@ definition {
 			panel = "Applications",
 			portlet = "Process Builder");
 
-		Workflow.uploadDefinition(
-			workflowDefinitionFile = "1-workflow-definition.xml",
-			workflowDefinitionTitle = "Uploaded Definition");
+		Workflow.addNewDefinition(workflowDefinitionTitle = "Uploaded Definition");
+
+		ProcessBuilderKaleoDesignerReact.uploadDefinition(workflowDefinitionFile = "1-workflow-definition.xml");
+
+		ProcessBuilderKaleoDesignerReact.diagramSourceSwitchView();
+
+		ProcessBuilderKaleoDesignerReact.editConnector(
+			connectorLabel = "APPROVE",
+			newConnectorLabel = "Approve");
+
+		ProcessBuilderKaleoDesignerReact.editConnectorTransitionField(
+			connectorLabel = "APPROVE",
+			nodeId = "Approve");
+
+		PortletEntry.publish();
+
+		Workflow.openWorkflowListView();
 
 		Workflow.viewDefinition(
 			workflowDefinitionName = "Uploaded Definition",
@@ -2202,19 +2216,19 @@ definition {
 		Workflow.assignToMeTaskByActions(
 			workflowAssetTitle = "Kaleo Forms Process Predefined",
 			workflowAssetType = "${workflowAssetType}",
-			workflowTask = "Review");
+			workflowTask = "review");
 
 		Workflow.approveTaskByActions(
 			workflowAssetTitle = "Kaleo Forms Process Predefined",
 			workflowAssetType = "${workflowAssetType}",
-			workflowTask = "Review");
+			workflowTask = "review");
 
 		UserBar.gotoDropdownItem(dropdownItem = "My Workflow Tasks");
 
 		Workflow.viewCompletedTask(
 			workflowAssetTitle = "Kaleo Forms Process Predefined",
 			workflowAssetType = "${workflowAssetType}",
-			workflowTask = "Review");
+			workflowTask = "review");
 
 		Workflow.gotoCompletedTaskAssignedToMePreview(workflowAssetTitle = "Kaleo Forms Process Predefined");
 
@@ -3036,9 +3050,15 @@ definition {
 			panel = "Applications",
 			portlet = "Process Builder");
 
-		Workflow.uploadDefinition(
-			workflowDefinitionFile = "1-workflow-definition.xml",
-			workflowDefinitionTitle = "Uploaded Definition");
+		Workflow.addNewDefinition(workflowDefinitionTitle = "Uploaded Definition");
+
+		ProcessBuilderKaleoDesignerReact.uploadDefinition(workflowDefinitionFile = "1-workflow-definition.xml");
+
+		ProcessBuilderKaleoDesignerReact.diagramSourceSwitchView();
+
+		PortletEntry.publish();
+
+		Workflow.openWorkflowListView();
 
 		Workflow.viewDefinition(workflowDefinitionName = "Uploaded Definition");
 
@@ -3193,9 +3213,23 @@ definition {
 			panel = "Applications",
 			portlet = "Process Builder");
 
-		Workflow.uploadDefinition(
-			workflowDefinitionFile = "1-workflow-definition.xml",
-			workflowDefinitionTitle = "Uploaded Definition");
+		Workflow.addNewDefinition(workflowDefinitionTitle = "Uploaded Definition");
+
+		ProcessBuilderKaleoDesignerReact.uploadDefinition(workflowDefinitionFile = "1-workflow-definition.xml");
+
+		ProcessBuilderKaleoDesignerReact.diagramSourceSwitchView();
+
+		ProcessBuilderKaleoDesignerReact.editConnector(
+			connectorLabel = "APPROVE",
+			newConnectorLabel = "Approve");
+
+		ProcessBuilderKaleoDesignerReact.editConnectorTransitionField(
+			connectorLabel = "APPROVE",
+			nodeId = "Approve");
+
+		PortletEntry.publish();
+
+		Workflow.openWorkflowListView();
 
 		Workflow.viewDefinition(workflowDefinitionName = "Uploaded Definition");
 
@@ -3334,19 +3368,19 @@ definition {
 		Workflow.assignToMeTaskByActions(
 			workflowAssetTitle = "Kaleo Forms Process",
 			workflowAssetType = "${workflowAssetType}",
-			workflowTask = "Review");
+			workflowTask = "review");
 
 		Workflow.approveTaskByActions(
 			workflowAssetTitle = "Kaleo Forms Process",
 			workflowAssetType = "${workflowAssetType}",
-			workflowTask = "Review");
+			workflowTask = "review");
 
 		UserBar.gotoDropdownItem(dropdownItem = "My Workflow Tasks");
 
 		Workflow.viewCompletedTask(
 			workflowAssetTitle = "Kaleo Forms Process",
 			workflowAssetType = "${workflowAssetType}",
-			workflowTask = "Review");
+			workflowTask = "review");
 
 		Workflow.gotoCompletedTaskAssignedToMePreview(workflowAssetTitle = "Kaleo Forms Process");
 
@@ -4452,6 +4486,8 @@ definition {
 	@description = "This is a use case for LPS-51098."
 	@priority = "3"
 	test ViewKaleoProcessNameOpenedViaNotifications {
+		property portal.upstream = "quarantine";
+
 		Navigator.openURL();
 
 		ProductMenu.gotoPortlet(
@@ -4899,7 +4935,9 @@ definition {
 
 		Workflow.clickRevertSortDirection();
 
-		Pause(locator1 = "1000");
+		WaitForElementPresent(
+			locator1 = "MyWorkflowTasks#TABLE_GENERIC_ASSET_TITLE",
+			value1 = "Kaleo Forms Process");
 
 		Workflow._viewActivities(
 			workflowActivityComment = "Test Test completed the task Review.",

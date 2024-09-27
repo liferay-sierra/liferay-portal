@@ -39,8 +39,10 @@ import com.liferay.dynamic.data.mapping.util.DDMFormValuesToFieldsConverter;
 import com.liferay.dynamic.data.mapping.util.FieldsToDDMFormValuesConverter;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValuesValidationException;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONSerializer;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.constants.TestDataConstants;
@@ -330,10 +332,11 @@ public class StorageAdapterTest extends BaseDDMServiceTestCase {
 				TestPropsValues.getGroupId(), TestPropsValues.getUserId());
 
 		FileEntry file1 = DLAppLocalServiceUtil.addFileEntry(
-			TestPropsValues.getUserId(), TestPropsValues.getGroupId(),
+			null, TestPropsValues.getUserId(), TestPropsValues.getGroupId(),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, "Test 1.txt",
-			ContentTypes.TEXT_PLAIN, TestDataConstants.TEST_BYTE_ARRAY,
-			serviceContext);
+			ContentTypes.TEXT_PLAIN, "Test 1.txt", StringPool.BLANK,
+			StringPool.BLANK, StringPool.BLANK,
+			TestDataConstants.TEST_BYTE_ARRAY, null, null, serviceContext);
 
 		String file1Value = getDocLibraryFieldValue(file1);
 
@@ -398,33 +401,37 @@ public class StorageAdapterTest extends BaseDDMServiceTestCase {
 
 	@Test
 	public void testLinkToPageField() throws Exception {
-		String definition = read("ddm-structure-link-to-page-field.xsd");
-
 		DDMStructure structure = addStructure(
-			_classNameId, null, "Link to Page Field Structure", definition,
+			_classNameId, null, "Link to Page Field Structure",
+			read("ddm-structure-link-to-page-field.xsd"),
 			StorageType.DEFAULT.getValue(), DDMStructureConstants.TYPE_DEFAULT);
 
 		Fields fields = new Fields();
 
-		Field linkToPageField = new Field(
-			structure.getStructureId(), "link_to_page",
-			HashMapBuilder.<Locale, List<Serializable>>put(
-				_enLocale,
-				ListUtil.fromArray(
-					"{\"layoutId\":\"1\",\"privateLayout\":false}")
-			).put(
-				_ptLocale,
-				ListUtil.fromArray(
-					"{\"layoutId\":\"2\",\"privateLayout\":true}")
-			).build(),
-			_enLocale);
-
-		fields.put(linkToPageField);
-
-		Field fieldsDisplayField = createFieldsDisplayField(
-			structure.getStructureId(), "link_to_page_INSTANCE_rztm");
-
-		fields.put(fieldsDisplayField);
+		fields.put(
+			new Field(
+				structure.getStructureId(), "link_to_page",
+				HashMapBuilder.<Locale, List<Serializable>>put(
+					_enLocale,
+					ListUtil.fromArray(
+						JSONUtil.put(
+							"layoutId", "1"
+						).put(
+							"privateLayout", false
+						).toString())
+				).put(
+					_ptLocale,
+					ListUtil.fromArray(
+						JSONUtil.put(
+							"layoutId", "2"
+						).put(
+							"privateLayout", true
+						).toString())
+				).build(),
+				_enLocale));
+		fields.put(
+			createFieldsDisplayField(
+				structure.getStructureId(), "link_to_page_INSTANCE_rztm"));
 
 		validate(structure.getStructureId(), fields);
 	}

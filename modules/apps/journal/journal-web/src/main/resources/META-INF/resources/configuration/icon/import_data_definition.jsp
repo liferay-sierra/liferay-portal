@@ -16,13 +16,6 @@
 
 <%@ include file="/init.jsp" %>
 
-<liferay-ui:icon
-	id="importDataDefinitionIcon"
-	message="import-structure"
-	onClick='<%= liferayPortletResponse.getNamespace() + "openImportDataDefinitionModal();" %>'
-	url="javascript:;"
-/>
-
 <div>
 	<react:component
 		module="js/modals/ImportDataDefinitionModal"
@@ -44,11 +37,14 @@
 </div>
 
 <aui:script>
-	function <portlet:namespace />openImportDataDefinitionModal() {
-		Liferay.componentReady(
-			'<portlet:namespace />importDataDefinitionModal'
-		).then((importDataDefinitionModal) => {
-			importDataDefinitionModal.open();
-		});
-	}
+	Liferay.Util.setPortletConfigurationIconAction(
+		'<portlet:namespace />importDataDefinition',
+		() => {
+			Liferay.componentReady(
+				'<portlet:namespace />importDataDefinitionModal'
+			).then((importDataDefinitionModal) => {
+				importDataDefinitionModal.open();
+			});
+		}
+	);
 </aui:script>

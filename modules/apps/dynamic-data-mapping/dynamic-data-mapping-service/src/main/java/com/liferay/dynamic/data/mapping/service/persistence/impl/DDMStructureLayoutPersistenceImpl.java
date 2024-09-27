@@ -49,7 +49,7 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 
 import java.io.Serializable;
 
@@ -209,7 +209,7 @@ public class DDMStructureLayoutPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<DDMStructureLayout>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (DDMStructureLayout ddmStructureLayout : list) {
@@ -606,7 +606,7 @@ public class DDMStructureLayoutPersistenceImpl
 
 			finderArgs = new Object[] {uuid};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -742,7 +742,7 @@ public class DDMStructureLayoutPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = finderCache.getResult(
-				_finderPathFetchByUUID_G, finderArgs);
+				_finderPathFetchByUUID_G, finderArgs, this);
 		}
 
 		if (result instanceof DDMStructureLayout) {
@@ -862,7 +862,7 @@ public class DDMStructureLayoutPersistenceImpl
 
 			finderArgs = new Object[] {uuid, groupId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1034,7 +1034,7 @@ public class DDMStructureLayoutPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<DDMStructureLayout>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (DDMStructureLayout ddmStructureLayout : list) {
@@ -1460,7 +1460,7 @@ public class DDMStructureLayoutPersistenceImpl
 
 			finderArgs = new Object[] {uuid, companyId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1623,7 +1623,7 @@ public class DDMStructureLayoutPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<DDMStructureLayout>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (DDMStructureLayout ddmStructureLayout : list) {
@@ -1995,7 +1995,7 @@ public class DDMStructureLayoutPersistenceImpl
 
 			finderArgs = new Object[] {groupId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2145,7 +2145,7 @@ public class DDMStructureLayoutPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<DDMStructureLayout>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (DDMStructureLayout ddmStructureLayout : list) {
@@ -2553,7 +2553,7 @@ public class DDMStructureLayoutPersistenceImpl
 
 			finderArgs = new Object[] {structureLayoutKey};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2688,7 +2688,7 @@ public class DDMStructureLayoutPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = finderCache.getResult(
-				_finderPathFetchByStructureVersionId, finderArgs);
+				_finderPathFetchByStructureVersionId, finderArgs, this);
 		}
 
 		if (result instanceof DDMStructureLayout) {
@@ -2807,7 +2807,7 @@ public class DDMStructureLayoutPersistenceImpl
 
 			finderArgs = new Object[] {structureVersionId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2957,7 +2957,7 @@ public class DDMStructureLayoutPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<DDMStructureLayout>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (DDMStructureLayout ddmStructureLayout : list) {
@@ -3358,7 +3358,7 @@ public class DDMStructureLayoutPersistenceImpl
 
 			finderArgs = new Object[] {groupId, classNameId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -3499,7 +3499,8 @@ public class DDMStructureLayoutPersistenceImpl
 		Object result = null;
 
 		if (useFinderCache && productionMode) {
-			result = finderCache.getResult(_finderPathFetchByG_C_S, finderArgs);
+			result = finderCache.getResult(
+				_finderPathFetchByG_C_S, finderArgs, this);
 		}
 
 		if (result instanceof DDMStructureLayout) {
@@ -3634,7 +3635,7 @@ public class DDMStructureLayoutPersistenceImpl
 				groupId, classNameId, structureLayoutKey
 			};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -3824,7 +3825,7 @@ public class DDMStructureLayoutPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<DDMStructureLayout>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (DDMStructureLayout ddmStructureLayout : list) {
@@ -4256,7 +4257,7 @@ public class DDMStructureLayoutPersistenceImpl
 				groupId, classNameId, structureVersionId
 			};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -4497,7 +4498,7 @@ public class DDMStructureLayoutPersistenceImpl
 		ddmStructureLayout.setNew(true);
 		ddmStructureLayout.setPrimaryKey(structureLayoutId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		ddmStructureLayout.setUuid(uuid);
 
@@ -4624,7 +4625,7 @@ public class DDMStructureLayoutPersistenceImpl
 			(DDMStructureLayoutModelImpl)ddmStructureLayout;
 
 		if (Validator.isNull(ddmStructureLayout.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			ddmStructureLayout.setUuid(uuid);
 		}
@@ -4752,7 +4753,9 @@ public class DDMStructureLayoutPersistenceImpl
 	 */
 	@Override
 	public DDMStructureLayout fetchByPrimaryKey(Serializable primaryKey) {
-		if (ctPersistenceHelper.isProductionMode(DDMStructureLayout.class)) {
+		if (ctPersistenceHelper.isProductionMode(
+				DDMStructureLayout.class, primaryKey)) {
+
 			return super.fetchByPrimaryKey(primaryKey);
 		}
 
@@ -4974,7 +4977,7 @@ public class DDMStructureLayoutPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<DDMStructureLayout>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -5050,7 +5053,7 @@ public class DDMStructureLayoutPersistenceImpl
 
 		if (productionMode) {
 			count = (Long)finderCache.getResult(
-				_finderPathCountAll, FINDER_ARGS_EMPTY);
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 		}
 
 		if (count == null) {
@@ -5442,7 +5445,6 @@ public class DDMStructureLayoutPersistenceImpl
 	}
 
 	@Reference
-	private DDMStructureLayoutModelArgumentsResolver
-		_ddmStructureLayoutModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

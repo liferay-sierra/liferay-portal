@@ -14,11 +14,17 @@
 
 package com.liferay.jenkins.results.parser.test.clazz.group;
 
+import com.google.common.collect.Lists;
+
 import com.liferay.jenkins.results.parser.GitWorkingDirectory;
 import com.liferay.jenkins.results.parser.JenkinsResultsParserUtil;
+import com.liferay.jenkins.results.parser.PortalTestClassJob;
 import com.liferay.jenkins.results.parser.QAWebsitesGitRepositoryJob;
 import com.liferay.jenkins.results.parser.job.property.JobProperty;
+import com.liferay.jenkins.results.parser.test.clazz.TestClass;
 import com.liferay.poshi.core.PoshiContext;
+import com.liferay.poshi.core.util.GetterUtil;
+import com.liferay.poshi.core.util.MathUtil;
 import com.liferay.poshi.core.util.PropsUtil;
 
 import java.io.File;
@@ -26,6 +32,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+
+import org.json.JSONObject;
 
 /**
  * @author Michael Hashimoto
@@ -37,10 +45,11 @@ public class QAWebsitesFunctionalBatchTestClassGroup
 	public List<File> getTestBaseDirs() {
 		List<File> testBaseDirs = new ArrayList<>();
 
-		QAWebsitesGitRepositoryJob qaWebsitesGitRepositoryJob =
-			_getQAWebsitesGitRepositoryJob();
 		GitWorkingDirectory qaWebsitesGitWorkingDirectory =
 			_getQAWebsitesGitWorkingDirectory();
+
+		QAWebsitesGitRepositoryJob qaWebsitesGitRepositoryJob =
+			_getQAWebsitesGitRepositoryJob();
 
 		for (String projectName :
 				qaWebsitesGitRepositoryJob.getProjectNames()) {
@@ -55,10 +64,31 @@ public class QAWebsitesFunctionalBatchTestClassGroup
 	}
 
 	protected QAWebsitesFunctionalBatchTestClassGroup(
-		String batchName,
-		QAWebsitesGitRepositoryJob qaWebsitesGitRepositoryJob) {
+		JSONObject jsonObject, PortalTestClassJob portalTestClassJob) {
 
-		super(batchName, qaWebsitesGitRepositoryJob);
+		super(jsonObject, portalTestClassJob);
+	}
+
+	protected QAWebsitesFunctionalBatchTestClassGroup(
+		String batchName, PortalTestClassJob portalTestClassJob) {
+
+		super(batchName, portalTestClassJob);
+	}
+
+	protected int getAxisMaxSize(File testBaseDir) {
+		JobProperty jobProperty = getJobProperty(
+			"test.batch.axis.max.size", testSuiteName, testBaseDir,
+			JobProperty.Type.QA_WEBSITES_TEST_DIR);
+
+		String jobPropertyValue = jobProperty.getValue();
+
+		if (JenkinsResultsParserUtil.isInteger(jobPropertyValue)) {
+			recordJobProperty(jobProperty);
+
+			return Integer.parseInt(jobPropertyValue);
+		}
+
+		return AXES_SIZE_MAX_DEFAULT;
 	}
 
 	@Override
@@ -76,7 +106,7 @@ public class QAWebsitesFunctionalBatchTestClassGroup
 		}
 
 		JobProperty jobProperty = getJobProperty(
-			"test.batch.property.query", testBaseDir,
+			"test.batch.property.query", testSuiteName, testBaseDir,
 			JobProperty.Type.QA_WEBSITES_TEST_DIR);
 
 		recordJobProperty(jobProperty);
@@ -85,7 +115,7 @@ public class QAWebsitesFunctionalBatchTestClassGroup
 	}
 
 	@Override
-	protected List<List<String>> getPoshiTestClassGroups(File testBaseDir) {
+	protected List<List<TestClass>> getPoshiTestClassGroups(File testBaseDir) {
 		String query = getTestBatchRunPropertyQuery(testBaseDir);
 
 		if (JenkinsResultsParserUtil.isNullOrEmpty(query)) {
@@ -102,6 +132,8 @@ public class QAWebsitesFunctionalBatchTestClassGroup
 
 			Properties properties = JenkinsResultsParserUtil.getProperties(
 				new File(testBaseDir.getParentFile(), "test.properties"),
+				new File(testBaseDir, "poshi-ext.properties"),
+				new File(testBaseDir, "poshi.properties"),
 				new File(testBaseDir, "test.properties"));
 
 			if (!JenkinsResultsParserUtil.isNullOrEmpty(testBaseDirPath)) {
@@ -117,7 +149,20 @@ public class QAWebsitesFunctionalBatchTestClassGroup
 
 				PoshiContext.readFiles();
 
-				return PoshiContext.getTestBatchGroups(query, getAxisMaxSize());
+				JobProperty jobProperty = getJobProperty(
+					"test.batch.axis.count", testSuiteName, testBaseDir,
+					JobProperty.Type.QA_WEBSITES_TEST_DIR);
+
+				if (jobProperty.getValue() != null) {
+					return getTestClassGroups(
+						_getTestBatchGroupsByAxisCount(
+							query,
+							GetterUtil.getInteger(jobProperty.getValue())));
+				}
+
+				return getTestClassGroups(
+					PoshiContext.getTestBatchGroups(
+						query, getAxisMaxSize(testBaseDir)));
 			}
 			catch (Exception exception) {
 				throw new RuntimeException(exception);
@@ -139,6 +184,21 @@ public class QAWebsitesFunctionalBatchTestClassGroup
 			_getQAWebsitesGitRepositoryJob();
 
 		return qaWebsitesGitRepositoryJob.getGitWorkingDirectory();
+	}
+
+	private List<List<String>> _getTestBatchGroupsByAxisCount(
+			String pqlQuery, long axisCount)
+		throws Exception {
+
+		List<String> classCommandNames = PoshiContext.executePQLQuery(
+			pqlQuery, false);
+
+		long testCount = classCommandNames.size();
+
+		long groupSize = MathUtil.quotient(testCount, axisCount, true);
+
+		return Lists.partition(
+			classCommandNames, GetterUtil.getInteger(groupSize));
 	}
 
 }

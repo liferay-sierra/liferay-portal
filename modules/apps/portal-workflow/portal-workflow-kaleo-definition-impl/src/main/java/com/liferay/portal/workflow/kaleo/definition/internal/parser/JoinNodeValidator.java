@@ -25,9 +25,7 @@ import org.osgi.service.component.annotations.Component;
  * @author Michael C. Han
  * @author Marcellus Tavares
  */
-@Component(
-	immediate = true, property = "node.type=JOIN", service = NodeValidator.class
-)
+@Component(property = "node.type=JOIN", service = NodeValidator.class)
 public class JoinNodeValidator extends BaseNodeValidator<Join> {
 
 	@Override
@@ -36,12 +34,12 @@ public class JoinNodeValidator extends BaseNodeValidator<Join> {
 
 		if (join.getIncomingTransitionsCount() == 0) {
 			throw new KaleoDefinitionValidationException.
-				MustSetIncomingTransition(join.getName());
+				MustSetIncomingTransition(join.getDefaultLabel());
 		}
 
 		if (join.getOutgoingTransitionsCount() == 0) {
 			throw new KaleoDefinitionValidationException.
-				MustSetOutgoingTransition(join.getName());
+				MustSetOutgoingTransition(join.getDefaultLabel());
 		}
 	}
 

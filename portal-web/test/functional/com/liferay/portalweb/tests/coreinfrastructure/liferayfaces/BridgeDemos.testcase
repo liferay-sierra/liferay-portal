@@ -41,7 +41,6 @@ definition {
 		PagesAdmin.configurePage(
 			columnName = "1 Column",
 			pageName = "alloy-applicant",
-			privacy = "Public Pages",
 			sitePageType = "Widget Page");
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "web/bridge-demos/alloy-applicant");
@@ -133,7 +132,6 @@ definition {
 		PagesAdmin.configurePage(
 			columnName = "1 Column",
 			pageName = "bootsfaces-applicant",
-			privacy = "Public Pages",
 			sitePageType = "Widget Page");
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "web/bridge-demos/bootsfaces-applicant");
@@ -229,7 +227,6 @@ definition {
 		PagesAdmin.configurePage(
 			columnName = "1 Column",
 			pageName = "butterfaces-applicant",
-			privacy = "Public Pages",
 			sitePageType = "Widget Page");
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "web/bridge-demos/butterfaces-applicant");
@@ -325,7 +322,6 @@ definition {
 		PagesAdmin.configurePage(
 			columnName = "1 Column",
 			pageName = "jsf-events",
-			privacy = "Public Pages",
 			sitePageType = "Widget Page");
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "web/bridge-demos/jsf-events");
@@ -382,7 +378,6 @@ definition {
 		PagesAdmin.configurePage(
 			columnName = "1 Column",
 			pageName = "jsf-prp",
-			privacy = "Public Pages",
 			sitePageType = "Widget Page");
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "web/bridge-demos/jsf-prp");
@@ -439,7 +434,6 @@ definition {
 		PagesAdmin.configurePage(
 			columnName = "1 Column",
 			pageName = "jsf-applicant",
-			privacy = "Public Pages",
 			sitePageType = "Widget Page");
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "web/bridge-demos/jsf-applicant");
@@ -531,7 +525,6 @@ definition {
 		PagesAdmin.configurePage(
 			columnName = "1 Column",
 			pageName = "jsf-cdi-applicant",
-			privacy = "Public Pages",
 			sitePageType = "Widget Page");
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "web/bridge-demos/jsf-cdi-applicant");
@@ -623,7 +616,6 @@ definition {
 		PagesAdmin.configurePage(
 			columnName = "1 Column",
 			pageName = "jsf-pdf",
-			privacy = "Public Pages",
 			sitePageType = "Widget Page");
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "web/bridge-demos/jsf-pdf");
@@ -650,7 +642,6 @@ definition {
 		PagesAdmin.configurePage(
 			columnName = "1 Column",
 			pageName = "jsf flows",
-			privacy = "Public Pages",
 			sitePageType = "Widget Page");
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "web/bridge-demos/jsf-flows");
@@ -735,7 +726,6 @@ definition {
 		PagesAdmin.configurePage(
 			columnName = "1 Column",
 			pageName = "jsf-html5-applicant",
-			privacy = "Public Pages",
 			sitePageType = "Widget Page");
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "web/bridge-demos/jsf-html5-applicant");
@@ -827,7 +817,6 @@ definition {
 		PagesAdmin.configurePage(
 			columnName = "1 Column",
 			pageName = "jsf-jsp-applicant",
-			privacy = "Public Pages",
 			sitePageType = "Widget Page");
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "web/bridge-demos/jsf-jsp-applicant");
@@ -911,7 +900,6 @@ definition {
 		PagesAdmin.configurePage(
 			columnName = "1 Column",
 			pageName = "jsf-spring-applicant",
-			privacy = "Public Pages",
 			sitePageType = "Widget Page");
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "web/bridge-demos");
@@ -1003,7 +991,6 @@ definition {
 		PagesAdmin.configurePage(
 			columnName = "1 Column",
 			pageName = "primefaces-applicant",
-			privacy = "Public Pages",
 			sitePageType = "Widget Page");
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "web/bridge-demos/primefaces-applicant");
@@ -1102,7 +1089,6 @@ definition {
 		PagesAdmin.configurePage(
 			columnName = "1 Column",
 			pageName = "richfaces-applicant",
-			privacy = "Public Pages",
 			sitePageType = "Widget Page");
 
 		Navigator.openWithAppendToBaseURL(urlAppend = "web/bridge-demos/richfaces-applicant");

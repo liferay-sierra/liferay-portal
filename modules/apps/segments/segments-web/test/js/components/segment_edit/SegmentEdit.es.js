@@ -14,6 +14,7 @@
 
 import '@testing-library/jest-dom/extend-expect';
 import {fireEvent, render, waitFor} from '@testing-library/react';
+import {navigate} from 'frontend-js-web';
 import React from 'react';
 
 import SegmentEdit from '../../../../src/main/resources/META-INF/resources/js/components/segment_edit/SegmentEdit.es';
@@ -57,12 +58,18 @@ const CONTRIBUTORS = [
 	},
 ];
 
+jest.mock('frontend-js-web', () => ({
+	...jest.requireActual('frontend-js-web'),
+	navigate: jest.fn(),
+}));
+
 function _renderSegmentEditComponent({
 	source = undefined,
 	redirect = DEFAULT_REDIRECT,
 	hasUpdatePermission = undefined,
 	contributors = undefined,
 	showInEditMode = undefined,
+	isSegmentationEnabled = true,
 } = {}) {
 	return render(
 		<SegmentEdit
@@ -75,6 +82,7 @@ function _renderSegmentEditComponent({
 			initialSegmentName={{
 				en_US: 'Segment title',
 			}}
+			isSegmentationEnabled={isSegmentationEnabled}
 			locale="en_US"
 			redirect={redirect}
 			showInEditMode={showInEditMode}
@@ -84,6 +92,18 @@ function _renderSegmentEditComponent({
 }
 
 describe('SegmentEdit', () => {
+	beforeAll(() => {
+		window.Liferay = {
+			...Liferay,
+			CustomDialogs: {},
+			FeatureFlags: {},
+		};
+	});
+
+	afterEach(() => {
+		jest.clearAllMocks();
+	});
+
 	it('renders', () => {
 		const {asFragment} = _renderSegmentEditComponent();
 
@@ -140,8 +160,7 @@ describe('SegmentEdit', () => {
 
 	it('redirects when cancelling without any edition', () => {
 		const mockConfirm = jest.fn();
-		const mockNavigate = jest.fn();
-		window.Liferay.Util.navigate = mockNavigate;
+
 		window.confirm = mockConfirm;
 
 		const hasUpdatePermission = true;
@@ -158,15 +177,14 @@ describe('SegmentEdit', () => {
 
 		fireEvent.click(cancelButton);
 
-		expect(mockNavigate).toHaveBeenCalledTimes(1);
-		expect(mockNavigate).toHaveBeenCalledWith(DEFAULT_REDIRECT);
+		expect(navigate).toHaveBeenCalledTimes(1);
+		expect(navigate).toHaveBeenCalledWith(DEFAULT_REDIRECT);
 		expect(mockConfirm).toHaveBeenCalledTimes(0);
 	});
 
 	it('redirects when cancelling after title edition', (done) => {
 		const mockConfirm = jest.fn();
-		const mockNavigate = jest.fn();
-		window.Liferay.Util.navigate = mockNavigate;
+
 		window.confirm = mockConfirm;
 
 		const hasUpdatePermission = true;
@@ -187,13 +205,67 @@ describe('SegmentEdit', () => {
 
 			fireEvent.click(cancelButton);
 
-			expect(mockNavigate).toHaveBeenCalledTimes(0);
-
+			expect(navigate).toHaveBeenCalledTimes(0);
 			expect(mockConfirm).toHaveBeenCalledTimes(1);
 			expect(mockConfirm).toHaveBeenCalledWith(
 				'criteria-cancel-confirmation-message'
 			);
 			done();
 		});
+	});
+
+	it('renders a dissmisible alert if Segmentation service is disabled', () => {
+		const isSegmentationEnabled = false;
+
+		const {container, getByText} = _renderSegmentEditComponent({
+			isSegmentationEnabled,
+		});
+
+		expect(getByText('segmentation-is-disabled')).toBeInTheDocument();
+
+		expect(
+			container.getElementsByClassName(
+				'segment-edit-page-root--with-warning'
+			).length
+		).toBe(1);
+
+		expect(
+			container.querySelectorAll(
+				'.alert-dismissible .lexicon-icon.lexicon-icon-times'
+			).length
+		).toBe(1);
+	});
+
+	it('renders a dismissible alert which is effectively dismissible', async () => {
+		const isSegmentationEnabled = false;
+
+		const {
+			container,
+			getByLabelText,
+			getByText,
+			queryByText,
+		} = _renderSegmentEditComponent({
+			isSegmentationEnabled,
+		});
+
+		expect(getByText('segmentation-is-disabled')).toBeInTheDocument();
+
+		const dismissButton = getByLabelText('Close', {selector: 'button'});
+
+		fireEvent.click(dismissButton);
+
+		expect(queryByText('segmentation-is-disabled')).not.toBeInTheDocument();
+
+		expect(
+			container.querySelectorAll(
+				'.alert-dismissible .lexicon-icon.lexicon-icon-times'
+			).length
+		).toBe(0);
+
+		expect(
+			container.getElementsByClassName(
+				'segment-edit-page-root--with-warning'
+			).length
+		).toBe(0);
 	});
 });

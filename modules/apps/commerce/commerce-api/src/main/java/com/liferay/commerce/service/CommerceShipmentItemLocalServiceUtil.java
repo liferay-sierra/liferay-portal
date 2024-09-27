@@ -62,14 +62,16 @@ public class CommerceShipmentItemLocalServiceUtil {
 	}
 
 	public static CommerceShipmentItem addCommerceShipmentItem(
-			long commerceShipmentId, long commerceOrderItemId,
-			long commerceInventoryWarehouseId, int quantity,
+			String externalReferenceCode, long commerceShipmentId,
+			long commerceOrderItemId, long commerceInventoryWarehouseId,
+			int quantity, boolean validateInventory,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws PortalException {
 
 		return getService().addCommerceShipmentItem(
-			commerceShipmentId, commerceOrderItemId,
-			commerceInventoryWarehouseId, quantity, serviceContext);
+			externalReferenceCode, commerceShipmentId, commerceOrderItemId,
+			commerceInventoryWarehouseId, quantity, validateInventory,
+			serviceContext);
 	}
 
 	public static CommerceShipmentItem
@@ -80,6 +82,19 @@ public class CommerceShipmentItemLocalServiceUtil {
 
 		return getService().addDeliverySubscriptionCommerceShipmentItem(
 			groupId, userId, commerceShipmentId, commerceOrderItemId);
+	}
+
+	public static CommerceShipmentItem addOrUpdateCommerceShipmentItem(
+			String externalReferenceCode, long commerceShipmentId,
+			long commerceOrderItemId, long commerceInventoryWarehouseId,
+			int quantity, boolean validateInventory,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
+
+		return getService().addOrUpdateCommerceShipmentItem(
+			externalReferenceCode, commerceShipmentId, commerceOrderItemId,
+			commerceInventoryWarehouseId, quantity, validateInventory,
+			serviceContext);
 	}
 
 	/**
@@ -273,6 +288,46 @@ public class CommerceShipmentItemLocalServiceUtil {
 			commerceInventoryWarehouseId);
 	}
 
+	/**
+	 * Returns the commerce shipment item with the matching external reference code and company.
+	 *
+	 * @param companyId the primary key of the company
+	 * @param externalReferenceCode the commerce shipment item's external reference code
+	 * @return the matching commerce shipment item, or <code>null</code> if a matching commerce shipment item could not be found
+	 */
+	public static CommerceShipmentItem
+		fetchCommerceShipmentItemByExternalReferenceCode(
+			long companyId, String externalReferenceCode) {
+
+		return getService().fetchCommerceShipmentItemByExternalReferenceCode(
+			companyId, externalReferenceCode);
+	}
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link #fetchCommerceShipmentItemByExternalReferenceCode(long, String)}
+	 */
+	@Deprecated
+	public static CommerceShipmentItem fetchCommerceShipmentItemByReferenceCode(
+		long companyId, String externalReferenceCode) {
+
+		return getService().fetchCommerceShipmentItemByReferenceCode(
+			companyId, externalReferenceCode);
+	}
+
+	/**
+	 * Returns the commerce shipment item matching the UUID and group.
+	 *
+	 * @param uuid the commerce shipment item's UUID
+	 * @param groupId the primary key of the group
+	 * @return the matching commerce shipment item, or <code>null</code> if a matching commerce shipment item could not be found
+	 */
+	public static CommerceShipmentItem
+		fetchCommerceShipmentItemByUuidAndGroupId(String uuid, long groupId) {
+
+		return getService().fetchCommerceShipmentItemByUuidAndGroupId(
+			uuid, groupId);
+	}
+
 	public static com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery
 		getActionableDynamicQuery() {
 
@@ -291,6 +346,39 @@ public class CommerceShipmentItemLocalServiceUtil {
 		throws PortalException {
 
 		return getService().getCommerceShipmentItem(commerceShipmentItemId);
+	}
+
+	/**
+	 * Returns the commerce shipment item with the matching external reference code and company.
+	 *
+	 * @param companyId the primary key of the company
+	 * @param externalReferenceCode the commerce shipment item's external reference code
+	 * @return the matching commerce shipment item
+	 * @throws PortalException if a matching commerce shipment item could not be found
+	 */
+	public static CommerceShipmentItem
+			getCommerceShipmentItemByExternalReferenceCode(
+				long companyId, String externalReferenceCode)
+		throws PortalException {
+
+		return getService().getCommerceShipmentItemByExternalReferenceCode(
+			companyId, externalReferenceCode);
+	}
+
+	/**
+	 * Returns the commerce shipment item matching the UUID and group.
+	 *
+	 * @param uuid the commerce shipment item's UUID
+	 * @param groupId the primary key of the group
+	 * @return the matching commerce shipment item
+	 * @throws PortalException if a matching commerce shipment item could not be found
+	 */
+	public static CommerceShipmentItem getCommerceShipmentItemByUuidAndGroupId(
+			String uuid, long groupId)
+		throws PortalException {
+
+		return getService().getCommerceShipmentItemByUuidAndGroupId(
+			uuid, groupId);
 	}
 
 	/**
@@ -346,6 +434,40 @@ public class CommerceShipmentItemLocalServiceUtil {
 	}
 
 	/**
+	 * Returns all the commerce shipment items matching the UUID and company.
+	 *
+	 * @param uuid the UUID of the commerce shipment items
+	 * @param companyId the primary key of the company
+	 * @return the matching commerce shipment items, or an empty list if no matches were found
+	 */
+	public static List<CommerceShipmentItem>
+		getCommerceShipmentItemsByUuidAndCompanyId(
+			String uuid, long companyId) {
+
+		return getService().getCommerceShipmentItemsByUuidAndCompanyId(
+			uuid, companyId);
+	}
+
+	/**
+	 * Returns a range of commerce shipment items matching the UUID and company.
+	 *
+	 * @param uuid the UUID of the commerce shipment items
+	 * @param companyId the primary key of the company
+	 * @param start the lower bound of the range of commerce shipment items
+	 * @param end the upper bound of the range of commerce shipment items (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the range of matching commerce shipment items, or an empty list if no matches were found
+	 */
+	public static List<CommerceShipmentItem>
+		getCommerceShipmentItemsByUuidAndCompanyId(
+			String uuid, long companyId, int start, int end,
+			OrderByComparator<CommerceShipmentItem> orderByComparator) {
+
+		return getService().getCommerceShipmentItemsByUuidAndCompanyId(
+			uuid, companyId, start, end, orderByComparator);
+	}
+
+	/**
 	 * Returns the number of commerce shipment items.
 	 *
 	 * @return the number of commerce shipment items
@@ -370,6 +492,14 @@ public class CommerceShipmentItemLocalServiceUtil {
 
 		return getService().getCommerceShipmentOrderItemsQuantity(
 			commerceShipmentId, commerceOrderItemId);
+	}
+
+	public static com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery
+		getExportActionableDynamicQuery(
+			com.liferay.exportimport.kernel.lar.PortletDataContext
+				portletDataContext) {
+
+		return getService().getExportActionableDynamicQuery(portletDataContext);
 	}
 
 	public static
@@ -414,20 +544,21 @@ public class CommerceShipmentItemLocalServiceUtil {
 	}
 
 	public static CommerceShipmentItem updateCommerceShipmentItem(
-			long commerceShipmentItemId, int quantity)
+			long commerceShipmentItemId, long commerceInventoryWarehouseId,
+			int quantity, boolean validateInventory)
 		throws PortalException {
 
 		return getService().updateCommerceShipmentItem(
-			commerceShipmentItemId, quantity);
+			commerceShipmentItemId, commerceInventoryWarehouseId, quantity,
+			validateInventory);
 	}
 
-	public static CommerceShipmentItem updateCommerceShipmentItem(
-			long commerceShipmentItemId, long commerceInventoryWarehouseId,
-			int quantity)
+	public static CommerceShipmentItem updateExternalReferenceCode(
+			long commerceShipmentItemId, String externalReferenceCode)
 		throws PortalException {
 
-		return getService().updateCommerceShipmentItem(
-			commerceShipmentItemId, commerceInventoryWarehouseId, quantity);
+		return getService().updateExternalReferenceCode(
+			commerceShipmentItemId, externalReferenceCode);
 	}
 
 	public static CommerceShipmentItemLocalService getService() {

@@ -135,20 +135,12 @@ const baseProps = {
 
 const renderComponent = (props) => render(<Translate {...props} />);
 
+jest.mock('frontend-js-web', () => ({
+	...jest.requireActual('frontend-js-web'),
+	sub: jest.fn((langKey, arg) => langKey.replace('x', arg)),
+}));
+
 describe('Translate', () => {
-	Liferay.Util.sub.mockImplementation((langKey, ...args) =>
-		[langKey, ...args].join('-')
-	);
-
-	Liferay.Util.unescapeHTML =
-		Liferay.Util.unescapeHTML ||
-		jest.fn((string) =>
-			string.replace(/&([^;]+);/g, (match) => {
-				return new DOMParser().parseFromString(match, 'text/html')
-					.documentElement.textContent;
-			})
-		);
-
 	afterEach(cleanup);
 
 	it('renders with auto-translate enabled', () => {
@@ -197,8 +189,7 @@ describe('Translate', () => {
 
 		expect(
 			getByText(
-				'auto-translate-x-field-' +
-					baseProps.infoFieldSetEntries[1].fields[0].label
+				`auto-translate-${baseProps.infoFieldSetEntries[1].fields[0].label}-field`
 			).closest('button')
 		).toBeDisabled();
 	});
@@ -238,8 +229,9 @@ describe('Translate', () => {
 				result = renderComponent(baseProps);
 
 				const {getByText} = result;
+
 				const autoTranslateFieldButton = getByText(
-					'auto-translate-x-field-' + infoFieldContent.label
+					`auto-translate-${infoFieldContent.label}-field`
 				).closest('button');
 
 				await act(async () => {
@@ -334,8 +326,7 @@ describe('Translate', () => {
 				const {getByText} = renderComponent(baseProps);
 
 				const autoTranslateFieldButton = getByText(
-					'auto-translate-x-field-' +
-						baseProps.infoFieldSetEntries[0].fields[0].label
+					`auto-translate-${baseProps.infoFieldSetEntries[0].fields[0].label}-field`
 				).closest('button');
 
 				await act(async () => {

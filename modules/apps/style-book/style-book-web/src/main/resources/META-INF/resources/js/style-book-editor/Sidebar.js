@@ -15,28 +15,14 @@
 import ClayAlert from '@clayui/alert';
 import ClayButton from '@clayui/button';
 import ClayDropDown, {Align} from '@clayui/drop-down';
-import React, {useContext, useEffect, useRef, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 
 import FrontendTokenSet from './FrontendTokenSet';
-import {StyleBookContext} from './StyleBookContext';
 import {config} from './config';
+import {useFrontendTokensValues} from './contexts/StyleBookEditorContext';
 
-export default function Sidebar() {
-	const {frontendTokensValues = {}} = useContext(StyleBookContext);
+export default React.memo(function Sidebar() {
 	const sidebarRef = useRef();
-
-	useEffect(() => {
-		if (sidebarRef.current) {
-			Object.values(frontendTokensValues).forEach(
-				({cssVariableMapping, value}) => {
-					sidebarRef.current.style.setProperty(
-						`--${cssVariableMapping}`,
-						value
-					);
-				}
-			);
-		}
-	}, [frontendTokensValues]);
 
 	return (
 		<div className="style-book-editor__sidebar" ref={sidebarRef}>
@@ -44,7 +30,10 @@ export default function Sidebar() {
 				<ThemeInformation />
 
 				{config.frontendTokenDefinition.frontendTokenCategories ? (
-					<FrontendTokenCategories />
+					<>
+						<FrontendTokenCategories />
+						<UpdateStyle sidebarRef={sidebarRef} />
+					</>
 				) : (
 					<ClayAlert className="m-3" displayType="info">
 						{Liferay.Language.get(
@@ -55,19 +44,50 @@ export default function Sidebar() {
 			</div>
 		</div>
 	);
+});
+
+function UpdateStyle({sidebarRef}) {
+	const frontendTokensValues = useFrontendTokensValues();
+
+	useEffect(() => {
+		if (sidebarRef.current) {
+			sidebarRef.current.removeAttribute('style');
+
+			Object.values(frontendTokensValues).forEach(
+				({cssVariableMapping, value}) => {
+					sidebarRef.current.style.setProperty(
+						`--${cssVariableMapping}`,
+						value
+					);
+				}
+			);
+		}
+	}, [frontendTokensValues, sidebarRef]);
+
+	return null;
 }
 
 function ThemeInformation() {
 	return (
 		<div className="pb-3">
 			<p className="small text-secondary">
-				{config.showPrivateLayouts
-					? Liferay.Language.get(
+				{IsValidFrontendTokenDefinition() ? (
+					config.isPrivateLayoutsEnabled ? (
+						Liferay.Language.get(
 							'this-token-definition-belongs-to-the-theme-set-for-public-pages'
-					  )
-					: Liferay.Language.get(
+						)
+					) : (
+						Liferay.Language.get(
 							'this-token-definition-belongs-to-the-theme-set-for-pages'
-					  )}
+						)
+					)
+				) : (
+					<ClayAlert className="m-0" displayType="warning">
+						{Liferay.Language.get(
+							'the-current-theme-does-not-support-editing-style-book-values'
+						)}
+					</ClayAlert>
+				)}
 			</p>
 
 			<p className="mb-0 small">
@@ -81,13 +101,37 @@ function ThemeInformation() {
 	);
 }
 
+function IsValidFrontendTokenDefinition() {
+	const frontendTokensValues = useFrontendTokensValues();
+	const frontendThemeValues = config.frontendTokens;
+
+	return Object.keys(frontendTokensValues).every(
+		(tokenValue) => frontendThemeValues[tokenValue]
+	);
+}
+
 function FrontendTokenCategories() {
+	const frontendTokensValues = useFrontendTokensValues();
+
 	const frontendTokenCategories =
 		config.frontendTokenDefinition.frontendTokenCategories;
 	const [active, setActive] = useState(false);
 	const [selectedCategory, setSelectedCategory] = useState(
 		frontendTokenCategories[0]
 	);
+
+	const tokenValues = useMemo(() => {
+		const nextTokenValues = {...config.frontendTokens};
+
+		for (const [name, {value}] of Object.entries(frontendTokensValues)) {
+			nextTokenValues[name] = {
+				...nextTokenValues[name],
+				value: value || nextTokenValues[name].defaultValue,
+			};
+		}
+
+		return nextTokenValues;
+	}, [frontendTokensValues]);
 
 	return (
 		<>
@@ -134,12 +178,13 @@ function FrontendTokenCategories() {
 			)}
 
 			{selectedCategory?.frontendTokenSets.map(
-				({frontendTokens, label, name}) => (
+				({frontendTokens, label, name}, index) => (
 					<FrontendTokenSet
 						frontendTokens={frontendTokens}
 						key={name}
 						label={label}
-						name={name}
+						open={index === 0}
+						tokenValues={tokenValues}
 					/>
 				)
 			)}

@@ -13,8 +13,8 @@
  */
 
 import ClayButton from '@clayui/button';
-import classnames from 'classnames';
-import React, {useState} from 'react';
+import classNames from 'classnames';
+import React, {useEffect, useState} from 'react';
 
 import * as DefaultVariant from '../../../core/components/PageRenderer/DefaultVariant.es';
 import {useConfig} from '../../../core/hooks/useConfig.es';
@@ -29,7 +29,7 @@ export function Column({children, column, columnRef, editable, ...otherProps}) {
 		<DefaultVariant.Column
 			{...otherProps}
 			column={column}
-			columnClassName={classnames({
+			columnClassName={classNames({
 				hide: firstField?.hideField && !editable,
 			})}
 			ref={columnRef}
@@ -51,33 +51,69 @@ export function Container({
 	strings = null,
 }) {
 	const [showReport, setShowReport] = useState(false);
+	const [alertDismissed, setAlertDismissed] = useState(false);
 
 	const {
+		dataEngineModule,
+		displayChartAsTable,
 		formReportDataURL,
-		hasDescription,
+		showPartialResultsToRespondents,
 		showSubmitButton,
 		submitLabel,
 	} = useConfig();
 
 	const onClick = () => {
 		setShowReport(true);
+
+		if (
+			document.querySelector(
+				'.lfr-ddm__show-partial-results-alert--hidden'
+			)
+		) {
+			setAlertDismissed(true);
+		}
 	};
 
-	if (showReport) {
+	useEffect(() => {
+		const backButton = document.querySelector(
+			'.lfr-ddm__default-page-header-back-button'
+		);
 		const alertElement = document.querySelector(
 			'.lfr-ddm__show-partial-results-alert'
 		);
+		if (alertDismissed) {
+			alertElement.classList.add(
+				'lfr-ddm__show-partial-results-alert--hidden'
+			);
+		}
+		if (showReport) {
+			backButton?.classList.remove('hide');
+			backButton.addEventListener('click', () => setShowReport(false));
+			alertElement.classList.add(
+				'lfr-ddm__show-partial-results-alert--hidden'
+			);
+		}
 
-		alertElement.classList.add(
-			'lfr-ddm__show-partial-results-alert--hidden'
-		);
-	}
+		return () => {
+			if (showPartialResultsToRespondents) {
+				backButton?.classList.add('hide');
+				alertElement?.classList.remove(
+					'lfr-ddm__show-partial-results-alert--hidden'
+				);
+			}
+		};
+	}, [alertDismissed, showPartialResultsToRespondents, showReport]);
+
+	useEffect(() => {
+		document.getElementById('main-content').scrollTop = 0;
+	}, [activePage]);
 
 	return (
 		<>
 			{showReport ? (
 				<PartialResults
-					hasDescription={hasDescription}
+					dataEngineModule={dataEngineModule}
+					displayChartAsTable={displayChartAsTable}
 					onShow={() => setShowReport(false)}
 					reportDataURL={formReportDataURL}
 				/>
@@ -92,7 +128,7 @@ export function Container({
 					)}
 
 					<div
-						className={classnames(
+						className={classNames(
 							'ddm-layout-builder ddm-page-container-layout',
 							{
 								hide: activePage !== pageIndex,
@@ -104,7 +140,7 @@ export function Container({
 
 					{pageIndex === activePage && (
 						<>
-							{pages.length > 0 && (
+							{!!pages.length && (
 								<PaginationControls
 									activePage={activePage}
 									onClick={onClick}

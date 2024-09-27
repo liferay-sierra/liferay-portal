@@ -60,6 +60,8 @@ public interface LiferaySelenium {
 
 	public void assertEditable(String locator) throws Exception;
 
+	public void assertElementAccessible(String locator) throws Exception;
+
 	public void assertElementNotPresent(String locator) throws Exception;
 
 	public void assertElementPresent(String locator) throws Exception;
@@ -134,6 +136,9 @@ public interface LiferaySelenium {
 	public void assertSelectedLabel(String selectLocator, String pattern)
 		throws Exception;
 
+	public void assertTable(String locator, String tableString)
+		throws Exception;
+
 	public void assertText(String locator, String pattern) throws Exception;
 
 	public void assertTextCaseInsensitive(String locator, String pattern)
@@ -196,11 +201,11 @@ public interface LiferaySelenium {
 
 	public String getConfirmation(String value);
 
-	public int getElementHeight(String locator);
+	public long getElementHeight(String locator);
 
 	public String getElementValue(String locator) throws Exception;
 
-	public int getElementWidth(String locator);
+	public long getElementWidth(String locator);
 
 	public String getEmailBody(String index) throws Exception;
 
@@ -223,9 +228,9 @@ public interface LiferaySelenium {
 
 	public String getNumberIncrement(String value);
 
-	public String getOcularResultImageDirName();
+	public String getOcularBaselineImageDirName();
 
-	public String getOcularSnapImageDirName();
+	public String getOcularResultImageDirName();
 
 	public String getOutputDirName();
 
@@ -244,6 +249,8 @@ public interface LiferaySelenium {
 	public String getText(String locator) throws Exception;
 
 	public String getTitle();
+
+	public String getWebElementAttribute(String locator, String attributeName);
 
 	public void goBack();
 
@@ -334,6 +341,8 @@ public interface LiferaySelenium {
 
 	public void javaScriptMouseDown(String locator);
 
+	public void javaScriptMouseOver(String locator);
+
 	public void javaScriptMouseUp(String locator);
 
 	public void keyDown(String locator, String keySequence);
@@ -362,7 +371,8 @@ public interface LiferaySelenium {
 
 	public void mouseUpAt(String locator, String coordString);
 
-	public void ocularAssertElementImage(String locator, String fileName)
+	public void ocularAssertElementImage(
+			String locator, String fileName, String match)
 		throws Exception;
 
 	public void open(String url) throws Exception;
@@ -485,8 +495,6 @@ public interface LiferaySelenium {
 	public void typeAceEditor(String locator, String value);
 
 	public void typeAlert(String value);
-
-	public void typeAlloyEditor(String locator, String value);
 
 	public void typeCKEditor(String locator, String value);
 

@@ -76,7 +76,27 @@ definition {
 			locator1 = "LexiconTable#TABLE_ENTRY_TITLE");
 	}
 
+	macro deleteCP {
+		ApplicationDisplayTemplates.gotoWidgetTemplatesEllipsisItem(
+			item = "Delete",
+			widgetTemplateName = "${widgetTemplateName}");
+
+		AssertTextEquals(
+			locator1 = "Modal#BODY",
+			value1 = "Are you sure you want to delete this? It will be deleted immediately.");
+
+		Click(
+			key_text = "Delete",
+			locator1 = "Modal#MODAL_FOOTER_BUTTON");
+
+		Alert.viewSuccessMessage();
+	}
+
 	macro editADTScript {
+		Type.sendKeys(
+			locator1 = "DDMEditTemplate#CODE_MIRROR_EDITOR_CONTENT",
+			value1 = "keys=CONTROL,m");
+
 		Type.sendKeysAceEditor(
 			locator1 = "DDMEditTemplate#CODE_MIRROR_EDITOR_CONTENT",
 			value1 = "${adtScript}");
@@ -105,12 +125,26 @@ definition {
 		PortletEntry.save();
 	}
 
+	macro getWidgetTemplateKey {
+		var portalURL = JSONCompany.getPortalURL();
+
+		var curl = '''
+			${portalURL}/api/jsonws/ddm.ddmtemplate/get-template \
+			-u test@liferay.com:test \
+			-d templateId=${templateID}
+		''';
+
+		var templateKey = JSONCurlUtil.post("${curl}", "$.templateKey");
+
+		return "${templateKey}";
+	}
+
 	macro gotoWidgetTemplatesEllipsisItem {
 		Click.waitForMenuToggleJSClick(
 			key_tableEntry = "${widgetTemplateName}",
 			locator1 = "LexiconTable#TABLE_ENTRY_ELLIPSIS");
 
-		MenuItem.clickNoError(menuItem = "${item}");
+		MenuItem.click(menuItem = "${item}");
 	}
 
 	macro openWidgetTemplatesAdmin {

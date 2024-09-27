@@ -29,7 +29,7 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.MVCResourceCommand;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.UserLocalService;
-import com.liferay.portal.kernel.service.permission.PortalPermissionUtil;
+import com.liferay.portal.kernel.service.permission.PortalPermission;
 import com.liferay.portal.kernel.service.permission.PortletPermissionUtil;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
@@ -68,7 +68,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Mika Koivisto
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + UsersAdminPortletKeys.USERS_ADMIN,
 		"mvc.command.name=/users_admin/export_users"
@@ -99,11 +98,6 @@ public class ExportUsersMVCResourceCommand extends BaseMVCResourceCommand {
 
 			_log.error(exception);
 		}
-	}
-
-	@Reference(unbind = "-")
-	protected void setUserLocalService(UserLocalService userLocalService) {
-		_userLocalService = userLocalService;
 	}
 
 	private String _getUserCSV(User user) {
@@ -165,7 +159,7 @@ public class ExportUsersMVCResourceCommand extends BaseMVCResourceCommand {
 		PermissionChecker permissionChecker =
 			themeDisplay.getPermissionChecker();
 
-		boolean exportAllUsers = PortalPermissionUtil.contains(
+		boolean exportAllUsers = _portalPermission.contains(
 			permissionChecker, ActionKeys.EXPORT_USER);
 
 		if (!exportAllUsers &&
@@ -281,6 +275,10 @@ public class ExportUsersMVCResourceCommand extends BaseMVCResourceCommand {
 	@Reference
 	private Portal _portal;
 
+	@Reference
+	private PortalPermission _portalPermission;
+
+	@Reference
 	private UserLocalService _userLocalService;
 
 }

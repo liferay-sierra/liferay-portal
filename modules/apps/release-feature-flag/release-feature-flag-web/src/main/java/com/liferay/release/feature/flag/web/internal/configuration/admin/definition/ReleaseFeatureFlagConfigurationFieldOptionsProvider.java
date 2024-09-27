@@ -15,7 +15,7 @@
 package com.liferay.release.feature.flag.web.internal.configuration.admin.definition;
 
 import com.liferay.configuration.admin.definition.ConfigurationFieldOptionsProvider;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.release.feature.flag.ReleaseFeatureFlag;
 
 import java.util.List;
@@ -24,12 +24,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Alejandro Tardín
  */
 @Component(
-	immediate = true,
 	property = {
 		"configuration.field.name=disabledReleaseFeatureFlags",
 		"configuration.pid=com.liferay.release.feature.flag.web.internal.configuration.ReleaseFeatureFlagConfiguration"
@@ -48,7 +48,7 @@ public class ReleaseFeatureFlagConfigurationFieldOptionsProvider
 
 				@Override
 				public String getLabel(Locale locale) {
-					return LanguageUtil.get(
+					return _language.get(
 						locale,
 						"release-feature-flag[" + releaseFeatureFlag + "]");
 				}
@@ -63,5 +63,8 @@ public class ReleaseFeatureFlagConfigurationFieldOptionsProvider
 			Collectors.toList()
 		);
 	}
+
+	@Reference
+	private Language _language;
 
 }

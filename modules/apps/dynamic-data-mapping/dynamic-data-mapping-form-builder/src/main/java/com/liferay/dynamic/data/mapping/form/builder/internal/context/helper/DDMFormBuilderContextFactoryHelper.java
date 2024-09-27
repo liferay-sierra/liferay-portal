@@ -15,7 +15,7 @@
 package com.liferay.dynamic.data.mapping.form.builder.internal.context.helper;
 
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldType;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderingContext;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormTemplateContextFactory;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
@@ -48,7 +48,6 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MapUtil;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -71,7 +70,7 @@ public class DDMFormBuilderContextFactoryHelper {
 	public DDMFormBuilderContextFactoryHelper(
 		Optional<DDMStructure> ddmStructureOptional,
 		Optional<DDMStructureVersion> ddmStructureVersionOptional,
-		DDMFormFieldTypeServicesTracker ddmFormFieldTypeServicesTracker,
+		DDMFormFieldTypeServicesRegistry ddmFormFieldTypeServicesRegistry,
 		DDMFormTemplateContextFactory ddmFormTemplateContextFactory,
 		HttpServletRequest httpServletRequest,
 		HttpServletResponse httpServletResponse, JSONFactory jsonFactory,
@@ -80,7 +79,7 @@ public class DDMFormBuilderContextFactoryHelper {
 
 		_ddmStructureOptional = ddmStructureOptional;
 		_ddmStructureVersionOptional = ddmStructureVersionOptional;
-		_ddmFormFieldTypeServicesTracker = ddmFormFieldTypeServicesTracker;
+		_ddmFormFieldTypeServicesRegistry = ddmFormFieldTypeServicesRegistry;
 		_ddmFormTemplateContextFactory = ddmFormTemplateContextFactory;
 		_httpServletRequest = httpServletRequest;
 		_httpServletResponse = httpServletResponse;
@@ -112,7 +111,7 @@ public class DDMFormBuilderContextFactoryHelper {
 		throws PortalException {
 
 		DDMFormFieldType ddmFormFieldType =
-			_ddmFormFieldTypeServicesTracker.getDDMFormFieldType(
+			_ddmFormFieldTypeServicesRegistry.getDDMFormFieldType(
 				ddmFormField.getType());
 
 		DDMForm ddmForm = DDMFormFactory.create(
@@ -125,6 +124,9 @@ public class DDMFormBuilderContextFactoryHelper {
 			new DDMFormRenderingContext();
 
 		ddmFormRenderingContext.setContainerId("settings");
+		ddmFormRenderingContext.setDDMFormValues(
+			_createDDMFormFieldSettingContextDDMFormValues(
+				ddmForm, ddmFormField));
 
 		if (_ddmStructureVersionOptional.isPresent()) {
 			DDMStructureVersion ddmStructureVersion =
@@ -138,12 +140,6 @@ public class DDMFormBuilderContextFactoryHelper {
 		ddmFormRenderingContext.setHttpServletResponse(_httpServletResponse);
 		ddmFormRenderingContext.setLocale(_locale);
 		ddmFormRenderingContext.setPortletNamespace(_portletNamespace);
-
-		DDMFormValues ddmFormValues =
-			_createDDMFormFieldSettingContextDDMFormValues(
-				ddmForm, ddmFormField);
-
-		ddmFormRenderingContext.setDDMFormValues(ddmFormValues);
 
 		return _ddmFormTemplateContextFactory.create(
 			ddmForm, ddmFormLayout, ddmFormRenderingContext);
@@ -172,12 +168,11 @@ public class DDMFormBuilderContextFactoryHelper {
 
 			DDMForm ddmForm = ddmFormField.getDDMForm();
 
-			Value value = _createDDMFormFieldValue(
-				ddmFormFieldTypeSetting,
-				ddmFormFieldProperties.get(propertyName),
-				ddmForm.getAvailableLocales());
-
-			ddmFormFieldValue.setValue(value);
+			ddmFormFieldValue.setValue(
+				_createDDMFormFieldValue(
+					ddmFormFieldTypeSetting,
+					ddmFormFieldProperties.get(propertyName),
+					ddmForm.getAvailableLocales()));
 
 			ddmFormValues.addDDMFormFieldValue(ddmFormFieldValue);
 		}
@@ -420,11 +415,7 @@ public class DDMFormBuilderContextFactoryHelper {
 			).put(
 				"isLink", false
 			).put(
-				"label",
-				LanguageUtil.get(
-					ResourceBundleUtil.getBundle(
-						"content.Language", _locale, getClass()),
-					"builder")
+				"label", LanguageUtil.get(_httpServletRequest, "builder")
 			).put(
 				"pluginEntryPoint",
 				_npmResolver.resolveModuleName(
@@ -484,8 +475,8 @@ public class DDMFormBuilderContextFactoryHelper {
 	private static final Log _log = LogFactoryUtil.getLog(
 		DDMFormBuilderContextFactoryHelper.class);
 
-	private final DDMFormFieldTypeServicesTracker
-		_ddmFormFieldTypeServicesTracker;
+	private final DDMFormFieldTypeServicesRegistry
+		_ddmFormFieldTypeServicesRegistry;
 	private final DDMFormTemplateContextFactory _ddmFormTemplateContextFactory;
 	private final Optional<DDMStructure> _ddmStructureOptional;
 	private final Optional<DDMStructureVersion> _ddmStructureVersionOptional;

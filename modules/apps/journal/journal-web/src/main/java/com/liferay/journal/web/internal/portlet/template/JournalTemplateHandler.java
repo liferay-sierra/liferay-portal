@@ -31,7 +31,7 @@ import com.liferay.journal.service.JournalArticleLocalService;
 import com.liferay.journal.service.JournalArticleService;
 import com.liferay.journal.util.JournalContent;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.template.TemplateHandler;
@@ -90,7 +90,7 @@ public class JournalTemplateHandler extends BaseDDMTemplateHandler {
 			JournalPortletKeys.JOURNAL,
 			ResourceBundleUtil.getBundle(locale, getClass()));
 
-		return LanguageUtil.format(locale, "x-template", portletTitle, false);
+		return _language.format(locale, "x-template", portletTitle, false);
 	}
 
 	@Override
@@ -117,8 +117,7 @@ public class JournalTemplateHandler extends BaseDDMTemplateHandler {
 
 		if (fieldsTemplateVariableGroup != null) {
 			fieldsTemplateVariableGroup.addVariable(
-				"friendly-url", String.class,
-				"friendlyURLs[themeDisplay.getLanguageId()]!\"\"");
+				"friendly-url", String.class, "friendlyURL");
 		}
 
 		String[] restrictedVariables = getRestrictedVariables(language);
@@ -225,18 +224,17 @@ public class JournalTemplateHandler extends BaseDDMTemplateHandler {
 		return _templateVariableCodeHandler;
 	}
 
-	@Reference(unbind = "-")
-	protected void setJournalContent(JournalContent journalContent) {
-		_journalContent = journalContent;
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		JournalTemplateHandler.class);
 
 	@Reference
 	private DDMStructureLocalService _ddmStructureLocalService;
 
+	@Reference
 	private JournalContent _journalContent;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

@@ -15,8 +15,12 @@
 package com.liferay.object.web.internal.object.definitions.portlet.configuration.icon;
 
 import com.liferay.object.constants.ObjectPortletKeys;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.configuration.icon.BaseJSPPortletConfigurationIcon;
 import com.liferay.portal.kernel.portlet.configuration.icon.PortletConfigurationIcon;
+import com.liferay.portal.kernel.util.HashMapBuilder;
+
+import java.util.Map;
 
 import javax.portlet.PortletRequest;
 
@@ -29,12 +33,20 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marco Leo
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + ObjectPortletKeys.OBJECT_DEFINITIONS,
 	service = PortletConfigurationIcon.class
 )
 public class ImportObjectDefinitionPortletConfigurationIcon
 	extends BaseJSPPortletConfigurationIcon {
+
+	@Override
+	public Map<String, Object> getContext(PortletRequest portletRequest) {
+		return HashMapBuilder.<String, Object>put(
+			"action", getNamespace(portletRequest) + "importObjectDefinition"
+		).put(
+			"globalAction", true
+		).build();
+	}
 
 	@Override
 	public String getJspPath() {
@@ -43,16 +55,24 @@ public class ImportObjectDefinitionPortletConfigurationIcon
 	}
 
 	@Override
+	public String getMessage(PortletRequest portletRequest) {
+		return _language.get(getLocale(portletRequest), "import");
+	}
+
+	@Override
 	public boolean isShow(PortletRequest portletRequest) {
 		return true;
 	}
 
 	@Override
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.object.web)", unbind = "-"
-	)
-	public void setServletContext(ServletContext servletContext) {
-		super.setServletContext(servletContext);
+	protected ServletContext getServletContext() {
+		return _servletContext;
 	}
+
+	@Reference
+	private Language _language;
+
+	@Reference(target = "(osgi.web.symbolicname=com.liferay.object.web)")
+	private ServletContext _servletContext;
 
 }

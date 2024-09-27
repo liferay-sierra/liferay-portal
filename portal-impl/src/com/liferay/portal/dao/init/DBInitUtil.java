@@ -76,6 +76,8 @@ public class DBInitUtil {
 		try (Connection connection = _dataSource.getConnection()) {
 			_init(DBManagerUtil.getDB(), connection);
 
+			_dataSource = DBPartitionUtil.wrapDataSource(_dataSource);
+
 			DBPartitionUtil.setDefaultCompanyId(connection);
 		}
 	}
@@ -127,7 +129,7 @@ public class DBInitUtil {
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(exception.getMessage(), exception);
+				_log.debug(exception);
 			}
 		}
 
@@ -219,6 +221,15 @@ public class DBInitUtil {
 			}
 		}
 
+		try {
+			db.runSQL(connection, "alter table Release_ add state_ INTEGER");
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+		}
+
 		if (_checkDefaultRelease(connection)) {
 			_setSupportsStringCaseSensitiveQuery(db, connection);
 
@@ -243,8 +254,8 @@ public class DBInitUtil {
 			return null;
 		}
 
-		DataSource dataSource = DBPartitionUtil.wrapDataSource(
-			DataSourceFactoryUtil.initDataSource(properties));
+		DataSource dataSource = DataSourceFactoryUtil.initDataSource(
+			properties);
 
 		DBManagerUtil.setDB(DialectDetector.getDialect(dataSource), dataSource);
 

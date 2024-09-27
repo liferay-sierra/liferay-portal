@@ -95,7 +95,8 @@ public interface KBArticleLocalService
 			String externalReferenceCode, long userId,
 			long parentResourceClassNameId, long parentResourcePrimKey,
 			String title, String urlTitle, String content, String description,
-			String sourceURL, String[] sections, String[] selectedFileNames,
+			String[] sections, String sourceURL, Date expirationDate,
+			Date reviewDate, String[] selectedFileNames,
 			ServiceContext serviceContext)
 		throws PortalException;
 
@@ -557,9 +558,9 @@ public interface KBArticleLocalService
 
 	public KBArticle updateKBArticle(
 			long userId, long resourcePrimKey, String title, String content,
-			String description, String sourceURL, String[] sections,
-			String[] selectedFileNames, long[] removeFileEntryIds,
-			ServiceContext serviceContext)
+			String description, String[] sections, String sourceURL,
+			Date expirationDate, Date reviewDate, String[] selectedFileNames,
+			long[] removeFileEntryIds, ServiceContext serviceContext)
 		throws PortalException;
 
 	public void updateKBArticleAsset(

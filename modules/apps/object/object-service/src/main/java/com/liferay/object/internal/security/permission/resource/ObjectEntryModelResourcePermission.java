@@ -17,6 +17,7 @@ package com.liferay.object.internal.security.permission.resource;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
@@ -69,10 +70,9 @@ public class ObjectEntryModelResourcePermission
 			String actionId)
 		throws PortalException {
 
-		ObjectEntry objectEntry = _objectEntryLocalService.getObjectEntry(
-			objectEntryId);
-
-		return contains(permissionChecker, objectEntry, actionId);
+		return contains(
+			permissionChecker,
+			_objectEntryLocalService.getObjectEntry(objectEntryId), actionId);
 	}
 
 	@Override
@@ -80,6 +80,14 @@ public class ObjectEntryModelResourcePermission
 			PermissionChecker permissionChecker, ObjectEntry objectEntry,
 			String actionId)
 		throws PortalException {
+
+		User user = permissionChecker.getUser();
+
+		if (user.isDefaultUser()) {
+			return permissionChecker.hasPermission(
+				objectEntry.getGroupId(), _modelName,
+				objectEntry.getObjectEntryId(), actionId);
+		}
 
 		if (permissionChecker.hasOwnerPermission(
 				permissionChecker.getCompanyId(), _modelName,

@@ -28,9 +28,7 @@ CPDefinition cpDefinition = cpDefinitionsDisplayContext.getCPDefinition();
 	<aui:form cssClass="container-fluid container-fluid-max-xl p-0" method="post" name="duplicatefm" onSubmit='<%= "event.preventDefault(); " + liferayPortletResponse.getNamespace() + "apiSubmit(this.form);" %>'>
 		<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
 
-		<aui:input name="name" required="<%= true %>" type="text" value='<%= LanguageUtil.format(locale, "copy-of-x", cpDefinition.getName(languageId)) %>' />
-
-		<label class="control-label" for="catalogId"><%= LanguageUtil.get(request, "catalog") %></label>
+		<label class="control-label" for="catalogId"><liferay-ui:message key="catalog" /></label>
 
 		<div id="autocomplete-root"></div>
 	</aui:form>
@@ -43,6 +41,7 @@ CPDefinition cpDefinition = cpDefinitionsDisplayContext.getCPDefinition();
 		var <portlet:namespace />defaultLanguageId = null;
 		var <portlet:namespace />product = {
 			active: true,
+			productStatus: <%= WorkflowConstants.STATUS_DRAFT %>,
 			productType: '<%= cpDefinition.getProductTypeName() %>',
 		};
 
@@ -68,37 +67,23 @@ CPDefinition cpDefinition = cpDefinitionsDisplayContext.getCPDefinition();
 							productType: <portlet:namespace />product.productType,
 						};
 
-						formattedData.name[
-							<portlet:namespace />defaultLanguageId
-						] = document.getElementById('<portlet:namespace />name').value;
+						var redirectURL = new Liferay.PortletURL.createURL(
+							'<%= editProductDefinitionURL %>'
+						);
 
-						Liferay.Util.fetch(
-							'/o/headless-commerce-admin-catalog/v1.0/products/' +
-								payload.productId,
-							{
-								body: JSON.stringify(formattedData),
-								headers: headers,
-								method: 'patch',
-							}
-						).then(() => {
-							var redirectURL = new Liferay.PortletURL.createURL(
-								'<%= editProductDefinitionURL %>'
-							);
+						redirectURL.setParameter('cpDefinitionId', payload.id);
+						redirectURL.setParameter(
+							'p_p_state',
+							'<%= LiferayWindowState.MAXIMIZED.toString() %>'
+						);
 
-							redirectURL.setParameter('cpDefinitionId', payload.id);
-							redirectURL.setParameter(
-								'p_p_state',
-								'<%= LiferayWindowState.MAXIMIZED.toString() %>'
-							);
-
-							window.parent.Liferay.fire(events.CLOSE_MODAL, {
-								redirectURL: redirectURL.toString(),
-								successNotification: {
-									showSuccessNotification: true,
-									message:
-										'<liferay-ui:message key="your-request-completed-successfully" />',
-								},
-							});
+						window.parent.Liferay.fire(events.CLOSE_MODAL, {
+							redirectURL: redirectURL.toString(),
+							successNotification: {
+								showSuccessNotification: true,
+								message:
+									'<liferay-ui:message key="your-request-completed-successfully" />',
+							},
 						});
 					})
 					.catch(() => {

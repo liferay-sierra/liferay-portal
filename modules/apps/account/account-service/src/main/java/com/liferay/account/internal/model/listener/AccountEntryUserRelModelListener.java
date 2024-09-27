@@ -42,7 +42,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Pei-Jung Lan
  */
-@Component(immediate = true, service = ModelListener.class)
+@Component(service = ModelListener.class)
 public class AccountEntryUserRelModelListener
 	extends BaseModelListener<AccountEntryUserRel> {
 
@@ -143,27 +143,12 @@ public class AccountEntryUserRelModelListener
 			AccountEntryUserRel accountEntryUserRel)
 		throws ModelListenerException {
 
-		long accountUserId = accountEntryUserRel.getAccountUserId();
-
 		List<AccountEntryUserRel> accountEntryUserRels =
 			_accountEntryUserRelLocalService.
-				getAccountEntryUserRelsByAccountUserId(accountUserId);
+				getAccountEntryUserRelsByAccountUserId(
+					accountEntryUserRel.getAccountUserId());
 
-		if (ListUtil.isEmpty(accountEntryUserRels)) {
-			if (accountEntryUserRel.getAccountEntryId() !=
-					AccountConstants.ACCOUNT_ENTRY_ID_DEFAULT) {
-
-				try {
-					_accountEntryUserRelLocalService.addAccountEntryUserRel(
-						AccountConstants.ACCOUNT_ENTRY_ID_DEFAULT,
-						accountUserId);
-				}
-				catch (PortalException portalException) {
-					throw new ModelListenerException(portalException);
-				}
-			}
-		}
-		else if (accountEntryUserRels.size() > 1) {
+		if (accountEntryUserRels.size() > 1) {
 			for (AccountEntryUserRel curAccountEntryUserRel :
 					accountEntryUserRels) {
 

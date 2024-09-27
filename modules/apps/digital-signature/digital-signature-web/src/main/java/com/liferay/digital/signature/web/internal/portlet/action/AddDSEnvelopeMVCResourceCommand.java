@@ -20,7 +20,8 @@ import com.liferay.digital.signature.model.DSDocument;
 import com.liferay.digital.signature.model.DSEnvelope;
 import com.liferay.digital.signature.model.DSRecipient;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
@@ -34,7 +35,6 @@ import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.IntegerWrapper;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.vulcan.util.TransformUtil;
 
 import java.util.List;
 
@@ -48,7 +48,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author José Abelenda
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + DigitalSignaturePortletKeys.COLLECT_DIGITAL_SIGNATURE,
 		"javax.portlet.name=" + DigitalSignaturePortletKeys.DIGITAL_SIGNATURE,
@@ -95,20 +94,7 @@ public class AddDSEnvelopeMVCResourceCommand extends BaseMVCResourceCommand {
 		return TransformUtil.transformToList(
 			ArrayUtil.toLongArray(
 				ParamUtil.getLongValues(resourceRequest, "fileEntryIds")),
-			fileEntryId -> {
-				FileEntry fileEntry = _dlAppLocalService.getFileEntry(
-					fileEntryId);
-
-				return new DSDocument() {
-					{
-						data = Base64.encode(
-							FileUtil.getBytes(fileEntry.getContentStream()));
-						dsDocumentId = String.valueOf(fileEntryId);
-						fileExtension = fileEntry.getExtension();
-						name = fileEntry.getFileName();
-					}
-				};
-			});
+			fileEntryId -> _toDSDocument(fileEntryId));
 	}
 
 	private List<DSRecipient> _getDSRecipients(ResourceRequest resourceRequest)
@@ -117,7 +103,7 @@ public class AddDSEnvelopeMVCResourceCommand extends BaseMVCResourceCommand {
 		IntegerWrapper integerWrapper = new IntegerWrapper();
 
 		return JSONUtil.toList(
-			JSONFactoryUtil.createJSONArray(
+			_jsonFactory.createJSONArray(
 				ParamUtil.getString(resourceRequest, "recipients")),
 			recipientJSONObject -> new DSRecipient() {
 				{
@@ -128,10 +114,27 @@ public class AddDSEnvelopeMVCResourceCommand extends BaseMVCResourceCommand {
 			});
 	}
 
+	private DSDocument _toDSDocument(long fileEntryId) throws Exception {
+		FileEntry fileEntry = _dlAppLocalService.getFileEntry(fileEntryId);
+
+		return new DSDocument() {
+			{
+				data = Base64.encode(
+					FileUtil.getBytes(fileEntry.getContentStream()));
+				dsDocumentId = String.valueOf(fileEntryId);
+				fileExtension = fileEntry.getExtension();
+				name = fileEntry.getFileName();
+			}
+		};
+	}
+
 	@Reference
 	private DLAppLocalService _dlAppLocalService;
 
 	@Reference
 	private DSEnvelopeManager _dsEnvelopeManager;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 }

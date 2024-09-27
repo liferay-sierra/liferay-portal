@@ -31,7 +31,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author István András Dézsi
  */
-@Component(immediate = true, service = ModelListener.class)
+@Component(service = ModelListener.class)
 public class RoleModelListener extends BaseModelListener<Role> {
 
 	@Override
@@ -42,13 +42,6 @@ public class RoleModelListener extends BaseModelListener<Role> {
 		catch (Exception exception) {
 			throw new ModelListenerException(exception);
 		}
-	}
-
-	@Reference(unbind = "-")
-	protected void setKaleoTaskAssignmentLocalService(
-		KaleoTaskAssignmentLocalService kaleoTaskAssignmentLocalService) {
-
-		_kaleoTaskAssignmentLocalService = kaleoTaskAssignmentLocalService;
 	}
 
 	private void _deleteKaleoTaskAssignmentByRole(long roleId)
@@ -78,6 +71,7 @@ public class RoleModelListener extends BaseModelListener<Role> {
 		actionableDynamicQuery.performActions();
 	}
 
+	@Reference
 	private KaleoTaskAssignmentLocalService _kaleoTaskAssignmentLocalService;
 
 }

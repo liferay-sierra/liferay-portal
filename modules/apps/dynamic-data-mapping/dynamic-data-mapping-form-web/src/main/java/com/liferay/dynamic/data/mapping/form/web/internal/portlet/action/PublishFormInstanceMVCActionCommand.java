@@ -50,7 +50,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Bruno Basto
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM_ADMIN,
 		"mvc.command.name=/dynamic_data_mapping_form/publish_form_instance"
@@ -113,32 +112,6 @@ public class PublishFormInstanceMVCActionCommand
 			String.valueOf(ddmFormInstance.getFormInstanceId()));
 
 		portletURL.setParameter("showPublishAlert", Boolean.TRUE.toString());
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMFormInstanceService(
-		DDMFormInstanceService ddmFormInstanceService) {
-
-		_ddmFormInstanceService = ddmFormInstanceService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setDDMFormValuesQueryFactory(
-		DDMFormValuesQueryFactory ddmFormValuesQueryFactory) {
-
-		_ddmFormValuesQueryFactory = ddmFormValuesQueryFactory;
-	}
-
-	@Reference(unbind = "-")
-	protected void setResourcePermissionLocalService(
-		ResourcePermissionLocalService resourcePermissionLocalService) {
-
-		_resourcePermissionLocalService = resourcePermissionLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setRoleLocalService(RoleLocalService roleLocalService) {
-		_roleLocalService = roleLocalService;
 	}
 
 	private boolean _isFormInstancePublished(DDMFormInstance formInstance)
@@ -206,13 +179,19 @@ public class PublishFormInstanceMVCActionCommand
 			ddmFormValues.getDefaultLocale(), Boolean.toString(published));
 	}
 
+	@Reference
 	private DDMFormInstanceService _ddmFormInstanceService;
+
+	@Reference
 	private DDMFormValuesQueryFactory _ddmFormValuesQueryFactory;
 
 	@Reference
 	private Portal _portal;
 
+	@Reference
 	private ResourcePermissionLocalService _resourcePermissionLocalService;
+
+	@Reference
 	private RoleLocalService _roleLocalService;
 
 }

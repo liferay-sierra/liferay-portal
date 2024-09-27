@@ -21,7 +21,7 @@ import com.liferay.portal.instance.lifecycle.PortalInstanceLifecycleListener;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.service.UserLocalService;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowDefinitionManager;
 
@@ -63,7 +63,7 @@ public class AddMBModerationWorkflowDefinitionPortalInstanceLifecycleListener
 
 		_workflowDefinitionManager.deployWorkflowDefinition(
 			company.getCompanyId(), defaultUserId,
-			LocalizationUtil.getXml(
+			_localization.getXml(
 				_getTitleMap(company.getCompanyId()),
 				_language.getLanguageId(company.getLocale()), "title"),
 			MBModerationConstants.WORKFLOW_DEFINITION_NAME,
@@ -87,9 +87,12 @@ public class AddMBModerationWorkflowDefinitionPortalInstanceLifecycleListener
 	private Language _language;
 
 	@Reference
+	private Localization _localization;
+
+	@Reference
 	private UserLocalService _userLocalService;
 
-	@Reference(target = "(proxy.bean=false)")
+	@Reference
 	private WorkflowDefinitionManager _workflowDefinitionManager;
 
 }

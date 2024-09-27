@@ -22,14 +22,14 @@ import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.ListUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.workflow.WorkflowHandler;
 import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
 import com.liferay.portal.workflow.kaleo.definition.NodeType;
@@ -72,7 +72,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Rafael Praxedes
  */
-@Component(immediate = true, service = IndexerHelper.class)
+@Component(service = IndexerHelper.class)
 public class IndexerHelper {
 
 	public AddNodeRequest createAddNodeRequest(
@@ -152,8 +152,7 @@ public class IndexerHelper {
 			kaleoDefinition.getKaleoDefinitionId()
 		).title(
 			kaleoDefinition.getTitle(
-				LocalizationUtil.getDefaultLanguageId(
-					kaleoDefinition.getTitle()))
+				_localization.getDefaultLanguageId(kaleoDefinition.getTitle()))
 		).titleMap(
 			kaleoDefinition.getTitleMap()
 		);
@@ -302,7 +301,7 @@ public class IndexerHelper {
 				assetRenderer.getClassName(), assetRenderer.getClassPK());
 
 			if (assetEntry != null) {
-				return LocalizationUtil.populateLocalizationMap(
+				return _localization.populateLocalizationMap(
 					assetEntry.getTitleMap(), assetEntry.getDefaultLanguageId(),
 					assetEntry.getGroupId());
 			}
@@ -315,7 +314,7 @@ public class IndexerHelper {
 			Map<Locale, String> localizationMap = new HashMap<>();
 
 			for (Locale availableLocale :
-					LanguageUtil.getAvailableLocales(groupId)) {
+					_language.getAvailableLocales(groupId)) {
 
 				localizationMap.put(
 					availableLocale,
@@ -333,9 +332,7 @@ public class IndexerHelper {
 
 		Map<Locale, String> localizationMap = new HashMap<>();
 
-		for (Locale availableLocale :
-				LanguageUtil.getAvailableLocales(groupId)) {
-
+		for (Locale availableLocale : _language.getAvailableLocales(groupId)) {
 			localizationMap.put(
 				availableLocale,
 				ResourceActionsUtil.getModelResource(
@@ -389,8 +386,7 @@ public class IndexerHelper {
 			kaleoDefinition.getKaleoDefinitionId()
 		).title(
 			kaleoDefinition.getTitle(
-				LocalizationUtil.getDefaultLanguageId(
-					kaleoDefinition.getTitle()))
+				_localization.getDefaultLanguageId(kaleoDefinition.getTitle()))
 		).titleMap(
 			kaleoDefinition.getTitleMap()
 		).version(
@@ -496,6 +492,12 @@ public class IndexerHelper {
 
 	@Reference
 	private KaleoTaskLocalService _kaleoTaskLocalService;
+
+	@Reference
+	private Language _language;
+
+	@Reference
+	private Localization _localization;
 
 	@Reference
 	private UserLocalService _userLocalService;

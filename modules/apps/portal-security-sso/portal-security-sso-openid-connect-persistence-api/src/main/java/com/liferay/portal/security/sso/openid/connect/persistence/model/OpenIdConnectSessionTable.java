@@ -52,16 +52,20 @@ public class OpenIdConnectSessionTable
 	public final Column<OpenIdConnectSessionTable, String> accessToken =
 		createColumn(
 			"accessToken", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
-	public final Column<OpenIdConnectSessionTable, String> configurationPid =
-		createColumn(
-			"configurationPid", String.class, Types.VARCHAR,
+	public final Column<OpenIdConnectSessionTable, Date>
+		accessTokenExpirationDate = createColumn(
+			"accessTokenExpirationDate", Date.class, Types.TIMESTAMP,
 			Column.FLAG_DEFAULT);
+	public final Column<OpenIdConnectSessionTable, String>
+		authServerWellKnownURI = createColumn(
+			"authServerWellKnownURI", String.class, Types.VARCHAR,
+			Column.FLAG_DEFAULT);
+	public final Column<OpenIdConnectSessionTable, String> clientId =
+		createColumn(
+			"clientId", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
 	public final Column<OpenIdConnectSessionTable, String> idToken =
 		createColumn(
 			"idToken", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
-	public final Column<OpenIdConnectSessionTable, String> providerName =
-		createColumn(
-			"providerName", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
 	public final Column<OpenIdConnectSessionTable, String> refreshToken =
 		createColumn(
 			"refreshToken", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);

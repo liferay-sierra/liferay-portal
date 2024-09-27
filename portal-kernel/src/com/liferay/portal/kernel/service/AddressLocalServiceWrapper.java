@@ -49,27 +49,6 @@ public class AddressLocalServiceWrapper
 		return _addressLocalService.addAddress(address);
 	}
 
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
-	 #addAddress(String, long, String, long, String, String,
-	 String, String, String, String, String, long, long, long,
-	 boolean, boolean, String, ServiceContext)}
-	 */
-	@Deprecated
-	@Override
-	public com.liferay.portal.kernel.model.Address addAddress(
-			long userId, java.lang.String className, long classPK,
-			java.lang.String street1, java.lang.String street2,
-			java.lang.String street3, java.lang.String city,
-			java.lang.String zip, long regionId, long countryId, long typeId,
-			boolean mailing, boolean primary, ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _addressLocalService.addAddress(
-			userId, className, classPK, street1, street2, street3, city, zip,
-			regionId, countryId, typeId, mailing, primary, serviceContext);
-	}
-
 	@Override
 	public com.liferay.portal.kernel.model.Address addAddress(
 			java.lang.String externalReferenceCode, long userId,
@@ -77,14 +56,15 @@ public class AddressLocalServiceWrapper
 			java.lang.String description, java.lang.String street1,
 			java.lang.String street2, java.lang.String street3,
 			java.lang.String city, java.lang.String zip, long regionId,
-			long countryId, long typeId, boolean mailing, boolean primary,
+			long countryId, long listTypeId, boolean mailing, boolean primary,
 			java.lang.String phoneNumber, ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _addressLocalService.addAddress(
 			externalReferenceCode, userId, className, classPK, name,
 			description, street1, street2, street3, city, zip, regionId,
-			countryId, typeId, mailing, primary, phoneNumber, serviceContext);
+			countryId, listTypeId, mailing, primary, phoneNumber,
+			serviceContext);
 	}
 
 	@Override
@@ -469,6 +449,29 @@ public class AddressLocalServiceWrapper
 		return _addressLocalService.getIndexableActionableDynamicQuery();
 	}
 
+	@Override
+	public java.util.List<com.liferay.portal.kernel.model.Address>
+		getListTypeAddresses(
+			long companyId, java.lang.String className, long classPK,
+			long[] listTypeIds) {
+
+		return _addressLocalService.getListTypeAddresses(
+			companyId, className, classPK, listTypeIds);
+	}
+
+	@Override
+	public java.util.List<com.liferay.portal.kernel.model.Address>
+		getListTypeAddresses(
+			long companyId, java.lang.String className, long classPK,
+			long[] listTypeIds, int start, int end,
+			com.liferay.portal.kernel.util.OrderByComparator
+				<com.liferay.portal.kernel.model.Address> orderByComparator) {
+
+		return _addressLocalService.getListTypeAddresses(
+			companyId, className, classPK, listTypeIds, start, end,
+			orderByComparator);
+	}
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -488,29 +491,6 @@ public class AddressLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _addressLocalService.getPersistedModel(primaryKeyObj);
-	}
-
-	@Override
-	public java.util.List<com.liferay.portal.kernel.model.Address>
-		getTypeAddresses(
-			long companyId, java.lang.String className, long classPK,
-			long[] typeIds) {
-
-		return _addressLocalService.getTypeAddresses(
-			companyId, className, classPK, typeIds);
-	}
-
-	@Override
-	public java.util.List<com.liferay.portal.kernel.model.Address>
-		getTypeAddresses(
-			long companyId, java.lang.String className, long classPK,
-			long[] typeIds, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.portal.kernel.model.Address> orderByComparator) {
-
-		return _addressLocalService.getTypeAddresses(
-			companyId, className, classPK, typeIds, start, end,
-			orderByComparator);
 	}
 
 	@Override
@@ -548,13 +528,13 @@ public class AddressLocalServiceWrapper
 	public com.liferay.portal.kernel.model.Address updateAddress(
 			long addressId, java.lang.String street1, java.lang.String street2,
 			java.lang.String street3, java.lang.String city,
-			java.lang.String zip, long regionId, long countryId, long typeId,
-			boolean mailing, boolean primary)
+			java.lang.String zip, long regionId, long countryId,
+			long listTypeId, boolean mailing, boolean primary)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _addressLocalService.updateAddress(
 			addressId, street1, street2, street3, city, zip, regionId,
-			countryId, typeId, mailing, primary);
+			countryId, listTypeId, mailing, primary);
 	}
 
 	@Override
@@ -562,13 +542,14 @@ public class AddressLocalServiceWrapper
 			long addressId, java.lang.String name, java.lang.String description,
 			java.lang.String street1, java.lang.String street2,
 			java.lang.String street3, java.lang.String city,
-			java.lang.String zip, long regionId, long countryId, long typeId,
-			boolean mailing, boolean primary, java.lang.String phoneNumber)
+			java.lang.String zip, long regionId, long countryId,
+			long listTypeId, boolean mailing, boolean primary,
+			java.lang.String phoneNumber)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _addressLocalService.updateAddress(
 			addressId, name, description, street1, street2, street3, city, zip,
-			regionId, countryId, typeId, mailing, primary, phoneNumber);
+			regionId, countryId, listTypeId, mailing, primary, phoneNumber);
 	}
 
 	@Override

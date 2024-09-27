@@ -47,7 +47,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Leonardo Barros
  */
 @Component(
-	immediate = true,
 	service = {
 		AddDefaultSharedFormLayoutPortalInstanceLifecycleListener.class,
 		PortalInstanceLifecycleListener.class
@@ -100,40 +99,6 @@ public class AddDefaultSharedFormLayoutPortalInstanceLifecycleListener
 		_verifyLayout(privateLayout);
 	}
 
-	@Reference(unbind = "-")
-	protected void setGroupLocalService(GroupLocalService groupLocalService) {
-		_groupLocalService = groupLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setLayoutLocalService(
-		LayoutLocalService layoutLocalService) {
-
-		_layoutLocalService = layoutLocalService;
-	}
-
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
-	protected void setModuleServiceLifecycle(
-		ModuleServiceLifecycle moduleServiceLifecycle) {
-	}
-
-	@Reference(unbind = "-")
-	protected void setResourcePermissionLocalService(
-		ResourcePermissionLocalService resourcePermissionLocalService) {
-
-		_resourcePermissionLocalService = resourcePermissionLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setRoleLocalService(RoleLocalService roleLocalService) {
-		_roleLocalService = roleLocalService;
-	}
-
-	@Reference(unbind = "-")
-	protected void setUserLocalService(UserLocalService userLocalService) {
-		_userLocalService = userLocalService;
-	}
-
 	private Group _addFormsGroup(long companyId) throws Exception {
 		return _groupLocalService.addGroup(
 			_userLocalService.getDefaultUserId(companyId),
@@ -157,7 +122,6 @@ public class AddDefaultSharedFormLayoutPortalInstanceLifecycleListener
 		serviceContext.setAttribute(
 			"layout.instanceable.allowed", Boolean.TRUE);
 		serviceContext.setAttribute("layoutUpdateable", Boolean.FALSE);
-
 		serviceContext.setScopeGroupId(groupId);
 
 		long defaultUserId = _userLocalService.getDefaultUserId(companyId);
@@ -186,7 +150,6 @@ public class AddDefaultSharedFormLayoutPortalInstanceLifecycleListener
 		serviceContext.setAttribute(
 			"layout.instanceable.allowed", Boolean.TRUE);
 		serviceContext.setAttribute("layoutUpdateable", Boolean.FALSE);
-
 		serviceContext.setScopeGroupId(groupId);
 
 		long defaultUserId = _userLocalService.getDefaultUserId(companyId);
@@ -226,10 +189,22 @@ public class AddDefaultSharedFormLayoutPortalInstanceLifecycleListener
 		_layoutLocalService.updateLayout(layout);
 	}
 
+	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
 	private LayoutLocalService _layoutLocalService;
+
+	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
+	private ModuleServiceLifecycle _moduleServiceLifecycle;
+
+	@Reference
 	private ResourcePermissionLocalService _resourcePermissionLocalService;
+
+	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
 	private UserLocalService _userLocalService;
 
 }

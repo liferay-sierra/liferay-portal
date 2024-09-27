@@ -16,8 +16,11 @@ package com.liferay.address.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
+import com.liferay.portal.kernel.exception.CountryTitleException;
 import com.liferay.portal.kernel.model.Address;
 import com.liferay.portal.kernel.model.Country;
+import com.liferay.portal.kernel.model.CountryLocalization;
+import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.OrganizationConstants;
 import com.liferay.portal.kernel.model.Region;
@@ -40,6 +43,7 @@ import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -155,43 +159,39 @@ public class CountryLocalServiceTest {
 
 	@Test
 	public void testSearchCountries() throws Exception {
-		Country country = _addCountry(
-			"a1", "a11", true, RandomTestUtil.randomString());
+		Country country1 = _addCountry(
+			"a1", "a11", true, RandomTestUtil.randomString() + "_a11");
 
 		String keywords = RandomTestUtil.randomString();
 
-		List<Country> expectedCountries = Arrays.asList(
-			_addCountry("a2", "a22", true, keywords),
-			_addCountry(
-				"a3", "a33", true, keywords + RandomTestUtil.randomString()));
+		Country country2 = _addCountry("a2", "a22", true, keywords + "_a22");
+		Country country3 = _addCountry("a3", "a33", true, keywords + "_a33");
+		Country country4 = _addCountry("a4", "a44", false, keywords + "_a44");
 
-		_addCountry("a4", "a44", false, RandomTestUtil.randomString());
-
-		BaseModelSearchResult<Country> baseModelSearchResult =
-			_countryLocalService.searchCountries(
-				country.getCompanyId(), true, keywords, QueryUtil.ALL_POS,
-				QueryUtil.ALL_POS,
-				OrderByComparatorFactoryUtil.create("Country", "name", true));
-
-		Assert.assertEquals(
-			expectedCountries.size(), baseModelSearchResult.getLength());
-		Assert.assertEquals(
-			expectedCountries, baseModelSearchResult.getBaseModels());
+		_testSearchCountries(keywords, true, country2, country3);
+		_testSearchCountries(keywords, false, country4);
+		_testSearchCountries(keywords, null, country2, country3, country4);
 
 		String localizedCountryName = RandomTestUtil.randomString();
 
 		_countryLocalService.updateCountryLocalization(
-			country, "de_DE", localizedCountryName);
+			country1, "de_DE", localizedCountryName);
 
-		baseModelSearchResult = _countryLocalService.searchCountries(
-			country.getCompanyId(), true, localizedCountryName,
-			QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+		_testSearchCountries(localizedCountryName, true, country1);
+	}
 
-		Assert.assertEquals(1, baseModelSearchResult.getLength());
+	@Test
+	public void testSearchCountriesByISOCodes() throws Exception {
+		String a2 = "a1";
+		String a3 = "a11";
+		String number = "aaa";
 
-		List<Country> countries = baseModelSearchResult.getBaseModels();
+		Country country = _addCountry(
+			a2, a3, true, RandomTestUtil.randomString(), number);
 
-		Assert.assertEquals(country, countries.get(0));
+		_testSearchCountries(a2, true, country);
+		_testSearchCountries(a3, true, country);
+		_testSearchCountries(number, true, country);
 	}
 
 	@Test
@@ -254,6 +254,17 @@ public class CountryLocalServiceTest {
 		Assert.assertEquals(!subjectToVAT, updatedCountry.isSubjectToVAT());
 	}
 
+	@Test(expected = CountryTitleException.MustNotExceedMaximumLength.class)
+	public void testUpdateCountryLocalizations() throws Exception {
+		int maxTitleLength = ModelHintsUtil.getMaxLength(
+			CountryLocalization.class.getName(), "title");
+
+		_countryLocalService.updateCountryLocalizations(
+			_countryLocalService.createCountry(0L),
+			Collections.singletonMap(
+				"de_DE", RandomTestUtil.randomString(maxTitleLength + 1)));
+	}
+
 	private Country _addCountry(
 			boolean billingAllowed, String number, double position,
 			boolean shippingAllowed, boolean subjectToVAT, boolean zipRequired)
@@ -270,9 +281,16 @@ public class CountryLocalServiceTest {
 			String a2, String a3, boolean active, String name)
 		throws Exception {
 
+		return _addCountry(a2, a3, active, name, RandomTestUtil.randomString());
+	}
+
+	private Country _addCountry(
+			String a2, String a3, boolean active, String name, String number)
+		throws Exception {
+
 		return _countryLocalService.addCountry(
 			a2, a3, active, RandomTestUtil.randomBoolean(),
-			RandomTestUtil.randomString(), name, RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), name, number,
 			RandomTestUtil.randomDouble(), RandomTestUtil.randomBoolean(),
 			RandomTestUtil.randomBoolean(), RandomTestUtil.randomBoolean(),
 			ServiceContextTestUtil.getServiceContext());
@@ -309,6 +327,29 @@ public class CountryLocalServiceTest {
 			Assert.assertEquals(
 				expectedCountries.get(start + i), actualCountries.get(i));
 		}
+	}
+
+	private void _testSearchCountries(
+			String keywords, Boolean active, Country... expectedCountries)
+		throws Exception {
+
+		List<Country> expectedCountriesList = Arrays.asList(expectedCountries);
+
+		Arrays.sort(
+			expectedCountries,
+			Comparator.comparing(
+				Country::getName, String.CASE_INSENSITIVE_ORDER));
+
+		BaseModelSearchResult<Country> baseModelSearchResult =
+			_countryLocalService.searchCountries(
+				TestPropsValues.getCompanyId(), active, keywords,
+				QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+				OrderByComparatorFactoryUtil.create("Country", "name", true));
+
+		Assert.assertEquals(
+			expectedCountriesList.size(), baseModelSearchResult.getLength());
+		Assert.assertEquals(
+			expectedCountriesList, baseModelSearchResult.getBaseModels());
 	}
 
 	@Inject

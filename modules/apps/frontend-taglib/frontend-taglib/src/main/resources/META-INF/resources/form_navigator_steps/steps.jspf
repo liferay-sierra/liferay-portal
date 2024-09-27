@@ -14,6 +14,10 @@
  */
 --%>
 
+<liferay-util:html-top>
+	<link href="<%= PortalUtil.getStaticResourceURL(request, PortalUtil.getPathProxy() + application.getContextPath() + "/css/form_navigator.css") %>" rel="stylesheet" type="text/css" />
+</liferay-util:html-top>
+
 <div class="taglib-form-navigator" id="<portlet:namespace />tabsBoundingBox">
 	<aui:input name="modifiedSections" type="hidden" />
 
@@ -138,7 +142,7 @@
 
 							<div class="divider">
 								<svg aria-hidden="true" class="lexicon-icon lexicon-icon-<%= sectionIcon %>">
-									<use xlink:href="<%= themeDisplay.getPathThemeImages() %>/clay/icons.svg#<%= sectionIcon %>"></use>
+									<use xlink:href="<%= FrontendIconsUtil.getSpritemap(themeDisplay) %>#<%= sectionIcon %>"></use>
 								</svg>
 							</div>
 

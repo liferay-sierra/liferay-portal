@@ -12,10 +12,31 @@
 import {fetch} from 'frontend-js-web';
 
 import {DEFAULT_ERROR} from './constants';
-import {openErrorToast} from './toasts';
 
-export function fetchData(url = '', parameters, onSuccess, onError) {
-	fetch(url, parameters)
+const DEFAULT_HEADERS_OBJECT = {
+	'Accept': 'application/json',
+	'Accept-Language': Liferay.ThemeDisplay.getBCP47LanguageId(),
+	'Content-Type': 'application/json',
+};
+
+export const DEFAULT_HEADERS = new Headers(DEFAULT_HEADERS_OBJECT);
+export const DEFAULT_METHOD = 'GET';
+
+/**
+ * A wrapper around frontend-js-web's `fetch` function with commonly used
+ * default `init` options.
+ * @see {@link https://github.com/liferay/liferay-portal/blob/master/modules/apps/frontend-js/frontend-js-web/src/main/resources/META-INF/resources/liferay/util/fetch.es.js}
+ * @param {!string|!Request} resource The URL to the resource, or a Resource
+ * object.
+ * @param {Object=} init An optional object containing custom configuration.
+ * @return {Promise} A Promise that resolves to a Response object.
+ */
+export function fetchData(resource = '', {headers, ...init} = {}) {
+	return fetch(resource, {
+		headers: new Headers({...DEFAULT_HEADERS_OBJECT, ...headers}),
+		method: DEFAULT_METHOD,
+		...init,
+	})
 		.then((response) => {
 			if (!response.ok) {
 				throw DEFAULT_ERROR;
@@ -23,17 +44,12 @@ export function fetchData(url = '', parameters, onSuccess, onError) {
 
 			return response.json();
 		})
-		.then((responseContent) => {
-			onSuccess(responseContent);
-		})
 		.catch((error) => {
-			openErrorToast();
-
 			if (process.env.NODE_ENV === 'development') {
 				console.error(error);
 			}
 
-			onError(error);
+			throw error;
 		});
 }
 
@@ -66,9 +82,7 @@ export function fetchPreviewSearch(urlParameters, options) {
 	return fetch(
 		addParams('/o/search-experiences-rest/v1.0/search', urlParameters),
 		{
-			headers: new Headers({
-				'Content-Type': 'application/json',
-			}),
+			headers: DEFAULT_HEADERS,
 			method: 'POST',
 			...options,
 		}

@@ -15,18 +15,18 @@
 package com.liferay.layout.content.page.editor.web.internal.portlet.action;
 
 import com.liferay.exportimport.kernel.staging.LayoutStagingUtil;
-import com.liferay.fragment.processor.PortletRegistry;
+import com.liferay.layout.content.LayoutContentProvider;
 import com.liferay.layout.content.page.editor.constants.ContentPageEditorPortletKeys;
-import com.liferay.layout.content.page.editor.listener.ContentPageEditorListenerTracker;
 import com.liferay.layout.content.page.editor.web.internal.util.layout.structure.LayoutStructureUtil;
+import com.liferay.layout.service.LayoutLocalizationLocalService;
 import com.liferay.layout.util.LayoutCopyHelper;
 import com.liferay.portal.aop.AopService;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutRevision;
+import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
-import com.liferay.portal.kernel.security.auth.PrincipalException;
-import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.LayoutRevisionLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -37,18 +37,24 @@ import com.liferay.portal.kernel.servlet.MultiSessionMessages;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.transaction.Transactional;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
+import com.liferay.sites.kernel.util.Sites;
 
 import java.util.Collections;
+import java.util.Locale;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletException;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -57,7 +63,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pavel Savinov
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + ContentPageEditorPortletKeys.CONTENT_PAGE_EDITOR_PORTLET,
 		"mvc.command.name=/layout_content_page_editor/publish_layout"
@@ -95,28 +100,18 @@ public class PublishLayoutMVCActionCommand
 
 		Layout layout = _layoutLocalService.getLayout(draftLayout.getClassPK());
 
-		try {
-			LayoutPermissionUtil.check(
-				themeDisplay.getPermissionChecker(), draftLayout,
-				ActionKeys.UPDATE);
+		LayoutPermissionUtil.checkLayoutUpdatePermission(
+			themeDisplay.getPermissionChecker(), draftLayout);
 
-			LayoutPermissionUtil.check(
-				themeDisplay.getPermissionChecker(), layout, ActionKeys.UPDATE);
-		}
-		catch (PrincipalException principalException) {
-			if (!LayoutPermissionUtil.contains(
-					themeDisplay.getPermissionChecker(), layout,
-					ActionKeys.UPDATE_LAYOUT_CONTENT)) {
-
-				throw principalException;
-			}
-		}
+		LayoutPermissionUtil.checkLayoutUpdatePermission(
+			themeDisplay.getPermissionChecker(), layout);
 
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			actionRequest);
 
 		_publishLayout(
-			draftLayout, layout, serviceContext, themeDisplay.getUserId());
+			actionRequest, actionResponse, draftLayout, layout, serviceContext,
+			themeDisplay.getUserId());
 
 		String portletId = _portal.getPortletId(actionRequest);
 
@@ -134,13 +129,13 @@ public class PublishLayoutMVCActionCommand
 	}
 
 	private void _publishLayout(
+			ActionRequest actionRequest, ActionResponse actionResponse,
 			Layout draftLayout, Layout layout, ServiceContext serviceContext,
 			long userId)
 		throws Exception {
 
 		LayoutStructureUtil.deleteMarkedForDeletionItems(
-			draftLayout.getCompanyId(), _contentPageEditorListenerTracker,
-			draftLayout.getGroupId(), draftLayout.getPlid(), _portletRegistry);
+			draftLayout.getGroupId(), draftLayout.getPlid());
 
 		if (_workflowDefinitionLinkLocalService.hasWorkflowDefinitionLink(
 				layout.getCompanyId(), layout.getGroupId(),
@@ -152,9 +147,15 @@ public class PublishLayoutMVCActionCommand
 				serviceContext, Collections.emptyMap());
 		}
 		else {
+			UnicodeProperties originalTypeSettingsUnicodeProperties =
+				layout.getTypeSettingsProperties();
+
 			_layoutCopyHelper.copyLayout(draftLayout, layout);
 
 			layout = _layoutLocalService.getLayout(layout.getPlid());
+
+			_updateLayoutContent(
+				actionRequest, actionResponse, layout, serviceContext);
 
 			draftLayout = _layoutLocalService.getLayout(draftLayout.getPlid());
 
@@ -175,6 +176,31 @@ public class PublishLayoutMVCActionCommand
 
 			_layoutLocalService.updateLayout(draftLayout);
 
+			LayoutSet layoutSet = layout.getLayoutSet();
+
+			if (layoutSet.isLayoutSetPrototypeLinkActive()) {
+				UnicodeProperties updatedTypeSettingsUnicodeProperties =
+					layout.getTypeSettingsProperties();
+
+				if (originalTypeSettingsUnicodeProperties.containsKey(
+						Sites.LAST_MERGE_LAYOUT_MODIFIED_TIME)) {
+
+					updatedTypeSettingsUnicodeProperties.put(
+						Sites.LAST_MERGE_LAYOUT_MODIFIED_TIME,
+						originalTypeSettingsUnicodeProperties.getProperty(
+							Sites.LAST_MERGE_LAYOUT_MODIFIED_TIME));
+				}
+
+				if (originalTypeSettingsUnicodeProperties.containsKey(
+						Sites.LAST_MERGE_TIME)) {
+
+					updatedTypeSettingsUnicodeProperties.put(
+						Sites.LAST_MERGE_TIME,
+						originalTypeSettingsUnicodeProperties.getProperty(
+							Sites.LAST_MERGE_TIME));
+				}
+			}
+
 			layout.setType(draftLayout.getType());
 			layout.setLayoutPrototypeUuid(null);
 			layout.setStatus(WorkflowConstants.STATUS_APPROVED);
@@ -182,6 +208,26 @@ public class PublishLayoutMVCActionCommand
 			_layoutLocalService.updateLayout(layout);
 
 			_updateLayoutRevision(layout, serviceContext);
+		}
+	}
+
+	private void _updateLayoutContent(
+		ActionRequest actionRequest, ActionResponse actionResponse,
+		Layout layout, ServiceContext serviceContext) {
+
+		HttpServletRequest httpServletRequest = _portal.getHttpServletRequest(
+			actionRequest);
+		HttpServletResponse httpServletResponse =
+			_portal.getHttpServletResponse(actionResponse);
+
+		for (Locale locale :
+				_language.getAvailableLocales(layout.getGroupId())) {
+
+			_layoutLocalizationLocalService.updateLayoutLocalization(
+				_layoutContentProvider.getLayoutContent(
+					httpServletRequest, httpServletResponse, layout, locale),
+				LocaleUtil.toLanguageId(locale), layout.getPlid(),
+				serviceContext);
 		}
 	}
 
@@ -208,10 +254,16 @@ public class PublishLayoutMVCActionCommand
 	}
 
 	@Reference
-	private ContentPageEditorListenerTracker _contentPageEditorListenerTracker;
+	private Language _language;
+
+	@Reference
+	private LayoutContentProvider _layoutContentProvider;
 
 	@Reference
 	private LayoutCopyHelper _layoutCopyHelper;
+
+	@Reference
+	private LayoutLocalizationLocalService _layoutLocalizationLocalService;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;
@@ -223,7 +275,7 @@ public class PublishLayoutMVCActionCommand
 	private Portal _portal;
 
 	@Reference
-	private PortletRegistry _portletRegistry;
+	private Sites _sites;
 
 	@Reference
 	private WorkflowDefinitionLinkLocalService

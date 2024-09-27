@@ -25,7 +25,7 @@ import com.liferay.info.item.InfoItemFieldValues;
 import com.liferay.info.item.InfoItemReference;
 import com.liferay.info.localized.InfoLocalizedValue;
 import com.liferay.layout.display.page.LayoutDisplayPageInfoItemFieldValuesProvider;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -74,6 +74,8 @@ public class AssetCategoryLayoutDisplayPageInfoItemFieldValuesProvider
 					InfoField.builder(
 					).infoFieldType(
 						TextInfoFieldType.INSTANCE
+					).namespace(
+						AssetCategory.class.getSimpleName()
 					).name(
 						"vocabulary"
 					).labelInfoLocalizedValue(
@@ -98,6 +100,8 @@ public class AssetCategoryLayoutDisplayPageInfoItemFieldValuesProvider
 					InfoField.builder(
 					).infoFieldType(
 						TextInfoFieldType.INSTANCE
+					).namespace(
+						AssetCategory.class.getSimpleName()
 					).name(
 						"group"
 					).labelInfoLocalizedValue(
@@ -110,7 +114,7 @@ public class AssetCategoryLayoutDisplayPageInfoItemFieldValuesProvider
 						LocaleUtil.fromLanguageId(group.getDefaultLanguageId())
 					).values(
 						HashMapBuilder.put(
-							LanguageUtil.getAvailableLocales(),
+							_language.getAvailableLocales(),
 							locale -> group.getDescriptiveName(locale)
 						).build()
 					).build()));
@@ -139,5 +143,8 @@ public class AssetCategoryLayoutDisplayPageInfoItemFieldValuesProvider
 
 	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private Language _language;
 
 }

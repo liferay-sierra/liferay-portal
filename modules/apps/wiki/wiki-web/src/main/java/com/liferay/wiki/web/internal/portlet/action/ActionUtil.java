@@ -14,13 +14,13 @@
 
 package com.liferay.wiki.web.internal.portlet.action;
 
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
@@ -255,22 +255,20 @@ public class ActionUtil {
 			}
 		).buildPortletURL();
 
-		PortletURL editPageURL = PortletURLBuilder.createRenderURL(
-			liferayPortletResponse
-		).setMVCRenderCommandName(
-			"wiki/edit_page"
-		).setParameter(
-			"nodeId", nodeId
-		).setParameter(
-			"title", title
-		).buildPortletURL();
-
-		String attachmentURLPrefix = WikiUtil.getAttachmentURLPrefix(
-			themeDisplay.getPathMain(), themeDisplay.getPlid(), nodeId, title);
-
 		return wikiEngineRenderer.diffHtml(
-			sourcePage, targetPage, viewPageURL, editPageURL,
-			attachmentURLPrefix);
+			sourcePage, targetPage, viewPageURL,
+			PortletURLBuilder.createRenderURL(
+				liferayPortletResponse
+			).setMVCRenderCommandName(
+				"wiki/edit_page"
+			).setParameter(
+				"nodeId", nodeId
+			).setParameter(
+				"title", title
+			).buildPortletURL(),
+			WikiUtil.getAttachmentURLPrefix(
+				themeDisplay.getPathMain(), themeDisplay.getPlid(), nodeId,
+				title));
 	}
 
 	public static WikiNode getNode(PortletRequest portletRequest)

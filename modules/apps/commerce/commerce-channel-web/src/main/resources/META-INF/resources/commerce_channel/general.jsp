@@ -30,6 +30,9 @@ Map<String, String> contextParams = HashMapBuilder.<String, String>put(
 ).build();
 %>
 
+<liferay-ui:error embed="<%= false %>" exception="<%= FileExtensionException.class %>" message="please-select-a-valid-jrxml-file" />
+<liferay-ui:error embed="<%= false %>" exception="<%= InvalidFileException.class %>" message="please-select-a-valid-jrxml-file" />
+
 <portlet:actionURL name="/commerce_channels/edit_commerce_channel" var="editCommerceChannelActionURL" />
 
 <aui:form action="<%= editCommerceChannelActionURL %>" cssClass="m-0 p-0" method="post" name="fm">
@@ -99,13 +102,13 @@ Map<String, String> contextParams = HashMapBuilder.<String, String>put(
 
 				<%@ include file="/commerce_channel/workflow_definition.jspf" %>
 
+				<aui:input checked="<%= commerceChannelDisplayContext.isHideShippingPriceZero() %>" helpMessage="configures-whether-an-shipping-price-of-zero-is-shown-during-the-shipping-method-selection-checkout-screen" label="shipping-price-zero" labelOff="show" labelOn="hide" name="settings--hideShippingPriceZero--" type="toggle-switch" />
+
 				<aui:input checked="<%= commerceChannelDisplayContext.isShowPurchaseOrderNumber() %>" helpMessage="configures-whether-the-purchase-order-number-is-shown-or-hidden-in-placed-and-pending-order-details" label="purchase-order-number" labelOff="hide" labelOn="show" name="settings--showPurchaseOrderNumber--" type="toggle-switch" />
 
 				<aui:input checked="<%= commerceChannelDisplayContext.isCheckoutRequestedDeliveryDateEnabled() %>" helpMessage="configures-whether-an-order-requested-delivery-date-can-be-set-during-checkout" label="requested-delivery-date-at-checkout" labelOff="disabled" labelOn="enabled" name="settings--checkoutRequestedDeliveryDateEnabled--" type="toggle-switch" />
 
 				<aui:input checked="<%= commerceChannelDisplayContext.isGuestCheckoutEnabled() %>" helpMessage="configures-whether-a-guest-may-checkout-by-providing-an-email-address-or-if-they-must-sign-in" label="guest-checkout" labelOff="disabled" labelOn="enabled" name="settings--guestCheckoutEnabled--" type="toggle-switch" />
-
-				<aui:input checked="<%= commerceChannelDisplayContext.isViewPaymentTermCheckoutStepEnabled() %>" helpMessage="configures-whether-the-payment-terms-checkout-step-is-shown-during-checkout" label="view-payment-term-checkout-step" labelOff="disabled" labelOn="enabled" name="settings--viewPaymentTermCheckoutStepEnabled--" type="toggle-switch" />
 
 				<aui:input label="maximum-number-of-open-orders-per-account" name="orderSettings--accountCartMaxAllowed--" type="number" value="<%= commerceChannelDisplayContext.getAccountCartMaxAllowed() %>">
 					<aui:validator name="number" />
@@ -124,7 +127,7 @@ Map<String, String> contextParams = HashMapBuilder.<String, String>put(
 				<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
 				<aui:input name="fileEntryId" type="hidden" />
 
-				<label><%= LanguageUtil.get(request, "print-order-template") %></label>
+				<label><liferay-ui:message key="print-order-template" /></label>
 
 				<p class="text-default">
 					<span class="<%= (fileEntry != null) ? "" : "hide" %>" id="<portlet:namespace />fileEntryRemoveIcon" role="button">
@@ -135,8 +138,7 @@ Map<String, String> contextParams = HashMapBuilder.<String, String>put(
 
 				<aui:button name="selectFileButton" value="select-file" />
 
-				<liferay-ui:error exception="<%= FileExtensionException.class %>" message="please-select-a-valid-jrxml-file" />
-				<liferay-ui:error exception="<%= InvalidFileException.class %>" message="please-select-a-valid-jrxml-file" />
+				<aui:input label="order-importer-date-format" labelOff="disabled" labelOn="enabled" name="format--orderImporterDateFormat--" type="text" value="<%= commerceChannelDisplayContext.getOrderImporterDateFormat() %>" />
 			</commerce-ui:panel>
 		</div>
 
@@ -145,7 +147,7 @@ Map<String, String> contextParams = HashMapBuilder.<String, String>put(
 				bodyClasses="flex-fill"
 				title='<%= LanguageUtil.get(request, "prices") %>'
 			>
-				<label class="control-label" for="shippingTaxSettings--taxCategoryId--"><%= LanguageUtil.get(request, "shipping-tax-category") %></label>
+				<label class="control-label" for="shippingTaxSettings--taxCategoryId--"><liferay-ui:message key="shipping-tax-category" /></label>
 
 				<div class="mb-4" id="autocomplete-root"></div>
 
@@ -161,7 +163,7 @@ Map<String, String> contextParams = HashMapBuilder.<String, String>put(
 
 				<aui:select label="discounts-target-price-type" name="discountsTargetNetPrice">
 					<aui:option label="net-price" selected="<%= commerceChannel.isDiscountsTargetNetPrice() %>" value="true" />
-					<aui:option label="gross-price" selected="<%= commerceChannel.isDiscountsTargetNetPrice() %>" value="false" />
+					<aui:option label="gross-price" selected="<%= !commerceChannel.isDiscountsTargetNetPrice() %>" value="false" />
 				</aui:select>
 			</commerce-ui:panel>
 		</div>
@@ -173,14 +175,11 @@ Map<String, String> contextParams = HashMapBuilder.<String, String>put(
 		bodyClasses="p-0"
 		title='<%= LanguageUtil.get(request, "health-checks") %>'
 	>
-		<clay:data-set-display
+		<frontend-data-set:classic-display
 			contextParams="<%= contextParams %>"
-			dataProviderKey="<%= CommerceChannelHealthCheckClayTable.NAME %>"
-			id="<%= CommerceChannelHealthCheckClayTable.NAME %>"
+			dataProviderKey="<%= CommerceChannelFDSNames.CHANNEL_HEALTH_CHECK %>"
+			id="<%= CommerceChannelFDSNames.CHANNEL_HEALTH_CHECK %>"
 			itemsPerPage="<%= 10 %>"
-			namespace="<%= liferayPortletResponse.getNamespace() %>"
-			pageNumber="<%= 1 %>"
-			portletURL="<%= commerceChannelDisplayContext.getPortletURL() %>"
 			showManagementBar="<%= false %>"
 		/>
 	</commerce-ui:panel>
@@ -190,14 +189,11 @@ Map<String, String> contextParams = HashMapBuilder.<String, String>put(
 	bodyClasses="p-0"
 	title='<%= LanguageUtil.get(request, "payment-methods") %>'
 >
-	<clay:data-set-display
+	<frontend-data-set:classic-display
 		contextParams="<%= contextParams %>"
-		dataProviderKey="<%= CommercePaymentMethodClayTable.NAME %>"
-		id="<%= CommercePaymentMethodClayTable.NAME %>"
+		dataProviderKey="<%= CommerceChannelFDSNames.PAYMENT_METHOD %>"
+		id="<%= CommerceChannelFDSNames.PAYMENT_METHOD %>"
 		itemsPerPage="<%= 10 %>"
-		namespace="<%= liferayPortletResponse.getNamespace() %>"
-		pageNumber="<%= 1 %>"
-		portletURL="<%= commerceChannelDisplayContext.getPortletURL() %>"
 		selectedItemsKey="key"
 		showManagementBar="<%= false %>"
 	/>
@@ -207,14 +203,11 @@ Map<String, String> contextParams = HashMapBuilder.<String, String>put(
 	bodyClasses="p-0"
 	title='<%= LanguageUtil.get(request, "shipping-methods") %>'
 >
-	<clay:data-set-display
+	<frontend-data-set:classic-display
 		contextParams="<%= contextParams %>"
-		dataProviderKey="<%= CommerceShippingMethodClayTable.NAME %>"
-		id="<%= CommerceShippingMethodClayTable.NAME %>"
+		dataProviderKey="<%= CommerceChannelFDSNames.SHIPPING_METHOD %>"
+		id="<%= CommerceChannelFDSNames.SHIPPING_METHOD %>"
 		itemsPerPage="<%= 10 %>"
-		namespace="<%= liferayPortletResponse.getNamespace() %>"
-		pageNumber="<%= 1 %>"
-		portletURL="<%= commerceChannelDisplayContext.getPortletURL() %>"
 		selectedItemsKey="key"
 		showManagementBar="<%= false %>"
 	/>
@@ -224,14 +217,11 @@ Map<String, String> contextParams = HashMapBuilder.<String, String>put(
 	bodyClasses="p-0"
 	title='<%= LanguageUtil.get(request, "tax-calculations") %>'
 >
-	<clay:data-set-display
+	<frontend-data-set:classic-display
 		contextParams="<%= contextParams %>"
-		dataProviderKey="<%= CommerceTaxMethodClayTable.NAME %>"
-		id="<%= CommerceTaxMethodClayTable.NAME %>"
+		dataProviderKey="<%= CommerceChannelFDSNames.TAX_METHOD %>"
+		id="<%= CommerceChannelFDSNames.TAX_METHOD %>"
 		itemsPerPage="<%= 10 %>"
-		namespace="<%= liferayPortletResponse.getNamespace() %>"
-		pageNumber="<%= 1 %>"
-		portletURL="<%= commerceChannelDisplayContext.getPortletURL() %>"
 		selectedItemsKey="key"
 		showManagementBar="<%= false %>"
 	/>

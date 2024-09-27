@@ -24,7 +24,7 @@ import com.liferay.frontend.data.set.provider.FDSDataProvider;
 import com.liferay.frontend.data.set.provider.search.FDSKeywords;
 import com.liferay.frontend.data.set.provider.search.FDSPagination;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -43,7 +43,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "fds.data.provider.key=" + CommercePricingFDSNames.INSTANCE_PRICE_ENTRIES,
 	service = FDSDataProvider.class
 )
@@ -76,14 +75,14 @@ public class CPInstancePriceEntryFDSDataProvider
 
 			Date createDate = commercePriceEntry.getCreateDate();
 
-			String createDateDescription = LanguageUtil.getTimeDescription(
+			String createDateDescription = _language.getTimeDescription(
 				httpServletRequest,
 				System.currentTimeMillis() - createDate.getTime(), true);
 
 			instancePriceEntries.add(
 				new InstancePriceEntry(
 					commercePriceEntry.getCommercePriceEntryId(),
-					LanguageUtil.format(
+					_language.format(
 						httpServletRequest, "x-ago", createDateDescription,
 						false),
 					commercePriceList.getName(),
@@ -109,6 +108,9 @@ public class CPInstancePriceEntryFDSDataProvider
 
 	@Reference
 	private CommercePriceEntryService _commercePriceEntryService;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private Portal _portal;

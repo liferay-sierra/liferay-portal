@@ -14,7 +14,7 @@
 
 package com.liferay.portlet.configuration.icon.edit.defaults.internal;
 
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.configuration.icon.BasePortletConfigurationIcon;
 import com.liferay.portal.kernel.portlet.configuration.icon.PortletConfigurationIcon;
 import com.liferay.portal.kernel.theme.PortletDisplay;
@@ -25,6 +25,7 @@ import javax.portlet.PortletRequest;
 import javax.portlet.PortletResponse;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Eudaldo Alonso
@@ -35,9 +36,7 @@ public class EditDefaultsPortletConfigurationIcon
 
 	@Override
 	public String getMessage(PortletRequest portletRequest) {
-		return LanguageUtil.get(
-			getResourceBundle(getLocale(portletRequest)),
-			"default-preferences");
+		return _language.get(getLocale(portletRequest), "default-preferences");
 	}
 
 	@Override
@@ -67,9 +66,7 @@ public class EditDefaultsPortletConfigurationIcon
 		return portletDisplay.isShowEditDefaultsIcon();
 	}
 
-	@Override
-	public boolean isToolTip() {
-		return false;
-	}
+	@Reference
+	private Language _language;
 
 }

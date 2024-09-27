@@ -23,6 +23,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.dom4j.Attribute;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -31,10 +35,14 @@ import org.dom4j.Element;
 import org.dom4j.Node;
 import org.dom4j.Text;
 import org.dom4j.XPath;
+import org.dom4j.io.DOMReader;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
 import org.dom4j.io.XMLWriter;
 import org.dom4j.tree.DefaultElement;
+
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 /**
  * @author Peter Yoo
@@ -66,13 +74,19 @@ public class Dom4JUtil {
 			}
 
 			if (item instanceof Element) {
-				element.add((Element)item);
+				Element itemElement = (Element)item;
+
+				itemElement.detach();
+
+				element.add(itemElement);
 
 				continue;
 			}
 
 			if (item instanceof Element[]) {
 				for (Element itemElement : (Element[])item) {
+					itemElement.detach();
+
 					element.add(itemElement);
 				}
 
@@ -275,9 +289,45 @@ public class Dom4JUtil {
 	}
 
 	public static Document parse(String xml) throws DocumentException {
-		SAXReader saxReader = new SAXReader();
+		try {
+			SAXReader saxReader = new SAXReader();
 
-		return saxReader.read(new StringReader(xml));
+			return saxReader.read(new StringReader(xml));
+		}
+		catch (Exception exception1) {
+			try {
+				DOMReader domReader = new DOMReader();
+
+				DocumentBuilderFactory documentBuilderFactory =
+					DocumentBuilderFactory.newInstance();
+
+				DocumentBuilder documentBuilder =
+					documentBuilderFactory.newDocumentBuilder();
+
+				org.w3c.dom.Document orgW3CDomDocument = null;
+
+				if (!xml.contains("<!DOCTYPE definition")) {
+					String documentTypeDefinition =
+						"<!DOCTYPE definition [\n<!ENTITY micro" +
+							"  \"&#181;\">\n]>\n";
+
+					orgW3CDomDocument = documentBuilder.parse(
+						new InputSource(
+							new StringReader(documentTypeDefinition + xml)));
+				}
+				else {
+					orgW3CDomDocument = documentBuilder.parse(
+						new InputSource(new StringReader(xml)));
+				}
+
+				return domReader.read(orgW3CDomDocument);
+			}
+			catch (IOException | ParserConfigurationException | SAXException
+						exception2) {
+
+				throw new RuntimeException(exception2);
+			}
+		}
 	}
 
 	public static void replace(
@@ -332,9 +382,7 @@ public class Dom4JUtil {
 		content = content.replaceAll("\\t", "  ");
 
 		return getNewElement(
-			"pre", null,
-			getNewElement(
-				"code", null, JenkinsResultsParserUtil.redact(content)));
+			"pre", null, JenkinsResultsParserUtil.redact(content));
 	}
 
 	public static void truncateElement(Element element, int size) {

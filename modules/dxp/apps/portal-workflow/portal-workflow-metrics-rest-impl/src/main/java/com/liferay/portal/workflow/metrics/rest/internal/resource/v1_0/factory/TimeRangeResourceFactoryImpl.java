@@ -32,15 +32,20 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
+import com.liferay.portal.workflow.metrics.rest.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.portal.workflow.metrics.rest.resource.v1_0.TimeRangeResource;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -58,7 +61,10 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @author Rafael Praxedes
  * @generated
  */
-@Component(immediate = true, service = TimeRangeResource.Factory.class)
+@Component(
+	property = "resource.locator.key=/portal-workflow-metrics/v1.0/TimeRange",
+	service = TimeRangeResource.Factory.class
+)
 @Generated("")
 public class TimeRangeResourceFactoryImpl implements TimeRangeResource.Factory {
 
@@ -72,9 +78,7 @@ public class TimeRangeResourceFactoryImpl implements TimeRangeResource.Factory {
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (TimeRangeResource)ProxyUtil.newProxyInstance(
-					TimeRangeResource.class.getClassLoader(),
-					new Class<?>[] {TimeRangeResource.class},
+				return _timeRangeResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -133,14 +137,31 @@ public class TimeRangeResourceFactoryImpl implements TimeRangeResource.Factory {
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		TimeRangeResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, TimeRangeResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		TimeRangeResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			TimeRangeResource.class.getClassLoader(), TimeRangeResource.class);
+
+		try {
+			Constructor<TimeRangeResource> constructor =
+				(Constructor<TimeRangeResource>)proxyClass.getConstructor(
+					InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -163,7 +184,7 @@ public class TimeRangeResourceFactoryImpl implements TimeRangeResource.Factory {
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		TimeRangeResource timeRangeResource =
@@ -187,6 +208,7 @@ public class TimeRangeResourceFactoryImpl implements TimeRangeResource.Factory {
 		timeRangeResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		timeRangeResource.setRoleLocalService(_roleLocalService);
+		timeRangeResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(timeRangeResource, arguments);
@@ -202,6 +224,9 @@ public class TimeRangeResourceFactoryImpl implements TimeRangeResource.Factory {
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, TimeRangeResource>
+		_timeRangeResourceProxyProviderFunction = _getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -223,9 +248,6 @@ public class TimeRangeResourceFactoryImpl implements TimeRangeResource.Factory {
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -234,6 +256,9 @@ public class TimeRangeResourceFactoryImpl implements TimeRangeResource.Factory {
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

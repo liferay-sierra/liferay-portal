@@ -14,9 +14,38 @@
 
 package com.liferay.object.model.impl;
 
+import com.liferay.object.model.ObjectFieldSetting;
+
+import java.util.List;
+import java.util.Objects;
+
 /**
  * @author Marco Leo
  * @author Brian Wing Shun Chan
  */
 public class ObjectFieldImpl extends ObjectFieldBaseImpl {
+
+	@Override
+	public boolean compareBusinessType(String businessType) {
+		if (Objects.equals(getBusinessType(), businessType)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
+	public List<ObjectFieldSetting> getObjectFieldSettings() {
+		return _objectFieldSettings;
+	}
+
+	@Override
+	public void setObjectFieldSettings(
+		List<ObjectFieldSetting> objectFieldSettings) {
+
+		_objectFieldSettings = objectFieldSettings;
+	}
+
+	private List<ObjectFieldSetting> _objectFieldSettings;
+
 }

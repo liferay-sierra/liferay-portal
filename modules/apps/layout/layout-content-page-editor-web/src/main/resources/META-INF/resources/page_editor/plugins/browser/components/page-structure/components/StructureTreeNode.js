@@ -14,15 +14,24 @@
 
 import ClayButton from '@clayui/button';
 import ClayIcon from '@clayui/icon';
+import {useEventListener} from '@liferay/frontend-js-react-web';
 import classNames from 'classnames';
+import {openToast, sub} from 'frontend-js-web';
 import PropTypes from 'prop-types';
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 
 import {addMappingFields} from '../../../../../app/actions/index';
 import {fromControlsId} from '../../../../../app/components/layout-data-items/Collection';
 import {ITEM_ACTIVATION_ORIGINS} from '../../../../../app/config/constants/itemActivationOrigins';
 import {ITEM_TYPES} from '../../../../../app/config/constants/itemTypes';
+import {
+	ARROW_DOWN_KEYCODE,
+	ARROW_LEFT_KEYCODE,
+	ARROW_RIGHT_KEYCODE,
+	ARROW_UP_KEYCODE,
+} from '../../../../../app/config/constants/keycodes';
 import {LAYOUT_DATA_ITEM_TYPES} from '../../../../../app/config/constants/layoutDataItemTypes';
+import {VIEWPORT_SIZES} from '../../../../../app/config/constants/viewportSizes';
 import {
 	useActivationOrigin,
 	useActiveItemId,
@@ -31,15 +40,24 @@ import {
 	useSelectItem,
 } from '../../../../../app/contexts/ControlsContext';
 import {
+	useDisableKeyboardMovement,
+	useMovementSource,
+	useMovementTarget,
+	useSetMovementSource,
+} from '../../../../../app/contexts/KeyboardMovementContext';
+import {
 	useDispatch,
 	useSelector,
+	useSelectorCallback,
+	useSelectorRef,
 } from '../../../../../app/contexts/StoreContext';
 import selectCanUpdatePageStructure from '../../../../../app/selectors/selectCanUpdatePageStructure';
-import selectSegmentsExperienceId from '../../../../../app/selectors/selectSegmentsExperienceId';
 import CollectionService from '../../../../../app/services/CollectionService';
-import deleteItem from '../../../../../app/thunks/deleteItem';
 import moveItem from '../../../../../app/thunks/moveItem';
+import updateItemConfig from '../../../../../app/thunks/updateItemConfig';
+import canBeRenamed from '../../../../../app/utils/canBeRenamed';
 import {deepEqual} from '../../../../../app/utils/checkDeepEqual';
+import {collectionIsMapped} from '../../../../../app/utils/collectionIsMapped';
 import checkAllowedChild from '../../../../../app/utils/drag-and-drop/checkAllowedChild';
 import {DRAG_DROP_TARGET_TYPE} from '../../../../../app/utils/drag-and-drop/constants/dragDropTargetType';
 import {ORIENTATIONS} from '../../../../../app/utils/drag-and-drop/constants/orientations';
@@ -52,10 +70,20 @@ import {
 	initialDragDrop,
 	useDragItem,
 	useDropTarget,
+	useIsDroppable,
 } from '../../../../../app/utils/drag-and-drop/useDragAndDrop';
+import {formIsMapped} from '../../../../../app/utils/formIsMapped';
 import getFirstControlsId from '../../../../../app/utils/getFirstControlsId';
+import {
+	FORM_ERROR_TYPES,
+	getFormErrorDescription,
+} from '../../../../../app/utils/getFormErrorDescription';
 import getMappingFieldsKey from '../../../../../app/utils/getMappingFieldsKey';
+import isItemWidget from '../../../../../app/utils/isItemWidget';
 import updateItemStyle from '../../../../../app/utils/updateItemStyle';
+import useHasRequiredChild from '../../../../../app/utils/useHasRequiredChild';
+import useControlledState from '../../../../../core/hooks/useControlledState';
+import StructureTreeNodeActions from './StructureTreeNodeActions';
 
 const HOVER_EXPAND_DELAY = 1000;
 
@@ -102,7 +130,7 @@ export default function StructureTreeNode({node}) {
 	useEffect(() => {
 		if (node.type === LAYOUT_DATA_ITEM_TYPES.collection) {
 			const item =
-				layoutData.items[node.id] || masterLayoutData.items[node.id];
+				layoutData.items[node.id] || masterLayoutData?.items[node.id];
 
 			if (!item?.config?.collection) {
 				return;
@@ -155,11 +183,7 @@ StructureTreeNodeContent.propTypes = {
 
 const MemoizedStructureTreeNodeContent = React.memo(
 	StructureTreeNodeContent,
-	(prevProps, nextProps) =>
-		deepEqual(
-			{...prevProps, node: {...prevProps.node, children: []}},
-			{...nextProps, node: {...nextProps.node, children: []}}
-		)
+	(prevProps, nextProps) => deepEqual(prevProps, nextProps)
 );
 
 function StructureTreeNodeContent({
@@ -174,60 +198,130 @@ function StructureTreeNodeContent({
 	const dispatch = useDispatch();
 	const hoverItem = useHoverItem();
 	const nodeRef = useRef();
-	const layoutDataRef = useRef();
-	const segmentsExperienceId = useSelector(selectSegmentsExperienceId);
 	const selectedViewportSize = useSelector(
 		(state) => state.selectedViewportSize
 	);
 	const selectItem = useSelectItem();
 
-	useSelector((store) => {
-		layoutDataRef.current = store.layoutData;
+	const layoutDataRef = useSelectorRef((store) => store.layoutData);
 
-		return null;
-	});
+	const [editingName, setEditingName] = useState(false);
 
-	const item = {
-		children: node.children,
-		icon: node.icon,
-		itemId: node.id,
-		name: node.name,
-		origin: ITEM_ACTIVATION_ORIGINS.sidebar,
-		parentId: node.parentItemId,
-		type: node.type || node.itemType,
-	};
+	const item = useMemo(
+		() => ({
+			children:
+				node.itemType === ITEM_TYPES.editable ? [] : node.children,
+			config: layoutDataRef.current.items[node.id]?.config,
+			icon: node.icon,
+			itemId: node.id,
+			name: node.name,
+			origin: ITEM_ACTIVATION_ORIGINS.sidebar,
+			parentId: node.parentItemId,
+			type: node.type || node.itemType,
+		}),
+		[layoutDataRef, node]
+	);
+
+	const fragmentEntryType = useSelectorCallback(
+		(state) => {
+			if (!node.type === LAYOUT_DATA_ITEM_TYPES.fragment) {
+				return null;
+			}
+
+			const fragmentEntryLink =
+				state.fragmentEntryLinks[item.config?.fragmentEntryLinkId];
+
+			return fragmentEntryLink?.fragmentEntryType ?? null;
+		},
+		[item]
+	);
+
+	const isWidget = useSelectorCallback(
+		(state) => isItemWidget(item, state.fragmentEntryLinks),
+		[item]
+	);
 
 	const {isOverTarget, targetPosition, targetRef} = useDropTarget(
 		item,
 		computeHover
 	);
 
-	const {handlerRef, isDraggingSource} = useDragItem(
-		item,
+	const {handlerRef, isDraggingSource: itemIsDraggingSource} = useDragItem(
+		{...item, fragmentEntryType, isWidget},
 		(parentItemId, position) =>
 			dispatch(
 				moveItem({
 					itemId: node.id,
 					parentItemId,
 					position,
-					segmentsExperienceId,
 				})
 			)
 	);
 
+	const {
+		itemId: keyboardMovementTargetId,
+		position: keyboardMovementPosition,
+	} = useMovementTarget();
+
+	const dropTargetPosition = targetPosition || keyboardMovementPosition;
+
+	const keyboardMovementSource = useMovementSource();
+
+	const isDraggingSource =
+		itemIsDraggingSource || keyboardMovementSource?.itemId === item.itemId;
+
+	const isDroppable = useIsDroppable();
+
+	const isValidDrop =
+		(isDroppable && isOverTarget) ||
+		keyboardMovementTargetId === item.itemId;
+
+	const onEditName = (nextName) => {
+		const trimmedName = nextName?.trim();
+
+		if (trimmedName && node.name !== trimmedName) {
+			dispatch(
+				updateItemConfig({
+					itemConfig: {name: trimmedName},
+					itemId: node.id,
+				})
+			);
+		}
+
+		setEditingName(false);
+	};
+
+	const handleButtonsKeyDown = (event) => {
+		event.stopPropagation();
+
+		if (
+			[
+				ARROW_DOWN_KEYCODE,
+				ARROW_LEFT_KEYCODE,
+				ARROW_RIGHT_KEYCODE,
+				ARROW_UP_KEYCODE,
+			].includes(event.keyCode)
+		) {
+			document.activeElement
+				.closest('.lfr-treeview-node-list-item')
+				?.focus();
+		}
+	};
+
 	useEffect(() => {
 		if (
-			isActive &&
-			activationOrigin === ITEM_ACTIVATION_ORIGINS.pageEditor &&
-			nodeRef.current
+			item.itemId === keyboardMovementTargetId ||
+			(activationOrigin === ITEM_ACTIVATION_ORIGINS.pageEditor &&
+				nodeRef.current &&
+				isActive)
 		) {
 			nodeRef.current.scrollIntoView({
-				behavior: 'smooth',
+				behavior: 'instant',
 				block: 'center',
 				inline: 'nearest',
 			});
 		}
-	}, [activationOrigin, isActive]);
+	}, [activationOrigin, isActive, keyboardMovementTargetId, item]);
 
 	useEffect(() => {
 		let timeoutId = null;
@@ -243,17 +337,26 @@ function StructureTreeNodeContent({
 		};
 	}, [isOverTarget, node]);
 
+	const showOptions =
+		canUpdatePageStructure &&
+		node.itemType !== ITEM_TYPES.editable &&
+		node.type !== LAYOUT_DATA_ITEM_TYPES.dropZone &&
+		node.activable &&
+		!node.isMasterItem;
+
 	return (
 		<div
 			aria-disabled={node.isMasterItem || !node.activable}
 			aria-selected={isActive}
 			className={classNames('page-editor__page-structure__tree-node', {
 				'drag-over-bottom':
-					isOverTarget && targetPosition === TARGET_POSITIONS.BOTTOM,
+					isValidDrop &&
+					dropTargetPosition === TARGET_POSITIONS.BOTTOM,
 				'drag-over-middle':
-					isOverTarget && targetPosition === TARGET_POSITIONS.MIDDLE,
+					isValidDrop &&
+					dropTargetPosition === TARGET_POSITIONS.MIDDLE,
 				'drag-over-top':
-					isOverTarget && targetPosition === TARGET_POSITIONS.TOP,
+					isValidDrop && dropTargetPosition === TARGET_POSITIONS.TOP,
 				'dragged': isDraggingSource,
 				'font-weight-semi-bold':
 					node.activable && node.itemType !== ITEM_TYPES.editable,
@@ -278,14 +381,12 @@ function StructureTreeNodeContent({
 			ref={targetRef}
 		>
 			<div
-				aria-label={Liferay.Util.sub(Liferay.Language.get('select-x'), [
-					node.name,
-				])}
-				className="page-editor__page-structure__tree-node__mask"
-				onClick={(event) => {
-					event.stopPropagation();
-					event.target.focus();
-
+				aria-label={sub(Liferay.Language.get('select-x'), [node.name])}
+				className="lfr-portal-tooltip page-editor__page-structure__tree-node__mask"
+				data-item-id={node.id}
+				data-title={node.tooltipTitle}
+				data-tooltip-align="right"
+				onClick={() => {
 					const itemId = getFirstControlsId({
 						item: node,
 						layoutData: layoutDataRef.current,
@@ -298,75 +399,165 @@ function StructureTreeNodeContent({
 						});
 					}
 				}}
-				onDoubleClick={(event) => event.stopPropagation()}
-				ref={handlerRef}
+				onDoubleClick={(event) => {
+					event.stopPropagation();
+
+					if (canBeRenamed(item)) {
+						setEditingName(true);
+					}
+				}}
+				ref={
+					selectedViewportSize === VIEWPORT_SIZES.desktop
+						? handlerRef
+						: null
+				}
 				role="button"
 			/>
 
+			<MoveButton
+				canUpdate={canUpdatePageStructure}
+				fragmentEntryType={fragmentEntryType}
+				isWidget={isWidget}
+				node={node}
+				nodeRef={nodeRef}
+				onKeyDown={handleButtonsKeyDown}
+				selectedViewportSize={selectedViewportSize}
+			/>
+
 			<NameLabel
+				editingName={editingName}
 				hidden={node.hidden || node.hiddenAncestor}
 				icon={node.icon}
 				isActive={isActive}
 				isMapped={isMapped}
 				isMasterItem={node.isMasterItem}
 				name={node.name}
+				nameInfo={node.nameInfo}
+				onEditName={onEditName}
 				ref={nodeRef}
 			/>
 
-			<div>
-				{(node.removable || node.hidden) && (
-					<VisibilityButton
-						dispatch={dispatch}
-						node={node}
-						segmentsExperienceId={segmentsExperienceId}
-						selectedViewportSize={selectedViewportSize}
-						visible={node.hidden || isHovered || isSelected}
-					/>
-				)}
+			{!editingName && (
+				<div
+					className={classNames({
+						'page-editor__page-structure__tree-node__buttons--hidden':
+							node.hidden || node.hiddenAncestor,
+					})}
+					onFocus={(event) => event.stopPropagation()}
+					onKeyDown={handleButtonsKeyDown}
+				>
+					{(node.hidable || node.hidden) && (
+						<VisibilityButton
+							dispatch={dispatch}
+							node={node}
+							selectedViewportSize={selectedViewportSize}
+							visible={node.hidden || isHovered || isSelected}
+						/>
+					)}
 
-				{node.removable && canUpdatePageStructure && (
-					<RemoveButton
-						node={node}
-						visible={isHovered || isSelected}
-					/>
-				)}
-			</div>
+					{showOptions && (
+						<StructureTreeNodeActions
+							item={item}
+							setEditingName={setEditingName}
+							visible={node.hidden || isHovered || isSelected}
+						/>
+					)}
+				</div>
+			)}
 		</div>
 	);
 }
 
 const NameLabel = React.forwardRef(
-	({hidden, icon, isActive, isMapped, isMasterItem, name}, ref) => (
-		<div
-			className={classNames(
-				'page-editor__page-structure__tree-node__name',
-				{
-					'page-editor__page-structure__tree-node__name--active': isActive,
-					'page-editor__page-structure__tree-node__name--hidden': hidden,
-					'page-editor__page-structure__tree-node__name--mapped': isMapped,
-					'page-editor__page-structure__tree-node__name--master-item': isMasterItem,
-				}
-			)}
-			ref={ref}
-		>
-			{icon && <ClayIcon symbol={icon || ''} />}
+	(
+		{
+			editingName,
+			hidden,
+			icon,
+			isActive,
+			isMapped,
+			isMasterItem,
+			name: defaultName,
+			nameInfo,
+			onEditName,
+		},
+		ref
+	) => {
+		const inputRef = useRef();
 
-			{name || Liferay.Language.get('element')}
-		</div>
-	)
+		const [name, setName] = useControlledState(defaultName);
+
+		useEffect(() => {
+			if (editingName && inputRef.current) {
+				inputRef.current.focus();
+			}
+		}, [editingName]);
+
+		return (
+			<div
+				className={classNames(
+					'page-editor__page-structure__tree-node__name d-flex flex-grow-1 align-items-center',
+					{
+						'page-editor__page-structure__tree-node__name--active': isActive,
+						'page-editor__page-structure__tree-node__name--hidden': hidden,
+						'page-editor__page-structure__tree-node__name--mapped': isMapped,
+						'page-editor__page-structure__tree-node__name--master-item': isMasterItem,
+						'w-100': editingName,
+					}
+				)}
+				ref={ref}
+			>
+				{icon && <ClayIcon className="mt-0" symbol={icon || ''} />}
+
+				{editingName ? (
+					<input
+						className="flex-grow-1"
+						onBlur={() => {
+							onEditName(name);
+						}}
+						onChange={(event) => {
+							setName(event.target.value);
+						}}
+						onFocus={(event) => {
+							inputRef.current.setSelectionRange(0, name.length);
+							event.stopPropagation();
+						}}
+						onKeyDown={(event) => {
+							if (event.key === 'Enter') {
+								onEditName(name);
+							}
+
+							if (!event.key.match(/[a-z0-9-_ ]/gi)) {
+								event.preventDefault();
+							}
+
+							event.stopPropagation();
+						}}
+						ref={inputRef}
+						type="text"
+						value={name}
+					/>
+				) : (
+					name || defaultName || Liferay.Language.get('element')
+				)}
+
+				{!editingName && nameInfo && (
+					<span className="ml-3 page-editor__page-structure__tree-node__name-info position-relative">
+						{nameInfo}
+					</span>
+				)}
+			</div>
+		);
+	}
 );
 
-const VisibilityButton = ({
-	dispatch,
-	node,
-	segmentsExperienceId,
-	selectedViewportSize,
-	visible,
-}) => {
+const VisibilityButton = ({dispatch, node, selectedViewportSize, visible}) => {
+	const hasRequiredChild = useHasRequiredChild(node.id);
+
 	return (
 		<ClayButton
-			aria-label={Liferay.Util.sub(
-				node.hidden
+			aria-label={sub(
+				node.hidden || node.hiddenAncestor
 					? Liferay.Language.get('show-x')
 					: Liferay.Language.get('hide-x'),
 				[node.name]
@@ -377,47 +568,96 @@ const VisibilityButton = ({
 					'page-editor__page-structure__tree-node__visibility-button--visible': visible,
 				}
 			)}
-			disabled={node.isMasterItem}
+			disabled={node.isMasterItem || node.hiddenAncestor}
 			displayType="unstyled"
-			onClick={() =>
+			onClick={() => {
 				updateItemStyle({
 					dispatch,
 					itemId: node.id,
-					segmentsExperienceId,
 					selectedViewportSize,
 					styleName: 'display',
 					styleValue: node.hidden ? 'block' : 'none',
-				})
-			}
+				});
+
+				if (!node.hidden && hasRequiredChild()) {
+					const {message} = getFormErrorDescription({
+						type: FORM_ERROR_TYPES.hiddenFragment,
+					});
+
+					openToast({
+						message,
+						type: 'warning',
+					});
+				}
+			}}
 		>
-			<ClayIcon symbol={node.hidden ? 'hidden' : 'view'} />
+			<ClayIcon
+				symbol={node.hidden || node.hiddenAncestor ? 'hidden' : 'view'}
+			/>
 		</ClayButton>
 	);
 };
 
-const RemoveButton = ({node, visible}) => {
-	const dispatch = useDispatch();
-	const selectItem = useSelectItem();
+const MoveButton = ({
+	canUpdate,
+	fragmentEntryType,
+	isWidget,
+	node,
+	nodeRef,
+	onKeyDown,
+	selectedViewportSize,
+}) => {
+	const setMovementSource = useSetMovementSource();
+	const disableMovement = useDisableKeyboardMovement();
+
+	const buttonRef = useRef(null);
+
+	useEventListener('blur', () => disableMovement(), false, buttonRef.current);
+	useEventListener(
+		'focus',
+		() =>
+			nodeRef.current.scrollIntoView({
+				behavior: 'instant',
+				block: 'center',
+				inline: 'nearest',
+			}),
+		false,
+		buttonRef.current
+	);
+
+	if (
+		selectedViewportSize !== VIEWPORT_SIZES.desktop ||
+		node.itemType === ITEM_TYPES.editable ||
+		node.itemType === ITEM_TYPES.dropZone ||
+		node.isMasterItem ||
+		!node.activable ||
+		!canUpdate
+	) {
+		return null;
+	}
 
 	return (
 		<ClayButton
-			aria-label={Liferay.Util.sub(Liferay.Language.get('remove-x'), [
-				node.name,
-			])}
-			className={classNames(
-				'page-editor__page-structure__tree-node__remove-button',
-				{
-					'page-editor__page-structure__tree-node__remove-button--visible': visible,
-				}
-			)}
+			aria-label={sub(Liferay.Language.get('move-x'), [node.name])}
+			className="mr-2 sr-only sr-only-focusable"
+			disabled={node.isMasterItem || node.hiddenAncestor}
 			displayType="unstyled"
-			onClick={(event) => {
-				event.stopPropagation();
-
-				dispatch(deleteItem({itemId: node.id, selectItem}));
-			}}
+			onClick={() =>
+				setMovementSource({
+					fragmentEntryType,
+					icon: node.icon,
+					isWidget,
+					itemId: node.id,
+					name: node.name,
+					type: node.type,
+				})
+			}
+			onFocus={(event) => event.stopPropagation()}
+			onKeyDown={onKeyDown}
+			ref={buttonRef}
+			title={sub(Liferay.Language.get('move-x'), [node.name])}
 		>
-			<ClayIcon symbol="times-circle" />
+			<ClayIcon symbol="drag" />
 		</ClayButton>
 	);
 };
@@ -462,20 +702,31 @@ function computeHover({
 	// Drop inside target
 
 	const validDropInsideTarget = (() => {
+		const targetIsCollectionNotMapped =
+			targetItem.type === LAYOUT_DATA_ITEM_TYPES.collection &&
+			!collectionIsMapped(targetItem);
 		const targetIsColumn =
 			targetItem.type === LAYOUT_DATA_ITEM_TYPES.column;
 		const targetIsFragment =
 			targetItem.type === LAYOUT_DATA_ITEM_TYPES.fragment;
 		const targetIsContainer =
-			targetItem.type === LAYOUT_DATA_ITEM_TYPES.container;
+			targetItem.type === LAYOUT_DATA_ITEM_TYPES.container ||
+			targetItem.type === LAYOUT_DATA_ITEM_TYPES.form;
 		const targetIsEmpty =
 			layoutDataRef.current.items[targetItem.itemId]?.children.length ===
 			0;
+		const targetIsFormNotMapped =
+			targetItem.type === LAYOUT_DATA_ITEM_TYPES.form &&
+			!formIsMapped(targetItem);
 		const targetIsParent = sourceItem.parentId === targetItem.itemId;
 
 		return (
 			targetPositionWithMiddle === TARGET_POSITIONS.MIDDLE &&
-			(targetIsEmpty || targetIsColumn || targetIsContainer) &&
+			(targetIsEmpty ||
+				targetIsCollectionNotMapped ||
+				targetIsColumn ||
+				targetIsContainer ||
+				targetIsFormNotMapped) &&
 			!targetIsFragment &&
 			!targetIsParent
 		);
@@ -485,7 +736,7 @@ function computeHover({
 		return dispatch({
 			dropItem: sourceItem,
 			dropTargetItem: targetItem,
-			droppable: checkAllowedChild(sourceItem, targetItem),
+			droppable: checkAllowedChild(sourceItem, targetItem, layoutDataRef),
 			elevate: null,
 			targetPositionWithMiddle,
 			targetPositionWithoutMiddle,
@@ -497,11 +748,11 @@ function computeHover({
 	// - dropItem should be child of dropTargetItem
 	// - dropItem should be sibling of siblingItem
 
-	if (siblingItem && checkAllowedChild(sourceItem, targetItem)) {
+	if (siblingItem) {
 		return dispatch({
 			dropItem: sourceItem,
 			dropTargetItem: siblingItem,
-			droppable: true,
+			droppable: checkAllowedChild(sourceItem, targetItem, layoutDataRef),
 			elevate: true,
 			targetPositionWithMiddle,
 			targetPositionWithoutMiddle,
@@ -534,9 +785,8 @@ function computeHover({
 				);
 
 				if (
-					(targetPosition === targetPositionWithMiddle ||
-						parentPosition === targetPositionWithMiddle) &&
-					checkAllowedChild(sourceItem, parent)
+					targetPosition === targetPositionWithMiddle ||
+					parentPosition === targetPositionWithMiddle
 				) {
 					return [parent, target];
 				}

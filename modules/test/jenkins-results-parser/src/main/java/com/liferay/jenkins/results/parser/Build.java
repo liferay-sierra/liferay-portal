@@ -21,6 +21,7 @@ import java.net.URL;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 import org.dom4j.Element;
 
@@ -33,9 +34,15 @@ public interface Build {
 
 	public static final String DEPENDENCIES_URL_TOKEN = "${dependencies.url}";
 
+	public void addDownstreamBuilds(Map<String, String> urlAxisNames);
+
 	public void addDownstreamBuilds(String... urls);
 
+	public void archive();
+
 	public void archive(String archiveName);
+
+	public List<Callable<Object>> getArchiveCallables();
 
 	public String getArchiveName();
 
@@ -155,13 +162,11 @@ public interface Build {
 
 	public long getStatusDuration(String status);
 
-	public String getStatusReport();
-
-	public String getStatusReport(int indentSize);
-
 	public String getStatusSummary();
 
 	public Map<String, String> getStopPropertiesTempMap();
+
+	public StopWatchRecordsGroup getStopWatchRecordsGroup();
 
 	public TestClassResult getTestClassResult(String testClassName);
 

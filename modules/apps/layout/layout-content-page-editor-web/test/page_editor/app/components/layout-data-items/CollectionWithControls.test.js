@@ -26,6 +26,11 @@ import {
 	useSelectItem,
 } from '../../../../../src/main/resources/META-INF/resources/page_editor/app/contexts/ControlsContext';
 import {StoreAPIContextProvider} from '../../../../../src/main/resources/META-INF/resources/page_editor/app/contexts/StoreContext';
+import getLayoutDataItemClassName from '../../../../../src/main/resources/META-INF/resources/page_editor/app/utils/getLayoutDataItemClassName';
+import getLayoutDataItemTopperUniqueClassName from '../../../../../src/main/resources/META-INF/resources/page_editor/app/utils/getLayoutDataItemTopperUniqueClassName';
+import getLayoutDataItemUniqueClassName from '../../../../../src/main/resources/META-INF/resources/page_editor/app/utils/getLayoutDataItemUniqueClassName';
+
+const COLLECTION_ID = 'COLLECTION_ID';
 
 const renderCollection = ({
 	isActive = true,
@@ -37,7 +42,7 @@ const renderCollection = ({
 	const collection = {
 		children: [],
 		config: collectionConfig,
-		itemId: 'collection',
+		itemId: COLLECTION_ID,
 		parentId: null,
 		type: LAYOUT_DATA_ITEM_TYPES.collection,
 	};
@@ -58,6 +63,8 @@ const renderCollection = ({
 				<StoreAPIContextProvider
 					dispatch={() => {}}
 					getState={() => ({
+						fragmentEntryLinks: {},
+						layoutData,
 						permissions: {
 							LOCKED_SEGMENTS_EXPERIMENT: lockedSegment,
 							UPDATE: hasUpdatePermission,
@@ -107,35 +114,19 @@ describe('CollectionWithControls', () => {
 		expect(queryByText('duplicate')).not.toBeInTheDocument();
 	});
 
-	it('does not show the collection if it has been hidden by the user', async () => {
-		const {baseElement} = renderCollection({
-			collectionConfig: {
-				styles: {
-					display: 'none',
-				},
-			},
+	it('set classes for referencing the item', () => {
+		const {baseElement} = renderCollection();
+
+		const classes = [
+			getLayoutDataItemClassName(LAYOUT_DATA_ITEM_TYPES.collection),
+			getLayoutDataItemTopperUniqueClassName(COLLECTION_ID),
+			getLayoutDataItemUniqueClassName(COLLECTION_ID),
+		];
+
+		classes.forEach((className) => {
+			const item = baseElement.querySelector(`.${className}`);
+
+			expect(item).toBeVisible();
 		});
-
-		const collection = baseElement.querySelector(
-			'.page-editor__collection'
-		);
-
-		expect(collection).not.toBeVisible();
-	});
-
-	it('shows the collection if it has not been hidden by the user', async () => {
-		const {baseElement} = renderCollection({
-			collectionConfig: {
-				styles: {
-					display: 'block',
-				},
-			},
-		});
-
-		const collection = baseElement.querySelector(
-			'.page-editor__collection'
-		);
-
-		expect(collection).toBeVisible();
 	});
 });

@@ -16,20 +16,17 @@ package com.liferay.layout.content.page.editor.web.internal.portlet.action;
 
 import com.liferay.dynamic.data.mapping.exception.StorageFieldValueException;
 import com.liferay.fragment.constants.FragmentPortletKeys;
-import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
 import com.liferay.fragment.model.FragmentCollection;
 import com.liferay.fragment.model.FragmentComposition;
-import com.liferay.fragment.renderer.FragmentRendererTracker;
 import com.liferay.fragment.service.FragmentCollectionService;
 import com.liferay.fragment.service.FragmentCompositionService;
-import com.liferay.fragment.util.configuration.FragmentEntryConfigurationParser;
 import com.liferay.layout.content.page.editor.constants.ContentPageEditorPortletKeys;
 import com.liferay.layout.content.page.editor.web.internal.constants.ContentPageEditorConstants;
 import com.liferay.layout.page.template.serializer.LayoutStructureItemJSONSerializer;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Repository;
@@ -50,7 +47,6 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.segments.constants.SegmentsExperienceConstants;
 
 import java.net.URL;
 
@@ -64,7 +60,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pavel Savinov
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + ContentPageEditorPortletKeys.CONTENT_PAGE_EDITOR_PORTLET,
 		"mvc.command.name=/layout_content_page_editor/add_fragment_composition"
@@ -83,8 +78,7 @@ public class AddFragmentCompositionMVCActionCommand
 			WebKeys.THEME_DISPLAY);
 
 		long fragmentCollectionId = ParamUtil.getLong(
-			actionRequest, "fragmentCollectionId",
-			SegmentsExperienceConstants.ID_DEFAULT);
+			actionRequest, "fragmentCollectionId");
 
 		FragmentCollection fragmentCollection =
 			_fragmentCollectionService.fetchFragmentCollection(
@@ -94,7 +88,7 @@ public class AddFragmentCompositionMVCActionCommand
 			actionRequest);
 
 		if (fragmentCollection == null) {
-			String fragmentCollectionName = LanguageUtil.get(
+			String fragmentCollectionName = _language.get(
 				themeDisplay.getRequest(), "saved-fragments");
 
 			fragmentCollection =
@@ -112,8 +106,7 @@ public class AddFragmentCompositionMVCActionCommand
 		boolean saveMappingConfiguration = ParamUtil.getBoolean(
 			actionRequest, "saveMappingConfiguration");
 		long segmentsExperienceId = ParamUtil.getLong(
-			actionRequest, "segmentsExperienceId",
-			SegmentsExperienceConstants.ID_DEFAULT);
+			actionRequest, "segmentsExperienceId");
 
 		String layoutStructureItemJSON =
 			_layoutStructureItemJSONSerializer.toJSONString(
@@ -219,7 +212,7 @@ public class AddFragmentCompositionMVCActionCommand
 			}
 
 			throw new StorageFieldValueException(
-				LanguageUtil.format(
+				_language.format(
 					themeDisplay.getRequest(), "the-file-x-cannot-be-saved",
 					url));
 		}
@@ -229,20 +222,13 @@ public class AddFragmentCompositionMVCActionCommand
 		AddFragmentCompositionMVCActionCommand.class);
 
 	@Reference
-	private FragmentCollectionContributorTracker
-		_fragmentCollectionContributorTracker;
-
-	@Reference
 	private FragmentCollectionService _fragmentCollectionService;
 
 	@Reference
 	private FragmentCompositionService _fragmentCompositionService;
 
 	@Reference
-	private FragmentEntryConfigurationParser _fragmentEntryConfigurationParser;
-
-	@Reference
-	private FragmentRendererTracker _fragmentRendererTracker;
+	private Language _language;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;

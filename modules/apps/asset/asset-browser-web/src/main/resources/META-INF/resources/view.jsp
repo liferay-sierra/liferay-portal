@@ -101,7 +101,7 @@
 								<h5>
 									<c:choose>
 										<c:when test="<%= !assetBrowserDisplayContext.isMultipleSelection() %>">
-											<aui:a cssClass="<%= cssClass %>" data="<%= data %>" href="javascript:;">
+											<aui:a cssClass="<%= cssClass %>" data="<%= data %>" href="javascript:void(0);">
 												<%= HtmlUtil.escape(assetRenderer.getTitle(locale)) %>
 											</aui:a>
 										</c:when>
@@ -151,7 +151,7 @@
 							>
 								<c:choose>
 									<c:when test="<%= !assetBrowserDisplayContext.isMultipleSelection() %>">
-										<aui:a cssClass="<%= cssClass %>" data="<%= data %>" href="javascript:;">
+										<aui:a cssClass="<%= cssClass %>" data="<%= data %>" href="javascript:void(0);">
 											<%= HtmlUtil.escape(assetRenderer.getTitle(locale)) %>
 										</aui:a>
 									</c:when>
@@ -208,7 +208,7 @@
 
 					<%
 					if (assetRenderer == null) {
-						_log.error("Unable to get asset renderer for assetEntry with primary key " + assetEntry.getEntryId());
+						_log.error("Unable to get asset renderer for asset entry with primary key " + assetEntry.getEntryId());
 					}
 
 					row.setSkip(true);
@@ -227,8 +227,8 @@
 
 <c:choose>
 	<c:when test="<%= !assetBrowserDisplayContext.isMultipleSelection() %>">
-		<aui:script require="frontend-js-web/liferay/delegate/delegate.es as delegateModule">
-			var delegate = delegateModule.default;
+		<aui:script require="frontend-js-web/index as frontendJsWeb">
+			var {delegate} = frontendJsWeb;
 
 			var delegateHandler = delegate(
 				document.querySelector('#<portlet:namespace />selectAssetFm'),

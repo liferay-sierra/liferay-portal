@@ -35,6 +35,101 @@ definition {
 		}
 	}
 
+	@description = "This is a test for 147512. The page editor cannot change background image on non-desktop viewports."
+	@priority = "4"
+	test CannotChangeBackgroundImageOfFragmentInNonDesktopViewport {
+		task ("Given a page creator has a content page where a Container fragment has a background image") {
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Test Content Page Name",
+				siteName = "Test Site Name");
+
+			PageEditor.addFragment(
+				collectionName = "Layout Elements",
+				fragmentName = "Container");
+
+			PageEditor.editLayoutContainer(
+				backgroundImage = "Direct",
+				panel = "Styles",
+				uploadFileName = "high_resolution_photo.jpg");
+
+			PageEditor.viewContainerStyle(backgroundImage = "high_resolution_photo-jpg");
+
+			AssertEditable(
+				key_text = "Background Image",
+				locator1 = "TextInput#ANY");
+		}
+
+		task ("When the page creator switch to the Landscape Phone viewport") {
+			PageEditor.switchViewport(deviceType = "Landscape Phone");
+		}
+
+		task ("Then the page creator cannot change background image of Container in the Landscape Phone viewport") {
+			AssertNotEditable(
+				key_text = "Background Image",
+				locator1 = "TextInput#ANY");
+		}
+	}
+
+	@description = "This is a test for 147512. The page editor could customize styles on non-desktop viewports."
+	@priority = "5"
+	test CustomizeFragmentStylesInNonDesktopViewport {
+		task ("Given a page creator has a content page with a Heading fragment") {
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Test Content Page Name",
+				siteName = "Test Site Name");
+
+			PageEditor.addFragment(
+				collectionName = "Basic Components",
+				fragmentName = "Heading");
+		}
+
+		task ("When the page creator switch to the Tablet viewport") {
+			PageEditor.switchViewport(deviceType = "Tablet");
+		}
+
+		task ("Then the page creator could customize styles of Heading fragment in the Tablet viewport") {
+			task ("View only the CSS section is available on Advanced panel") {
+				SelectFrame.selectFrameNoLoading(locator1 = "IFrame#PAGE_EDITOR_GLOBAL_CONTEXT_IFRAME");
+
+				PageEditor.clickConfigurableField(fragmentName = "Heading");
+
+				SelectFrameTop();
+
+				Navigator.gotoNavTab(navTab = "Advanced");
+
+				AssertElementPresent(
+					key_fieldSetLabel = "CSS",
+					locator1 = "PageEditor#ITEM_CONFIGURATION_FIELDSET_LABEL");
+
+				AssertElementNotPresent(
+					checkboxName = "Hide from Site Search Results",
+					locator1 = "Checkbox#ANY_CHECKBOX");
+			}
+
+			task ("View only the Frame section is available on General panel") {
+				Navigator.gotoNavTab(navTab = "General");
+
+				AssertElementPresent(
+					key_fieldSetLabel = "Frame",
+					locator1 = "PageEditor#ITEM_CONFIGURATION_FIELDSET_LABEL");
+
+				AssertElementNotPresent(
+					key_fieldSetLabel = "Heading Options",
+					locator1 = "PageEditor#ITEM_CONFIGURATION_FIELDSET_LABEL");
+			}
+
+			task ("View all sections are available on Styles panel") {
+				Navigator.gotoNavTab(navTab = "Styles");
+
+				for (var fieldSetLabel : list "Spacing,Text,Background,Borders,Effects") {
+					AssertElementPresent(
+						key_fieldSetLabel = "${fieldSetLabel}",
+						locator1 = "PageEditor#ITEM_CONFIGURATION_FIELDSET_LABEL");
+				}
+			}
+		}
+	}
+
 	@description = "This is a test for LPS-119979 and LPS-106776. Customize the Layout of Grid in each viewport."
 	@priority = "4"
 	@uitest
@@ -69,7 +164,7 @@ definition {
 				locator1 = "Select#GENERIC_SELECT_FIELD",
 				value1 = "3 Modules per Row");
 
-			Pause(locator1 = "3000");
+			PageEditor.waitForAutoSave();
 		}
 
 		task ("Select the 6 Modules per Row as Layout in Landscape Phone viewport") {
@@ -80,7 +175,7 @@ definition {
 				locator1 = "Select#GENERIC_SELECT_FIELD",
 				value1 = "6 Modules per Row");
 
-			Pause(locator1 = "3000");
+			PageEditor.waitForAutoSave();
 		}
 
 		task ("Select the 1 Module per Row as Layout in Portrait Phone viewport") {
@@ -91,7 +186,7 @@ definition {
 				locator1 = "Select#GENERIC_SELECT_FIELD",
 				value1 = "1 Module per Row");
 
-			Pause(locator1 = "3000");
+			PageEditor.waitForAutoSave();
 		}
 
 		task ("Assert the Layout of Grid is 2 Modules per Row and the height of module is greater than 20px in Desktop viewport") {
@@ -103,6 +198,7 @@ definition {
 				position = "1");
 
 			var moduleHeight = selenium.getElementHeight("//div[@aria-label='Grid']//div[contains(@class,'page-editor__topper__content')]//div[contains(@class,'col-6')]");
+
 			var moduleHeight = StringUtil.replace("${moduleHeight}", "px", "");
 
 			TestUtils.isGreaterThan(
@@ -121,6 +217,7 @@ definition {
 				position = "1");
 
 			var moduleHeight = selenium.getElementHeight("//div[@aria-label='Grid']//div[contains(@class,'page-editor__topper__content')]//div[contains(@class,'col-4')]");
+
 			var moduleHeight = StringUtil.replace("${moduleHeight}", "px", "");
 
 			TestUtils.isGreaterThan(
@@ -141,6 +238,7 @@ definition {
 				position = "1");
 
 			var moduleHeight = selenium.getElementHeight("//div[@aria-label='Grid']//div[contains(@class,'page-editor__topper__content')]//div[contains(@class,'col-2')]");
+
 			var moduleHeight = StringUtil.replace("${moduleHeight}", "px", "");
 
 			TestUtils.isGreaterThan(
@@ -161,6 +259,7 @@ definition {
 				position = "1");
 
 			var moduleHeight = selenium.getElementHeight("//div[@aria-label='Grid']//div[contains(@class,'page-editor__topper__content')]//div[contains(@class,'col-12')]");
+
 			var moduleHeight = StringUtil.replace("${moduleHeight}", "px", "");
 
 			TestUtils.isGreaterThan(
@@ -185,9 +284,13 @@ definition {
 		}
 
 		task ("View the Text Align of Heading is left") {
-			PageEditor.viewFragmentStyle(
-				alignment = "left",
-				fragmentName = "Heading");
+			AssertCssValue(
+				fragmentName = "heading",
+				id = "element-text",
+				index = "1",
+				locator1 = "Fragment#CONTRIBUTED_FRAGMENT_TEXT",
+				locator2 = "text-align",
+				value1 = "start");
 		}
 
 		task ("Change the Text Align of Heading in other viewports") {
@@ -197,7 +300,7 @@ definition {
 				deviceType = "Tablet",
 				fragmentName = "Heading");
 
-			PageEditor.configureFragment(alignment = "Center");
+			PageEditor.configureFragment(alignment = "Align Center");
 
 			PageEditor.switchViewport(deviceType = "Landscape Phone");
 
@@ -205,7 +308,7 @@ definition {
 				deviceType = "Landscape Phone",
 				fragmentName = "Heading");
 
-			PageEditor.configureFragment(alignment = "Right");
+			PageEditor.configureFragment(alignment = "Align Right");
 
 			PageEditor.switchViewport(deviceType = "Portrait Phone");
 
@@ -213,15 +316,19 @@ definition {
 				deviceType = "Portrait Phone",
 				fragmentName = "Heading");
 
-			PageEditor.configureFragment(alignment = "Justify");
+			PageEditor.configureFragment(alignment = "Align Justify");
 		}
 
 		task ("View the Text Align of Heading in different viewports") {
 			PageEditor.switchViewport(deviceType = "Desktop");
 
-			PageEditor.viewFragmentStyle(
-				alignment = "left",
-				fragmentName = "Heading");
+			AssertCssValue(
+				fragmentName = "heading",
+				id = "element-text",
+				index = "1",
+				locator1 = "Fragment#CONTRIBUTED_FRAGMENT_TEXT",
+				locator2 = "text-align",
+				value1 = "start");
 
 			PageEditor.switchViewport(deviceType = "Tablet");
 
@@ -254,66 +361,15 @@ definition {
 			SelectFrame(value1 = "relative=top");
 		}
 
-		task ("View the Text Align of Heading in different viewports at preview mode") {
-			PageEditor.openPreviewMode();
-
-			PageEditor.switchViewport(
-				deviceType = "Desktop",
-				modal = "true");
-
-			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_BODY");
+		task ("View the Text Align of Heading at preview mode") {
+			PageEditor.previewInANewTab();
 
 			AssertCssValue(
 				fragmentName = "heading",
 				index = "1",
 				locator1 = "Fragment#FRAGMENT_BODY",
 				locator2 = "text-align",
-				value1 = "left");
-
-			SelectFrame(value1 = "relative=top");
-
-			PageEditor.switchViewport(
-				deviceType = "Tablet",
-				modal = "true");
-
-			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_BODY");
-
-			AssertCssValue(
-				fragmentName = "heading",
-				index = "1",
-				locator1 = "Fragment#FRAGMENT_BODY",
-				locator2 = "text-align",
-				value1 = "center");
-
-			SelectFrame(value1 = "relative=top");
-
-			PageEditor.switchViewport(
-				deviceType = "Landscape Phone",
-				modal = "true");
-
-			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_BODY");
-
-			AssertCssValue(
-				fragmentName = "heading",
-				index = "1",
-				locator1 = "Fragment#FRAGMENT_BODY",
-				locator2 = "text-align",
-				value1 = "right");
-
-			SelectFrame(value1 = "relative=top");
-
-			PageEditor.switchViewport(
-				deviceType = "Portrait Phone",
-				modal = "true");
-
-			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_BODY");
-
-			AssertCssValue(
-				fragmentName = "heading",
-				index = "1",
-				locator1 = "Fragment#FRAGMENT_BODY",
-				locator2 = "text-align",
-				value1 = "justify");
+				value1 = "start");
 		}
 	}
 
@@ -390,28 +446,24 @@ definition {
 
 			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#PAGE_EDITOR_GLOBAL_CONTEXT_IFRAME");
 
-			AssertNotVisible(
-				fragmentName = "heading",
-				id = "element-text",
-				index = "1",
-				locator1 = "Fragment#CONTRIBUTED_FRAGMENT_TEXT");
+			PageEditor.viewFragmentNotVisible(fragmentName = "Heading");
 
 			SelectFrame(value1 = "relative=top");
 		}
 
-		task ("Click restore default for Heading Example 2 and assert  is NOT shown") {
+		task ("Click restore default for Heading Example 2 and assert is NOT shown") {
 			PageEditor.restoreDefaultHidePropertyForFragment(
 				fragmentName = "Heading",
 				index = "2");
 
 			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#PAGE_EDITOR_GLOBAL_CONTEXT_IFRAME");
 
-			PageEditor.viewFragmentNotPresent(fragmentName = "Heading");
+			PageEditor.viewFragmentNotVisible(fragmentName = "Heading");
 
 			SelectFrame(value1 = "relative=top");
 		}
 
-		task ("Click restore default for Heading Example 3 and assert  is shown") {
+		task ("Click restore default for Heading Example 3 and assert is shown") {
 			PageEditor.restoreDefaultHidePropertyForFragment(
 				fragmentName = "Heading",
 				index = "3");
@@ -491,16 +543,10 @@ definition {
 		}
 
 		task ("Open the Preview modal") {
-			PageEditor.openPreviewMode();
+			PageEditor.previewInANewTab();
 		}
 
-		task ("Assert that Heading from 1 to 4 are shown for desktop view on preview") {
-			PageEditor.switchViewport(
-				deviceType = "Desktop",
-				modal = "true");
-
-			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_BODY");
-
+		task ("Assert that Heading from 1 to 4 are shown on preview") {
 			for (var n : list "1,2,3,4") {
 				ContentPages.viewFragmentText(
 					fragmentName = "heading",
@@ -515,80 +561,71 @@ definition {
 				index = "5",
 				locator1 = "Fragment#CONTRIBUTED_FRAGMENT_TEXT");
 		}
+	}
 
-		task ("Assert that Heading from 1 to 3 are shown for tablet view on preview") {
-			SelectFrameTop();
+	@description = "This is a test for 147512. The page editor only could clear color picker selection defined on current non-desktop viewport."
+	@priority = "4"
+	test OnlyClearColorPickerSelectionInCurrentNonDesktopViewport {
+		task ("Given a page creator has a content page where a Heading fragment has a defined Text Color in desktop viewport") {
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Test Content Page Name",
+				siteName = "Test Site Name");
 
-			PageEditor.switchViewport(
-				deviceType = "Tablet",
-				modal = "true");
+			PageEditor.addFragment(
+				collectionName = "Basic Components",
+				fragmentName = "Heading");
 
-			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_BODY");
+			PageEditor.gotoStyle(fragmentName = "Heading");
 
-			for (var n : list "1,2,3") {
-				ContentPages.viewFragmentText(
-					fragmentName = "heading",
-					id = "element-text",
-					position = "${n}",
-					text = "Heading Example ${n}");
-			}
-
-			for (var n : list "4,5") {
-				AssertNotVisible(
-					fragmentName = "heading",
-					id = "element-text",
-					index = "${n}",
-					locator1 = "Fragment#CONTRIBUTED_FRAGMENT_TEXT");
-			}
+			PageEditor.configureFragment(textColor = "Success");
 		}
 
-		task ("Assert that Heading from 1 to 2 are shown for landscape phone view on preview") {
-			SelectFrameTop();
-
-			PageEditor.switchViewport(
-				deviceType = "Landscape Phone",
-				modal = "true");
-
-			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_BODY");
-
-			for (var n : list "1,2") {
-				ContentPages.viewFragmentText(
-					fragmentName = "heading",
-					id = "element-text",
-					position = "${n}",
-					text = "Heading Example ${n}");
-			}
-
-			for (var n : list "3,4,5") {
-				AssertNotVisible(
-					fragmentName = "heading",
-					id = "element-text",
-					index = "${n}",
-					locator1 = "Fragment#CONTRIBUTED_FRAGMENT_TEXT");
-			}
+		task ("When the page creator switch to the Tablet viewport") {
+			PageEditor.switchViewport(deviceType = "Tablet");
 		}
 
-		task ("Assert that only Heading 1 is shown for portail phone view on preview") {
+		task ("Then the page creator cannot clear color picker selection defined in desktop viewport") {
+			PageEditor.clearSelection(fieldLabel = "Text Color");
+
+			AssertTextEquals(
+				key_fieldLabel = "Text Color",
+				locator1 = "Button#COLOR_PICKER",
+				value1 = "Success");
+
+			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#PAGE_EDITOR_GLOBAL_CONTEXT_IFRAME");
+
+			PageEditor.viewFragmentStyle(
+				fragmentName = "Heading",
+				textColor = "success");
+		}
+
+		task ("When the page creator changes the Text Color to Warning") {
 			SelectFrameTop();
 
-			PageEditor.switchViewport(
-				deviceType = "Portrait Phone",
-				modal = "true");
+			PageEditor.configureFragment(textColor = "Warning");
 
-			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_BODY");
+			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#PAGE_EDITOR_GLOBAL_CONTEXT_IFRAME");
 
-			ContentPages.viewFragmentText(
-				fragmentName = "heading",
-				id = "element-text",
-				text = "Heading Example 1");
+			PageEditor.viewFragmentStyle(
+				fragmentName = "Heading",
+				textColor = "warning");
+		}
 
-			for (var n : list "2,3,4,5") {
-				AssertNotVisible(
-					fragmentName = "heading",
-					id = "element-text",
-					index = "${n}",
-					locator1 = "Fragment#CONTRIBUTED_FRAGMENT_TEXT");
-			}
+		task ("Then the page creator could clear the color picker selection defined in Tablet viewport") {
+			SelectFrameTop();
+
+			PageEditor.clearSelection(fieldLabel = "Text Color");
+
+			AssertTextEquals(
+				key_fieldLabel = "Text Color",
+				locator1 = "Button#COLOR_PICKER",
+				value1 = "Success");
+
+			SelectFrame.selectFrameNoLoading(locator1 = "IFrame#PAGE_EDITOR_GLOBAL_CONTEXT_IFRAME");
+
+			PageEditor.viewFragmentStyle(
+				fragmentName = "Heading",
+				textColor = "success");
 		}
 	}
 
@@ -653,6 +690,61 @@ definition {
 		}
 	}
 
+	@description = "This is a test for LPS-153383. The page creator can resize editor sidebar on non desktop Viewport."
+	@priority = "4"
+	test ResizeLeftSidebarPanelInNonDesktopViewport {
+		task ("Given a page creator accesses to the page editor") {
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Test Content Page Name",
+				siteName = "Test Site Name");
+		}
+
+		task ("When the page creator resizes the left sidebar panel in the Desktop viewport") {
+			DragAndDrop.dragAndDrop(
+				locator1 = "PageEditor#SIDEBAR_RESIZER",
+				value1 = "100,0");
+		}
+
+		task ("Then the page creator see the left sidebar panel resized in the Tablet viewport") {
+			PageEditor.switchViewport(deviceType = "Tablet");
+
+			AssertCssValue(
+				locator1 = "Sidebar#PANEL_OPEN",
+				locator2 = "width",
+				value1 = "380px");
+		}
+
+		task ("When the page creator resizes the left sidebar panel in the Tablet viewport") {
+			DragAndDrop.dragAndDrop(
+				locator1 = "PageEditor#SIDEBAR_RESIZER",
+				value1 = "100,0");
+		}
+
+		task ("Then the page creator see the left sidebar panel resized in the Landscape Phone viewport") {
+			PageEditor.switchViewport(deviceType = "Landscape Phone");
+
+			AssertCssValue(
+				locator1 = "Sidebar#PANEL_OPEN",
+				locator2 = "width",
+				value1 = "480px");
+		}
+
+		task ("When the page creator resizes the left sidebar panel in the Landscape Phone viewport") {
+			DragAndDrop.dragAndDrop(
+				locator1 = "PageEditor#SIDEBAR_RESIZER",
+				value1 = "-180,0");
+		}
+
+		task ("Then the page creator see the left sidebar panel resized in the Portrait Phone viewport") {
+			PageEditor.switchViewport(deviceType = "Portrait Phone");
+
+			AssertCssValue(
+				locator1 = "Sidebar#PANEL_OPEN",
+				locator2 = "width",
+				value1 = "300px");
+		}
+	}
+
 	@description = "This is a test for LPS-110707. Can resize the width of non-desktop viewports when edit content page."
 	@priority = "5"
 	@uitest
@@ -660,6 +752,8 @@ definition {
 		property portal.acceptance = "true";
 
 		task ("View the viewport resizer not shown in Desktop viewport") {
+			TestUtils.maximizeWindow();
+
 			ContentPagesNavigator.openEditContentPage(
 				pageName = "Test Content Page Name",
 				siteName = "Test Site Name");
@@ -721,14 +815,14 @@ definition {
 
 			AssertElementPresent(
 				key_fieldSetLabel = "Frame",
-				locator1 = "PageEditor#COMMON_STYLES_FIELDSET_LABEL");
+				locator1 = "PageEditor#ITEM_CONFIGURATION_FIELDSET_LABEL");
 
 			Navigator.gotoNavTab(navTab = "Styles");
 
-			for (var fieldSetLabel : list "Margin,Padding,Text,Background,Borders,Effects") {
+			for (var fieldSetLabel : list "Spacing,Text,Background,Borders,Effects") {
 				AssertElementPresent(
 					key_fieldSetLabel = "${fieldSetLabel}",
-					locator1 = "PageEditor#COMMON_STYLES_FIELDSET_LABEL");
+					locator1 = "PageEditor#ITEM_CONFIGURATION_FIELDSET_LABEL");
 			}
 		}
 
@@ -736,11 +830,9 @@ definition {
 			for (var deviceType : list "Tablet,Landscape Phone,Portrait Phone") {
 				PageEditor.switchViewport(deviceType = "${deviceType}");
 
-				for (var fieldSetLabel : list "Margin,Padding") {
-					AssertElementPresent(
-						key_fieldSetLabel = "${fieldSetLabel}",
-						locator1 = "PageEditor#COMMON_STYLES_FIELDSET_LABEL");
-				}
+				AssertElementPresent(
+					key_fieldSetLabel = "Spacing",
+					locator1 = "PageEditor#ITEM_CONFIGURATION_FIELDSET_LABEL");
 			}
 		}
 	}

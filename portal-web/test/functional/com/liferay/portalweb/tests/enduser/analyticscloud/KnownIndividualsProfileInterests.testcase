@@ -1,6 +1,8 @@
 @component-name = "portal-analytics-cloud"
 definition {
 
+	property analytics.cloud.release = "true";
+	property analytics.cloud.upstream = "true";
 	property portal.release = "false";
 	property portal.upstream = "true";
 	property property.group = "analytics.cloud.profile";
@@ -31,6 +33,8 @@ definition {
 	tearDown {
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
+		ACUtils.tearDownAC();
+
 		ACUtils.tearDownDXP();
 
 		if ("${testPortalInstance}" == "true") {
@@ -39,15 +43,12 @@ definition {
 		else {
 			JSONGroup.deleteGroupByName(groupName = "Site Name");
 		}
-
-		ACUtils.tearDownAC();
 	}
 
 	@description = "Feature ID: Legacy | Automation ID: LRAC-9132 | Test Summary: Individuals interest details has a tab that shows active pages"
 	@ignore = "true"
 	@priority = "3"
 	test AssertIndividualsinterestActivePages {
-		property portal.upstream = "quarantine";
 
 		// AC Refactor: data doesn't appear on time
 		// AC Refactor ticket: LRAC-9152
@@ -82,7 +83,6 @@ definition {
 			ACInterests.clickInterest(interestTopic = "ac page 1");
 
 			var portalURL = PropsUtil.get("portal.url");
-
 			var siteName = TestCase.getSiteName(siteName = "${siteName}");
 
 			ACInterests.viewInterestPage(
@@ -95,7 +95,6 @@ definition {
 	@ignore = "true"
 	@priority = "3"
 	test AssertIndividualsInterestInactivePages {
-		property portal.upstream = "quarantine";
 
 		// AC Refactor: data doesn't appear on time
 		// AC Refactor ticket: LRAC-9151
@@ -139,7 +138,6 @@ definition {
 	@ignore = "true"
 	@priority = "5"
 	test InterestsAssociatedWithIndividualAppearInList {
-		property portal.upstream = "quarantine";
 
 		// AC Refactor: data doesn't appear on time
 		// AC Refactor ticket: LRAC-9151

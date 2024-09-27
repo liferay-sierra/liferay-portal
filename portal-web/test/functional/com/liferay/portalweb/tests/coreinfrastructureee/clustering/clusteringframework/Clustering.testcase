@@ -42,7 +42,7 @@ definition {
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "Test Page1");
+		PagesAdmin.addPage(pageName = "Test Page1");
 
 		Navigator.gotoPage(pageName = "Test Page1");
 
@@ -83,7 +83,7 @@ definition {
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "Test Page2");
+		PagesAdmin.addPage(pageName = "Test Page2");
 
 		Navigator.gotoSpecificURLPage(
 			pageName = "Test Page2",
@@ -155,34 +155,54 @@ definition {
 			searchAssetType = "Blogs Entry");
 	}
 
+	@priority = "3"
+	test CanAccessGogoShellOnAnyClusteredNode {
+		property test.name.skip.portal.instance = "Clustering#CanAccessGogoShellOnAnyClusteredNode";
+
+		ApplicationsMenu.gotoPortlet(
+			category = "System",
+			panel = "Control Panel",
+			portlet = "Gogo Shell");
+
+		GogoShell.executeCommand(commandName = "lb | grep Liferay");
+
+		GogoShell.viewOutput(outputContent = "Liferay Portal");
+
+		User.logoutPG();
+
+		User.loginPG(
+			nodePort = "9080",
+			password = "test",
+			userEmailAddress = "test@liferay.com");
+
+		ApplicationsMenu.gotoPortlet(
+			category = "System",
+			panel = "Control Panel",
+			portlet = "Gogo Shell");
+
+		GogoShell.executeCommand(commandName = "lb | grep Liferay");
+
+		GogoShell.viewOutput(outputContent = "Liferay Portal");
+	}
+
 	@priority = "4"
 	test CanInvokeMethods {
 		property test.name.skip.portal.instance = "Clustering#CanInvokeMethods";
 
-		Clustering.runGroovyScript(
-			nodePort = "8080",
+		Groovy.runScriptViaGogoShell(
+			expectedOutput = "Result of invoke-method-portal: 9080",
 			scriptFile = "groovy-script-invoke-method.groovy");
 
-		AssertTextEquals(
-			locator1 = "ServerAdministrationScript#OUTPUT_FIELD",
-			value1 = "Result of invoke-method-portal: 9080");
-
-		Clustering.runGroovyScript(
+		Groovy.runScriptViaGogoShell(
+			expectedOutput = "Result of invoke-method-portal: 8080",
 			nodePort = "9080",
 			scriptFile = "groovy-script-invoke-method.groovy");
 
-		AssertTextEquals(
-			locator1 = "ServerAdministrationScript#OUTPUT_FIELD",
-			value1 = "Result of invoke-method-portal: 8080");
-
 		for (var serverPort : list "8080,9080") {
-			Clustering.runGroovyScript(
+			Groovy.runScriptViaGogoShell(
+				expectedOutput = "Result of invoke-method-portal-on-master: 8080",
 				nodePort = "${serverPort}",
 				scriptFile = "groovy-script-invoke-method-on-master.groovy");
-
-			AssertTextEquals(
-				locator1 = "ServerAdministrationScript#OUTPUT_FIELD",
-				value1 = "Result of invoke-method-portal-on-master: 8080");
 		}
 
 		for (var serverPort : list "8080,9080") {
@@ -194,7 +214,7 @@ definition {
 				locator1 = "build-test.xml",
 				value1 = "cluster-invoke-method -Dcluster.invoke.method=${method}");
 
-			Pause(locator1 = "10000");
+			WaitForConsoleTextPresent(value1 = "Result of ${method}");
 
 			Clustering.viewTextPresentOnSpecificNode(
 				expectedText = "Result of ${method}: 9080",
@@ -210,7 +230,7 @@ definition {
 				locator1 = "build-test.xml",
 				value1 = "cluster-invoke-method -Dcluster.invoke.method=${method}");
 
-			Pause(locator1 = "10000");
+			WaitForConsoleTextPresent(value1 = "STARTED com.liferay.portal.cluster.multiple.sample.web_1.0.0");
 
 			Clustering.viewTextPresentOnSpecificNode(
 				expectedText = "Result of ${method}: 8080",
@@ -365,31 +385,21 @@ definition {
 	test SlaveNodeCanBecomeMasterNode {
 		property test.name.skip.portal.instance = "Clustering#SlaveNodeCanBecomeMasterNode";
 
-		Clustering.runGroovyScript(
-			nodePort = "8080",
+		Groovy.runScriptViaGogoShell(
+			expectedOutput = "This node is master node",
 			scriptFile = "groovy-script-master-slave.groovy");
 
-		AssertTextEquals(
-			locator1 = "ServerAdministrationScript#OUTPUT_FIELD",
-			value1 = "This node is master node");
-
-		Clustering.runGroovyScript(
+		Groovy.runScriptViaGogoShell(
+			expectedOutput = "This node is slave node",
 			nodePort = "9080",
 			scriptFile = "groovy-script-master-slave.groovy");
-
-		AssertTextEquals(
-			locator1 = "ServerAdministrationScript#OUTPUT_FIELD",
-			value1 = "This node is slave node");
 
 		Clustering.shutdownSpecificServer(nodePort = "8080");
 
-		Clustering.runGroovyScript(
+		Groovy.runScriptViaGogoShell(
+			expectedOutput = "This node is master node",
 			nodePort = "9080",
 			scriptFile = "groovy-script-master-slave.groovy");
-
-		AssertTextEquals(
-			locator1 = "ServerAdministrationScript#OUTPUT_FIELD",
-			value1 = "This node is master node");
 
 		Clustering.startSpecificServer(
 			deleteLiferayHome = "true",
@@ -405,13 +415,9 @@ definition {
 			password = "test",
 			userEmailAddress = "test@liferay.com");
 
-		Clustering.runGroovyScript(
-			nodePort = "8080",
+		Groovy.runScriptViaGogoShell(
+			expectedOutput = "This node is slave node",
 			scriptFile = "groovy-script-master-slave.groovy");
-
-		AssertTextEquals(
-			locator1 = "ServerAdministrationScript#OUTPUT_FIELD",
-			value1 = "This node is slave node");
 	}
 
 	@priority = "4"
@@ -468,7 +474,7 @@ definition {
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "Documents and Media Page");
+		PagesAdmin.addPage(pageName = "Documents and Media Page");
 
 		Navigator.gotoPage(pageName = "Documents and Media Page");
 
@@ -629,7 +635,7 @@ definition {
 
 		Portlet.addPG(portletName = "Web Content Display");
 
-		WebContent.addPGViaWCD(
+		WebContentDisplayPortlet.add(
 			webContentContent = "WebContent Content",
 			webContentTitle = "WebContent Title");
 
@@ -691,7 +697,7 @@ definition {
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.addPublicPage(pageName = "New Page Name");
+		PagesAdmin.addPage(pageName = "New Page Name");
 
 		Navigator.openURL();
 
@@ -726,7 +732,9 @@ definition {
 			locator1 = "Home#PAGE_2_GUEST_VIEW",
 			value1 = "New Page Name");
 
-		Pause(locator1 = "180000");
+		// Pausing 300 seconds due to LRQA-75909
+
+		Pause(locator1 = "300000");
 
 		Navigator.gotoSpecificURLPage(
 			pageName = "Home",

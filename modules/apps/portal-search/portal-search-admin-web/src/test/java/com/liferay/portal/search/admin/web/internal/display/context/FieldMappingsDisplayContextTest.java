@@ -15,13 +15,11 @@
 package com.liferay.portal.search.admin.web.internal.display.context;
 
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.search.admin.web.internal.display.context.builder.FieldMappingsDisplayContextBuilder;
 import com.liferay.portal.search.index.IndexInformation;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
-import com.liferay.portal.util.HttpImpl;
 
 import java.util.List;
 
@@ -31,7 +29,6 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import org.mockito.Matchers;
 import org.mockito.Mockito;
 
 /**
@@ -46,7 +43,6 @@ public class FieldMappingsDisplayContextTest {
 
 	@Before
 	public void setUp() {
-		setUpHttpUtil();
 		setUpIndexInformation();
 		setUpPortalUtil();
 	}
@@ -54,7 +50,7 @@ public class FieldMappingsDisplayContextTest {
 	@Test
 	public void testGetIndexes() {
 		FieldMappingsDisplayContextBuilder fieldMappingsDisplayContextBuilder =
-			new FieldMappingsDisplayContextBuilder(http);
+			new FieldMappingsDisplayContextBuilder();
 
 		fieldMappingsDisplayContextBuilder.setCurrentURL("/");
 		fieldMappingsDisplayContextBuilder.setIndexInformation(
@@ -100,7 +96,7 @@ public class FieldMappingsDisplayContextTest {
 	@Test
 	public void testGetSelectedIndexName() {
 		FieldMappingsDisplayContextBuilder fieldMappingsDisplayContextBuilder =
-			new FieldMappingsDisplayContextBuilder(http);
+			new FieldMappingsDisplayContextBuilder();
 
 		fieldMappingsDisplayContextBuilder.setCurrentURL("/");
 		fieldMappingsDisplayContextBuilder.setIndexInformation(
@@ -140,7 +136,7 @@ public class FieldMappingsDisplayContextTest {
 	@Test
 	public void testGetSelectedIndexNameDefaultCompany() {
 		FieldMappingsDisplayContextBuilder fieldMappingsDisplayContextBuilder =
-			new FieldMappingsDisplayContextBuilder(http);
+			new FieldMappingsDisplayContextBuilder();
 
 		fieldMappingsDisplayContextBuilder.setCompanyId(2);
 		fieldMappingsDisplayContextBuilder.setCurrentURL("/");
@@ -180,7 +176,7 @@ public class FieldMappingsDisplayContextTest {
 	@Test
 	public void testGetSelectedIndexNameDefaultFirst() {
 		FieldMappingsDisplayContextBuilder fieldMappingsDisplayContextBuilder =
-			new FieldMappingsDisplayContextBuilder(http);
+			new FieldMappingsDisplayContextBuilder();
 
 		fieldMappingsDisplayContextBuilder.setCurrentURL("/");
 		fieldMappingsDisplayContextBuilder.setIndexInformation(
@@ -216,10 +212,6 @@ public class FieldMappingsDisplayContextTest {
 		Assert.assertEquals("", fieldMappingIndexDisplayContext.getCssClass());
 	}
 
-	protected void setUpHttpUtil() {
-		http = new HttpImpl();
-	}
-
 	protected void setUpIndexInformation() {
 		indexInformation = Mockito.mock(IndexInformation.class);
 
@@ -230,7 +222,7 @@ public class FieldMappingsDisplayContextTest {
 		);
 
 		Mockito.when(
-			indexInformation.getCompanyIndexName(Matchers.anyLong())
+			indexInformation.getCompanyIndexName(Mockito.anyLong())
 		).thenAnswer(
 			invocation -> "index" + invocation.getArguments()[0]
 		);
@@ -241,7 +233,7 @@ public class FieldMappingsDisplayContextTest {
 
 		Mockito.doAnswer(
 			invocation -> new String[] {
-				invocation.getArgumentAt(0, String.class), StringPool.BLANK
+				invocation.getArgument(0, String.class), StringPool.BLANK
 			}
 		).when(
 			_portal
@@ -254,7 +246,6 @@ public class FieldMappingsDisplayContextTest {
 		portalUtil.setPortal(_portal);
 	}
 
-	protected Http http;
 	protected IndexInformation indexInformation;
 
 	private Portal _portal;

@@ -29,12 +29,10 @@ import {openImageSelector} from '../../core/openImageSelector';
 import {config} from '../config/index';
 import {useActiveItemId} from '../contexts/ControlsContext';
 import {useDispatch, useSelector} from '../contexts/StoreContext';
-import selectSegmentsExperienceId from '../selectors/selectSegmentsExperienceId';
 import addFragmentComposition from '../thunks/addFragmentComposition';
 
 const SaveFragmentCompositionModal = ({onCloseModal}) => {
 	const dispatch = useDispatch();
-	const segmentsExperienceId = useSelector(selectSegmentsExperienceId);
 
 	const activeItemId = useActiveItemId();
 	const isMounted = useIsMounted();
@@ -44,7 +42,7 @@ const SaveFragmentCompositionModal = ({onCloseModal}) => {
 	const [name, setName] = useState(undefined);
 	const [description, setDescription] = useState('');
 	const [fragmentCollectionId, setFragmentCollectionId] = useState(
-		collections.length > 0 ? collections[0].fragmentCollectionId : -1
+		collections.length ? collections[0].fragmentCollectionId : -1
 	);
 
 	const [saveInlineContent, setSaveInlineContent] = useState(false);
@@ -81,7 +79,6 @@ const SaveFragmentCompositionModal = ({onCloseModal}) => {
 					previewImageURL: thumbnail.url,
 					saveInlineContent,
 					saveMappingConfiguration,
-					segmentsExperienceId,
 				})
 			)
 				.then(() => {
@@ -136,6 +133,9 @@ const SaveFragmentCompositionModal = ({onCloseModal}) => {
 							<ClayInput
 								autoFocus
 								id={nameInputId}
+								maxlength={
+									config.fragmentCompositionNameMaxLength
+								}
 								onChange={(event) =>
 									setName(event.target.value)
 								}
@@ -202,7 +202,9 @@ const SaveFragmentCompositionModal = ({onCloseModal}) => {
 
 							<ClayInput
 								component="textarea"
-								id={descriptionInputId}
+								maxlength={
+									config.fragmentCompositionDescriptionMaxLength
+								}
 								onChange={(event) =>
 									setDescription(event.target.value)
 								}
@@ -249,11 +251,11 @@ const SaveFragmentCompositionModal = ({onCloseModal}) => {
 						</ClayForm.Group>
 
 						<ClayForm.Group>
-							{collections.length > 0 ? (
+							{collections.length ? (
 								<>
 									<p className="sheet-tertiary-title">
 										{Liferay.Language.get(
-											'select-collection'
+											'select-fragment-set'
 										)}
 									</p>
 
@@ -322,7 +324,7 @@ const SaveFragmentCompositionModal = ({onCloseModal}) => {
 									/>
 
 									{Liferay.Language.get(
-										'this-fragment-will-be-saved-in-a-new-collection-called-saved-fragments'
+										'this-fragment-will-be-saved-in-a-new-fragment-set-called-saved-fragments'
 									)}
 								</div>
 							)}

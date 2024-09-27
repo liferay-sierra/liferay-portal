@@ -89,16 +89,6 @@ public class ObjectFieldSettingSerDes {
 			sb.append(objectFieldSetting.getObjectFieldId());
 		}
 
-		if (objectFieldSetting.getRequired() != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
-
-			sb.append("\"required\": ");
-
-			sb.append(objectFieldSetting.getRequired());
-		}
-
 		if (objectFieldSetting.getValue() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -106,11 +96,14 @@ public class ObjectFieldSettingSerDes {
 
 			sb.append("\"value\": ");
 
-			sb.append("\"");
-
-			sb.append(_escape(objectFieldSetting.getValue()));
-
-			sb.append("\"");
+			if (objectFieldSetting.getValue() instanceof String) {
+				sb.append("\"");
+				sb.append((String)objectFieldSetting.getValue());
+				sb.append("\"");
+			}
+			else {
+				sb.append(objectFieldSetting.getValue());
+			}
 		}
 
 		sb.append("}");
@@ -155,14 +148,6 @@ public class ObjectFieldSettingSerDes {
 			map.put(
 				"objectFieldId",
 				String.valueOf(objectFieldSetting.getObjectFieldId()));
-		}
-
-		if (objectFieldSetting.getRequired() == null) {
-			map.put("required", null);
-		}
-		else {
-			map.put(
-				"required", String.valueOf(objectFieldSetting.getRequired()));
 		}
 
 		if (objectFieldSetting.getValue() == null) {
@@ -210,15 +195,9 @@ public class ObjectFieldSettingSerDes {
 						Long.valueOf((String)jsonParserFieldValue));
 				}
 			}
-			else if (Objects.equals(jsonParserFieldName, "required")) {
-				if (jsonParserFieldValue != null) {
-					objectFieldSetting.setRequired(
-						(Boolean)jsonParserFieldValue);
-				}
-			}
 			else if (Objects.equals(jsonParserFieldName, "value")) {
 				if (jsonParserFieldValue != null) {
-					objectFieldSetting.setValue((String)jsonParserFieldValue);
+					objectFieldSetting.setValue((Object)jsonParserFieldValue);
 				}
 			}
 		}

@@ -19,10 +19,8 @@ import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.commerce.product.catalog.CPQuery;
 import com.liferay.commerce.product.data.source.CPDataSource;
 import com.liferay.commerce.product.model.CPDefinition;
-import com.liferay.commerce.product.util.CPDefinitionHelper;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.language.Language;
 
 import java.util.Locale;
 
@@ -33,7 +31,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Ethan Bustad
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = "commerce.product.data.source.name=" + AssetCategoriesCPDataSourceImpl.NAME,
 	service = CPDataSource.class
 )
@@ -44,7 +42,7 @@ public class AssetCategoriesCPDataSourceImpl
 
 	@Override
 	public String getLabel(Locale locale) {
-		return LanguageUtil.get(
+		return _language.get(
 			getResourceBundle(locale), "products-of-the-same-categories");
 	}
 
@@ -65,17 +63,10 @@ public class AssetCategoriesCPDataSourceImpl
 		return cpQuery;
 	}
 
-	@Reference(unbind = "-")
-	private void _setCPDefinitionHelper(CPDefinitionHelper cpDefinitionHelper) {
-		this.cpDefinitionHelper = cpDefinitionHelper;
-	}
-
-	@Reference(unbind = "-")
-	private void _setPortal(Portal portal) {
-		this.portal = portal;
-	}
-
 	@Reference
 	private AssetEntryLocalService _assetEntryLocalService;
+
+	@Reference
+	private Language _language;
 
 }

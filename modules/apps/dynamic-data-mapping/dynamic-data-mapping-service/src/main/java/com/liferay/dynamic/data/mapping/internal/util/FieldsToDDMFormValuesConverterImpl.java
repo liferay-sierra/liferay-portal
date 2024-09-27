@@ -46,7 +46,7 @@ import org.osgi.service.component.annotations.Component;
 /**
  * @author Marcellus Tavares
  */
-@Component(immediate = true, service = FieldsToDDMFormValuesConverter.class)
+@Component(service = FieldsToDDMFormValuesConverter.class)
 public class FieldsToDDMFormValuesConverterImpl
 	implements FieldsToDDMFormValuesConverter {
 
@@ -261,10 +261,9 @@ public class FieldsToDDMFormValuesConverterImpl
 
 		String name = ddmFormFieldValue.getName();
 
-		String instanceId = _getDDMFieldInstanceId(
-			ddmFields, name, ddmFieldsCounter.get(name));
-
-		ddmFormFieldValue.setInstanceId(instanceId);
+		ddmFormFieldValue.setInstanceId(
+			_getDDMFieldInstanceId(
+				ddmFields, name, ddmFieldsCounter.get(name)));
 	}
 
 	private void _setDDMFormFieldValueLocalizedValue(

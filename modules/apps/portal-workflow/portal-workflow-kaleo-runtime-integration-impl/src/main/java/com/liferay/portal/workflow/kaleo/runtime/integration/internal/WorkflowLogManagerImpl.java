@@ -32,10 +32,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Michael C. Han
  */
-@Component(
-	immediate = true, property = "proxy.bean=false",
-	service = WorkflowLogManager.class
-)
+@Component(service = WorkflowLogManager.class)
 public class WorkflowLogManagerImpl implements WorkflowLogManager {
 
 	@Override
@@ -113,10 +110,8 @@ public class WorkflowLogManagerImpl implements WorkflowLogManager {
 		List<WorkflowLog> workflowLogs = new ArrayList<>(kaleoLogs.size());
 
 		for (KaleoLog kaleoLog : kaleoLogs) {
-			WorkflowLog workflowLog =
-				_kaleoWorkflowModelConverter.toWorkflowLog(kaleoLog);
-
-			workflowLogs.add(workflowLog);
+			workflowLogs.add(
+				_kaleoWorkflowModelConverter.toWorkflowLog(kaleoLog));
 		}
 
 		return workflowLogs;

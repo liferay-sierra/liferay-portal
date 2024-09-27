@@ -67,14 +67,8 @@ export default {
 	 * @param {object} options
 	 * @param {string} options.classNameId Asset's className
 	 * @param {string} options.classTypeId Asset's classTypeId
-	 * @param {string} options.fieldType Type of field to which we are mapping
-	 * @param {function} options.onNetworkStatus
 	 */
-	getAvailableStructureMappingFields({
-		classNameId,
-		classTypeId,
-		onNetworkStatus,
-	}) {
+	getAvailableStructureMappingFields({classNameId, classTypeId}) {
 		return serviceFetch(
 			config.mappingFieldsURL,
 			{
@@ -83,7 +77,7 @@ export default {
 					classTypeId,
 				},
 			},
-			onNetworkStatus
+			() => {}
 		);
 	},
 
@@ -119,6 +113,7 @@ export default {
 	getInfoItemFieldValue({
 		classNameId,
 		classPK,
+		editableTypeOptions,
 		fieldId,
 		languageId,
 		onNetworkStatus,
@@ -129,6 +124,7 @@ export default {
 				body: {
 					classNameId,
 					classPK,
+					editableTypeOptions: JSON.stringify(editableTypeOptions),
 					fieldId,
 					languageId,
 				},
@@ -142,7 +138,15 @@ export default {
 	 * @param {object} options
 	 * @param {function} options.onNetworkStatus
 	 */
-	getPageContents({onNetworkStatus}) {
-		return serviceFetch(config.getPageContentsURL, {}, onNetworkStatus);
+	getPageContents({onNetworkStatus, segmentsExperienceId}) {
+		return serviceFetch(
+			config.getPageContentsURL,
+			{
+				body: {
+					segmentsExperienceId,
+				},
+			},
+			onNetworkStatus
+		);
 	},
 };

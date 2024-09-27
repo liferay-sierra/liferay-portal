@@ -78,10 +78,14 @@ public class CommerceShipmentItemCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(25);
+		StringBundler sb = new StringBundler(29);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
+		sb.append(", uuid=");
+		sb.append(uuid);
+		sb.append(", externalReferenceCode=");
+		sb.append(externalReferenceCode);
 		sb.append(", commerceShipmentItemId=");
 		sb.append(commerceShipmentItemId);
 		sb.append(", groupId=");
@@ -115,6 +119,22 @@ public class CommerceShipmentItemCacheModel
 			new CommerceShipmentItemImpl();
 
 		commerceShipmentItemImpl.setMvccVersion(mvccVersion);
+
+		if (uuid == null) {
+			commerceShipmentItemImpl.setUuid("");
+		}
+		else {
+			commerceShipmentItemImpl.setUuid(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			commerceShipmentItemImpl.setExternalReferenceCode("");
+		}
+		else {
+			commerceShipmentItemImpl.setExternalReferenceCode(
+				externalReferenceCode);
+		}
+
 		commerceShipmentItemImpl.setCommerceShipmentItemId(
 			commerceShipmentItemId);
 		commerceShipmentItemImpl.setGroupId(groupId);
@@ -156,6 +176,8 @@ public class CommerceShipmentItemCacheModel
 	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
+		uuid = objectInput.readUTF();
+		externalReferenceCode = objectInput.readUTF();
 
 		commerceShipmentItemId = objectInput.readLong();
 
@@ -180,6 +202,20 @@ public class CommerceShipmentItemCacheModel
 	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
+		if (uuid == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(externalReferenceCode);
+		}
 
 		objectOutput.writeLong(commerceShipmentItemId);
 
@@ -209,6 +245,8 @@ public class CommerceShipmentItemCacheModel
 	}
 
 	public long mvccVersion;
+	public String uuid;
+	public String externalReferenceCode;
 	public long commerceShipmentItemId;
 	public long groupId;
 	public long companyId;

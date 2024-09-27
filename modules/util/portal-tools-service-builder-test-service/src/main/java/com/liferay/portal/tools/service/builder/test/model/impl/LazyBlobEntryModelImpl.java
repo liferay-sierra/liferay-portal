@@ -33,7 +33,6 @@ import com.liferay.portal.tools.service.builder.test.service.LazyBlobEntryLocalS
 
 import java.io.Serializable;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 
 import java.sql.Blob;
@@ -227,34 +226,6 @@ public class LazyBlobEntryModelImpl
 		getAttributeSetterBiConsumers() {
 
 		return _attributeSetterBiConsumers;
-	}
-
-	private static Function<InvocationHandler, LazyBlobEntry>
-		_getProxyProviderFunction() {
-
-		Class<?> proxyClass = ProxyUtil.getProxyClass(
-			LazyBlobEntry.class.getClassLoader(), LazyBlobEntry.class,
-			ModelWrapper.class);
-
-		try {
-			Constructor<LazyBlobEntry> constructor =
-				(Constructor<LazyBlobEntry>)proxyClass.getConstructor(
-					InvocationHandler.class);
-
-			return invocationHandler -> {
-				try {
-					return constructor.newInstance(invocationHandler);
-				}
-				catch (ReflectiveOperationException
-							reflectiveOperationException) {
-
-					throw new InternalError(reflectiveOperationException);
-				}
-			};
-		}
-		catch (NoSuchMethodException noSuchMethodException) {
-			throw new InternalError(noSuchMethodException);
-		}
 	}
 
 	private static final Map<String, Function<LazyBlobEntry, Object>>
@@ -623,43 +594,12 @@ public class LazyBlobEntryModelImpl
 		return sb.toString();
 	}
 
-	@Override
-	public String toXmlString() {
-		StringBundler sb = new StringBundler(19);
-
-		sb.append("<model><model-name>");
-		sb.append(
-			"com.liferay.portal.tools.service.builder.test.model.LazyBlobEntry");
-		sb.append("</model-name>");
-
-		sb.append(
-			"<column><column-name>uuid</column-name><column-value><![CDATA[");
-
-		sb.append(getUuid());
-
-		sb.append("]]></column-value></column>");
-		sb.append(
-			"<column><column-name>lazyBlobEntryId</column-name><column-value><![CDATA[");
-
-		sb.append(getLazyBlobEntryId());
-
-		sb.append("]]></column-value></column>");
-		sb.append(
-			"<column><column-name>groupId</column-name><column-value><![CDATA[");
-
-		sb.append(getGroupId());
-
-		sb.append("]]></column-value></column>");
-
-		sb.append("</model>");
-
-		return sb.toString();
-	}
-
 	private static class EscapedModelProxyProviderFunctionHolder {
 
 		private static final Function<InvocationHandler, LazyBlobEntry>
-			_escapedModelProxyProviderFunction = _getProxyProviderFunction();
+			_escapedModelProxyProviderFunction =
+				ProxyUtil.getProxyProviderFunction(
+					LazyBlobEntry.class, ModelWrapper.class);
 
 	}
 

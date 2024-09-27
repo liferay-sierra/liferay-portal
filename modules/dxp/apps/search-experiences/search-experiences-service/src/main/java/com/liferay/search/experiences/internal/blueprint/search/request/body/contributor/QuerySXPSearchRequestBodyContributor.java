@@ -214,6 +214,8 @@ public class QuerySXPSearchRequestBodyContributor
 			clause.getParent()
 		).query(
 			_queryConverter.toQuery((JSONObject)clause.getQuery())
+		).rootClause(
+			true
 		).type(
 			clause.getType()
 		).value(
@@ -234,11 +236,11 @@ public class QuerySXPSearchRequestBodyContributor
 		}
 
 		return rescoreBuilder.queryWeight(
-			rescore.getQueryWeight()
+			GetterUtil.getFloat(rescore.getQueryWeight())
 		).rescoreQueryWeight(
-			rescore.getRescoreQueryWeight()
+			GetterUtil.getFloat(rescore.getRescoreQueryWeight())
 		).windowSize(
-			rescore.getWindowSize()
+			GetterUtil.getInteger(rescore.getWindowSize())
 		).build();
 	}
 

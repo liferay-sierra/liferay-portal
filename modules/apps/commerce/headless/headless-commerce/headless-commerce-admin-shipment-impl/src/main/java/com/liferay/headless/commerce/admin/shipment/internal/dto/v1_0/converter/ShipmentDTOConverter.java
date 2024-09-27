@@ -17,6 +17,7 @@ package com.liferay.headless.commerce.admin.shipment.internal.dto.v1_0.converter
 import com.liferay.commerce.model.CommerceShipment;
 import com.liferay.commerce.service.CommerceShipmentService;
 import com.liferay.headless.commerce.admin.shipment.dto.v1_0.Shipment;
+import com.liferay.headless.commerce.admin.shipment.internal.dto.v1_0.util.CustomFieldsUtil;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
 
@@ -25,9 +26,9 @@ import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Andrea Sbarra
+ * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	property = "dto.class.name=com.liferay.commerce.model.CommerceShipment",
 	service = {DTOConverter.class, ShipmentDTOConverter.class}
 )
@@ -53,7 +54,15 @@ public class ShipmentDTOConverter
 				actions = dtoConverterContext.getActions();
 				carrier = commerceShipment.getCarrier();
 				createDate = commerceShipment.getCreateDate();
+				customFields = CustomFieldsUtil.toCustomFields(
+					dtoConverterContext.isAcceptAllLanguages(),
+					CommerceShipment.class.getName(),
+					commerceShipment.getCommerceShipmentId(),
+					commerceShipment.getCompanyId(),
+					dtoConverterContext.getLocale());
 				expectedDate = commerceShipment.getExpectedDate();
+				externalReferenceCode =
+					commerceShipment.getExternalReferenceCode();
 				id = commerceShipment.getCommerceShipmentId();
 				modifiedDate = commerceShipment.getModifiedDate();
 				shippingAddressId = commerceShipment.getCommerceAddressId();
@@ -62,6 +71,7 @@ public class ShipmentDTOConverter
 					commerceShipment.getCommerceShippingMethodId();
 				shippingOptionName = commerceShipment.getShippingOptionName();
 				trackingNumber = commerceShipment.getTrackingNumber();
+				trackingURL = commerceShipment.getTrackingURL();
 				userName = commerceShipment.getUserName();
 			}
 		};

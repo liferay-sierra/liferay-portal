@@ -18,6 +18,7 @@ import React from 'react';
 
 import {FRAGMENT_CONFIGURATION_FIELDS} from '../../../../../../app/components/fragment-configuration-fields/index';
 import {CONTAINER_WIDTH_TYPES} from '../../../../../../app/config/constants/containerWidthTypes';
+import {FRAGMENT_ENTRY_TYPES} from '../../../../../../app/config/constants/fragmentEntryTypes';
 import {LAYOUT_DATA_ITEM_TYPES} from '../../../../../../app/config/constants/layoutDataItemTypes';
 import {VIEWPORT_SIZES} from '../../../../../../app/config/constants/viewportSizes';
 import {useSelector} from '../../../../../../app/contexts/StoreContext';
@@ -31,12 +32,45 @@ const DISPLAY_SIZES = {
 	small: 'small',
 };
 
-const fieldIsDisabled = (item, field) =>
-	item.type === LAYOUT_DATA_ITEM_TYPES.container &&
-	item.config?.widthType === CONTAINER_WIDTH_TYPES.fixed &&
-	(field.name === 'marginRight' || field.name === 'marginLeft');
+export function fieldIsDisabled(item, field) {
+	if (field.disabled) {
+		return true;
+	}
+
+	return (
+		item.type === LAYOUT_DATA_ITEM_TYPES.container &&
+		item.config?.widthType === CONTAINER_WIDTH_TYPES.fixed &&
+		(field.name === 'marginRight' || field.name === 'marginLeft')
+	);
+}
+
+function getAvailableFields(item, fields, fragmentEntryLinks, viewportSize) {
+	let availableFields = fields;
+
+	if (viewportSize !== VIEWPORT_SIZES.desktop) {
+		availableFields = fields.filter(
+			(field) => field.responsive || field.name === 'backgroundImage'
+		);
+	}
+
+	if (item.type !== LAYOUT_DATA_ITEM_TYPES.fragment) {
+		return availableFields;
+	}
+
+	const fragmentEntryLink =
+		fragmentEntryLinks[item.config.fragmentEntryLinkId];
+
+	if (fragmentEntryLink.fragmentEntryType === FRAGMENT_ENTRY_TYPES.input) {
+		availableFields = availableFields.filter(
+			(field) => field.name !== 'display'
+		);
+	}
+
+	return availableFields;
+}
 
 export function FieldSet({
+	isCustomStylesFieldSet = false,
 	fields,
 	item = {},
 	label,
@@ -46,20 +80,20 @@ export function FieldSet({
 }) {
 	const store = useSelector((state) => state);
 
-	const {selectedViewportSize} = store;
+	const {fragmentEntryLinks, selectedViewportSize} = store;
 
-	const availableFields =
-		selectedViewportSize === VIEWPORT_SIZES.desktop
-			? fields
-			: fields.filter(
-					(field) =>
-						field.responsive || field.name === 'backgroundImage'
-			  );
+	const availableFields = getAvailableFields(
+		item,
+		fields,
+		fragmentEntryLinks,
+		selectedViewportSize
+	);
 
-	return availableFields.length > 0 && label ? (
+	return !!availableFields.length && label ? (
 		<Collapse label={label} open>
 			<FieldSetContent
 				fields={availableFields}
+				isCustomStylesFieldSet={isCustomStylesFieldSet}
 				item={item}
 				languageId={languageId}
 				onValueSelect={onValueSelect}
@@ -69,6 +103,7 @@ export function FieldSet({
 	) : (
 		<FieldSetContent
 			fields={availableFields}
+			isCustomStylesFieldSet={isCustomStylesFieldSet}
 			item={item}
 			languageId={languageId}
 			onValueSelect={onValueSelect}
@@ -77,7 +112,14 @@ export function FieldSet({
 	);
 }
 
-function FieldSetContent({fields, item, languageId, onValueSelect, values}) {
+function FieldSetContent({
+	fields,
+	isCustomStylesFieldSet,
+	item,
+	languageId,
+	onValueSelect,
+	values,
+}) {
 	return (
 		<div className="page-editor__sidebar__fieldset">
 			{fields.map((field, index) => {
@@ -87,8 +129,8 @@ function FieldSetContent({fields, item, languageId, onValueSelect, values}) {
 				return (
 					<div
 						className={classNames(
-							'autofit-row',
-							'page-editor__sidebar__fieldset__field align-items-end',
+							field.cssClass,
+							'autofit-row page-editor__sidebar__fieldset__field align-items-end',
 							{
 								'page-editor__sidebar__fieldset__field-small':
 									field.displaySize === DISPLAY_SIZES.small,
@@ -100,6 +142,8 @@ function FieldSetContent({fields, item, languageId, onValueSelect, values}) {
 							<FieldComponent
 								disabled={fieldIsDisabled(item, field)}
 								field={field}
+								isCustomStyle={isCustomStylesFieldSet}
+								item={item}
 								onValueSelect={onValueSelect}
 								value={getFieldValue({
 									field,
@@ -120,6 +164,10 @@ function FieldSetContent({fields, item, languageId, onValueSelect, values}) {
 }
 
 function getFieldValue({field, languageId, values}) {
+	if (field.name === '') {
+		return values;
+	}
+
 	const value = values[field.name];
 
 	if (isNullOrUndefined(value)) {
@@ -135,6 +183,7 @@ function getFieldValue({field, languageId, values}) {
 
 FieldSet.propTypes = {
 	fields: PropTypes.arrayOf(PropTypes.shape(ConfigurationFieldPropTypes)),
+	isCustomStylesFieldSet: PropTypes.bool,
 	item: PropTypes.object,
 	label: PropTypes.string,
 	languageId: PropTypes.string.isRequired,

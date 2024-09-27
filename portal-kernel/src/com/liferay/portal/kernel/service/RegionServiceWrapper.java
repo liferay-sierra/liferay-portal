@@ -43,19 +43,6 @@ public class RegionServiceWrapper
 			countryId, active, name, position, regionCode, serviceContext);
 	}
 
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x)
-	 */
-	@Deprecated
-	@Override
-	public com.liferay.portal.kernel.model.Region addRegion(
-			long countryId, java.lang.String regionCode, java.lang.String name,
-			boolean active)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _regionService.addRegion(countryId, regionCode, name, active);
-	}
-
 	@Override
 	public void deleteRegion(long regionId)
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -162,6 +149,22 @@ public class RegionServiceWrapper
 	@Override
 	public int getRegionsCount(long countryId, boolean active) {
 		return _regionService.getRegionsCount(countryId, active);
+	}
+
+	@Override
+	public com.liferay.portal.kernel.search.BaseModelSearchResult
+		<com.liferay.portal.kernel.model.Region> searchRegions(
+				long companyId, java.lang.Boolean active,
+				java.lang.String keywords,
+				java.util.LinkedHashMap<java.lang.String, java.lang.Object>
+					params,
+				int start, int end,
+				com.liferay.portal.kernel.util.OrderByComparator
+					<com.liferay.portal.kernel.model.Region> orderByComparator)
+			throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _regionService.searchRegions(
+			companyId, active, keywords, params, start, end, orderByComparator);
 	}
 
 	@Override

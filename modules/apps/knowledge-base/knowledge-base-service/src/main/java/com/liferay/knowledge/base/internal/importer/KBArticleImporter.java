@@ -116,8 +116,8 @@ public class KBArticleImporter {
 					null, userId, parentResourceClassNameId,
 					parentResourcePrimaryKey,
 					kbArticleMarkdownConverter.getTitle(), urlTitle, markdown,
-					null, kbArticleMarkdownConverter.getSourceURL(), null, null,
-					serviceContext);
+					null, null, kbArticleMarkdownConverter.getSourceURL(), null,
+					null, null, serviceContext);
 
 				serviceContext.setWorkflowAction(workflowAction);
 			}
@@ -142,9 +142,10 @@ public class KBArticleImporter {
 			return _kbArticleLocalService.updateKBArticle(
 				userId, kbArticle.getResourcePrimKey(),
 				kbArticleMarkdownConverter.getTitle(), html,
-				kbArticle.getDescription(),
-				kbArticleMarkdownConverter.getSourceURL(), null, null, null,
-				serviceContext);
+				kbArticle.getDescription(), null,
+				kbArticleMarkdownConverter.getSourceURL(),
+				kbArticle.getExpirationDate(), kbArticle.getReviewDate(), null,
+				null, serviceContext);
 		}
 		catch (Exception exception) {
 			throw new KBArticleImportException(

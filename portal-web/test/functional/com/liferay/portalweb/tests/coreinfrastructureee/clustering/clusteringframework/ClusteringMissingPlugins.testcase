@@ -41,9 +41,11 @@ definition {
 			exceptionText = "Could not resolve module: com.liferay.portal.cluster.multiple.sample.web",
 			nodePort = "8080");
 
-		Clustering.runGroovyScript(
-			nodePort = "8080",
-			scriptFile = "groovy-script-portal-cache-put-modules.groovy");
+		Clustering.viewTextPresentOnSpecificNode(
+			expectedText = "STARTED com.liferay.portal.cluster.multiple.sample.web",
+			nodePort = "8080");
+
+		Groovy.runScriptViaGogoShell(scriptFile = "groovy-script-portal-cache-put-modules.groovy");
 
 		Clustering.viewTextPresentOnSpecificNode(
 			expectedText = "Put test.key into test.cache",
@@ -53,15 +55,12 @@ definition {
 			exceptionText = "Unable to deserialize object",
 			nodePort = "9080");
 
-		Clustering.runGroovyScript(
+		Groovy.runScriptViaGogoShell(
+			expectedOutput = "test.cache is empty",
 			nodePort = "9080",
 			scriptFile = "groovy-script-portal-cache-get.groovy");
 
-		AssertTextEquals(
-			locator1 = "ServerAdministrationScript#OUTPUT_FIELD",
-			value1 = "test.cache is empty");
-
-		Clustering.runGroovyScript(
+		Groovy.runScriptViaGogoShell(
 			nodePort = "9080",
 			scriptFile = "groovy-script-portal-cache-remove.groovy");
 
@@ -73,9 +72,7 @@ definition {
 			expectedText = "Removed test.key from test.cache",
 			nodePort = "9080");
 
-		Clustering.runGroovyScript(
-			nodePort = "8080",
-			scriptFile = "groovy-script-portal-cache-put-modules.groovy");
+		Groovy.runScriptViaGogoShell(scriptFile = "groovy-script-portal-cache-put-modules.groovy");
 
 		Clustering.viewTextPresentOnSpecificNode(
 			expectedText = "Unable to deserialize object",
@@ -87,21 +84,18 @@ definition {
 			exceptionText = "Could not resolve module: com.liferay.portal.cluster.multiple.sample.web",
 			nodePort = "9080");
 
-		Clustering.runGroovyScript(
+		Clustering.viewTextPresentOnSpecificNode(
+			expectedText = "STARTED com.liferay.portal.cluster.multiple.sample.web",
+			nodePort = "9080");
+
+		Groovy.runScriptViaGogoShell(
+			expectedOutput = "test.cache is empty",
 			nodePort = "9080",
 			scriptFile = "groovy-script-portal-cache-get.groovy");
 
-		AssertTextEquals(
-			locator1 = "ServerAdministrationScript#OUTPUT_FIELD",
-			value1 = "test.cache is empty");
+		Groovy.runScriptViaGogoShell(scriptFile = "groovy-script-portal-cache-remove.groovy");
 
-		Clustering.runGroovyScript(
-			nodePort = "8080",
-			scriptFile = "groovy-script-portal-cache-remove.groovy");
-
-		Clustering.runGroovyScript(
-			nodePort = "8080",
-			scriptFile = "groovy-script-portal-cache-put-modules.groovy");
+		Groovy.runScriptViaGogoShell(scriptFile = "groovy-script-portal-cache-put-modules.groovy");
 
 		Clustering.viewTextPresentOnSpecificNode(
 			expectedText = "Put test.key into test.cache",
@@ -118,27 +112,22 @@ definition {
 			categoryName = "com.liferay.portal.cluster.multiple.sample.web.internal",
 			nodePort = "8080");
 
-		Clustering.runGroovyScript(
-			nodePort = "8080",
+		Groovy.runScriptViaGogoShell(
+			expectedOutput = "This node is master node",
 			scriptFile = "groovy-script-master-slave.groovy");
 
-		AssertTextEquals(
-			locator1 = "ServerAdministrationScript#OUTPUT_FIELD",
-			value1 = "This node is master node");
-
-		Clustering.runGroovyScript(
+		Groovy.runScriptViaGogoShell(
+			expectedOutput = "This node is slave node",
 			nodePort = "9080",
 			scriptFile = "groovy-script-master-slave.groovy");
-
-		AssertTextEquals(
-			locator1 = "ServerAdministrationScript#OUTPUT_FIELD",
-			value1 = "This node is slave node");
 
 		Clustering.deployClusteringModule(nodePort = "9080");
 
 		Clustering.enableDebugging(
 			categoryName = "com.liferay.portal.cluster.multiple.sample.web.internal",
 			nodePort = "9080");
+
+		// Pausing 10 seconds due to LRQA-75909
 
 		Pause(locator1 = "10000");
 
@@ -156,6 +145,8 @@ definition {
 			categoryName = "com.liferay.portal.cluster.multiple.sample.web.internal",
 			nodePort = "8080");
 
+		// Pausing 10 seconds due to LRQA-75909
+
 		Pause(locator1 = "10000");
 
 		Clustering.viewTextPresentOnSpecificNode(
@@ -164,13 +155,12 @@ definition {
 
 		Clustering.shutdownSpecificServer(nodePort = "8080");
 
-		Clustering.runGroovyScript(
+		Groovy.runScriptViaGogoShell(
+			expectedOutput = "This node is master node",
 			nodePort = "9080",
 			scriptFile = "groovy-script-master-slave.groovy");
 
-		AssertTextEquals(
-			locator1 = "ServerAdministrationScript#OUTPUT_FIELD",
-			value1 = "This node is master node");
+		// Pausing 10 seconds due to LRQA-75909
 
 		Pause(locator1 = "10000");
 
@@ -195,7 +185,7 @@ definition {
 			categoryName = "com.liferay.portal.cluster.multiple.sample.web.internal",
 			nodePort = "8080");
 
-		Pause(locator1 = "10000");
+		WaitForConsoleTextPresent(value1 = "STARTED com.liferay.portal.cluster.multiple.sample.web_1.0.0");
 
 		Clustering.viewTextPresentOnSpecificNode(
 			expectedText = "Received message at",
@@ -203,13 +193,14 @@ definition {
 
 		Clustering.shutdownSpecificServer(nodePort = "8080");
 
-		Clustering.runGroovyScript(
+		Groovy.runScriptViaGogoShell(
+			expectedOutput = "This node is master node",
 			nodePort = "9080",
 			scriptFile = "groovy-script-master-slave.groovy");
 
-		AssertTextEquals(
-			locator1 = "ServerAdministrationScript#OUTPUT_FIELD",
-			value1 = "This node is master node");
+		// Pausing 10 seconds due to LRQA-75909
+
+		Pause(locator1 = "10000");
 
 		Clustering.viewTextNotPresentOnSpecificNode(
 			exceptionText = "Received message at",
@@ -221,7 +212,7 @@ definition {
 			categoryName = "com.liferay.portal.cluster.multiple.sample.web.internal",
 			nodePort = "9080");
 
-		Pause(locator1 = "10000");
+		WaitForConsoleTextPresent(value1 = "Cluster sample command is null");
 
 		Clustering.viewTextPresentOnSpecificNode(
 			expectedText = "Scheduler job com.liferay.portal.cluster.multiple.sample.web.internal.messaging.ClusterSampleMessageListener.com.liferay.portal.cluster.multiple.sample.web.internal.messaging.ClusterSampleMessageListener already exists",

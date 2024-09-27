@@ -19,7 +19,7 @@ import com.liferay.commerce.product.model.CPDefinition;
 import com.liferay.commerce.product.model.CProduct;
 import com.liferay.commerce.shop.by.diagram.model.CSDiagramSetting;
 import com.liferay.commerce.shop.by.diagram.service.CSDiagramSettingService;
-import com.liferay.document.library.kernel.util.DLUtil;
+import com.liferay.document.library.util.DLURLHelperUtil;
 import com.liferay.headless.commerce.admin.catalog.dto.v1_0.Diagram;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
@@ -32,7 +32,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	property = "dto.class.name=com.liferay.commerce.shop.by.diagram.model.CSDiagramSetting",
 	service = {DiagramDTOConverter.class, DTOConverter.class}
 )
@@ -78,7 +77,7 @@ public class DiagramDTOConverter
 							return null;
 						}
 
-						return DLUtil.getDownloadURL(
+						return DLURLHelperUtil.getDownloadURL(
 							fileEntry, fileEntry.getFileVersion(), null, null);
 					});
 			}

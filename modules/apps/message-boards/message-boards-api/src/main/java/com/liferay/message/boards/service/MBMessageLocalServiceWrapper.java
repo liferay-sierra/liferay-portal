@@ -51,15 +51,15 @@ public class MBMessageLocalServiceWrapper
 
 	@Override
 	public MBMessage addDiscussionMessage(
-			long userId, String userName, long groupId, String className,
-			long classPK, long threadId, long parentMessageId, String subject,
-			String body,
+			String externalReferenceCode, long userId, String userName,
+			long groupId, String className, long classPK, long threadId,
+			long parentMessageId, String subject, String body,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _mbMessageLocalService.addDiscussionMessage(
-			userId, userName, groupId, className, classPK, threadId,
-			parentMessageId, subject, body, serviceContext);
+			externalReferenceCode, userId, userName, groupId, className,
+			classPK, threadId, parentMessageId, subject, body, serviceContext);
 	}
 
 	/**
@@ -1119,17 +1119,19 @@ public class MBMessageLocalServiceWrapper
 	}
 
 	@Override
-	public void updateAnswer(long messageId, boolean answer, boolean cascade)
+	public MBMessage updateAnswer(
+			long messageId, boolean answer, boolean cascade)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		_mbMessageLocalService.updateAnswer(messageId, answer, cascade);
+		return _mbMessageLocalService.updateAnswer(messageId, answer, cascade);
 	}
 
 	@Override
-	public void updateAnswer(MBMessage message, boolean answer, boolean cascade)
+	public MBMessage updateAnswer(
+			MBMessage message, boolean answer, boolean cascade)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		_mbMessageLocalService.updateAnswer(message, answer, cascade);
+		return _mbMessageLocalService.updateAnswer(message, answer, cascade);
 	}
 
 	@Override

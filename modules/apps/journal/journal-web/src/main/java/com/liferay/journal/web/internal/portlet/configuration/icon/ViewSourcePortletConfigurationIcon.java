@@ -15,23 +15,21 @@
 package com.liferay.journal.web.internal.portlet.configuration.icon;
 
 import com.liferay.journal.constants.JournalPortletKeys;
+import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.web.internal.portlet.action.ActionUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.portlet.configuration.icon.BaseJSPPortletConfigurationIcon;
+import com.liferay.portal.kernel.portlet.LiferayWindowState;
+import com.liferay.portal.kernel.portlet.configuration.icon.BasePortletConfigurationIcon;
 import com.liferay.portal.kernel.portlet.configuration.icon.PortletConfigurationIcon;
-import com.liferay.portal.kernel.util.JavaConstants;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
-
-import java.io.IOException;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletResponse;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -48,44 +46,39 @@ import org.osgi.service.component.annotations.Reference;
 	service = PortletConfigurationIcon.class
 )
 public class ViewSourcePortletConfigurationIcon
-	extends BaseJSPPortletConfigurationIcon {
-
-	@Override
-	public String getJspPath() {
-		return "/configuration/icon/view_source_icon.jsp";
-	}
+	extends BasePortletConfigurationIcon {
 
 	@Override
 	public String getMessage(PortletRequest portletRequest) {
-		return LanguageUtil.get(
-			getResourceBundle(getLocale(portletRequest)), "view-source");
+		return _language.get(getLocale(portletRequest), "view-source");
 	}
 
 	@Override
 	public String getURL(
 		PortletRequest portletRequest, PortletResponse portletResponse) {
 
-		return "javascript:;";
-	}
-
-	@Override
-	public double getWeight() {
-		return 100.0;
-	}
-
-	@Override
-	public boolean include(
-			HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse)
-		throws IOException {
-
 		try {
-			PortletRequest portletRequest =
-				(PortletRequest)httpServletRequest.getAttribute(
-					JavaConstants.JAVAX_PORTLET_REQUEST);
+			ThemeDisplay themeDisplay =
+				(ThemeDisplay)portletRequest.getAttribute(
+					WebKeys.THEME_DISPLAY);
 
-			httpServletRequest.setAttribute(
-				WebKeys.JOURNAL_ARTICLE, ActionUtil.getArticle(portletRequest));
+			JournalArticle article = ActionUtil.getArticle(portletRequest);
+
+			return PortletURLBuilder.createRenderURL(
+				_portal.getLiferayPortletResponse(portletResponse)
+			).setMVCPath(
+				"/configuration/icon/view_source.jsp"
+			).setRedirect(
+				themeDisplay.getURLCurrent()
+			).setParameter(
+				"articleId", article.getArticleId()
+			).setParameter(
+				"groupId", article.getGroupId()
+			).setParameter(
+				"status", article.getStatus()
+			).setWindowState(
+				LiferayWindowState.POP_UP
+			).buildString();
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
@@ -93,7 +86,12 @@ public class ViewSourcePortletConfigurationIcon
 			}
 		}
 
-		return super.include(httpServletRequest, httpServletResponse);
+		return null;
+	}
+
+	@Override
+	public double getWeight() {
+		return 100.0;
 	}
 
 	@Override
@@ -113,14 +111,17 @@ public class ViewSourcePortletConfigurationIcon
 	}
 
 	@Override
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.journal.web)", unbind = "-"
-	)
-	public void setServletContext(ServletContext servletContext) {
-		super.setServletContext(servletContext);
+	public boolean isUseDialog() {
+		return true;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ViewSourcePortletConfigurationIcon.class);
+
+	@Reference
+	private Language _language;
+
+	@Reference
+	private Portal _portal;
 
 }

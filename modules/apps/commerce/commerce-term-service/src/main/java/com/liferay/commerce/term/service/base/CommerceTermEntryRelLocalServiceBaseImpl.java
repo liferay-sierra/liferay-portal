@@ -17,8 +17,6 @@ package com.liferay.commerce.term.service.base;
 import com.liferay.commerce.term.model.CommerceTermEntryRel;
 import com.liferay.commerce.term.service.CommerceTermEntryRelLocalService;
 import com.liferay.commerce.term.service.CommerceTermEntryRelLocalServiceUtil;
-import com.liferay.commerce.term.service.persistence.CTermEntryLocalizationPersistence;
-import com.liferay.commerce.term.service.persistence.CommerceTermEntryPersistence;
 import com.liferay.commerce.term.service.persistence.CommerceTermEntryRelPersistence;
 import com.liferay.petra.sql.dsl.query.DSLQuery;
 import com.liferay.portal.aop.AopService;
@@ -34,6 +32,8 @@ import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Projection;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.PersistedModel;
 import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.search.Indexable;
@@ -342,6 +342,11 @@ public abstract class CommerceTermEntryRelLocalServiceBaseImpl
 	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
 		throws PortalException {
 
+		if (_log.isWarnEnabled()) {
+			_log.warn(
+				"Implement CommerceTermEntryRelLocalServiceImpl#deleteCommerceTermEntryRel(CommerceTermEntryRel) to avoid orphaned data");
+		}
+
 		return commerceTermEntryRelLocalService.deleteCommerceTermEntryRel(
 			(CommerceTermEntryRel)persistedModel);
 	}
@@ -488,32 +493,16 @@ public abstract class CommerceTermEntryRelLocalServiceBaseImpl
 		}
 	}
 
-	@Reference
-	protected CommerceTermEntryPersistence commerceTermEntryPersistence;
-
 	protected CommerceTermEntryRelLocalService commerceTermEntryRelLocalService;
 
 	@Reference
 	protected CommerceTermEntryRelPersistence commerceTermEntryRelPersistence;
 
 	@Reference
-	protected CTermEntryLocalizationPersistence
-		cTermEntryLocalizationPersistence;
-
-	@Reference
 	protected com.liferay.counter.kernel.service.CounterLocalService
 		counterLocalService;
 
-	@Reference
-	protected com.liferay.portal.kernel.service.ClassNameLocalService
-		classNameLocalService;
-
-	@Reference
-	protected com.liferay.portal.kernel.service.ResourceLocalService
-		resourceLocalService;
-
-	@Reference
-	protected com.liferay.portal.kernel.service.UserLocalService
-		userLocalService;
+	private static final Log _log = LogFactoryUtil.getLog(
+		CommerceTermEntryRelLocalServiceBaseImpl.class);
 
 }

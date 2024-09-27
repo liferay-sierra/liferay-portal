@@ -1,0 +1,401 @@
+@component-name = "portal-solutions"
+definition {
+
+	property custom.properties = "feature.flag.LPS-163118=true";
+	property osgi.modules.includes = "site-initializer-testray";
+	property portal.release = "false";
+	property portal.upstream = "true";
+	property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
+	property testray.main.component.name = "Site Initializer Testray";
+
+	setUp {
+		task ("Login and create a Testray Site") {
+			TestCase.setUpPortalInstance();
+
+			User.firstLoginPG();
+
+			Testray.addTestraySite();
+
+			Refresh();
+		}
+
+		task ("Go to Testray, Create Project and change pagination") {
+			ApplicationsMenu.gotoSite(site = "Testray 2");
+
+			Testray.createProjectTestray(
+				description = "Projects_1 Description",
+				key_name = "Projects_1 Project");
+
+			Testray.changePagination(
+				numberItems = "20",
+				valuePagination = "150");
+		}
+
+		task ("Go to created project and add a new team") {
+			TestrayContextMenu.clickContextMenuProjects(name = "Projects_1 Project");
+
+			TestrayContextMenu.selectItemFromProjectsContextMenu(item = "Manage Teams");
+
+			Testray.addNewTeam(teamName = "Components_1 Team");
+
+			TestrayManage.closeModalInOptions();
+		}
+
+		task ("Go to created project and add a component") {
+			TestrayContextMenu.clickContextMenuProjects(name = "Projects_1 Project");
+
+			TestrayContextMenu.selectItemFromProjectsContextMenu(item = "Manage Components");
+
+			Testray.addNewComponent(
+				componentName = "Components_1 Project 1",
+				teamName = "Components_1 Team");
+
+			Testray.addNewComponent(
+				componentName = "Components_1 Project 2",
+				teamName = "Components_1 Team");
+
+			Refresh();
+		}
+
+		task ("Create a new Routine and a new Case") {
+			Testray.changePagination(
+				numberItems = "20",
+				valuePagination = "150");
+
+			Testray.goToProjectPage(projectName = "Projects_1 Project");
+
+			TestrayRoutines.createRoutine(key_name = "Routines_1 Routine");
+
+			Testray.projectTabNavigator(navTabName = "Cases");
+
+			TestrayCases.typeCasesField(
+				caseName = "Cases_1 Case",
+				caseTypeId = "Automated Functional Test",
+				componentId = "Components_1 Project 1",
+				description = "Cases_1 Case Description",
+				duration = "40",
+				priority = "5",
+				steps = "Auto Test Steps");
+
+			Testray.projectTabNavigator(navTabName = "Routine");
+		}
+
+		task ("Add Environments Factors") {
+			TestrayContextMenu.clickContextMenuProjects(name = "Routines_1 Routine");
+
+			TestrayContextMenu.selectItemFromProjectsContextMenu(item = "Select Default Environment Factors");
+
+			TestrayBuild.selectDefaultEnvironmentFactors(
+				label = "Application Server",
+				label1 = "Browser",
+				listCategory = "Application Server,Browser",
+				listOption = "JBoss 6.1",
+				listOption1 = "Chrome x");
+		}
+
+		task ("Go to Testray 2 and change the pagination") {
+			ApplicationsMenu.gotoSite(site = "Testray 2");
+
+			Testray.changePagination(
+				numberItems = "20",
+				valuePagination = "150");
+		}
+	}
+
+	tearDown {
+		var testPortalInstance = PropsUtil.get("test.portal.instance");
+
+		TestrayBuild.deleteBuild(itemName = "Builds_1 Project");
+
+		Testray.deleteAllProjects();
+
+		Testray.tearDownCP();
+
+		if ("${testPortalInstance}" == "true") {
+			PortalInstances.tearDownCP();
+		}
+	}
+
+	@description = "This is a test for LPS-156438 - Verify if as an Administrator can Add a Build"
+	@priority = "5"
+	test AdminCanAddBuild {
+		task ("Given that the user add a new build") {
+			Testray.goToProjectPage(projectName = "Projects_1 Project");
+
+			TestrayRoutines.goToRoutine(routineName = "Routines_1 Routine");
+
+			TestrayBuild.createBuild(
+				addVersion = "1.2",
+				caseName = "Cases_1 Case",
+				description = "Builds_1 Project Description",
+				dropdownItem = "New Build",
+				fieldName = "Builds_1 Project",
+				gitHash = "12345",
+				productVersion = "1.2",
+				routine = "Routines_1 Routine");
+		}
+
+		task ("Then the Routine should appear on the list") {
+			Testray.assertItemName(key_name = "Builds_1 Project");
+		}
+	}
+
+	@description = "This is a test for LPS-157540 - Verify if as an Administrator I should be able to archive a build "
+	@ignore = "Test Stub"
+	@priority = "3"
+	test AdminCanArchiveBuild {
+
+		// TODO LPS-157540 AdminCanArchiveBuild pending implementation
+
+	}
+
+	@description = "This is a test for LPS-157539 - Verify if as an Administrator I should be able to Autoanalyze Builds in a Routine and assert that the Assignee, Comments, Issues have been copied"
+	@ignore = "Test Stub"
+	@priority = "5"
+	test AdminCanAutoanalyzeBuildsInRoutine {
+
+		// TODO LPS-157539 AdminCanAutoanalyzeBuildsInRoutine pending implementation
+
+	}
+
+	@description = "This is a test for LPS-156513 - Verify if as an Administrator I can delete Builds"
+	@priority = "5"
+	test AdminCanDeleteBuild {
+		task ("Given that the user add a new build") {
+			Testray.goToProjectPage(projectName = "Projects_1 Project");
+
+			TestrayRoutines.goToRoutine(routineName = "Routines_1 Routine");
+
+			TestrayBuild.createBuild(
+				addVersion = "1.2",
+				caseName = "Cases_1 Case",
+				description = "Builds_1 Project Description",
+				dropdownItem = "New Build",
+				fieldName = "Builds_1 Project",
+				gitHash = "12345",
+				productVersion = "1.2",
+				routine = "Routines_1 Routine");
+		}
+
+		task ("When a build is deleted") {
+			TestrayBuild.deleteBuild(itemName = "Builds_1 Project");
+		}
+
+		task ("Then the build should not appear on the list") {
+			Testray.assertItemNotPresent(itemName = "Builds_1 Project");
+		}
+	}
+
+	@description = "This is a test for LPS-156575 - Verify if as an Administrator I should be able to delete a build that contains runs"
+	@priority = "4"
+	test AdminCanDeleteBuildContainsRuns {
+		task ("Given that the user add a new build with Environments Factors") {
+			Testray.goToProjectPage(projectName = "Projects_1 Project");
+
+			TestrayRoutines.goToRoutine(routineName = "Routines_1 Routine");
+
+			TestrayBuild.createBuild(
+				addVersion = "1.2",
+				caseName = "Cases_1 Case",
+				description = "Builds_1 Project Description",
+				dropdownItem = "New Build",
+				fieldName = "Builds_1 Project",
+				gitHash = "12345",
+				productVersion = "1.2",
+				routine = "Routines_1 Routine");
+		}
+
+		task ("And deleted build with runs") {
+			TestrayBuild.goToBuild(buildName = "Builds_1 Project");
+
+			Testray.projectTabNavigator(navTabName = "Runs");
+
+			Testray.assertItemName(key_name = "JBoss 6.1");
+
+			Testray.assertItemName(key_name = "Chrome x");
+
+			TestrayLayout.clickResultsOnSidebar();
+
+			Testray.changePagination(
+				numberItems = "20",
+				valuePagination = "150");
+
+			Testray.goToProjectPage(projectName = "Projects_1 Project");
+
+			TestrayContextMenu.clickContextMenuProjects(name = "Routines_1 Routine");
+
+			TestrayBuild.deleteBuild(itemName = "Builds_1 Project");
+		}
+
+		task ("Then the build with runs should not appear on the list") {
+			Testray.assertItemNotPresent(itemName = "Builds_1 Project");
+		}
+	}
+
+	@description = "This is a test for LPS-156543 - Verify if as an Administrator I am able to edit Builds"
+	@priority = "5"
+	test AdminCanEditBuild {
+		task ("Given that the user add a new build") {
+			Testray.goToProjectPage(projectName = "Projects_1 Project");
+
+			TestrayRoutines.goToRoutine(routineName = "Routines_1 Routine");
+
+			TestrayBuild.createBuild(
+				addVersion = "1.2",
+				caseName = "Cases_1 Case",
+				description = "Builds_1 Project Description",
+				dropdownItem = "New Build",
+				fieldName = "Builds_1 Project",
+				gitHash = "12345",
+				productVersion = "1.2",
+				routine = "Routines_1 Routine");
+		}
+
+		task ("When a build is edited") {
+			TestrayContextMenu.clickContextMenuProjects(name = "Builds_1 Project");
+
+			TestrayContextMenu.selectItemFromProjectsContextMenu(item = "Edit");
+
+			TestrayBuild.editBuild(
+				description = "Builds_1 Project Description Edited",
+				fieldName = "Builds_1 Project Edited",
+				gitHash = "12345",
+				productVersion = "1.2",
+				routine = "Routines_1 Routine");
+		}
+
+		task ("Then the build should appear on the list with name edited") {
+			Testray.assertItemName(key_name = "Builds_1 Project Edited");
+		}
+	}
+
+	@description = "This is a test for LPS-156546 - Verify if as an Administrator I should not be able to add a duplicate build"
+	@priority = "5"
+	test AdminCanNotAddDuplicateBuild {
+		task ("Given that the user add a new build") {
+			Testray.goToProjectPage(projectName = "Projects_1 Project");
+
+			TestrayRoutines.goToRoutine(routineName = "Routines_1 Routine");
+
+			TestrayBuild.createBuild(
+				addVersion = "1.2",
+				caseName = "Cases_1 Case",
+				description = "Builds_1 Project Description",
+				dropdownItem = "New Build",
+				fieldName = "Builds_1 Project",
+				gitHash = "12345",
+				productVersion = "1.2",
+				routine = "Routines_1 Routine");
+		}
+
+		task ("When add a build with duplicated name") {
+			TestrayBuild.createBuild(
+				addVersion = "1.4",
+				caseName = "Cases_1 Case",
+				description = "Builds_1 Project Description",
+				dropdownItem = "New Build",
+				fieldName = "Builds_1 Project",
+				gitHash = "12345",
+				productVersion = "1.4",
+				routine = "Routines_1 Routine");
+		}
+
+		task ("Then a warning message is displayed") {
+			Alert.viewErrorMessage(errorMessage = "The Build name already exists");
+		}
+	}
+
+	@description = "This is a test for LPS-156557 - Verify if as an Administrator I should not be able to archive a build where its task is in analysis using"
+	@ignore = "Test Stub"
+	@priority = "3"
+	test AdminCanNotArchiveBuildInAnalysis {
+
+		// TODO LPS-156557 AdminCanNotArchivedBuildInAnalysis pending implementation
+
+	}
+
+	@description = "This is a test for LPS-156455 - Verify if as an Administrator I should not be able to archive a promoted build"
+	@ignore = "Test Stub"
+	@priority = "5"
+	test AdminCanNotArchivePromotedBuild {
+
+		// TODO LPS-156455 AdminCanNotArchivePromotedBuild pending implementation
+
+	}
+
+	@description = "This is a test for LPS-156583 - Verify if as an Administrator I should be able to promote a build"
+	@priority = "5"
+	test AdminCanPromoteBuild {
+		task ("Given that the user add a new build") {
+			Testray.goToProjectPage(projectName = "Projects_1 Project");
+
+			TestrayRoutines.goToRoutine(routineName = "Routines_1 Routine");
+
+			TestrayBuild.createBuild(
+				addVersion = "1.2",
+				caseName = "Cases_1 Case",
+				description = "Builds_1 Project Description",
+				dropdownItem = "New Build",
+				fieldName = "Builds_1 Project",
+				gitHash = "12345",
+				productVersion = "1.2",
+				routine = "Routines_1 Routine");
+		}
+
+		task ("When a build is promoted") {
+			TestrayContextMenu.clickContextMenuProjects(name = "Builds_1 Project");
+
+			TestrayContextMenu.selectItemFromProjectsContextMenu(item = "Promote");
+		}
+
+		task ("Then the promoted build should appear on the list") {
+			TestrayBuild.verifyPromoteBuild();
+		}
+	}
+
+	@description = "This is a test for LPS-156585 - Verify if as an Administrator I should be able to sort the Builds Index"
+	@ignore = "Test Stub"
+	@priority = "4"
+	test AdminCanSortBuildByName {
+
+		// TODO LPS-156585 AdminCanSortCompilationBuildName pending implementation
+
+	}
+
+	@description = "This is a test for LPS-156586 - Verify if as an Administrator I should be able to sort the Builds Promoted"
+	@ignore = "Test Stub"
+	@priority = "3"
+	test AdminCanSortBuildPromoted {
+
+		// TODO LPS-156586 AdminCanSortBuildPromoted pending implementation
+
+	}
+
+	@description = "This is a test for LPS-156588 - Verify if as an Administrator I should be able to sort the Builds Index"
+	@ignore = "Test Stub"
+	@priority = "4"
+	test AdminCanSortCompilationBuildProductVersion {
+
+		// TODO LPS-156588 AdminCanSortCompilationBuildProductVersion pending implementation
+
+	}
+
+	@description = "This is a test for LPS-156580 - Verify if as an Administrator I should be able to specify a start and end parameter when fetching a build index "
+	@ignore = "Test Stub"
+	@priority = "4"
+	test AdminCanSpecifyStartAndEndParameter {
+
+		// TODO LPS-156580 AdminCanSpecifyStartAndEndParameter pending implementation
+
+	}
+
+	@description = "This is a test for LPS-156592 - Verify if as an Administrator I should be able to unarchive a build"
+	@ignore = "Test Stub"
+	@priority = "4"
+	test AdminCanUnarchiveBuilds {
+
+		// TODO LPS-156592 AdminCanUnarchiveBuilds pending implementation
+
+	}
+
+}

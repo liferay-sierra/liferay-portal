@@ -56,7 +56,7 @@ definition {
 			locator1 = "DigitalSignatureEnvelopeSettings#DIGITAL_SIGNATURE_SELECT_DOCUMENT_MODAL");
 	}
 
-	macro createEnvelopeWith2Documents {
+	macro createEnvelopeWithTwoDocuments {
 		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
 
 		DMDocument.addMultipleCP(dmDocumentFileList = "Document_2.docx,Document_3.docx");
@@ -124,6 +124,8 @@ definition {
 	}
 
 	macro deleteEnvelope {
+		Refresh();
+
 		Click(
 			key_text = "${envelopeName}",
 			locator1 = "Link#ANY");

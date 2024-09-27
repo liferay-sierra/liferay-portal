@@ -232,9 +232,7 @@ DLPortletInstanceSettingsHelper dlPortletInstanceSettingsHelper = new DLPortletI
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button type="submit" />
-
-		<aui:button type="cancel" />
+		<liferay-frontend:edit-form-buttons />
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>
 
@@ -246,10 +244,10 @@ DLPortletInstanceSettingsHelper dlPortletInstanceSettingsHelper = new DLPortletI
 
 		Util.postForm(form, {
 			data: {
-				displayViews: Util.listSelect(
+				displayViews: Util.getSelectedOptionValues(
 					Util.getFormElement(form, 'currentDisplayViews')
 				),
-				entryColumns: Util.listSelect(
+				entryColumns: Util.getSelectedOptionValues(
 					Util.getFormElement(form, 'currentEntryColumns')
 				),
 			},

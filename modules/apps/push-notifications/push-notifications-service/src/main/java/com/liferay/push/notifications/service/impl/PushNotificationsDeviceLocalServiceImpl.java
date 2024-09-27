@@ -23,6 +23,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.messaging.MessageBus;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.push.notifications.constants.PushNotificationsDestinationNames;
 import com.liferay.push.notifications.model.PushNotificationsDevice;
@@ -56,7 +57,7 @@ public class PushNotificationsDeviceLocalServiceImpl
 			long userId, String platform, String token)
 		throws PortalException {
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		long pushNotificationsDeviceId = counterLocalService.increment();
 
@@ -100,7 +101,10 @@ public class PushNotificationsDeviceLocalServiceImpl
 			long[] toUserIds, JSONObject payloadJSONObject)
 		throws PortalException {
 
-		for (String platform : _serviceTrackerMap.keySet()) {
+		ServiceTrackerMap<String, PushNotificationsSender> serviceTrackerMap =
+			_getServiceTrackerMap();
+
+		for (String platform : serviceTrackerMap.keySet()) {
 			List<String> tokens = new ArrayList<>();
 
 			List<PushNotificationsDevice> pushNotificationsDevices =
@@ -126,8 +130,11 @@ public class PushNotificationsDeviceLocalServiceImpl
 			String platform, List<String> tokens, JSONObject payloadJSONObject)
 		throws PortalException {
 
+		ServiceTrackerMap<String, PushNotificationsSender> serviceTrackerMap =
+			_getServiceTrackerMap();
+
 		PushNotificationsSender pushNotificationsSender =
-			_serviceTrackerMap.getService(platform);
+			serviceTrackerMap.getService(platform);
 
 		if (pushNotificationsSender == null) {
 			return;
@@ -181,8 +188,7 @@ public class PushNotificationsDeviceLocalServiceImpl
 
 	@Activate
 	protected void activate(BundleContext bundleContext) {
-		_serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
-			bundleContext, PushNotificationsSender.class, "platform");
+		_bundleContext = bundleContext;
 	}
 
 	@Deactivate
@@ -190,13 +196,31 @@ public class PushNotificationsDeviceLocalServiceImpl
 	protected void deactivate() {
 		super.deactivate();
 
-		_serviceTrackerMap.close();
+		if (_serviceTrackerMap != null) {
+			_serviceTrackerMap.close();
+		}
 	}
+
+	private ServiceTrackerMap<String, PushNotificationsSender>
+		_getServiceTrackerMap() {
+
+		if (_serviceTrackerMap == null) {
+			_serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
+				_bundleContext, PushNotificationsSender.class, "platform");
+		}
+
+		return _serviceTrackerMap;
+	}
+
+	private BundleContext _bundleContext;
 
 	@Reference
 	private MessageBus _messageBus;
 
 	private ServiceTrackerMap<String, PushNotificationsSender>
 		_serviceTrackerMap;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

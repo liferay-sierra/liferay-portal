@@ -72,11 +72,6 @@ public class RSSStrutsAction implements StrutsAction {
 		}
 	}
 
-	@Reference(unbind = "-")
-	protected void setWikiPageService(WikiPageService wikiPageService) {
-		_wikiPageService = wikiPageService;
-	}
-
 	private byte[] _getRSS(HttpServletRequest httpServletRequest)
 		throws Exception {
 
@@ -101,12 +96,10 @@ public class RSSStrutsAction implements StrutsAction {
 			httpServletRequest, "version", RSSUtil.VERSION_DEFAULT);
 		String displayStyle = ParamUtil.getString(
 			httpServletRequest, "displayStyle", RSSUtil.DISPLAY_STYLE_DEFAULT);
-
-		String layoutFullURL = _portal.getLayoutFullURL(
-			themeDisplay.getScopeGroupId(), WikiPortletKeys.WIKI);
-
 		String feedURL = StringBundler.concat(
-			layoutFullURL, Portal.FRIENDLY_URL_SEPARATOR, "wiki/", nodeId);
+			_portal.getLayoutFullURL(
+				themeDisplay.getScopeGroupId(), WikiPortletKeys.WIKI),
+			Portal.FRIENDLY_URL_SEPARATOR, "wiki/", nodeId);
 
 		String entryURL = feedURL + StringPool.SLASH + title;
 
@@ -143,6 +136,7 @@ public class RSSStrutsAction implements StrutsAction {
 	@Reference
 	private Portal _portal;
 
+	@Reference
 	private WikiPageService _wikiPageService;
 
 }

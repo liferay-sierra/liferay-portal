@@ -48,7 +48,8 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.search.BaseIndexer;
@@ -58,6 +59,7 @@ import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.IndexWriterHelper;
 import com.liferay.portal.kernel.search.Indexer;
+import com.liferay.portal.kernel.search.ParseException;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.Summary;
 import com.liferay.portal.kernel.search.facet.util.RangeParserUtil;
@@ -66,12 +68,17 @@ import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.search.filter.RangeTermFilter;
 import com.liferay.portal.kernel.search.filter.TermFilter;
 import com.liferay.portal.kernel.search.filter.TermsFilter;
+import com.liferay.portal.kernel.search.generic.BooleanQueryImpl;
+import com.liferay.portal.kernel.search.generic.MultiMatchQuery;
+import com.liferay.portal.kernel.search.generic.TermQueryImpl;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.search.expando.ExpandoBridgeIndexer;
 
 import java.io.Serializable;
 
@@ -97,7 +104,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marco Leo
  * @author Alessio Antonio Rendina
  */
-@Component(enabled = false, immediate = true, service = Indexer.class)
+@Component(immediate = true, service = Indexer.class)
 public class CPDefinitionIndexer extends BaseIndexer<CPDefinition> {
 
 	public static final String CLASS_NAME = CPDefinition.class.getName();
@@ -338,6 +345,38 @@ public class CPDefinitionIndexer extends BaseIndexer<CPDefinition> {
 				addSearchExpando(searchQuery, searchContext, expandoAttributes);
 			}
 		}
+
+		String keywords = searchContext.getKeywords();
+
+		if (Validator.isNotNull(keywords)) {
+			try {
+				keywords = StringUtil.toLowerCase(keywords);
+
+				BooleanQuery booleanQuery = new BooleanQueryImpl();
+
+				booleanQuery.add(
+					new TermQueryImpl(CPField.SKUS + ".1_10_ngram", keywords),
+					BooleanClauseOccur.SHOULD);
+
+				MultiMatchQuery multiMatchQuery = new MultiMatchQuery(keywords);
+
+				multiMatchQuery.addFields(
+					CPField.SKUS, CPField.SKUS + ".reverse");
+				multiMatchQuery.setType(MultiMatchQuery.Type.PHRASE_PREFIX);
+
+				booleanQuery.add(multiMatchQuery, BooleanClauseOccur.SHOULD);
+
+				if (searchContext.isAndSearch()) {
+					searchQuery.add(booleanQuery, BooleanClauseOccur.MUST);
+				}
+				else {
+					searchQuery.add(booleanQuery, BooleanClauseOccur.SHOULD);
+				}
+			}
+			catch (ParseException parseException) {
+				throw new SystemException(parseException);
+			}
+		}
 	}
 
 	@Override
@@ -357,7 +396,7 @@ public class CPDefinitionIndexer extends BaseIndexer<CPDefinition> {
 		Document document = getBaseModelDocument(CLASS_NAME, cpDefinition);
 
 		String cpDefinitionDefaultLanguageId =
-			LocalizationUtil.getDefaultLanguageId(cpDefinition.getName());
+			_localization.getDefaultLanguageId(cpDefinition.getName());
 
 		List<String> languageIds =
 			_cpDefinitionLocalService.getCPDefinitionLocalizationLanguageIds(
@@ -384,67 +423,63 @@ public class CPDefinitionIndexer extends BaseIndexer<CPDefinition> {
 
 		for (String languageId : languageIds) {
 			String description = cpDefinition.getDescription(languageId);
-			String name = cpDefinition.getName(languageId);
-			String urlTitle = languageIdToUrlTitleMap.get(languageId);
 			String metaDescription = cpDefinition.getMetaDescription(
 				languageId);
 			String metaKeywords = cpDefinition.getMetaKeywords(languageId);
 			String metaTitle = cpDefinition.getMetaTitle(languageId);
+			String name = cpDefinition.getName(languageId);
 			String shortDescription = cpDefinition.getShortDescription(
 				languageId);
-
-			if (languageId.equals(cpDefinitionDefaultLanguageId)) {
-				document.addText(Field.DESCRIPTION, description);
-				document.addText(Field.NAME, name);
-				document.addText(Field.URL, urlTitle);
-				document.addText(CPField.META_DESCRIPTION, metaDescription);
-				document.addText(CPField.META_KEYWORDS, metaKeywords);
-				document.addText(CPField.META_TITLE, metaTitle);
-				document.addText(CPField.SHORT_DESCRIPTION, shortDescription);
-				document.addText("defaultLanguageId", languageId);
-			}
+			String urlTitle = languageIdToUrlTitleMap.get(languageId);
 
 			document.addText(
-				LocalizationUtil.getLocalizedName(Field.NAME, languageId),
-				name);
-			document.addText(
-				LocalizationUtil.getLocalizedName(
-					Field.DESCRIPTION, languageId),
-				description);
-			document.addText(
-				LocalizationUtil.getLocalizedName(Field.URL, languageId),
-				urlTitle);
-			document.addText(
-				LocalizationUtil.getLocalizedName(
+				_localization.getLocalizedName(
 					CPField.META_DESCRIPTION, languageId),
 				metaDescription);
 			document.addText(
-				LocalizationUtil.getLocalizedName(
+				_localization.getLocalizedName(
 					CPField.META_KEYWORDS, languageId),
 				metaKeywords);
 			document.addText(
-				LocalizationUtil.getLocalizedName(
-					CPField.META_TITLE, languageId),
+				_localization.getLocalizedName(CPField.META_TITLE, languageId),
 				metaTitle);
 			document.addText(
-				LocalizationUtil.getLocalizedName(
+				_localization.getLocalizedName(
 					CPField.SHORT_DESCRIPTION, languageId),
 				shortDescription);
+			document.addText(
+				_localization.getLocalizedName(Field.DESCRIPTION, languageId),
+				description);
+			document.addText(
+				_localization.getLocalizedName(Field.NAME, languageId), name);
+			document.addText(
+				_localization.getLocalizedName(Field.URL, languageId),
+				urlTitle);
 
 			document.addText(Field.CONTENT, description);
 		}
 
 		document.addText(
+			CPField.META_DESCRIPTION,
+			cpDefinition.getMetaDescription(cpDefinitionDefaultLanguageId));
+		document.addText(
+			CPField.META_KEYWORDS,
+			cpDefinition.getMetaKeywords(cpDefinitionDefaultLanguageId));
+		document.addText(
+			CPField.META_TITLE,
+			cpDefinition.getMetaTitle(cpDefinitionDefaultLanguageId));
+		document.addText(
 			Field.NAME, cpDefinition.getName(cpDefinitionDefaultLanguageId));
+		document.addText(
+			CPField.SHORT_DESCRIPTION,
+			cpDefinition.getShortDescription(cpDefinitionDefaultLanguageId));
 		document.addText(
 			Field.DESCRIPTION,
 			cpDefinition.getDescription(cpDefinitionDefaultLanguageId));
 		document.addText(
 			Field.URL,
 			languageIdToUrlTitleMap.get(cpDefinitionDefaultLanguageId));
-		document.addText(
-			CPField.SHORT_DESCRIPTION,
-			cpDefinition.getShortDescription(cpDefinitionDefaultLanguageId));
+		document.addText("defaultLanguageId", cpDefinitionDefaultLanguageId);
 
 		List<Long> commerceChannelGroupIds = new ArrayList<>();
 
@@ -501,11 +536,11 @@ public class CPDefinitionIndexer extends BaseIndexer<CPDefinition> {
 
 			List<String> optionValueIds = new ArrayList<>();
 
-			Set<Locale> availableLocales = LanguageUtil.getAvailableLocales(
+			Set<Locale> availableLocales = _language.getAvailableLocales(
 				cpDefinitionOptionRel.getGroupId());
 
 			for (Locale locale : availableLocales) {
-				String languageId = LanguageUtil.getLanguageId(locale);
+				String languageId = _language.getLanguageId(locale);
 
 				List<String> localizedOptionValues = new ArrayList<>();
 
@@ -561,22 +596,17 @@ public class CPDefinitionIndexer extends BaseIndexer<CPDefinition> {
 		document.addKeyword(
 			CPField.CHANNEL_FILTER_ENABLED,
 			cpDefinition.isChannelFilterEnabled());
-
 		document.addKeyword(
 			CPField.IS_IGNORE_SKU_COMBINATIONS,
 			cpDefinition.isIgnoreSKUCombinations());
-
 		document.addKeyword(CPField.PRODUCT_ID, cpDefinition.getCProductId());
-
 		document.addText(
 			CPField.OPTION_NAMES, ArrayUtil.toStringArray(optionNames));
 		document.addNumber(
 			CPField.OPTION_IDS, ArrayUtil.toLongArray(optionIds));
-
-		String[] skus = _cpInstanceLocalService.getSKUs(
-			cpDefinition.getCPDefinitionId());
-
-		document.addText(CPField.SKUS, skus);
+		document.addText(
+			CPField.SKUS,
+			_cpInstanceLocalService.getSKUs(cpDefinition.getCPDefinitionId()));
 
 		List<String> specificationOptionNames = new ArrayList<>();
 		List<Long> specificationOptionIds = new ArrayList<>();
@@ -607,11 +637,11 @@ public class CPDefinitionIndexer extends BaseIndexer<CPDefinition> {
 
 			specificationOptionValuesNames.add(specificationOptionValue);
 
-			Set<Locale> availableLocales = LanguageUtil.getAvailableLocales(
+			Set<Locale> availableLocales = _language.getAvailableLocales(
 				cpDefinitionSpecificationOptionValue.getGroupId());
 
 			for (Locale locale : availableLocales) {
-				String languageId = LanguageUtil.getLanguageId(locale);
+				String languageId = _language.getLanguageId(locale);
 
 				String localizedSpecificationOptionValue =
 					cpDefinitionSpecificationOptionValue.getValue(languageId);
@@ -751,8 +781,7 @@ public class CPDefinitionIndexer extends BaseIndexer<CPDefinition> {
 					cpAttachmentFileEntryId, false, false, false));
 		}
 
-		if ((cpDefinition.getStatus() != WorkflowConstants.STATUS_APPROVED) &&
-			(cpDefinition.getCPDefinitionId() !=
+		if ((cpDefinition.getCPDefinitionId() !=
 				cProduct.getPublishedCPDefinitionId()) &&
 			_cpDefinitionLocalService.isVersionable(
 				cpDefinition.getCPDefinitionId())) {
@@ -794,7 +823,11 @@ public class CPDefinitionIndexer extends BaseIndexer<CPDefinition> {
 						firstCPInstance.getCPInstanceUuid(),
 						CommercePriceListConstants.TYPE_PRICE_LIST);
 
-			BigDecimal lowestPrice = commercePriceEntry.getPrice();
+			BigDecimal lowestPrice = BigDecimal.ZERO;
+
+			if (commercePriceEntry != null) {
+				lowestPrice = commercePriceEntry.getPrice();
+			}
 
 			for (CPInstance cpInstance : cpInstances) {
 				commercePriceEntry =
@@ -802,6 +835,10 @@ public class CPDefinitionIndexer extends BaseIndexer<CPDefinition> {
 						getInstanceBaseCommercePriceEntry(
 							cpInstance.getCPInstanceUuid(),
 							CommercePriceListConstants.TYPE_PRICE_LIST);
+
+				if (commercePriceEntry == null) {
+					continue;
+				}
 
 				BigDecimal price = commercePriceEntry.getPrice();
 
@@ -820,6 +857,9 @@ public class CPDefinitionIndexer extends BaseIndexer<CPDefinition> {
 
 			document.addNumber(CPField.BASE_PRICE, lowestPrice);
 		}
+
+		_expandoBridgeIndexer.addAttributes(
+			document, cpDefinition.getExpandoBridge());
 
 		if (_log.isDebugEnabled()) {
 			_log.debug("Document " + cpDefinition + " indexed successfully");
@@ -844,8 +884,7 @@ public class CPDefinitionIndexer extends BaseIndexer<CPDefinition> {
 	@Override
 	protected void doReindex(CPDefinition cpDefinition) throws Exception {
 		_indexWriterHelper.updateDocument(
-			getSearchEngineId(), cpDefinition.getCompanyId(),
-			getDocument(cpDefinition), isCommitImmediately());
+			cpDefinition.getCompanyId(), getDocument(cpDefinition));
 	}
 
 	@Override
@@ -925,7 +964,6 @@ public class CPDefinitionIndexer extends BaseIndexer<CPDefinition> {
 					}
 				}
 			});
-		indexableActionableDynamicQuery.setSearchEngineId(getSearchEngineId());
 
 		indexableActionableDynamicQuery.performActions();
 	}
@@ -964,9 +1002,18 @@ public class CPDefinitionIndexer extends BaseIndexer<CPDefinition> {
 	private CPInstanceLocalService _cpInstanceLocalService;
 
 	@Reference
+	private ExpandoBridgeIndexer _expandoBridgeIndexer;
+
+	@Reference
 	private FriendlyURLEntryLocalService _friendlyURLEntryLocalService;
 
 	@Reference
 	private IndexWriterHelper _indexWriterHelper;
+
+	@Reference
+	private Language _language;
+
+	@Reference
+	private Localization _localization;
 
 }

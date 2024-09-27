@@ -33,7 +33,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Leonardo Barros
  */
 @Component(
-	immediate = true, property = "ddm.form.instance.record.writer.type=json",
+	property = "ddm.form.instance.record.writer.type=json",
 	service = DDMFormInstanceRecordWriter.class
 )
 public class DDMFormInstanceRecordJSONWriter
@@ -58,7 +58,7 @@ public class DDMFormInstanceRecordJSONWriter
 			jsonArray::put
 		);
 
-		String json = jsonArray.toJSONString();
+		String json = jsonArray.toString();
 
 		DDMFormInstanceRecordWriterResponse.Builder builder =
 			DDMFormInstanceRecordWriterResponse.Builder.newBuilder(

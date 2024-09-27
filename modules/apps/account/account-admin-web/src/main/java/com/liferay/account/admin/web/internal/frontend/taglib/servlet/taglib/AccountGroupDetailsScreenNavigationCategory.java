@@ -22,11 +22,11 @@ import com.liferay.account.constants.AccountConstants;
 import com.liferay.frontend.taglib.servlet.taglib.ScreenNavigationCategory;
 import com.liferay.frontend.taglib.servlet.taglib.ScreenNavigationEntry;
 import com.liferay.frontend.taglib.servlet.taglib.util.JSPRenderer;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
-import com.liferay.portal.kernel.service.permission.PortalPermissionUtil;
+import com.liferay.portal.kernel.service.permission.PortalPermission;
 
 import java.io.IOException;
 
@@ -64,7 +64,7 @@ public class AccountGroupDetailsScreenNavigationCategory
 
 	@Override
 	public String getLabel(Locale locale) {
-		return LanguageUtil.get(locale, "details");
+		return _language.get(locale, "details");
 	}
 
 	@Override
@@ -80,7 +80,7 @@ public class AccountGroupDetailsScreenNavigationCategory
 		if (accountGroupDisplay.getAccountGroupId() ==
 				AccountConstants.ACCOUNT_ENTRY_ID_DEFAULT) {
 
-			return PortalPermissionUtil.contains(
+			return portalPermission.contains(
 				PermissionCheckerFactoryUtil.create(user),
 				AccountActionKeys.ADD_ACCOUNT_GROUP);
 		}
@@ -103,5 +103,11 @@ public class AccountGroupDetailsScreenNavigationCategory
 
 	@Reference
 	protected JSPRenderer jspRenderer;
+
+	@Reference
+	protected PortalPermission portalPermission;
+
+	@Reference
+	private Language _language;
 
 }

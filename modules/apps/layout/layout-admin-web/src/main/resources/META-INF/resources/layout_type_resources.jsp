@@ -85,16 +85,12 @@ if (selLayout != null) {
 	<c:otherwise>
 
 		<%
-		liferayPortletRequest.setAttribute(WebKeys.LAYOUT_DESCRIPTIONS, layoutsAdminDisplayContext.getLayoutDescriptions());
-
 		LayoutTypeController layoutTypeController = LayoutTypeControllerTracker.getLayoutTypeController(type);
-
-		ResourceBundle layoutTypeResourceBundle = ResourceBundleUtil.getBundle("content.Language", locale, layoutTypeController.getClass());
 		%>
 
 		<div class="layout-type">
 			<p class="small text-muted">
-				<%= LanguageUtil.get(request, layoutTypeResourceBundle, "layout.types." + type + ".description") %>
+				<liferay-ui:message key='<%= "layout.types." + type + ".description" %>' />
 			</p>
 
 			<%= layoutTypeController.includeEditContent(request, response, selLayout) %>

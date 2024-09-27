@@ -19,24 +19,21 @@ import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.model.AssetRenderer;
 import com.liferay.asset.kernel.model.AssetRendererFactory;
 import com.liferay.asset.kernel.service.AssetEntryLocalServiceUtil;
-import com.liferay.document.library.kernel.model.DLFileEntry;
+import com.liferay.asset.util.LinkedAssetEntryIdsUtil;
 import com.liferay.info.constants.InfoDisplayWebKeys;
 import com.liferay.info.item.ClassPKInfoItemIdentifier;
 import com.liferay.info.item.InfoItemDetails;
 import com.liferay.info.item.InfoItemIdentifier;
 import com.liferay.info.item.InfoItemReference;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemDetailsProvider;
-import com.liferay.info.item.provider.InfoItemFieldValuesProvider;
 import com.liferay.info.item.provider.InfoItemObjectProvider;
 import com.liferay.info.item.provider.InfoItemPermissionProvider;
-import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.info.search.InfoSearchClassMapperRegistry;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
-
-import java.util.Objects;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -47,14 +44,14 @@ public class DisplayPageLayoutTypeControllerDisplayContext {
 
 	public DisplayPageLayoutTypeControllerDisplayContext(
 			HttpServletRequest httpServletRequest,
-			InfoItemServiceTracker infoItemServiceTracker)
+			InfoItemServiceRegistry infoItemServiceRegistry,
+			InfoSearchClassMapperRegistry infoSearchClassMapperRegistry)
 		throws Exception {
 
-		_httpServletRequest = httpServletRequest;
-		_infoItemServiceTracker = infoItemServiceTracker;
+		_infoItemServiceRegistry = infoItemServiceRegistry;
 
 		long assetEntryId = ParamUtil.getLong(
-			_httpServletRequest, "assetEntryId");
+			httpServletRequest, "assetEntryId");
 
 		Object infoItem = httpServletRequest.getAttribute(
 			InfoDisplayWebKeys.INFO_ITEM);
@@ -68,15 +65,12 @@ public class DisplayPageLayoutTypeControllerDisplayContext {
 			AssetEntry assetEntry = AssetEntryLocalServiceUtil.fetchEntry(
 				assetEntryId);
 
-			String className = assetEntry.getClassName();
-
-			if (Objects.equals(className, DLFileEntry.class.getName())) {
-				className = FileEntry.class.getName();
-			}
+			String className = infoSearchClassMapperRegistry.getClassName(
+				assetEntry.getClassName());
 
 			InfoItemObjectProvider<Object> infoItemObjectProvider =
 				(InfoItemObjectProvider<Object>)
-					infoItemServiceTracker.getFirstInfoItemService(
+					infoItemServiceRegistry.getFirstInfoItemService(
 						InfoItemObjectProvider.class, className);
 
 			InfoItemIdentifier infoItemIdentifier =
@@ -90,21 +84,20 @@ public class DisplayPageLayoutTypeControllerDisplayContext {
 
 			if (assetRenderer != null) {
 				InfoItemDetailsProvider infoItemDetailsProvider =
-					infoItemServiceTracker.getFirstInfoItemService(
+					infoItemServiceRegistry.getFirstInfoItemService(
 						InfoItemDetailsProvider.class, className);
 
 				infoItemDetails = infoItemDetailsProvider.getInfoItemDetails(
 					assetRenderer.getAssetObject());
 			}
 
-			_httpServletRequest.setAttribute(
+			httpServletRequest.setAttribute(
 				InfoDisplayWebKeys.INFO_ITEM, infoItem);
-			_httpServletRequest.setAttribute(
-				InfoDisplayWebKeys.INFO_ITEM_FIELD_VALUES_PROVIDER,
-				infoItemServiceTracker.getFirstInfoItemService(
-					InfoItemFieldValuesProvider.class, className));
-			_httpServletRequest.setAttribute(
+			httpServletRequest.setAttribute(
 				WebKeys.LAYOUT_ASSET_ENTRY, assetEntry);
+
+			LinkedAssetEntryIdsUtil.addLinkedAssetEntryId(
+				httpServletRequest, assetEntry.getEntryId());
 		}
 
 		_infoItem = infoItem;
@@ -130,7 +123,7 @@ public class DisplayPageLayoutTypeControllerDisplayContext {
 		}
 
 		InfoItemPermissionProvider infoItemPermissionProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemPermissionProvider.class,
 				_infoItemDetails.getClassName());
 
@@ -153,9 +146,8 @@ public class DisplayPageLayoutTypeControllerDisplayContext {
 		return true;
 	}
 
-	private final HttpServletRequest _httpServletRequest;
 	private final Object _infoItem;
 	private final InfoItemDetails _infoItemDetails;
-	private final InfoItemServiceTracker _infoItemServiceTracker;
+	private final InfoItemServiceRegistry _infoItemServiceRegistry;
 
 }

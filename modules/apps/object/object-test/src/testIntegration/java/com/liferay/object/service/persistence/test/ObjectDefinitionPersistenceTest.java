@@ -128,6 +128,9 @@ public class ObjectDefinitionPersistenceTest {
 
 		newObjectDefinition.setUuid(RandomTestUtil.randomString());
 
+		newObjectDefinition.setExternalReferenceCode(
+			RandomTestUtil.randomString());
+
 		newObjectDefinition.setCompanyId(RandomTestUtil.nextLong());
 
 		newObjectDefinition.setUserId(RandomTestUtil.nextLong());
@@ -138,10 +141,16 @@ public class ObjectDefinitionPersistenceTest {
 
 		newObjectDefinition.setModifiedDate(RandomTestUtil.nextDate());
 
+		newObjectDefinition.setAccountEntryRestrictedObjectFieldId(
+			RandomTestUtil.nextLong());
+
 		newObjectDefinition.setDescriptionObjectFieldId(
 			RandomTestUtil.nextLong());
 
 		newObjectDefinition.setTitleObjectFieldId(RandomTestUtil.nextLong());
+
+		newObjectDefinition.setAccountEntryRestricted(
+			RandomTestUtil.randomBoolean());
 
 		newObjectDefinition.setActive(RandomTestUtil.randomBoolean());
 
@@ -150,6 +159,14 @@ public class ObjectDefinitionPersistenceTest {
 		newObjectDefinition.setLabel(RandomTestUtil.randomString());
 
 		newObjectDefinition.setClassName(RandomTestUtil.randomString());
+
+		newObjectDefinition.setEnableCategorization(
+			RandomTestUtil.randomBoolean());
+
+		newObjectDefinition.setEnableComments(RandomTestUtil.randomBoolean());
+
+		newObjectDefinition.setEnableObjectEntryHistory(
+			RandomTestUtil.randomBoolean());
 
 		newObjectDefinition.setName(RandomTestUtil.randomString());
 
@@ -168,6 +185,8 @@ public class ObjectDefinitionPersistenceTest {
 
 		newObjectDefinition.setScope(RandomTestUtil.randomString());
 
+		newObjectDefinition.setStorageType(RandomTestUtil.randomString());
+
 		newObjectDefinition.setSystem(RandomTestUtil.randomBoolean());
 
 		newObjectDefinition.setVersion(RandomTestUtil.nextInt());
@@ -184,6 +203,9 @@ public class ObjectDefinitionPersistenceTest {
 			newObjectDefinition.getMvccVersion());
 		Assert.assertEquals(
 			existingObjectDefinition.getUuid(), newObjectDefinition.getUuid());
+		Assert.assertEquals(
+			existingObjectDefinition.getExternalReferenceCode(),
+			newObjectDefinition.getExternalReferenceCode());
 		Assert.assertEquals(
 			existingObjectDefinition.getObjectDefinitionId(),
 			newObjectDefinition.getObjectDefinitionId());
@@ -203,11 +225,17 @@ public class ObjectDefinitionPersistenceTest {
 			Time.getShortTimestamp(existingObjectDefinition.getModifiedDate()),
 			Time.getShortTimestamp(newObjectDefinition.getModifiedDate()));
 		Assert.assertEquals(
+			existingObjectDefinition.getAccountEntryRestrictedObjectFieldId(),
+			newObjectDefinition.getAccountEntryRestrictedObjectFieldId());
+		Assert.assertEquals(
 			existingObjectDefinition.getDescriptionObjectFieldId(),
 			newObjectDefinition.getDescriptionObjectFieldId());
 		Assert.assertEquals(
 			existingObjectDefinition.getTitleObjectFieldId(),
 			newObjectDefinition.getTitleObjectFieldId());
+		Assert.assertEquals(
+			existingObjectDefinition.isAccountEntryRestricted(),
+			newObjectDefinition.isAccountEntryRestricted());
 		Assert.assertEquals(
 			existingObjectDefinition.isActive(),
 			newObjectDefinition.isActive());
@@ -220,6 +248,15 @@ public class ObjectDefinitionPersistenceTest {
 		Assert.assertEquals(
 			existingObjectDefinition.getClassName(),
 			newObjectDefinition.getClassName());
+		Assert.assertEquals(
+			existingObjectDefinition.isEnableCategorization(),
+			newObjectDefinition.isEnableCategorization());
+		Assert.assertEquals(
+			existingObjectDefinition.isEnableComments(),
+			newObjectDefinition.isEnableComments());
+		Assert.assertEquals(
+			existingObjectDefinition.isEnableObjectEntryHistory(),
+			newObjectDefinition.isEnableObjectEntryHistory());
 		Assert.assertEquals(
 			existingObjectDefinition.getName(), newObjectDefinition.getName());
 		Assert.assertEquals(
@@ -243,6 +280,9 @@ public class ObjectDefinitionPersistenceTest {
 		Assert.assertEquals(
 			existingObjectDefinition.getScope(),
 			newObjectDefinition.getScope());
+		Assert.assertEquals(
+			existingObjectDefinition.getStorageType(),
+			newObjectDefinition.getStorageType());
 		Assert.assertEquals(
 			existingObjectDefinition.isSystem(),
 			newObjectDefinition.isSystem());
@@ -313,6 +353,15 @@ public class ObjectDefinitionPersistenceTest {
 	}
 
 	@Test
+	public void testCountByC_A_S() throws Exception {
+		_persistence.countByC_A_S(
+			RandomTestUtil.nextLong(), RandomTestUtil.randomBoolean(),
+			RandomTestUtil.nextInt());
+
+		_persistence.countByC_A_S(0L, RandomTestUtil.randomBoolean(), 0);
+	}
+
+	@Test
 	public void testCountByC_A_S_S() throws Exception {
 		_persistence.countByC_A_S_S(
 			RandomTestUtil.nextLong(), RandomTestUtil.randomBoolean(),
@@ -321,6 +370,15 @@ public class ObjectDefinitionPersistenceTest {
 		_persistence.countByC_A_S_S(
 			0L, RandomTestUtil.randomBoolean(), RandomTestUtil.randomBoolean(),
 			0);
+	}
+
+	@Test
+	public void testCountByC_ERC() throws Exception {
+		_persistence.countByC_ERC(RandomTestUtil.nextLong(), "");
+
+		_persistence.countByC_ERC(0L, "null");
+
+		_persistence.countByC_ERC(0L, (String)null);
 	}
 
 	@Test
@@ -349,14 +407,17 @@ public class ObjectDefinitionPersistenceTest {
 	protected OrderByComparator<ObjectDefinition> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
 			"ObjectDefinition", "mvccVersion", true, "uuid", true,
-			"objectDefinitionId", true, "companyId", true, "userId", true,
-			"userName", true, "createDate", true, "modifiedDate", true,
-			"descriptionObjectFieldId", true, "titleObjectFieldId", true,
-			"active", true, "dbTableName", true, "label", true, "className",
-			true, "name", true, "panelAppOrder", true, "panelCategoryKey", true,
+			"externalReferenceCode", true, "objectDefinitionId", true,
+			"companyId", true, "userId", true, "userName", true, "createDate",
+			true, "modifiedDate", true, "accountEntryRestrictedObjectFieldId",
+			true, "descriptionObjectFieldId", true, "titleObjectFieldId", true,
+			"accountEntryRestricted", true, "active", true, "dbTableName", true,
+			"label", true, "className", true, "enableCategorization", true,
+			"enableComments", true, "enableObjectEntryHistory", true, "name",
+			true, "panelAppOrder", true, "panelCategoryKey", true,
 			"pkObjectFieldDBColumnName", true, "pkObjectFieldName", true,
-			"pluralLabel", true, "portlet", true, "scope", true, "system", true,
-			"version", true, "status", true);
+			"pluralLabel", true, "portlet", true, "scope", true, "storageType",
+			true, "system", true, "version", true, "status", true);
 	}
 
 	@Test
@@ -649,6 +710,17 @@ public class ObjectDefinitionPersistenceTest {
 			ReflectionTestUtil.invoke(
 				objectDefinition, "getColumnOriginalValue",
 				new Class<?>[] {String.class}, "name"));
+
+		Assert.assertEquals(
+			Long.valueOf(objectDefinition.getCompanyId()),
+			ReflectionTestUtil.<Long>invoke(
+				objectDefinition, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "companyId"));
+		Assert.assertEquals(
+			objectDefinition.getExternalReferenceCode(),
+			ReflectionTestUtil.invoke(
+				objectDefinition, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "externalReferenceCode"));
 	}
 
 	protected ObjectDefinition addObjectDefinition() throws Exception {
@@ -660,6 +732,9 @@ public class ObjectDefinitionPersistenceTest {
 
 		objectDefinition.setUuid(RandomTestUtil.randomString());
 
+		objectDefinition.setExternalReferenceCode(
+			RandomTestUtil.randomString());
+
 		objectDefinition.setCompanyId(RandomTestUtil.nextLong());
 
 		objectDefinition.setUserId(RandomTestUtil.nextLong());
@@ -670,9 +745,15 @@ public class ObjectDefinitionPersistenceTest {
 
 		objectDefinition.setModifiedDate(RandomTestUtil.nextDate());
 
+		objectDefinition.setAccountEntryRestrictedObjectFieldId(
+			RandomTestUtil.nextLong());
+
 		objectDefinition.setDescriptionObjectFieldId(RandomTestUtil.nextLong());
 
 		objectDefinition.setTitleObjectFieldId(RandomTestUtil.nextLong());
+
+		objectDefinition.setAccountEntryRestricted(
+			RandomTestUtil.randomBoolean());
 
 		objectDefinition.setActive(RandomTestUtil.randomBoolean());
 
@@ -681,6 +762,14 @@ public class ObjectDefinitionPersistenceTest {
 		objectDefinition.setLabel(RandomTestUtil.randomString());
 
 		objectDefinition.setClassName(RandomTestUtil.randomString());
+
+		objectDefinition.setEnableCategorization(
+			RandomTestUtil.randomBoolean());
+
+		objectDefinition.setEnableComments(RandomTestUtil.randomBoolean());
+
+		objectDefinition.setEnableObjectEntryHistory(
+			RandomTestUtil.randomBoolean());
 
 		objectDefinition.setName(RandomTestUtil.randomString());
 
@@ -698,6 +787,8 @@ public class ObjectDefinitionPersistenceTest {
 		objectDefinition.setPortlet(RandomTestUtil.randomBoolean());
 
 		objectDefinition.setScope(RandomTestUtil.randomString());
+
+		objectDefinition.setStorageType(RandomTestUtil.randomString());
 
 		objectDefinition.setSystem(RandomTestUtil.randomBoolean());
 

@@ -19,9 +19,9 @@
 			"indexed": true,
 			"indexedAsKeyword": false,
 			"label": {
-				"en-US": "AC Workspace Name"
+				"en-US": "AC Workspace Group ID"
 			},
-			"name": "acWorkspaceName",
+			"name": "acWorkspaceGroupId",
 			"required": false
 		},
 		{
@@ -62,6 +62,16 @@
 				"en-US": "Max Requestors"
 			},
 			"name": "maxRequestors",
+			"required": false
+		},
+		{
+			"DBType": "String",
+			"indexed": true,
+			"indexedAsKeyword": false,
+			"label": {
+				"en-US": "Name"
+			},
+			"name": "name",
 			"required": false
 		},
 		{
@@ -205,6 +215,7 @@
 			"required": false
 		}
 	],
+	"panelCategoryKey": "control_panel.object",
 	"pluralLabel": {
 		"en_US": "Koroneiki Accounts"
 	},

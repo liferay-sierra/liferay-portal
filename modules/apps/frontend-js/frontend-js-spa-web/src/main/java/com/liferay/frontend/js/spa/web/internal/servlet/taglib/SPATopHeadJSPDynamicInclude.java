@@ -32,6 +32,7 @@ import com.liferay.portal.kernel.util.WebKeys;
 
 import java.io.IOException;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -107,8 +108,7 @@ public class SPATopHeadJSPDynamicInclude extends BaseJSPDynamicInclude {
 
 		initScriptData.append(
 			null,
-			"frontendJsSpaWebInit.default(" + configJSONObject.toJSONString() +
-				")",
+			"frontendJsSpaWebInit.default(" + configJSONObject.toString() + ")",
 			initModuleName + " as frontendJsSpaWebInit",
 			ScriptData.ModulesType.ES6);
 
@@ -133,6 +133,11 @@ public class SPATopHeadJSPDynamicInclude extends BaseJSPDynamicInclude {
 
 	@Override
 	protected Log getLog() {
+		return null;
+	}
+
+	@Override
+	protected ServletContext getServletContext() {
 		return null;
 	}
 

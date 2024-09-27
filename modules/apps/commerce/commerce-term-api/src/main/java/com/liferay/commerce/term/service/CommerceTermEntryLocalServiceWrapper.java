@@ -310,6 +310,21 @@ public class CommerceTermEntryLocalServiceWrapper
 				companyId, externalReferenceCode);
 	}
 
+	/**
+	 * Returns the commerce term entry with the matching UUID and company.
+	 *
+	 * @param uuid the commerce term entry's UUID
+	 * @param companyId the primary key of the company
+	 * @return the matching commerce term entry, or <code>null</code> if a matching commerce term entry could not be found
+	 */
+	@Override
+	public com.liferay.commerce.term.model.CommerceTermEntry
+		fetchCommerceTermEntryByUuidAndCompanyId(String uuid, long companyId) {
+
+		return _commerceTermEntryLocalService.
+			fetchCommerceTermEntryByUuidAndCompanyId(uuid, companyId);
+	}
+
 	@Override
 	public com.liferay.commerce.term.model.CTermEntryLocalization
 		fetchCTermEntryLocalization(
@@ -343,6 +358,14 @@ public class CommerceTermEntryLocalServiceWrapper
 
 		return _commerceTermEntryLocalService.getCommerceTermEntries(
 			start, end);
+	}
+
+	@Override
+	public java.util.List<com.liferay.commerce.term.model.CommerceTermEntry>
+		getCommerceTermEntries(long companyId, String type) {
+
+		return _commerceTermEntryLocalService.getCommerceTermEntries(
+			companyId, type);
 	}
 
 	/**
@@ -390,6 +413,23 @@ public class CommerceTermEntryLocalServiceWrapper
 				companyId, externalReferenceCode);
 	}
 
+	/**
+	 * Returns the commerce term entry with the matching UUID and company.
+	 *
+	 * @param uuid the commerce term entry's UUID
+	 * @param companyId the primary key of the company
+	 * @return the matching commerce term entry
+	 * @throws PortalException if a matching commerce term entry could not be found
+	 */
+	@Override
+	public com.liferay.commerce.term.model.CommerceTermEntry
+			getCommerceTermEntryByUuidAndCompanyId(String uuid, long companyId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _commerceTermEntryLocalService.
+			getCommerceTermEntryByUuidAndCompanyId(uuid, companyId);
+	}
+
 	@Override
 	public com.liferay.commerce.term.model.CTermEntryLocalization
 			getCTermEntryLocalization(
@@ -415,6 +455,26 @@ public class CommerceTermEntryLocalServiceWrapper
 
 		return _commerceTermEntryLocalService.getCTermEntryLocalizations(
 			commerceTermEntryId);
+	}
+
+	@Override
+	public java.util.List<com.liferay.commerce.term.model.CommerceTermEntry>
+		getDeliveryCommerceTermEntries(
+			long companyId, long commerceOrderTypeId,
+			long commerceShippingOptionId) {
+
+		return _commerceTermEntryLocalService.getDeliveryCommerceTermEntries(
+			companyId, commerceOrderTypeId, commerceShippingOptionId);
+	}
+
+	@Override
+	public com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery
+		getExportActionableDynamicQuery(
+			com.liferay.exportimport.kernel.lar.PortletDataContext
+				portletDataContext) {
+
+		return _commerceTermEntryLocalService.getExportActionableDynamicQuery(
+			portletDataContext);
 	}
 
 	@Override

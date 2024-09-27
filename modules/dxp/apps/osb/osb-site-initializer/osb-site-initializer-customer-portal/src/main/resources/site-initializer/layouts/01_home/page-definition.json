@@ -19,12 +19,15 @@
 				"pageElements": [
 					{
 						"definition": {
+							"fragmentStyle": {
+								"minHeight": "52.5vh"
+							},
 							"widgetInstance": {
 								"widgetConfig": {
 									"portletSetupPortletDecoratorId": "barebone",
-									"properties": "page:home\nroute:portal"
+									"properties": "route=home"
 								},
-								"widgetName": "[$REMOTE_APP_ENTRY_ID:CUSTOMER-PORTAL$]"
+								"widgetName": "[$CLIENT_EXTENSION_ENTRY_ID:CUSTOMER-PORTAL$]"
 							}
 						},
 						"type": "Widget"

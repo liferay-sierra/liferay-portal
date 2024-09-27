@@ -87,14 +87,14 @@ public class CommerceShippingMethodLocalServiceUtil {
 
 	public static CommerceShippingMethod addCommerceShippingMethod(
 			long userId, long groupId, Map<java.util.Locale, String> nameMap,
-			Map<java.util.Locale, String> descriptionMap,
-			java.io.File imageFile, String engineKey, double priority,
-			boolean active)
+			Map<java.util.Locale, String> descriptionMap, boolean active,
+			String engineKey, java.io.File imageFile, double priority,
+			String trackingURL)
 		throws PortalException {
 
 		return getService().addCommerceShippingMethod(
-			userId, groupId, nameMap, descriptionMap, imageFile, engineKey,
-			priority, active);
+			userId, groupId, nameMap, descriptionMap, active, engineKey,
+			imageFile, priority, trackingURL);
 	}
 
 	/**
@@ -336,15 +336,19 @@ public class CommerceShippingMethodLocalServiceUtil {
 	}
 
 	public static List<CommerceShippingMethod> getCommerceShippingMethods(
-		long groupId) {
+		long groupId, boolean active, int start, int end,
+		OrderByComparator<CommerceShippingMethod> orderByComparator) {
 
-		return getService().getCommerceShippingMethods(groupId);
+		return getService().getCommerceShippingMethods(
+			groupId, active, start, end, orderByComparator);
 	}
 
 	public static List<CommerceShippingMethod> getCommerceShippingMethods(
-		long groupId, boolean active) {
+		long groupId, int start, int end,
+		OrderByComparator<CommerceShippingMethod> orderByComparator) {
 
-		return getService().getCommerceShippingMethods(groupId, active);
+		return getService().getCommerceShippingMethods(
+			groupId, start, end, orderByComparator);
 	}
 
 	public static List<CommerceShippingMethod> getCommerceShippingMethods(
@@ -361,6 +365,10 @@ public class CommerceShippingMethodLocalServiceUtil {
 	 */
 	public static int getCommerceShippingMethodsCount() {
 		return getService().getCommerceShippingMethodsCount();
+	}
+
+	public static int getCommerceShippingMethodsCount(long groupId) {
+		return getService().getCommerceShippingMethodsCount(groupId);
 	}
 
 	public static int getCommerceShippingMethodsCount(
@@ -421,13 +429,13 @@ public class CommerceShippingMethodLocalServiceUtil {
 	public static CommerceShippingMethod updateCommerceShippingMethod(
 			long commerceShippingMethodId,
 			Map<java.util.Locale, String> nameMap,
-			Map<java.util.Locale, String> descriptionMap,
-			java.io.File imageFile, double priority, boolean active)
+			Map<java.util.Locale, String> descriptionMap, boolean active,
+			java.io.File imageFile, double priority, String trackingURL)
 		throws PortalException {
 
 		return getService().updateCommerceShippingMethod(
-			commerceShippingMethodId, nameMap, descriptionMap, imageFile,
-			priority, active);
+			commerceShippingMethodId, nameMap, descriptionMap, active,
+			imageFile, priority, trackingURL);
 	}
 
 	public static CommerceShippingMethodLocalService getService() {

@@ -28,7 +28,7 @@ import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
 import com.liferay.portal.kernel.util.Constants;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 
@@ -48,7 +48,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = {
 		"javax.portlet.name=" + CommercePortletKeys.COMMERCE_SHIPPING_METHODS,
 		"mvc.command.name=/commerce_shipping_methods/edit_commerce_shipping_method"
@@ -104,14 +104,14 @@ public class EditCommerceShippingMethodMVCActionCommand
 		long commerceShippingMethodId = ParamUtil.getLong(
 			actionRequest, "commerceShippingMethodId");
 
-		Map<Locale, String> nameMap = LocalizationUtil.getLocalizationMap(
+		Map<Locale, String> nameMap = _localization.getLocalizationMap(
 			actionRequest, "nameMapAsXML");
-		Map<Locale, String> descriptionMap =
-			LocalizationUtil.getLocalizationMap(
-				actionRequest, "descriptionMapAsXML");
+		Map<Locale, String> descriptionMap = _localization.getLocalizationMap(
+			actionRequest, "descriptionMapAsXML");
+		boolean active = ParamUtil.getBoolean(actionRequest, "active");
 		File imageFile = uploadPortletRequest.getFile("imageFile");
 		double priority = ParamUtil.getDouble(actionRequest, "priority");
-		boolean active = ParamUtil.getBoolean(actionRequest, "active");
+		String trackingURL = ParamUtil.getString(actionRequest, "trackingURL");
 
 		CommerceShippingMethod commerceShippingMethod = null;
 
@@ -128,14 +128,14 @@ public class EditCommerceShippingMethodMVCActionCommand
 			commerceShippingMethod =
 				_commerceShippingMethodService.addCommerceShippingMethod(
 					commerceChannel.getGroupId(), nameMap, descriptionMap,
-					imageFile, commerceShippingMethodEngineKey, priority,
-					active);
+					active, commerceShippingMethodEngineKey, imageFile,
+					priority, trackingURL);
 		}
 		else {
 			commerceShippingMethod =
 				_commerceShippingMethodService.updateCommerceShippingMethod(
-					commerceShippingMethodId, nameMap, descriptionMap,
-					imageFile, priority, active);
+					commerceShippingMethodId, nameMap, descriptionMap, active,
+					imageFile, priority, trackingURL);
 		}
 
 		return commerceShippingMethod;
@@ -146,6 +146,9 @@ public class EditCommerceShippingMethodMVCActionCommand
 
 	@Reference
 	private CommerceShippingMethodService _commerceShippingMethodService;
+
+	@Reference
+	private Localization _localization;
 
 	@Reference
 	private Portal _portal;

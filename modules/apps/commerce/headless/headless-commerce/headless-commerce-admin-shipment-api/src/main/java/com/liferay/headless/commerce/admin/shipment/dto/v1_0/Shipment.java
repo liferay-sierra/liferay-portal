@@ -42,7 +42,6 @@ import javax.annotation.Generated;
 
 import javax.validation.Valid;
 import javax.validation.constraints.DecimalMin;
-import javax.validation.constraints.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -53,7 +52,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 @Generated("")
 @GraphQLName("Shipment")
 @JsonFilter("Liferay.Vulcan")
-@Schema(requiredProperties = {"orderId"})
 @XmlRootElement(name = "Shipment")
 public class Shipment implements Serializable {
 
@@ -66,7 +64,7 @@ public class Shipment implements Serializable {
 	}
 
 	@DecimalMin("0")
-	@Schema
+	@Schema(example = "30130")
 	public Long getAccountId() {
 		return accountId;
 	}
@@ -124,7 +122,7 @@ public class Shipment implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
 	protected Map<String, Map<String, String>> actions;
 
-	@Schema
+	@Schema(example = "FedEx")
 	public String getCarrier() {
 		return carrier;
 	}
@@ -181,6 +179,35 @@ public class Shipment implements Serializable {
 	protected Date createDate;
 
 	@Schema
+	@Valid
+	public CustomField[] getCustomFields() {
+		return customFields;
+	}
+
+	public void setCustomFields(CustomField[] customFields) {
+		this.customFields = customFields;
+	}
+
+	@JsonIgnore
+	public void setCustomFields(
+		UnsafeSupplier<CustomField[], Exception> customFieldsUnsafeSupplier) {
+
+		try {
+			customFields = customFieldsUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected CustomField[] customFields;
+
+	@Schema
 	public Date getExpectedDate() {
 		return expectedDate;
 	}
@@ -208,8 +235,36 @@ public class Shipment implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected Date expectedDate;
 
-	@DecimalMin("0")
 	@Schema
+	public String getExternalReferenceCode() {
+		return externalReferenceCode;
+	}
+
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		this.externalReferenceCode = externalReferenceCode;
+	}
+
+	@JsonIgnore
+	public void setExternalReferenceCode(
+		UnsafeSupplier<String, Exception> externalReferenceCodeUnsafeSupplier) {
+
+		try {
+			externalReferenceCode = externalReferenceCodeUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String externalReferenceCode;
+
+	@DecimalMin("0")
+	@Schema(example = "30130")
 	public Long getId() {
 		return id;
 	}
@@ -264,7 +319,7 @@ public class Shipment implements Serializable {
 	protected Date modifiedDate;
 
 	@DecimalMin("0")
-	@Schema
+	@Schema(example = "30130")
 	public Long getOrderId() {
 		return orderId;
 	}
@@ -290,7 +345,6 @@ public class Shipment implements Serializable {
 
 	@GraphQLField
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	@NotNull
 	protected Long orderId;
 
 	@Schema
@@ -353,7 +407,7 @@ public class Shipment implements Serializable {
 	protected ShippingAddress shippingAddress;
 
 	@DecimalMin("0")
-	@Schema
+	@Schema(example = "31130")
 	public Long getShippingAddressId() {
 		return shippingAddressId;
 	}
@@ -410,7 +464,7 @@ public class Shipment implements Serializable {
 	protected Date shippingDate;
 
 	@DecimalMin("0")
-	@Schema
+	@Schema(example = "30130")
 	public Long getShippingMethodId() {
 		return shippingMethodId;
 	}
@@ -435,10 +489,10 @@ public class Shipment implements Serializable {
 	}
 
 	@GraphQLField
-	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected Long shippingMethodId;
 
-	@Schema
+	@Schema(example = "Standard Delivery")
 	public String getShippingOptionName() {
 		return shippingOptionName;
 	}
@@ -495,7 +549,7 @@ public class Shipment implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
 	protected Status status;
 
-	@Schema
+	@Schema(example = "123AD-asd")
 	public String getTrackingNumber() {
 		return trackingNumber;
 	}
@@ -523,7 +577,35 @@ public class Shipment implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected String trackingNumber;
 
-	@Schema
+	@Schema(example = "Standard Delivery")
+	public String getTrackingURL() {
+		return trackingURL;
+	}
+
+	public void setTrackingURL(String trackingURL) {
+		this.trackingURL = trackingURL;
+	}
+
+	@JsonIgnore
+	public void setTrackingURL(
+		UnsafeSupplier<String, Exception> trackingURLUnsafeSupplier) {
+
+		try {
+			trackingURL = trackingURLUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String trackingURL;
+
+	@Schema(example = "John")
 	public String getUserName() {
 		return userName;
 	}
@@ -629,6 +711,26 @@ public class Shipment implements Serializable {
 			sb.append("\"");
 		}
 
+		if (customFields != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"customFields\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < customFields.length; i++) {
+				sb.append(String.valueOf(customFields[i]));
+
+				if ((i + 1) < customFields.length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
 		if (expectedDate != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -639,6 +741,20 @@ public class Shipment implements Serializable {
 			sb.append("\"");
 
 			sb.append(liferayToJSONDateFormat.format(expectedDate));
+
+			sb.append("\"");
+		}
+
+		if (externalReferenceCode != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"externalReferenceCode\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(externalReferenceCode));
 
 			sb.append("\"");
 		}
@@ -775,6 +891,20 @@ public class Shipment implements Serializable {
 			sb.append("\"");
 
 			sb.append(_escape(trackingNumber));
+
+			sb.append("\"");
+		}
+
+		if (trackingURL != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"trackingURL\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(trackingURL));
 
 			sb.append("\"");
 		}

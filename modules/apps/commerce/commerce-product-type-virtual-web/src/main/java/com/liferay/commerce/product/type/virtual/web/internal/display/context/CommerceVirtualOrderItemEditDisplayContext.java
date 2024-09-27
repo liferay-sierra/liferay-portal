@@ -23,17 +23,16 @@ import com.liferay.commerce.product.type.virtual.web.internal.display.context.he
 import com.liferay.commerce.service.CommerceOrderItemService;
 import com.liferay.commerce.service.CommerceOrderService;
 import com.liferay.document.library.kernel.service.DLAppService;
-import com.liferay.document.library.kernel.util.DLUtil;
+import com.liferay.document.library.util.DLURLHelperUtil;
 import com.liferay.item.selector.ItemSelector;
 import com.liferay.item.selector.ItemSelectorReturnType;
 import com.liferay.item.selector.criteria.FileEntryItemSelectorReturnType;
 import com.liferay.item.selector.criteria.file.criterion.FileItemSelectorCriterion;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.util.ParamUtil;
 
@@ -114,12 +113,8 @@ public class CommerceVirtualOrderItemEditDisplayContext {
 	}
 
 	public PortletURL getCommerceOrderItemsPortletURL() throws PortalException {
-		LiferayPortletResponse liferayPortletResponse =
-			_cpDefinitionVirtualSettingRequestHelper.
-				getLiferayPortletResponse();
-
 		return PortletURLBuilder.createRenderURL(
-			liferayPortletResponse
+			_cpDefinitionVirtualSettingRequestHelper.getLiferayPortletResponse()
 		).setMVCRenderCommandName(
 			"/commerce_open_order_content/edit_commerce_order"
 		).setParameter(
@@ -141,7 +136,7 @@ public class CommerceVirtualOrderItemEditDisplayContext {
 		FileEntry fileEntry = _dlAppService.getFileEntry(
 			_commerceVirtualOrderItem.getFileEntryId());
 
-		return DLUtil.getDownloadURL(
+		return DLURLHelperUtil.getDownloadURL(
 			fileEntry, fileEntry.getLatestFileVersion(),
 			_cpDefinitionVirtualSettingRequestHelper.getThemeDisplay(),
 			StringPool.BLANK, true, true);
@@ -171,11 +166,10 @@ public class CommerceVirtualOrderItemEditDisplayContext {
 			Collections.<ItemSelectorReturnType>singletonList(
 				new FileEntryItemSelectorReturnType()));
 
-		PortletURL itemSelectorURL = _itemSelector.getItemSelectorURL(
-			requestBackedPortletURLFactory, "uploadCommerceVirtualOrderItem",
-			fileItemSelectorCriterion);
-
-		return itemSelectorURL.toString();
+		return String.valueOf(
+			_itemSelector.getItemSelectorURL(
+				requestBackedPortletURLFactory,
+				"uploadCommerceVirtualOrderItem", fileItemSelectorCriterion));
 	}
 
 	private final CommerceOrder _commerceOrder;

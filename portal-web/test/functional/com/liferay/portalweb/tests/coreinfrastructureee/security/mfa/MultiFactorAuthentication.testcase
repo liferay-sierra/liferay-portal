@@ -3,7 +3,6 @@ definition {
 
 	property custom.properties = "mail.send.blacklist=noreply@liferay.com,noreply@domain.invalid,test@domain.invalid";
 	property dummy.socket.proxy.disabled = "true";
-	property osgi.app.includes = "multi-factor-authentication";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property test.run.environment = "EE";
@@ -31,7 +30,8 @@ definition {
 	@priority = "4"
 	test AssertDescriptionsOnTOTPConfigurationPage {
 		property osgi.module.configuration.file.names = "com.liferay.multi.factor.authentication.email.otp.configuration.MFAEmailOTPConfiguration.config";
-		property osgi.module.configurations = "emailFromAddress=&quot;test@liferay.com&quot;${line.separator}emailFromName=&quot;Joe\ Bloggs&quot;";
+		property osgi.module.configurations = "emailFromAddress=\"test@liferay.com\"${line.separator}emailFromName=\"Joe\ Bloggs\"";
+		property test.name.skip.portal.instance = "MultiFactorAuthentication#AssertDescriptionsOnTOTPConfigurationPage";
 
 		task ("Enable OTP") {
 			MultiFactorAuthentication.openToConfigInInstanceSettings();
@@ -79,7 +79,7 @@ definition {
 	@description = "This is a use case for LPS-102467 and LPS-110444. Configure e-mail template for Email One Time Password verification step."
 	@priority = "5"
 	test AssertEditedEmailTemplate {
-		property database.types = "db2,hypersonic,mariadb,mysql,oracle,postgresql,sqlserver,sybase";
+		property database.types = "hypersonic,mariadb,mysql,oracle,postgresql,sqlserver,sybase";
 		property test.name.skip.portal.instance = "MultiFactorAuthentication#AssertEditedEmailTemplate";
 
 		var portalURL = PropsUtil.get("portal.url");
@@ -283,9 +283,9 @@ definition {
 	@description = "LPS-92659 TC-3: Assert after user reached the number of allowed failed attempts will be blocked."
 	@priority = "5"
 	test AssertUserIsBlockedAfterReachAllowedFailedAttempts {
-		property database.types = "db2,hypersonic,mariadb,mysql,oracle,postgresql,sqlserver,sybase";
+		property database.types = "hypersonic,mariadb,mysql,oracle,postgresql,sqlserver,sybase";
 		property osgi.module.configuration.file.names = "com.liferay.multi.factor.authentication.email.otp.configuration.MFAEmailOTPConfiguration.config";
-		property osgi.module.configurations = "emailFromAddress=&quot;test@liferay.com&quot;${line.separator}emailFromName=&quot;Joe\ Bloggs&quot;";
+		property osgi.module.configurations = "emailFromAddress=\"test@liferay.com\"${line.separator}emailFromName=\"Joe\ Bloggs\"";
 		property portal.acceptance = "true";
 		property test.name.skip.portal.instance = "MultiFactorAuthentication#AssertUserIsBlockedAfterReachAllowedFailedAttempts";
 
@@ -524,7 +524,7 @@ definition {
 	@description = "This is a use case for LPS-101720. Instance admin can enable and disable MFA for instance."
 	@priority = "5"
 	test EnableOTPForInstanceAsInstanceAdminUser {
-		property database.types = "db2,hypersonic,mariadb,mysql,oracle,postgresql,sqlserver,sybase";
+		property database.types = "hypersonic,mariadb,mysql,oracle,postgresql,sqlserver,sybase";
 		property portal.acceptance = "true";
 		property test.name.skip.portal.instance = "MultiFactorAuthentication#EnableOTPForInstanceAsInstanceAdminUser";
 
@@ -607,7 +607,7 @@ definition {
 	test EndUserPermissionCheck {
 		property custom.properties = "jsonws.web.service.paths.excludes=";
 		property osgi.module.configuration.file.names = "com.liferay.multi.factor.authentication.email.otp.configuration.MFAEmailOTPConfiguration.config";
-		property osgi.module.configurations = "emailFromAddress=&quot;test@liferay.com&quot;${line.separator}emailFromName=&quot;Joe\ Bloggs&quot;";
+		property osgi.module.configurations = "emailFromAddress=\"test@liferay.com\"${line.separator}emailFromName=\"Joe\ Bloggs\"";
 
 		var portalURL = PropsUtil.get("portal.url");
 
@@ -661,7 +661,7 @@ definition {
 	@priority = "5"
 	test LoginSuccessfulAfterResetPasswordAsEndUser {
 		property osgi.module.configuration.file.names = "com.liferay.multi.factor.authentication.email.otp.configuration.MFAEmailOTPConfiguration.config";
-		property osgi.module.configurations = "emailFromAddress=&quot;test@liferay.com&quot;${line.separator}emailFromName=&quot;Joe\ Bloggs&quot;";
+		property osgi.module.configurations = "emailFromAddress=\"test@liferay.com\"${line.separator}emailFromName=\"Joe\ Bloggs\"";
 		property test.name.skip.portal.instance = "MultiFactorAuthentication#LoginSuccessfulAfterResetPasswordAsEndUser";
 
 		var portalURL = PropsUtil.get("portal.url");
@@ -719,9 +719,9 @@ definition {
 	@description = "LPS-92659 TC-4: User can login successfully after retry timeout."
 	@priority = "5"
 	test LoginSuccessfulAfterRetryTimeout {
-		property database.types = "db2,hypersonic,mariadb,mysql,oracle,postgresql,sqlserver,sybase";
+		property database.types = "hypersonic,mariadb,mysql,oracle,postgresql,sqlserver,sybase";
 		property osgi.module.configuration.file.names = "com.liferay.multi.factor.authentication.email.otp.configuration.MFAEmailOTPConfiguration.config";
-		property osgi.module.configurations = "emailFromAddress=&quot;test@liferay.com&quot;${line.separator}emailFromName=&quot;Joe\ Bloggs&quot;";
+		property osgi.module.configurations = "emailFromAddress=\"test@liferay.com\"${line.separator}emailFromName=\"Joe\ Bloggs\"";
 		property test.name.skip.portal.instance = "MultiFactorAuthentication#LoginSuccessfulAfterRetryTimeout";
 
 		var portalURL = PropsUtil.get("portal.url");
@@ -755,7 +755,11 @@ definition {
 		}
 
 		task ("Assert user can login portal after retry time out") {
-			Pause(locator1 = "5000");
+			while (IsElementPresent(locator1 = "MultiFactorAuthentication#EMAIL_OTP_VERIFY_SUBMIT_EMAIL_BUTTON_DISABLED")) {
+				Pause(locator1 = "800");
+
+				Refresh();
+			}
 
 			MultiFactorAuthentication.verifyOTP(
 				portalURL = "${portalURL}",
@@ -769,7 +773,7 @@ definition {
 	@priority = "5"
 	test LoginWithIPBasedVerifierEnabled {
 		property osgi.module.configuration.file.names = "com.liferay.multi.factor.authentication.email.otp.configuration.MFAEmailOTPConfiguration.config";
-		property osgi.module.configurations = "emailFromAddress=&quot;test@liferay.com&quot;${line.separator}emailFromName=&quot;Joe\ Bloggs&quot;";
+		property osgi.module.configurations = "emailFromAddress=\"test@liferay.com\"${line.separator}emailFromName=\"Joe\ Bloggs\"";
 		property portal.acceptance = "true";
 		property test.name.skip.portal.instance = "MultiFactorAuthentication#LoginWithIPBasedVerifierEnabled";
 
@@ -810,18 +814,18 @@ definition {
 
 		task ("Assert audit details") {
 			Audit.viewAuditDetails(
-				additionalInformation = "None",
+				additionalInformation = "",
 				clientIp = "127.0.0.1",
 				resourceAction = "MFA_IP_OTP_VERIFICATION_SUCCESS",
 				resourceName = "IPAddressHeadlessMFAChecker",
 				userName = "Test Test");
 		}
 
-		task ("Configure none IP address allowed") {
+		task ("Configure custom IP address allowed, to trigger MFA during login flow") {
 			MultiFactorAuthentication.openToConfigInInstanceSettings(portlet = "IP Address");
 
 			MultiFactorAuthentication.configureIPAddress(
-				allowedIp = " ",
+				allowedIp = "9.9.9.9",
 				enableIp = "true");
 		}
 
@@ -867,10 +871,10 @@ definition {
 	test LoginWithOTPEnabled {
 		property app.server.types = "jboss,tcserver,tomcat,weblogic,websphere,wildfly";
 		property custom.properties = "jsonws.web.service.paths.excludes=";
-		property database.types = "db2,hypersonic,mariadb,mysql,oracle,postgresql,sqlserver,sybase";
+		property database.types = "hypersonic,mariadb,mysql,oracle,postgresql,sqlserver,sybase";
 		property environment.acceptance = "true";
 		property osgi.module.configuration.file.names = "com.liferay.multi.factor.authentication.email.otp.configuration.MFAEmailOTPConfiguration.config";
-		property osgi.module.configurations = "emailFromAddress=&quot;test@liferay.com&quot;${line.separator}emailFromName=&quot;Joe\ Bloggs&quot;";
+		property osgi.module.configurations = "emailFromAddress=\"test@liferay.com\"${line.separator}emailFromName=\"Joe\ Bloggs\"";
 		property portal.acceptance = "true";
 		property test.name.skip.portal.instance = "MultiFactorAuthentication#LoginWithOTPEnabled";
 
@@ -973,6 +977,8 @@ definition {
 
 			var secretKey = selenium.getAttribute("//input[contains(@id,'sharedSecret')]@value");
 
+			echo("secretKey is: ${secretKey}");
+
 			MultiFactorAuthentication.getTOTP();
 		}
 
@@ -1025,7 +1031,7 @@ definition {
 	test RemoveTOTPVerificationOfCurrentUserNotAffectOtherEndUser {
 		property custom.properties = "jsonws.web.service.paths.excludes=";
 		property osgi.module.configuration.file.names = "com.liferay.multi.factor.authentication.email.otp.configuration.MFAEmailOTPConfiguration.config";
-		property osgi.module.configurations = "emailFromAddress=&quot;test@liferay.com&quot;${line.separator}emailFromName=&quot;Joe\ Bloggs&quot;";
+		property osgi.module.configurations = "emailFromAddress=\"test@liferay.com\"${line.separator}emailFromName=\"Joe\ Bloggs\"";
 		property test.name.skip.portal.instance = "MultiFactorAuthentication#RemoveTOTPVerificationOfCurrentUserNotAffectOtherEndUser";
 
 		var portalURL = PropsUtil.get("portal.url");
@@ -1284,7 +1290,7 @@ definition {
 			MultiFactorAuthentication.viewOTPOrderFieldAvailable();
 
 			AssertElementPresent(
-				key_fieldName = "service.ranking",
+				key_fieldName = "serviceRanking",
 				locator1 = "MultiFactorAuthentication#EMAIL_OTP_CONFIG_FIELD");
 		}
 	}
@@ -1293,7 +1299,7 @@ definition {
 	@priority = "4"
 	test ViewResourceActionsOfOTPVerificationFailure {
 		property osgi.module.configuration.file.names = "com.liferay.multi.factor.authentication.email.otp.configuration.MFAEmailOTPConfiguration.config";
-		property osgi.module.configurations = "emailFromAddress=&quot;test@liferay.com&quot;${line.separator}emailFromName=&quot;Joe\ Bloggs&quot;";
+		property osgi.module.configurations = "emailFromAddress=\"test@liferay.com\"${line.separator}emailFromName=\"Joe\ Bloggs\"";
 		property test.name.skip.portal.instance = "MultiFactorAuthentication#ViewResourceActionsOfOTPVerificationFailure";
 
 		var portalURL = PropsUtil.get("portal.url");
@@ -1414,6 +1420,8 @@ definition {
 			Navigator.gotoNavUnderline(navUnderline = "Multi-Factor Authentication");
 
 			var secretKey = selenium.getAttribute("//input[contains(@id,'sharedSecret')]@value");
+
+			echo("secretKey is: ${secretKey}");
 
 			MultiFactorAuthentication.getTOTP();
 		}

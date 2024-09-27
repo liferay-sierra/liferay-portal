@@ -79,7 +79,7 @@ public class StagingLocalServiceTest {
 	public void testBranchingLayoutLayoutUpdate() throws Exception {
 		Group group = GroupTestUtil.addGroup();
 
-		LayoutTestUtil.addLayout(group);
+		LayoutTestUtil.addTypePortletLayout(group);
 
 		Map<Locale, String> nameMap = HashMapBuilder.put(
 			LocaleUtil.getSiteDefault(), RandomTestUtil.randomString()
@@ -104,8 +104,9 @@ public class StagingLocalServiceTest {
 				stagingLayout.getKeywordsMap(), stagingLayout.getRobotsMap(),
 				stagingLayout.getType(), stagingLayout.isHidden(),
 				stagingLayout.getFriendlyURLMap(), false, null,
-				stagingLayout.getMasterLayoutPlid(),
-				stagingLayout.getStyleBookEntryId(), new ServiceContext());
+				stagingLayout.getStyleBookEntryId(),
+				stagingLayout.getFaviconFileEntryId(),
+				stagingLayout.getMasterLayoutPlid(), new ServiceContext());
 
 			stagingLayout = _layoutLocalService.updateLayout(
 				stagingLayout.getGroupId(), stagingLayout.isPrivateLayout(),
@@ -118,8 +119,9 @@ public class StagingLocalServiceTest {
 				stagingLayout.getKeywordsMap(), stagingLayout.getRobotsMap(),
 				stagingLayout.getType(), stagingLayout.isHidden(),
 				stagingLayout.getFriendlyURLMap(), false, null,
-				stagingLayout.getMasterLayoutPlid(),
-				stagingLayout.getStyleBookEntryId(), new ServiceContext());
+				stagingLayout.getStyleBookEntryId(),
+				stagingLayout.getFaviconFileEntryId(),
+				stagingLayout.getMasterLayoutPlid(), new ServiceContext());
 
 			Map<Locale, String> layoutNameMap = stagingLayout.getNameMap();
 
@@ -136,7 +138,7 @@ public class StagingLocalServiceTest {
 	public void testBranchingLayoutPortletRemoval() throws Exception {
 		Group group = GroupTestUtil.addGroup();
 
-		Layout layout = LayoutTestUtil.addLayout(group);
+		Layout layout = LayoutTestUtil.addTypePortletLayout(group);
 
 		UnicodeProperties unicodeProperties =
 			layout.getTypeSettingsProperties();
@@ -200,7 +202,7 @@ public class StagingLocalServiceTest {
 
 		Group group = GroupTestUtil.addGroup();
 
-		Layout layout = LayoutTestUtil.addLayout(group);
+		Layout layout = LayoutTestUtil.addTypePortletLayout(group);
 
 		UnicodeProperties unicodeProperties =
 			layout.getTypeSettingsProperties();
@@ -274,7 +276,7 @@ public class StagingLocalServiceTest {
 
 		Group group = GroupTestUtil.addGroup();
 
-		Layout layout = LayoutTestUtil.addLayout(group);
+		Layout layout = LayoutTestUtil.addTypePortletLayout(group);
 
 		UnicodeProperties unicodeProperties =
 			layout.getTypeSettingsProperties();

@@ -30,7 +30,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Riccardo Alberti
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "frontend.data.set.name=" + CommercePricingFDSNames.PRICE_MODIFIER_PRICING_CLASSES,
 	service = FDSView.class
 )
@@ -42,13 +41,11 @@ public class CommercePriceModifierPricingClassTableFDSView
 		FDSTableSchemaBuilder fdsTableSchemaBuilder =
 			_fdsTableSchemaBuilderFactory.create();
 
-		fdsTableSchemaBuilder.addFDSTableSchemaField(
-			"productGroup.title.LANG", "title");
-
-		fdsTableSchemaBuilder.addFDSTableSchemaField(
-			"productGroup.productsCount", "number-of-products");
-
-		return fdsTableSchemaBuilder.build();
+		return fdsTableSchemaBuilder.add(
+			"productGroup.title.LANG", "title"
+		).add(
+			"productGroup.productsCount", "number-of-products"
+		).build();
 	}
 
 	@Reference

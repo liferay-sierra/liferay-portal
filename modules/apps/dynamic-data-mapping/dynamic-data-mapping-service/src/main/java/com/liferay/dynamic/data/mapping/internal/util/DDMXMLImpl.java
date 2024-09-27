@@ -57,7 +57,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Bruno Basto
  * @author Brian Wing Shun Chan
  */
-@Component(immediate = true, service = DDMXML.class)
+@Component(service = DDMXML.class)
 public class DDMXMLImpl implements DDMXML {
 
 	@Override
@@ -80,7 +80,7 @@ public class DDMXMLImpl implements DDMXML {
 		}
 		catch (DocumentException documentException) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(documentException.getMessage(), documentException);
+				_log.debug(documentException);
 			}
 
 			return null;
@@ -136,11 +136,8 @@ public class DDMXMLImpl implements DDMXML {
 							"default-locale");
 					}
 
-					Locale defaultLocale = LocaleUtil.fromLanguageId(
-						defaultLanguageId);
-
-					field.setDefaultLocale(defaultLocale);
-
+					field.setDefaultLocale(
+						LocaleUtil.fromLanguageId(defaultLanguageId));
 					field.setDDMStructureId(structure.getStructureId());
 					field.setName(fieldName);
 					field.setValue(locale, fieldValueSerializable);
@@ -238,11 +235,6 @@ public class DDMXMLImpl implements DDMXML {
 		}
 	}
 
-	@Reference(unbind = "-")
-	protected void setSAXReader(SAXReader saxReader) {
-		_saxReader = saxReader;
-	}
-
 	private void _appendField(Element element, Field field) {
 		Element dynamicElementElement = element.addElement("dynamic-element");
 
@@ -326,7 +318,9 @@ public class DDMXMLImpl implements DDMXML {
 
 	private static final Log _log = LogFactoryUtil.getLog(DDMXMLImpl.class);
 
+	@Reference
 	private SAXReader _saxReader;
+
 	private XMLSchema _xmlSchema;
 
 }

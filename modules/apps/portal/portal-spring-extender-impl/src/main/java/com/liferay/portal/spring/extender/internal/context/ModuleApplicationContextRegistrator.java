@@ -18,7 +18,9 @@ import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.bean.BeanLocatorImpl;
 import com.liferay.portal.kernel.bean.PortletBeanLocatorUtil;
+import com.liferay.portal.kernel.util.AggregateClassLoader;
 import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.spring.configurator.ConfigurableApplicationContextConfigurator;
 import com.liferay.portal.spring.extender.internal.bean.ApplicationContextServicePublisherUtil;
@@ -83,7 +85,28 @@ public class ModuleApplicationContextRegistrator {
 		_registerDataSource();
 	}
 
+	public void stop() {
+		ApplicationContextServicePublisherUtil.unregisterContext(
+			_serviceRegistrations);
+
+		if (_dataSourceServiceRegistration != null) {
+			_dataSourceServiceRegistration.unregister();
+
+			_dataSourceServiceRegistration = null;
+		}
+
+		_moduleApplicationContext.close();
+	}
+
 	protected void start() throws Exception {
+		Thread currentThread = Thread.currentThread();
+
+		ClassLoader contextClassLoader = currentThread.getContextClassLoader();
+
+		currentThread.setContextClassLoader(
+			AggregateClassLoader.getAggregateClassLoader(
+				PortalClassLoaderUtil.getClassLoader(), contextClassLoader));
+
 		try {
 			_moduleApplicationContext.refresh();
 
@@ -119,6 +142,8 @@ public class ModuleApplicationContextRegistrator {
 				extenderBundleWiring.getClassLoader());
 
 			Introspector.flushCaches();
+
+			currentThread.setContextClassLoader(contextClassLoader);
 		}
 	}
 

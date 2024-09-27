@@ -18,7 +18,7 @@ import aQute.bnd.osgi.Constants;
 
 import com.liferay.gradle.plugins.cache.WriteDigestTask;
 import com.liferay.gradle.plugins.defaults.LiferayThemeDefaultsPlugin;
-import com.liferay.gradle.plugins.defaults.tasks.WriteArtifactPublishCommandsTask;
+import com.liferay.gradle.plugins.defaults.task.WriteArtifactPublishCommandsTask;
 import com.liferay.gradle.util.Validator;
 
 import java.io.File;
@@ -101,6 +101,24 @@ public class LiferayRelengUtil {
 		return getRelengDir(project.getProjectDir());
 	}
 
+	public static String getUnpublishedDependencyName(Project project) {
+		List<File> artifactPropertiesFiles = _getArtifactPropertiesFiles(
+			project, false);
+
+		for (File artifactPropertiesFile : artifactPropertiesFiles) {
+			File artifactProjectDir = _getArtifactProjectDir(
+				artifactPropertiesFile);
+
+			if (hasUnpublishedCommits(
+					project, artifactProjectDir, artifactPropertiesFile)) {
+
+				return artifactProjectDir.getName();
+			}
+		}
+
+		return null;
+	}
+
 	public static boolean hasStaleParentTheme(Project project) {
 		WriteDigestTask writeDigestTask = (WriteDigestTask)GradleUtil.getTask(
 			project,
@@ -122,20 +140,24 @@ public class LiferayRelengUtil {
 	}
 
 	public static boolean hasStalePortalDependencies(
-		Project project, String artifactGitId) {
+		Project project, File artifactPropertiesFile) {
+
+		if (!artifactPropertiesFile.exists()) {
+			return false;
+		}
 
 		List<File> artifactPropertiesFiles = _getArtifactPropertiesFiles(
 			project, true);
 
-		for (File artifactPropertiesFile : artifactPropertiesFiles) {
+		for (File curArtifactPropertiesFile : artifactPropertiesFiles) {
 			Properties artifactProperties = GUtil.loadProperties(
-				artifactPropertiesFile);
+				curArtifactPropertiesFile);
 
 			String artifactUrl = artifactProperties.getProperty("artifact.url");
 
 			if (Validator.isNull(artifactUrl)) {
 				File artifactProjectDir = _getArtifactProjectDir(
-					artifactPropertiesFile);
+					curArtifactPropertiesFile);
 
 				throw new GradleException(
 					"The dependency '" + artifactProjectDir.getName() +
@@ -144,9 +166,10 @@ public class LiferayRelengUtil {
 
 			String[] tokens = artifactUrl.split("/");
 
+			String artifactName = tokens[tokens.length - 3];
+
 			String compatVersion = GradleUtil.getProperty(
-				project, "build.compat.version." + tokens[tokens.length - 3],
-				(String)null);
+				project, "build.compat.version." + artifactName, (String)null);
 
 			if (Validator.isNotNull(compatVersion)) {
 				continue;
@@ -156,7 +179,7 @@ public class LiferayRelengUtil {
 				tokens[tokens.length - 2]);
 
 			File artifactProjectDir = _getArtifactProjectDir(
-				artifactPropertiesFile);
+				curArtifactPropertiesFile);
 
 			Properties properties = GUtil.loadProperties(
 				new File(artifactProjectDir, "bnd.bnd"));
@@ -164,7 +187,23 @@ public class LiferayRelengUtil {
 			VersionNumber versionNumber = VersionNumber.parse(
 				properties.getProperty(Constants.BUNDLE_VERSION));
 
-			if (versionNumber.getMinor() != artifactVersionNumber.getMinor()) {
+			if (versionNumber.getMinor() == artifactVersionNumber.getMinor()) {
+				continue;
+			}
+
+			Properties bndProperties = null;
+
+			try {
+				bndProperties = FileUtil.readProperties(project, "bnd.bnd");
+			}
+			catch (IOException ioException) {
+				throw new UncheckedIOException(ioException);
+			}
+
+			String includeResource = bndProperties.getProperty(
+				Constants.INCLUDERESOURCE);
+
+			if (includeResource.contains(artifactName)) {
 				return true;
 			}
 		}
@@ -289,32 +328,6 @@ public class LiferayRelengUtil {
 		}
 
 		_createNewFile(new File(gitResultsDir, sb.toString() + "false"));
-
-		return false;
-	}
-
-	public static boolean hasUnpublishedDependencies(Project project) {
-		List<File> artifactPropertiesFiles = _getArtifactPropertiesFiles(
-			project, false);
-
-		for (File artifactPropertiesFile : artifactPropertiesFiles) {
-			File artifactProjectDir = _getArtifactProjectDir(
-				artifactPropertiesFile);
-
-			if (hasUnpublishedCommits(
-					project, artifactProjectDir, artifactPropertiesFile)) {
-
-				Logger logger = project.getLogger();
-
-				if (logger.isQuietEnabled()) {
-					logger.quiet(
-						"The project dependency '{}' has new commits.",
-						artifactProjectDir.getName());
-				}
-
-				return true;
-			}
-		}
 
 		return false;
 	}

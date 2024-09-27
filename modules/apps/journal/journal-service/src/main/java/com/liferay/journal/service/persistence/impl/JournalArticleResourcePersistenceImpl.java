@@ -46,7 +46,7 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 
 import java.io.Serializable;
 
@@ -205,7 +205,7 @@ public class JournalArticleResourcePersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<JournalArticleResource>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (JournalArticleResource journalArticleResource : list) {
@@ -606,7 +606,7 @@ public class JournalArticleResourcePersistenceImpl
 
 			finderArgs = new Object[] {uuid};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -743,7 +743,7 @@ public class JournalArticleResourcePersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = finderCache.getResult(
-				_finderPathFetchByUUID_G, finderArgs);
+				_finderPathFetchByUUID_G, finderArgs, this);
 		}
 
 		if (result instanceof JournalArticleResource) {
@@ -865,7 +865,7 @@ public class JournalArticleResourcePersistenceImpl
 
 			finderArgs = new Object[] {uuid, groupId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1039,7 +1039,7 @@ public class JournalArticleResourcePersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<JournalArticleResource>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (JournalArticleResource journalArticleResource : list) {
@@ -1466,7 +1466,7 @@ public class JournalArticleResourcePersistenceImpl
 
 			finderArgs = new Object[] {uuid, companyId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1629,7 +1629,7 @@ public class JournalArticleResourcePersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<JournalArticleResource>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (JournalArticleResource journalArticleResource : list) {
@@ -2006,7 +2006,7 @@ public class JournalArticleResourcePersistenceImpl
 
 			finderArgs = new Object[] {groupId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2128,7 +2128,8 @@ public class JournalArticleResourcePersistenceImpl
 		Object result = null;
 
 		if (useFinderCache && productionMode) {
-			result = finderCache.getResult(_finderPathFetchByG_A, finderArgs);
+			result = finderCache.getResult(
+				_finderPathFetchByG_A, finderArgs, this);
 		}
 
 		if (result instanceof JournalArticleResource) {
@@ -2251,7 +2252,7 @@ public class JournalArticleResourcePersistenceImpl
 
 			finderArgs = new Object[] {groupId, articleId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2482,7 +2483,7 @@ public class JournalArticleResourcePersistenceImpl
 		journalArticleResource.setNew(true);
 		journalArticleResource.setPrimaryKey(resourcePrimKey);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		journalArticleResource.setUuid(uuid);
 
@@ -2611,7 +2612,7 @@ public class JournalArticleResourcePersistenceImpl
 			(JournalArticleResourceModelImpl)journalArticleResource;
 
 		if (Validator.isNull(journalArticleResource.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			journalArticleResource.setUuid(uuid);
 		}
@@ -2716,7 +2717,7 @@ public class JournalArticleResourcePersistenceImpl
 	@Override
 	public JournalArticleResource fetchByPrimaryKey(Serializable primaryKey) {
 		if (ctPersistenceHelper.isProductionMode(
-				JournalArticleResource.class)) {
+				JournalArticleResource.class, primaryKey)) {
 
 			return super.fetchByPrimaryKey(primaryKey);
 		}
@@ -2942,7 +2943,7 @@ public class JournalArticleResourcePersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<JournalArticleResource>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -3018,7 +3019,7 @@ public class JournalArticleResourcePersistenceImpl
 
 		if (productionMode) {
 			count = (Long)finderCache.getResult(
-				_finderPathCountAll, FINDER_ARGS_EMPTY);
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 		}
 
 		if (count == null) {
@@ -3317,7 +3318,6 @@ public class JournalArticleResourcePersistenceImpl
 	}
 
 	@Reference
-	private JournalArticleResourceModelArgumentsResolver
-		_journalArticleResourceModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

@@ -14,12 +14,10 @@
 
 package com.liferay.portal.workflow.web.internal.portlet.action;
 
-import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.LocalizationUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -39,7 +37,6 @@ import org.osgi.service.component.annotations.Component;
  * @author Jeyvison Nascimento
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + WorkflowPortletKeys.CONTROL_PANEL_WORKFLOW,
 		"mvc.command.name=/portal_workflow/duplicate_workflow_definition"
@@ -64,7 +61,7 @@ public class DuplicateWorkflowDefinitionMVCActionCommand
 			themeDisplay,
 			ParamUtil.getString(actionRequest, "duplicatedDefinitionName"));
 
-		Map<Locale, String> titleMap = LocalizationUtil.getLocalizationMap(
+		Map<Locale, String> titleMap = localization.getLocalizationMap(
 			actionRequest, randomNamespace + "title");
 
 		validateTitle(actionRequest, titleMap);
@@ -97,7 +94,7 @@ public class DuplicateWorkflowDefinitionMVCActionCommand
 		String duplicatedDefinitionTitle = ParamUtil.getString(
 			actionRequest, "duplicatedDefinitionTitle");
 
-		return LanguageUtil.format(
+		return language.format(
 			getResourceBundle(actionRequest), "duplicated-from-x",
 			StringUtil.quote(duplicatedDefinitionTitle));
 	}

@@ -14,29 +14,38 @@
 
 package com.liferay.account.internal.security.permission.resource;
 
+import com.liferay.account.constants.AccountActionKeys;
 import com.liferay.account.constants.AccountConstants;
 import com.liferay.account.model.AccountEntry;
 import com.liferay.account.model.AccountRole;
+import com.liferay.account.role.AccountRolePermissionThreadLocal;
 import com.liferay.account.service.AccountEntryLocalService;
 import com.liferay.account.service.AccountRoleLocalService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
+import com.liferay.portal.kernel.service.permission.RolePermission;
+
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * @author Pei-Jung Lan
  */
 @Component(
-	immediate = true,
 	property = "model.class.name=com.liferay.account.model.AccountRole",
-	service = ModelResourcePermission.class
+	service = {
+		AccountRoleModelResourcePermission.class, ModelResourcePermission.class
+	}
 )
 public class AccountRoleModelResourcePermission
 	implements ModelResourcePermission<AccountRole> {
@@ -83,28 +92,75 @@ public class AccountRoleModelResourcePermission
 			String actionId)
 		throws PortalException {
 
+		Group group = null;
+
+		long contextAccountEntryId =
+			AccountRolePermissionThreadLocal.getAccountEntryId();
+
+		if (contextAccountEntryId > 0) {
+			AccountEntry accountEntry =
+				_accountEntryLocalService.getAccountEntry(
+					contextAccountEntryId);
+
+			group = accountEntry.getAccountEntryGroup();
+		}
+
 		AccountRole accountRole = _accountRoleLocalService.fetchAccountRole(
 			accountRoleId);
 
-		if (accountRole != null) {
-			Role role = accountRole.getRole();
+		if (accountRole == null) {
+			return permissionChecker.hasPermission(
+				group, AccountRole.class.getName(), 0L, actionId);
+		}
 
-			if (permissionChecker.hasOwnerPermission(
-					permissionChecker.getCompanyId(),
-					AccountRole.class.getName(), accountRoleId,
-					role.getUserId(), actionId)) {
+		Role role = accountRole.getRole();
+
+		if (permissionChecker.hasOwnerPermission(
+				permissionChecker.getCompanyId(), AccountRole.class.getName(),
+				accountRoleId, role.getUserId(), actionId)) {
+
+			return true;
+		}
+
+		long accountRoleAccountEntryId = accountRole.getAccountEntryId();
+
+		if ((accountRoleAccountEntryId >
+				AccountConstants.ACCOUNT_ENTRY_ID_DEFAULT) &&
+			(contextAccountEntryId >
+				AccountConstants.ACCOUNT_ENTRY_ID_DEFAULT) &&
+			!Objects.equals(accountRoleAccountEntryId, contextAccountEntryId)) {
+
+			return false;
+		}
+
+		for (long accountEntryId :
+				new long[] {accountRoleAccountEntryId, contextAccountEntryId}) {
+
+			if ((Objects.equals(actionId, ActionKeys.VIEW) &&
+				 (accountEntryId > 0) &&
+				 _accountEntryModelResourcePermission.contains(
+					 permissionChecker, accountEntryId,
+					 AccountActionKeys.VIEW_ACCOUNT_ROLES)) ||
+				_rolePermission.contains(
+					permissionChecker, role.getRoleId(), ActionKeys.VIEW)) {
+
+				return true;
+			}
+
+			if (Objects.equals(actionId, AccountActionKeys.ASSIGN_USERS) &&
+				(accountEntryId > 0) &&
+				_accountEntryModelResourcePermission.contains(
+					permissionChecker, accountEntryId,
+					ActionKeys.MANAGE_USERS)) {
 
 				return true;
 			}
 		}
 
-		Group group = null;
-
-		long accountEntryId = accountRole.getAccountEntryId();
-
-		if (accountEntryId > 0) {
+		if ((group == null) && (accountRoleAccountEntryId > 0)) {
 			AccountEntry accountEntry =
-				_accountEntryLocalService.getAccountEntry(accountEntryId);
+				_accountEntryLocalService.getAccountEntry(
+					accountRoleAccountEntryId);
 
 			group = accountEntry.getAccountEntryGroup();
 		}
@@ -126,6 +182,14 @@ public class AccountRoleModelResourcePermission
 	@Reference
 	private AccountEntryLocalService _accountEntryLocalService;
 
+	@Reference(
+		policy = ReferencePolicy.DYNAMIC,
+		policyOption = ReferencePolicyOption.GREEDY,
+		target = "(model.class.name=com.liferay.account.model.AccountEntry)"
+	)
+	private volatile ModelResourcePermission<AccountEntry>
+		_accountEntryModelResourcePermission;
+
 	@Reference
 	private AccountRoleLocalService _accountRoleLocalService;
 
@@ -133,5 +197,8 @@ public class AccountRoleModelResourcePermission
 		target = "(resource.name=" + AccountConstants.RESOURCE_NAME + ")"
 	)
 	private PortletResourcePermission _portletResourcePermission;
+
+	@Reference
+	private RolePermission _rolePermission;
 
 }

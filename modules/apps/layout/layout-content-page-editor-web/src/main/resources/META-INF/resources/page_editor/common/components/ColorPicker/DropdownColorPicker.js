@@ -15,8 +15,6 @@
 import ClayButton, {ClayButtonWithIcon} from '@clayui/button';
 import DropDown from '@clayui/drop-down';
 import ClayEmptyState from '@clayui/empty-state';
-import {ClayInput} from '@clayui/form';
-import {FocusScope} from '@clayui/shared';
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React, {
@@ -33,8 +31,8 @@ import SearchForm from '../../../common/components/SearchForm';
 export function DropdownColorPicker({
 	active,
 	colors,
-	config,
-	disabled,
+	fieldLabel = null,
+	inherited = false,
 	label = null,
 	onValueChange = () => {},
 	onSetActive,
@@ -114,12 +112,27 @@ export function DropdownColorPicker({
 		}
 	};
 
-	return config.tokenReuseEnabled ? (
-		<div className="page-editor__dropdown-color-picker w-100">
+	const containerRef = useMemo(() => {
+		const ref = React.createRef();
+
+		ref.current = document.querySelector(
+			'page-editor__item-configuration-sidebar'
+		);
+
+		return ref;
+	}, []);
+
+	return (
+		<div
+			className={classNames(
+				'flex-grow-1 flex-shrink-0 page-editor__dropdown-color-picker',
+				{'ml-2': !showSelector}
+			)}
+		>
 			{showSelector ? (
 				<ClayButton
 					aria-label={label}
-					className="align-items-center border-0 d-flex page-editor__dropdown-color-picker__selector w-100"
+					className="align-items-center border-0 d-flex font-weight-normal page-editor__dropdown-color-picker__selector text-body w-100"
 					displayType="secondary"
 					onClick={() => onSetActive((active) => !active)}
 					ref={triggerElementRef}
@@ -127,20 +140,27 @@ export function DropdownColorPicker({
 				>
 					<span className="c-inner" tabIndex="-1">
 						<span
-							className="page-editor__dropdown-color-picker__selector-splotch rounded-circle"
-							style={{
-								background: `${value}`,
-							}}
+							className={classNames(
+								'page-editor__dropdown-color-picker__selector-splotch rounded-circle',
+								{'lfr-portal-tooltip': fieldLabel}
+							)}
+							data-title={fieldLabel}
+							style={{background: `${value}`}}
 						/>
 
 						<span className="text-truncate">{label}</span>
+
+						{inherited ? (
+							<span
+								className="inherited"
+								title={Liferay.Language.get('inherited-value')}
+							></span>
+						) : null}
 					</span>
 				</ClayButton>
 			) : (
 				<ClayButtonWithIcon
-					className={classNames({
-						'border-0': config.tokenReuseEnabled,
-					})}
+					className="border-0 flex-shrink-0"
 					displayType="secondary"
 					onClick={() => onSetActive(!active)}
 					ref={triggerElementRef}
@@ -156,6 +176,7 @@ export function DropdownColorPicker({
 				className="clay-color-dropdown-menu px-0"
 				containerProps={{
 					className: 'cadmin',
+					containerRef,
 				}}
 				onSetActive={onSetActive}
 				ref={dropdownContainerRef}
@@ -163,7 +184,6 @@ export function DropdownColorPicker({
 				{active ? (
 					<Wrapper
 						colors={filteredColors}
-						config={config}
 						dropdownContainerRef={dropdownContainerRef}
 						onKeyDown={handleKeyDownWrapper}
 						onSetActive={onSetActive}
@@ -174,58 +194,11 @@ export function DropdownColorPicker({
 				) : null}
 			</DropDown.Menu>
 		</div>
-	) : (
-		<FocusScope arrowKeysUpDown={false}>
-			<div className="clay-color-picker">
-				<ClayInput.Group className="clay-color" small={small}>
-					<ClayInput.GroupItem shrink>
-						<ClayInput.GroupText className="page-editor__dropdown-color-picker__input-group-text--rounded-left">
-							<Splotch
-								className="dropdown-toggle"
-								config={config}
-								disabled={disabled}
-								onClick={() => onSetActive((active) => !active)}
-								onKeyPress={() =>
-									triggerElementRef.current.focus()
-								}
-								ref={triggerElementRef}
-								value={value}
-							/>
-						</ClayInput.GroupText>
-					</ClayInput.GroupItem>
-
-					<DropDown.Menu
-						active={active}
-						alignElementRef={triggerElementRef}
-						className="clay-color-dropdown-menu px-0"
-						containerProps={{
-							className: 'cadmin',
-						}}
-						onSetActive={onSetActive}
-						ref={dropdownContainerRef}
-					>
-						{active ? (
-							<Wrapper
-								colors={filteredColors}
-								config={config}
-								dropdownContainerRef={dropdownContainerRef}
-								onKeyDown={handleKeyDownWrapper}
-								onSetActive={onSetActive}
-								onSetSearchValue={setSearchValue}
-								onValueChange={onValueChange}
-								triggerElementRef={triggerElementRef}
-							/>
-						) : null}
-					</DropDown.Menu>
-				</ClayInput.Group>
-			</div>
-		</FocusScope>
 	);
 }
 
 const Wrapper = ({
 	colors,
-	config,
 	dropdownContainerRef,
 	onKeyDown,
 	onSetActive,
@@ -273,7 +246,6 @@ const Wrapper = ({
 												key={name}
 											>
 												<Splotch
-													config={config}
 													disabled={disabled}
 													onClick={() => {
 														onValueChange({
@@ -301,11 +273,12 @@ const Wrapper = ({
 				))
 			) : (
 				<ClayEmptyState
-					className="mt-4 page-editor__dropdown-color-picker__empty-result"
+					className="mt-4"
 					description={Liferay.Language.get(
 						'try-again-with-a-different-search'
 					)}
 					imgSrc={`${themeDisplay.getPathThemeImages()}/states/empty_state.gif`}
+					small
 					title={Liferay.Language.get('no-results-found')}
 				/>
 			)}
@@ -315,24 +288,12 @@ const Wrapper = ({
 
 const Splotch = React.forwardRef(
 	(
-		{
-			active,
-			className,
-			config,
-			disabled,
-			onClick,
-			onKeyPress,
-			size,
-			title,
-			value,
-		},
+		{active, className, disabled, onClick, onKeyPress, size, title, value},
 		ref
 	) => (
 		<button
 			className={classNames(
-				`btn clay-color-btn clay-color-btn-bordered lfr-portal-tooltip rounded${
-					config.tokenReuseEnabled ? '-circle' : ''
-				}`,
+				'btn clay-color-btn clay-color-btn-bordered lfr-portal-tooltip rounded-circle',
 				{
 					active,
 					[className]: !!className,

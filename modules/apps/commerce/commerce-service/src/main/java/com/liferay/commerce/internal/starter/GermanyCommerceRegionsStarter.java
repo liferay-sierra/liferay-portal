@@ -15,17 +15,18 @@
 package com.liferay.commerce.internal.starter;
 
 import com.liferay.commerce.starter.CommerceRegionsStarter;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 
 import java.util.Locale;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Riccardo Alberti
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = "commerce.region.starter.key=" + GermanyCommerceRegionsStarter.GERMANY_NUMERIC_ISO_CODE,
 	service = CommerceRegionsStarter.class
 )
@@ -35,7 +36,7 @@ public class GermanyCommerceRegionsStarter extends BaseCommerceRegionsStarter {
 
 	@Override
 	public String getLabel(Locale locale) {
-		return LanguageUtil.get(locale, "country.germany");
+		return _language.get(locale, "country.germany");
 	}
 
 	@Override
@@ -50,5 +51,8 @@ public class GermanyCommerceRegionsStarter extends BaseCommerceRegionsStarter {
 
 	private static final String _FILEPATH =
 		"com/liferay/commerce/internal/germany.json";
+
+	@Reference
+	private Language _language;
 
 }

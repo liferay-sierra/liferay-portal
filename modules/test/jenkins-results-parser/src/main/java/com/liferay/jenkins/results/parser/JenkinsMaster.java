@@ -21,10 +21,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -176,6 +179,25 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 	}
 
 	@Override
+	public JenkinsCohort getJenkinsCohort() {
+		if (_jenkinsCohort != null) {
+			return _jenkinsCohort;
+		}
+
+		Matcher matcher = _masterNamePattern.matcher(getName());
+
+		if (!matcher.find()) {
+			return null;
+		}
+
+		String cohortName = matcher.group("cohortName");
+
+		_jenkinsCohort = JenkinsCohort.getInstance(cohortName);
+
+		return _jenkinsCohort;
+	}
+
+	@Override
 	public JenkinsMaster getJenkinsMaster() {
 		return this;
 	}
@@ -297,6 +319,196 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 		}
 
 		return _blacklisted;
+	}
+
+	public boolean isBuildInProgress(
+		String jobName, Map<String, String> buildParameters) {
+
+		try {
+			JSONObject jobJSONObject = JenkinsResultsParserUtil.toJSONObject(
+				JenkinsResultsParserUtil.combine(
+					getURL(), "/job/", jobName, "/api/json?",
+					"tree=builds[actions[parameters[name,value]],result,url]"));
+
+			JSONArray buildsJSONArray = jobJSONObject.optJSONArray("builds");
+
+			for (int i = 0; i < buildsJSONArray.length(); i++) {
+				JSONObject buildJSONObject = buildsJSONArray.optJSONObject(i);
+
+				if ((buildJSONObject == JSONObject.NULL) ||
+					!JenkinsResultsParserUtil.isNullOrEmpty(
+						buildJSONObject.optString("result"))) {
+
+					continue;
+				}
+
+				JSONArray actionsJSONArray = buildJSONObject.optJSONArray(
+					"actions");
+
+				if (actionsJSONArray == JSONObject.NULL) {
+					continue;
+				}
+
+				for (int j = 0; j < actionsJSONArray.length(); j++) {
+					JSONObject actionJSONObject =
+						actionsJSONArray.optJSONObject(j);
+
+					if ((actionJSONObject == JSONObject.NULL) ||
+						!Objects.equals(
+							actionJSONObject.optString("_class"),
+							"hudson.model.ParametersAction")) {
+
+						continue;
+					}
+
+					JSONArray parametersJSONArray =
+						actionJSONObject.optJSONArray("parameters");
+
+					if (parametersJSONArray == JSONObject.NULL) {
+						continue;
+					}
+
+					Map<String, String> parameters = new HashMap<>();
+
+					for (int k = 0; k < parametersJSONArray.length(); k++) {
+						JSONObject parameterJSONObject =
+							parametersJSONArray.optJSONObject(k);
+
+						if (parameterJSONObject == JSONObject.NULL) {
+							continue;
+						}
+
+						parameters.put(
+							parameterJSONObject.getString("name"),
+							parameterJSONObject.getString("value"));
+					}
+
+					boolean matchingBuildParameters = true;
+
+					for (Map.Entry<String, String> buildParameter :
+							buildParameters.entrySet()) {
+
+						String parameterValue = parameters.get(
+							buildParameter.getKey());
+
+						if (!Objects.equals(
+								buildParameter.getValue(), parameterValue)) {
+
+							matchingBuildParameters = false;
+
+							break;
+						}
+					}
+
+					if (matchingBuildParameters) {
+						return true;
+					}
+				}
+			}
+		}
+		catch (Exception exception) {
+			return false;
+		}
+
+		return false;
+	}
+
+	public boolean isBuildQueued(
+		String jobName, Map<String, String> buildParameters) {
+
+		try {
+			JSONObject queueJSONObject = JenkinsResultsParserUtil.toJSONObject(
+				JenkinsResultsParserUtil.combine(
+					getURL(), "/queue/api/json?",
+					"tree=items[actions[parameters[name,value]],task[url]]"));
+
+			JSONArray itemsJSONArray = queueJSONObject.optJSONArray("items");
+
+			for (int i = 0; i < itemsJSONArray.length(); i++) {
+				JSONObject itemJSONObject = itemsJSONArray.optJSONObject(i);
+
+				if (itemJSONObject == JSONObject.NULL) {
+					continue;
+				}
+
+				JSONObject taskJSONObject = itemJSONObject.optJSONObject(
+					"task");
+
+				String taskURL = taskJSONObject.optString("url", "");
+
+				if (!taskURL.contains("/" + jobName + "/")) {
+					continue;
+				}
+
+				JSONArray actionsJSONArray = itemJSONObject.optJSONArray(
+					"actions");
+
+				if (actionsJSONArray == JSONObject.NULL) {
+					continue;
+				}
+
+				for (int j = 0; j < actionsJSONArray.length(); j++) {
+					JSONObject actionJSONObject =
+						actionsJSONArray.optJSONObject(j);
+
+					if ((actionJSONObject == JSONObject.NULL) ||
+						!Objects.equals(
+							actionJSONObject.optString("_class"),
+							"hudson.model.ParametersAction")) {
+
+						continue;
+					}
+
+					JSONArray parametersJSONArray =
+						actionJSONObject.optJSONArray("parameters");
+
+					if (parametersJSONArray == JSONObject.NULL) {
+						continue;
+					}
+
+					Map<String, String> parameters = new HashMap<>();
+
+					for (int k = 0; k < parametersJSONArray.length(); k++) {
+						JSONObject parameterJSONObject =
+							parametersJSONArray.optJSONObject(k);
+
+						if (parameterJSONObject == JSONObject.NULL) {
+							continue;
+						}
+
+						parameters.put(
+							parameterJSONObject.getString("name"),
+							parameterJSONObject.getString("value"));
+					}
+
+					boolean matchingBuildParameters = true;
+
+					for (Map.Entry<String, String> buildParameter :
+							buildParameters.entrySet()) {
+
+						String parameterValue = parameters.get(
+							buildParameter.getKey());
+
+						if (!Objects.equals(
+								buildParameter.getValue(), parameterValue)) {
+
+							matchingBuildParameters = false;
+
+							break;
+						}
+					}
+
+					if (matchingBuildParameters) {
+						return true;
+					}
+				}
+			}
+		}
+		catch (Exception exception) {
+			return false;
+		}
+
+		return false;
 	}
 
 	@Override
@@ -434,26 +646,33 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 		for (int i = 0; i < itemsJSONArray.length(); i++) {
 			JSONObject itemJSONObject = itemsJSONArray.getJSONObject(i);
 
-			JSONObject taskJSONObject = null;
-
-			if (itemJSONObject.has("task")) {
-				taskJSONObject = itemJSONObject.getJSONObject("task");
+			if (!itemJSONObject.has("task")) {
+				continue;
 			}
 
-			if (taskJSONObject != null) {
-				String taskName = taskJSONObject.getString("name");
+			JSONObject taskJSONObject = itemJSONObject.getJSONObject("task");
 
-				if (taskName.equals("verification-node")) {
-					continue;
-				}
+			String taskName = taskJSONObject.getString("name");
+
+			if (taskName.equals("verification-node")) {
+				continue;
 			}
 
 			if (itemJSONObject.has("why")) {
 				String why = itemJSONObject.optString("why");
 
+				if (taskName.startsWith("label=")) {
+					String offlineSlaveWhy = JenkinsResultsParserUtil.combine(
+						"‘", taskName.substring("label=".length()),
+						"’ is offline");
+
+					if (why.contains(offlineSlaveWhy)) {
+						continue;
+					}
+				}
+
 				if (why.startsWith("There are no nodes") ||
-					why.contains("already in progress") ||
-					why.endsWith("is offline")) {
+					why.contains("already in progress")) {
 
 					continue;
 				}
@@ -556,6 +775,8 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 		Collections.synchronizedMap(new HashMap<String, JenkinsMaster>());
 	private static final List<String> _jenkinsMastersBlacklist =
 		new ArrayList<>();
+	private static final Pattern _masterNamePattern = Pattern.compile(
+		"(?<cohortName>test-\\d+)-\\d+");
 
 	static {
 		try {
@@ -576,6 +797,7 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 	private final Map<Long, Integer> _batchSizes = new TreeMap<>();
 	private boolean _blacklisted;
 	private final List<String> _buildURLs = new CopyOnWriteArrayList<>();
+	private JenkinsCohort _jenkinsCohort;
 	private final Map<String, JenkinsSlave> _jenkinsSlavesMap =
 		Collections.synchronizedMap(new HashMap<String, JenkinsSlave>());
 	private final String _masterName;

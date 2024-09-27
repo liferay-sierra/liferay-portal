@@ -42,7 +42,6 @@ import java.util.Map;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
 /**
@@ -50,12 +49,11 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.document.library.configuration.DLConfiguration",
-	service = TempFileEntriesMessageListener.class
+	immediate = true, service = TempFileEntriesMessageListener.class
 )
 public class TempFileEntriesMessageListener extends BaseMessageListener {
 
 	@Activate
-	@Modified
 	protected void activate(Map<String, Object> properties) {
 		_dlConfiguration = ConfigurableUtil.createConfigurable(
 			DLConfiguration.class, properties);
@@ -91,11 +89,6 @@ public class TempFileEntriesMessageListener extends BaseMessageListener {
 				repository));
 
 		actionableDynamicQuery.performActions();
-	}
-
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
-	protected void setModuleServiceLifecycle(
-		ModuleServiceLifecycle moduleServiceLifecycle) {
 	}
 
 	private void _deleteExpiredTemporaryFileEntries(Repository repository) {
@@ -144,6 +137,9 @@ public class TempFileEntriesMessageListener extends BaseMessageListener {
 		TempFileEntriesMessageListener.class);
 
 	private volatile DLConfiguration _dlConfiguration;
+
+	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
+	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
 	@Reference
 	private RepositoryLocalService _repositoryLocalService;

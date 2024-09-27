@@ -20,6 +20,7 @@ import com.liferay.account.constants.AccountConstants;
 import com.liferay.account.model.AccountEntry;
 import com.liferay.account.retriever.AccountUserRetriever;
 import com.liferay.account.service.AccountEntryLocalService;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -36,7 +37,6 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.vulcan.util.TransformUtil;
 import com.liferay.users.admin.kernel.util.UsersAdmin;
 
 import java.util.List;
@@ -57,23 +57,21 @@ public class AccountUserDisplaySearchContainerFactory {
 		throws PortalException {
 
 		String accountEntriesNavigation = ParamUtil.getString(
-			liferayPortletRequest, "accountEntriesNavigation", "all");
+			liferayPortletRequest, "accountEntriesNavigation", "any-account");
 
 		long[] accountEntryIds = null;
 
-		if (accountEntriesNavigation.equals("all")) {
+		if (accountEntriesNavigation.equals("any-account")) {
 			accountEntryIds = new long[] {
 				AccountConstants.ACCOUNT_ENTRY_ID_ANY
 			};
 		}
-		else if (accountEntriesNavigation.equals("accounts")) {
+		else if (accountEntriesNavigation.equals("selected-accounts")) {
 			accountEntryIds = ParamUtil.getLongValues(
 				liferayPortletRequest, "accountEntryIds");
 		}
 		else if (accountEntriesNavigation.equals("no-assigned-account")) {
-			accountEntryIds = new long[] {
-				AccountConstants.ACCOUNT_ENTRY_ID_DEFAULT
-			};
+			accountEntryIds = new long[0];
 		}
 
 		return _create(
@@ -124,7 +122,7 @@ public class AccountUserDisplaySearchContainerFactory {
 			_userGroupRoleLocalService.getUserGroupRolesByGroupAndRole(
 				accountEntry.getAccountEntryGroupId(), roleId);
 
-		if (!ListUtil.isEmpty(userGroupRoles)) {
+		if (ListUtil.isNotEmpty(userGroupRoles)) {
 			emptyResultsMessage = "no-users-were-found";
 		}
 
@@ -236,7 +234,7 @@ public class AccountUserDisplaySearchContainerFactory {
 		throws PortalException {
 
 		return _accountUserRetriever.searchAccountUsers(
-			accountEntryIds, keywords, status, start, delta, orderByCol,
+			accountEntryIds, keywords, null, status, start, delta, orderByCol,
 			_isReverseOrder(orderByType));
 	}
 

@@ -53,7 +53,7 @@ definition {
 				collectionName = "Basic Components",
 				fragmentName = "Heading");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Add a widget page template") {
@@ -80,7 +80,9 @@ definition {
 		}
 
 		task ("Assert Export button is disabled") {
-			AssertElementPresent(locator1 = "Icon#EXPORT_DISABLED");
+			AssertElementPresent(
+				key_text = "upload",
+				locator1 = "Icon#ANY_DISABLED");
 		}
 	}
 
@@ -113,7 +115,7 @@ definition {
 				collectionName = "Basic Components",
 				fragmentName = "Heading");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Add a second content page template but not publish") {
@@ -156,7 +158,9 @@ definition {
 		}
 
 		task ("Assert Export button is disabled") {
-			AssertElementPresent(locator1 = "Icon#EXPORT_DISABLED");
+			AssertElementPresent(
+				key_text = "upload",
+				locator1 = "Icon#ANY_DISABLED");
 		}
 	}
 
@@ -175,9 +179,7 @@ definition {
 				fragmentName = "Heading",
 				scope = "Master");
 
-			Button.click(button = "Publish Master");
-
-			Alert.viewSuccessMessage();
+			MastersPageTemplates.publishMaster();
 		}
 
 		task ("Add a content page template based on custom master") {
@@ -205,7 +207,7 @@ definition {
 				key_fragmentName = "heading",
 				locator1 = "PageEditor#FRAGMENT_INHERITED_FROM_CUSTOM_MASTERS");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Export content page template") {
@@ -243,9 +245,7 @@ definition {
 				fragmentName = "Button",
 				scope = "Master");
 
-			Button.click(button = "Publish Master");
-
-			Alert.viewSuccessMessage();
+			MastersPageTemplates.publishMaster();
 		}
 
 		task ("Import content page template in new site") {
@@ -271,10 +271,9 @@ definition {
 
 			Click(locator1 = "PageEditor#MORE_LINK");
 
-			AssertTextEquals(
+			AssertElementPresent(
 				key_masterLayoutName = "Custom Masters Page Template",
-				locator1 = "PagesAdmin#MASTER_LAYOUT_NAME",
-				value1 = "Custom Masters Page Template");
+				locator1 = "PagesAdmin#MASTER_LAYOUT_NAME");
 		}
 	}
 
@@ -341,7 +340,7 @@ definition {
 				editableText = "Lorem ipsum dolor sit amet",
 				fragmentName = "Title");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Export content page template") {
@@ -447,7 +446,7 @@ definition {
 
 			PageEditor.assertFragmentSidebarLoaded();
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Export content page template") {
@@ -483,7 +482,7 @@ definition {
 
 			Click(locator1 = "PageEditor#MORE_LINK");
 
-			Pause(locator1 = "3000");
+			WaitForPageLoad();
 
 			AssertChecked.assertCheckedNotVisible(locator1 = "Radio#SPECIFIC_LOOK");
 
@@ -570,7 +569,7 @@ definition {
 
 			Click(locator1 = "Icon#CLOSE");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Export content page template") {
@@ -610,6 +609,8 @@ definition {
 
 			PageTemplatesAdmin.gotoPageTemplate(pageTemplateName = "Page Template Name");
 
+			PageEditor.assertFragmentSidebarLoaded();
+
 			WaitForLiferayEvent.initializeLiferayEventLog();
 
 			MouseOver.mouseOverNotVisible(
@@ -624,7 +625,7 @@ definition {
 
 			IFrame.selectPermissionsFrame();
 
-			AssertChecked(locator1 = "//tr[contains(.,'Site Team Name')]/td/input[contains(@id,'ACTION_VIEW')]");
+			AssertChecked.assertCheckedNotVisible(locator1 = "//tr[contains(.,'Site Team Name')]/td/input[contains(@id,'ACTION_VIEW')]");
 		}
 	}
 
@@ -663,7 +664,7 @@ definition {
 
 			StyleBooks.selectStyleBookViaPageDesignOptions(styleBookName = "Test Style Book Name");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Export content page template") {
@@ -681,7 +682,7 @@ definition {
 		task ("Delete the page template collection") {
 			PageTemplatesAdmin.openPageTemplatesAdmin(siteURLKey = "test-site-name");
 
-			Collection.deleteCollection(collectionName = "Page Template Collection");
+			PageTemplatesAdmin.deletePageTemplateSet(setName = "Page Template Collection");
 		}
 
 		task ("Import the previously exported page template") {
@@ -784,7 +785,7 @@ definition {
 				editableText = "Lorem ipsum dolor sit amet",
 				fragmentName = "Title");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Export content page template") {
@@ -918,7 +919,7 @@ definition {
 				fragmentName = "Heading",
 				targetFragmentName = "Fragment Name");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Export the template.") {
@@ -1018,7 +1019,7 @@ definition {
 				id = "element-text",
 				text = "New editable fragment text");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Assert content page template has Approved label") {
@@ -1125,7 +1126,7 @@ definition {
 
 			IFrame.selectPermissionsFrame();
 
-			Check(
+			Check.checkNotVisible(
 				key_roleTitle = "account-manager",
 				locator1 = "Permissions#CONFIGURATION_PERMISSIONS_VIEW_CHECKBOX");
 
@@ -1137,7 +1138,7 @@ definition {
 
 			Click(locator1 = "Icon#CLOSE");
 
-			PageEditor.clickPublish();
+			PageEditor.publish();
 		}
 
 		task ("Export content page template") {

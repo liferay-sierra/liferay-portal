@@ -13,7 +13,7 @@
  */
 
 import ClayAlert from '@clayui/alert';
-import ClayButton from '@clayui/button/lib/Button';
+import ClayButton from '@clayui/button';
 import {Context as ClayModalContext} from '@clayui/modal';
 import ClayPanel from '@clayui/panel';
 import {useFormState} from 'data-engine-js-components-web';
@@ -160,7 +160,7 @@ const usePropagateFieldSet = () => {
 							</ClayPanel>
 						)}
 
-						{dataLayouts.length > 0 && (
+						{!!dataLayouts.length && (
 							<ClayPanel
 								className="remove-object-field-panel"
 								displayType="secondary"
@@ -174,7 +174,7 @@ const usePropagateFieldSet = () => {
 							</ClayPanel>
 						)}
 
-						{dataListViews.length > 0 && (
+						{!!dataListViews.length && (
 							<ClayPanel
 								className="remove-object-field-panel"
 								displayTitle={Liferay.Language.get(

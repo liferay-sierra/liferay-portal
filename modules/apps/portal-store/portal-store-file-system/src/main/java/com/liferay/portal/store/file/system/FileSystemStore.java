@@ -17,12 +17,14 @@ package com.liferay.portal.store.file.system;
 import com.liferay.document.library.kernel.exception.NoSuchFileException;
 import com.liferay.document.library.kernel.store.Store;
 import com.liferay.document.library.kernel.util.DLUtil;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.store.file.system.configuration.FileSystemStoreConfiguration;
 
@@ -59,11 +61,16 @@ public class FileSystemStore implements Store {
 
 		_rootDir = rootDir;
 
+		_rootDir.mkdirs();
+
 		try {
-			FileUtil.mkdirs(_rootDir);
+			FileUtil.write(
+				new File(_rootDir, "README.txt"),
+				StringUtil.read(
+					FileSystemStore.class, "dependencies/README.txt"));
 		}
 		catch (IOException ioException) {
-			throw new SystemException(ioException);
+			ReflectionUtil.throwException(ioException);
 		}
 	}
 
@@ -72,11 +79,16 @@ public class FileSystemStore implements Store {
 		long companyId, long repositoryId, String fileName, String versionLabel,
 		InputStream inputStream) {
 
-		try {
-			File fileNameVersionFile = getFileNameVersionFile(
-				companyId, repositoryId, fileName, versionLabel);
+		if (Validator.isNull(versionLabel)) {
+			versionLabel = getHeadVersionLabel(
+				companyId, repositoryId, fileName);
+		}
 
-			FileUtil.write(fileNameVersionFile, inputStream);
+		try {
+			FileUtil.write(
+				getFileNameVersionFile(
+					companyId, repositoryId, fileName, versionLabel),
+				inputStream);
 		}
 		catch (IOException ioException) {
 			throw new SystemException(ioException);
@@ -104,6 +116,11 @@ public class FileSystemStore implements Store {
 	public void deleteFile(
 		long companyId, long repositoryId, String fileName,
 		String versionLabel) {
+
+		if (Validator.isNull(versionLabel)) {
+			versionLabel = getHeadVersionLabel(
+				companyId, repositoryId, fileName);
+		}
 
 		File fileNameVersionFile = getFileNameVersionFile(
 			companyId, repositoryId, fileName, versionLabel);
@@ -138,7 +155,8 @@ public class FileSystemStore implements Store {
 		}
 		catch (FileNotFoundException fileNotFoundException) {
 			throw new NoSuchFileException(
-				companyId, repositoryId, fileName, fileNotFoundException);
+				companyId, repositoryId, fileName, versionLabel,
+				fileNotFoundException);
 		}
 	}
 
@@ -176,7 +194,8 @@ public class FileSystemStore implements Store {
 			companyId, repositoryId, fileName, versionLabel);
 
 		if (!fileNameVersionFile.exists()) {
-			throw new NoSuchFileException(companyId, repositoryId, fileName);
+			throw new NoSuchFileException(
+				companyId, repositoryId, fileName, versionLabel);
 		}
 
 		return fileNameVersionFile.length();
@@ -207,6 +226,11 @@ public class FileSystemStore implements Store {
 	public boolean hasFile(
 		long companyId, long repositoryId, String fileName,
 		String versionLabel) {
+
+		if (Validator.isNull(versionLabel)) {
+			versionLabel = getHeadVersionLabel(
+				companyId, repositoryId, fileName);
+		}
 
 		File fileNameVersionFile = getFileNameVersionFile(
 			companyId, repositoryId, fileName, versionLabel);

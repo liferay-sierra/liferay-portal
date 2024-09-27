@@ -19,7 +19,6 @@ import com.liferay.asset.list.constants.AssetListFormConstants;
 import com.liferay.asset.list.model.AssetListEntry;
 import com.liferay.frontend.taglib.form.navigator.FormNavigatorEntry;
 import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.service.PortletLocalService;
 
 import javax.servlet.ServletContext;
 
@@ -42,6 +41,11 @@ public class AssetListOrderingFormNavigatorEntry
 	}
 
 	@Override
+	public ServletContext getServletContext() {
+		return _servletContext;
+	}
+
+	@Override
 	public boolean isVisible(User user, AssetListEntry assetListEntry) {
 		if (assetListEntry == null) {
 			return false;
@@ -57,20 +61,11 @@ public class AssetListOrderingFormNavigatorEntry
 	}
 
 	@Override
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.asset.list.web)",
-		unbind = "-"
-	)
-	public void setServletContext(ServletContext servletContext) {
-		super.setServletContext(servletContext);
-	}
-
-	@Override
 	protected String getJspPath() {
 		return "/asset_list/ordering.jsp";
 	}
 
-	@Reference
-	private PortletLocalService _portletLocalService;
+	@Reference(target = "(osgi.web.symbolicname=com.liferay.asset.list.web)")
+	private ServletContext _servletContext;
 
 }

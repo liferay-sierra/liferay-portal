@@ -24,7 +24,7 @@ import com.liferay.journal.exception.NoSuchArticleException;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.model.JournalFolder;
 import com.liferay.journal.service.JournalArticleLocalService;
-import com.liferay.petra.string.StringBundler;
+import com.liferay.journal.util.JournalHelper;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
@@ -35,7 +35,7 @@ import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.social.kernel.model.BaseSocialActivityInterpreter;
 import com.liferay.social.kernel.model.SocialActivity;
@@ -96,14 +96,12 @@ public class JournalArticleActivityInterpreter
 			Layout layout = article.getLayout();
 
 			if (layout != null) {
-				String groupFriendlyURL = _portal.getGroupFriendlyURL(
-					layout.getLayoutSet(), serviceContext.getThemeDisplay(),
-					false, false);
+				ThemeDisplay themeDisplay = serviceContext.getThemeDisplay();
 
-				return StringBundler.concat(
-					groupFriendlyURL,
+				return _journalHelper.createURLPattern(
+					article, themeDisplay.getLocale(), layout.isPrivateLayout(),
 					JournalArticleConstants.CANONICAL_URL_SEPARATOR,
-					article.getUrlTitle());
+					themeDisplay);
 			}
 
 			return null;
@@ -213,13 +211,6 @@ public class JournalArticleActivityInterpreter
 			permissionChecker, activity.getClassPK(), actionId);
 	}
 
-	@Reference(unbind = "-")
-	protected void setJournalArticleLocalService(
-		JournalArticleLocalService journalArticleLocalService) {
-
-		_journalArticleLocalService = journalArticleLocalService;
-	}
-
 	private static final String[] _CLASS_NAMES = {
 		JournalArticle.class.getName()
 	};
@@ -227,6 +218,7 @@ public class JournalArticleActivityInterpreter
 	private static final Log _log = LogFactoryUtil.getLog(
 		JournalArticleActivityInterpreter.class);
 
+	@Reference
 	private JournalArticleLocalService _journalArticleLocalService;
 
 	@Reference(
@@ -242,6 +234,6 @@ public class JournalArticleActivityInterpreter
 		_journalFolderModelResourcePermission;
 
 	@Reference
-	private Portal _portal;
+	private JournalHelper _journalHelper;
 
 }

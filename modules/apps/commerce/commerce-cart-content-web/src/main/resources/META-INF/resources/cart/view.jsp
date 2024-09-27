@@ -35,7 +35,7 @@ request.setAttribute("view.jsp-portletURL", portletURL);
 
 List<CommerceOrderValidatorResult> commerceOrderValidatorResults = new ArrayList<>();
 
-Map<Long, List<CommerceOrderValidatorResult>> commerceOrderValidatorResultMap = commerceCartContentDisplayContext.getCommerceOrderValidatorResults();
+Map<Long, List<CommerceOrderValidatorResult>> commerceOrderValidatorResultsMap = commerceCartContentDisplayContext.getCommerceOrderValidatorResults();
 %>
 
 <liferay-ui:error exception="<%= CommerceOrderValidatorException.class %>">
@@ -85,6 +85,8 @@ Map<Long, List<CommerceOrderValidatorResult>> commerceOrderValidatorResultMap = 
 
 					StringJoiner stringJoiner = new StringJoiner(StringPool.COMMA);
 
+					String cpInstanceCDNURL = commerceCartContentDisplayContext.getCPInstanceCDNURL(commerceOrderItem);
+
 					if (cpInstance != null) {
 						CPDefinition cpDefinition = commerceOrderItem.getCPDefinition();
 
@@ -101,10 +103,17 @@ Map<Long, List<CommerceOrderValidatorResult>> commerceOrderValidatorResultMap = 
 					>
 						<span class="sticker sticker-xl">
 							<span class="sticker-overlay">
-								<liferay-adaptive-media:img
-									class="sticker-img"
-									fileVersion="<%= commerceCartContentDisplayContext.getCPInstanceImageFileVersion(commerceOrderItem) %>"
-								/>
+								<c:choose>
+									<c:when test="<%= Validator.isNotNull(cpInstanceCDNURL) %>">
+										<img class="sticker-img" src="<%= cpInstanceCDNURL %>" />
+									</c:when>
+									<c:otherwise>
+										<liferay-adaptive-media:img
+											class="sticker-img"
+											fileVersion="<%= commerceCartContentDisplayContext.getCPInstanceImageFileVersion(commerceOrderItem) %>"
+										/>
+									</c:otherwise>
+								</c:choose>
 							</span>
 						</span>
 					</liferay-ui:search-container-column-text>
@@ -120,10 +129,10 @@ Map<Long, List<CommerceOrderValidatorResult>> commerceOrderValidatorResultMap = 
 							<%= HtmlUtil.escape(stringJoiner.toString()) %>
 						</h6>
 
-						<c:if test="<%= !commerceOrderValidatorResultMap.isEmpty() %>">
+						<c:if test="<%= !commerceOrderValidatorResultsMap.isEmpty() %>">
 
 							<%
-							commerceOrderValidatorResults = commerceOrderValidatorResultMap.get(commerceOrderItem.getCommerceOrderItemId());
+							commerceOrderValidatorResults = commerceOrderValidatorResultsMap.get(commerceOrderItem.getCommerceOrderItemId());
 
 							for (CommerceOrderValidatorResult commerceOrderValidatorResult : commerceOrderValidatorResults) {
 							%>

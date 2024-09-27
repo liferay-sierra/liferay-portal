@@ -16,6 +16,7 @@ import ClayButton from '@clayui/button';
 import {ClayPaginationWithBasicItems} from '@clayui/pagination';
 import ClayPaginationBar from '@clayui/pagination-bar';
 import classNames from 'classnames';
+import {sub} from 'frontend-js-web';
 import PropTypes from 'prop-types';
 import React from 'react';
 
@@ -33,27 +34,10 @@ export default function CollectionPagination({
 	const isActive = useIsActive();
 	const {
 		displayAllPages,
-		numberOfItems,
 		numberOfItemsPerPage,
 		numberOfPages,
 		paginationType,
-		showAllItems,
 	} = collectionConfig;
-
-	const numericPaginationLabel = [
-		numberOfItemsPerPage && numberOfItems && totalNumberOfItems
-			? (activePage - 1) * numberOfItemsPerPage + 1
-			: 0,
-		paginationType && showAllItems
-			? Math.min(activePage * numberOfItemsPerPage, totalNumberOfItems)
-			: Math.min(
-					Math.min(activePage * numberOfItemsPerPage, numberOfItems),
-					totalNumberOfItems
-			  ),
-		paginationType && showAllItems
-			? totalNumberOfItems
-			: Math.min(numberOfItems, totalNumberOfItems),
-	];
 
 	const itemsPerPage = Math.min(
 		numberOfItemsPerPage,
@@ -83,17 +67,16 @@ export default function CollectionPagination({
 			{paginationType === 'numeric' ? (
 				<ClayPaginationBar className="flex-grow-1">
 					<ClayPaginationBar.Results>
-						{Liferay.Util.sub(
+						{sub(
 							Liferay.Language.get('showing-x-to-x-of-x-entries'),
-							config.paginationImprovementsEnabled
-								? numericPaginationLabelValues
-								: numericPaginationLabel
+							numericPaginationLabelValues
 						)}
 					</ClayPaginationBar.Results>
 
 					<ClayPaginationWithBasicItems
-						activePage={activePage}
-						onPageChange={onPageChange}
+						active={activePage}
+						disableEllipsis
+						onActiveChange={onPageChange}
 						totalPages={
 							(Number.isFinite(totalPages) && totalPages) || 1
 						}

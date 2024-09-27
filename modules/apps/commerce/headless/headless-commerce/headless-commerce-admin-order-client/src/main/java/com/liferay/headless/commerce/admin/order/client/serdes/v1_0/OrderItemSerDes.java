@@ -14,6 +14,7 @@
 
 package com.liferay.headless.commerce.admin.order.client.serdes.v1_0;
 
+import com.liferay.headless.commerce.admin.order.client.dto.v1_0.CustomField;
 import com.liferay.headless.commerce.admin.order.client.dto.v1_0.OrderItem;
 import com.liferay.headless.commerce.admin.order.client.json.BaseJSONParser;
 
@@ -27,6 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Stream;
 
 import javax.annotation.Generated;
 
@@ -59,7 +61,7 @@ public class OrderItemSerDes {
 		sb.append("{");
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+			"yyyy-MM-dd'T'HH:mm:ssXX");
 
 		if (orderItem.getBookedQuantityId() != null) {
 			if (sb.length() > 1) {
@@ -78,7 +80,17 @@ public class OrderItemSerDes {
 
 			sb.append("\"customFields\": ");
 
-			sb.append(_toJSON(orderItem.getCustomFields()));
+			sb.append("[");
+
+			for (int i = 0; i < orderItem.getCustomFields().length; i++) {
+				sb.append(String.valueOf(orderItem.getCustomFields()[i]));
+
+				if ((i + 1) < orderItem.getCustomFields().length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
 		}
 
 		if (orderItem.getDecimalQuantity() != null) {
@@ -113,6 +125,16 @@ public class OrderItemSerDes {
 			sb.append("\"discountAmount\": ");
 
 			sb.append(orderItem.getDiscountAmount());
+		}
+
+		if (orderItem.getDiscountManuallyAdjusted() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"discountManuallyAdjusted\": ");
+
+			sb.append(orderItem.getDiscountManuallyAdjusted());
 		}
 
 		if (orderItem.getDiscountPercentageLevel1() != null) {
@@ -311,6 +333,16 @@ public class OrderItemSerDes {
 			sb.append(orderItem.getOrderId());
 		}
 
+		if (orderItem.getPriceManuallyAdjusted() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"priceManuallyAdjusted\": ");
+
+			sb.append(orderItem.getPriceManuallyAdjusted());
+		}
+
 		if (orderItem.getPrintedNote() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -502,7 +534,7 @@ public class OrderItemSerDes {
 		Map<String, String> map = new TreeMap<>();
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+			"yyyy-MM-dd'T'HH:mm:ssXX");
 
 		if (orderItem.getBookedQuantityId() == null) {
 			map.put("bookedQuantityId", null);
@@ -545,6 +577,15 @@ public class OrderItemSerDes {
 			map.put(
 				"discountAmount",
 				String.valueOf(orderItem.getDiscountAmount()));
+		}
+
+		if (orderItem.getDiscountManuallyAdjusted() == null) {
+			map.put("discountManuallyAdjusted", null);
+		}
+		else {
+			map.put(
+				"discountManuallyAdjusted",
+				String.valueOf(orderItem.getDiscountManuallyAdjusted()));
 		}
 
 		if (orderItem.getDiscountPercentageLevel1() == null) {
@@ -703,6 +744,15 @@ public class OrderItemSerDes {
 			map.put("orderId", String.valueOf(orderItem.getOrderId()));
 		}
 
+		if (orderItem.getPriceManuallyAdjusted() == null) {
+			map.put("priceManuallyAdjusted", null);
+		}
+		else {
+			map.put(
+				"priceManuallyAdjusted",
+				String.valueOf(orderItem.getPriceManuallyAdjusted()));
+		}
+
 		if (orderItem.getPrintedNote() == null) {
 			map.put("printedNote", null);
 		}
@@ -854,8 +904,13 @@ public class OrderItemSerDes {
 			else if (Objects.equals(jsonParserFieldName, "customFields")) {
 				if (jsonParserFieldValue != null) {
 					orderItem.setCustomFields(
-						(Map)OrderItemSerDes.toMap(
-							(String)jsonParserFieldValue));
+						Stream.of(
+							toStrings((Object[])jsonParserFieldValue)
+						).map(
+							object -> CustomFieldSerDes.toDTO((String)object)
+						).toArray(
+							size -> new CustomField[size]
+						));
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "decimalQuantity")) {
@@ -873,6 +928,14 @@ public class OrderItemSerDes {
 				if (jsonParserFieldValue != null) {
 					orderItem.setDiscountAmount(
 						new BigDecimal((String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "discountManuallyAdjusted")) {
+
+				if (jsonParserFieldValue != null) {
+					orderItem.setDiscountManuallyAdjusted(
+						(Boolean)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(
@@ -1008,6 +1071,14 @@ public class OrderItemSerDes {
 				if (jsonParserFieldValue != null) {
 					orderItem.setOrderId(
 						Long.valueOf((String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "priceManuallyAdjusted")) {
+
+				if (jsonParserFieldValue != null) {
+					orderItem.setPriceManuallyAdjusted(
+						(Boolean)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "printedNote")) {

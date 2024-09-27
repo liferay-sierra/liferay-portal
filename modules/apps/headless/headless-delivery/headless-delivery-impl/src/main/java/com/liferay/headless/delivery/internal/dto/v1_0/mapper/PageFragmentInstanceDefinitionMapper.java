@@ -14,7 +14,8 @@
 
 package com.liferay.headless.delivery.internal.dto.v1_0.mapper;
 
-import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
+import com.liferay.fragment.contributor.FragmentCollectionContributorRegistry;
+import com.liferay.fragment.entry.processor.constants.FragmentEntryProcessorConstants;
 import com.liferay.fragment.entry.processor.util.EditableFragmentEntryProcessorUtil;
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.model.FragmentEntryLink;
@@ -43,9 +44,10 @@ import com.liferay.headless.delivery.dto.v1_0.PageFragmentInstanceDefinition;
 import com.liferay.headless.delivery.dto.v1_0.WidgetInstance;
 import com.liferay.headless.delivery.internal.dto.v1_0.mapper.util.FragmentMappedValueUtil;
 import com.liferay.headless.delivery.internal.dto.v1_0.mapper.util.LocalizedValueUtil;
+import com.liferay.headless.delivery.internal.dto.v1_0.mapper.util.StyledLayoutStructureItemUtil;
 import com.liferay.info.field.InfoFieldValue;
 import com.liferay.info.item.ClassPKInfoItemIdentifier;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFieldValuesProvider;
 import com.liferay.info.item.provider.InfoItemObjectProvider;
 import com.liferay.layout.util.structure.FragmentStyledLayoutStructureItem;
@@ -53,13 +55,12 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONDeserializer;
 import com.liferay.portal.kernel.json.JSONException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
-import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -69,6 +70,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -103,11 +105,18 @@ public class PageFragmentInstanceDefinitionMapper {
 		String rendererKey = fragmentEntryLink.getRendererKey();
 
 		FragmentEntry fragmentEntry = _getFragmentEntry(
-			_fragmentCollectionContributorTracker,
+			_fragmentCollectionContributorRegistry,
 			fragmentEntryLink.getFragmentEntryId(), rendererKey);
 
 		return new PageFragmentInstanceDefinition() {
 			{
+				cssClasses = StyledLayoutStructureItemUtil.getCssClasses(
+					fragmentStyledLayoutStructureItem);
+				customCSS = StyledLayoutStructureItemUtil.getCustomCSS(
+					fragmentStyledLayoutStructureItem);
+				customCSSViewports =
+					StyledLayoutStructureItemUtil.getCustomCSSViewports(
+						fragmentStyledLayoutStructureItem);
 				fragment = new Fragment() {
 					{
 						key = _getFragmentKey(fragmentEntry, rendererKey);
@@ -119,13 +128,20 @@ public class PageFragmentInstanceDefinitionMapper {
 				fragmentStyle = pageFragmentInstanceDefinitionFragmentStyle;
 				fragmentViewports =
 					pageFragmentInstanceDefinitionFragmentViewports;
+				indexed = fragmentStyledLayoutStructureItem.isIndexed();
 				widgetInstances = _getWidgetInstances(fragmentEntryLink);
+
+				setName(fragmentStyledLayoutStructureItem::getName);
 			}
 		};
 	}
 
 	private List<FragmentField> _getBackgroundImageFragmentFields(
 		JSONObject jsonObject, boolean saveMapping) {
+
+		if (jsonObject == null) {
+			return Collections.emptyList();
+		}
 
 		List<FragmentField> fragmentFields = new ArrayList<>();
 
@@ -155,19 +171,39 @@ public class PageFragmentInstanceDefinitionMapper {
 		FragmentEntryLink fragmentEntryLink) {
 
 		try {
+			JSONObject editableValuesJSONObject = _jsonFactory.createJSONObject(
+				fragmentEntryLink.getEditableValues());
+
+			JSONObject configJSONObject =
+				editableValuesJSONObject.getJSONObject(
+					FragmentEntryProcessorConstants.
+						KEY_FREEMARKER_FRAGMENT_ENTRY_PROCESSOR);
+
+			if (configJSONObject == null) {
+				configJSONObject =
+					_fragmentEntryConfigurationParser.
+						getConfigurationDefaultValuesJSONObject(
+							fragmentEntryLink.getConfiguration());
+
+				if (configJSONObject == null) {
+					return Collections.emptyMap();
+				}
+			}
+
+			JSONObject jsonObject = configJSONObject;
+
 			return new HashMap<String, Object>() {
 				{
-					JSONObject jsonObject =
-						_fragmentEntryConfigurationParser.
-							getConfigurationJSONObject(
+					for (String key : jsonObject.keySet()) {
+						Object value =
+							_fragmentEntryConfigurationParser.getFieldValue(
 								fragmentEntryLink.getConfiguration(),
 								fragmentEntryLink.getEditableValues(),
-								LocaleUtil.getMostRelevantLocale());
+								LocaleUtil.getMostRelevantLocale(), key);
 
-					Set<String> keys = jsonObject.keySet();
-
-					for (String key : keys) {
-						Object value = jsonObject.get(key);
+						if (value == null) {
+							value = jsonObject.get(key);
+						}
 
 						if (value instanceof JSONObject) {
 							JSONObject valueJSONObject = (JSONObject)value;
@@ -182,7 +218,7 @@ public class PageFragmentInstanceDefinitionMapper {
 
 							JSONDeserializer<Map<String, Object>>
 								jsonDeserializer =
-									JSONFactoryUtil.createJSONDeserializer();
+									_jsonFactory.createJSONDeserializer();
 
 							value = jsonDeserializer.deserialize(
 								value.toString());
@@ -194,13 +230,17 @@ public class PageFragmentInstanceDefinitionMapper {
 			};
 		}
 		catch (JSONException jsonException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(jsonException);
+			}
+
 			return null;
 		}
 	}
 
 	private FragmentEntry _getFragmentEntry(
-		FragmentCollectionContributorTracker
-			fragmentCollectionContributorTracker,
+		FragmentCollectionContributorRegistry
+			fragmentCollectionContributorRegistry,
 		long fragmentEntryId, String rendererKey) {
 
 		FragmentEntry fragmentEntry =
@@ -211,7 +251,7 @@ public class PageFragmentInstanceDefinitionMapper {
 		}
 
 		Map<String, FragmentEntry> fragmentEntries =
-			fragmentCollectionContributorTracker.getFragmentEntries();
+			fragmentCollectionContributorRegistry.getFragmentEntries();
 
 		return fragmentEntries.get(rendererKey);
 	}
@@ -227,31 +267,34 @@ public class PageFragmentInstanceDefinitionMapper {
 		JSONObject editableValuesJSONObject = null;
 
 		try {
-			editableValuesJSONObject = JSONFactoryUtil.createJSONObject(
+			editableValuesJSONObject = _jsonFactory.createJSONObject(
 				fragmentEntryLink.getEditableValues());
 		}
 		catch (JSONException jsonException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(jsonException);
+			}
+
 			return null;
 		}
 
 		List<FragmentField> fragmentFields = new ArrayList<>(
 			_getBackgroundImageFragmentFields(
 				editableValuesJSONObject.getJSONObject(
-					"com.liferay.fragment.entry.processor.background.image." +
-						"BackgroundImageFragmentEntryProcessor"),
+					FragmentEntryProcessorConstants.
+						KEY_BACKGROUND_IMAGE_FRAGMENT_ENTRY_PROCESSOR),
 				saveMapping));
 
 		JSONObject jsonObject = editableValuesJSONObject.getJSONObject(
-			"com.liferay.fragment.entry.processor.editable." +
-				"EditableFragmentEntryProcessor");
+			FragmentEntryProcessorConstants.
+				KEY_EDITABLE_FRAGMENT_ENTRY_PROCESSOR);
 
 		if (jsonObject != null) {
-			Map<String, String> editableTypes =
-				EditableFragmentEntryProcessorUtil.getEditableTypes(
-					fragmentEntryLink.getHtml());
-
 			fragmentFields.addAll(
-				_getTextFragmentFields(editableTypes, jsonObject, saveMapping));
+				_getTextFragmentFields(
+					EditableFragmentEntryProcessorUtil.getEditableTypes(
+						fragmentEntryLink.getHtml()),
+					jsonObject, saveMapping));
 		}
 
 		return fragmentFields.toArray(new FragmentField[0]);
@@ -367,11 +410,11 @@ public class PageFragmentInstanceDefinitionMapper {
 		}
 
 		InfoItemFieldValuesProvider<Object> infoItemFieldValuesProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFieldValuesProvider.class, className);
 
 		InfoItemObjectProvider<Object> infoItemObjectProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemObjectProvider.class, className);
 
 		if ((infoItemFieldValuesProvider == null) ||
@@ -569,6 +612,9 @@ public class PageFragmentInstanceDefinitionMapper {
 		Map<String, String> localizedValues =
 			LocalizedValueUtil.toLocalizedValues(jsonObject);
 
+		Map<String, String> localizedURLs = _toLocalizedURLs(
+			localizedJSONObjects, localizedValues);
+
 		return new FragmentFieldImage() {
 			{
 				fragmentImage = new FragmentImage() {
@@ -580,7 +626,9 @@ public class PageFragmentInstanceDefinitionMapper {
 
 						setFragmentImageClassPKReference(
 							() -> {
-								if (MapUtil.isEmpty(localizedJSONObjects)) {
+								if (MapUtil.isEmpty(localizedJSONObjects) ||
+									MapUtil.isNotEmpty(localizedURLs)) {
+
 									return null;
 								}
 
@@ -590,10 +638,6 @@ public class PageFragmentInstanceDefinitionMapper {
 							});
 						setUrl(
 							() -> {
-								if (MapUtil.isNotEmpty(localizedJSONObjects)) {
-									return null;
-								}
-
 								if (FragmentMappedValueUtil.
 										isSaveFragmentMappedValue(
 											jsonObject, saveMapping)) {
@@ -607,7 +651,7 @@ public class PageFragmentInstanceDefinitionMapper {
 
 								return new FragmentInlineValue() {
 									{
-										value_i18n = localizedValues;
+										value_i18n = localizedURLs;
 									}
 								};
 							});
@@ -664,13 +708,33 @@ public class PageFragmentInstanceDefinitionMapper {
 				classPKReferences = _toClassPKReferences(localizedJSONObjects);
 				fragmentImageConfiguration = new FragmentImageConfiguration() {
 					{
-						landscapeMobile =
-							imageConfigurationJSONObject.getString(
-								"landscapeMobile", "auto");
-						portraitMobile = imageConfigurationJSONObject.getString(
-							"portraitMobile", "auto");
-						tablet = imageConfigurationJSONObject.getString(
-							"tablet", "auto");
+						setLandscapeMobile(
+							() -> {
+								if (imageConfigurationJSONObject == null) {
+									return null;
+								}
+
+								return imageConfigurationJSONObject.getString(
+									"landscapeMobile", "auto");
+							});
+						setPortraitMobile(
+							() -> {
+								if (imageConfigurationJSONObject == null) {
+									return null;
+								}
+
+								return imageConfigurationJSONObject.getString(
+									"portraitMobile", "auto");
+							});
+						setTablet(
+							() -> {
+								if (imageConfigurationJSONObject == null) {
+									return null;
+								}
+
+								return imageConfigurationJSONObject.getString(
+									"tablet", "auto");
+							});
 					}
 				};
 			}
@@ -720,7 +784,32 @@ public class PageFragmentInstanceDefinitionMapper {
 
 						return new FragmentInlineValue() {
 							{
-								value = configJSONObject.getString("href");
+								setValue(
+									() -> {
+										JSONObject hrefJSONObject =
+											configJSONObject.getJSONObject(
+												"href");
+
+										if (hrefJSONObject != null) {
+											return null;
+										}
+
+										return configJSONObject.getString(
+											"href");
+									});
+								setValue_i18n(
+									() -> {
+										JSONObject hrefJSONObject =
+											configJSONObject.getJSONObject(
+												"href");
+
+										if (hrefJSONObject != null) {
+											return JSONUtil.toStringMap(
+												hrefJSONObject);
+										}
+
+										return null;
+									});
 							}
 						};
 					});
@@ -787,7 +876,34 @@ public class PageFragmentInstanceDefinitionMapper {
 			fragmentLinkValues.put(languageId, fragmentLinkValue);
 		}
 
+		if (fragmentLinkValues.isEmpty()) {
+			return null;
+		}
+
 		return fragmentLinkValues;
+	}
+
+	private Map<String, String> _toLocalizedURLs(
+		Map<String, JSONObject> localizedJSONObjects,
+		Map<String, String> localizedValues) {
+
+		HashMap<String, String> localizedURLs = new HashMap<String, String>() {
+			{
+				for (Map.Entry<String, JSONObject> entry :
+						localizedJSONObjects.entrySet()) {
+
+					JSONObject localizedJSONObject = entry.getValue();
+
+					put(entry.getKey(), localizedJSONObject.getString("url"));
+				}
+			}
+		};
+
+		if (!localizedURLs.isEmpty()) {
+			return localizedURLs;
+		}
+
+		return localizedValues;
 	}
 
 	private Map<String, JSONObject> _toLocalizedValueJSONObjects(
@@ -841,8 +957,8 @@ public class PageFragmentInstanceDefinitionMapper {
 		PageFragmentInstanceDefinitionMapper.class);
 
 	@Reference
-	private FragmentCollectionContributorTracker
-		_fragmentCollectionContributorTracker;
+	private FragmentCollectionContributorRegistry
+		_fragmentCollectionContributorRegistry;
 
 	@Reference
 	private FragmentEntryConfigurationParser _fragmentEntryConfigurationParser;
@@ -854,10 +970,10 @@ public class PageFragmentInstanceDefinitionMapper {
 	private FragmentEntryLocalService _fragmentEntryLocalService;
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
-	private LayoutLocalService _layoutLocalService;
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Portal _portal;

@@ -22,6 +22,7 @@ import com.liferay.dispatch.executor.DispatchTaskClusterMode;
 import com.liferay.dispatch.internal.helper.DispatchTriggerHelper;
 import com.liferay.dispatch.model.DispatchTrigger;
 import com.liferay.dispatch.service.base.DispatchTriggerLocalServiceBaseImpl;
+import com.liferay.dispatch.service.persistence.DispatchLogPersistence;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -33,6 +34,8 @@ import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.scheduler.SchedulerException;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.service.ResourceLocalService;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalRunMode;
@@ -41,6 +44,7 @@ import com.liferay.portal.kernel.util.Validator;
 
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -58,18 +62,20 @@ public class DispatchTriggerLocalServiceImpl
 
 	@Override
 	public DispatchTrigger addDispatchTrigger(
-			long userId, String dispatchTaskExecutorType,
+			String externalReferenceCode, long userId,
+			String dispatchTaskExecutorType,
 			UnicodeProperties dispatchTaskSettingsUnicodeProperties,
 			String name, boolean system)
 		throws PortalException {
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
-		validate(0, user.getCompanyId(), name);
+		_validate(0, user.getCompanyId(), name);
 
 		DispatchTrigger dispatchTrigger = dispatchTriggerPersistence.create(
 			counterLocalService.increment());
 
+		dispatchTrigger.setExternalReferenceCode(externalReferenceCode);
 		dispatchTrigger.setCompanyId(user.getCompanyId());
 		dispatchTrigger.setUserId(user.getUserId());
 		dispatchTrigger.setUserName(user.getFullName());
@@ -81,7 +87,7 @@ public class DispatchTriggerLocalServiceImpl
 
 		dispatchTrigger = dispatchTriggerPersistence.update(dispatchTrigger);
 
-		resourceLocalService.addResources(
+		_resourceLocalService.addResources(
 			user.getCompanyId(), GroupConstants.DEFAULT_LIVE_GROUP_ID,
 			user.getUserId(), DispatchTrigger.class.getName(),
 			dispatchTrigger.getDispatchTriggerId(), false, true, true);
@@ -102,12 +108,12 @@ public class DispatchTriggerLocalServiceImpl
 			return dispatchTrigger;
 		}
 
-		dispatchLogPersistence.removeByDispatchTriggerId(
+		_dispatchLogPersistence.removeByDispatchTriggerId(
 			dispatchTrigger.getDispatchTriggerId());
 
 		dispatchTriggerPersistence.remove(dispatchTrigger);
 
-		resourceLocalService.deleteResource(
+		_resourceLocalService.deleteResource(
 			dispatchTrigger, ResourceConstants.SCOPE_INDIVIDUAL);
 
 		DispatchTaskClusterMode dispatchTaskClusterMode =
@@ -260,7 +266,7 @@ public class DispatchTriggerLocalServiceImpl
 			int endDateDay, int endDateYear, int endDateHour, int endDateMinute,
 			boolean neverEnd, boolean overlapAllowed, int startDateMonth,
 			int startDateDay, int startDateYear, int startDateHour,
-			int startDateMinute)
+			int startDateMinute, String timeZoneId)
 		throws PortalException {
 
 		DispatchTrigger dispatchTrigger =
@@ -274,20 +280,24 @@ public class DispatchTriggerLocalServiceImpl
 		}
 		else {
 			dispatchTrigger.setEndDate(
-				_portal.getDate(
-					endDateMonth, endDateDay, endDateYear, endDateHour,
-					endDateMinute, DispatchTriggerEndDateException.class));
+				_getUTCDate(
+					_portal.getDate(
+						endDateMonth, endDateDay, endDateYear, endDateHour,
+						endDateMinute, DispatchTriggerEndDateException.class),
+					timeZoneId));
 		}
-
-		dispatchTrigger.setOverlapAllowed(overlapAllowed);
-
-		dispatchTrigger.setStartDate(
-			_portal.getDate(
-				startDateMonth, startDateDay, startDateYear, startDateHour,
-				startDateMinute, DispatchTriggerStartDateException.class));
 
 		dispatchTrigger.setDispatchTaskClusterMode(
 			dispatchTaskClusterMode.getMode());
+		dispatchTrigger.setOverlapAllowed(overlapAllowed);
+		dispatchTrigger.setStartDate(
+			_getUTCDate(
+				_portal.getDate(
+					startDateMonth, startDateDay, startDateYear, startDateHour,
+					startDateMinute, DispatchTriggerStartDateException.class),
+				timeZoneId));
+
+		dispatchTrigger.setTimeZoneId(timeZoneId);
 
 		dispatchTrigger = dispatchTriggerPersistence.update(dispatchTrigger);
 
@@ -298,7 +308,7 @@ public class DispatchTriggerLocalServiceImpl
 			_dispatchTriggerHelper.addSchedulerJob(
 				dispatchTriggerId, cronExpression,
 				dispatchTrigger.getStartDate(), dispatchTrigger.getEndDate(),
-				dispatchTaskClusterMode.getStorageType());
+				dispatchTaskClusterMode.getStorageType(), timeZoneId);
 		}
 
 		return dispatchTrigger;
@@ -313,7 +323,7 @@ public class DispatchTriggerLocalServiceImpl
 		DispatchTrigger dispatchTrigger =
 			dispatchTriggerPersistence.findByPrimaryKey(dispatchTriggerId);
 
-		validate(dispatchTriggerId, dispatchTrigger.getCompanyId(), name);
+		_validate(dispatchTriggerId, dispatchTrigger.getCompanyId(), name);
 
 		dispatchTrigger.setName(name);
 		dispatchTrigger.setDispatchTaskSettingsUnicodeProperties(
@@ -322,7 +332,13 @@ public class DispatchTriggerLocalServiceImpl
 		return dispatchTriggerPersistence.update(dispatchTrigger);
 	}
 
-	protected void validate(long dispatchTriggerId, long companyId, String name)
+	private Date _getUTCDate(Date date, String timeZoneId) {
+		TimeZone timeZone = TimeZone.getTimeZone(timeZoneId);
+
+		return new Date(date.getTime() - timeZone.getOffset(date.getTime()));
+	}
+
+	private void _validate(long dispatchTriggerId, long companyId, String name)
 		throws PortalException {
 
 		if (Validator.isNull(name)) {
@@ -350,9 +366,18 @@ public class DispatchTriggerLocalServiceImpl
 		DispatchTriggerLocalServiceImpl.class);
 
 	@Reference
+	private DispatchLogPersistence _dispatchLogPersistence;
+
+	@Reference
 	private DispatchTriggerHelper _dispatchTriggerHelper;
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private ResourceLocalService _resourceLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

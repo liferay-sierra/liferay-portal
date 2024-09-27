@@ -32,7 +32,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Eduardo García
  */
-@Component(immediate = true, service = StagedModelDataHandler.class)
+@Component(service = StagedModelDataHandler.class)
 public class SegmentsEntryStagedModelDataHandler
 	extends BaseStagedModelDataHandler<SegmentsEntry> {
 
@@ -116,14 +116,11 @@ public class SegmentsEntryStagedModelDataHandler
 
 		importedSegmentsEntry.setGroupId(portletDataContext.getScopeGroupId());
 		importedSegmentsEntry.setCompanyId(portletDataContext.getCompanyId());
-
-		String criteria =
+		importedSegmentsEntry.setCriteria(
 			_segmentsEntryExportImportContentProcessor.
 				replaceImportContentReferences(
 					portletDataContext, segmentsEntry,
-					segmentsEntry.getCriteria());
-
-		importedSegmentsEntry.setCriteria(criteria);
+					segmentsEntry.getCriteria()));
 
 		SegmentsEntry existingSegmentsEntry =
 			_stagedModelRepository.fetchStagedModelByUuidAndGroupId(

@@ -16,6 +16,7 @@ package com.liferay.portal.vulcan.util;
 
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.dao.orm.QueryDefinition;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.search.BooleanClause;
@@ -28,6 +29,7 @@ import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.IndexSearcherHelperUtil;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
+import com.liferay.portal.kernel.search.Query;
 import com.liferay.portal.kernel.search.QueryConfig;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.facet.SimpleFacet;
@@ -39,7 +41,6 @@ import com.liferay.portal.kernel.search.generic.MatchAllQuery;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.search.aggregation.AggregationResult;
 import com.liferay.portal.search.searcher.SearchResponse;
@@ -71,16 +72,68 @@ public class SearchUtil {
 		Object[] orderByComparatorColumns = _getOrderByComparatorColumns(sorts);
 
 		if (orderByComparatorColumns != null) {
-			OrderByComparator<T> orderByComparator =
+			queryDefinition.setOrderByComparator(
 				OrderByComparatorFactoryUtil.create(
-					clazz.getSimpleName(), orderByComparatorColumns);
-
-			queryDefinition.setOrderByComparator(orderByComparator);
+					clazz.getSimpleName(), orderByComparatorColumns));
 		}
 
 		queryDefinition.setStart(pagination.getStartPosition());
 
 		return queryDefinition;
+	}
+
+	public static <T> Page<T> search(
+			Map<String, Map<String, String>> actions,
+			UnsafeConsumer<BooleanQuery, Exception> booleanQueryUnsafeConsumer,
+			Filter filter, Indexer<?> indexer, String keywords,
+			Pagination pagination,
+			UnsafeConsumer<QueryConfig, Exception> queryConfigUnsafeConsumer,
+			UnsafeConsumer<SearchContext, Exception>
+				searchContextUnsafeConsumer,
+			Sort[] sorts,
+			UnsafeFunction<Document, T, Exception> transformUnsafeFunction)
+		throws Exception {
+
+		Hits hits = null;
+		long totalCount = 0;
+
+		if (sorts == null) {
+			sorts = new Sort[] {
+				new Sort(Field.ENTRY_CLASS_PK, Sort.LONG_TYPE, false)
+			};
+		}
+
+		SearchContext searchContext = _createSearchContext(
+			_getBooleanClause(booleanQueryUnsafeConsumer, filter), keywords,
+			pagination, queryConfigUnsafeConsumer, sorts);
+
+		searchContextUnsafeConsumer.accept(searchContext);
+
+		if (searchContext.isVulcanCheckPermissions()) {
+			hits = indexer.search(searchContext);
+			totalCount = indexer.searchCount(searchContext);
+		}
+		else {
+			Query query = indexer.getFullQuery(searchContext);
+
+			hits = IndexSearcherHelperUtil.search(searchContext, query);
+			totalCount = IndexSearcherHelperUtil.searchCount(
+				searchContext, query);
+		}
+
+		List<T> items = new ArrayList<>();
+
+		for (Document document : hits.getDocs()) {
+			T item = transformUnsafeFunction.apply(document);
+
+			if (item != null) {
+				items.add(item);
+			}
+		}
+
+		return Page.of(
+			(actions != null) ? actions : Collections.emptyMap(),
+			_getFacets(searchContext), items, pagination, totalCount);
 	}
 
 	public static <T> Page<T> search(
@@ -95,47 +148,11 @@ public class SearchUtil {
 			UnsafeFunction<Document, T, Exception> transformUnsafeFunction)
 		throws Exception {
 
-		if (actions == null) {
-			actions = Collections.emptyMap();
-		}
-
-		if (sorts == null) {
-			sorts = new Sort[] {
-				new Sort(Field.ENTRY_CLASS_PK, Sort.LONG_TYPE, false)
-			};
-		}
-
-		SearchContext searchContext = _createSearchContext(
-			_getBooleanClause(booleanQueryUnsafeConsumer, filter), keywords,
-			pagination, queryConfigUnsafeConsumer, sorts);
-
-		searchContextUnsafeConsumer.accept(searchContext);
-
-		List<T> items = new ArrayList<>();
-
-		Hits hits = null;
-
-		Indexer<?> indexer = IndexerRegistryUtil.getIndexer(indexerClassName);
-
-		if (searchContext.isVulcanCheckPermissions()) {
-			hits = indexer.search(searchContext);
-		}
-		else {
-			hits = IndexSearcherHelperUtil.search(
-				searchContext, indexer.getFullQuery(searchContext));
-		}
-
-		for (Document document : hits.getDocs()) {
-			T item = transformUnsafeFunction.apply(document);
-
-			if (item != null) {
-				items.add(item);
-			}
-		}
-
-		return Page.of(
-			actions, _getFacets(searchContext), items, pagination,
-			indexer.searchCount(searchContext));
+		return search(
+			actions, booleanQueryUnsafeConsumer, filter,
+			IndexerRegistryUtil.getIndexer(indexerClassName), keywords,
+			pagination, queryConfigUnsafeConsumer, searchContextUnsafeConsumer,
+			sorts, transformUnsafeFunction);
 	}
 
 	public static class SearchContext

@@ -63,6 +63,25 @@ definition {
 			option = "${option}");
 	}
 
+	macro configureFederatedSearchKeyForOptionsWidget {
+		Portlet.gotoPortletOptions(
+			portletName = "Blueprints Options",
+			portletOption = "Configuration");
+
+		SelectFrame(locator1 = "IFrame#CONFIGURATION");
+
+		Type(
+			key_fieldLabel = "Federated Search Key",
+			locator1 = "TextInput#GENERIC_TEXT_INPUT",
+			value1 = "${federatedSearchKey}");
+
+		Button.clickSave();
+
+		Alert.viewSuccessMessage();
+
+		IFrame.closeFrame();
+	}
+
 	macro createBlueprint {
 		Click(locator1 = "Button#PLUS");
 
@@ -103,45 +122,60 @@ definition {
 		Alert.viewSuccessMessage();
 	}
 
-	macro editBlueprint {
-		Blueprints.editEntry(title = "${title}");
+	macro getBlueprintID {
+		Variables.assertDefined(parameterList = "${title}");
+
+		var portalURL = JSONCompany.getPortalURL();
+
+		var curl = '''
+				${portalURL}/o/search-experiences-rest/v1.0/sxp-blueprints?search=${title} \
+				-H 'accept: application/json' \
+				-u test@liferay.com:test
+		''';
+
+		var blueprintId = JSONCurlUtil.get("${curl}", "$.items[?(@['title'] == '${title}')]['id']");
+
+		echo("## ID for Blueprint ${title}: ${blueprintId}");
+
+		return "${blueprintId}";
 	}
 
-	macro editElement {
+	macro getElementID {
+		Variables.assertDefined(parameterList = "${title}");
+
+		var portalURL = JSONCompany.getPortalURL();
+
+		var curl = '''
+				${portalURL}/o/search-experiences-rest/v1.0/sxp-elements?search=${title} \
+				-H 'accept: application/json' \
+				-u test@liferay.com:test
+		''';
+
+		var elementId = JSONCurlUtil.get("${curl}", "$.items[?(@['title'] == '${title}')]['id']");
+
+		echo("## ID for Element ${title}: ${elementId}");
+
+		return "${elementId}";
+	}
+
+	macro gotoBlueprint {
+		Blueprints.gotoEntry(title = "${title}");
+	}
+
+	macro gotoElement {
 		Navigator.gotoNavItem(navItem = "Elements");
 
 		if ("${searchForElement}" == "true") {
 			Search.searchCP(searchTerm = "${element}");
 		}
 
-		Blueprints.editEntry(title = "${element}");
+		Blueprints.gotoEntry(title = "${element}");
 	}
 
-	macro editEntry {
+	macro gotoEntry {
 		Click(
-			locator1 = "Blueprints#BLUEPRINTS_ADMIN_ENTRY_TITLE",
-			title = "${title}");
-	}
-
-	macro getBlueprintID {
-		Variables.assertDefined(parameterList = "${title}");
-
-		var groupId = JSONGroupAPI._getGroupIdByName(
-			groupName = "Global",
-			site = "true");
-
-		var portalURL = JSONCompany.getPortalURL();
-
-		var curl = '''
-				${portalURL}/o/search-experiences-rest/v1.0/sxp-blueprints \
-				-H 'accept: application/json' \
-				-u test@liferay.com:test
-		''';
-		var blueprintId = JSONCurlUtil.get("${curl}", "$.items[?(@['title'] == '${title}')]['id']");
-
-		echo("## ID for Blueprint ${title}: ${blueprintId}");
-
-		return "${blueprintId}";
+			entryTitle = "${title}",
+			locator1 = "Blueprints#BLUEPRINTS_ADMIN_ENTRY_TITLE");
 	}
 
 	macro gotoEntryMenuItem {
@@ -157,13 +191,18 @@ definition {
 			var siteURLKey = "guest";
 		}
 
-		Navigator.openWithAppendToBaseURL(urlAppend = "group/${siteURLKey}/~/control_panel/manage?p_p_id=com_liferay_search_experiences_web_internal_blueprint_admin_portlet_SXPBlueprintAdminPortlet");
+		if (isSet(locale)) {
+			Navigator.openWithAppendToBaseURL(urlAppend = "${locale}/group/${siteURLKey}/~/control_panel/manage?p_p_id=com_liferay_search_experiences_web_internal_blueprint_admin_portlet_SXPBlueprintAdminPortlet");
+		}
+		else {
+			Navigator.openWithAppendToBaseURL(urlAppend = "group/${siteURLKey}/~/control_panel/manage?p_p_id=com_liferay_search_experiences_web_internal_blueprint_admin_portlet_SXPBlueprintAdminPortlet");
+		}
 	}
 
 	macro openEntryMenu {
 		Click.waitForMenuToggleJSClick(
-			locator1 = "Blueprints#BLUEPRINTS_ADMIN_ENTRY_VERTICAL_ELLIPSIS",
-			title = "${title}");
+			entryTitle = "${title}",
+			locator1 = "Blueprints#BLUEPRINTS_ADMIN_ENTRY_VERTICAL_ELLIPSIS");
 	}
 
 	macro searchBlueprintsPreview {
@@ -173,7 +212,7 @@ definition {
 
 		if (isSet(attributesKey)) {
 			Click.javaScriptClick(
-				key_title = "Attributes",
+				key_title = "Search Context Attributes",
 				locator1 = "Button#ANY_TITLE");
 
 			Type(
@@ -214,24 +253,27 @@ definition {
 		MenuItem.clickNoError(menuItem = "${menuItem}");
 	}
 
-	macro viewCopiedContent {
-		WebContentNavigator.openToAddBasicArticle(
-			groupName = "Guest",
-			siteURLKey = "guest");
+	macro setTitleAndDescriptionLocalization {
+		Click(
+			key_currentLocale = StringUtil.lowerCase("${currentLocale}"),
+			locator1 = "Button#TRANSLATIONS_LOCALIZATION");
 
-		SelectFrame.selectFrameNoLoading(locator1 = "CKEditor#BODY_FIELD_IFRAME_2");
+		Click(
+			key_locale = "${locale}",
+			locator1 = "Translation#DROPDOWN_MENU_ITEM");
 
-		Click(locator1 = "CKEditor#BODY");
+		AssertVisible(
+			key_currentLocale = StringUtil.lowerCase("${locale}"),
+			locator1 = "Button#TRANSLATIONS_LOCALIZATION");
 
-		RobotType.robotTypeShortcut(locator1 = "Ctrl + v");
+		PortletEntry.inputTitle(title = "${title}");
 
-		WaitForElementPresent(
-			key_text = "${text}",
-			locator1 = "CKEditor#BODY_TEXT");
+		PortletEntry.inputDescription(description = "${description}");
 	}
 
 	macro viewDownloadedContent {
 		var tempDir = PropsUtil.get("output.dir.name");
+
 		var fileContent = FileUtil.read("${tempDir}/${fileName}");
 
 		if (contains("${fileContent}", "${text}")) {
@@ -242,16 +284,51 @@ definition {
 		}
 	}
 
+	macro viewEntriesSpecificOrder {
+		var entryOrder = "0";
+
+		for (var entryTitle : list "${entryList}") {
+			var entryOrder = ${entryOrder} + 1;
+
+			AssertTextEquals.assertPartialText(
+				locator1 = "Blueprints#BLUEPRINTS_ADMIN_ENTRY_ROW_NUMBER",
+				rowNumber = "${entryOrder}",
+				value1 = "${entryTitle}");
+		}
+	}
+
 	macro viewEntryTitle {
 		AssertElementPresent(
-			locator1 = "Blueprints#BLUEPRINTS_ADMIN_ENTRY_TITLE",
-			title = "${title}");
+			entryTitle = "${title}",
+			locator1 = "Blueprints#BLUEPRINTS_ADMIN_ENTRY_TITLE");
 	}
 
 	macro viewNoEntry {
 		AssertElementNotPresent(
-			locator1 = "Blueprints#BLUEPRINTS_ADMIN_ENTRY_TITLE",
-			title = "${title}");
+			entryTitle = "${title}",
+			locator1 = "Blueprints#BLUEPRINTS_ADMIN_ENTRY_TITLE");
+	}
+
+	macro viewTitleAndDescriptionLocalization {
+		Click(
+			key_currentLocale = StringUtil.lowerCase("${currentLocale}"),
+			locator1 = "Button#TRANSLATIONS_LOCALIZATION");
+
+		AssertElementPresent(
+			key_locale = "${locale}",
+			locator1 = "Blueprints#LANGUAGE_TRANSLATED_LABEL");
+
+		Click(
+			key_locale = "${locale}",
+			locator1 = "Translation#DROPDOWN_MENU_ITEM");
+
+		AssertElementPresent(
+			locator1 = "TextInput#TITLE",
+			value1 = "${title}");
+
+		AssertElementPresent(
+			locator1 = "TextArea#DESCRIPTION",
+			value1 = "${description}");
 	}
 
 }

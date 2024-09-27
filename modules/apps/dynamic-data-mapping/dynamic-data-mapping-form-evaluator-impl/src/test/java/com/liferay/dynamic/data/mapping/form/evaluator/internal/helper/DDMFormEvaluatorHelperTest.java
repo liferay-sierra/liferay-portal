@@ -16,7 +16,7 @@ package com.liferay.dynamic.data.mapping.form.evaluator.internal.helper;
 
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunctionFactory;
-import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunctionTracker;
+import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunctionRegistry;
 import com.liferay.dynamic.data.mapping.expression.internal.DDMExpressionFactoryImpl;
 import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormEvaluatorEvaluateRequest;
 import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormEvaluatorEvaluateResponse;
@@ -36,13 +36,13 @@ import com.liferay.dynamic.data.mapping.form.evaluator.internal.function.factory
 import com.liferay.dynamic.data.mapping.form.evaluator.internal.function.factory.SetValueFunctionFactory;
 import com.liferay.dynamic.data.mapping.form.evaluator.internal.function.factory.SetVisibleFunctionFactory;
 import com.liferay.dynamic.data.mapping.form.evaluator.internal.function.factory.SumFunctionFactory;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueAccessor;
 import com.liferay.dynamic.data.mapping.form.field.type.DefaultDDMFormFieldValueAccessor;
 import com.liferay.dynamic.data.mapping.form.field.type.internal.checkbox.CheckboxDDMFormFieldValueAccessor;
 import com.liferay.dynamic.data.mapping.form.field.type.internal.numeric.NumericDDMFormFieldValueAccessor;
 import com.liferay.dynamic.data.mapping.form.page.change.DDMFormPageChange;
-import com.liferay.dynamic.data.mapping.form.page.change.DDMFormPageChangeTracker;
+import com.liferay.dynamic.data.mapping.form.page.change.DDMFormPageChangeRegistry;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldValidation;
@@ -74,6 +74,7 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.math.BigDecimal;
 
@@ -90,28 +91,27 @@ import java.util.stream.Stream;
 import javax.servlet.http.HttpServletRequest;
 
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import org.mockito.Matchers;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 /**
  * @author Leonardo Barros
  * @author Marcellus Tavares
  */
-@RunWith(PowerMockRunner.class)
-public class DDMFormEvaluatorHelperTest extends PowerMockito {
+public class DDMFormEvaluatorHelperTest {
 
-	@Before
-	public void setUp() throws Exception {
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
+	@BeforeClass
+	public static void setUpClass() throws Exception {
 		_setUpJSONFactoryUtil();
 		_setUpLanguageUtil();
 		_setUpPortalUtil();
@@ -196,8 +196,7 @@ public class DDMFormEvaluatorHelperTest extends PowerMockito {
 				"field0_instanceId", "field0", new UnlocalizedValue("")));
 
 		Mockito.when(
-			_roleLocalService.fetchRole(
-				Matchers.anyLong(), Matchers.anyString())
+			_roleLocalService.fetchRole(Mockito.anyLong(), Mockito.anyString())
 		).thenReturn(
 			_role
 		);
@@ -210,8 +209,8 @@ public class DDMFormEvaluatorHelperTest extends PowerMockito {
 
 		Mockito.when(
 			_userLocalService.hasRoleUser(
-				Matchers.anyLong(), Matchers.eq("Role1"), Matchers.anyLong(),
-				Matchers.eq(true))
+				Mockito.anyLong(), Mockito.eq("Role1"), Mockito.anyLong(),
+				Mockito.eq(true))
 		).thenReturn(
 			true
 		);
@@ -1800,10 +1799,10 @@ public class DDMFormEvaluatorHelperTest extends PowerMockito {
 		DDMFormEvaluatorHelper ddmFormEvaluatorHelper =
 			new DDMFormEvaluatorHelper(
 				_ddmExpressionFactory, builder.build(),
-				_mockDDMFormFieldTypeServicesTracker(),
-				_mockDDMFormPageChangeTracker());
+				_mockDDMFormFieldTypeServicesRegistry(),
+				_mockDDMFormPageChangeRegistry());
 
-		_mockDDMExpressionFunctionTracker();
+		_mockDDMExpressionFunctionRegistry();
 
 		return ddmFormEvaluatorHelper.evaluate();
 	}
@@ -1822,6 +1821,62 @@ public class DDMFormEvaluatorHelperTest extends PowerMockito {
 		return evaluate(ddmForm, null, ddmFormValues, locale);
 	}
 
+	private static void _setUpJSONFactoryUtil() {
+		JSONFactoryUtil jsonFactoryUtil = new JSONFactoryUtil();
+
+		jsonFactoryUtil.setJSONFactory(new JSONFactoryImpl());
+	}
+
+	private static void _setUpLanguageUtil() {
+		LanguageUtil languageUtil = new LanguageUtil();
+
+		_language = Mockito.mock(Language.class);
+
+		Mockito.when(
+			_language.get(
+				Mockito.any(Locale.class),
+				Mockito.eq("input-format-is-not-satisfied"))
+		).thenReturn(
+			"Input format is not satisfied."
+		);
+
+		Mockito.when(
+			_language.get(
+				Mockito.any(Locale.class), Mockito.eq("this-field-is-invalid"))
+		).thenReturn(
+			"This field is invalid."
+		);
+
+		Mockito.when(
+			_language.get(
+				Mockito.any(Locale.class), Mockito.eq("this-field-is-required"))
+		).thenReturn(
+			"This field is required."
+		);
+
+		languageUtil.setLanguage(_language);
+	}
+
+	private static void _setUpPortalUtil() throws Exception {
+		PortalUtil portalUtil = new PortalUtil();
+
+		Portal portal = Mockito.mock(Portal.class);
+
+		Mockito.when(
+			portal.getUser(_httpServletRequest)
+		).thenReturn(
+			_user
+		);
+
+		Mockito.when(
+			portal.getCompany(_httpServletRequest)
+		).thenReturn(
+			_company
+		);
+
+		portalUtil.setPortal(portal);
+	}
+
 	private DDMExpressionFunctionFactory _createAllFunction() throws Exception {
 		AllFunctionFactory allFunctionFactory = new AllFunctionFactory();
 
@@ -1831,9 +1886,7 @@ public class DDMFormEvaluatorHelperTest extends PowerMockito {
 		return allFunctionFactory;
 	}
 
-	private DDMExpressionFunctionFactory _createBelongsToRoleFunction()
-		throws Exception {
-
+	private DDMExpressionFunctionFactory _createBelongsToRoleFunction() {
 		BelongsToRoleFunctionFactory belongsToRoleFunctionFactory =
 			new BelongsToRoleFunctionFactory();
 
@@ -2010,9 +2063,8 @@ public class DDMFormEvaluatorHelperTest extends PowerMockito {
 	}
 
 	private Map<String, Object> _getDDMFormFieldPropertyChangesByKey(
-			DDMFormEvaluatorEvaluateResponse ddmFormEvaluatorEvaluateResponse,
-			DDMFormEvaluatorFieldContextKey ddmFormEvaluatorFieldContextKey)
-		throws Exception {
+		DDMFormEvaluatorEvaluateResponse ddmFormEvaluatorEvaluateResponse,
+		DDMFormEvaluatorFieldContextKey ddmFormEvaluatorFieldContextKey) {
 
 		Map<DDMFormEvaluatorFieldContextKey, Map<String, Object>>
 			ddmFormFieldsPropertyChanges =
@@ -2023,162 +2075,74 @@ public class DDMFormEvaluatorHelperTest extends PowerMockito {
 			ddmFormEvaluatorFieldContextKey);
 	}
 
-	private void _mockDDMExpressionFunctionTracker() throws Exception {
-		DDMExpressionFunctionTracker ddmExpressionFunctionTracker = mock(
-			DDMExpressionFunctionTracker.class);
+	private void _mockDDMExpressionFunctionRegistry() throws Exception {
+		DDMExpressionFunctionRegistry ddmExpressionFunctionRegistry =
+			Mockito.mock(DDMExpressionFunctionRegistry.class);
 
-		when(
-			ddmExpressionFunctionTracker.getDDMExpressionFunctionFactories(
-				Matchers.any())
+		Mockito.when(
+			ddmExpressionFunctionRegistry.getDDMExpressionFunctionFactories(
+				Mockito.any())
 		).thenReturn(
 			_createDDMExpressionFunctionMap()
 		);
 
-		field(
-			DDMExpressionFactoryImpl.class, "ddmExpressionFunctionTracker"
-		).set(
-			_ddmExpressionFactory, ddmExpressionFunctionTracker
-		);
+		ReflectionTestUtil.setFieldValue(
+			_ddmExpressionFactory, "ddmExpressionFunctionRegistry",
+			ddmExpressionFunctionRegistry);
 	}
 
-	private DDMFormFieldTypeServicesTracker
-		_mockDDMFormFieldTypeServicesTracker() {
+	private DDMFormFieldTypeServicesRegistry
+		_mockDDMFormFieldTypeServicesRegistry() {
 
 		Map<String, DDMFormFieldValueAccessor<?>> ddmFormFieldValueAccessorMap =
 			_createDDMFormFieldValueAccessorMap();
 
-		DDMFormFieldTypeServicesTracker ddmFormFieldTypeServicesTracker =
-			Mockito.mock(DDMFormFieldTypeServicesTracker.class);
+		DDMFormFieldTypeServicesRegistry ddmFormFieldTypeServicesRegistry =
+			Mockito.mock(DDMFormFieldTypeServicesRegistry.class);
 
 		for (Map.Entry<String, DDMFormFieldValueAccessor<?>> entry :
 				ddmFormFieldValueAccessorMap.entrySet()) {
 
 			Mockito.when(
-				ddmFormFieldTypeServicesTracker.getDDMFormFieldValueAccessor(
-					Matchers.eq(entry.getKey()))
+				ddmFormFieldTypeServicesRegistry.getDDMFormFieldValueAccessor(
+					Mockito.eq(entry.getKey()))
 			).then(
-				new Answer<DDMFormFieldValueAccessor<?>>() {
-
-					@Override
-					public DDMFormFieldValueAccessor<?> answer(
-							InvocationOnMock invocation)
-						throws Throwable {
-
-						return entry.getValue();
-					}
-
-				}
+				(Answer<DDMFormFieldValueAccessor<?>>)
+					invocation -> entry.getValue()
 			);
 		}
 
-		return ddmFormFieldTypeServicesTracker;
+		return ddmFormFieldTypeServicesRegistry;
 	}
 
-	private DDMFormPageChangeTracker _mockDDMFormPageChangeTracker() {
-		DDMFormPageChangeTracker ddmFormPageChangeTracker = Mockito.mock(
-			DDMFormPageChangeTracker.class);
+	private DDMFormPageChangeRegistry _mockDDMFormPageChangeRegistry() {
+		DDMFormPageChangeRegistry ddmFormPageChangeRegistry = Mockito.mock(
+			DDMFormPageChangeRegistry.class);
 
 		Mockito.when(
-			ddmFormPageChangeTracker.getDDMFormPageChangeByDDMFormInstanceId(
-				Matchers.anyString())
+			ddmFormPageChangeRegistry.getDDMFormPageChangeByDDMFormInstanceId(
+				Mockito.anyString())
 		).then(
-			new Answer<DDMFormPageChange>() {
-
-				@Override
-				public DDMFormPageChange answer(InvocationOnMock invocation)
-					throws Throwable {
-
-					return new DDMTestFormPageChange();
-				}
-
-			}
+			(Answer<DDMFormPageChange>)invocation -> new DDMTestFormPageChange()
 		);
 
-		return ddmFormPageChangeTracker;
+		return ddmFormPageChangeRegistry;
 	}
 
-	private void _setUpJSONFactoryUtil() {
-		JSONFactoryUtil jsonFactoryUtil = new JSONFactoryUtil();
+	private static final Company _company = Mockito.mock(Company.class);
+	private static DDMExpressionFactory _ddmExpressionFactory;
+	private static final HttpServletRequest _httpServletRequest = Mockito.mock(
+		HttpServletRequest.class);
+	private static Language _language;
+	private static final User _user = Mockito.mock(User.class);
 
-		jsonFactoryUtil.setJSONFactory(new JSONFactoryImpl());
-	}
-
-	private void _setUpLanguageUtil() {
-		LanguageUtil languageUtil = new LanguageUtil();
-
-		_language = Mockito.mock(Language.class);
-
-		Mockito.when(
-			_language.get(
-				Matchers.any(Locale.class),
-				Matchers.eq("input-format-is-not-satisfied"))
-		).thenReturn(
-			"Input format is not satisfied."
-		);
-
-		Mockito.when(
-			_language.get(
-				Matchers.any(Locale.class),
-				Matchers.eq("this-field-is-invalid"))
-		).thenReturn(
-			"This field is invalid."
-		);
-
-		Mockito.when(
-			_language.get(
-				Matchers.any(Locale.class),
-				Matchers.eq("this-field-is-required"))
-		).thenReturn(
-			"This field is required."
-		);
-
-		languageUtil.setLanguage(_language);
-	}
-
-	private void _setUpPortalUtil() throws Exception {
-		PortalUtil portalUtil = new PortalUtil();
-
-		Portal portal = Mockito.mock(Portal.class);
-
-		Mockito.when(
-			portal.getUser(_httpServletRequest)
-		).thenReturn(
-			_user
-		);
-
-		Mockito.when(
-			portal.getCompany(_httpServletRequest)
-		).thenReturn(
-			_company
-		);
-
-		portalUtil.setPortal(portal);
-	}
-
-	@Mock
-	private Company _company;
-
-	private DDMExpressionFactory _ddmExpressionFactory;
-
-	@Mock
-	private HttpServletRequest _httpServletRequest;
-
-	private Language _language;
-
-	@Mock
-	private Role _role;
-
-	@Mock
-	private RoleLocalService _roleLocalService;
-
-	@Mock
-	private User _user;
-
-	@Mock
-	private UserGroupRoleLocalService _userGroupRoleLocalService;
-
-	@Mock
-	private UserLocalService _userLocalService;
+	private final Role _role = Mockito.mock(Role.class);
+	private final RoleLocalService _roleLocalService = Mockito.mock(
+		RoleLocalService.class);
+	private final UserGroupRoleLocalService _userGroupRoleLocalService =
+		Mockito.mock(UserGroupRoleLocalService.class);
+	private final UserLocalService _userLocalService = Mockito.mock(
+		UserLocalService.class);
 
 	private static class DDMTestFormPageChange implements DDMFormPageChange {
 

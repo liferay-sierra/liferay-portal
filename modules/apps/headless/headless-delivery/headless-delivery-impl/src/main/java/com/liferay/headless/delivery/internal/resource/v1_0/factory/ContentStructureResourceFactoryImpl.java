@@ -14,6 +14,7 @@
 
 package com.liferay.headless.delivery.internal.resource.v1_0.factory;
 
+import com.liferay.headless.delivery.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.headless.delivery.resource.v1_0.ContentStructureResource;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -33,14 +34,18 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -58,7 +61,10 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @author Javier Gamarra
  * @generated
  */
-@Component(immediate = true, service = ContentStructureResource.Factory.class)
+@Component(
+	property = "resource.locator.key=/headless-delivery/v1.0/ContentStructure",
+	service = ContentStructureResource.Factory.class
+)
 @Generated("")
 public class ContentStructureResourceFactoryImpl
 	implements ContentStructureResource.Factory {
@@ -73,9 +79,7 @@ public class ContentStructureResourceFactoryImpl
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (ContentStructureResource)ProxyUtil.newProxyInstance(
-					ContentStructureResource.class.getClassLoader(),
-					new Class<?>[] {ContentStructureResource.class},
+				return _contentStructureResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -134,14 +138,32 @@ public class ContentStructureResourceFactoryImpl
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		ContentStructureResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, ContentStructureResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		ContentStructureResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			ContentStructureResource.class.getClassLoader(),
+			ContentStructureResource.class);
+
+		try {
+			Constructor<ContentStructureResource> constructor =
+				(Constructor<ContentStructureResource>)
+					proxyClass.getConstructor(InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -164,7 +186,7 @@ public class ContentStructureResourceFactoryImpl
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		ContentStructureResource contentStructureResource =
@@ -190,6 +212,7 @@ public class ContentStructureResourceFactoryImpl
 		contentStructureResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		contentStructureResource.setRoleLocalService(_roleLocalService);
+		contentStructureResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(contentStructureResource, arguments);
@@ -205,6 +228,10 @@ public class ContentStructureResourceFactoryImpl
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, ContentStructureResource>
+		_contentStructureResourceProxyProviderFunction =
+			_getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -227,9 +254,6 @@ public class ContentStructureResourceFactoryImpl
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -238,6 +262,9 @@ public class ContentStructureResourceFactoryImpl
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

@@ -52,7 +52,7 @@ definition {
 			navTab = "Blog Images",
 			uploadFileName = "Document_1.jpg");
 
-		Pause(locator1 = "1000");
+		WaitForElementPresent(locator1 = "Button#SAVE_AS_DRAFT");
 
 		BlogsEntry.saveAsDraft();
 
@@ -98,7 +98,7 @@ definition {
 
 		CKEditor.addEntryExternalURLToExistingText(
 			entryExternalURL = "/web/guest/home",
-			fieldLabel = "content");
+			fieldLabel = "Content");
 
 		SelectFrame.selectFrameNoLoading(locator1 = "CKEditor#BODY_FIELD_IFRAME_2");
 
@@ -245,8 +245,6 @@ definition {
 				locator1 = "//body",
 				value1 = "a");
 
-			Pause(locator1 = "1000");
-
 			KeyPress(
 				locator1 = "//body",
 				value1 = "c");
@@ -317,7 +315,7 @@ definition {
 		SelectFrame(locator1 = "IFrame#MODAL_BODY");
 
 		AssertTextEquals.assertPartialText(
-			locator1 = "//div[@class='portlet-body']/div[contains(@class,'mt-2')]",
+			locator1 = "//div[@class='portlet-body']/div[contains(@class,'container-fluid-max')]",
 			value1 = "Sample document for editor area test");
 
 		AssertElementPresent(locator1 = "//img[contains(@src,'redhead.JPG')]");

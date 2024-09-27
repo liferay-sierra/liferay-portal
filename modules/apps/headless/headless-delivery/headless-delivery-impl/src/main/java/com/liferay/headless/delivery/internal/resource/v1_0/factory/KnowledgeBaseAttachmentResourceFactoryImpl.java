@@ -14,6 +14,7 @@
 
 package com.liferay.headless.delivery.internal.resource.v1_0.factory;
 
+import com.liferay.headless.delivery.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.headless.delivery.resource.v1_0.KnowledgeBaseAttachmentResource;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -33,14 +34,18 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -59,7 +62,8 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @generated
  */
 @Component(
-	immediate = true, service = KnowledgeBaseAttachmentResource.Factory.class
+	property = "resource.locator.key=/headless-delivery/v1.0/KnowledgeBaseAttachment",
+	service = KnowledgeBaseAttachmentResource.Factory.class
 )
 @Generated("")
 public class KnowledgeBaseAttachmentResourceFactoryImpl
@@ -75,10 +79,8 @@ public class KnowledgeBaseAttachmentResourceFactoryImpl
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (KnowledgeBaseAttachmentResource)
-					ProxyUtil.newProxyInstance(
-						KnowledgeBaseAttachmentResource.class.getClassLoader(),
-						new Class<?>[] {KnowledgeBaseAttachmentResource.class},
+				return _knowledgeBaseAttachmentResourceProxyProviderFunction.
+					apply(
 						(proxy, method, arguments) -> _invoke(
 							method, arguments, _checkPermissions,
 							_httpServletRequest, _httpServletResponse,
@@ -137,14 +139,32 @@ public class KnowledgeBaseAttachmentResourceFactoryImpl
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		KnowledgeBaseAttachmentResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, KnowledgeBaseAttachmentResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		KnowledgeBaseAttachmentResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			KnowledgeBaseAttachmentResource.class.getClassLoader(),
+			KnowledgeBaseAttachmentResource.class);
+
+		try {
+			Constructor<KnowledgeBaseAttachmentResource> constructor =
+				(Constructor<KnowledgeBaseAttachmentResource>)
+					proxyClass.getConstructor(InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -167,7 +187,7 @@ public class KnowledgeBaseAttachmentResourceFactoryImpl
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		KnowledgeBaseAttachmentResource knowledgeBaseAttachmentResource =
@@ -196,6 +216,8 @@ public class KnowledgeBaseAttachmentResourceFactoryImpl
 		knowledgeBaseAttachmentResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		knowledgeBaseAttachmentResource.setRoleLocalService(_roleLocalService);
+		knowledgeBaseAttachmentResource.setSortParserProvider(
+			_sortParserProvider);
 
 		try {
 			return method.invoke(knowledgeBaseAttachmentResource, arguments);
@@ -212,6 +234,11 @@ public class KnowledgeBaseAttachmentResourceFactoryImpl
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function
+		<InvocationHandler, KnowledgeBaseAttachmentResource>
+			_knowledgeBaseAttachmentResourceProxyProviderFunction =
+				_getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -234,9 +261,6 @@ public class KnowledgeBaseAttachmentResourceFactoryImpl
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -245,6 +269,9 @@ public class KnowledgeBaseAttachmentResourceFactoryImpl
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

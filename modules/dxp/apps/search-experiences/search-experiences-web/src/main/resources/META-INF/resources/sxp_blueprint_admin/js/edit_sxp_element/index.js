@@ -11,46 +11,57 @@
 
 import React, {useEffect, useState} from 'react';
 
+import useClipboardJS from '../hooks/useClipboardJS';
 import ErrorBoundary from '../shared/ErrorBoundary';
 import ThemeContext from '../shared/ThemeContext';
 import {COPY_BUTTON_CSS_CLASS} from '../utils/constants';
 import {fetchData} from '../utils/fetch';
-import {renameKeys} from '../utils/language';
-import useClipboardJS from '../utils/useClipboardJS';
+import {
+	formatLocaleWithUnderscores,
+	renameKeys,
+	transformLocale,
+} from '../utils/language';
+import {openInitialSuccessToast} from '../utils/toasts';
 import EditSXPElementForm from './EditSXPElementForm';
 
 /**
  * Gets the formatted description_i18n object from the sxp element response.
  * Also creates an object using the default locale and `description` field if
- * the description_i18n object is undefined.
+ * the description_i18n object is undefined. If the description_i18n object is
+ * {}, it will return object with placeholder: {'en_US': ''}.
  *
- * The expected return format is: [{'en_US': 'description'}]
+ * The expected return format is: {'en_US': 'description'}
  * @param {object} sxpElementResponse The response object from the GET
  * 	sxp-elements
  * @param {string} defaultLocale The default locale
- * @returns {Array}
+ * @returns {object}
  */
 const getDescriptionI18n = (sxpElementResponse, defaultLocale) => {
-	const descriptionObject = sxpElementResponse.description_i18n || {
-		[defaultLocale]: sxpElementResponse.description,
-	};
+	let descriptionObject = renameKeys(
+		sxpElementResponse.description_i18n,
+		transformLocale
+	);
 
-	return renameKeys(descriptionObject, (str) => str.replace('-', '_'));
+	if (!Object.keys(descriptionObject).length) {
+		descriptionObject = {[defaultLocale]: ''};
+	}
+
+	return renameKeys(descriptionObject, formatLocaleWithUnderscores);
 };
 
 /**
  * See `getDescriptionI18n`.
  * @param {object} sxpElementResponse The response object from the GET
  * 	sxp-elements
- * @param {string} defaultLocale The default locale
- * @returns {Array}
+ * @returns {object}
  */
-const getTitleI18n = (sxpElementResponse, defaultLocale) => {
-	const titleObject = sxpElementResponse.title_i18n || {
-		[defaultLocale]: sxpElementResponse.title,
-	};
+const getTitleI18n = (sxpElementResponse) => {
+	const titleObject = renameKeys(
+		sxpElementResponse.title_i18n,
+		transformLocale
+	);
 
-	return renameKeys(titleObject, (str) => str.replace('-', '_'));
+	return renameKeys(titleObject, formatLocaleWithUnderscores);
 };
 
 /**
@@ -66,7 +77,7 @@ const transformToSXPElementExportFormat = (
 	return {
 		description_i18n: getDescriptionI18n(sxpElementResponse, defaultLocale),
 		elementDefinition: sxpElementResponse.elementDefinition,
-		title_i18n: getTitleI18n(sxpElementResponse, defaultLocale),
+		title_i18n: getTitleI18n(sxpElementResponse),
 		type: sxpElementResponse.type,
 	};
 };
@@ -85,23 +96,21 @@ export default function ({
 	useClipboardJS('.' + COPY_BUTTON_CSS_CLASS);
 
 	useEffect(() => {
-		fetchData(
-			`/o/search-experiences-rest/v1.0/sxp-elements/${sxpElementId}`,
-			{
-				method: 'GET',
-			},
-			(responseContent) => setSXPElementResponse(responseContent),
-			() => setSXPElementResponse({})
-		);
+		openInitialSuccessToast();
 
 		fetchData(
-			'/o/search-experiences-rest/v1.0/sxp-parameter-contributor-definitions',
-			{
-				method: 'GET',
-			},
-			(responseContent) => setPredefinedVariables(responseContent.items),
-			() => setPredefinedVariables([])
-		);
+			`/o/search-experiences-rest/v1.0/sxp-elements/${sxpElementId}`
+		)
+			.then((responseContent) => setSXPElementResponse(responseContent))
+			.catch(() => setSXPElementResponse({}));
+
+		fetchData(
+			'/o/search-experiences-rest/v1.0/sxp-parameter-contributor-definitions'
+		)
+			.then((responseContent) =>
+				setPredefinedVariables(responseContent.items)
+			)
+			.catch(() => setPredefinedVariables([]));
 	}, []); //eslint-disable-line
 
 	if (!sxpElementResponse || !predefinedVariables) {
@@ -122,15 +131,7 @@ export default function ({
 			<div className="edit-sxp-element-root">
 				<ErrorBoundary>
 					<EditSXPElementForm
-						initialDescription={getDescriptionI18n(
-							sxpElementResponse,
-							defaultLocale
-						)}
 						initialElementJSONEditorValue={transformToSXPElementExportFormat(
-							sxpElementResponse,
-							defaultLocale
-						)}
-						initialTitle={getTitleI18n(
 							sxpElementResponse,
 							defaultLocale
 						)}

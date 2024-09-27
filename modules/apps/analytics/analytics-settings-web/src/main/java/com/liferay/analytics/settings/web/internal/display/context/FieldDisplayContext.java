@@ -22,7 +22,7 @@ import com.liferay.analytics.settings.web.internal.search.FieldSearch;
 import com.liferay.analytics.settings.web.internal.user.AnalyticsUsersManager;
 import com.liferay.expando.kernel.model.ExpandoColumn;
 import com.liferay.expando.kernel.model.ExpandoColumnConstants;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -272,8 +272,6 @@ public class FieldDisplayContext {
 
 	private static final Map<String, String> _contactFieldNames =
 		TreeMapBuilder.put(
-			"accountId", "Long"
-		).put(
 			"birthday", "Date"
 		).put(
 			"classNameId", "Long"
@@ -314,13 +312,13 @@ public class FieldDisplayContext {
 		).put(
 			"parentContactId", "Long"
 		).put(
-			"prefixId", "Long"
+			"prefixListTypeId", "Long"
 		).put(
 			"skypeSn", "String"
 		).put(
 			"smsSn", "String"
 		).put(
-			"suffixId", "Long"
+			"suffixListTypeId", "Long"
 		).put(
 			"twitterSn", "String"
 		).build();

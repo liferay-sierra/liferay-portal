@@ -30,6 +30,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Props;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.search.batch.BatchIndexingActionable;
+import com.liferay.portal.search.batch.BatchIndexingHelper;
 import com.liferay.portal.search.index.IndexStatusManager;
 import com.liferay.portal.search.index.UpdateDocumentIndexWriter;
 import com.liferay.portal.search.indexer.BaseModelRetriever;
@@ -53,6 +54,7 @@ public class IndexerWriterImpl<T extends BaseModel<?>>
 	public IndexerWriterImpl(
 		ModelSearchSettings modelSearchSettings,
 		BaseModelRetriever baseModelRetriever,
+		BatchIndexingHelper batchIndexingHelper,
 		ModelIndexerWriterContributor<T> modelIndexerWriterContributor,
 		IndexerDocumentBuilder indexerDocumentBuilder,
 		SearchPermissionIndexWriter searchPermissionIndexWriter,
@@ -62,6 +64,7 @@ public class IndexerWriterImpl<T extends BaseModel<?>>
 
 		_modelSearchSettings = modelSearchSettings;
 		_baseModelRetriever = baseModelRetriever;
+		_batchIndexingHelper = batchIndexingHelper;
 		_modelIndexerWriterContributor = modelIndexerWriterContributor;
 		_indexerDocumentBuilder = indexerDocumentBuilder;
 		_searchPermissionIndexWriter = searchPermissionIndexWriter;
@@ -79,8 +82,7 @@ public class IndexerWriterImpl<T extends BaseModel<?>>
 
 		try {
 			_indexWriterHelper.deleteDocument(
-				_modelSearchSettings.getSearchEngineId(), companyId, uid,
-				_modelSearchSettings.isCommitImmediately());
+				companyId, uid, _modelSearchSettings.isCommitImmediately());
 		}
 		catch (SearchException searchException) {
 			throw new RuntimeException(searchException);
@@ -105,8 +107,9 @@ public class IndexerWriterImpl<T extends BaseModel<?>>
 		BatchIndexingActionable batchIndexingActionable =
 			_modelIndexerWriterContributor.getBatchIndexingActionable();
 
-		batchIndexingActionable.setSearchEngineId(
-			_modelSearchSettings.getSearchEngineId());
+		batchIndexingActionable.setInterval(
+			_batchIndexingHelper.getBulkSize(
+				_modelSearchSettings.getClassName()));
 
 		return batchIndexingActionable;
 	}
@@ -217,9 +220,8 @@ public class IndexerWriterImpl<T extends BaseModel<?>>
 			Document document = _indexerDocumentBuilder.getDocument(baseModel);
 
 			_updateDocumentIndexWriter.updateDocument(
-				_modelSearchSettings.getSearchEngineId(),
 				_modelIndexerWriterContributor.getCompanyId(baseModel),
-				document, _modelSearchSettings.isCommitImmediately());
+				document);
 		}
 		else if (indexerWriterMode == IndexerWriterMode.DELETE) {
 			delete(baseModel);
@@ -242,7 +244,6 @@ public class IndexerWriterImpl<T extends BaseModel<?>>
 	public void updatePermissionFields(T baseModel) {
 		_searchPermissionIndexWriter.updatePermissionFields(
 			baseModel, _modelIndexerWriterContributor.getCompanyId(baseModel),
-			_modelSearchSettings.getSearchEngineId(),
 			_modelSearchSettings.isCommitImmediately());
 	}
 
@@ -272,6 +273,7 @@ public class IndexerWriterImpl<T extends BaseModel<?>>
 		IndexerWriterImpl.class);
 
 	private final BaseModelRetriever _baseModelRetriever;
+	private final BatchIndexingHelper _batchIndexingHelper;
 	private final IndexerDocumentBuilder _indexerDocumentBuilder;
 	private Boolean _indexerEnabled;
 	private final IndexStatusManager _indexStatusManager;

@@ -14,7 +14,7 @@
 
 package com.liferay.layout.page.template.model.impl;
 
-import com.liferay.document.library.kernel.util.DLUtil;
+import com.liferay.document.library.util.DLURLHelperUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -42,10 +42,10 @@ public class LayoutPageTemplateEntryImpl
 				return StringPool.BLANK;
 			}
 
-			return DLUtil.getImagePreviewURL(fileEntry, themeDisplay);
+			return DLURLHelperUtil.getImagePreviewURL(fileEntry, themeDisplay);
 		}
 		catch (Exception exception) {
-			_log.error("Unable to get preview entry image URL", exception);
+			_log.error("Unable to get image preview URL", exception);
 		}
 
 		return StringPool.BLANK;

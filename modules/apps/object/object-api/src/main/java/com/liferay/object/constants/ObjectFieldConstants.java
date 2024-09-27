@@ -19,6 +19,8 @@ package com.liferay.object.constants;
  */
 public class ObjectFieldConstants {
 
+	public static final String BUSINESS_TYPE_AGGREGATION = "Aggregation";
+
 	public static final String BUSINESS_TYPE_ATTACHMENT = "Attachment";
 
 	public static final String BUSINESS_TYPE_BOOLEAN = "Boolean";
@@ -26,6 +28,8 @@ public class ObjectFieldConstants {
 	public static final String BUSINESS_TYPE_DATE = "Date";
 
 	public static final String BUSINESS_TYPE_DECIMAL = "Decimal";
+
+	public static final String BUSINESS_TYPE_FORMULA = "Formula";
 
 	public static final String BUSINESS_TYPE_INTEGER = "Integer";
 
@@ -35,12 +39,17 @@ public class ObjectFieldConstants {
 
 	public static final String BUSINESS_TYPE_LONG_TEXT = "LongText";
 
+	public static final String BUSINESS_TYPE_MULTISELECT_PICKLIST =
+		"MultiselectPicklist";
+
 	public static final String BUSINESS_TYPE_PICKLIST = "Picklist";
 
 	public static final String BUSINESS_TYPE_PRECISION_DECIMAL =
 		"PrecisionDecimal";
 
 	public static final String BUSINESS_TYPE_RELATIONSHIP = "Relationship";
+
+	public static final String BUSINESS_TYPE_RICH_TEXT = "RichText";
 
 	public static final String BUSINESS_TYPE_TEXT = "Text";
 

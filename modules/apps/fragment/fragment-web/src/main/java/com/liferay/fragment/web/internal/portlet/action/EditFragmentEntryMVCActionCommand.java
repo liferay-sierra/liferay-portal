@@ -20,7 +20,8 @@ import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.service.FragmentEntryService;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
@@ -86,19 +87,37 @@ public class EditFragmentEntryMVCActionCommand
 		String css = ParamUtil.getString(actionRequest, "cssContent");
 		String html = ParamUtil.getString(actionRequest, "htmlContent");
 		String js = ParamUtil.getString(actionRequest, "jsContent");
-		boolean cacheable = ParamUtil.getBoolean(actionRequest, "cacheable");
 		String configuration = ParamUtil.getString(
 			actionRequest, "configurationContent");
 		int status = ParamUtil.getInteger(actionRequest, "status");
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+		JSONObject jsonObject = _jsonFactory.createJSONObject();
 
 		draftFragmentEntry.setName(name);
 		draftFragmentEntry.setCss(css);
 		draftFragmentEntry.setHtml(html);
 		draftFragmentEntry.setJs(js);
-		draftFragmentEntry.setCacheable(cacheable);
 		draftFragmentEntry.setConfiguration(configuration);
+
+		if (draftFragmentEntry.isTypeInput()) {
+			String[] fieldTypes = ParamUtil.getStringValues(
+				actionRequest, "fieldTypes");
+
+			JSONArray fieldTypesJSONArray = _jsonFactory.createJSONArray(
+				fieldTypes);
+
+			JSONObject typeOptionsJSONObject = _jsonFactory.createJSONObject(
+				draftFragmentEntry.getTypeOptions());
+
+			typeOptionsJSONObject.put("fieldTypes", fieldTypesJSONArray);
+
+			draftFragmentEntry.setTypeOptions(typeOptionsJSONObject.toString());
+		}
+		else {
+			draftFragmentEntry.setCacheable(
+				ParamUtil.getBoolean(actionRequest, "cacheable"));
+		}
+
 		draftFragmentEntry.setStatus(status);
 
 		try {
@@ -116,5 +135,8 @@ public class EditFragmentEntryMVCActionCommand
 
 	@Reference
 	private FragmentEntryService _fragmentEntryService;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 }

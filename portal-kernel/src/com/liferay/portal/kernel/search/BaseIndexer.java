@@ -96,7 +96,7 @@ public abstract class BaseIndexer<T> implements Indexer<T> {
 	public void delete(long companyId, String uid) throws SearchException {
 		try {
 			IndexWriterHelperUtil.deleteDocument(
-				getSearchEngineId(), companyId, uid, _commitImmediately);
+				companyId, uid, _commitImmediately);
 		}
 		catch (SearchException searchException) {
 			throw searchException;
@@ -196,8 +196,6 @@ public abstract class BaseIndexer<T> implements Indexer<T> {
 		throws SearchException {
 
 		try {
-			searchContext.setSearchEngineId(getSearchEngineId());
-
 			resetFullQuery(searchContext);
 
 			String[] fullQueryEntryClassNames =
@@ -221,13 +219,9 @@ public abstract class BaseIndexer<T> implements Indexer<T> {
 			addSearchLayout(fullQueryBooleanFilter, searchContext);
 			addSearchUserId(fullQueryBooleanFilter, searchContext);
 
-			Map<String, Indexer<?>> entryClassNameIndexerMap =
-				_getEntryClassNameIndexerMap(
-					entryClassNames, searchContext.getSearchEngineId());
-
 			_addPreFilters(
-				fullQueryBooleanFilter, entryClassNameIndexerMap,
-				searchContext);
+				fullQueryBooleanFilter,
+				_getEntryClassNameIndexerMap(entryClassNames), searchContext);
 
 			BooleanQuery fullQuery = createFullQuery(
 				fullQueryBooleanFilter, searchContext);
@@ -252,43 +246,6 @@ public abstract class BaseIndexer<T> implements Indexer<T> {
 	@Override
 	public String[] getSearchClassNames() {
 		return new String[] {getClassName()};
-	}
-
-	@Override
-	public String getSearchEngineId() {
-		if (_searchEngineId != null) {
-			return _searchEngineId;
-		}
-
-		Class<?> clazz = getClass();
-
-		String searchEngineId = GetterUtil.getString(
-			PropsUtil.get(
-				PropsKeys.INDEX_SEARCH_ENGINE_ID,
-				new com.liferay.portal.kernel.configuration.Filter(
-					clazz.getName())));
-
-		if (Validator.isNotNull(searchEngineId)) {
-			SearchEngine searchEngine = SearchEngineHelperUtil.getSearchEngine(
-				searchEngineId);
-
-			if (searchEngine != null) {
-				_searchEngineId = searchEngineId;
-			}
-		}
-
-		if (_searchEngineId == null) {
-			_searchEngineId = SearchEngineHelperUtil.getDefaultSearchEngineId();
-		}
-
-		if (_log.isDebugEnabled()) {
-			_log.debug(
-				StringBundler.concat(
-					"Search engine ID for ", clazz.getName(), " is ",
-					searchEngineId));
-		}
-
-		return _searchEngineId;
 	}
 
 	/**
@@ -610,8 +567,6 @@ public abstract class BaseIndexer<T> implements Indexer<T> {
 		queryConfig.setScoreEnabled(false);
 		queryConfig.setQueryIndexingEnabled(false);
 		queryConfig.setQuerySuggestionEnabled(false);
-
-		searchContext.setSearchEngineId(getSearchEngineId());
 
 		BooleanQuery fullQuery = getFullQuery(searchContext);
 
@@ -1124,7 +1079,7 @@ public abstract class BaseIndexer<T> implements Indexer<T> {
 		}
 
 		IndexWriterHelperUtil.deleteDocument(
-			getSearchEngineId(), companyId, uid, _commitImmediately);
+			companyId, uid, _commitImmediately);
 	}
 
 	protected void deleteDocument(long companyId, String field1, String field2)
@@ -1135,8 +1090,7 @@ public abstract class BaseIndexer<T> implements Indexer<T> {
 		document.addUID(getClassName(), field1, field2);
 
 		IndexWriterHelperUtil.deleteDocument(
-			getSearchEngineId(), companyId, document.get(Field.UID),
-			_commitImmediately);
+			companyId, document.get(Field.UID), _commitImmediately);
 	}
 
 	protected abstract void doDelete(T object) throws Exception;
@@ -1180,8 +1134,6 @@ public abstract class BaseIndexer<T> implements Indexer<T> {
 
 	protected Hits doSearch(SearchContext searchContext)
 		throws SearchException {
-
-		searchContext.setSearchEngineId(getSearchEngineId());
 
 		Query fullQuery = getFullQuery(searchContext);
 
@@ -1531,7 +1483,7 @@ public abstract class BaseIndexer<T> implements Indexer<T> {
 	}
 
 	private Map<String, Indexer<?>> _getEntryClassNameIndexerMap(
-		String[] entryClassNames, String searchEngineId) {
+		String[] entryClassNames) {
 
 		Map<String, Indexer<?>> entryClassNameIndexerMap =
 			new LinkedHashMap<>();
@@ -1539,9 +1491,7 @@ public abstract class BaseIndexer<T> implements Indexer<T> {
 		for (String entryClassName : entryClassNames) {
 			Indexer<?> indexer = IndexerRegistryUtil.getIndexer(entryClassName);
 
-			if ((indexer == null) ||
-				!searchEngineId.equals(indexer.getSearchEngineId())) {
-
+			if (indexer == null) {
 				continue;
 			}
 
@@ -1632,7 +1582,6 @@ public abstract class BaseIndexer<T> implements Indexer<T> {
 	private IndexerPostProcessor[] _indexerPostProcessors =
 		new IndexerPostProcessor[0];
 	private boolean _permissionAware;
-	private String _searchEngineId;
 	private boolean _selectAllLocales;
 	private boolean _stagingAware = true;
 

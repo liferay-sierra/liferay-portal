@@ -16,14 +16,14 @@ package com.liferay.portal.background.task.internal.messaging;
 
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.background.task.internal.BackgroundTaskImpl;
 import com.liferay.portal.background.task.internal.SerialBackgroundTaskExecutor;
 import com.liferay.portal.background.task.internal.ThreadLocalAwareBackgroundTaskExecutor;
-import com.liferay.portal.kernel.backgroundtask.BackgroundTask;
+import com.liferay.portal.background.task.model.BackgroundTask;
+import com.liferay.portal.background.task.service.BackgroundTaskLocalService;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskExecutor;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskExecutorRegistry;
-import com.liferay.portal.kernel.backgroundtask.BackgroundTaskManager;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskResult;
-import com.liferay.portal.kernel.backgroundtask.BackgroundTaskStatusMessageTranslator;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskStatusRegistry;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskThreadLocal;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskThreadLocalManager;
@@ -57,13 +57,13 @@ public class BackgroundTaskMessageListener extends BaseMessageListener {
 
 	public BackgroundTaskMessageListener(
 		BackgroundTaskExecutorRegistry backgroundTaskExecutorRegistry,
-		BackgroundTaskManager backgroundTaskManager,
+		BackgroundTaskLocalService backgroundTaskLocalService,
 		BackgroundTaskStatusRegistry backgroundTaskStatusRegistry,
 		BackgroundTaskThreadLocalManager backgroundTaskThreadLocalManager,
 		LockManager lockManager, MessageBus messageBus) {
 
 		_backgroundTaskExecutorRegistry = backgroundTaskExecutorRegistry;
-		_backgroundTaskManager = backgroundTaskManager;
+		_backgroundTaskLocalService = backgroundTaskLocalService;
 		_backgroundTaskStatusRegistry = backgroundTaskStatusRegistry;
 		_backgroundTaskThreadLocalManager = backgroundTaskThreadLocalManager;
 		_lockManager = lockManager;
@@ -82,7 +82,7 @@ public class BackgroundTaskMessageListener extends BaseMessageListener {
 			ServiceContext serviceContext = new ServiceContext();
 
 			BackgroundTask backgroundTask =
-				_backgroundTaskManager.amendBackgroundTask(
+				_backgroundTaskLocalService.amendBackgroundTask(
 					backgroundTaskId, null,
 					BackgroundTaskConstants.STATUS_IN_PROGRESS, serviceContext);
 
@@ -96,8 +96,6 @@ public class BackgroundTaskMessageListener extends BaseMessageListener {
 			}
 
 			BackgroundTaskExecutor backgroundTaskExecutor = null;
-			BackgroundTaskStatusMessageListener
-				backgroundTaskStatusMessageListener = null;
 
 			int status = backgroundTask.getStatus();
 			String statusMessage = null;
@@ -110,30 +108,17 @@ public class BackgroundTaskMessageListener extends BaseMessageListener {
 					backgroundTask, classLoader);
 
 				_backgroundTaskStatusRegistry.registerBackgroundTaskStatus(
-					backgroundTaskId);
+					backgroundTaskId,
+					backgroundTaskExecutor.
+						getBackgroundTaskStatusMessageTranslator());
 
-				BackgroundTaskStatusMessageTranslator
-					backgroundTaskStatusMessageTranslator =
-						backgroundTaskExecutor.
-							getBackgroundTaskStatusMessageTranslator();
-
-				if (backgroundTaskStatusMessageTranslator != null) {
-					backgroundTaskStatusMessageListener =
-						new BackgroundTaskStatusMessageListener(
-							backgroundTaskId,
-							backgroundTaskStatusMessageTranslator,
-							_backgroundTaskStatusRegistry);
-
-					_messageBus.registerMessageListener(
-						DestinationNames.BACKGROUND_TASK_STATUS,
-						backgroundTaskStatusMessageListener);
-				}
-
-				backgroundTask = _backgroundTaskManager.fetchBackgroundTask(
-					backgroundTask.getBackgroundTaskId());
+				backgroundTask =
+					_backgroundTaskLocalService.fetchBackgroundTask(
+						backgroundTask.getBackgroundTaskId());
 
 				BackgroundTaskResult backgroundTaskResult =
-					backgroundTaskExecutor.execute(backgroundTask);
+					backgroundTaskExecutor.execute(
+						new BackgroundTaskImpl(backgroundTask));
 
 				status = backgroundTaskResult.getStatus();
 				statusMessage = backgroundTaskResult.getStatusMessage();
@@ -166,7 +151,7 @@ public class BackgroundTaskMessageListener extends BaseMessageListener {
 
 				if (backgroundTaskExecutor != null) {
 					statusMessage = backgroundTaskExecutor.handleException(
-						backgroundTask, exception);
+						new BackgroundTaskImpl(backgroundTask), exception);
 				}
 
 				if (_log.isInfoEnabled()) {
@@ -189,18 +174,12 @@ public class BackgroundTaskMessageListener extends BaseMessageListener {
 							" with status: ", status));
 				}
 
-				_backgroundTaskManager.amendBackgroundTask(
+				_backgroundTaskLocalService.amendBackgroundTask(
 					backgroundTaskId, null, status, statusMessage,
 					serviceContext);
 
 				_backgroundTaskStatusRegistry.unregisterBackgroundTaskStatus(
 					backgroundTaskId);
-
-				if (backgroundTaskStatusMessageListener != null) {
-					_messageBus.unregisterMessageListener(
-						DestinationNames.BACKGROUND_TASK_STATUS,
-						backgroundTaskStatusMessageListener);
-				}
 
 				Message responseMessage = new Message();
 
@@ -334,7 +313,7 @@ public class BackgroundTaskMessageListener extends BaseMessageListener {
 
 	private final BackgroundTaskExecutorRegistry
 		_backgroundTaskExecutorRegistry;
-	private final BackgroundTaskManager _backgroundTaskManager;
+	private final BackgroundTaskLocalService _backgroundTaskLocalService;
 	private final BackgroundTaskStatusRegistry _backgroundTaskStatusRegistry;
 	private final BackgroundTaskThreadLocalManager
 		_backgroundTaskThreadLocalManager;

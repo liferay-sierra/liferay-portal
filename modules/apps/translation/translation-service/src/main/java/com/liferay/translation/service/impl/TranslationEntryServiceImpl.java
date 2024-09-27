@@ -17,7 +17,7 @@ package com.liferay.translation.service.impl;
 import com.liferay.info.exception.InfoItemPermissionException;
 import com.liferay.info.item.InfoItemFieldValues;
 import com.liferay.info.item.InfoItemReference;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemPermissionProvider;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.portal.aop.AopService;
@@ -38,8 +38,6 @@ import com.liferay.translation.internal.util.XLIFFLocaleIdUtil;
 import com.liferay.translation.model.TranslationEntry;
 import com.liferay.translation.security.permission.TranslationPermission;
 import com.liferay.translation.service.base.TranslationEntryServiceBaseImpl;
-
-import net.sf.okapi.common.LocaleId;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -76,11 +74,11 @@ public class TranslationEntryServiceImpl
 		throws PortalException {
 
 		try {
-			LocaleId targetLocaleId = XLIFFLocaleIdUtil.getTargetLocaleId(
-				_saxReader.read(content));
-
 			String languageId = _language.getLanguageId(
-				LocaleUtil.fromLanguageId(targetLocaleId.toString()));
+				LocaleUtil.fromLanguageId(
+					String.valueOf(
+						XLIFFLocaleIdUtil.getTargetLocaleId(
+							_saxReader.read(content)))));
 
 			_checkPermission(groupId, languageId, infoItemReference);
 
@@ -129,7 +127,7 @@ public class TranslationEntryServiceImpl
 		PermissionChecker permissionChecker = getPermissionChecker();
 
 		InfoItemPermissionProvider<JournalArticle> infoItemPermissionProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemPermissionProvider.class,
 				infoItemReference.getClassName());
 
@@ -150,7 +148,7 @@ public class TranslationEntryServiceImpl
 	}
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
 	private Language _language;

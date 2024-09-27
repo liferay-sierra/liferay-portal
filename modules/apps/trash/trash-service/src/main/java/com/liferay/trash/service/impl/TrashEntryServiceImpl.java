@@ -14,7 +14,6 @@
 
 package com.liferay.trash.service.impl;
 
-import com.liferay.petra.model.adapter.util.ModelAdapterUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
@@ -33,6 +32,7 @@ import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.trash.TrashHandlerRegistryUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.model.adapter.ModelAdapterUtil;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.trash.constants.TrashActionKeys;
 import com.liferay.trash.constants.TrashEntryConstants;
@@ -99,7 +99,7 @@ public class TrashEntryServiceImpl extends TrashEntryServiceBaseImpl {
 					continue;
 				}
 
-				deleteEntry(entry);
+				_deleteEntry(entry);
 			}
 			catch (TrashPermissionException trashPermissionException) {
 
@@ -169,7 +169,7 @@ public class TrashEntryServiceImpl extends TrashEntryServiceBaseImpl {
 	public void deleteEntry(long entryId) throws PortalException {
 		TrashEntry entry = trashEntryPersistence.findByPrimaryKey(entryId);
 
-		deleteEntry(entry);
+		_deleteEntry(entry);
 	}
 
 	/**
@@ -198,7 +198,7 @@ public class TrashEntryServiceImpl extends TrashEntryServiceBaseImpl {
 			entry.setClassPK(classPK);
 		}
 
-		deleteEntry(entry);
+		_deleteEntry(entry);
 	}
 
 	/**
@@ -240,7 +240,7 @@ public class TrashEntryServiceImpl extends TrashEntryServiceBaseImpl {
 		List<TrashEntry> entries = trashEntryPersistence.findByG_C(
 			groupId, _classNameLocalService.getClassNameId(className));
 
-		return filterEntries(entries);
+		return _filterEntries(entries);
 	}
 
 	/**
@@ -287,7 +287,7 @@ public class TrashEntryServiceImpl extends TrashEntryServiceBaseImpl {
 				orderByComparator);
 		}
 
-		List<TrashEntry> filteredEntries = filterEntries(entries);
+		List<TrashEntry> filteredEntries = _filterEntries(entries);
 
 		int total = filteredEntries.size();
 
@@ -518,7 +518,7 @@ public class TrashEntryServiceImpl extends TrashEntryServiceBaseImpl {
 		return null;
 	}
 
-	protected void deleteEntry(TrashEntry entry) throws PortalException {
+	private void _deleteEntry(TrashEntry entry) throws PortalException {
 		PermissionChecker permissionChecker = getPermissionChecker();
 
 		TrashHandler trashHandler = TrashHandlerRegistryUtil.getTrashHandler(
@@ -533,7 +533,7 @@ public class TrashEntryServiceImpl extends TrashEntryServiceBaseImpl {
 		trashHandler.deleteTrashEntry(entry.getClassPK());
 	}
 
-	protected List<TrashEntry> filterEntries(List<TrashEntry> entries)
+	private List<TrashEntry> _filterEntries(List<TrashEntry> entries)
 		throws PrincipalException {
 
 		List<TrashEntry> filteredEntries = new ArrayList<>();

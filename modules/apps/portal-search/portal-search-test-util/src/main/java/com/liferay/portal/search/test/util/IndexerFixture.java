@@ -22,6 +22,8 @@ import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.search.legacy.searcher.SearchRequestBuilderFactory;
+import com.liferay.portal.search.searcher.SearchResponse;
 
 import java.io.Serializable;
 
@@ -37,14 +39,22 @@ import java.util.stream.Stream;
 public class IndexerFixture<T> {
 
 	public IndexerFixture(Class<T> clazz) {
+		this(clazz, null);
+	}
+
+	public IndexerFixture(
+		Class<T> clazz,
+		SearchRequestBuilderFactory searchRequestBuilderFactory) {
+
+		_searchRequestBuilderFactory = searchRequestBuilderFactory;
+
 		_indexer = IndexerRegistryUtil.getIndexer(clazz);
 	}
 
 	public void deleteDocument(Document document) {
 		try {
 			IndexWriterHelperUtil.deleteDocument(
-				_indexer.getSearchEngineId(), TestPropsValues.getCompanyId(),
-				document.getUID(), true);
+				TestPropsValues.getCompanyId(), document.getUID(), true);
 		}
 		catch (PortalException portalException) {
 			throw new RuntimeException(portalException);
@@ -56,7 +66,7 @@ public class IndexerFixture<T> {
 			Stream<Document> stream = Arrays.stream(docs);
 
 			IndexWriterHelperUtil.deleteDocuments(
-				_indexer.getSearchEngineId(), TestPropsValues.getCompanyId(),
+				TestPropsValues.getCompanyId(),
 				stream.map(
 					document -> document.getUID()
 				).collect(
@@ -75,11 +85,9 @@ public class IndexerFixture<T> {
 
 	public Document[] search(long userId, String keywords, Locale locale) {
 		try {
-			SearchContext searchContext =
+			Hits hits = _indexer.search(
 				SearchContextTestUtil.getSearchContext(
-					userId, keywords, locale);
-
-			Hits hits = _indexer.search(searchContext);
+					userId, keywords, locale));
 
 			return hits.getDocs();
 		}
@@ -106,11 +114,9 @@ public class IndexerFixture<T> {
 		Map<String, Serializable> attributes) {
 
 		try {
-			SearchContext searchContext =
+			Hits hits = _indexer.search(
 				SearchContextTestUtil.getSearchContext(
-					userId, null, keywords, locale, attributes);
-
-			Hits hits = _indexer.search(searchContext);
+					userId, null, keywords, locale, attributes));
 
 			HitsAssert.assertNoHits(hits);
 		}
@@ -188,6 +194,34 @@ public class IndexerFixture<T> {
 		return searchOnlyOne(keywords, null, attributes);
 	}
 
+	public SearchResponse searchOnlyOneSearchResponse(
+		String keywords, Locale locale) {
+
+		try {
+			SearchContext searchContext =
+				SearchContextTestUtil.getSearchContext(
+					TestPropsValues.getUserId(), keywords, locale);
+
+			_searchRequestBuilderFactory.builder(
+				searchContext
+			).fetchSourceIncludes(
+				new String[] {"*_sortable"}
+			).build();
+
+			Hits hits = _indexer.search(searchContext);
+
+			HitsAssert.assertOnlyOne(
+				(String)searchContext.getAttribute("queryString"), hits);
+
+			return (SearchResponse)searchContext.getAttribute(
+				"search.response");
+		}
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
+		}
+	}
+
 	private final Indexer<T> _indexer;
+	private final SearchRequestBuilderFactory _searchRequestBuilderFactory;
 
 }

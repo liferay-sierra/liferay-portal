@@ -16,21 +16,6 @@ html#{$cadmin-selector} {
 				font-size: 0.75rem;
 			}
 
-			&__empty-result {
-				.c-empty-state-image {
-					max-width: 120px;
-
-					& + .c-empty-state-title {
-						font-size: 1rem;
-						margin-top: 32px;
-					}
-
-					& + .c-empty-state-text {
-						margin-top: 4px;
-					}
-				}
-			}
-
 			&__search-form {
 				&
 					+ .page-editor__dropdown-color-picker__color-palette
@@ -44,6 +29,15 @@ html#{$cadmin-selector} {
 					height: 32px;
 					padding-left: 9px;
 					padding-right: 9px;
+				}
+
+				.inherited {
+					background-color: $cadmin-blue;
+					border-radius: 50%;
+					flex-shrink: 0;
+					height: 6px;
+					margin-left: 8px;
+					width: 6px;
 				}
 
 				&-splotch {

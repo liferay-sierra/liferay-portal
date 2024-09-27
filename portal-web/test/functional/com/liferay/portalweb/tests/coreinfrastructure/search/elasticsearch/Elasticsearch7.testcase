@@ -29,6 +29,7 @@ definition {
 
 	@priority = "4"
 	test AssertIndexOnStartup {
+		property search.environment.suite.exclude = "true";
 		property test.assert.warning.exceptions = "true";
 		property test.name.skip.portal.instance = "Elasticsearch7#AssertIndexOnStartup";
 
@@ -57,9 +58,7 @@ definition {
 		Portlet.addPG(portletName = "Asset Publisher");
 
 		var companyId = JSONCompany.getCompanyId();
-
 		var port = Elasticsearch.getServerPort();
-
 		var portalHostname = PropsUtil.get("portal.hostname");
 
 		var curl = '''
@@ -125,6 +124,13 @@ definition {
 			key_searchAssetTitle = "WC WebContent Title",
 			key_searchAssetType = "Web Content Article",
 			locator1 = "SearchResults#ASSET_ENTRY_TABLE_TITLE_SPECIFIC");
+
+		SearchPortlets.searchEmbedded(searchTerm = "Home");
+
+		VerifyElementPresent(
+			key_searchAssetTitle = "Home",
+			key_searchAssetType = "Page",
+			locator1 = "SearchResults#ASSET_ENTRY_TABLE_TITLE_SPECIFIC");
 	}
 
 	@priority = "5"
@@ -137,7 +143,6 @@ definition {
 			portlet = "Search");
 
 		var clientVersion = Elasticsearch.getClientVersion();
-
 		var serverVersion = Elasticsearch.getServerVersion();
 
 		SearchAdministration.assertEngineVendorAndVersions(
@@ -195,17 +200,13 @@ definition {
 
 		SearchPortlets.searchEmbedded(searchTerm = "apple");
 
-		AssertTextEquals.assertPartialText(
-			locator1 = "SearchResults#SEARCH_INSIGHTS_PORTLET_STRING_QUERY",
-			value1 = "&quot;explain&quot;:true");
+		AssertElementPresent(
+			key_text = "\"explain\"",
+			locator1 = "SearchResults#SEARCH_INSIGHTS_WIDGET_REQUEST_QUERY");
 
-		AssertTextEquals.assertPartialText(
-			locator1 = "SearchResults#SEARCH_INSIGHTS_PORTLET_RESPONSE_QUERY",
-			value1 = "buckets");
-
-		AssertTextEquals.assertPartialText(
-			locator1 = "SearchResults#SEARCH_INSIGHTS_PORTLET_RESPONSE_QUERY",
-			value1 = "_explanation");
+		AssertElementPresent(
+			key_text = "\"_explanation\"",
+			locator1 = "SearchResults#SEARCH_INSIGHTS_WIDGET_RESPONSE_QUERY");
 
 		Portlet.gotoPortletOptions(
 			portletName = "Search Insights",
@@ -223,13 +224,13 @@ definition {
 
 		SearchPortlets.searchEmbedded(searchTerm = "apple");
 
-		AssertTextEquals.assertPartialText(
-			locator1 = "SearchResults#SEARCH_INSIGHTS_PORTLET_STRING_QUERY",
-			value1 = "&quot;explain&quot;:false");
+		AssertElementPresent(
+			key_text = "\"explain\"",
+			locator1 = "SearchResults#SEARCH_INSIGHTS_WIDGET_REQUEST_QUERY");
 
-		AssertTextNotEquals.assertNotPartialText(
-			locator1 = "SearchResults#SEARCH_INSIGHTS_PORTLET_RESPONSE_QUERY",
-			value1 = "_explanation");
+		AssertElementNotPresent(
+			key_text = "\"_explanation\"",
+			locator1 = "SearchResults#SEARCH_INSIGHTS_WIDGET_RESPONSE_QUERY");
 	}
 
 	@priority = "5"
@@ -238,6 +239,7 @@ definition {
 		property embedded.elasticsearch.only = "true";
 		property environment.acceptance = "true";
 		property portal.acceptance = "true";
+		property search.environment.suite.exclude = "true";
 		property test.assert.warning.exceptions = "true";
 
 		AssertConsoleTextPresent(value1 = "Sidecar Elasticsearch liferay started at [\d\.]+:9201");
@@ -260,6 +262,7 @@ definition {
 		property cluster.enabled = "true";
 		property embedded.elasticsearch.only = "true";
 		property minimum.slave.ram = "24";
+		property search.environment.suite.exclude = "true";
 		property test.assert.warning.exceptions = "true";
 		property test.name.skip.portal.instance = "Elasticsearch7#AssertSidecarDoesNotCluster";
 
@@ -352,13 +355,40 @@ definition {
 			searchAssetType = "Web Content Article");
 	}
 
+	@priority = "4"
+	test CanReindexSelectedInstance {
+		property test.name.skip.portal.instance = "Elasticsearch7#CanReindexSelectedInstance";
+
+		var baseURL = PropsUtil.get("portal.url");
+
+		ServerAdministration.openServerAdmin();
+
+		ServerAdministration.addCategoryLogLevels(
+			categoryLevel = "DEBUG",
+			categoryName = "com.liferay.portal.search.internal.background.task");
+
+		SearchAdministration.executeReindex(executionScope = "System");
+
+		var companyId = JSONCompany.getCompanyId();
+
+		AssertConsoleTextNotPresent(value1 = "phase=portalStart, defaultLocale=en_US, companyId=${companyId}");
+
+		AssertConsoleTextPresent(value1 = "phase=portalStart, defaultLocale=en_US, companyId=0");
+
+		SearchAdministration.executeReindex(executionScope = "liferay.com");
+
+		AssertConsoleTextPresent(value1 = "phase=portalStart, defaultLocale=en_US, companyId=${companyId}");
+
+		SearchAdministration.executeReindex(executionScope = "All Instances");
+	}
+
 	@priority = "5"
 	test ElasticsearchClusteringSmokeTest {
 		property elasticsearch.cluster.size = "2";
 		property minimum.slave.ram = "24";
 		property portal.acceptance = "true";
-		property portal.upstream = "quarantine";
 		property remote.elasticsearch.enabled = "true";
+		property search.environment.suite.exclude = "true";
 		property test.name.skip.portal.instance = "Elasticsearch7#ElasticsearchClusteringSmokeTest";
 
 		Elasticsearch.viewClusterStatusViaClusterHealthAPI(
@@ -414,8 +444,8 @@ definition {
 	@priority = "5"
 	test MultipleConnectionsSmokeTest {
 		property elasticsearch.multiple.connections = "true";
-		property portal.upstream = "quarantine";
 		property remote.elasticsearch.enabled = "true";
+		property search.environment.suite.exclude = "true";
 
 		SearchAdministration.openSearchAdmin();
 
@@ -516,19 +546,54 @@ definition {
 	test OSGiConfigSmokeTest {
 		property embedded.elasticsearch.only = "true";
 		property osgi.module.configuration.file.names = "com.liferay.portal.search.elasticsearch7.configuration.ElasticsearchConfiguration.config";
-		property osgi.module.configurations = "clusterName=&quot;LiferayElasticsearchCluster1&quot;";
+		property osgi.module.configurations = "clusterName=\"LiferayElasticsearchCluster1\"";
 		property portal.acceptance = "true";
+		property search.environment.suite.exclude = "true";
 
 		var portalHostname = PropsUtil.get("portal.hostname");
 
 		Navigator.openSpecificURL(url = "http://${portalHostname}:9201");
 
-		Elasticsearch.viewClusterStatus(clusterStatus = "&quot;cluster_name&quot; : &quot;LiferayElasticsearchCluster1&quot;");
+		Elasticsearch.viewClusterStatus(clusterStatus = "\"cluster_name\" : \"LiferayElasticsearchCluster1\"");
+	}
+
+	@description = "Assert search is functional after Elasticsearch connector is redeployed from GogoShell"
+	@priority = "3"
+	test SearchAfterRedeployingElasticsearchConnector {
+		property test.assert.warning.exceptions = "true";
+		property test.name.skip.portal.instance = "Elasticsearch7#SearchAfterRedeployingElasticsearchConnector";
+
+		GogoShell.openGogoShellAdmin();
+
+		var moduleId = GogoShell.getModuleID(moduleName = "com.liferay.portal.search.elasticsearch7.impl");
+
+		GogoShell.stopModule(moduleId = "${moduleId}");
+
+		GogoShell.viewModuleStatus(
+			moduleName = "com.liferay.portal.search.elasticsearch7.impl",
+			moduleStatus = "Resolved");
+
+		GogoShell.startModule(moduleId = "${moduleId}");
+
+		GogoShell.viewModuleStatus(
+			moduleName = "com.liferay.portal.search.elasticsearch7.impl",
+			moduleStatus = "Active");
+
+		SearchAdministration.executeReindex();
+
+		Navigator.gotoPage(pageName = "Home");
+
+		SearchPortlets.searchEmbedded(searchTerm = "test");
+
+		AssertElementPresent(
+			key_searchAssetTitle = "Test Test",
+			locator1 = "SearchResults#ASSET_ENTRY_TABLE_TITLE");
 	}
 
 	@priority = "5"
 	test SearchWithNonLiferayIndex {
 		property embedded.elasticsearch.only = "true";
+		property search.environment.suite.exclude = "true";
 		property test.name.skip.portal.instance = "Elasticsearch7#SearchWithNonLiferayIndex";
 
 		var portalHostname = PropsUtil.get("portal.hostname");
@@ -578,12 +643,13 @@ definition {
 
 		AssertTextEquals.assertPartialText(
 			locator1 = "SearchResults#RESULTS_PORTLET_SEARCH_QUERY",
-			value1 = "1 results for bicycle");
+			value1 = "1 result for bicycle");
 	}
 
 	@priority = "4"
 	test SwitchSidecarToRemote {
 		property embedded.elasticsearch.only = "true";
+		property search.environment.suite.exclude = "true";
 		property test.name.skip.portal.instance = "Elasticsearch7#SwitchSidecarToRemote";
 
 		JSONWebcontent.addWebContent(
@@ -616,8 +682,11 @@ definition {
 
 		SearchAdministration.openSearchAdmin();
 
-		var clientVersion = Elasticsearch.getClientVersion();
+		WaitForElementPresent(
+			locator1 = "Panel#PANEL",
+			value1 = "NODES (1)");
 
+		var clientVersion = Elasticsearch.getClientVersion();
 		var serverVersion = Elasticsearch.getServerVersion();
 
 		SearchAdministration.assertEngineVendorAndVersions(
@@ -697,7 +766,7 @@ definition {
 
 		Navigator.openSpecificURL(url = "http://${portalHostname}:9201");
 
-		Elasticsearch.viewClusterStatus(clusterStatus = "&quot;cluster_name&quot; : &quot;LiferayElasticsearchCluster1&quot;");
+		Elasticsearch.viewClusterStatus(clusterStatus = "\"cluster_name\" : \"LiferayElasticsearchCluster1\"");
 
 		Navigator.openURL();
 

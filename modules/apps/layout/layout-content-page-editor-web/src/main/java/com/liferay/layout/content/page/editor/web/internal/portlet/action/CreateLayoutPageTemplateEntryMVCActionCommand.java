@@ -19,10 +19,9 @@ import com.liferay.layout.page.template.admin.constants.LayoutPageTemplateAdminP
 import com.liferay.layout.page.template.exception.LayoutPageTemplateEntryNameException;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryService;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
@@ -30,6 +29,7 @@ import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
@@ -38,7 +38,6 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.segments.constants.SegmentsEntryConstants;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -51,7 +50,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Jürgen Kappler
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + ContentPageEditorPortletKeys.CONTENT_PAGE_EDITOR_PORTLET,
 		"mvc.command.name=/layout_content_page_editor/create_layout_page_template_entry"
@@ -70,8 +68,7 @@ public class CreateLayoutPageTemplateEntryMVCActionCommand
 			WebKeys.THEME_DISPLAY);
 
 		long segmentsExperienceId = ParamUtil.getLong(
-			actionRequest, "segmentsExperienceId",
-			SegmentsEntryConstants.ID_DEFAULT);
+			actionRequest, "segmentsExperienceId");
 		Layout sourceLayout = _layoutLocalService.getLayout(
 			themeDisplay.getPlid());
 		String name = ParamUtil.getString(actionRequest, "name");
@@ -81,7 +78,7 @@ public class CreateLayoutPageTemplateEntryMVCActionCommand
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			LayoutPageTemplateEntry.class.getName(), actionRequest);
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+		JSONObject jsonObject = _jsonFactory.createJSONObject();
 
 		try {
 			LayoutPageTemplateEntry layoutPageTemplateEntry =
@@ -118,14 +115,14 @@ public class CreateLayoutPageTemplateEntryMVCActionCommand
 			if (exception instanceof
 					LayoutPageTemplateEntryNameException.MustNotBeDuplicate) {
 
-				errorMessage = LanguageUtil.get(
+				errorMessage = _language.get(
 					themeDisplay.getLocale(),
 					"a-page-template-entry-with-that-name-already-exists");
 			}
 			else if (exception instanceof
 						LayoutPageTemplateEntryNameException.MustNotBeNull) {
 
-				errorMessage = LanguageUtil.get(
+				errorMessage = _language.get(
 					themeDisplay.getLocale(), "name-must-not-be-empty");
 			}
 			else if (exception instanceof
@@ -137,7 +134,7 @@ public class CreateLayoutPageTemplateEntryMVCActionCommand
 						(LayoutPageTemplateEntryNameException.
 							MustNotContainInvalidCharacters)exception;
 
-				errorMessage = LanguageUtil.format(
+				errorMessage = _language.format(
 					themeDisplay.getLocale(),
 					"name-cannot-contain-the-following-invalid-character-x",
 					lptene.character);
@@ -149,14 +146,14 @@ public class CreateLayoutPageTemplateEntryMVCActionCommand
 				int nameMaxLength = ModelHintsUtil.getMaxLength(
 					LayoutPageTemplateEntry.class.getName(), "name");
 
-				errorMessage = LanguageUtil.format(
+				errorMessage = _language.format(
 					themeDisplay.getLocale(),
 					"please-enter-a-name-with-fewer-than-x-characters",
 					nameMaxLength);
 			}
 
 			if (Validator.isNull(errorMessage)) {
-				errorMessage = LanguageUtil.get(
+				errorMessage = _language.get(
 					themeDisplay.getLocale(), "an-unexpected-error-occurred");
 			}
 
@@ -169,6 +166,12 @@ public class CreateLayoutPageTemplateEntryMVCActionCommand
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		CreateLayoutPageTemplateEntryMVCActionCommand.class);
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;

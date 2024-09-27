@@ -25,7 +25,7 @@ import com.liferay.portal.kernel.template.TemplateConstants;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -47,7 +47,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Leonardo Barros
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + DDMPortletKeys.DYNAMIC_DATA_MAPPING,
 		"javax.portlet.name=" + PortletKeys.PORTLET_DISPLAY_TEMPLATE,
@@ -83,14 +82,11 @@ public class AddTemplateMVCActionCommand extends BaseDDMMVCActionCommand {
 		return ParamUtil.getString(uploadPortletRequest, "scriptContent");
 	}
 
-	@Reference(unbind = "-")
-	protected void setDDMTemplateService(
-		DDMTemplateService ddmTemplateService) {
-
-		this.ddmTemplateService = ddmTemplateService;
-	}
-
+	@Reference
 	protected DDMTemplateService ddmTemplateService;
+
+	@Reference
+	protected Localization localization;
 
 	@Reference
 	protected Portal portal;
@@ -109,11 +105,10 @@ public class AddTemplateMVCActionCommand extends BaseDDMMVCActionCommand {
 			uploadPortletRequest, "resourceClassNameId");
 		String templateKey = ParamUtil.getString(
 			uploadPortletRequest, "templateKey");
-		Map<Locale, String> nameMap = LocalizationUtil.getLocalizationMap(
+		Map<Locale, String> nameMap = localization.getLocalizationMap(
 			uploadPortletRequest, "name");
-		Map<Locale, String> descriptionMap =
-			LocalizationUtil.getLocalizationMap(
-				uploadPortletRequest, "description");
+		Map<Locale, String> descriptionMap = localization.getLocalizationMap(
+			uploadPortletRequest, "description");
 		String type = ParamUtil.getString(uploadPortletRequest, "type");
 		String mode = ParamUtil.getString(uploadPortletRequest, "mode");
 		String language = ParamUtil.getString(

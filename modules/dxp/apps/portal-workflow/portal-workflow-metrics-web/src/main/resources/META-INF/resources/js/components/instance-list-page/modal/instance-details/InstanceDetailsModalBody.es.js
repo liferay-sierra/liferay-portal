@@ -15,6 +15,7 @@ import ClayIcon from '@clayui/icon';
 import ClayLayout from '@clayui/layout';
 import ClayLink from '@clayui/link';
 import ClayModal, {useModal} from '@clayui/modal';
+import {ClayTooltipProvider} from '@clayui/tooltip';
 import WorkflowInstanceTracker from '@liferay/portal-workflow-instance-tracker-web/js/components/WorkflowInstanceTracker';
 import React, {useState} from 'react';
 
@@ -89,7 +90,7 @@ function Body({
 						{Liferay.Language.get('due-date-by-sla')}
 					</Body.SectionTitle>
 
-					{slaResults.length === 0 && (
+					{!slaResults.length && (
 						<p>
 							<span className="font-weight-medium text-muted">
 								{Liferay.Language.get(
@@ -99,7 +100,7 @@ function Body({
 						</p>
 					)}
 
-					{SLAs.open.length > 0 && (
+					{!!SLAs.open.length && (
 						<Body.SectionSubTitle>
 							{`${Liferay.Language.get('open').toUpperCase()} (${
 								SLAs.open.length
@@ -111,7 +112,7 @@ function Body({
 						<Body.SLAResultItem key={item.id} {...item} />
 					))}
 
-					{SLAs.resolved.length > 0 && (
+					{!!SLAs.resolved.length && (
 						<Body.SectionSubTitle>
 							{`${Liferay.Language.get(
 								'resolved'
@@ -123,7 +124,7 @@ function Body({
 						<Body.SLAResultItem key={item.id} {...item} />
 					))}
 
-					{SLAs.notStarted.length > 0 && (
+					{!!SLAs.notStarted.length && (
 						<Body.SectionSubTitle>
 							{`${Liferay.Language.get(
 								'not-started'
@@ -147,14 +148,22 @@ function Body({
 									? Liferay.Language.get('completed')
 									: Liferay.Language.get('pending')}
 
-								<ClayLink
-									className="ml-1"
-									onClick={() =>
-										setShowInstanceTrackerModal(true)
-									}
-								>
-									({Liferay.Language.get('track-workflow')})
-								</ClayLink>
+								<ClayTooltipProvider>
+									<ClayLink
+										className="ml-1 tracker-tooltip"
+										data-tooltip-align="top"
+										onClick={() =>
+											setShowInstanceTrackerModal(true)
+										}
+										title={Liferay.Language.get(
+											'click-and-see'
+										)}
+									>
+										(
+										{Liferay.Language.get('track-workflow')}
+										)
+									</ClayLink>
+								</ClayTooltipProvider>
 							</>
 						}
 					/>
@@ -204,9 +213,7 @@ function Body({
 							description={Liferay.Language.get(
 								'current-assignee'
 							)}
-							detail={assignees
-								.map((user) => user.name)
-								.join(', ')}
+							detail={assignees[0].name}
 						/>
 					)}
 

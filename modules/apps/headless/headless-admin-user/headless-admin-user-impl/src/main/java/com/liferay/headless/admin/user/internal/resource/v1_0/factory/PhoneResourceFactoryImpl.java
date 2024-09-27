@@ -14,6 +14,7 @@
 
 package com.liferay.headless.admin.user.internal.resource.v1_0.factory;
 
+import com.liferay.headless.admin.user.internal.security.permission.LiberalPermissionChecker;
 import com.liferay.headless.admin.user.resource.v1_0.PhoneResource;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -33,14 +34,18 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Generated;
 
@@ -48,9 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 
@@ -58,7 +61,10 @@ import org.osgi.service.component.annotations.ReferenceScope;
  * @author Javier Gamarra
  * @generated
  */
-@Component(immediate = true, service = PhoneResource.Factory.class)
+@Component(
+	property = "resource.locator.key=/headless-admin-user/v1.0/Phone",
+	service = PhoneResource.Factory.class
+)
 @Generated("")
 public class PhoneResourceFactoryImpl implements PhoneResource.Factory {
 
@@ -72,9 +78,7 @@ public class PhoneResourceFactoryImpl implements PhoneResource.Factory {
 					throw new IllegalArgumentException("User is not set");
 				}
 
-				return (PhoneResource)ProxyUtil.newProxyInstance(
-					PhoneResource.class.getClassLoader(),
-					new Class<?>[] {PhoneResource.class},
+				return _phoneResourceProxyProviderFunction.apply(
 					(proxy, method, arguments) -> _invoke(
 						method, arguments, _checkPermissions,
 						_httpServletRequest, _httpServletResponse,
@@ -133,14 +137,31 @@ public class PhoneResourceFactoryImpl implements PhoneResource.Factory {
 		};
 	}
 
-	@Activate
-	protected void activate() {
-		PhoneResource.FactoryHolder.factory = this;
-	}
+	private static Function<InvocationHandler, PhoneResource>
+		_getProxyProviderFunction() {
 
-	@Deactivate
-	protected void deactivate() {
-		PhoneResource.FactoryHolder.factory = null;
+		Class<?> proxyClass = ProxyUtil.getProxyClass(
+			PhoneResource.class.getClassLoader(), PhoneResource.class);
+
+		try {
+			Constructor<PhoneResource> constructor =
+				(Constructor<PhoneResource>)proxyClass.getConstructor(
+					InvocationHandler.class);
+
+			return invocationHandler -> {
+				try {
+					return constructor.newInstance(invocationHandler);
+				}
+				catch (ReflectiveOperationException
+							reflectiveOperationException) {
+
+					throw new InternalError(reflectiveOperationException);
+				}
+			};
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			throw new InternalError(noSuchMethodException);
+		}
 	}
 
 	private Object _invoke(
@@ -163,7 +184,7 @@ public class PhoneResourceFactoryImpl implements PhoneResource.Factory {
 		}
 		else {
 			PermissionThreadLocal.setPermissionChecker(
-				_liberalPermissionCheckerFactory.create(user));
+				new LiberalPermissionChecker(user));
 		}
 
 		PhoneResource phoneResource = _componentServiceObjects.getService();
@@ -186,6 +207,7 @@ public class PhoneResourceFactoryImpl implements PhoneResource.Factory {
 		phoneResource.setResourcePermissionLocalService(
 			_resourcePermissionLocalService);
 		phoneResource.setRoleLocalService(_roleLocalService);
+		phoneResource.setSortParserProvider(_sortParserProvider);
 
 		try {
 			return method.invoke(phoneResource, arguments);
@@ -201,6 +223,9 @@ public class PhoneResourceFactoryImpl implements PhoneResource.Factory {
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 		}
 	}
+
+	private static final Function<InvocationHandler, PhoneResource>
+		_phoneResourceProxyProviderFunction = _getProxyProviderFunction();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -222,9 +247,6 @@ public class PhoneResourceFactoryImpl implements PhoneResource.Factory {
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@Reference(target = "(permission.checker.type=liberal)")
-	private PermissionCheckerFactory _liberalPermissionCheckerFactory;
-
 	@Reference
 	private ResourceActionLocalService _resourceActionLocalService;
 
@@ -233,6 +255,9 @@ public class PhoneResourceFactoryImpl implements PhoneResource.Factory {
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SortParserProvider _sortParserProvider;
 
 	@Reference
 	private UserLocalService _userLocalService;

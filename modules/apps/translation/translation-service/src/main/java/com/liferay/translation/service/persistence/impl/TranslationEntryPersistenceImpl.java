@@ -40,7 +40,7 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 import com.liferay.translation.exception.NoSuchEntryException;
 import com.liferay.translation.model.TranslationEntry;
 import com.liferay.translation.model.TranslationEntryTable;
@@ -204,7 +204,7 @@ public class TranslationEntryPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<TranslationEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (TranslationEntry translationEntry : list) {
@@ -598,7 +598,7 @@ public class TranslationEntryPersistenceImpl
 
 			finderArgs = new Object[] {uuid};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -734,7 +734,7 @@ public class TranslationEntryPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = finderCache.getResult(
-				_finderPathFetchByUUID_G, finderArgs);
+				_finderPathFetchByUUID_G, finderArgs, this);
 		}
 
 		if (result instanceof TranslationEntry) {
@@ -854,7 +854,7 @@ public class TranslationEntryPersistenceImpl
 
 			finderArgs = new Object[] {uuid, groupId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1026,7 +1026,7 @@ public class TranslationEntryPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<TranslationEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (TranslationEntry translationEntry : list) {
@@ -1452,7 +1452,7 @@ public class TranslationEntryPersistenceImpl
 
 			finderArgs = new Object[] {uuid, companyId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1622,7 +1622,7 @@ public class TranslationEntryPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<TranslationEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (TranslationEntry translationEntry : list) {
@@ -2022,7 +2022,7 @@ public class TranslationEntryPersistenceImpl
 
 			finderArgs = new Object[] {classNameId, classPK};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2161,7 +2161,8 @@ public class TranslationEntryPersistenceImpl
 		Object result = null;
 
 		if (useFinderCache && productionMode) {
-			result = finderCache.getResult(_finderPathFetchByC_C_L, finderArgs);
+			result = finderCache.getResult(
+				_finderPathFetchByC_C_L, finderArgs, this);
 		}
 
 		if (result instanceof TranslationEntry) {
@@ -2290,7 +2291,7 @@ public class TranslationEntryPersistenceImpl
 
 			finderArgs = new Object[] {classNameId, classPK, languageId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2517,7 +2518,7 @@ public class TranslationEntryPersistenceImpl
 		translationEntry.setNew(true);
 		translationEntry.setPrimaryKey(translationEntryId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		translationEntry.setUuid(uuid);
 
@@ -2639,7 +2640,7 @@ public class TranslationEntryPersistenceImpl
 			(TranslationEntryModelImpl)translationEntry;
 
 		if (Validator.isNull(translationEntry.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			translationEntry.setUuid(uuid);
 		}
@@ -2766,7 +2767,9 @@ public class TranslationEntryPersistenceImpl
 	 */
 	@Override
 	public TranslationEntry fetchByPrimaryKey(Serializable primaryKey) {
-		if (ctPersistenceHelper.isProductionMode(TranslationEntry.class)) {
+		if (ctPersistenceHelper.isProductionMode(
+				TranslationEntry.class, primaryKey)) {
+
 			return super.fetchByPrimaryKey(primaryKey);
 		}
 
@@ -2986,7 +2989,7 @@ public class TranslationEntryPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<TranslationEntry>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -3062,7 +3065,7 @@ public class TranslationEntryPersistenceImpl
 
 		if (productionMode) {
 			count = (Long)finderCache.getResult(
-				_finderPathCountAll, FINDER_ARGS_EMPTY);
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 		}
 
 		if (count == null) {
@@ -3382,7 +3385,6 @@ public class TranslationEntryPersistenceImpl
 	}
 
 	@Reference
-	private TranslationEntryModelArgumentsResolver
-		_translationEntryModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

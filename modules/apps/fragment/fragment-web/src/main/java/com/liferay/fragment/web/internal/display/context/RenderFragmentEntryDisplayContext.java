@@ -14,8 +14,9 @@
 
 package com.liferay.fragment.web.internal.display.context;
 
+import com.liferay.fragment.constants.FragmentConstants;
 import com.liferay.fragment.constants.FragmentEntryLinkConstants;
-import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
+import com.liferay.fragment.contributor.FragmentCollectionContributorRegistry;
 import com.liferay.fragment.model.FragmentCollection;
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.model.FragmentEntryLink;
@@ -39,8 +40,8 @@ public class RenderFragmentEntryDisplayContext {
 
 		_httpServletRequest = httpServletRequest;
 
-		_fragmentCollectionContributorTracker =
-			(FragmentCollectionContributorTracker)
+		_fragmentCollectionContributorRegistry =
+			(FragmentCollectionContributorRegistry)
 				_httpServletRequest.getAttribute(
 					FragmentWebKeys.FRAGMENT_COLLECTION_CONTRIBUTOR_TRACKER);
 	}
@@ -73,10 +74,27 @@ public class RenderFragmentEntryDisplayContext {
 		fragmentEntryLink.setJs(js);
 		fragmentEntryLink.setConfiguration(configuration);
 
+		String rendererKey = null;
+
+		if ((fragmentEntry != null) && (fragmentEntryId == 0)) {
+			rendererKey = fragmentEntry.getFragmentEntryKey();
+		}
+
+		fragmentEntryLink.setRendererKey(rendererKey);
+
+		int type = FragmentConstants.TYPE_COMPONENT;
+
+		if (fragmentEntry != null) {
+			type = fragmentEntry.getType();
+		}
+
+		fragmentEntryLink.setType(type);
+
 		DefaultFragmentRendererContext defaultFragmentRendererContext =
 			new DefaultFragmentRendererContext(fragmentEntryLink);
 
 		defaultFragmentRendererContext.setMode(FragmentEntryLinkConstants.VIEW);
+		defaultFragmentRendererContext.setUseCachedContent(false);
 
 		return defaultFragmentRendererContext;
 	}
@@ -103,15 +121,15 @@ public class RenderFragmentEntryDisplayContext {
 
 		if (fragmentEntry == null) {
 			fragmentEntry =
-				_fragmentCollectionContributorTracker.getFragmentEntry(
+				_fragmentCollectionContributorRegistry.getFragmentEntry(
 					fragmentEntryKey);
 		}
 
 		return fragmentEntry;
 	}
 
-	private final FragmentCollectionContributorTracker
-		_fragmentCollectionContributorTracker;
+	private final FragmentCollectionContributorRegistry
+		_fragmentCollectionContributorRegistry;
 	private final HttpServletRequest _httpServletRequest;
 
 }

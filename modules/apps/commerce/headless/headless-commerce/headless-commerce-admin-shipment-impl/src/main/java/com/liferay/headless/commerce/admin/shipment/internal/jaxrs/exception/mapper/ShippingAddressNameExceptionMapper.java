@@ -15,8 +15,7 @@
 package com.liferay.headless.commerce.admin.shipment.internal.jaxrs.exception.mapper;
 
 import com.liferay.commerce.exception.CommerceAddressNameException;
-import com.liferay.portal.vulcan.jaxrs.exception.mapper.BaseExceptionMapper;
-import com.liferay.portal.vulcan.jaxrs.exception.mapper.Problem;
+import com.liferay.headless.commerce.core.exception.mapper.BaseExceptionMapper;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
@@ -27,11 +26,10 @@ import org.osgi.service.component.annotations.Component;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	property = {
 		"osgi.jaxrs.application.select=(osgi.jaxrs.name=Liferay.Headless.Commerce.Admin.Shipment)",
 		"osgi.jaxrs.extension=true",
-		"osgi.jaxrs.name=Liferay.Headless.Commerce.Admin.Shipment.ShippingAddressNameException"
+		"osgi.jaxrs.name=Liferay.Headless.Commerce.Admin.Shipment.ShippingAddressNameExceptionMapper"
 	},
 	service = ExceptionMapper.class
 )
@@ -39,12 +37,13 @@ public class ShippingAddressNameExceptionMapper
 	extends BaseExceptionMapper<CommerceAddressNameException> {
 
 	@Override
-	protected Problem getProblem(
-		CommerceAddressNameException commerceAddressNameException) {
+	public String getErrorDescription() {
+		return "Invalid shipping address name";
+	}
 
-		return new Problem(
-			Response.Status.BAD_REQUEST,
-			commerceAddressNameException.getMessage());
+	@Override
+	public Response.Status getStatus() {
+		return Response.Status.BAD_REQUEST;
 	}
 
 }

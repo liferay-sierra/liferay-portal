@@ -58,9 +58,9 @@ List<AssetRendererFactory<?>> classTypesAssetRendererFactories = new ArrayList<>
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button onClick='<%= liferayPortletResponse.getNamespace() + "saveSelectBoxes();" %>' type="submit" />
-
-		<aui:button type="cancel" />
+		<liferay-frontend:edit-form-buttons
+			submitOnClick='<%= liferayPortletResponse.getNamespace() + "saveSelectBoxes();" %>'
+		/>
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>
 
@@ -74,7 +74,7 @@ List<AssetRendererFactory<?>> classTypesAssetRendererFactories = new ArrayList<>
 		%>
 
 			Liferay.Util.setFormValues(form, {
-				classTypeIds<%= className %>: Liferay.Util.listSelect(
+				classTypeIds<%= className %>: Liferay.Util.getSelectedOptionValues(
 					Liferay.Util.getFormElement(
 						form,
 						'<%= className %>currentClassTypeIds'
@@ -98,10 +98,10 @@ List<AssetRendererFactory<?>> classTypesAssetRendererFactories = new ArrayList<>
 		if (currentClassNameIdsSelect && currentMetadataFieldsInput) {
 			Liferay.Util.postForm(form, {
 				data: {
-					classNameIds: Liferay.Util.listSelect(
+					classNameIds: Liferay.Util.getSelectedOptionValues(
 						currentClassNameIdsSelect
 					),
-					metadataFields: Liferay.Util.listSelect(
+					metadataFields: Liferay.Util.getSelectedOptionValues(
 						currentMetadataFieldsInput
 					),
 				},
@@ -110,7 +110,7 @@ List<AssetRendererFactory<?>> classTypesAssetRendererFactories = new ArrayList<>
 		else if (currentMetadataFieldsInput) {
 			Liferay.Util.postForm(form, {
 				data: {
-					metadataFields: Liferay.Util.listSelect(
+					metadataFields: Liferay.Util.getSelectedOptionValues(
 						currentMetadataFieldsInput
 					),
 				},

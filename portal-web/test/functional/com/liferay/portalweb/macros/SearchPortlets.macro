@@ -19,8 +19,6 @@ definition {
 
 		Navigator.gotoNavTab(navTab = "Widgets");
 
-		Pause(locator1 = "5000");
-
 		Type.sendKeysApplicationSearch(
 			locator1 = "NavBar#APPLICATION_SEARCH_FIELD",
 			value1 = "search");
@@ -57,13 +55,60 @@ definition {
 
 	macro chooseWidgetScope {
 		if (("${searchScope}" == "Everything") || ("${searchScope}" == "This Site")) {
-			Select(
+			Click.clickNoMouseOver(
 				locator1 = "Search#SEARCH_BAR_WIDGET_SCOPE_SELECT",
-				value1 = "${searchScope}");
+				searchScope = "${searchScope}");
 		}
 		else {
 			fail("Invalid search scope. Must be (Everything|This Site).");
 		}
+	}
+
+	macro configureCategoryFacet {
+		if (isSet(index)) {
+			SearchPortlets.gotoSearchFacetOptionsSpecific(
+				index = "${index}",
+				portletName = "Category Facet",
+				portletOption = "Configuration");
+		}
+		else {
+			SearchPortlets.gotoSearchFacetOptionsSpecific(
+				index = "1",
+				portletName = "Category Facet",
+				portletOption = "Configuration");
+		}
+
+		SelectFrame(locator1 = "IFrame#CONFIGURATION");
+
+		if (isSet(vocabularyScope)) {
+			if ("${vocabularyScope}" == "Select Vocabularies") {
+				Check.checkNotVisible(
+					key_radioName = "${vocabularyScope}",
+					locator1 = "Search#CATEGORY_FACET_VOCABULARY_SCOPE_RADIO");
+
+				Click(
+					key_radioName = "${vocabularyScope}",
+					locator1 = "Search#CATEGORY_FACET_EXPAND_VOCABULARIES");
+
+				for (var vocabularyName : list "${vocabularyName}") {
+					Check.checkNotVisible(
+						key_vocabularyName = "${vocabularyName}",
+						locator1 = "Search#CATEGORY_FACET_VOCABULARY_CHECKBOX");
+				}
+			}
+			else if ("${vocabularyScope}" == "All Vocabularies") {
+				Check.checkNotVisible(
+					key_radioName = "${vocabularyScope}",
+					locator1 = "Search#CATEGORY_FACET_VOCABULARY_SCOPE_RADIO");
+			}
+			else {
+				fail("Invalid vocabulary scope. Must be (All Vocabularies|Select Vocabularies).");
+			}
+		}
+
+		PortletEntry.save();
+
+		IFrame.closeFrame();
 	}
 
 	macro configureCustomFilter {
@@ -125,17 +170,6 @@ definition {
 
 		SelectFrame(locator1 = "IFrame#CONFIGURATION");
 
-		if (isSet(searchScope)) {
-			if (("${searchScope}" == "Everything") || ("${searchScope}" == "Let the User Choose") || ("${searchScope}" == "This Site")) {
-				Select(
-					locator1 = "Select#SCOPE_CONFIGURATION",
-					value1 = "${searchScope}");
-			}
-			else {
-				fail("Invalid search scope. Must be (Everything|Let the User Choose|This Site).");
-			}
-		}
-
 		if (isSet(destinationPage)) {
 			if (contains("${destinationPage}", " ")) {
 				var destinationPage = StringUtil.replace("${destinationPage}", " ", "-");
@@ -146,6 +180,17 @@ definition {
 			Type(
 				locator1 = "SearchConfiguration#DESTINATION_PAGE",
 				value1 = "${destinationPage}");
+		}
+
+		if (isSet(searchScope)) {
+			if (("${searchScope}" == "Everything") || ("${searchScope}" == "Let the User Choose") || ("${searchScope}" == "This Site")) {
+				Select(
+					locator1 = "Select#SCOPE_CONFIGURATION",
+					value1 = "${searchScope}");
+			}
+			else {
+				fail("Invalid search scope. Must be (Everything|Let the User Choose|This Site).");
+			}
 		}
 
 		PortletEntry.save();
@@ -199,12 +244,12 @@ definition {
 
 	macro configureSearchBarWidget {
 		if (isSet(index)) {
-			SearchPortlets.gotoWidgetOptionsSpecific(
+			SearchPortlets.gotoSearchBarWidgetOptionsSpecific(
 				index = "${index}",
 				portletOption = "Configuration");
 		}
 		else {
-			SearchPortlets.gotoWidgetOptions(portletOption = "Configuration");
+			SearchPortlets.gotoSearchBarWidgetOptions(portletOption = "Configuration");
 		}
 
 		SelectFrame(locator1 = "IFrame#CONFIGURATION");
@@ -306,6 +351,13 @@ definition {
 				value1 = "${fields}");
 		}
 
+		if (isSet(linkBehavior)) {
+			Select(
+				locator1 = "Select#SELECT_ID",
+				selectFieldId = "linkBehavior",
+				value1 = "${linkBehavior}");
+		}
+
 		if (isSet(maximumDocumentFrequency)) {
 			Type(
 				key_fieldLabel = "Maximum Document Frequency",
@@ -362,6 +414,12 @@ definition {
 				value1 = "${minimumWordLength}");
 		}
 
+		if (isSet(searchScope)) {
+			Select(
+				locator1 = "Select#SCOPE_CONFIGURATION",
+				value1 = "${searchScope}");
+		}
+
 		if (isSet(stopWords)) {
 			Type(
 				key_fieldLabel = "Stop Words",
@@ -375,7 +433,7 @@ definition {
 	}
 
 	macro configureWidgetScope {
-		SearchPortlets.gotoWidgetOptions(portletOption = "Configuration");
+		SearchPortlets.gotoSearchBarWidgetOptions(portletOption = "Configuration");
 
 		if (("${searchScope}" == "Everything") || ("${searchScope}" == "Let the User Choose") || ("${searchScope}" == "This Site")) {
 			SelectFrame(locator1 = "IFrame#CONFIGURATION");
@@ -400,7 +458,9 @@ definition {
 
 		var searchPage = StringUtil.toLowerCase("${searchPage}");
 		var portalURL = PropsUtil.get("portal.url");
+
 		var searchURL = "${portalURL}/web/guest/${searchPage}?q=";
+
 		var searchURL = "${searchURL}${searchTerm}";
 
 		return "${searchURL}";
@@ -434,10 +494,14 @@ definition {
 			value1 = "${searchAssetTitle}");
 	}
 
-	macro gotoWidgetOptions {
-		MouseOver.mouseOverNotVisible(locator1 = "Search#SEARCH_BAR_WIDGET_ELLIPSIS_ICON");
+	macro gotoSearchBarWidgetOptions {
+		MouseOver.mouseOverNotVisible(
+			key_portletName = "Search Bar",
+			locator1 = "Search#SEARCH_WIDGET_ELLIPSIS_ICON");
 
-		Click(locator1 = "Search#SEARCH_BAR_WIDGET_ELLIPSIS_ICON");
+		Click(
+			key_portletName = "Search Bar",
+			locator1 = "Search#SEARCH_WIDGET_ELLIPSIS_ICON");
 
 		if (isSet(portletOption)) {
 			var key_menuItem = "${portletOption}";
@@ -446,14 +510,34 @@ definition {
 		}
 	}
 
-	macro gotoWidgetOptionsSpecific {
+	macro gotoSearchBarWidgetOptionsSpecific {
 		MouseOver.mouseOverNotVisible(
 			key_index = "${index}",
-			locator1 = "Search#SEARCH_BAR_WIDGET_ELLIPSIS_ICON_SPECIFIC");
+			key_portletName = "Search Bar",
+			locator1 = "Search#SEARCH_WIDGET_ELLIPSIS_ICON_SPECIFIC");
 
 		Click(
 			key_index = "${index}",
-			locator1 = "Search#SEARCH_BAR_WIDGET_ELLIPSIS_ICON_SPECIFIC");
+			key_portletName = "Search Bar",
+			locator1 = "Search#SEARCH_WIDGET_ELLIPSIS_ICON_SPECIFIC");
+
+		if (isSet(portletOption)) {
+			var key_menuItem = "${portletOption}";
+
+			Click(locator1 = "MenuItem#ANY_MENU_ITEM");
+		}
+	}
+
+	macro gotoSearchFacetOptionsSpecific {
+		MouseOver.mouseOverNotVisible(
+			key_index = "${index}",
+			key_portletName = "${portletName}",
+			locator1 = "Search#SEARCH_WIDGET_ELLIPSIS_ICON_SPECIFIC");
+
+		Click(
+			key_index = "${index}",
+			key_portletName = "${portletName}",
+			locator1 = "Search#SEARCH_WIDGET_ELLIPSIS_ICON_SPECIFIC");
 
 		if (isSet(portletOption)) {
 			var key_menuItem = "${portletOption}";
@@ -471,7 +555,7 @@ definition {
 
 		var browserType = PropsUtil.get("browser.type");
 
-		if ("${browserType}" == "safari") {
+		if (("${browserType}" == "safari") || ("${clickMagnifyingGlassIcon}" == "true")) {
 			Click(locator1 = "Icon#BASIC_SEARCH");
 		}
 		else {
@@ -488,9 +572,14 @@ definition {
 			locator1 = "Search#SEARCH_BAR_WIDGET",
 			value1 = "${searchTerm}");
 
-		KeyPress(
-			locator1 = "Search#SEARCH_BAR_WIDGET",
-			value1 = "\RETURN");
+		if ("${clickMagnifyingGlassIcon}" == "true") {
+			Click(locator1 = "Search#SEARCH_BAR_WIDGET_MAGNIFYING_GLASS_BUTTON");
+		}
+		else {
+			KeyPress(
+				locator1 = "Search#SEARCH_BAR_WIDGET",
+				value1 = "\RETURN");
+		}
 
 		WaitForLiferayEvent.initializeLiferayEventLog();
 	}
@@ -513,6 +602,22 @@ definition {
 			widgetName = "Similar Results");
 
 		Navigator.gotoPage(pageName = "Similar Results Page");
+	}
+
+	macro viewCopiedContent {
+		WebContentNavigator.openToAddBasicArticle(
+			groupName = "Guest",
+			siteURLKey = "guest");
+
+		SelectFrame.selectFrameNoLoading(locator1 = "CKEditor#BODY_FIELD_IFRAME_2");
+
+		Click(locator1 = "CKEditor#BODY");
+
+		RobotType.robotTypeShortcut(locator1 = "Ctrl + v");
+
+		WaitForElementPresent(
+			key_text = "${text}",
+			locator1 = "CKEditor#BODY_TEXT");
 	}
 
 	macro viewResultDetails {

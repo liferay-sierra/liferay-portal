@@ -15,7 +15,7 @@
 package com.liferay.saml.web.internal.struts;
 
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.security.auth.AuthTokenUtil;
@@ -56,20 +56,11 @@ public class SamlLoginAction extends BaseSamlStrutsAction {
 
 	@Override
 	public boolean isEnabled() {
-		if (samlProviderConfigurationHelper.isRoleSp()) {
-			return super.isEnabled();
+		if (_samlProviderConfigurationHelper.isRoleSp()) {
+			return _samlProviderConfigurationHelper.isEnabled();
 		}
 
 		return false;
-	}
-
-	@Override
-	@Reference(unbind = "-")
-	public void setSamlProviderConfigurationHelper(
-		SamlProviderConfigurationHelper samlProviderConfigurationHelper) {
-
-		super.setSamlProviderConfigurationHelper(
-			samlProviderConfigurationHelper);
 	}
 
 	@Override
@@ -84,12 +75,10 @@ public class SamlLoginAction extends BaseSamlStrutsAction {
 		long companyId = _portal.getCompanyId(httpServletRequest);
 
 		if (Validator.isNotNull(entityId)) {
-			SamlSpIdpConnection samlSpIdpConnection =
-				_samlSpIdpConnectionLocalService.getSamlSpIdpConnection(
-					companyId, entityId);
-
 			httpServletRequest.setAttribute(
-				SamlWebKeys.SAML_SP_IDP_CONNECTION, samlSpIdpConnection);
+				SamlWebKeys.SAML_SP_IDP_CONNECTION,
+				_samlSpIdpConnectionLocalService.getSamlSpIdpConnection(
+					companyId, entityId));
 
 			if (GetterUtil.getBoolean(
 					ParamUtil.getBoolean(httpServletRequest, "forceAuthn"))) {
@@ -118,7 +107,7 @@ public class SamlLoginAction extends BaseSamlStrutsAction {
 
 		if (samlSpIdpConnections.isEmpty()) {
 			SamlProviderConfiguration samlProviderConfiguration =
-				samlProviderConfigurationHelper.getSamlProviderConfiguration();
+				_samlProviderConfigurationHelper.getSamlProviderConfiguration();
 
 			if (samlProviderConfiguration.allowShowingTheLoginPortlet()) {
 				return null;
@@ -159,7 +148,7 @@ public class SamlLoginAction extends BaseSamlStrutsAction {
 	private JSONObject _toJSONObject(
 		List<SamlSpIdpConnection> samlSpIdpConnections) {
 
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 		for (SamlSpIdpConnection samlSpIdpConnection : samlSpIdpConnections) {
 			jsonArray.put(
@@ -176,7 +165,13 @@ public class SamlLoginAction extends BaseSamlStrutsAction {
 	}
 
 	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
 	private Portal _portal;
+
+	@Reference
+	private SamlProviderConfigurationHelper _samlProviderConfigurationHelper;
 
 	@Reference
 	private SamlSpIdpConnectionLocalService _samlSpIdpConnectionLocalService;

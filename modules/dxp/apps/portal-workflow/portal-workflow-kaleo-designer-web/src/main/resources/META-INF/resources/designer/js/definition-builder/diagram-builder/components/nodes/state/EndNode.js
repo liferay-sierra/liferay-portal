@@ -16,7 +16,7 @@ import {defaultLanguageId} from '../../../../constants';
 import BaseNode from '../BaseNode';
 
 export default function EndNode({
-	data: {actions, description, label, newNode} = {},
+	data: {actions, description, label, newNode, notifications} = {},
 	descriptionSidebar,
 	id,
 	...otherProps
@@ -30,13 +30,14 @@ export default function EndNode({
 	return (
 		<BaseNode
 			actions={actions}
-			className="end-node"
 			description={description}
 			descriptionSidebar={descriptionSidebar}
 			icon="flag-full"
 			id={id}
 			label={label}
 			newNode={newNode}
+			nodeTypeClassName="end-node"
+			notifications={notifications}
 			type="end"
 			{...otherProps}
 		/>

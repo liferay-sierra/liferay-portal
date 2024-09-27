@@ -28,7 +28,6 @@ import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.StringUtil;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -40,7 +39,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = {
 		"javax.portlet.name=" + CommercePortletKeys.COMMERCE_COUNTRY,
 		"mvc.command.name=/commerce_country/edit_commerce_region"
@@ -110,8 +109,7 @@ public class EditCommerceRegionMVCActionCommand extends BaseMVCActionCommand {
 			deleteRegionIds = new long[] {regionId};
 		}
 		else {
-			deleteRegionIds = StringUtil.split(
-				ParamUtil.getString(actionRequest, "deleteRegionIds"), 0L);
+			deleteRegionIds = ParamUtil.getLongValues(actionRequest, "rowIds");
 		}
 
 		for (long deleteRegionId : deleteRegionIds) {

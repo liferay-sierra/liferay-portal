@@ -61,7 +61,6 @@ import com.liferay.portal.kernel.util.Validator;
 import java.net.URLEncoder;
 
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -77,7 +76,6 @@ import org.osgi.service.component.annotations.ServiceScope;
  * @author Jaclyn Ong
  */
 @Component(
-	enabled = false,
 	properties = "OSGI-INF/liferay/rest/v1_0/punch-out-session.properties",
 	scope = ServiceScope.PROTOTYPE, service = PunchOutSessionResource.class
 )
@@ -185,16 +183,14 @@ public class PunchOutSessionResourceImpl
 			businessCommerceAccount, buyerGroup, buyerLiferayUser,
 			commerceChannel, editCartCommerceOrder, punchOutSession);
 
-		HashMap<String, Object> punchOutSessionAttributes =
-			_punchOutSessionContributor.getPunchOutSessionAttributes(
-				punchOutContext);
-
 		PunchOutAccessToken punchOutAccessToken =
 			_punchOutAccessTokenProvider.generatePunchOutAccessToken(
 				buyerGroup.getGroupId(),
 				businessCommerceAccount.getCommerceAccountId(),
 				cart.getCurrencyCode(), buyerLiferayUser.getEmailAddress(),
-				commerceOrderUuid, punchOutSessionAttributes);
+				commerceOrderUuid,
+				_punchOutSessionContributor.getPunchOutSessionAttributes(
+					punchOutContext));
 
 		String tokenString = Base64.encodeToURL(punchOutAccessToken.getToken());
 
@@ -209,13 +205,6 @@ public class PunchOutSessionResourceImpl
 		punchOutSession.setPunchOutStartURL(punchOutStartURL);
 
 		return punchOutSession;
-	}
-
-	@Reference(unbind = "-")
-	protected void setConfigurationProvider(
-		ConfigurationProvider configurationProvider) {
-
-		_configurationProvider = configurationProvider;
 	}
 
 	private com.liferay.portal.kernel.model.User _addBuyerUser(
@@ -238,10 +227,9 @@ public class PunchOutSessionResourceImpl
 		String password2 = StringPool.BLANK;
 		boolean autoScreenName = true;
 		String screenName = StringPool.BLANK;
-		String openId = StringPool.BLANK;
 		Locale locale = LocaleUtil.getDefault();
-		long prefixId = 0;
-		long suffixId = 0;
+		long prefixListTypeId = 0;
+		long suffixListTypeId = 0;
 		int birthdayMonth = Calendar.JANUARY;
 		int birthdayDay = 1;
 		int birthdayYear = 1970;
@@ -253,8 +241,8 @@ public class PunchOutSessionResourceImpl
 
 		com.liferay.portal.kernel.model.User user = _userLocalService.addUser(
 			creatorUserId, companyId, autoPassword, password1, password2,
-			autoScreenName, screenName, email, 0, openId, locale, firstName,
-			middleName, lastName, prefixId, suffixId, false, birthdayMonth,
+			autoScreenName, screenName, email, locale, firstName, middleName,
+			lastName, prefixListTypeId, suffixListTypeId, false, birthdayMonth,
 			birthdayDay, birthdayYear, jobTitle, new long[] {groupId},
 			organizationIds, roleIds, userGroupIds, sendEmail,
 			_serviceContextHelper.getServiceContext(groupId));
@@ -510,6 +498,7 @@ public class PunchOutSessionResourceImpl
 	@Reference
 	private CompanyLocalService _companyLocalService;
 
+	@Reference
 	private ConfigurationProvider _configurationProvider;
 
 	@Reference

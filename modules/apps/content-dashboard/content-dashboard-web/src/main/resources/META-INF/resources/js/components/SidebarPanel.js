@@ -16,8 +16,20 @@ import ClayAlert from '@clayui/alert';
 import ClayLoadingIndicator from '@clayui/loading-indicator';
 import {useIsMounted} from '@liferay/frontend-js-react-web';
 import {fetch} from 'frontend-js-web';
-import React, {useEffect, useImperativeHandle, useReducer, useRef} from 'react';
+import React, {
+	useCallback,
+	useEffect,
+	useImperativeHandle,
+	useReducer,
+	useRef,
+	useState,
+} from 'react';
 
+import {
+	CLOSE_PANEL_VALUE,
+	DEFAULT_ACTIVE_PANEL_TAB,
+	TABS_STATE_SESSION_KEY,
+} from '../utils/constants';
 import Sidebar from './Sidebar';
 
 const initialState = {
@@ -27,9 +39,25 @@ const initialState = {
 	open: true,
 };
 
+const resetSessionPanelValues = () => {
+	Liferay.Util.Session.set(
+		'com.liferay.content.dashboard.web_panelState',
+		CLOSE_PANEL_VALUE
+	);
+
+	Liferay.Util.Session.set(
+		'com.liferay.content.dashboard.web_selectedItemRowId',
+		''
+	);
+
+	Liferay.Util.Session.set(TABS_STATE_SESSION_KEY, DEFAULT_ACTIVE_PANEL_TAB);
+};
+
 const dataReducer = (state, action) => {
 	switch (action.type) {
 		case 'CLOSE_SIDEBAR':
+			resetSessionPanelValues();
+
 			return {
 				...state,
 				isOpen: false,
@@ -81,20 +109,32 @@ const dataReducer = (state, action) => {
 };
 
 const SidebarPanel = React.forwardRef(
-	({fetchURL, onClose, viewComponent: View}, ref) => {
+	(
+		{
+			fetchURL: initialFetchUrl,
+			onClose,
+			singlePageApplicationEnabled,
+			viewComponent: View,
+		},
+		ref
+	) => {
+		const [fetchURL, setFetchURL] = useState(initialFetchUrl);
 		const CurrentViewRef = useRef(View);
 
 		const isMounted = useIsMounted();
 
 		const [state, dispatch] = useReducer(dataReducer, initialState);
 
-		const safeDispatch = (action) => {
-			if (isMounted()) {
-				dispatch(action);
-			}
-		};
+		const safeDispatch = useCallback(
+			(action) => {
+				if (isMounted()) {
+					dispatch(action);
+				}
+			},
+			[isMounted]
+		);
 
-		const getData = (fetchURL) => {
+		const getData = useCallback(() => {
 			safeDispatch({type: 'LOAD_DATA'});
 
 			fetch(fetchURL, {
@@ -121,33 +161,59 @@ const SidebarPanel = React.forwardRef(
 						type: 'SET_ERROR',
 					});
 				});
-		};
+		}, [fetchURL, safeDispatch]);
 
 		const onCloseHandle = () =>
 			onClose ? onClose() : safeDispatch({type: 'CLOSE_SIDEBAR'});
 
 		useEffect(() => {
-			getData(fetchURL);
-			// eslint-disable-next-line react-hooks/exhaustive-deps
-		}, [fetchURL]);
+			getData();
+		}, [getData]);
 
 		useEffect(() => {
 			CurrentViewRef.current = View;
 		}, [View]);
+
+		useEffect(() => {
+			if (!singlePageApplicationEnabled) {
+				return;
+			}
+
+			const navigationEventHandler = Liferay.on(
+				'startNavigate',
+				({path, target}) => {
+					const [, paramString] = target.currentURL.split('?');
+					const params = new URLSearchParams(paramString);
+					const currentPortletId = params.get('p_p_id');
+
+					if (!path.includes(currentPortletId)) {
+						resetSessionPanelValues();
+					}
+				}
+			);
+
+			return () => {
+				navigationEventHandler.detach();
+			};
+		}, [singlePageApplicationEnabled]);
 
 		useImperativeHandle(ref, () => ({
 			close: () => safeDispatch({type: 'CLOSE_SIDEBAR'}),
 			open: (fetchURL, View) => {
 				CurrentViewRef.current = View;
 
-				getData(fetchURL);
-
 				safeDispatch({type: 'OPEN_SIDEBAR'});
+
+				setFetchURL(fetchURL);
 			},
 		}));
 
 		return (
-			<Sidebar onClose={onCloseHandle} open={state.isOpen}>
+			<Sidebar
+				fetchData={getData}
+				onClose={onCloseHandle}
+				open={state.isOpen}
+			>
 				{state?.loading ? (
 					<div className="align-items-center d-flex loading-indicator-wrapper">
 						<ClayLoadingIndicator small />
@@ -161,7 +227,14 @@ const SidebarPanel = React.forwardRef(
 						</ClayAlert>
 					</>
 				) : (
-					state?.data && <CurrentViewRef.current {...state.data} />
+					state?.data && (
+						<CurrentViewRef.current
+							{...state.data}
+							singlePageApplicationEnabled={
+								singlePageApplicationEnabled
+							}
+						/>
+					)
 				)}
 			</Sidebar>
 		);

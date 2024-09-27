@@ -40,6 +40,10 @@ if (isDraggable) {
 }
 %>
 
+<liferay-util:html-top>
+	<link href="<%= PortalUtil.getStaticResourceURL(request, PortalUtil.getPathProxy() + application.getContextPath() + "/css/image_selector.css") %>" rel="stylesheet" type="text/css" />
+</liferay-util:html-top>
+
 <div>
 	<react:component
 		module="image_selector/js/ImageSelector"
@@ -103,7 +107,7 @@ if (isDraggable) {
 							</c:choose>
 						</c:when>
 						<c:otherwise>
-							<%= LanguageUtil.get(resourceBundle, "drag-and-drop-to-upload") %>
+							<liferay-ui:message key="drag-and-drop-to-upload" />
 						</c:otherwise>
 					</c:choose>
 				</div>

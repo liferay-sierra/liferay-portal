@@ -38,7 +38,7 @@ function fetchData(apiURL, searchParam, currentPage = 1) {
 		url.searchParams.append('search', encodeURIComponent(searchParam));
 	}
 
-	return fetch(url, {
+	return fetch(url.pathname + url.search, {
 		headers: {
 			'Accept-Language': Liferay.ThemeDisplay.getBCP47LanguageId(),
 		},
@@ -68,7 +68,7 @@ Item.propTypes = {
 	value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 
-function composeMultipleValuesOdataString(key, values, exclude) {
+function composeCollectionEntityFieldMultipleValuesOdata(key, values, exclude) {
 	return `${key}/any(x:${values
 		.map(
 			(value) =>
@@ -79,40 +79,74 @@ function composeMultipleValuesOdataString(key, values, exclude) {
 		.join(exclude ? ' and ' : ' or ')})`;
 }
 
+function composeStringEntityFieldMultipleValuesOdata(key, values, exclude) {
+	const expression = `${key} in (${values
+		.map((value) => `'${value}'`)
+		.join(', ')})`;
+
+	if (exclude) {
+		return 'not (' + expression + ')';
+	}
+
+	return expression;
+}
+
 function composeSingleValuesOdataString(key, value, exclude) {
 	return `${key} ${exclude ? 'ne' : 'eq'} ${
 		typeof value === 'string' ? `'${value}'` : value
 	}`;
 }
 
-const formatValue = (value, exclude) =>
-	(exclude ? `(${Liferay.Language.get('exclude')}) ` : '') +
-	value.map((element) => element.label).join(', ');
+const getSelectedItemsLabel = ({selectedData}) => {
+	const {exclude, itemsValues} = selectedData;
 
-function getOdataString(selectedItems, key, selectionType, exclude) {
-	if (selectedItems?.length) {
-		const values = selectedItems.map((item) => item.value);
+	return (
+		(exclude ? `(${Liferay.Language.get('exclude')}) ` : '') +
+		itemsValues.map((itemsValue) => itemsValue.label).join(', ')
+	);
+};
+
+const getOdataString = ({entityFieldType, id, selectedData, selectionType}) => {
+	const {exclude, itemsValues} = selectedData;
+
+	if (itemsValues?.length) {
+		const values = itemsValues.map((item) => item.value);
+
+		if (entityFieldType === 'string') {
+			return composeStringEntityFieldMultipleValuesOdata(
+				id,
+				values,
+				exclude
+			);
+		}
 
 		return selectionType === 'multiple'
-			? composeMultipleValuesOdataString(key, values, exclude)
-			: composeSingleValuesOdataString(key, values[0], exclude);
+			? composeCollectionEntityFieldMultipleValuesOdata(
+					id,
+					values,
+					exclude
+			  )
+			: composeSingleValuesOdataString(id, values[0], exclude);
 	}
 
 	return null;
-}
+};
 function AutocompleteFilter({
 	apiURL,
+	entityFieldType,
 	id,
 	inputPlaceholder,
 	itemKey,
 	itemLabel: itemLabelProp,
+	selectedData,
 	selectionType,
-	updateFilterState,
-	value: valueProp,
+	setFilter,
 }) {
 	const [query, setQuery] = useState('');
 	const [search, setSearch] = useState('');
-	const [selectedItems, setSelectedItems] = useState(valueProp?.items || []);
+	const [selectedItems, setSelectedItems] = useState(
+		selectedData?.itemsValues || []
+	);
 	const [items, setItems] = useState(null);
 	const [loading, setLoading] = useState(false);
 	const [currentPage, setCurrentPage] = useState(1);
@@ -121,13 +155,13 @@ function AutocompleteFilter({
 	const [scrollingAreaRendered, setScrollingAreaRendered] = useState(false);
 	const infiniteLoaderRef = useRef(null);
 	const [infiniteLoaderRendered, setInfiniteLoaderRendered] = useState(false);
-	const [exclude, setExclude] = useState(!!valueProp?.exclude);
+	const [exclude, setExclude] = useState(!!selectedData?.exclude);
 
 	const loaderVisible = items && items.length < total;
 
 	useEffect(() => {
-		setSelectedItems(valueProp?.items || []);
-	}, [valueProp]);
+		setSelectedItems(selectedData?.itemsValues || []);
+	}, [selectedData]);
 
 	useEffect(() => {
 		if (query === search) {
@@ -213,11 +247,11 @@ function AutocompleteFilter({
 
 	let actionType = 'edit';
 
-	if (valueProp?.items && !selectedItems.length) {
+	if (selectedData?.itemsValues && !selectedItems.length) {
 		actionType = 'delete';
 	}
 
-	if (!valueProp) {
+	if (!selectedData) {
 		actionType = 'add';
 	}
 
@@ -225,9 +259,12 @@ function AutocompleteFilter({
 
 	if (
 		actionType === 'delete' ||
-		(!valueProp && selectedItems.length) ||
-		(valueProp && isValuesArrayChanged(valueProp.items, selectedItems)) ||
-		(valueProp && selectedItems.length && valueProp.exclude !== exclude)
+		(!selectedData && selectedItems.length) ||
+		(selectedData &&
+			isValuesArrayChanged(selectedData.itemsValues, selectedItems)) ||
+		(selectedData &&
+			selectedItems.length &&
+			selectedData.exclude !== exclude)
 	) {
 		submitDisabled = false;
 	}
@@ -358,24 +395,33 @@ function AutocompleteFilter({
 			<ClayDropDown.Caption>
 				<ClayButton
 					disabled={submitDisabled}
-					onClick={() =>
-						actionType !== 'delete'
-							? updateFilterState(
+					onClick={() => {
+						if (actionType === 'delete') {
+							setFilter({active: false, id});
+						}
+						else {
+							const newSelectedData = {
+								exclude,
+								itemsValues: selectedItems,
+							};
+
+							setFilter({
+								active: true,
+								id,
+								odataFilterString: getOdataString({
+									entityFieldType,
 									id,
-									{
-										exclude,
-										items: selectedItems,
-									},
-									formatValue(selectedItems, exclude),
-									getOdataString(
-										selectedItems,
-										id,
-										selectionType,
-										exclude
-									)
-							  )
-							: updateFilterState(id)
-					}
+									selectedData: newSelectedData,
+									selectionType,
+								}),
+								selectedData: newSelectedData,
+								selectedItemsLabel: getSelectedItemsLabel({
+									items,
+									selectedData: newSelectedData,
+								}),
+							});
+						}
+					}}
 					small
 				>
 					{actionType === 'add' && Liferay.Language.get('add-filter')}
@@ -393,14 +439,13 @@ function AutocompleteFilter({
 
 AutocompleteFilter.propTypes = {
 	apiURL: PropTypes.string.isRequired,
+	entityFieldType: PropTypes.string,
 	id: PropTypes.string.isRequired,
 	inputPlaceholder: PropTypes.string,
 	itemKey: PropTypes.string.isRequired,
 	itemLabel: PropTypes.oneOfType([PropTypes.string, PropTypes.array])
 		.isRequired,
-	selectionType: PropTypes.oneOf(['single', 'multiple']).isRequired,
-	updateFilterState: PropTypes.func.isRequired,
-	value: PropTypes.shape({
+	selectedData: PropTypes.shape({
 		exclude: PropTypes.bool,
 		items: PropTypes.arrayOf(
 			PropTypes.shape({
@@ -415,10 +460,12 @@ AutocompleteFilter.propTypes = {
 			})
 		),
 	}),
+	selectionType: PropTypes.oneOf(['single', 'multiple']).isRequired,
 };
 
 AutocompleteFilter.defaultProps = {
 	selectionType: 'multiple',
 };
 
+export {getSelectedItemsLabel, getOdataString};
 export default AutocompleteFilter;

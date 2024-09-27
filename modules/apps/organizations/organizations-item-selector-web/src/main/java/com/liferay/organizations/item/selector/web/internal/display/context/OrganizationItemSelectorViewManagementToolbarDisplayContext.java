@@ -15,13 +15,11 @@
 package com.liferay.organizations.item.selector.web.internal.display.context;
 
 import com.liferay.frontend.taglib.clay.servlet.taglib.display.context.SearchContainerManagementToolbarDisplayContext;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
-
-import javax.portlet.PortletURL;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -51,13 +49,6 @@ public class OrganizationItemSelectorViewManagementToolbarDisplayContext
 		).setKeywords(
 			StringPool.BLANK
 		).buildString();
-	}
-
-	@Override
-	public String getSearchActionURL() {
-		PortletURL searchActionURL = getPortletURL();
-
-		return searchActionURL.toString();
 	}
 
 	@Override

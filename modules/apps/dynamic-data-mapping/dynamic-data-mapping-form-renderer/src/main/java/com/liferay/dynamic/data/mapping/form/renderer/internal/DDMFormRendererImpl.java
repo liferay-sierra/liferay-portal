@@ -14,7 +14,6 @@
 
 package com.liferay.dynamic.data.mapping.form.renderer.internal;
 
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderer;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderingContext;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderingException;
@@ -24,6 +23,7 @@ import com.liferay.dynamic.data.mapping.model.DDMFormLayout;
 import com.liferay.dynamic.data.mapping.util.DDM;
 import com.liferay.frontend.js.loader.modules.extender.npm.NPMResolver;
 import com.liferay.petra.io.unsync.UnsyncStringWriter;
+import com.liferay.portal.kernel.frontend.icons.FrontendIconsUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.template.react.renderer.ComponentDescriptor;
@@ -41,7 +41,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marcellus Tavares
  */
-@Component(immediate = true, service = DDMFormRenderer.class)
+@Component(service = DDMFormRenderer.class)
 public class DDMFormRendererImpl implements DDMFormRenderer {
 
 	@Override
@@ -65,11 +65,8 @@ public class DDMFormRendererImpl implements DDMFormRenderer {
 			(ThemeDisplay)httpServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
 
-		String pathThemeImages = themeDisplay.getPathThemeImages();
-
-		String spriteMap = pathThemeImages.concat("/clay/icons.svg");
-
-		ddmFormTemplateContext.put("spritemap", spriteMap);
+		ddmFormTemplateContext.put(
+			"spritemap", FrontendIconsUtil.getSpritemap(themeDisplay));
 
 		return ddmFormTemplateContext;
 	}
@@ -137,9 +134,6 @@ public class DDMFormRendererImpl implements DDMFormRenderer {
 
 	@Reference
 	private DDM _ddm;
-
-	@Reference
-	private DDMFormFieldTypeServicesTracker _ddmFormFieldTypeServicesTracker;
 
 	@Reference
 	private DDMFormTemplateContextFactory _ddmFormTemplateContextFactory;

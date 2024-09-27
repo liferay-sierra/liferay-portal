@@ -18,15 +18,25 @@ import com.liferay.commerce.discount.constants.CommerceDiscountConstants;
 import com.liferay.commerce.discount.model.CommerceDiscount;
 import com.liferay.commerce.discount.model.CommerceDiscountUsageEntry;
 import com.liferay.commerce.discount.service.base.CommerceDiscountUsageEntryLocalServiceBaseImpl;
+import com.liferay.commerce.discount.service.persistence.CommerceDiscountPersistence;
+import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 
 import java.util.Objects;
+
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Alessio Antonio Rendina
  */
+@Component(
+	property = "model.class.name=com.liferay.commerce.discount.model.CommerceDiscountUsageEntry",
+	service = AopService.class
+)
 public class CommerceDiscountUsageEntryLocalServiceImpl
 	extends CommerceDiscountUsageEntryLocalServiceBaseImpl {
 
@@ -38,7 +48,7 @@ public class CommerceDiscountUsageEntryLocalServiceImpl
 
 		long userId = serviceContext.getUserId();
 
-		User user = userLocalService.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		if (user.isDefaultUser()) {
 			userId = 0;
@@ -117,8 +127,7 @@ public class CommerceDiscountUsageEntryLocalServiceImpl
 		throws PortalException {
 
 		CommerceDiscount commerceDiscount =
-			commerceDiscountLocalService.getCommerceDiscount(
-				commerceDiscountId);
+			_commerceDiscountPersistence.findByPrimaryKey(commerceDiscountId);
 
 		if (Objects.equals(
 				commerceDiscount.getLimitationType(),
@@ -181,5 +190,11 @@ public class CommerceDiscountUsageEntryLocalServiceImpl
 
 		return true;
 	}
+
+	@Reference
+	private CommerceDiscountPersistence _commerceDiscountPersistence;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

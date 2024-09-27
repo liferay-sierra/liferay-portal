@@ -25,10 +25,7 @@ import org.osgi.service.component.annotations.Component;
  * @author Michael C. Han
  * @author Marcellus Tavares
  */
-@Component(
-	immediate = true, property = "node.type=CONDITION",
-	service = NodeValidator.class
-)
+@Component(property = "node.type=CONDITION", service = NodeValidator.class)
 public class ConditionNodeValidator extends BaseNodeValidator<Condition> {
 
 	@Override
@@ -37,12 +34,12 @@ public class ConditionNodeValidator extends BaseNodeValidator<Condition> {
 
 		if (condition.getIncomingTransitionsCount() == 0) {
 			throw new KaleoDefinitionValidationException.
-				MustSetIncomingTransition(condition.getName());
+				MustSetIncomingTransition(condition.getDefaultLabel());
 		}
 
 		if (condition.getOutgoingTransitionsCount() < 2) {
 			throw new KaleoDefinitionValidationException.
-				MustSetMultipleOutgoingTransition(condition.getName());
+				MustSetMultipleOutgoingTransition(condition.getDefaultLabel());
 		}
 	}
 

@@ -5,15 +5,11 @@ definition {
 		Variables.assertDefined(parameterList = "${groupName},${parentGroupName}");
 
 		var groupDescriptionMap = JSONGroupSetter.setGroupDescriptionMap(groupDescription = "${groupDescription}");
-
 		var groupNameMap = JSONGroupSetter.setGroupNameMap(groupName = "${groupName}");
-
 		var parentGroupId = JSONGroupSetter.setParentGroupId(
 			grandParentGroupName = "${grandParentGroupName}",
 			parentGroupName = "${parentGroupName}");
-
 		var type = JSONGroupSetter.setMembershipType(membershipType = "${membershipType}");
-
 		var manualMembership = JSONGroupSetter.setAllowManualMembershipManagement(allowManualMembershipManagement = "${allowManualMembershipManagement}");
 
 		JSONGroupAPI._addGroup(
@@ -29,13 +25,9 @@ definition {
 		Variables.assertDefined(parameterList = "${groupName}");
 
 		var groupDescriptionMap = JSONGroupSetter.setGroupDescriptionMap(groupDescription = "${groupDescription}");
-
 		var groupNameMap = JSONGroupSetter.setGroupNameMap(groupName = "${groupName}");
-
 		var parentGroupId = JSONGroupSetter.setParentGroupId(groupName = "${parentGroupName}");
-
 		var type = JSONGroupSetter.setMembershipType(membershipType = "${membershipType}");
-
 		var manualMembership = JSONGroupSetter.setAllowManualMembershipManagement(allowManualMembershipManagement = "${allowManualMembershipManagement}");
 
 		JSONGroupAPI._addGroup(
@@ -53,9 +45,7 @@ definition {
 		var groupId = JSONGroupSetter.setGroupId(
 			groupName = "${groupName}",
 			parentGroupName = "${parentGroupName}");
-
 		var roleId = JSONRoleAPI._getRoleIdByName(name = "${roleTitle}");
-
 		var userId = JSONUserAPI._getUserIdByEmailAddress(userEmailAddress = "${userEmailAddress}");
 
 		JSONGroupAPI._assignGroupRoleToUser(
@@ -64,11 +54,38 @@ definition {
 			userId = "${userId}");
 	}
 
+	macro assignGroupRoleToUserGroup {
+		Variables.assertDefined(parameterList = "${groupName},${roleTitle},${userGroupName}");
+
+		var groupId = JSONGroupSetter.setGroupId(
+			groupName = "${groupName}",
+			parentGroupName = "${parentGroupName}");
+		var roleId = JSONRoleAPI._getRoleIdByName(name = "${roleTitle}");
+		var userGroupId = JSONUserGroupAPI._getUserGroupIdByName(userGroupName = "${userGroupName}");
+
+		JSONGroupAPI._assignGroupRoleToUserGroup(
+			groupId = "${groupId}",
+			roleId = "${roleId}",
+			userGroupId = "${userGroupId}");
+	}
+
+	macro assignOrganizationToGroup {
+		Variables.assertDefined(parameterList = "${groupName},${organizationName}");
+
+		var groupId = JSONGroupSetter.setGroupId(
+			groupName = "${groupName}",
+			parentGroupName = "${parentGroupName}");
+		var organizationId = JSONOrganization.getOrganizationIdByName(organizationName = "${organizationName}");
+
+		JSONGroupAPI._assignOrganizationToGroup(
+			groupId = "${groupId}",
+			organizationId = "${organizationId}");
+	}
+
 	macro assignUserGroupToGroup {
 		Variables.assertDefined(parameterList = "${groupName},${userGroupName}");
 
 		var groupId = JSONGroupSetter.setGroupId(groupName = "${groupName}");
-
 		var userGroupId = JSONUserGroupAPI._getUserGroupIdByName(userGroupName = "${userGroupName}");
 
 		JSONGroupAPI._assignUserGroupToGroup(
@@ -82,7 +99,6 @@ definition {
 		var groupId = JSONGroupSetter.setGroupId(
 			groupName = "${groupName}",
 			parentGroupName = "${parentGroupName}");
-
 		var userId = JSONUserAPI._getUserIdByEmailAddress(userEmailAddress = "${userEmailAddress}");
 
 		JSONGroupAPI._assignUserToGroup(
@@ -101,6 +117,16 @@ definition {
 		JSONGroupAPI._deleteGroup(
 			groupId = "${groupId}",
 			portalURL = "${portalURL}");
+	}
+
+	macro tearDownNonDefaultGroups {
+		var nameCurrentValues = JSONGroupAPI._getNameCurrentValues();
+
+		for (var nameCurrentValue : list "${nameCurrentValues}") {
+			if (("${nameCurrentValue}" != "Global") && ("${nameCurrentValue}" != "Guest")) {
+				JSONGroup.deleteGroupByName(groupName = "${nameCurrentValue}");
+			}
+		}
 	}
 
 }

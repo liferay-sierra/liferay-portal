@@ -41,7 +41,7 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 import com.liferay.site.navigation.exception.NoSuchMenuItemException;
 import com.liferay.site.navigation.model.SiteNavigationMenuItem;
 import com.liferay.site.navigation.model.SiteNavigationMenuItemTable;
@@ -209,7 +209,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<SiteNavigationMenuItem>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SiteNavigationMenuItem siteNavigationMenuItem : list) {
@@ -610,7 +610,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 
 			finderArgs = new Object[] {uuid};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -747,7 +747,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			result = finderCache.getResult(
-				_finderPathFetchByUUID_G, finderArgs);
+				_finderPathFetchByUUID_G, finderArgs, this);
 		}
 
 		if (result instanceof SiteNavigationMenuItem) {
@@ -869,7 +869,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 
 			finderArgs = new Object[] {uuid, groupId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1043,7 +1043,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<SiteNavigationMenuItem>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SiteNavigationMenuItem siteNavigationMenuItem : list) {
@@ -1470,7 +1470,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 
 			finderArgs = new Object[] {uuid, companyId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -1635,7 +1635,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<SiteNavigationMenuItem>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SiteNavigationMenuItem siteNavigationMenuItem : list) {
@@ -2012,7 +2012,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 
 			finderArgs = new Object[] {companyId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2161,7 +2161,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<SiteNavigationMenuItem>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SiteNavigationMenuItem siteNavigationMenuItem : list) {
@@ -2544,7 +2544,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 
 			finderArgs = new Object[] {siteNavigationMenuId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -2700,7 +2700,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<SiteNavigationMenuItem>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SiteNavigationMenuItem siteNavigationMenuItem : list) {
@@ -3096,7 +3096,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 
 			finderArgs = new Object[] {parentSiteNavigationMenuItemId};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -3259,7 +3259,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<SiteNavigationMenuItem>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SiteNavigationMenuItem siteNavigationMenuItem : list) {
@@ -3675,7 +3675,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 				siteNavigationMenuId, parentSiteNavigationMenuItemId
 			};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -3826,7 +3826,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<SiteNavigationMenuItem>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (SiteNavigationMenuItem siteNavigationMenuItem : list) {
@@ -4257,7 +4257,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 
 			finderArgs = new Object[] {siteNavigationMenuId, name};
 
-			count = (Long)finderCache.getResult(finderPath, finderArgs);
+			count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 		}
 
 		if (count == null) {
@@ -4473,7 +4473,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 		siteNavigationMenuItem.setNew(true);
 		siteNavigationMenuItem.setPrimaryKey(siteNavigationMenuItemId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		siteNavigationMenuItem.setUuid(uuid);
 
@@ -4602,7 +4602,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 			(SiteNavigationMenuItemModelImpl)siteNavigationMenuItem;
 
 		if (Validator.isNull(siteNavigationMenuItem.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			siteNavigationMenuItem.setUuid(uuid);
 		}
@@ -4733,7 +4733,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 	@Override
 	public SiteNavigationMenuItem fetchByPrimaryKey(Serializable primaryKey) {
 		if (ctPersistenceHelper.isProductionMode(
-				SiteNavigationMenuItem.class)) {
+				SiteNavigationMenuItem.class, primaryKey)) {
 
 			return super.fetchByPrimaryKey(primaryKey);
 		}
@@ -4961,7 +4961,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 
 		if (useFinderCache && productionMode) {
 			list = (List<SiteNavigationMenuItem>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -5037,7 +5037,7 @@ public class SiteNavigationMenuItemPersistenceImpl
 
 		if (productionMode) {
 			count = (Long)finderCache.getResult(
-				_finderPathCountAll, FINDER_ARGS_EMPTY);
+				_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 		}
 
 		if (count == null) {
@@ -5421,7 +5421,6 @@ public class SiteNavigationMenuItemPersistenceImpl
 	}
 
 	@Reference
-	private SiteNavigationMenuItemModelArgumentsResolver
-		_siteNavigationMenuItemModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

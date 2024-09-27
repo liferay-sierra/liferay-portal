@@ -23,7 +23,6 @@ import com.liferay.item.selector.criteria.InfoItemItemSelectorReturnType;
 import com.liferay.item.selector.criteria.info.item.criterion.InfoItemItemSelectorCriterion;
 import com.liferay.layout.display.page.LayoutDisplayPageMultiSelectionProvider;
 import com.liferay.layout.display.page.LayoutDisplayPageObjectProvider;
-import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
@@ -33,6 +32,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ClassedModel;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -48,6 +48,7 @@ import com.liferay.portal.kernel.xml.Element;
 import com.liferay.site.navigation.menu.item.display.page.internal.display.context.DisplayPageTypeSiteNavigationMenuTypeDisplayContext;
 import com.liferay.site.navigation.model.SiteNavigationMenuItem;
 import com.liferay.site.navigation.type.SiteNavigationMenuItemType;
+import com.liferay.site.navigation.type.SiteNavigationMenuItemTypeContext;
 
 import java.io.IOException;
 
@@ -246,25 +247,12 @@ public class DisplayPageTypeSiteNavigationMenuItemType
 			return friendlyURL;
 		}
 
-		return themeDisplay.getURLCurrent() + StringPool.POUND;
+		return StringPool.BLANK;
 	}
 
 	@Override
 	public String getStatusIcon(SiteNavigationMenuItem siteNavigationMenuItem) {
-		UnicodeProperties typeSettingsUnicodeProperties =
-			UnicodePropertiesBuilder.fastLoad(
-				siteNavigationMenuItem.getTypeSettings()
-			).build();
-
-		if (!AssetDisplayPageUtil.hasAssetDisplayPage(
-				siteNavigationMenuItem.getGroupId(),
-				GetterUtil.getLong(
-					typeSettingsUnicodeProperties.get("classNameId")),
-				GetterUtil.getLong(
-					typeSettingsUnicodeProperties.get("classPK")),
-				GetterUtil.getLong(
-					typeSettingsUnicodeProperties.get("classTypeId")))) {
-
+		if (!_hasAssetDisplayPage(siteNavigationMenuItem)) {
 			return "warning-full";
 		}
 
@@ -393,8 +381,19 @@ public class DisplayPageTypeSiteNavigationMenuItemType
 	}
 
 	@Override
+	public boolean isAvailable(
+		SiteNavigationMenuItemTypeContext siteNavigationMenuItemTypeContext) {
+
+		return _displayPageTypeContext.isAvailable();
+	}
+
+	@Override
 	public boolean isBrowsable(SiteNavigationMenuItem siteNavigationMenuItem) {
-		return true;
+		if (_hasAssetDisplayPage(siteNavigationMenuItem)) {
+			return true;
+		}
+
+		return false;
 	}
 
 	@Override
@@ -417,13 +416,6 @@ public class DisplayPageTypeSiteNavigationMenuItemType
 	}
 
 	@Override
-	public void renderAddPage(
-			HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse)
-		throws IOException {
-	}
-
-	@Override
 	public void renderEditPage(
 			HttpServletRequest httpServletRequest,
 			HttpServletResponse httpServletResponse,
@@ -439,6 +431,23 @@ public class DisplayPageTypeSiteNavigationMenuItemType
 		_jspRenderer.renderJSP(
 			_servletContext, httpServletRequest, httpServletResponse,
 			"/edit_display_page_type.jsp");
+	}
+
+	private boolean _hasAssetDisplayPage(
+		SiteNavigationMenuItem siteNavigationMenuItem) {
+
+		UnicodeProperties typeSettingsUnicodeProperties =
+			UnicodePropertiesBuilder.fastLoad(
+				siteNavigationMenuItem.getTypeSettings()
+			).build();
+
+		return AssetDisplayPageUtil.hasAssetDisplayPage(
+			siteNavigationMenuItem.getGroupId(),
+			GetterUtil.getLong(
+				typeSettingsUnicodeProperties.get("classNameId")),
+			GetterUtil.getLong(typeSettingsUnicodeProperties.get("classPK")),
+			GetterUtil.getLong(
+				typeSettingsUnicodeProperties.get("classTypeId")));
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

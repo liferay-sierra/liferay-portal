@@ -33,6 +33,14 @@ export default function App(props) {
 
 	const packageName = props.npmResolvedPackageName;
 
+	const questionsComponent = Liferay.FeatureFlags['LPS-165491']
+		? `${packageName}/js/pages/questions/Questions.new.es`
+		: `${packageName}/js/pages/questions/Questions.es`;
+
+	const userActivityPage = Liferay.FeatureFlags['LPS-167151']
+		? `${packageName}/js/pages/home/UserActivity.new.es`
+		: `${packageName}/js/pages/home/UserActivity.es`;
+
 	let path = props.historyRouterBasePath;
 
 	if (path && props.i18nPath) {
@@ -47,8 +55,8 @@ export default function App(props) {
 	}
 
 	return (
-		<AppContextProvider {...props}>
-			<ClientContext.Provider value={client}>
+		<ClientContext.Provider value={client}>
+			<AppContextProvider {...props}>
 				<Router basename={path}>
 					<ErrorBoundary>
 						<div>
@@ -59,7 +67,7 @@ export default function App(props) {
 									component={(props) => (
 										<Component
 											module={`${packageName}/js/pages/home/Home`}
-											props={props}
+											props={{...props, isHomePath: true}}
 										/>
 									)}
 									exact
@@ -91,7 +99,7 @@ export default function App(props) {
 								<Route
 									component={(props) => (
 										<Component
-											module={`${packageName}/js/pages/home/UserActivity.es`}
+											module={userActivityPage}
 											props={props}
 										/>
 									)}
@@ -113,7 +121,7 @@ export default function App(props) {
 								<Route
 									component={(props) => (
 										<Component
-											module={`${packageName}/js/pages/questions/Questions.es`}
+											module={questionsComponent}
 											props={props}
 										/>
 									)}
@@ -151,7 +159,9 @@ export default function App(props) {
 												<Route
 													component={(props) => (
 														<Component
-															module={`${packageName}/js/pages/questions/Questions.es`}
+															module={
+																questionsComponent
+															}
 															props={props}
 														/>
 													)}
@@ -162,7 +172,9 @@ export default function App(props) {
 												<Route
 													component={(props) => (
 														<Component
-															module={`${packageName}/js/pages/questions/Questions.es`}
+															module={
+																questionsComponent
+															}
 															props={props}
 														/>
 													)}
@@ -206,7 +218,9 @@ export default function App(props) {
 												<Route
 													component={(props) => (
 														<Component
-															module={`${packageName}/js/pages/questions/Questions.es`}
+															module={
+																questionsComponent
+															}
 															props={props}
 														/>
 													)}
@@ -221,8 +235,8 @@ export default function App(props) {
 						</div>
 					</ErrorBoundary>
 				</Router>
-			</ClientContext.Provider>
-		</AppContextProvider>
+			</AppContextProvider>
+		</ClientContext.Provider>
 	);
 
 	function redirectForNotifications(props) {

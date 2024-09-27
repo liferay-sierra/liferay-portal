@@ -67,7 +67,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
@@ -132,7 +132,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Gianmarco Brunialti Masera
  */
 @Component(
-	enabled = false, immediate = true,
+	immediate = true,
 	property = "site.initializer.key=" + SpeedwellSiteInitializer.KEY,
 	service = SiteInitializer.class
 )
@@ -145,7 +145,7 @@ public class SpeedwellSiteInitializer implements SiteInitializer {
 		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
 			"content.Language", locale, getClass());
 
-		return LanguageUtil.get(resourceBundle, "speedwell-description");
+		return _language.get(resourceBundle, "speedwell-description");
 	}
 
 	@Override
@@ -158,7 +158,7 @@ public class SpeedwellSiteInitializer implements SiteInitializer {
 		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
 			"content.Language", locale, getClass());
 
-		return LanguageUtil.get(resourceBundle, "speedwell");
+		return _language.get(resourceBundle, "speedwell");
 	}
 
 	@Override
@@ -189,7 +189,7 @@ public class SpeedwellSiteInitializer implements SiteInitializer {
 			CommerceChannel commerceChannel = _createChannel(
 				commerceCatalog, serviceContext);
 
-			_configureB2CSite(commerceChannel.getGroupId(), serviceContext);
+			_configureB2CSite(commerceChannel.getGroup(), serviceContext);
 
 			_speedwellLayoutsInitializer.initialize(serviceContext);
 
@@ -293,10 +293,8 @@ public class SpeedwellSiteInitializer implements SiteInitializer {
 		_cpDefinitions = null;
 	}
 
-	private void _configureB2CSite(long groupId, ServiceContext serviceContext)
+	private void _configureB2CSite(Group group, ServiceContext serviceContext)
 		throws Exception {
-
-		Group group = _groupLocalService.getGroup(groupId);
 
 		group.setType(GroupConstants.TYPE_SITE_OPEN);
 		group.setManualMembership(true);
@@ -312,7 +310,7 @@ public class SpeedwellSiteInitializer implements SiteInitializer {
 
 		Settings settings = _settingsFactory.getSettings(
 			new GroupServiceSettingsLocator(
-				groupId, CommerceAccountConstants.SERVICE_NAME));
+				group.getGroupId(), CommerceAccountConstants.SERVICE_NAME));
 
 		ModifiableSettings modifiableSettings =
 			settings.getModifiableSettings();
@@ -324,7 +322,8 @@ public class SpeedwellSiteInitializer implements SiteInitializer {
 		modifiableSettings.store();
 
 		_accountEntryGroupSettings.setAllowedTypes(
-			serviceContext.getScopeGroupId(), _getAllowedTypes(groupId));
+			serviceContext.getScopeGroupId(),
+			_getAllowedTypes(group.getGroupId()));
 	}
 
 	private CommerceCatalog _createCatalog(ServiceContext serviceContext)
@@ -444,7 +443,7 @@ public class SpeedwellSiteInitializer implements SiteInitializer {
 		serviceContext.setAddGroupPermissions(true);
 		serviceContext.setAddGuestPermissions(true);
 		serviceContext.setCompanyId(group.getCompanyId());
-		serviceContext.setLanguageId(LanguageUtil.getLanguageId(locale));
+		serviceContext.setLanguageId(_language.getLanguageId(locale));
 		serviceContext.setScopeGroupId(groupId);
 		serviceContext.setTimeZone(user.getTimeZone());
 		serviceContext.setUserId(user.getUserId());
@@ -867,7 +866,7 @@ public class SpeedwellSiteInitializer implements SiteInitializer {
 		CommerceShippingMethod commerceShippingMethod =
 			_commerceShippingMethodLocalService.addCommerceShippingMethod(
 				serviceContext.getUserId(), groupId, nameMap, descriptionMap,
-				null, shippingMethod, 0, true);
+				true, shippingMethod, null, 0, StringPool.BLANK);
 
 		_setCommerceShippingOption(
 			commerceShippingMethod, "Standard Delivery", StringPool.BLANK,
@@ -890,8 +889,8 @@ public class SpeedwellSiteInitializer implements SiteInitializer {
 
 		_commerceShippingFixedOptionLocalService.addCommerceShippingFixedOption(
 			serviceContext.getUserId(), commerceShippingMethod.getGroupId(),
-			commerceShippingMethod.getCommerceShippingMethodId(), nameMap,
-			descriptionMap, price, 0);
+			commerceShippingMethod.getCommerceShippingMethodId(), price,
+			descriptionMap, null, nameMap, 0);
 	}
 
 	private void _setDefaultCatalogImage(
@@ -1101,6 +1100,9 @@ public class SpeedwellSiteInitializer implements SiteInitializer {
 
 	@Reference
 	private KBArticleImporter _kbArticleImporter;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private OrganizationImporter _organizationImporter;

@@ -49,7 +49,7 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.uuid.PortalUUID;
 
 import java.io.Serializable;
 
@@ -196,7 +196,7 @@ public class KBFolderPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBFolder>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBFolder kbFolder : list) {
@@ -576,7 +576,7 @@ public class KBFolderPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -706,7 +706,7 @@ public class KBFolderPersistenceImpl
 
 		if (useFinderCache) {
 			result = finderCache.getResult(
-				_finderPathFetchByUUID_G, finderArgs);
+				_finderPathFetchByUUID_G, finderArgs, this);
 		}
 
 		if (result instanceof KBFolder) {
@@ -817,7 +817,7 @@ public class KBFolderPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid, groupId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -982,7 +982,7 @@ public class KBFolderPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBFolder>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBFolder kbFolder : list) {
@@ -1394,7 +1394,7 @@ public class KBFolderPersistenceImpl
 
 		Object[] finderArgs = new Object[] {uuid, companyId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -1550,7 +1550,7 @@ public class KBFolderPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBFolder>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBFolder kbFolder : list) {
@@ -1907,7 +1907,7 @@ public class KBFolderPersistenceImpl
 
 		Object[] finderArgs = new Object[] {companyId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(2);
@@ -2050,7 +2050,7 @@ public class KBFolderPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBFolder>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 
 			if ((list != null) && !list.isEmpty()) {
 				for (KBFolder kbFolder : list) {
@@ -2778,7 +2778,7 @@ public class KBFolderPersistenceImpl
 
 		Object[] finderArgs = new Object[] {groupId, parentKBFolderId};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -2963,7 +2963,8 @@ public class KBFolderPersistenceImpl
 		Object result = null;
 
 		if (useFinderCache) {
-			result = finderCache.getResult(_finderPathFetchByG_P_N, finderArgs);
+			result = finderCache.getResult(
+				_finderPathFetchByG_P_N, finderArgs, this);
 		}
 
 		if (result instanceof KBFolder) {
@@ -3099,7 +3100,7 @@ public class KBFolderPersistenceImpl
 
 		Object[] finderArgs = new Object[] {groupId, parentKBFolderId, name};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -3253,7 +3254,7 @@ public class KBFolderPersistenceImpl
 
 		if (useFinderCache) {
 			result = finderCache.getResult(
-				_finderPathFetchByG_P_UT, finderArgs);
+				_finderPathFetchByG_P_UT, finderArgs, this);
 		}
 
 		if (result instanceof KBFolder) {
@@ -3393,7 +3394,7 @@ public class KBFolderPersistenceImpl
 			groupId, parentKBFolderId, urlTitle
 		};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(4);
@@ -3536,7 +3537,8 @@ public class KBFolderPersistenceImpl
 		Object result = null;
 
 		if (useFinderCache) {
-			result = finderCache.getResult(_finderPathFetchByG_ERC, finderArgs);
+			result = finderCache.getResult(
+				_finderPathFetchByG_ERC, finderArgs, this);
 		}
 
 		if (result instanceof KBFolder) {
@@ -3595,23 +3597,6 @@ public class KBFolderPersistenceImpl
 					}
 				}
 				else {
-					if (list.size() > 1) {
-						Collections.sort(list, Collections.reverseOrder());
-
-						if (_log.isWarnEnabled()) {
-							if (!useFinderCache) {
-								finderArgs = new Object[] {
-									groupId, externalReferenceCode
-								};
-							}
-
-							_log.warn(
-								"KBFolderPersistenceImpl.fetchByG_ERC(long, String, boolean) with parameters (" +
-									StringUtil.merge(finderArgs) +
-										") yields a result set with more than 1 result. This violates the logical unique restriction. There is no order guarantee on which result is returned by this finder.");
-						}
-					}
-
 					KBFolder kbFolder = list.get(0);
 
 					result = kbFolder;
@@ -3666,7 +3651,7 @@ public class KBFolderPersistenceImpl
 
 		Object[] finderArgs = new Object[] {groupId, externalReferenceCode};
 
-		Long count = (Long)finderCache.getResult(finderPath, finderArgs);
+		Long count = (Long)finderCache.getResult(finderPath, finderArgs, this);
 
 		if (count == null) {
 			StringBundler sb = new StringBundler(3);
@@ -3898,7 +3883,7 @@ public class KBFolderPersistenceImpl
 		kbFolder.setNew(true);
 		kbFolder.setPrimaryKey(kbFolderId);
 
-		String uuid = PortalUUIDUtil.generate();
+		String uuid = _portalUUID.generate();
 
 		kbFolder.setUuid(uuid);
 
@@ -4013,9 +3998,13 @@ public class KBFolderPersistenceImpl
 		KBFolderModelImpl kbFolderModelImpl = (KBFolderModelImpl)kbFolder;
 
 		if (Validator.isNull(kbFolder.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
+			String uuid = _portalUUID.generate();
 
 			kbFolder.setUuid(uuid);
+		}
+
+		if (Validator.isNull(kbFolder.getExternalReferenceCode())) {
+			kbFolder.setExternalReferenceCode(kbFolder.getUuid());
 		}
 
 		ServiceContext serviceContext =
@@ -4207,7 +4196,7 @@ public class KBFolderPersistenceImpl
 
 		if (useFinderCache) {
 			list = (List<KBFolder>)finderCache.getResult(
-				finderPath, finderArgs);
+				finderPath, finderArgs, this);
 		}
 
 		if (list == null) {
@@ -4277,7 +4266,7 @@ public class KBFolderPersistenceImpl
 	@Override
 	public int countAll() {
 		Long count = (Long)finderCache.getResult(
-			_finderPathCountAll, FINDER_ARGS_EMPTY);
+			_finderPathCountAll, FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -4586,6 +4575,6 @@ public class KBFolderPersistenceImpl
 	}
 
 	@Reference
-	private KBFolderModelArgumentsResolver _kbFolderModelArgumentsResolver;
+	private PortalUUID _portalUUID;
 
 }

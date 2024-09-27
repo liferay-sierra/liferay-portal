@@ -12,46 +12,69 @@
  * details.
  */
 
-import {TYPES} from './context';
-
-export type TName = {
-	[key: string]: string;
+export type TWorkflowStatus = {
+	label: string;
+	value: string;
 };
 
-export type TObjectField = {
-	checked: boolean;
-	filtered?: boolean | undefined;
-	id: number;
-	indexed: boolean;
-	indexedAsKeyword: boolean;
-	indexedLanguageId: string;
-	label: TName;
-	listTypeDefinitionId: boolean;
-	name: string;
-	required: boolean;
-	type: string;
+export type TObjectColumn = {
+	defaultSort?: boolean;
+	fieldLabel?: string;
+	filterBy?: string;
+	label: LocalizedValue<string>;
+	objectFieldBusinessType?: string;
+	objectFieldName: string;
+	priority?: number;
+	sortOrder?: string;
+	type?: string;
+	value?: string;
+	valueList?: LabelValueObject[];
 };
 
 export type TObjectViewColumn = {
-	label: string;
+	defaultSort?: boolean;
+	fieldLabel?: string;
+	label: LocalizedValue<string>;
+	objectFieldBusinessType?: string;
 	objectFieldName: string;
 	priority?: number;
 };
 
+export type TObjectViewSortColumn = {
+	fieldLabel?: string;
+	label: LocalizedValue<string>;
+	objectFieldName: string;
+	priority?: number;
+	sortOrder?: string;
+};
+
+export type TObjectViewFilterColumn = {
+	definition: {[key: string]: string[]} | null;
+	disableEdit?: boolean;
+	fieldLabel?: string;
+	filterBy?: string;
+	filterType: string | null;
+	label: LocalizedValue<string>;
+	objectFieldBusinessType?: string;
+	objectFieldName: string;
+	value?: string;
+	valueList?: LabelValueObject[];
+};
+
 export type TObjectView = {
 	defaultObjectView: boolean;
-	name: TName;
+	name: LocalizedValue<string>;
+	objectDefinitionId: number;
 	objectViewColumns: TObjectViewColumn[];
+	objectViewFilterColumns: TObjectViewFilterColumn[];
+	objectViewSortColumns: TObjectViewSortColumn[];
 };
 
 export type TState = {
+	filterOperators: TFilterOperators;
 	isViewOnly: boolean;
-	objectFields: TObjectField[];
+	objectFields: ObjectField[];
 	objectView: TObjectView;
 	objectViewId: string;
-};
-
-export type TAction = {
-	payload: {[key: string]: any};
-	type: keyof typeof TYPES;
+	workflowStatusJSONArray: TWorkflowStatus[];
 };

@@ -24,14 +24,14 @@ String[] types = GetterUtil.getStringValues(request.getAttribute(AccountWebKeys.
 
 <clay:sheet-section>
 	<h3 class="sheet-subtitle">
-		<%= LanguageUtil.get(request, "account-display-data") %>
+		<liferay-ui:message key="account-display-data" />
 	</h3>
 
 	<clay:row>
 		<clay:col
 			md="6"
 		>
-			<aui:input bean="<%= accountEntryDisplay.getAccountEntry() %>" label="account-name" model="<%= AccountEntry.class %>" name="name" />
+			<aui:input bean="<%= accountEntryDisplay %>" label="account-name" model="<%= AccountEntry.class %>" name="name" />
 
 			<c:choose>
 				<c:when test="<%= accountEntryDisplay.getAccountEntryId() > 0 %>">
@@ -60,7 +60,7 @@ String[] types = GetterUtil.getStringValues(request.getAttribute(AccountWebKeys.
 
 			<liferay-ui:error embed="<%= false %>" key="<%= DuplicateAccountEntryExternalReferenceCodeException.class.getName() %>" message="the-given-external-reference-code-belongs-to-another-account" />
 
-			<aui:input label="external-reference-code" name="externalReferenceCode" type="text" value="<%= accountEntryDisplay.getExternalReferenceCode() %>" />
+			<aui:input bean="<%= accountEntryDisplay %>" label="external-reference-code" model="<%= AccountEntry.class %>" name="externalReferenceCode" />
 
 			<c:if test="<%= accountEntryDisplay.getAccountEntryId() > 0 %>">
 				<aui:input cssClass="disabled" label="account-id" name="accountEntryId" readonly="true" type="text" value="<%= String.valueOf(accountEntryDisplay.getAccountEntryId()) %>" />
@@ -74,9 +74,9 @@ String[] types = GetterUtil.getStringValues(request.getAttribute(AccountWebKeys.
 				<label class="control-label"></label>
 
 				<liferay-ui:logo-selector
-					currentLogoURL="<%= (accountEntryDisplay.getLogoId() == 0) ? accountEntryDisplay.getDefaultLogoURL(liferayPortletRequest) : accountEntryDisplay.getLogoURL(themeDisplay.getPathImage()) %>"
+					currentLogoURL="<%= accountEntryDisplay.getLogoURL() %>"
 					defaultLogo="<%= accountEntryDisplay.getLogoId() == 0 %>"
-					defaultLogoURL="<%= accountEntryDisplay.getDefaultLogoURL(liferayPortletRequest) %>"
+					defaultLogoURL="<%= accountEntryDisplay.getDefaultLogoURL() %>"
 					tempImageFileName="<%= String.valueOf(accountEntryDisplay.getAccountEntryId()) %>"
 				/>
 			</div>
@@ -85,9 +85,5 @@ String[] types = GetterUtil.getStringValues(request.getAttribute(AccountWebKeys.
 
 	<aui:field-wrapper cssClass="form-group lfr-input-text-container">
 		<aui:input name="description" type="textarea" value="<%= accountEntryDisplay.getDescription() %>" />
-	</aui:field-wrapper>
-
-	<aui:field-wrapper cssClass="form-group lfr-input-text-container">
-		<aui:input label="" labelOff="inactive" labelOn="active" name="active" type="toggle-switch" value="<%= accountEntryDisplay.isActive() %>" />
 	</aui:field-wrapper>
 </clay:sheet-section>

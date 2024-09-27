@@ -14,7 +14,6 @@
 
 package com.liferay.fragment.internal.processor;
 
-import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.processor.FragmentEntryProcessor;
 import com.liferay.fragment.processor.FragmentEntryProcessorContext;
@@ -26,7 +25,6 @@ import com.liferay.petra.lang.CentralizedThreadLocal;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 
@@ -48,24 +46,8 @@ public class FragmentEntryProcessorRegistryImpl
 	implements FragmentEntryProcessorRegistry {
 
 	@Override
-	public void deleteFragmentEntryLinkData(
-		FragmentEntryLink fragmentEntryLink) {
-
-		if (ExportImportThreadLocal.isImportInProcess()) {
-			return;
-		}
-
-		for (FragmentEntryProcessor fragmentEntryProcessor :
-				_serviceTrackerList) {
-
-			fragmentEntryProcessor.deleteFragmentEntryLinkData(
-				fragmentEntryLink);
-		}
-	}
-
-	@Override
 	public JSONArray getAvailableTagsJSONArray() {
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 		for (FragmentEntryProcessor fragmentEntryProcessor :
 				_serviceTrackerList) {
@@ -87,7 +69,7 @@ public class FragmentEntryProcessorRegistryImpl
 
 	@Override
 	public JSONArray getDataAttributesJSONArray() {
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 		for (FragmentEntryProcessor fragmentEntryProcessor :
 				_serviceTrackerList) {
@@ -120,7 +102,9 @@ public class FragmentEntryProcessorRegistryImpl
 				fragmentEntryProcessor.getDefaultEditableValuesJSONObject(
 					html, configuration);
 
-			if (defaultEditableValuesJSONObject != null) {
+			if ((defaultEditableValuesJSONObject != null) &&
+				(defaultEditableValuesJSONObject.length() > 0)) {
+
 				Class<?> clazz = fragmentEntryProcessor.getClass();
 
 				jsonObject.put(

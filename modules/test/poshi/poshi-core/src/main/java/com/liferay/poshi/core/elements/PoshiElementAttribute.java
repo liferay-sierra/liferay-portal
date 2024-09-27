@@ -86,7 +86,7 @@ public class PoshiElementAttribute
 		}
 
 		sb.append(" = \"");
-		value = value.replaceAll("\"", "&quot;");
+		value = value.replace("\"", "\\\"");
 
 		sb.append(value);
 

@@ -15,6 +15,7 @@
 import ClayAlert from '@clayui/alert';
 import ClayDatePicker from '@clayui/date-picker';
 import ClayTimePicker from '@clayui/time-picker';
+import {navigate} from 'frontend-js-web';
 import React from 'react';
 
 import ChangeTrackingBaseScheduleView from './ChangeTrackingBaseScheduleView';
@@ -40,7 +41,7 @@ class ChangeTrackingRescheduleView extends ChangeTrackingBaseScheduleView {
 		this.unscheduleURL = unscheduleURL;
 
 		this.state = {
-			date: new Date(scheduledDate + ' 12:00:00'),
+			date: scheduledDate,
 			dateError: '',
 			formError: null,
 			time: scheduledTime,
@@ -69,7 +70,20 @@ class ChangeTrackingRescheduleView extends ChangeTrackingBaseScheduleView {
 									placeholder="YYYY-MM-DD"
 									spritemap={this.spritemap}
 									timezone={this.timeZone}
-									value={this.state.date}
+									value={
+										typeof this.state.date === 'string'
+											? this.state.date
+											: this.state.date.getFullYear() +
+											  '-' +
+											  this.pad(
+													this.state.date.getMonth() +
+														1
+											  ) +
+											  '-' +
+											  this.pad(
+													this.state.date.getDate()
+											  )
+									}
 									years={{
 										end: new Date().getFullYear() + 1,
 										start: new Date().getFullYear() - 1,
@@ -83,10 +97,10 @@ class ChangeTrackingRescheduleView extends ChangeTrackingBaseScheduleView {
 						<div className={this.getTimeClassName()}>
 							<div>
 								<ClayTimePicker
-									onInputChange={this.handleTimeChange}
+									onChange={this.handleTimeChange}
 									spritemap={this.spritemap}
 									timezone={this.timeZone}
-									values={this.state.time}
+									value={this.state.time}
 								/>
 
 								{this.getTimeHelpText()}
@@ -135,9 +149,7 @@ class ChangeTrackingRescheduleView extends ChangeTrackingBaseScheduleView {
 						<div className="btn-group-item">
 							<button
 								className="btn btn-outline-borderless btn-secondary"
-								onClick={() =>
-									Liferay.Util.navigate(this.redirect)
-								}
+								onClick={() => navigate(this.redirect)}
 								type="button"
 							>
 								{Liferay.Language.get('cancel')}

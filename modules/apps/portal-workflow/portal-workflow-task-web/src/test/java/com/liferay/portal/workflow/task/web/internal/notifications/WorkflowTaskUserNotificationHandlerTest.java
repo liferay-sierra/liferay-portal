@@ -16,12 +16,11 @@ package com.liferay.portal.workflow.task.web.internal.notifications;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.json.JSONFactoryImpl;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserNotificationEvent;
 import com.liferay.portal.kernel.model.UserNotificationEventWrapper;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
@@ -32,65 +31,67 @@ import com.liferay.portal.kernel.service.UserNotificationEventLocalService;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.ProxyFactory;
 import com.liferay.portal.kernel.workflow.BaseWorkflowHandler;
 import com.liferay.portal.kernel.workflow.DefaultWorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowHandler;
 import com.liferay.portal.kernel.workflow.WorkflowTask;
+import com.liferay.portal.kernel.workflow.WorkflowTaskManager;
 import com.liferay.portal.kernel.workflow.WorkflowTaskManagerUtil;
-import com.liferay.portal.util.HtmlImpl;
-import com.liferay.portal.workflow.WorkflowTaskManagerProxyBean;
-import com.liferay.portal.workflow.task.web.internal.permission.WorkflowTaskPermissionChecker;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
+import com.liferay.portal.workflow.security.permission.WorkflowTaskPermission;
 
 import java.io.Serializable;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import org.mockito.Mockito;
 
 import org.osgi.framework.BundleContext;
 
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.modules.junit4.PowerMockRunner;
-
 /**
  * @author Inácio Nery
  */
-@RunWith(PowerMockRunner.class)
-public class WorkflowTaskUserNotificationHandlerTest extends PowerMockito {
+public class WorkflowTaskUserNotificationHandlerTest {
+
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
-		_setUpHtmlUtil();
-		_setUpJSONFactoryUtil();
 		_setUpUserNotificationEventLocalService();
 		_setUpWorkflowTaskManagerUtil();
-		_setUpWorkflowTaskPermissionChecker();
+		_setUpWorkflowTaskPermission();
 	}
 
 	@Before
 	public void setUp() {
+		_allowedUsers.clear();
 		_setUpWorkflowHandlerRegistryUtil();
 	}
 
 	@Test
 	public void testInterpret() throws Exception {
-		_language = Mockito.mock(Language.class);
+		Language language = Mockito.mock(Language.class);
 
 		ReflectionTestUtil.setFieldValue(
-			LanguageUtil.class, "_language", _language);
+			_workflowTaskUserNotificationHandler, "_language", language);
 
 		Mockito.when(
-			LanguageUtil.format(
+			language.format(
 				Mockito.any(Locale.class),
 				Mockito.eq("notification-for-x-was-deactivated"),
 				Mockito.anyString(), Mockito.eq(false))
@@ -99,7 +100,7 @@ public class WorkflowTaskUserNotificationHandlerTest extends PowerMockito {
 		);
 
 		Mockito.when(
-			_language.get(
+			language.get(
 				Mockito.any(Locale.class),
 				Mockito.eq("notification-no-longer-applies"))
 		).thenReturn(
@@ -140,6 +141,43 @@ public class WorkflowTaskUserNotificationHandlerTest extends PowerMockito {
 			_workflowTaskUserNotificationHandler.getLink(
 				mockUserNotificationEvent(
 					_VALID_ENTRY_CLASS_NAME, null, _INVALID_WORKFLOW_TASK_ID),
+				_serviceContext));
+	}
+
+	@Test
+	public void testIsApplicable() {
+		User user1 = Mockito.mock(User.class);
+
+		Mockito.when(
+			user1.getUserId()
+		).thenReturn(
+			_USER_ID
+		);
+
+		_allowedUsers.add(user1);
+
+		User user2 = Mockito.mock(User.class);
+
+		Mockito.when(
+			user2.getUserId()
+		).thenReturn(
+			RandomTestUtil.randomLong()
+		);
+
+		_allowedUsers.add(user2);
+
+		Assert.assertTrue(
+			_workflowTaskUserNotificationHandler.isApplicable(
+				mockUserNotificationEvent(
+					_VALID_ENTRY_CLASS_NAME, null, _VALID_WORKFLOW_TASK_ID),
+				_serviceContext));
+
+		_allowedUsers.remove(user1);
+
+		Assert.assertFalse(
+			_workflowTaskUserNotificationHandler.isApplicable(
+				mockUserNotificationEvent(
+					_VALID_ENTRY_CLASS_NAME, null, _VALID_WORKFLOW_TASK_ID),
 				_serviceContext));
 	}
 
@@ -196,7 +234,7 @@ public class WorkflowTaskUserNotificationHandlerTest extends PowerMockito {
 
 			@Override
 			public String getPayload() {
-				return jsonObject.toJSONString();
+				return jsonObject.toString();
 			}
 
 			@Override
@@ -207,75 +245,66 @@ public class WorkflowTaskUserNotificationHandlerTest extends PowerMockito {
 		};
 	}
 
-	private static void _setUpHtmlUtil() {
-		HtmlUtil htmlUtil = new HtmlUtil();
-
-		htmlUtil.setHtml(
-			new HtmlImpl() {
-
-				@Override
-				public String escape(String text) {
-					return text;
-				}
-
-			});
-	}
-
-	private static void _setUpJSONFactoryUtil() {
-		JSONFactoryUtil jsonFactoryUtil = new JSONFactoryUtil();
-
-		jsonFactoryUtil.setJSONFactory(new JSONFactoryImpl());
-	}
-
 	private static void _setUpUserNotificationEventLocalService()
 		throws Exception {
 
-		_workflowTaskUserNotificationHandler.
-			setUserNotificationEventLocalService(
-				ProxyFactory.newDummyInstance(
-					UserNotificationEventLocalService.class));
+		ReflectionTestUtil.setFieldValue(
+			_workflowTaskUserNotificationHandler,
+			"_userNotificationEventLocalService",
+			ProxyFactory.newDummyInstance(
+				UserNotificationEventLocalService.class));
 	}
 
 	private static void _setUpWorkflowTaskManagerUtil() throws Exception {
-		WorkflowTaskManagerUtil workflowTaskManagerUtil =
-			new WorkflowTaskManagerUtil();
+		WorkflowTaskManager workflowTaskManager = Mockito.spy(
+			WorkflowTaskManager.class);
 
-		workflowTaskManagerUtil.setWorkflowTaskManager(
-			new WorkflowTaskManagerProxyBean() {
+		WorkflowTask workflowTask = new DefaultWorkflowTask() {
 
-				@Override
-				public WorkflowTask fetchWorkflowTask(
-					long companyId, long workflowTaskId) {
+			@Override
+			public Map<String, Serializable> getOptionalAttributes() {
+				return Collections.emptyMap();
+			}
 
-					if (workflowTaskId == _VALID_WORKFLOW_TASK_ID) {
-						return new DefaultWorkflowTask() {
+		};
 
-							@Override
-							public Map<String, Serializable>
-								getOptionalAttributes() {
+		Mockito.doReturn(
+			workflowTask
+		).when(
+			workflowTaskManager
+		).fetchWorkflowTask(
+			_VALID_WORKFLOW_TASK_ID
+		);
 
-								return Collections.emptyMap();
-							}
+		Mockito.doReturn(
+			_allowedUsers
+		).when(
+			workflowTaskManager
+		).getNotifiableUsers(
+			Mockito.anyLong()
+		);
 
-						};
-					}
-
-					return null;
-				}
-
-			});
+		ReflectionTestUtil.setFieldValue(
+			WorkflowTaskManagerUtil.class, "_workflowTaskManager",
+			workflowTaskManager);
 	}
 
-	private static void _setUpWorkflowTaskPermissionChecker() throws Exception {
+	private static void _setUpWorkflowTaskPermission() throws Exception {
 		ReflectionTestUtil.setFieldValue(
-			_workflowTaskUserNotificationHandler,
-			"_workflowTaskPermissionChecker",
-			new WorkflowTaskPermissionChecker() {
+			_workflowTaskUserNotificationHandler, "_workflowTaskPermission",
+			new WorkflowTaskPermission() {
 
 				@Override
-				public boolean hasPermission(
-					long groupId, WorkflowTask workflowTask,
-					PermissionChecker permissionChecker) {
+				public void check(
+						PermissionChecker permissionChecker,
+						WorkflowTask workflowTask, long groupId)
+					throws PortalException {
+				}
+
+				@Override
+				public boolean contains(
+					PermissionChecker permissionChecker,
+					WorkflowTask workflowTask, long groupId) {
 
 					return true;
 				}
@@ -312,13 +341,6 @@ public class WorkflowTaskUserNotificationHandlerTest extends PowerMockito {
 				}
 
 				@Override
-				public String getURLEditWorkflowTask(
-					long workflowTaskId, ServiceContext serviceContext) {
-
-					return getNotificationLink(workflowTaskId, serviceContext);
-				}
-
-				@Override
 				public Object updateStatus(int status, Map workflowContext) {
 					return null;
 				}
@@ -333,6 +355,8 @@ public class WorkflowTaskUserNotificationHandlerTest extends PowerMockito {
 	private static final String _NOTIFICATION_MESSAGE =
 		RandomTestUtil.randomString();
 
+	private static final Long _USER_ID = RandomTestUtil.randomLong();
+
 	private static final String _VALID_ENTRY_CLASS_NAME =
 		RandomTestUtil.randomString();
 
@@ -341,7 +365,7 @@ public class WorkflowTaskUserNotificationHandlerTest extends PowerMockito {
 	private static final Long _VALID_WORKFLOW_TASK_ID =
 		RandomTestUtil.randomLong();
 
-	private static Language _language;
+	private static final List<User> _allowedUsers = new ArrayList<>();
 
 	private static final ServiceContext _serviceContext = new ServiceContext() {
 
@@ -352,6 +376,11 @@ public class WorkflowTaskUserNotificationHandlerTest extends PowerMockito {
 					setSiteGroupId(RandomTestUtil.randomLong());
 				}
 			};
+		}
+
+		@Override
+		public long getUserId() {
+			return _USER_ID;
 		}
 
 	};

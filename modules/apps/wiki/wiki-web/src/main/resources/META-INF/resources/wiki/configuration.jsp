@@ -119,9 +119,7 @@
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button type="submit" />
-
-		<aui:button type="cancel" />
+		<liferay-frontend:edit-form-buttons />
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>
 
@@ -141,8 +139,12 @@
 		if (availableVisibleNodes && currentVisibleNodes) {
 			Liferay.Util.postForm(form, {
 				data: {
-					hiddenNodes: Liferay.Util.listSelect(availableVisibleNodes),
-					visibleNodes: Liferay.Util.listSelect(currentVisibleNodes),
+					hiddenNodes: Liferay.Util.getSelectedOptionValues(
+						availableVisibleNodes
+					),
+					visibleNodes: Liferay.Util.getSelectedOptionValues(
+						currentVisibleNodes
+					),
 				},
 			});
 		}

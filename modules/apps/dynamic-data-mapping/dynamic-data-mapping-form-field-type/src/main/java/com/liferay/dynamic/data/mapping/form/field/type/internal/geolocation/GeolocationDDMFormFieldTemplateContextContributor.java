@@ -43,7 +43,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marcela Cunha
  */
 @Component(
-	immediate = true,
 	property = "ddm.form.field.type.name=" + DDMFormFieldTypeConstants.GEOLOCATION,
 	service = {
 		DDMFormFieldTemplateContextContributor.class,
@@ -97,11 +96,11 @@ public class GeolocationDDMFormFieldTemplateContextContributor
 	protected String getModuleName(String mapProviderKey) {
 		if (StringUtil.equals(mapProviderKey, "GoogleMaps")) {
 			return _npmResolver.resolveModuleName(
-				"@liferay/map-google-maps/js/MapGoogleMaps.es");
+				"@liferay/map-google-maps/js/MapGoogleMaps");
 		}
 
 		return _npmResolver.resolveModuleName(
-			"@liferay/map-openstreetmap/js/MapOpenStreetMap.es");
+			"@liferay/map-openstreetmap/js/MapOpenStreetMap");
 	}
 
 	private String _getGoogleMapsAPIKey(

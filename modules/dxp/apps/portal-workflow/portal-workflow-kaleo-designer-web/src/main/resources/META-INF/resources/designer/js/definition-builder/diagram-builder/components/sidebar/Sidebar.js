@@ -14,6 +14,7 @@ import {isNode} from 'react-flow-renderer';
 
 import {DefinitionBuilderContext} from '../../../DefinitionBuilderContext';
 import {DiagramBuilderContext} from '../../DiagramBuilderContext';
+import DefinitionInfo from './DefnitionInfo';
 import SidebarBody from './SidebarBody';
 import SidebarHeader from './SidebarHeader';
 import sectionComponents from './sections/sectionComponents';
@@ -76,6 +77,14 @@ const contents = {
 	'notifications': {
 		backButton: (setContentName, selectedItemType) => () =>
 			setContentName(selectedItemType),
+		deleteFunction: (setSelectedItem) => () =>
+			setSelectedItem((previousValue) => ({
+				...previousValue,
+				data: {
+					...previousValue.data,
+					notifications: null,
+				},
+			})),
 		sections: ['notifications'],
 		showDeleteButton: true,
 		title: Liferay.Language.get('notifications'),
@@ -85,6 +94,12 @@ const contents = {
 		sections: ['sourceCode'],
 		showDeleteButton: false,
 		title: Liferay.Language.get('scripted-assignment'),
+	},
+	'scripted-reassignment': {
+		backButton: (setContentName) => () => setContentName('timers'),
+		sections: ['timerSourceCode'],
+		showDeleteButton: false,
+		title: Liferay.Language.get('scripted-reassignment'),
 	},
 	'start': {
 		sections: ['nodeInformation', 'notificationsSummary', 'actionsSummary'],
@@ -114,7 +129,7 @@ const contents = {
 				...previousValue,
 				data: {
 					...previousValue.data,
-					timers: null,
+					taskTimers: null,
 				},
 			})),
 		sections: ['timers'],
@@ -134,7 +149,10 @@ const errorsDefaultValues = {
 };
 
 export default function Sidebar() {
-	const {setBlockingErrors} = useContext(DefinitionBuilderContext);
+	const {definitionTitle, setBlockingErrors, showDefinitionInfo} = useContext(
+		DefinitionBuilderContext
+	);
+
 	const {selectedItem, setSelectedItem, setSelectedItemNewId} = useContext(
 		DiagramBuilderContext
 	);
@@ -153,16 +171,29 @@ export default function Sidebar() {
 
 	useEffect(() => {
 		setBlockingErrors((prev) => {
-			if (errors.label === true || errors.id.empty === true) {
-				return {...prev, errorType: 'emptyField'};
+			if (errors?.label === true || errors?.id?.empty === true) {
+				return {
+					...prev,
+					errorMessage: Liferay.Language.get(
+						'please-fill-out-the-fields-before-saving-or-publishing'
+					),
+					errorType: 'emptyField',
+				};
 			}
-			if (errors.id.duplicated === true) {
-				return {...prev, errorType: 'duplicated'};
+			else if (errors?.id?.duplicated === true) {
+				return {
+					...prev,
+					errorMessage: Liferay.Language.get(
+						'please-rename-this-with-another-words'
+					),
+					errorType: 'duplicated',
+				};
 			}
 			else {
 				return {...prev, errorType: ''};
 			}
 		});
+
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [errors]);
 
@@ -197,25 +228,33 @@ export default function Sidebar() {
 				deleteButtonFunction={
 					content?.deleteFunction?.(setSelectedItem) || null
 				}
-				showBackButton={!!content}
-				showDeleteButton={content?.showDeleteButton}
-				title={title}
+				showBackButton={!!content && !showDefinitionInfo}
+				showDeleteButton={
+					content?.showDeleteButton && !showDefinitionInfo
+				}
+				title={!showDefinitionInfo ? title : definitionTitle}
 			/>
 
-			<SidebarBody displayDefaultContent={!content}>
-				{content?.sections?.map((sectionKey) => {
-					const SectionComponent = sectionComponents[sectionKey];
+			<SidebarBody
+				displayDefaultContent={!content && !showDefinitionInfo}
+			>
+				{!showDefinitionInfo ? (
+					content?.sections?.map((sectionKey) => {
+						const SectionComponent = sectionComponents[sectionKey];
 
-					return (
-						<SectionComponent
-							errors={errors}
-							key={sectionKey}
-							sections={content?.sections || []}
-							setContentName={setContentName}
-							setErrors={setErrors}
-						/>
-					);
-				})}
+						return (
+							<SectionComponent
+								errors={errors}
+								key={sectionKey}
+								sections={content?.sections || []}
+								setContentName={setContentName}
+								setErrors={setErrors}
+							/>
+						);
+					})
+				) : (
+					<DefinitionInfo />
+				)}
 			</SidebarBody>
 		</div>
 	);

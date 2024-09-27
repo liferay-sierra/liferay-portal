@@ -46,7 +46,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alessio Antonio Rendina
  */
-@Component(enabled = false, immediate = true, service = Indexer.class)
+@Component(immediate = true, service = Indexer.class)
 public class CommercePriceEntryIndexer extends BaseIndexer<CommercePriceEntry> {
 
 	public static final String CLASS_NAME = CommercePriceEntry.class.getName();
@@ -94,9 +94,11 @@ public class CommercePriceEntryIndexer extends BaseIndexer<CommercePriceEntry> {
 		addSearchTerm(
 			searchQuery, searchContext, FIELD_EXTERNAL_REFERENCE_CODE, false);
 
-		addSearchTerm(searchQuery, searchContext, "sku", false);
 		addSearchLocalizedTerm(
 			searchQuery, searchContext, "cpDefinitionName", false);
+		addSearchTerm(searchQuery, searchContext, "sku", false);
+		addSearchTerm(
+			searchQuery, searchContext, "skuExternalReferenceCode", false);
 
 		LinkedHashMap<String, Object> params =
 			(LinkedHashMap<String, Object>)searchContext.getAttribute("params");
@@ -141,6 +143,8 @@ public class CommercePriceEntryIndexer extends BaseIndexer<CommercePriceEntry> {
 
 		document.addKeyword("cpInstanceId", cpInstance.getCPInstanceId());
 		document.addKeyword("sku", cpInstance.getSku());
+		document.addKeyword(
+			"skuExternalReferenceCode", cpInstance.getExternalReferenceCode());
 
 		CPDefinition cpDefinition = cpInstance.getCPDefinition();
 
@@ -174,8 +178,7 @@ public class CommercePriceEntryIndexer extends BaseIndexer<CommercePriceEntry> {
 		throws Exception {
 
 		_indexWriterHelper.updateDocument(
-			getSearchEngineId(), commercePriceEntry.getCompanyId(),
-			getDocument(commercePriceEntry), isCommitImmediately());
+			commercePriceEntry.getCompanyId(), getDocument(commercePriceEntry));
 	}
 
 	@Override
@@ -212,7 +215,6 @@ public class CommercePriceEntryIndexer extends BaseIndexer<CommercePriceEntry> {
 					}
 				}
 			});
-		indexableActionableDynamicQuery.setSearchEngineId(getSearchEngineId());
 
 		indexableActionableDynamicQuery.performActions();
 	}

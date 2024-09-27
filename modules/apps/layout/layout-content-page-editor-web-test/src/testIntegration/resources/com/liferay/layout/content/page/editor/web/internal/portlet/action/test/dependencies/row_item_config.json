@@ -1,5 +1,8 @@
 {
+	"cssClasses": [
+	],
 	"gutters": true,
+	"indexed": true,
 	"landscapeMobile": {
 		"styles": {
 		}

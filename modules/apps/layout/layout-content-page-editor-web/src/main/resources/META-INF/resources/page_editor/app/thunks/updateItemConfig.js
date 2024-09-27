@@ -13,34 +13,21 @@
  */
 
 import updateItemConfigAction from '../actions/updateItemConfig';
-import updatePageContents from '../actions/updatePageContents';
-import InfoItemService from '../services/InfoItemService';
 import LayoutService from '../services/LayoutService';
 
-export default function updateItemConfig({
-	itemConfig,
-	itemId,
-	segmentsExperienceId,
-}) {
-	return (dispatch) =>
-		LayoutService.updateItemConfig({
+export default function updateItemConfig({itemConfig, itemId}) {
+	return (dispatch, getState) => {
+		const {segmentsExperienceId} = getState();
+
+		return LayoutService.updateItemConfig({
 			itemConfig,
 			itemId,
 			onNetworkStatus: dispatch,
 			segmentsExperienceId,
-		})
-			.then((layoutData) => {
-				dispatch(updateItemConfigAction({itemId, layoutData}));
-			})
-			.then(() => {
-				InfoItemService.getPageContents({
-					onNetworkStatus: dispatch,
-				}).then((pageContents) => {
-					dispatch(
-						updatePageContents({
-							pageContents,
-						})
-					);
-				});
-			});
+		}).then(({layoutData, pageContents}) => {
+			dispatch(
+				updateItemConfigAction({itemId, layoutData, pageContents})
+			);
+		});
+	};
 }

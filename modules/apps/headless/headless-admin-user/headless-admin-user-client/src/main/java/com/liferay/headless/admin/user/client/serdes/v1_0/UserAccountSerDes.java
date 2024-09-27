@@ -20,6 +20,7 @@ import com.liferay.headless.admin.user.client.dto.v1_0.OrganizationBrief;
 import com.liferay.headless.admin.user.client.dto.v1_0.RoleBrief;
 import com.liferay.headless.admin.user.client.dto.v1_0.SiteBrief;
 import com.liferay.headless.admin.user.client.dto.v1_0.UserAccount;
+import com.liferay.headless.admin.user.client.dto.v1_0.UserGroupBrief;
 import com.liferay.headless.admin.user.client.json.BaseJSONParser;
 
 import java.text.DateFormat;
@@ -65,7 +66,7 @@ public class UserAccountSerDes {
 		sb.append("{");
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+			"yyyy-MM-dd'T'HH:mm:ssXX");
 
 		if (userAccount.getAccountBriefs() != null) {
 			if (sb.length() > 1) {
@@ -136,6 +137,20 @@ public class UserAccountSerDes {
 
 			sb.append(
 				liferayToJSONDateFormat.format(userAccount.getBirthDate()));
+
+			sb.append("\"");
+		}
+
+		if (userAccount.getCurrentPassword() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"currentPassword\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(userAccount.getCurrentPassword()));
 
 			sb.append("\"");
 		}
@@ -481,6 +496,26 @@ public class UserAccountSerDes {
 				String.valueOf(userAccount.getUserAccountContactInformation()));
 		}
 
+		if (userAccount.getUserGroupBriefs() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"userGroupBriefs\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < userAccount.getUserGroupBriefs().length; i++) {
+				sb.append(String.valueOf(userAccount.getUserGroupBriefs()[i]));
+
+				if ((i + 1) < userAccount.getUserGroupBriefs().length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
 		sb.append("}");
 
 		return sb.toString();
@@ -501,7 +536,7 @@ public class UserAccountSerDes {
 		Map<String, String> map = new TreeMap<>();
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+			"yyyy-MM-dd'T'HH:mm:ssXX");
 
 		if (userAccount.getAccountBriefs() == null) {
 			map.put("accountBriefs", null);
@@ -544,6 +579,15 @@ public class UserAccountSerDes {
 			map.put(
 				"birthDate",
 				liferayToJSONDateFormat.format(userAccount.getBirthDate()));
+		}
+
+		if (userAccount.getCurrentPassword() == null) {
+			map.put("currentPassword", null);
+		}
+		else {
+			map.put(
+				"currentPassword",
+				String.valueOf(userAccount.getCurrentPassword()));
 		}
 
 		if (userAccount.getCustomFields() == null) {
@@ -719,6 +763,15 @@ public class UserAccountSerDes {
 				String.valueOf(userAccount.getUserAccountContactInformation()));
 		}
 
+		if (userAccount.getUserGroupBriefs() == null) {
+			map.put("userGroupBriefs", null);
+		}
+		else {
+			map.put(
+				"userGroupBriefs",
+				String.valueOf(userAccount.getUserGroupBriefs()));
+		}
+
 		return map;
 	}
 
@@ -773,6 +826,12 @@ public class UserAccountSerDes {
 				if (jsonParserFieldValue != null) {
 					userAccount.setBirthDate(
 						toDate((String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "currentPassword")) {
+				if (jsonParserFieldValue != null) {
+					userAccount.setCurrentPassword(
+						(String)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "customFields")) {
@@ -928,6 +987,18 @@ public class UserAccountSerDes {
 					userAccount.setUserAccountContactInformation(
 						UserAccountContactInformationSerDes.toDTO(
 							(String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "userGroupBriefs")) {
+				if (jsonParserFieldValue != null) {
+					userAccount.setUserGroupBriefs(
+						Stream.of(
+							toStrings((Object[])jsonParserFieldValue)
+						).map(
+							object -> UserGroupBriefSerDes.toDTO((String)object)
+						).toArray(
+							size -> new UserGroupBrief[size]
+						));
 				}
 			}
 		}

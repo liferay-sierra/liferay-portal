@@ -3,8 +3,6 @@ definition {
 	macro addAssignee {
 		LexiconEntry.gotoAdd();
 
-		Pause(locator1 = "3000");
-
 		SelectFrame(
 			key_title = "Assign Accounts to ${accountGroupName}",
 			locator1 = "IFrame#MODAL_ANY");
@@ -14,8 +12,6 @@ definition {
 		}
 		else {
 			for (var assigneeName : list "${assigneeNames}") {
-				Search.searchCP(searchTerm = "${assigneeName}");
-
 				Check(
 					key_tableEntry = "${assigneeName}",
 					locator1 = "LexiconTable#TABLE_ENTRY_CHECKBOX");
@@ -27,15 +23,6 @@ definition {
 		Button.click(button = "Assign");
 
 		Alert.viewSuccessMessage();
-
-		Refresh();
-
-		for (var assigneeName : list "${assigneeNames}") {
-			AssertTextEquals.assertPartialText(
-				key_tableEntry = "${assigneeName}",
-				locator1 = "LexiconTable#TABLE_ENTRY",
-				value1 = "${assigneeName}");
-		}
 	}
 
 	macro addCP {
@@ -58,8 +45,6 @@ definition {
 
 	macro editCP {
 		AccountGroups.openAccountGroupsAdmin();
-
-		Search.searchCP(searchTerm = "${accountGroupName}");
 
 		LexiconEntry.gotoEntryMenuItem(
 			menuItem = "Edit",
@@ -89,8 +74,6 @@ definition {
 	}
 
 	macro removeAccount {
-		Search.searchCP(searchTerm = "${accountGroupName}");
-
 		if ("${removeType}" == "Toolbar Remove Icon") {
 			LexiconEntry.selectEntry(key_rowEntry = "${accountGroupName}");
 

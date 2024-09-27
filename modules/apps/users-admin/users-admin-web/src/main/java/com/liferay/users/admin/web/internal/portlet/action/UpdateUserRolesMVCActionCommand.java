@@ -37,13 +37,13 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.UserService;
-import com.liferay.portal.kernel.service.permission.OrganizationPermissionUtil;
+import com.liferay.portal.kernel.service.permission.OrganizationPermission;
 import com.liferay.portal.kernel.service.permission.PortletPermissionUtil;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -70,7 +70,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pei-Jung Lan
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + UsersAdminPortletKeys.MY_ACCOUNT,
 		"javax.portlet.name=" + UsersAdminPortletKeys.MY_ORGANIZATIONS,
@@ -130,13 +129,14 @@ public class UpdateUserRolesMVCActionCommand extends BaseMVCActionCommand {
 				user.getEmailAddress(), user.getLanguageId(),
 				user.getTimeZoneId(), user.getGreeting(), user.getComments(),
 				user.getFirstName(), user.getMiddleName(), user.getLastName(),
-				contact.getPrefixId(), contact.getSuffixId(), user.isMale(),
-				birthdayCal.get(Calendar.MONTH), birthdayCal.get(Calendar.DATE),
-				birthdayCal.get(Calendar.YEAR), contact.getSmsSn(),
-				contact.getFacebookSn(), contact.getJabberSn(),
-				contact.getSkypeSn(), contact.getTwitterSn(),
-				user.getJobTitle(), null, user.getOrganizationIds(), roleIds,
-				userGroupRoles, user.getUserGroupIds(), serviceContext);
+				contact.getPrefixListTypeId(), contact.getSuffixListTypeId(),
+				user.isMale(), birthdayCal.get(Calendar.MONTH),
+				birthdayCal.get(Calendar.DATE), birthdayCal.get(Calendar.YEAR),
+				contact.getSmsSn(), contact.getFacebookSn(),
+				contact.getJabberSn(), contact.getSkypeSn(),
+				contact.getTwitterSn(), user.getJobTitle(), null,
+				user.getOrganizationIds(), roleIds, userGroupRoles,
+				user.getUserGroupIds(), serviceContext);
 
 			User currentUser = _userService.getCurrentUser();
 
@@ -204,22 +204,22 @@ public class UpdateUserRolesMVCActionCommand extends BaseMVCActionCommand {
 				httpServletRequest, "redirect");
 
 			if (Validator.isNotNull(redirect)) {
-				Map<String, String[]> parameterMap = _http.getParameterMap(
-					redirect);
+				Map<String, String[]> parameterMap =
+					HttpComponentsUtil.getParameterMap(redirect);
 
 				backURL = parameterMap.get(portletNamespace + "backURL")[0];
 			}
 
 			if (Validator.isNotNull(backURL)) {
-				Map<String, String[]> parameterMap = _http.getParameterMap(
-					backURL);
+				Map<String, String[]> parameterMap =
+					HttpComponentsUtil.getParameterMap(backURL);
 
 				organizationId = GetterUtil.getLong(
 					parameterMap.get(portletNamespace + "organizationId")[0]);
 			}
 
 			if ((organizationId > 0) &&
-				!OrganizationPermissionUtil.contains(
+				!_organizationPermission.contains(
 					permissionChecker, organizationId, ActionKeys.VIEW)) {
 
 				PortletURL portletURL = _portal.getControlPanelPortletURL(
@@ -259,7 +259,7 @@ public class UpdateUserRolesMVCActionCommand extends BaseMVCActionCommand {
 	}
 
 	@Reference
-	private Http _http;
+	private OrganizationPermission _organizationPermission;
 
 	@Reference
 	private Portal _portal;

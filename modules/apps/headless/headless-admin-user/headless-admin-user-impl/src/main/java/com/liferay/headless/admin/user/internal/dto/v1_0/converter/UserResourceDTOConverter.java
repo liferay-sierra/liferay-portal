@@ -33,6 +33,7 @@ import com.liferay.headless.admin.user.dto.v1_0.RoleBrief;
 import com.liferay.headless.admin.user.dto.v1_0.SiteBrief;
 import com.liferay.headless.admin.user.dto.v1_0.UserAccount;
 import com.liferay.headless.admin.user.dto.v1_0.UserAccountContactInformation;
+import com.liferay.headless.admin.user.dto.v1_0.UserGroupBrief;
 import com.liferay.headless.admin.user.dto.v1_0.WebUrl;
 import com.liferay.headless.admin.user.internal.dto.v1_0.util.CustomFieldsUtil;
 import com.liferay.headless.admin.user.internal.dto.v1_0.util.EmailAddressUtil;
@@ -40,17 +41,19 @@ import com.liferay.headless.admin.user.internal.dto.v1_0.util.PhoneUtil;
 import com.liferay.headless.admin.user.internal.dto.v1_0.util.PostalAddressUtil;
 import com.liferay.headless.admin.user.internal.dto.v1_0.util.ServiceBuilderListTypeUtil;
 import com.liferay.headless.admin.user.internal.dto.v1_0.util.WebUrlUtil;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Contact;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.GroupService;
 import com.liferay.portal.kernel.service.RoleService;
+import com.liferay.portal.kernel.service.UserGroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -59,7 +62,6 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
-import com.liferay.portal.vulcan.util.TransformUtil;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -133,10 +135,12 @@ public class UserResourceDTOConverter
 				givenName = user.getFirstName();
 				honorificPrefix =
 					ServiceBuilderListTypeUtil.getServiceBuilderListTypeMessage(
-						contact.getPrefixId(), dtoConverterContext.getLocale());
+						contact.getPrefixListTypeId(),
+						dtoConverterContext.getLocale());
 				honorificSuffix =
 					ServiceBuilderListTypeUtil.getServiceBuilderListTypeMessage(
-						contact.getSuffixId(), dtoConverterContext.getLocale());
+						contact.getSuffixListTypeId(),
+						dtoConverterContext.getLocale());
 				id = user.getUserId();
 				jobTitle = user.getJobTitle();
 				keywords = ListUtil.toArray(
@@ -187,6 +191,10 @@ public class UserResourceDTOConverter
 								WebUrl.class);
 						}
 					};
+				userGroupBriefs = TransformUtil.transformToArray(
+					_userGroupLocalService.getUserUserGroups(user.getUserId()),
+					userGroup -> _toUserGroupBrief(userGroup),
+					UserGroupBrief.class);
 
 				setDashboardURL(
 					() -> {
@@ -242,7 +250,7 @@ public class UserResourceDTOConverter
 	private AccountBrief _toAccountBrief(
 			AccountEntryUserRel accountEntryUserRel,
 			DTOConverterContext dtoConverterContext, User user)
-		throws PortalException {
+		throws Exception {
 
 		if (accountEntryUserRel.getAccountEntryId() ==
 				AccountConstants.ACCOUNT_ENTRY_ID_DEFAULT) {
@@ -271,7 +279,7 @@ public class UserResourceDTOConverter
 	private OrganizationBrief _toOrganizationBrief(
 			DTOConverterContext dtoConverterContext, Organization organization,
 			User user)
-		throws PortalException {
+		throws Exception {
 
 		return new OrganizationBrief() {
 			{
@@ -288,7 +296,7 @@ public class UserResourceDTOConverter
 
 	private RoleBrief _toRoleBrief(
 			AccountRole accountRole, DTOConverterContext dtoConverterContext)
-		throws PortalException {
+		throws Exception {
 
 		Role role = accountRole.getRole();
 
@@ -318,15 +326,33 @@ public class UserResourceDTOConverter
 	}
 
 	private SiteBrief _toSiteBrief(
-		DTOConverterContext dtoConverterContext, Group group) {
+			DTOConverterContext dtoConverterContext, Group group)
+		throws Exception {
 
 		return new SiteBrief() {
 			{
+				descriptiveName = group.getDescriptiveName(
+					dtoConverterContext.getLocale());
+				descriptiveName_i18n = LocalizedMapUtil.getI18nMap(
+					dtoConverterContext.isAcceptAllLanguages(),
+					group.getDescriptiveNameMap());
 				id = group.getGroupId();
 				name = group.getName(dtoConverterContext.getLocale());
 				name_i18n = LocalizedMapUtil.getI18nMap(
 					dtoConverterContext.isAcceptAllLanguages(),
 					group.getNameMap());
+			}
+		};
+	}
+
+	private UserGroupBrief _toUserGroupBrief(UserGroup userGroup)
+		throws Exception {
+
+		return new UserGroupBrief() {
+			{
+				description = userGroup.getDescription();
+				id = userGroup.getGroupId();
+				name = userGroup.getName();
 			}
 		};
 	}
@@ -351,6 +377,12 @@ public class UserResourceDTOConverter
 
 	@Reference
 	private RoleService _roleService;
+
+	@Reference
+	private UserGroupLocalService _userGroupLocalService;
+
+	@Reference
+	private UserGroupResourceDTOConverter _userGroupResourceDTOConverter;
 
 	@Reference
 	private UserLocalService _userLocalService;

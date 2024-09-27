@@ -24,7 +24,7 @@ import com.liferay.frontend.data.set.provider.search.FDSKeywords;
 import com.liferay.frontend.data.set.provider.search.FDSPagination;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -41,7 +41,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Riccardo Alberti
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "fds.data.provider.key=" + CommercePricingFDSNames.PRICING_CLASSES_DISCOUNTS,
 	service = FDSDataProvider.class
 )
@@ -91,7 +90,7 @@ public class CommercePricingClassDiscountFDSDataProvider
 					_getDiscountType(commerceDiscount.isUsePercentage()),
 					new LabelField(
 						statusDisplayStyle,
-						LanguageUtil.get(
+						_language.get(
 							httpServletRequest,
 							WorkflowConstants.getStatusLabel(
 								commerceDiscount.getStatus())))));
@@ -123,5 +122,8 @@ public class CommercePricingClassDiscountFDSDataProvider
 
 	@Reference
 	private CommerceDiscountService _commerceDiscountService;
+
+	@Reference
+	private Language _language;
 
 }

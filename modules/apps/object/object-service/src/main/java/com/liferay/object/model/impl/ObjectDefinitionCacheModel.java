@@ -78,12 +78,14 @@ public class ObjectDefinitionCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(51);
+		StringBundler sb = new StringBundler(65);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
 		sb.append(", uuid=");
 		sb.append(uuid);
+		sb.append(", externalReferenceCode=");
+		sb.append(externalReferenceCode);
 		sb.append(", objectDefinitionId=");
 		sb.append(objectDefinitionId);
 		sb.append(", companyId=");
@@ -96,10 +98,14 @@ public class ObjectDefinitionCacheModel
 		sb.append(createDate);
 		sb.append(", modifiedDate=");
 		sb.append(modifiedDate);
+		sb.append(", accountEntryRestrictedObjectFieldId=");
+		sb.append(accountEntryRestrictedObjectFieldId);
 		sb.append(", descriptionObjectFieldId=");
 		sb.append(descriptionObjectFieldId);
 		sb.append(", titleObjectFieldId=");
 		sb.append(titleObjectFieldId);
+		sb.append(", accountEntryRestricted=");
+		sb.append(accountEntryRestricted);
 		sb.append(", active=");
 		sb.append(active);
 		sb.append(", dbTableName=");
@@ -108,6 +114,12 @@ public class ObjectDefinitionCacheModel
 		sb.append(label);
 		sb.append(", className=");
 		sb.append(className);
+		sb.append(", enableCategorization=");
+		sb.append(enableCategorization);
+		sb.append(", enableComments=");
+		sb.append(enableComments);
+		sb.append(", enableObjectEntryHistory=");
+		sb.append(enableObjectEntryHistory);
 		sb.append(", name=");
 		sb.append(name);
 		sb.append(", panelAppOrder=");
@@ -124,6 +136,8 @@ public class ObjectDefinitionCacheModel
 		sb.append(portlet);
 		sb.append(", scope=");
 		sb.append(scope);
+		sb.append(", storageType=");
+		sb.append(storageType);
 		sb.append(", system=");
 		sb.append(system);
 		sb.append(", version=");
@@ -146,6 +160,14 @@ public class ObjectDefinitionCacheModel
 		}
 		else {
 			objectDefinitionImpl.setUuid(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			objectDefinitionImpl.setExternalReferenceCode("");
+		}
+		else {
+			objectDefinitionImpl.setExternalReferenceCode(
+				externalReferenceCode);
 		}
 
 		objectDefinitionImpl.setObjectDefinitionId(objectDefinitionId);
@@ -173,9 +195,12 @@ public class ObjectDefinitionCacheModel
 			objectDefinitionImpl.setModifiedDate(new Date(modifiedDate));
 		}
 
+		objectDefinitionImpl.setAccountEntryRestrictedObjectFieldId(
+			accountEntryRestrictedObjectFieldId);
 		objectDefinitionImpl.setDescriptionObjectFieldId(
 			descriptionObjectFieldId);
 		objectDefinitionImpl.setTitleObjectFieldId(titleObjectFieldId);
+		objectDefinitionImpl.setAccountEntryRestricted(accountEntryRestricted);
 		objectDefinitionImpl.setActive(active);
 
 		if (dbTableName == null) {
@@ -198,6 +223,11 @@ public class ObjectDefinitionCacheModel
 		else {
 			objectDefinitionImpl.setClassName(className);
 		}
+
+		objectDefinitionImpl.setEnableCategorization(enableCategorization);
+		objectDefinitionImpl.setEnableComments(enableComments);
+		objectDefinitionImpl.setEnableObjectEntryHistory(
+			enableObjectEntryHistory);
 
 		if (name == null) {
 			objectDefinitionImpl.setName("");
@@ -251,6 +281,13 @@ public class ObjectDefinitionCacheModel
 			objectDefinitionImpl.setScope(scope);
 		}
 
+		if (storageType == null) {
+			objectDefinitionImpl.setStorageType("");
+		}
+		else {
+			objectDefinitionImpl.setStorageType(storageType);
+		}
+
 		objectDefinitionImpl.setSystem(system);
 		objectDefinitionImpl.setVersion(version);
 		objectDefinitionImpl.setStatus(status);
@@ -264,6 +301,7 @@ public class ObjectDefinitionCacheModel
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
 		uuid = objectInput.readUTF();
+		externalReferenceCode = objectInput.readUTF();
 
 		objectDefinitionId = objectInput.readLong();
 
@@ -274,14 +312,24 @@ public class ObjectDefinitionCacheModel
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
 
+		accountEntryRestrictedObjectFieldId = objectInput.readLong();
+
 		descriptionObjectFieldId = objectInput.readLong();
 
 		titleObjectFieldId = objectInput.readLong();
+
+		accountEntryRestricted = objectInput.readBoolean();
 
 		active = objectInput.readBoolean();
 		dbTableName = objectInput.readUTF();
 		label = objectInput.readUTF();
 		className = objectInput.readUTF();
+
+		enableCategorization = objectInput.readBoolean();
+
+		enableComments = objectInput.readBoolean();
+
+		enableObjectEntryHistory = objectInput.readBoolean();
 		name = objectInput.readUTF();
 		panelAppOrder = objectInput.readUTF();
 		panelCategoryKey = objectInput.readUTF();
@@ -291,6 +339,7 @@ public class ObjectDefinitionCacheModel
 
 		portlet = objectInput.readBoolean();
 		scope = objectInput.readUTF();
+		storageType = objectInput.readUTF();
 
 		system = objectInput.readBoolean();
 
@@ -310,6 +359,13 @@ public class ObjectDefinitionCacheModel
 			objectOutput.writeUTF(uuid);
 		}
 
+		if (externalReferenceCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(externalReferenceCode);
+		}
+
 		objectOutput.writeLong(objectDefinitionId);
 
 		objectOutput.writeLong(companyId);
@@ -326,9 +382,13 @@ public class ObjectDefinitionCacheModel
 		objectOutput.writeLong(createDate);
 		objectOutput.writeLong(modifiedDate);
 
+		objectOutput.writeLong(accountEntryRestrictedObjectFieldId);
+
 		objectOutput.writeLong(descriptionObjectFieldId);
 
 		objectOutput.writeLong(titleObjectFieldId);
+
+		objectOutput.writeBoolean(accountEntryRestricted);
 
 		objectOutput.writeBoolean(active);
 
@@ -352,6 +412,12 @@ public class ObjectDefinitionCacheModel
 		else {
 			objectOutput.writeUTF(className);
 		}
+
+		objectOutput.writeBoolean(enableCategorization);
+
+		objectOutput.writeBoolean(enableComments);
+
+		objectOutput.writeBoolean(enableObjectEntryHistory);
 
 		if (name == null) {
 			objectOutput.writeUTF("");
@@ -404,6 +470,13 @@ public class ObjectDefinitionCacheModel
 			objectOutput.writeUTF(scope);
 		}
 
+		if (storageType == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(storageType);
+		}
+
 		objectOutput.writeBoolean(system);
 
 		objectOutput.writeInt(version);
@@ -413,18 +486,24 @@ public class ObjectDefinitionCacheModel
 
 	public long mvccVersion;
 	public String uuid;
+	public String externalReferenceCode;
 	public long objectDefinitionId;
 	public long companyId;
 	public long userId;
 	public String userName;
 	public long createDate;
 	public long modifiedDate;
+	public long accountEntryRestrictedObjectFieldId;
 	public long descriptionObjectFieldId;
 	public long titleObjectFieldId;
+	public boolean accountEntryRestricted;
 	public boolean active;
 	public String dbTableName;
 	public String label;
 	public String className;
+	public boolean enableCategorization;
+	public boolean enableComments;
+	public boolean enableObjectEntryHistory;
 	public String name;
 	public String panelAppOrder;
 	public String panelCategoryKey;
@@ -433,6 +512,7 @@ public class ObjectDefinitionCacheModel
 	public String pluralLabel;
 	public boolean portlet;
 	public String scope;
+	public String storageType;
 	public boolean system;
 	public int version;
 	public int status;

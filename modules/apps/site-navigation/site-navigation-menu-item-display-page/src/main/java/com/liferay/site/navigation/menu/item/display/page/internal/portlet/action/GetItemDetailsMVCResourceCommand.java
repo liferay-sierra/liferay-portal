@@ -21,20 +21,20 @@ import com.liferay.info.item.InfoItemClassDetails;
 import com.liferay.info.item.InfoItemFieldValues;
 import com.liferay.info.item.InfoItemFormVariation;
 import com.liferay.info.item.InfoItemReference;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemDetailsProvider;
 import com.liferay.info.item.provider.InfoItemFormVariationsProvider;
 import com.liferay.layout.display.page.LayoutDisplayPageInfoItemFieldValuesProvider;
-import com.liferay.layout.display.page.LayoutDisplayPageInfoItemFieldValuesProviderTracker;
+import com.liferay.layout.display.page.LayoutDisplayPageInfoItemFieldValuesProviderRegistry;
 import com.liferay.layout.display.page.LayoutDisplayPageObjectProvider;
 import com.liferay.layout.display.page.LayoutDisplayPageProvider;
-import com.liferay.layout.display.page.LayoutDisplayPageProviderTracker;
+import com.liferay.layout.display.page.LayoutDisplayPageProviderRegistry;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
@@ -61,7 +61,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Jürgen Kappler
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + SiteNavigationAdminPortletKeys.SITE_NAVIGATION_ADMIN,
 		"mvc.command.name=/navigation_menu/get_item_details"
@@ -117,7 +116,7 @@ public class GetItemDetailsMVCResourceCommand extends BaseMVCResourceCommand {
 				resourceRequest, resourceResponse,
 				JSONUtil.put(
 					"error",
-					LanguageUtil.get(
+					_language.get(
 						themeDisplay.getRequest(),
 						"an-unexpected-error-occurred")));
 		}
@@ -129,11 +128,11 @@ public class GetItemDetailsMVCResourceCommand extends BaseMVCResourceCommand {
 
 		LayoutDisplayPageInfoItemFieldValuesProvider
 			layoutDisplayPageInfoItemFieldValuesProvider =
-				_layoutDisplayPageInfoItemFieldValuesProviderTracker.
+				_layoutDisplayPageInfoItemFieldValuesProviderRegistry.
 					getLayoutDisplayPageInfoItemFieldValuesProvider(className);
 
 		if (layoutDisplayPageInfoItemFieldValuesProvider == null) {
-			return JSONFactoryUtil.createJSONArray();
+			return _jsonFactory.createJSONArray();
 		}
 
 		InfoItemFieldValues infoItemFieldValues =
@@ -164,7 +163,7 @@ public class GetItemDetailsMVCResourceCommand extends BaseMVCResourceCommand {
 		ThemeDisplay themeDisplay) {
 
 		InfoItemFormVariationsProvider<?> infoItemFormVariationsProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFormVariationsProvider.class, className);
 
 		if (infoItemFormVariationsProvider == null) {
@@ -172,7 +171,7 @@ public class GetItemDetailsMVCResourceCommand extends BaseMVCResourceCommand {
 		}
 
 		LayoutDisplayPageProvider<?> layoutDisplayPageProvider =
-			_layoutDisplayPageProviderTracker.
+			_layoutDisplayPageProviderRegistry.
 				getLayoutDisplayPageProviderByClassName(className);
 
 		if (layoutDisplayPageProvider == null) {
@@ -201,7 +200,7 @@ public class GetItemDetailsMVCResourceCommand extends BaseMVCResourceCommand {
 
 	private String _getItemType(String className, ThemeDisplay themeDisplay) {
 		InfoItemDetailsProvider<?> infoItemDetailsProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemDetailsProvider.class, className);
 
 		if (infoItemDetailsProvider == null) {
@@ -222,14 +221,21 @@ public class GetItemDetailsMVCResourceCommand extends BaseMVCResourceCommand {
 		GetItemDetailsMVCResourceCommand.class);
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
-	private LayoutDisplayPageInfoItemFieldValuesProviderTracker
-		_layoutDisplayPageInfoItemFieldValuesProviderTracker;
+	private JSONFactory _jsonFactory;
 
 	@Reference
-	private LayoutDisplayPageProviderTracker _layoutDisplayPageProviderTracker;
+	private Language _language;
+
+	@Reference
+	private LayoutDisplayPageInfoItemFieldValuesProviderRegistry
+		_layoutDisplayPageInfoItemFieldValuesProviderRegistry;
+
+	@Reference
+	private LayoutDisplayPageProviderRegistry
+		_layoutDisplayPageProviderRegistry;
 
 	@Reference
 	private Portal _portal;

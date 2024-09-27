@@ -25,9 +25,9 @@ import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.LayoutTypeController;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.service.PortletLocalService;
-import com.liferay.portal.kernel.servlet.DirectRequestDispatcherFactoryUtil;
+import com.liferay.portal.kernel.servlet.DirectRequestDispatcherFactory;
 import com.liferay.portal.kernel.servlet.PipingServletResponse;
-import com.liferay.portal.kernel.servlet.TransferHeadersHelperUtil;
+import com.liferay.portal.kernel.servlet.TransferHeadersHelper;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
@@ -47,7 +47,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true, property = "layout.type=" + LayoutConstants.TYPE_PORTLET,
+	property = "layout.type=" + LayoutConstants.TYPE_PORTLET,
 	service = LayoutTypeController.class
 )
 public class PortletLayoutTypeController extends BaseLayoutTypeControllerImpl {
@@ -66,9 +66,9 @@ public class PortletLayoutTypeController extends BaseLayoutTypeControllerImpl {
 		httpServletRequest.setAttribute(WebKeys.SEL_LAYOUT, layout);
 
 		RequestDispatcher requestDispatcher =
-			TransferHeadersHelperUtil.getTransferHeadersRequestDispatcher(
-				DirectRequestDispatcherFactoryUtil.getRequestDispatcher(
-					servletContext, getEditPage()));
+			_transferHeadersHelper.getTransferHeadersRequestDispatcher(
+				_directRequestDispatcherFactory.getRequestDispatcher(
+					_servletContext, getEditPage()));
 
 		UnsyncStringWriter unsyncStringWriter = new UnsyncStringWriter();
 
@@ -87,9 +87,9 @@ public class PortletLayoutTypeController extends BaseLayoutTypeControllerImpl {
 		throws Exception {
 
 		RequestDispatcher requestDispatcher =
-			TransferHeadersHelperUtil.getTransferHeadersRequestDispatcher(
-				DirectRequestDispatcherFactoryUtil.getRequestDispatcher(
-					servletContext, getViewPage()));
+			_transferHeadersHelper.getTransferHeadersRequestDispatcher(
+				_directRequestDispatcherFactory.getRequestDispatcher(
+					_servletContext, getViewPage()));
 
 		HttpServletRequest originalHttpServletRequest =
 			_portal.getOriginalServletRequest(httpServletRequest);
@@ -175,16 +175,13 @@ public class PortletLayoutTypeController extends BaseLayoutTypeControllerImpl {
 	}
 
 	@Override
-	protected String getViewPage() {
-		return _VIEW_PAGE;
+	protected ServletContext getServletContext() {
+		return _servletContext;
 	}
 
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.layout.type.controller.portlet)",
-		unbind = "-"
-	)
-	protected void setServletContext(ServletContext servletContext) {
-		this.servletContext = servletContext;
+	@Override
+	protected String getViewPage() {
+		return _VIEW_PAGE;
 	}
 
 	private static final String _EDIT_PAGE = "/layout/edit/portlet.jsp";
@@ -194,6 +191,9 @@ public class PortletLayoutTypeController extends BaseLayoutTypeControllerImpl {
 			"p_v_l_s_g_id=${liferay:pvlsgid}";
 
 	private static final String _VIEW_PAGE = "/layout/view/portlet.jsp";
+
+	@Reference
+	private DirectRequestDispatcherFactory _directRequestDispatcherFactory;
 
 	@Reference
 	private LayoutPageTemplateEntryLocalService
@@ -208,5 +208,13 @@ public class PortletLayoutTypeController extends BaseLayoutTypeControllerImpl {
 
 	@Reference
 	private PortletLocalService _portletLocalService;
+
+	@Reference(
+		target = "(osgi.web.symbolicname=com.liferay.layout.type.controller.portlet)"
+	)
+	private ServletContext _servletContext;
+
+	@Reference
+	private TransferHeadersHelper _transferHeadersHelper;
 
 }

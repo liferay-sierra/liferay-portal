@@ -207,6 +207,38 @@ public class UserAccount implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected Date birthDate;
 
+	@Schema(
+		description = "The user's current password. Used to authenticate a user when they attempt to update their own password."
+	)
+	public String getCurrentPassword() {
+		return currentPassword;
+	}
+
+	public void setCurrentPassword(String currentPassword) {
+		this.currentPassword = currentPassword;
+	}
+
+	@JsonIgnore
+	public void setCurrentPassword(
+		UnsafeSupplier<String, Exception> currentPasswordUnsafeSupplier) {
+
+		try {
+			currentPassword = currentPasswordUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField(
+		description = "The user's current password. Used to authenticate a user when they attempt to update their own password."
+	)
+	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+	protected String currentPassword;
+
 	@Schema
 	@Valid
 	public CustomField[] getCustomFields() {
@@ -837,6 +869,36 @@ public class UserAccount implements Serializable {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected UserAccountContactInformation userAccountContactInformation;
 
+	@Schema(description = "A list of the user's userGroups.")
+	@Valid
+	public UserGroupBrief[] getUserGroupBriefs() {
+		return userGroupBriefs;
+	}
+
+	public void setUserGroupBriefs(UserGroupBrief[] userGroupBriefs) {
+		this.userGroupBriefs = userGroupBriefs;
+	}
+
+	@JsonIgnore
+	public void setUserGroupBriefs(
+		UnsafeSupplier<UserGroupBrief[], Exception>
+			userGroupBriefsUnsafeSupplier) {
+
+		try {
+			userGroupBriefs = userGroupBriefsUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField(description = "A list of the user's userGroups.")
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected UserGroupBrief[] userGroupBriefs;
+
 	@Override
 	public boolean equals(Object object) {
 		if (this == object) {
@@ -935,6 +997,20 @@ public class UserAccount implements Serializable {
 			sb.append("\"");
 
 			sb.append(liferayToJSONDateFormat.format(birthDate));
+
+			sb.append("\"");
+		}
+
+		if (currentPassword != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"currentPassword\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(currentPassword));
 
 			sb.append("\"");
 		}
@@ -1271,6 +1347,26 @@ public class UserAccount implements Serializable {
 			sb.append("\"userAccountContactInformation\": ");
 
 			sb.append(String.valueOf(userAccountContactInformation));
+		}
+
+		if (userGroupBriefs != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"userGroupBriefs\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < userGroupBriefs.length; i++) {
+				sb.append(String.valueOf(userGroupBriefs[i]));
+
+				if ((i + 1) < userGroupBriefs.length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
 		}
 
 		sb.append("}");

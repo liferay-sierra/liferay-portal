@@ -26,11 +26,11 @@ definition {
 
 		SelectFrameTop();
 
-		Pause(locator1 = "3000");
+		WaitForElementPresent(
+			key_text = "Done",
+			locator1 = "Button#ANY_ENABLED");
 
-		AssertClick(
-			locator1 = "Button#DONE",
-			value1 = "Done");
+		Click(locator1 = "Button#DONE");
 
 		Alert.viewSuccessMessage();
 	}
@@ -60,7 +60,7 @@ definition {
 
 			PortletEntry.inputName(name = "${siteName}");
 
-			Button.clickAdd();
+			Button.click(button = "Add");
 
 			SelectFrameTop();
 
@@ -190,6 +190,7 @@ definition {
 				localizedName = "${localizedName}");
 
 			var i = ${i} + 1;
+
 			var i = StringUtil.valueOf("${i}");
 		}
 
@@ -232,6 +233,13 @@ definition {
 				key_text = "Private Pages Virtual Host",
 				locator1 = "TextInput#ANY",
 				value1 = "${privatePageVirtualHostURL}");
+		}
+
+		if (isSet(stagingPages)) {
+			Type(
+				key_text = "Staging Pages",
+				locator1 = "TextInput#ANY",
+				value1 = "${stagingPages}");
 		}
 
 		if (isSet(stagingPublicPages)) {
@@ -369,7 +377,9 @@ definition {
 
 		SelectFrame(locator1 = "IFrame#MODAL_BODY");
 
-		LexiconEntry.changeDisplayStyle(displayStyle = "cards");
+		if (IsElementNotPresent(key_card = "${orgName}", locator1 = "Card#CARD")) {
+			LexiconEntry.changeDisplayStyle(displayStyle = "cards");
+		}
 
 		AssertTextEquals(
 			locator1 = "Card#CARD_TITLE",
@@ -438,18 +448,15 @@ definition {
 
 		LexiconEntry.gotoAdd();
 
-		AssertVisible(locator1 = "Button#DONE");
+		SelectFrame(locator1 = "IFrame#ADD_USERS_TO_SITE");
 
 		if (isSet(depotName)) {
 			SelectFrame(locator1 = "IFrame#ADD_USERS_TO_ASSET_LIBRARY");
 		}
-		else {
-			SelectFrame(locator1 = "IFrame#ADD_USERS_TO_SITE");
+
+		if (IsElementNotPresent(key_card = "${userFirstName}", locator1 = "Card#CARD")) {
+			LexiconEntry.changeDisplayStyle(displayStyle = "cards");
 		}
-
-		Pause(locator1 = "3000");
-
-		LexiconEntry.changeDisplayStyle(displayStyle = "cards");
 
 		if (isSet(userMiddleName)) {
 			LexiconCard.checkCardCheckbox(card = "${userFirstName} ${userMiddleName} ${userLastName}");
@@ -468,13 +475,9 @@ definition {
 	macro assignUserGroupAsMemberCP {
 		Navigator.gotoNavItem(navItem = "User Groups");
 
-		Pause(locator1 = "5000");
-
 		LexiconEntry.gotoAdd();
 
 		SelectFrame(locator1 = "IFrame#MODAL_BODY");
-
-		Pause(locator1 = "3000");
 
 		LexiconEntry.selectEntry(rowEntry = "${userGroupName}");
 
@@ -485,56 +488,25 @@ definition {
 		Alert.viewSuccessMessage();
 	}
 
-	macro assignUserSitesCP {
-		var key_userScreenName = "${userScreenName}";
-
-		AssertTextEquals(
-			locator1 = "UsersAndOrganizations#USER_TABLE_SCREEN_NAME",
-			value1 = "${userScreenName}");
-
-		AssertClick(
-			locator1 = "UsersAndOrganizations#USER_TABLE_SCREEN_NAME",
-			value1 = "${userScreenName}");
-
-		UserNavigator.gotoMemberships();
-
-		AssertClick(
-			locator1 = "UsersAndOrganizationsEditUser#SITES_SELECT_LINK",
-			value1 = "Select");
-
-		SelectFrame(locator1 = "IFrame#SELECT_USER_SITES");
-
-		var key_siteName = "${siteName}";
-
-		Type(
-			locator1 = "TextInput#SITE_SEARCH_KEYWORDS",
-			value1 = "${siteName}");
-
-		KeyPress(
-			locator1 = "TextInput#SEARCH",
-			value1 = "\RETURN");
-
-		AssertTextEquals.assertPartialText(
-			locator1 = "UsersAndOrganizationsEditUser#SITES_TABLE_NAME",
-			value1 = "${siteName}");
-
-		Click(locator1 = "SitesSelectSite#SITES_TABLE_CHOOSE_SITE_LINK");
-
-		SelectFrame(value1 = "relative=top");
-
-		PortletEntry.save();
-	}
-
 	macro changeSiteLogo {
 		ProductMenu.gotoPortlet(
 			category = "Site Builder",
 			portlet = "Pages");
 
-		PagesAdmin.togglePrivacy(privacy = "${pageName}");
+		WaitForPageLoad();
 
-		Click(
-			key_pageName = "${pageName}",
-			locator1 = "Icon#COG_PAGE");
+		Click.waitForMenuToggleJSClick(locator1 = "Icon#HEADER_VERTICAL_ELLIPSIS");
+
+		if (IsElementPresent(key_menuItem = "Configuration", locator1 = "MenuItem#DROPDOWN_MENU_ITEM")) {
+			DropdownMenuItem.click(menuItem = "Configuration");
+		}
+		else {
+			PagesAdmin.togglePrivacy(privacy = "${pageName}");
+
+			Click(
+				key_pageName = "${pageName}",
+				locator1 = "Icon#COG_PAGE");
+		}
 
 		Panel.expandPanel(panel = "Logo");
 
@@ -626,9 +598,9 @@ definition {
 				value1 = "${localizedSaveButton}");
 		}
 		else {
-			while (IsElementNotPresent(locator1 = "Button#SAVE")) {
-				Pause(locator1 = "1000");
-			}
+			WaitForElementPresent(
+				key_text = "Save",
+				locator1 = "Button#ANY_ENABLED");
 
 			Click(locator1 = "Button#SAVE");
 		}
@@ -673,9 +645,15 @@ definition {
 	macro deleteAllCP {
 		PortletEntry.selectAll();
 
-		ClickNoError(locator1 = "Icon#DELETE");
+		Click(locator1 = "Icon#DELETE");
 
-		AssertConfirm(value1 = "Are you sure you want to delete this? It will be deleted immediately.");
+		AssertTextEquals(
+			locator1 = "Modal#BODY",
+			value1 = "Deleting a site is an action impossible to revert. All content will be removed and it will not be possible to recover it.");
+
+		Click(
+			key_text = "Delete",
+			locator1 = "Modal#MODAL_FOOTER_BUTTON");
 
 		Alert.viewSuccessMessage();
 	}
@@ -693,7 +671,13 @@ definition {
 			item = "Delete",
 			tableEntry = "${siteName}");
 
-		AssertConfirm(value1 = "Are you sure you want to delete this? It will be deleted immediately.");
+		AssertTextEquals(
+			locator1 = "Modal#BODY",
+			value1 = "Deleting a site is an action impossible to revert. All content will be removed and it will not be possible to recover it.");
+
+		Click(
+			key_text = "Delete",
+			locator1 = "Modal#MODAL_FOOTER_BUTTON");
 
 		Alert.viewSuccessMessage();
 
@@ -747,13 +731,13 @@ definition {
 			locator1 = "SiteSettingsSiteURL#SITE_URL_FRIENDLY_URL_LABEL",
 			value1 = "Friendly URL");
 
-		Pause(locator1 = "5000");
+		WaitForEditable(locator1 = "TextInput#FRIENDLY_URL_SITE_SETTINGS");
 
 		Type(
 			locator1 = "TextInput#FRIENDLY_URL_SITE_SETTINGS",
 			value1 = "${siteFriendlyURLEdit}");
 
-		Button.clickSave();
+		Button.clickNoError(button = "Save");
 
 		if ("${friendlyURLInvalid}" == "true") {
 			Alert.viewRequestFailedToComplete();
@@ -783,16 +767,18 @@ definition {
 		PortletEntry.save();
 	}
 
-	macro editPiwikCP {
+	macro editMatomoCP {
 		Click(
 			key_itemName = "Analytics",
 			locator1 = "ListGroupItem#ITEM_TEXT");
 
 		Type(
-			locator1 = "TextInput#PIWIK",
-			value1 = "${piwik}");
+			locator1 = "TextInput#MATOMO",
+			value1 = "${matomo}");
 
-		Button.click(button = "Save");
+		ClickNoError.mouseDownMouseUp(
+			key_text = "Save",
+			locator1 = "Button#ANY");
 
 		if (isSet(confirmationText)) {
 			AssertConfirm(value1 = "${confirmationText}");
@@ -801,6 +787,21 @@ definition {
 		Alert.viewSuccessMessage();
 
 		WaitForLiferayEvent.initializeLiferayEventLog();
+	}
+
+	macro editVirtualHostLanguageCP {
+		Click(
+			key_itemName = "Site Configuration",
+			locator1 = "ListGroupItem#ITEM_TEXT");
+
+		Navigator.gotoNavTab(navTab = "Site URL");
+
+		Select(
+			key_selectFieldLabel = "Language",
+			locator1 = "Select#ANY",
+			value1 = "${languageVirtualHost}");
+
+		PortletEntry.save();
 	}
 
 	macro getSiteId {
@@ -824,7 +825,7 @@ definition {
 	}
 
 	macro importSiteFromTempFolder {
-		var siteLarFileName = TestCase.getDownloadedTempFileName(fileNamePattern = "Public_Pages-*.lar");
+		var siteLarFileName = TestCase.getDownloadedTempFileName(fileNamePattern = "Pages-*.lar");
 
 		UploadTempFile.uploadTempFileHiddenNoMouseOver(
 			locator1 = "TextInput#FILE",
@@ -866,13 +867,11 @@ definition {
 
 		Navigator.gotoNavItem(navItem = "Available Sites");
 
-		Pause(locator1 = "3000");
-
 		if ("${membershipType}" == "Private") {
 			LexiconList.viewListEntryNotPresent(listEntry = "${siteName}");
 		}
 		else if ("${membershipType}" == "Restricted") {
-			LexiconList.viewListEntryTitle(listEntry = "${siteName}");
+			LexiconList.viewListEntryPresent(listEntry = "${siteName}");
 
 			LexiconList.viewListEntrySubtitle(
 				listEntry = "${siteName}",
@@ -900,7 +899,7 @@ definition {
 				userRole = "${userRole}");
 		}
 		else {
-			LexiconList.viewListEntryTitle(listEntry = "${siteName}");
+			LexiconList.viewListEntryPresent(listEntry = "${siteName}");
 
 			LexiconList.viewListEntrySubtitle(
 				listEntry = "${siteName}",
@@ -913,7 +912,7 @@ definition {
 
 			Alert.viewSuccessMessage();
 
-			LexiconList.viewListEntryTitle(listEntry = "${siteName}");
+			LexiconList.viewListEntryPresent(listEntry = "${siteName}");
 
 			LexiconList.viewListEntrySubtitle(
 				listEntry = "${siteName}",
@@ -931,7 +930,7 @@ definition {
 	}
 
 	macro leaveViaMySitesPG {
-		LexiconList.viewListEntryTitle(listEntry = "${siteName}");
+		LexiconList.viewListEntryPresent(listEntry = "${siteName}");
 
 		LexiconList.viewListEntrySubtitle(
 			listEntry = "${siteName}",
@@ -939,7 +938,7 @@ definition {
 
 		Navigator.gotoNavItem(navItem = "Available Sites");
 
-		LexiconList.viewListEntryTitle(listEntry = "${siteName}");
+		LexiconList.viewListEntryPresent(listEntry = "${siteName}");
 
 		LexiconList.viewListEntrySubtitle(
 			listEntry = "${siteName}",
@@ -952,7 +951,7 @@ definition {
 
 		Alert.viewSuccessMessage();
 
-		LexiconList.viewListEntryTitle(listEntry = "${siteName}");
+		LexiconList.viewListEntryPresent(listEntry = "${siteName}");
 
 		LexiconList.viewListEntrySubtitle(
 			listEntry = "${siteName}",
@@ -988,7 +987,7 @@ definition {
 			key_itemName = "Site Configuration",
 			locator1 = "ListGroupItem#ITEM_TEXT");
 
-		Pause(locator1 = "5000");
+		WaitForPageLoad();
 
 		if ("${selectMembershipType}" == "true") {
 			AssertTextEquals(
@@ -1224,11 +1223,15 @@ definition {
 		if (IsElementNotPresent(locator1 = "Message#EMPTY_INFO")) {
 			PortletEntry.selectAll();
 
-			ClickNoError(
-				locator1 = "Icon#DELETE",
-				value1 = "Delete");
+			Click(locator1 = "Icon#DELETE");
 
-			AssertConfirm(value1 = "Are you sure you want to delete this? It will be deleted immediately.");
+			AssertTextEquals(
+				locator1 = "Modal#BODY",
+				value1 = "Deleting a site is an action impossible to revert. All content will be removed and it will not be possible to recover it.");
+
+			Click(
+				key_text = "Delete",
+				locator1 = "Modal#MODAL_FOOTER_BUTTON");
 
 			Alert.viewSuccessMessage();
 		}
@@ -1238,8 +1241,6 @@ definition {
 		var key_userGroupName = "${userGroupName}";
 
 		Navigator.gotoNavItem(navItem = "User Groups");
-
-		Search.searchCP(searchTerm = "${userGroupName}");
 
 		LexiconEntry.changeDisplayStyle(displayStyle = "table");
 
@@ -1253,7 +1254,9 @@ definition {
 
 		SelectFrame(locator1 = "IFrame#MODAL_BODY");
 
-		LexiconEntry.changeDisplayStyle(displayStyle = "cards");
+		if (IsElementNotPresent(key_card = "${roleName}", locator1 = "Card#CARD")) {
+			LexiconEntry.changeDisplayStyle(displayStyle = "cards");
+		}
 
 		LexiconCard.checkCardCheckbox(card = "${roleName}");
 
@@ -1283,6 +1286,8 @@ definition {
 		else {
 			Alert.viewErrorMessage(errorMessage = "The Site Name cannot be blank, numeric or a reserved word such as null. The Site Name cannot contain the following invalid characters: *.");
 		}
+
+		SelectFrameTop();
 	}
 
 	macro viewChildCP {
@@ -1335,8 +1340,6 @@ definition {
 		ProductMenuHelper.openWorkspace();
 
 		SelectFrame(locator1 = "IFrame#MODAL_BODY");
-
-		Pause(locator1 = "3000");
 
 		Navigator.gotoNavItem(navItem = "All Sites");
 
@@ -1448,7 +1451,7 @@ definition {
 			locator1 = "NavBar#NAV_ITEM_LINK",
 			value1 = "My Sites");
 
-		LexiconList.viewListEntryTitle(listEntry = "${siteName}");
+		LexiconList.viewListEntryPresent(listEntry = "${siteName}");
 
 		LexiconList.viewListEntrySubtitle(
 			listEntry = "${siteName}",
@@ -1605,7 +1608,7 @@ definition {
 	macro viewSiteRoleViaSiteMembershipsCP {
 		LexiconEntry.changeDisplayStyle(displayStyle = "list");
 
-		LexiconList.viewListEntryTitle(listEntry = "${resourceName}");
+		LexiconList.viewListEntryPresent(listEntry = "${resourceName}");
 
 		LexiconList.viewListEntrySubtitle(
 			listEntry = "${resourceName}",
